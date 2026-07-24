@@ -148,6 +148,65 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun tabsUseActualTriggerGeometryAndDoNotClaimVisualGaps() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(mapOf("behavior" to WireValue.Integer(6)))
+            val list = FrameLayout(host.context)
+            list.addView(View(host.context).apply { tag = "short" })
+            list.addView(View(host.context).apply { tag = "wide" })
+            host.addView(list)
+            host.layout(0, 0, 400, 160)
+            list.layout(20, 20, 380, 100)
+            list.getChildAt(0).layout(0, 0, 80, 80)
+            list.getChildAt(1).layout(140, 0, 360, 80)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 40f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 40f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 120f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 120f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 300f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 300f, 40f))
+
+            assertEquals(listOf("short", "wide"), payloads.map(ByteArray::decodeToString))
+            host.release()
+        }
+    }
+
+    @Test
+    fun verticalTabsSelectByActualTriggerBounds() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(6),
+                    "orientation" to WireValue.Integer(2),
+                ),
+            )
+            val list = FrameLayout(host.context)
+            list.addView(View(host.context).apply { tag = "overview" })
+            list.addView(View(host.context).apply { tag = "settings" })
+            host.addView(list)
+            host.layout(0, 0, 240, 400)
+            list.layout(20, 20, 220, 380)
+            list.getChildAt(0).layout(0, 0, 200, 100)
+            list.getChildAt(1).layout(0, 140, 200, 360)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 100f, 240f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 100f, 240f))
+
+            assertEquals("settings", payloads.single().decodeToString())
+            host.release()
+        }
+    }
+
+    @Test
     fun nonDismissibleSheetNeverAnimatesAwayOrEmitsDismissal() {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()
@@ -186,6 +245,35 @@ class MobileUiHostInstrumentedTest {
 
             assertTrue(host.isSheetHandle(150f, 650f))
             assertTrue(!host.isSheetHandle(150f, 850f))
+            host.animate().cancel()
+            host.translationY = 0f
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 150f, 900f))
+            assertEquals(0f, host.translationY, 0f)
+            host.release()
+        }
+    }
+
+    @Test
+    fun overlayHitTestingIncludesNestedTranslationWithoutDismissing() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(mapOf("behavior" to WireValue.Integer(17)))
+            val wrapper = FrameLayout(host.context)
+            val content = View(host.context)
+            wrapper.addView(content)
+            host.addView(wrapper)
+            host.layout(0, 0, 400, 600)
+            wrapper.layout(0, 0, 400, 600)
+            content.layout(20, 40, 220, 240)
+            wrapper.translationX = 80f
+            wrapper.translationY = 120f
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 150f, 200f))
+
+            assertTrue(payloads.isEmpty())
             host.release()
         }
     }

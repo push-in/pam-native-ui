@@ -23,6 +23,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
+import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 import dev.pam.nativeapp.protocol.WireMap
@@ -114,6 +115,7 @@ internal class MobileUiHost(
     private var dragOrigin = 0f
     private var dragOriginSecondary = 0f
     private var dragging = false
+    private var pressedSelectionIndex = -1
     private var imageScale = 1f
     private var imageTranslationX = 0f
     private var imageTranslationY = 0f
@@ -222,7 +224,7 @@ internal class MobileUiHost(
             animateExpanded()
         }
         if (previousSelected != selected && behavior == Behavior.TABS) {
-            announceForAccessibility(contentDescription)
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
         }
         scheduleToast(properties)
         applyComponentDefaults()
@@ -320,6 +322,9 @@ internal class MobileUiHost(
                 info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
             }
         }
+        if (behavior == Behavior.PROGRESS) {
+            info.className = "android.widget.ProgressBar"
+        }
         if (behavior.isOverlay() && dismissible) {
             info.addAction(AccessibilityNodeInfo.ACTION_DISMISS)
         }
@@ -350,7 +355,11 @@ internal class MobileUiHost(
             invalidate()
             return true
         }
-        if (action == AccessibilityNodeInfo.ACTION_DISMISS && behavior.isOverlay()) {
+        if (
+            action == AccessibilityNodeInfo.ACTION_DISMISS
+            && behavior.isOverlay()
+            && dismissible
+        ) {
             emitDismiss()
             return true
         }
@@ -639,14 +648,9 @@ internal class MobileUiHost(
             ) {
                 return@OnTouchListener false
             }
-            val content = if (childCount == 0) null else getChildAt(childCount - 1)
-            val contentLeft = content?.x ?: 0f
-            val contentTop = content?.y ?: 0f
+            val content = overlayContent()
             val insideContent = content != null
-                && event.x >= contentLeft
-                && event.x <= contentLeft + content.width
-                && event.y >= contentTop
-                && event.y <= contentTop + content.height
+                && boundsInHost(content).contains(event.x, event.y)
             if (!insideContent) {
                 emitDismiss()
                 performClick()
@@ -671,6 +675,7 @@ internal class MobileUiHost(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    if (!dragging) return@OnTouchListener false
                     translationY = max(0f, event.rawY - dragOrigin)
                     true
                 }
@@ -704,19 +709,18 @@ internal class MobileUiHost(
         OnTouchListener { _, event ->
             if (!isEnabled) return@OnTouchListener false
             val list = getChildAt(0) as? ViewGroup ?: this
-            val insideList = event.x >= list.left
-                && event.x <= list.right
-                && event.y >= list.top
-                && event.y <= list.bottom
-            if (!insideList) return@OnTouchListener false
+            val index = selectionIndexAt(list, event.x, event.y)
             when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> true
+                MotionEvent.ACTION_DOWN -> {
+                    pressedSelectionIndex = index
+                    index >= 0
+                }
                 MotionEvent.ACTION_UP -> {
-                    val count = list.childCount.coerceAtLeast(1)
-                    val localX = event.x - list.left
-                    val index = ((localX / list.width.coerceAtLeast(1)) * count)
-                        .toInt()
-                        .coerceIn(0, count - 1)
+                    if (index < 0 || index != pressedSelectionIndex) {
+                        pressedSelectionIndex = -1
+                        return@OnTouchListener false
+                    }
+                    pressedSelectionIndex = -1
                     selected = true
                     isSelected = true
                     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -728,7 +732,11 @@ internal class MobileUiHost(
                     performClick()
                     true
                 }
-                MotionEvent.ACTION_CANCEL -> true
+                MotionEvent.ACTION_CANCEL -> {
+                    val claimed = pressedSelectionIndex >= 0
+                    pressedSelectionIndex = -1
+                    claimed
+                }
                 else -> false
             }
         }
@@ -1058,6 +1066,9 @@ internal class MobileUiHost(
     private fun accordionChildren(): Sequence<View> =
         children().filterIndexed { index, _ -> index > 0 }
 
+    private fun overlayContent(): View? =
+        if (childCount > 0) getChildAt(childCount - 1) else null
+
     internal fun isSheetHandle(x: Float, y: Float): Boolean {
         val content = if (childCount > 0) getChildAt(childCount - 1) else null
         if (content == null) return y <= 64f * density
@@ -1097,6 +1108,15 @@ internal class MobileUiHost(
 
     private fun calendarGridBounds(): RectF =
         boundsInHost(findTaggedDescendant(this, "pam:calendar-grid") ?: this)
+
+    private fun selectionIndexAt(list: ViewGroup, x: Float, y: Float): Int {
+        repeat(list.childCount) { index ->
+            if (boundsInHost(list.getChildAt(index)).contains(x, y)) {
+                return index
+            }
+        }
+        return -1
+    }
 
     private fun boundsInHost(view: View): RectF {
         if (view === this) return RectF(0f, 0f, width.toFloat(), height.toFloat())
