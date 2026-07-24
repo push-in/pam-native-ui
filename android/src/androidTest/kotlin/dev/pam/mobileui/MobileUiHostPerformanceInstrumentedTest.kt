@@ -745,6 +745,26 @@ class MobileUiHostPerformanceInstrumentedTest {
                 fileTreeEvents.size,
             )
 
+            val markdownEvents = ArrayList<NativeViewEventKind>()
+            val markdownFactory = MobileUiMarkdownFactory(context)
+            val markdown = markdownFactory.create(context) { kind, _ ->
+                markdownEvents += kind
+            }
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                markdownFactory.update(markdown, markdownProperties(iteration))
+            }
+            val markdownUpdate = measure(SAMPLE_ITERATIONS) { iteration ->
+                markdownFactory.update(markdown, markdownProperties(iteration))
+            }
+            assertTrue(
+                "Markdown update p99 ${markdownUpdate.p99Micros}µs exceeded 4ms",
+                markdownUpdate.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Markdown rendering must stay UI-thread local until a link is activated",
+                markdownEvents.isEmpty(),
+            )
+
             val tableEvents = ArrayList<NativeViewEventKind>()
             val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
             table.update(mapOf("behavior" to WireValue.Integer(35)))
@@ -819,6 +839,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"branchNavigation\":${branchNavigation.json()},")
                     append("\"promptSubmission\":${promptSubmission.json()},")
                     append("\"fileTreeToggle\":${fileTreeToggle.json()},")
+                    append("\"markdownUpdate\":${markdownUpdate.json()},")
                     append("\"tableLayout\":${tableLayout.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
@@ -842,6 +863,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"branchBridgeEvents\":${branchEvents.size},")
                     append("\"promptBridgeEvents\":${promptEvents.size},")
                     append("\"fileTreeBridgeEvents\":${fileTreeEvents.size},")
+                    append("\"markdownBridgeEvents\":${markdownEvents.size},")
                     append("\"tableBridgeEvents\":${tableEvents.size}")
                     append('}')
                 },
@@ -880,6 +902,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             prompt.release()
             fileTreeFolder.release()
             fileTree.release()
+            markdownFactory.release(markdown)
             repeat(table.childCount) { index ->
                 (table.getChildAt(index) as? MobileUiHost)?.release()
             }
@@ -941,6 +964,21 @@ class MobileUiHostPerformanceInstrumentedTest {
             "is24Hour" to WireValue.Flag(true),
         )
     }
+
+    private fun markdownProperties(iteration: Int): Map<String, WireValue> =
+        mapOf(
+            "source" to WireValue.Text(
+                "# PAM Native\n**Fast ${iteration and 1}** and _native_.\n"
+                    + "- [Documentation](https://pam.dev)\n"
+                    + "```php\necho 'PAM';\n```",
+            ),
+            "foregroundColor" to WireValue.Integer(0xff171717),
+            "mutedColor" to WireValue.Integer(0xff737373),
+            "linkColor" to WireValue.Integer(0xff2563eb),
+            "codeBackgroundColor" to WireValue.Integer(0xfff5f5f5),
+            "codeForegroundColor" to WireValue.Integer(0xff171717),
+            "selectable" to WireValue.Flag(true),
+        )
 
     private fun accordionAction(iteration: Int): Int =
         if (iteration % 2 == 0) {

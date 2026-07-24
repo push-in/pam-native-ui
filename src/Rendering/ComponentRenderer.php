@@ -91,6 +91,7 @@ final class ComponentRenderer
         }
         $children = self::imageViewerChildren($part, $props, $children);
         $children = self::messageBranchChildren($part, $children);
+        $children = self::messageResponseChildren($part, $props, $children);
         $children = self::fileTreeFolderChildren($part, $props, $children);
         $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
@@ -120,6 +121,7 @@ final class ComponentRenderer
         $events = self::componentEvents($part, $runtimeProps, $events);
         $children = self::formControlChildren($part, $runtimeProps, $children);
         $children = self::inputEventChildren($part, $events, $children);
+        $children = self::messageResponseEventChildren($part, $events, $children);
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
         $nativeBackground = $style->backgroundColor;
         if ($styleOverride !== null && $styleOverride->backgroundColor !== null) {
@@ -354,6 +356,13 @@ final class ComponentRenderer
                 && !self::flag($runtimeProps, 'invalid', self::flag($runtimeProps, 'isInvalid'))
             )
             || (
+                $part === 'MessageToolbar'
+                && (
+                    self::integer($runtimeProps, 'role', 2) === 1
+                    || self::messageHasNoText($runtimeProps)
+                )
+            )
+            || (
                 self::isClosed($runtimeProps)
                 && (
                     self::hidesEntireRootWhenClosed($part)
@@ -442,17 +451,35 @@ final class ComponentRenderer
         if ($part === 'Spinner' || $part === 'ButtonSpinner') {
             return ActivityIndicator::make(($props['visible'] ?? true) !== false);
         }
-        if (in_array($part, ['FlatList', 'VirtualizedList'], true)) {
+        if (in_array($part, [
+            'FlatList',
+            'VirtualizedList',
+            'ActionsheetFlatList',
+            'ActionsheetVirtualizedList',
+            'BottomSheetFlatList',
+            'SelectFlatList',
+            'SelectVirtualizedList',
+        ], true)) {
             return self::configuredList(
                 FlatList::make(self::stringList($props['items'] ?? [])),
                 $props,
             );
         }
-        if ($part === 'SectionList') {
+        if (in_array($part, [
+            'SectionList',
+            'ActionsheetSectionList',
+            'BottomSheetSectionList',
+            'SelectSectionList',
+        ], true)) {
             return self::configuredList(
                 SectionList::make(self::sections($props['sections'] ?? [])),
                 $props,
             );
+        }
+        if ($part === 'MessageResponse') {
+            return count($children) === 1
+                ? $children[0]
+                : Column::make(...$children);
         }
         if ($part === 'ConversationContent') {
             return Scroll::make(self::oneChild($children))
@@ -1124,7 +1151,7 @@ final class ComponentRenderer
             || str_ends_with($part, 'Title')
             || str_ends_with($part, 'Description')
             || str_ends_with($part, 'Caption')
-            || in_array($part, ['TableHead', 'TableData', 'MessageResponse'], true);
+            || in_array($part, ['TableHead', 'TableData'], true);
     }
 
     private static function isInput(string $part): bool
@@ -1876,8 +1903,27 @@ final class ComponentRenderer
         if ($part === 'PromptInputSubmit') {
             return [Text::make('↑')];
         }
+        if ($part === 'PromptInputActionMenuTrigger') {
+            return [Text::make('+')];
+        }
         if ($part === 'ConversationScrollButton') {
             return [Text::make('↓')];
+        }
+        if ($part === 'ConversationDownload') {
+            return [
+                CustomView::make(
+                    'pam.mobile_ui.icon',
+                    self::iconProperties('DownloadIcon', []),
+                ),
+            ];
+        }
+        if ($part === 'AttachmentRemove') {
+            return [
+                CustomView::make(
+                    'pam.mobile_ui.icon',
+                    self::iconProperties('RemoveIcon', []),
+                ),
+            ];
         }
         if ($part === 'FileTreeFile') {
             return [Text::make(self::text($props, 'name', self::text($props, 'path')))];
@@ -1890,6 +1936,14 @@ final class ComponentRenderer
         }
         if ($part === 'ModelSelectorEmpty') {
             return [Text::make('No models found.')];
+        }
+        if ($part === 'ModelSelectorLogo') {
+            $provider = self::text($props, 'provider', '?');
+            $initials = function_exists('mb_substr')
+                ? mb_substr($provider, 0, 2)
+                : substr($provider, 0, 2);
+
+            return [Text::make(strtoupper($initials))];
         }
         if ($part === 'ConversationEmptyState') {
             return [
@@ -1930,6 +1984,179 @@ final class ComponentRenderer
             $children,
             array_keys($children),
         );
+    }
+
+    /**
+     * Builds each text part as one intrinsic native Markdown view and keeps
+     * file parts on PAM's native image pipeline.
+     *
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function messageResponseChildren(
+        string $part,
+        array $props,
+        array $children,
+    ): array {
+        if ($part !== 'MessageResponse') {
+            return $children;
+        }
+        if ($children !== []) {
+            $text = [];
+            foreach ($children as $child) {
+                $value = $child->properties()[PropKey::Text->value] ?? null;
+                if ($child->kind() !== NodeKind::Text || !is_string($value)) {
+                    return $children;
+                }
+                $text[] = $value;
+            }
+
+            return [self::markdownView(implode("\n", $text), $props)];
+        }
+
+        $message = is_array($props['message'] ?? null)
+            ? $props['message']
+            : [];
+        $parts = is_array($message['parts'] ?? null)
+            ? $message['parts']
+            : null;
+        if ($parts === null) {
+            $source = self::text(
+                $props,
+                'text',
+                is_scalar($message['content'] ?? null)
+                    ? (string) $message['content']
+                    : '',
+            );
+
+            return [self::markdownView($source, $props)];
+        }
+
+        $rendered = [];
+        foreach ($parts as $messagePart) {
+            if (!is_array($messagePart)) {
+                continue;
+            }
+            if (
+                ($messagePart['type'] ?? null) === 'text'
+                && is_scalar($messagePart['text'] ?? null)
+            ) {
+                $rendered[] = self::markdownView(
+                    (string) $messagePart['text'],
+                    $props,
+                );
+                continue;
+            }
+            if (($messagePart['type'] ?? null) !== 'file') {
+                continue;
+            }
+            $uri = is_string($messagePart['url'] ?? null)
+                ? $messagePart['url']
+                : '';
+            if (
+                $uri === ''
+                && is_string($messagePart['data'] ?? null)
+                && is_string($messagePart['mimeType'] ?? null)
+            ) {
+                $uri = 'data:'.$messagePart['mimeType'].';base64,'
+                    .$messagePart['data'];
+            }
+            if ($uri === '') {
+                continue;
+            }
+            $label = is_string($messagePart['filename'] ?? null)
+                ? $messagePart['filename']
+                : 'Message attachment';
+            $rendered[] = Image::make($uri)
+                ->fit(ImageFit::Cover)
+                ->accessibilityLabel($label)
+                ->accessibilityRole(AccessibilityRole::Image);
+        }
+
+        return $rendered === []
+            ? [Text::make(self::text($props, 'pendingText', 'Thinking...'))]
+            : $rendered;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function markdownView(string $source, array $props): Element
+    {
+        $theme = ThemeManager::current();
+
+        return CustomView::make(
+            'pam.mobile_ui.markdown',
+            [
+                'source' => $source,
+                'foregroundColor' => $theme->color(ColorToken::Foreground),
+                'mutedColor' => $theme->color(ColorToken::MutedForeground),
+                'linkColor' => $theme->color(ColorToken::Primary),
+                'codeBackgroundColor' => $theme->color(ColorToken::Muted),
+                'codeForegroundColor' => $theme->color(ColorToken::Foreground),
+                'selectable' => self::flag($props, 'selectable', true),
+            ],
+        );
+    }
+
+    /**
+     * A link originates in the intrinsic Markdown child, not in its optional
+     * multi-part container.
+     *
+     * @param array<int, Closure> $events
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function messageResponseEventChildren(
+        string $part,
+        array $events,
+        array $children,
+    ): array {
+        $handler = $events[EventKind::Native->value] ?? null;
+        if ($part !== 'MessageResponse' || $handler === null) {
+            return $children;
+        }
+
+        foreach ($children as $index => $child) {
+            if (
+                $child->kind() === NodeKind::CustomView
+                && ($child->properties()[PropKey::HostName->value] ?? null)
+                    === 'pam.mobile_ui.markdown'
+            ) {
+                $children[$index] = $child->on(EventKind::Native, $handler);
+            }
+        }
+
+        return $children;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function messageHasNoText(array $props): bool
+    {
+        if (array_key_exists('hasText', $props)) {
+            return !self::flag($props, 'hasText');
+        }
+        $message = $props['message'] ?? null;
+        if (!is_array($message)) {
+            return false;
+        }
+        $parts = $message['parts'] ?? null;
+        if (!is_array($parts)) {
+            $content = $message['content'] ?? null;
+
+            return is_scalar($content) && trim((string) $content) === '';
+        }
+        foreach ($parts as $messagePart) {
+            if (
+                is_array($messagePart)
+                && ($messagePart['type'] ?? null) === 'text'
+                && is_scalar($messagePart['text'] ?? null)
+                && trim((string) $messagePart['text']) !== ''
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

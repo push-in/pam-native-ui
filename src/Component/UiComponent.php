@@ -414,9 +414,33 @@ abstract class UiComponent implements Renderable
 
             return true;
         }
+        if ($name === 'message') {
+            return self::isSafeContextArray($value, 0);
+        }
 
         foreach ($value as $item) {
             if (!is_scalar($item)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** @param array<array-key, mixed> $value */
+    private static function isSafeContextArray(array $value, int $depth): bool
+    {
+        if ($depth >= 4 || count($value) > 256) {
+            return false;
+        }
+        foreach ($value as $item) {
+            if (is_scalar($item) || $item === null) {
+                continue;
+            }
+            if (
+                !is_array($item)
+                || !self::isSafeContextArray($item, $depth + 1)
+            ) {
                 return false;
             }
         }

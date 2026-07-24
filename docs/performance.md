@@ -106,6 +106,11 @@ activation performs its selection and expansion updates locally and emits
 exactly two semantic results (selected path plus bounded expansion map);
 animation frames never cross the bridge.
 
+MessageResponse adds a pending 10,000-update gate below 4 ms p99 for a mixed
+heading/emphasis/list/link/code document. Parsing and span application happen
+once per changed source on the Android UI thread and emit zero bridge events;
+only explicit safe-link activation emits one URI.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

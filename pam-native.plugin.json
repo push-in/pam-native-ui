@@ -24,6 +24,10 @@
         {
             "name": "pam.mobile_ui.icon",
             "class": "dev.pam.mobileui.MobileUiIconFactory"
+        },
+        {
+            "name": "pam.mobile_ui.markdown",
+            "class": "dev.pam.mobileui.MobileUiMarkdownFactory"
         }
     ]
 }

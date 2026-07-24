@@ -12,12 +12,17 @@ use Pam\MobileUi\Component\AccordionIcon;
 use Pam\MobileUi\Component\AccordionItem;
 use Pam\MobileUi\Component\AccordionTitleText;
 use Pam\MobileUi\Component\AccordionTrigger;
+use Pam\MobileUi\Component\ActionsheetFlatList;
+use Pam\MobileUi\Component\ActionsheetSectionList;
+use Pam\MobileUi\Component\ActionsheetVirtualizedList;
 use Pam\MobileUi\Component\BottomSheet;
 use Pam\MobileUi\Component\BottomSheetBackdrop;
 use Pam\MobileUi\Component\BottomSheetContent;
 use Pam\MobileUi\Component\BottomSheetDragIndicator;
+use Pam\MobileUi\Component\BottomSheetFlatList;
 use Pam\MobileUi\Component\BottomSheetItem;
 use Pam\MobileUi\Component\BottomSheetPortal;
+use Pam\MobileUi\Component\BottomSheetSectionList;
 use Pam\MobileUi\Component\Checkbox;
 use Pam\MobileUi\Component\CheckboxGroup;
 use Pam\MobileUi\Component\CheckboxIcon;
@@ -83,10 +88,13 @@ use Pam\MobileUi\Component\MessageBranchPage;
 use Pam\MobileUi\Component\MessageBranchPrevious;
 use Pam\MobileUi\Component\MessageBranchSelector;
 use Pam\MobileUi\Component\MessageContent;
+use Pam\MobileUi\Component\MessageResponse;
+use Pam\MobileUi\Component\MessageToolbar;
 use Pam\MobileUi\Component\Menu;
 use Pam\MobileUi\Component\MenuItem;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
+use Pam\MobileUi\Component\ModelSelectorLogo;
 use Pam\MobileUi\Component\Popover;
 use Pam\MobileUi\Component\PopoverArrow;
 use Pam\MobileUi\Component\PopoverCloseButton;
@@ -107,9 +115,12 @@ use Pam\MobileUi\Component\RadioIndicator;
 use Pam\MobileUi\Component\RadioLabel;
 use Pam\MobileUi\Component\Select;
 use Pam\MobileUi\Component\SelectContent;
+use Pam\MobileUi\Component\SelectFlatList;
 use Pam\MobileUi\Component\SelectItem;
 use Pam\MobileUi\Component\SelectPortal;
+use Pam\MobileUi\Component\SelectSectionList;
 use Pam\MobileUi\Component\SelectTrigger;
+use Pam\MobileUi\Component\SelectVirtualizedList;
 use Pam\MobileUi\Component\Slider;
 use Pam\MobileUi\Component\SliderFilledTrack;
 use Pam\MobileUi\Component\SliderThumb;
@@ -979,6 +990,70 @@ $assert(
     'Chat role recipes must preserve the upstream user bubble layout.',
 );
 
+$messageResponse = MessageResponse::make([
+    'message' => [
+        'parts' => [
+            [
+                'type' => 'text',
+                'text' => '# PAM Native'.PHP_EOL.'**Fast** and native.',
+            ],
+            [
+                'type' => 'file',
+                'filename' => 'architecture.png',
+                'url' => 'file:///architecture.png',
+            ],
+        ],
+    ],
+])->onNativeEvent(static function (string $uri): void {
+})->toElement();
+$markdownChild = $messageResponse->children()[0] ?? null;
+$messageFile = $messageResponse->children()[1] ?? null;
+$markdownNative = $markdownChild?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$markdownChild instanceof \Pam\Native\Element
+    || !$messageFile instanceof \Pam\Native\Element
+    || !$markdownNative instanceof BinaryValue
+) {
+    throw new RuntimeException('MessageResponse must render text and file parts.');
+}
+$markdownProperties = Wire::decodeMap($markdownNative->bytes);
+$userToolbar = Message::make(
+    [
+        'role' => MessageRole::User,
+        'message' => [
+            'parts' => [['type' => 'text', 'text' => 'Hello']],
+        ],
+    ],
+    MessageToolbar::make(MessageAction::make('Copy')),
+)->toElement()->children()[0] ?? null;
+$emptyAssistantToolbar = Message::make(
+    [
+        'role' => MessageRole::Assistant,
+        'message' => [
+            'parts' => [['type' => 'file', 'url' => 'file:///result.png']],
+        ],
+    ],
+    MessageToolbar::make(MessageAction::make('Copy')),
+)->toElement()->children()[0] ?? null;
+$modelLogo = ModelSelectorLogo::make(['provider' => 'anthropic'])->toElement();
+$assert(
+    $messageResponse->kind() === NodeKind::Column
+        && $markdownChild->kind() === NodeKind::CustomView
+        && $markdownChild->properties()[PropKey::HostName->value]
+            === 'pam.mobile_ui.markdown'
+        && $markdownProperties['source']
+            === '# PAM Native'.PHP_EOL.'**Fast** and native.'
+        && isset($markdownChild->events()[\Pam\Native\EventKind::Native->value])
+        && $messageFile->kind() === NodeKind::Image
+        && $userToolbar?->properties()[PropKey::Visible->value] === false
+        && $emptyAssistantToolbar?->properties()[PropKey::Visible->value] === false
+        && $modelLogo->children()[0]
+            ->properties()[PropKey::Text->value] === 'AN',
+    'Chat responses must keep Markdown, files, toolbar context and provider fallbacks native.',
+);
+
 $branchIndexes = [];
 $messageBranch = MessageBranch::make(
     ['defaultBranch' => 1, 'loop' => false],
@@ -1216,6 +1291,24 @@ $virtualizedList = VirtualizedList::make([
     'items' => ['One', 'Two'],
     'scrollEnabled' => false,
 ])->toElement();
+$sheetListKinds = [
+    ActionsheetFlatList::make(['items' => ['One']])->toElement()->kind(),
+    ActionsheetVirtualizedList::make(['items' => ['One']])->toElement()->kind(),
+    BottomSheetFlatList::make(['items' => ['One']])->toElement()->kind(),
+    SelectFlatList::make(['items' => ['One']])->toElement()->kind(),
+    SelectVirtualizedList::make(['items' => ['One']])->toElement()->kind(),
+];
+$sheetSectionKinds = [
+    ActionsheetSectionList::make([
+        'sections' => ['Group' => ['One']],
+    ])->toElement()->kind(),
+    BottomSheetSectionList::make([
+        'sections' => ['Group' => ['One']],
+    ])->toElement()->kind(),
+    SelectSectionList::make([
+        'sections' => ['Group' => ['One']],
+    ])->toElement()->kind(),
+];
 $assert(
     $flatList->kind() === NodeKind::List
         && $flatList->properties()[PropKey::ListRowHeight->value] === 64.0
@@ -1225,8 +1318,16 @@ $assert(
         && $sectionList->kind() === NodeKind::SectionList
         && $sectionList->properties()[PropKey::ListRowHeight->value] === 56.0
         && $virtualizedList->kind() === NodeKind::List
-        && $virtualizedList->properties()[PropKey::ScrollEnabled->value] === false,
-    'List facades must preserve recycled native rows, sizing, indicators and end events.',
+        && $virtualizedList->properties()[PropKey::ScrollEnabled->value] === false
+        && count(array_filter(
+            $sheetListKinds,
+            static fn (NodeKind $kind): bool => $kind === NodeKind::List,
+        )) === count($sheetListKinds)
+        && count(array_filter(
+            $sheetSectionKinds,
+            static fn (NodeKind $kind): bool => $kind === NodeKind::SectionList,
+        )) === count($sheetSectionKinds),
+    'List facades and sheet aliases must preserve recycled native rows, sizing, indicators and end events.',
 );
 
 $table = Table::make(

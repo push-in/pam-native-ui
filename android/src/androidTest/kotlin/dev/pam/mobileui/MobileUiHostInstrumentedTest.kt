@@ -2,7 +2,10 @@ package dev.pam.mobileui
 
 import android.content.Intent
 import android.os.Looper
+import android.text.Spanned
 import android.text.method.PasswordTransformationMethod
+import android.text.style.ClickableSpan
+import android.text.style.StyleSpan
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -26,6 +29,49 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
+    @Test
+    fun markdownRendersIntrinsicSpansAndEmitsSafeLinksOnTheUiThread() {
+        onMain {
+            val events = CopyOnWriteArrayList<NativeViewEventKind>()
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val factory = MobileUiMarkdownFactory(context)
+            val view = factory.create(context) { kind, payload ->
+                events += kind
+                payloads += payload
+            }
+            factory.update(
+                view,
+                mapOf(
+                    "source" to WireValue.Text(
+                        "# PAM\n**Fast** [docs](https://pam.dev)",
+                    ),
+                    "foregroundColor" to WireValue.Integer(0xff171717),
+                    "linkColor" to WireValue.Integer(0xff2563eb),
+                    "selectable" to WireValue.Flag(true),
+                ),
+            )
+
+            val textView = view as TextView
+            val styled = textView.text as Spanned
+            assertEquals("PAM\nFast docs", styled.toString())
+            assertTrue(
+                styled.getSpans(0, styled.length, StyleSpan::class.java)
+                    .isNotEmpty(),
+            )
+            val link = styled.getSpans(
+                0,
+                styled.length,
+                ClickableSpan::class.java,
+            ).single()
+            link.onClick(textView)
+            assertEquals(listOf(NativeViewEventKind.NATIVE), events)
+            assertEquals("https://pam.dev", payloads.single().decodeToString())
+            assertTrue(textView.isTextSelectable)
+            factory.release(view)
+        }
+    }
+
     @Test
     fun sliderKeepsTransientStateOnTheUiThreadAndExposesSeekBarSemantics() {
         onMain {

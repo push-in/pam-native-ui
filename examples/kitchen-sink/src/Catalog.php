@@ -157,6 +157,11 @@ final class Catalog extends Component
             : "Submitted prompt: {$prompt}";
     }
 
+    public function openMessageLink(string $uri): void
+    {
+        $this->notice = "Markdown link activated: {$uri}";
+    }
+
     public function selectFile(string $path): void
     {
         $this->selectedFile = $path;

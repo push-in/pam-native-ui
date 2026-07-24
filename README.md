@@ -376,7 +376,11 @@ remaining ordinary compound tags:
     <ConversationContent>
         <Message role="assistant">
             <MessageContent>
-                <MessageResponse>Choose an implementation.</MessageResponse>
+                <MessageResponse on:event="openLink">
+                    ## Choose an implementation
+
+                    Use **PAM primitives** or a [native plugin](https://pam.dev).
+                </MessageResponse>
             </MessageContent>
         </Message>
     </ConversationContent>
@@ -414,6 +418,12 @@ responses, counter and accessibility state on the UI thread, emitting one final
 index. Prompt text enables/disables Submit locally; submit trims and optionally
 clears the field, then sends one semantic string to PHP. With `sync="native"`,
 typing itself does not cross the bridge.
+
+`MessageResponse` supports headings, ordered/unordered lists, quotes, bold,
+italic, strike-through, inline/fenced code and safe links in one intrinsic
+Android text view. It also accepts gluestack-style `message.parts`: text parts
+become native Markdown and file parts become PAM images. A safe link emits its
+URI through `on:event`, leaving navigation policy in the application.
 
 File trees use the same compound syntax with native expansion and selection:
 
@@ -463,6 +473,11 @@ map to the core native list instead of creating a PHP component per row.
 Arbitrary rich row trees remain possible through ordinary PAM composition or a
 specialized native plugin; the scalar fast path deliberately does not invoke a
 PHP `renderItem` callback while scrolling.
+
+The aliases `ActionsheetFlatList`, `ActionsheetVirtualizedList`,
+`ActionsheetSectionList`, `BottomSheetFlatList`, `BottomSheetSectionList`,
+`SelectFlatList`, `SelectVirtualizedList` and `SelectSectionList` use those
+same recycled native nodes inside their overlay anatomy.
 
 Tables keep their full declarative anatomy while Android exposes native
 collection coordinates to TalkBack:

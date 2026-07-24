@@ -334,8 +334,12 @@
                     <ConversationContent>
                         <Message role="assistant">
                             <MessageContent>
-                                <MessageResponse>
-                                    PAM renders this response as a compact native tree.
+                                <MessageResponse on:event="openMessageLink">
+                                    ## PAM Native
+
+                                    **Markdown**, `inline code`, lists and
+                                    [safe links](https://github.com/push-in/pam-mobile-ui)
+                                    render in one intrinsic Android text view.
                                 </MessageResponse>
                             </MessageContent>
                         </Message>

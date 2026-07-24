@@ -41,6 +41,8 @@ detects the end threshold without calling PHP for visible-item rendering.
 facades only normalize familiar prop names (`rowHeight`, `itemHeight`,
 `estimatedItemSize`, indicator and scrolling flags) onto those core
 properties, so the optimized path does not gain an extra host or bridge layer.
+The `Actionsheet*List`, `BottomSheet*List` and `Select*List` aliases resolve to
+these exact native list nodes rather than styled generic containers.
 
 This path intentionally accepts scalar rows. Rich heterogeneous rows use normal
 PAM keyed composition or a purpose-built plugin whose recycling contract
@@ -85,6 +87,14 @@ derives Submit availability from trimmed text or mounted attachments, clears
 locally when requested and emits one `SUBMIT` payload. Native input sync avoids
 per-keystroke PHP callbacks; attachment removal and actual message creation
 remain application state.
+
+`MessageResponse` compiles each text part to one intrinsic Android `TextView`.
+Its dependency-free parser turns headings, lists, quotes, emphasis, code and
+safe links into `Spannable` ranges only when the source property changes; no
+WebView, JavaScript runtime or nested text-view-per-token tree is created.
+`http`, `https`, `mailto` and `tel` links emit one bounded native URI event for
+application policy instead of opening an external activity implicitly. File
+parts remain ordinary PAM images, including base64 data URIs.
 
 `FileTree` packs controlled/default expanded paths into one bounded newline
 payload. Folder and file hosts retain their authored nested PHP content while
