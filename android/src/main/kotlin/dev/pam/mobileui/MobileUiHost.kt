@@ -368,6 +368,7 @@ internal class MobileUiHost(
     private var promptClearOnSubmit = true
     private var promptTrimOnSubmit = true
     private var promptLoading = false
+    private var promptAttachmentCount = -1
     private var promptInput: EditText? = null
     private var promptTextWatcher: TextWatcher? = null
     private var conversationAutoScroll = true
@@ -593,6 +594,10 @@ internal class MobileUiHost(
                 "loading",
                 properties.flag("isSubmitting", false),
             )
+            promptAttachmentCount = properties.integer(
+                "attachmentCount",
+                -1L,
+            ).toInt().coerceAtLeast(-1)
         }
         if (behavior == Behavior.CHAT) {
             conversationAutoScroll = properties.flag(
@@ -5024,7 +5029,14 @@ internal class MobileUiHost(
         }
         val enabled = isEnabled
             && !promptLoading
-            && (hasText || promptAttachmentCount() > 0)
+            && (
+                hasText
+                || if (promptAttachmentCount >= 0) {
+                    promptAttachmentCount > 0
+                } else {
+                    mountedPromptAttachmentCount() > 0
+                }
+            )
         promptSubmitControls().forEach { control ->
             control.isEnabled = enabled
             control.alpha = if (enabled) 1f else DISABLED_CONTROL_ALPHA
@@ -5050,7 +5062,7 @@ internal class MobileUiHost(
             }
         }
 
-    private fun promptAttachmentCount(root: ViewGroup = this): Int {
+    private fun mountedPromptAttachmentCount(root: ViewGroup = this): Int {
         var count = 0
         repeat(root.childCount) { index ->
             val child = root.getChildAt(index)
@@ -5063,7 +5075,7 @@ internal class MobileUiHost(
                 child is ViewGroup
                 && !(child is MobileUiHost && child.behavior == Behavior.PROMPT_INPUT)
             ) {
-                count += promptAttachmentCount(child)
+                count += mountedPromptAttachmentCount(child)
             }
         }
         return count

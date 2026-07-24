@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use Pam\MobileUi\Enum\AttachmentType;
 use Pam\Native\Component;
 use Pam\Native\Renderable;
 use Pam\Native\View;
@@ -34,6 +35,22 @@ final class Catalog extends Component
         'pushinbr/pam-plugin-api',
         'pushinbr/pam-cli',
     ];
+    /**
+     * @var list<array{
+     *     id: string,
+     *     filename: string,
+     *     mediaType: string,
+     *     type: int,
+     *     url: string
+     * }>
+     */
+    private array $promptFiles = [[
+        'id' => 'architecture',
+        'filename' => 'architecture.md',
+        'mediaType' => 'text/markdown',
+        'type' => AttachmentType::File->value,
+        'url' => 'file:///architecture.md',
+    ]];
     /** @var list<array{url: string, alt: string}> */
     private array $gallery = [
         [
@@ -150,11 +167,34 @@ final class Catalog extends Component
         $this->responseBranch = max(0, min(1, (int) $payload));
     }
 
-    public function sendPrompt(string $prompt): void
+    /**
+     * @return list<array{
+     *     id: string,
+     *     filename: string,
+     *     mediaType: string,
+     *     type: int,
+     *     url: string
+     * }>
+     */
+    public function promptFiles(): array
     {
-        $this->notice = $prompt === ''
-            ? 'Submitted prompt with attachments.'
-            : "Submitted prompt: {$prompt}";
+        return $this->promptFiles;
+    }
+
+    /**
+     * @param array{
+     *     text: string,
+     *     files: list<array<string, string|int|float|bool|null>>
+     * } $submission
+     */
+    public function sendPrompt(array $submission): void
+    {
+        $text = $submission['text'];
+        $fileCount = count($submission['files']);
+        $this->promptFiles = [];
+        $this->notice = $text === ''
+            ? "Submitted {$fileCount} attachment(s)."
+            : "Submitted prompt: {$text} ({$fileCount} attachment(s))";
     }
 
     public function openMessageLink(string $uri): void

@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Pam\MobileUi;
 
+use Closure;
 use Pam\MobileUi\Component\UiComponent;
 use Pam\MobileUi\Generated\ComponentMap;
+use Pam\MobileUi\Rendering\ComponentRenderer;
 use Pam\MobileUi\Rendering\TailwindStyleCompiler;
 use Pam\MobileUi\Theme\ThemeClassRegistry;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
 use Pam\Native\Element;
+use Pam\Native\EventKind;
 use Pam\Native\Plugin\PluginProvider;
 use Pam\Native\PropKey;
 use Pam\Native\TemplateRegistry;
@@ -29,6 +32,19 @@ final class MobileUiPluginProvider implements PluginProvider
                 ) use ($component): UiComponent {
                     return $component::fromTemplate($props, $children);
                 },
+            );
+            TemplateRegistry::eventAdapter(
+                $tag,
+                static fn (
+                    EventKind $kind,
+                    Closure $handler,
+                    array $props,
+                ): Closure => ComponentRenderer::adaptTemplateEvent(
+                    $tag,
+                    $kind,
+                    $handler,
+                    $props,
+                ),
             );
         }
 

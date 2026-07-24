@@ -2120,6 +2120,19 @@ class MobileUiHostInstrumentedTest {
             assertTrue(!submit.isEnabled)
             assertEquals("Send prompt", submit.contentDescription)
 
+            prompt.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(40),
+                    "clearOnSubmit" to WireValue.Flag(true),
+                    "trimOnSubmit" to WireValue.Flag(true),
+                    "attachmentCount" to WireValue.Integer(1),
+                ),
+            )
+            assertTrue(submit.isEnabled)
+            assertTrue(submit.performClick())
+            assertEquals(2, promptEvents.size)
+            assertEquals("", promptPayloads.last().decodeToString())
+
             val conversation = MobileUiHost(context) { _, _ -> }
             conversation.update(
                 mapOf(

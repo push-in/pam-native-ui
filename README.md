@@ -451,12 +451,14 @@ remaining ordinary compound tags:
     </MessageBranchSelector>
 </MessageBranch>
 
-<PromptInput on:submit="sendPrompt">
-    <PromptInputBody>
-        <PromptInputTextarea sync="native" placeholder="Ask PAM anything" />
-    </PromptInputBody>
-    <PromptInputSubmit><ArrowUpIcon /></PromptInputSubmit>
-</PromptInput>
+<PromptInputProvider files="$files">
+    <PromptInput on:submit="sendPrompt">
+        <PromptInputBody>
+            <PromptInputTextarea sync="native" placeholder="Ask PAM anything" />
+        </PromptInputBody>
+        <PromptInputSubmit><ArrowUpIcon /></PromptInputSubmit>
+    </PromptInput>
+</PromptInputProvider>
 
 <ModelSelector
     open="{{ $modelSelectorOpen }}"
@@ -487,8 +489,13 @@ button observes scroll position and moves locally, while a newly appended user
 message follows the upstream auto-scroll rule. Message branches switch mounted
 responses, counter and accessibility state on the UI thread, emitting one final
 index. Prompt text enables/disables Submit locally; submit trims and optionally
-clears the field, then sends one semantic string to PHP. With `sync="native"`,
-typing itself does not cross the bridge.
+clears the field, then invokes PHP with the upstream shape
+`['text' => string, 'files' => list]`. With `sync="native"`, typing itself does
+not cross the bridge. Attachment data stays in PHP provider state; Android
+receives only its integer count, so files and data URIs are never serialized
+back through the event bridge. Attachment `type` uses the sequential
+`Pam\MobileUi\Enum\AttachmentType` values (`File=1`,
+`SourceDocument=2`).
 
 `ModelSelector` preserves the upstream controlled contract. Its root is a
 flattened provider node, `asChild` keeps the authored trigger primitive, and

@@ -390,37 +390,39 @@
                     <FileTreeFile path="/composer.json" name="composer.json" />
                 </FileTree>
 
-                <Attachments variant="list">
-                    <Attachment>
-                        <AttachmentPreview><PaperclipIcon /></AttachmentPreview>
-                        <VStack class="flex-1">
-                            <Text>architecture.md</Text>
-                            <Text class="ui-text-muted">24 KB</Text>
-                        </VStack>
-                        <AttachmentRemove accessibilityLabel="Remove attachment">
-                            <CloseIcon />
-                        </AttachmentRemove>
-                    </Attachment>
-                </Attachments>
+                <PromptInputProvider files="$promptFiles">
+                    <If condition="$promptFiles">
+                        <Attachments variant="list">
+                            <Each items="$promptFiles" as="file">
+                                <Attachment data="$file" key="{{ $file.id }}">
+                                    <AttachmentPreview />
+                                    <VStack class="flex-1">
+                                        <Text>{{ $file.filename }}</Text>
+                                        <Text class="ui-text-muted">{{ $file.mediaType }}</Text>
+                                    </VStack>
+                                </Attachment>
+                            </Each>
+                        </Attachments>
+                    </If>
 
-                <PromptInput on:submit="sendPrompt">
-                    <PromptInputBody>
-                        <PromptInputTextarea
-                            multiline="true"
-                            placeholder="Ask PAM anything"
-                            sync="native"
-                        />
-                    </PromptInputBody>
-                    <PromptInputFooter>
-                        <PromptInputTools>
-                            <PromptInputButton><PaperclipIcon /></PromptInputButton>
-                            <PromptInputButton><GlobeIcon /></PromptInputButton>
-                        </PromptInputTools>
-                        <PromptInputSubmit accessibilityLabel="Send prompt">
-                            <ArrowUpIcon />
-                        </PromptInputSubmit>
-                    </PromptInputFooter>
-                </PromptInput>
+                    <PromptInput on:submit="sendPrompt">
+                        <PromptInputBody>
+                            <PromptInputTextarea
+                                placeholder="Ask PAM anything"
+                                sync="native"
+                            />
+                        </PromptInputBody>
+                        <PromptInputFooter>
+                            <PromptInputTools>
+                                <PromptInputButton><PaperclipIcon /></PromptInputButton>
+                                <PromptInputButton><GlobeIcon /></PromptInputButton>
+                            </PromptInputTools>
+                            <PromptInputSubmit accessibilityLabel="Send prompt">
+                                <ArrowUpIcon />
+                            </PromptInputSubmit>
+                        </PromptInputFooter>
+                    </PromptInput>
+                </PromptInputProvider>
             </VStack>
 
             <VStack class="gap-3">

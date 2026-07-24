@@ -83,6 +83,7 @@ use Pam\MobileUi\Component\TableHead;
 use Pam\MobileUi\Component\TableHeader;
 use Pam\MobileUi\Component\TableRow;
 use Pam\MobileUi\Component\Attachment;
+use Pam\MobileUi\Component\AttachmentEmpty;
 use Pam\MobileUi\Component\AttachmentHoverCard;
 use Pam\MobileUi\Component\AttachmentHoverCardContent;
 use Pam\MobileUi\Component\AttachmentPreview;
@@ -170,6 +171,7 @@ use Pam\MobileUi\Component\TooltipContent;
 use Pam\MobileUi\Component\SwitchControl;
 use Pam\MobileUi\Enum\ButtonVariant;
 use Pam\MobileUi\Enum\BackdropPressBehavior;
+use Pam\MobileUi\Enum\AttachmentType;
 use Pam\MobileUi\Enum\BranchControlAction;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentCategory;
@@ -262,6 +264,7 @@ foreach ([
     ComponentMode::cases(),
     ImplementationKind::cases(),
     MessageRole::cases(),
+    AttachmentType::cases(),
     PrimitiveKind::cases(),
     ThemeMode::cases(),
     ColorToken::cases(),
@@ -1161,6 +1164,12 @@ $assert(
             === NodeKind::Pressable,
     'Chat attachment previews and authored actions must keep their native interaction paths.',
 );
+$customAttachmentEmpty = AttachmentEmpty::make('Nothing queued')->toElement();
+$assert(
+    $customAttachmentEmpty->children()[0]
+        ->properties()[PropKey::Text->value] === 'Nothing queued',
+    'AttachmentEmpty must preserve custom authored fallback content.',
+);
 $attachmentHover = AttachmentHoverCard::make(
     ['open' => true],
     Button::make(ButtonText::make('Preview')),
@@ -1340,16 +1349,27 @@ $assert(
     'Message branches must navigate locally and expose one semantic index.',
 );
 
+$promptFiles = [[
+    'id' => 'architecture',
+    'filename' => 'architecture.md',
+    'mediaType' => 'text/markdown',
+    'type' => AttachmentType::File->value,
+    'url' => 'file:///architecture.md',
+]];
+/** @var list<array{text: string, files: list<array<string, string|int|float|bool|null>>}> */
 $submittedPrompts = [];
-$prompt = PromptInput::make(
-    PromptInputBody::make(
-        PromptInputTextarea::make(['value' => 'Build a PAM screen']),
+$prompt = PromptInputProvider::make(
+    ['files' => $promptFiles],
+    PromptInput::make(
+        PromptInputBody::make(
+            PromptInputTextarea::make(['value' => 'Build a PAM screen']),
+        ),
+        PromptInputSubmit::make(),
+    )->onSubmit(
+        static function (array $submission) use (&$submittedPrompts): void {
+            $submittedPrompts[] = $submission;
+        },
     ),
-    PromptInputSubmit::make(),
-)->onSubmit(
-    static function (string $prompt) use (&$submittedPrompts): void {
-        $submittedPrompts[] = $prompt;
-    },
 )->toElement();
 $promptBody = $prompt->children()[0] ?? null;
 $promptTextarea = $promptBody?->children()[0] ?? null;
@@ -1374,10 +1394,17 @@ $assert(
         && $promptProperties['behavior'] === NativeBehavior::PromptInput->value
         && $promptProperties['clearOnSubmit'] === true
         && $promptProperties['trimOnSubmit'] === true
+        && $promptProperties['attachmentCount'] === 1
+        && $promptTextarea->properties()[PropKey::Placeholder->value]
+            === 'Let’s start building it'
+        && $promptTextarea->properties()[PropKey::Multiline->value] === true
         && $promptSubmitProperties['behavior']
             === NativeBehavior::PromptInputSubmit->value
-        && $submittedPrompts === ['Ship it'],
-    'PromptInput must submit and clear through one Android-owned coordinator.',
+        && $submittedPrompts === [[
+            'text' => 'Ship it',
+            'files' => $promptFiles,
+        ]],
+    'PromptInput must compose the upstream text-and-files submission without retransmitting file data.',
 );
 
 $horizontalScroll = ScrollView::make(
@@ -2731,6 +2758,61 @@ $assert(
         && $templateGalleryContent->children()[1]
             ->properties()[PropKey::AccessibilityLabel->value] === 'Ocean',
     'Bound gallery arrays must flow through tag context into optimized native children.',
+);
+$templatePromptScope = new class {
+    /** @var array{text: string, files: list<array<string, string|int|float|bool|null>>} */
+    public array $submission = ['text' => '', 'files' => []];
+
+    /**
+     * @param array{
+     *     text: string,
+     *     files: list<array<string, string|int|float|bool|null>>
+     * } $submission
+     */
+    public function submitPrompt(array $submission): void
+    {
+        $this->submission = $submission;
+    }
+};
+$templatePromptFiles = [[
+    'id' => 'diagram',
+    'filename' => 'diagram.png',
+    'mediaType' => 'image/png',
+    'type' => AttachmentType::File->value,
+    'url' => 'file:///diagram.png',
+]];
+$templatePrompt = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        <<<'PAM'
+<PromptInputProvider files="$files">
+    <PromptInput on:submit="submitPrompt">
+        <PromptInputTextarea />
+        <PromptInputSubmit />
+    </PromptInput>
+</PromptInputProvider>
+PAM,
+    ),
+    $templatePromptScope,
+    ['files' => $templatePromptFiles],
+);
+$templatePromptProperties = $templatePrompt->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (!$templatePromptProperties instanceof BinaryValue) {
+    throw new RuntimeException('Tag PromptInput must compile its native coordinator.');
+}
+$templatePromptNative = Wire::decodeMap($templatePromptProperties->bytes);
+$templatePrompt->events()[\Pam\Native\EventKind::Submit->value]('Draw it');
+$assert(
+    $templatePromptNative['attachmentCount'] === 1
+        && $templatePrompt->children()[0]
+            ->properties()[PropKey::Placeholder->value]
+            === 'Let’s start building it'
+        && $templatePromptScope->submission === [
+            'text' => 'Draw it',
+            'files' => $templatePromptFiles,
+        ],
+    'Tag PromptInput must adapt the upstream text-and-files callback without a file bridge payload.',
 );
 $templateRange = TemplateRenderer::render(
     TemplateCompiler::compile(

@@ -437,7 +437,7 @@ abstract class UiComponent implements Renderable
 
             return true;
         }
-        if ($name === 'message') {
+        if (in_array($name, ['attachments', 'files', 'message'], true)) {
             return self::isSafeContextArray($value, 0);
         }
 

@@ -84,9 +84,13 @@ the active index, page visibility, looping, previous/next availability,
 counter and pager accessibility metadata, then emits one scalar index after a
 settled selection. `PromptInput` observes its mounted `EditText` directly,
 derives Submit availability from trimmed text or mounted attachments, clears
-locally when requested and emits one `SUBMIT` payload. Native input sync avoids
-per-keystroke PHP callbacks; attachment removal and actual message creation
-remain application state.
+locally when requested and emits one text-only `SUBMIT` payload. The registered
+component event adapter joins that text with the provider's PHP-resident files
+into the upstream `{text, files}` callback shape. Only an integer attachment
+count enters the Android property map, so filenames, URLs and base64 data never
+make a redundant bridge round-trip. Native input sync avoids per-keystroke PHP
+callbacks; attachment removal and actual message creation remain application
+state.
 
 `MessageResponse` compiles each text part to one intrinsic Android `TextView`.
 Its dependency-free parser turns headings, lists, quotes, emphasis, code and
@@ -102,6 +106,8 @@ is rendered. Its one full-size View matches the upstream provider root.
 Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider` return
 one child directly. A multi-child provider emits a property-free View that
 PAM's layout-only optimization flattens, so Android allocates no provider host.
+Prompt provider arrays are bounded declarative context; coded attachment types
+are sequential integers represented by `AttachmentType`.
 
 React Native image-source objects are normalized to one bounded URI during PHP
 composition; Android still receives only PAM's scalar `Source` property. The

@@ -6,6 +6,7 @@ namespace Pam\MobileUi\Rendering;
 
 use Closure;
 use InvalidArgumentException;
+use Pam\MobileUi\Enum\AttachmentType;
 use Pam\MobileUi\Enum\BranchControlAction;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ImageViewerControlAction;
@@ -763,6 +764,12 @@ final class ComponentRenderer
         if ($behavior === NativeBehavior::FileTree) {
             $values = [...$values, ...self::fileTreeNativeProperties($props)];
         }
+        if ($behavior === NativeBehavior::PromptInput) {
+            $files = self::promptFiles($props);
+            if ($files !== null) {
+                $values['attachmentCount'] = count($files);
+            }
+        }
 
         return $values;
     }
@@ -937,6 +944,13 @@ final class ComponentRenderer
         } elseif ($part === 'ModelSelectorInput') {
             if (!array_key_exists('placeholder', $props)) {
                 $props['placeholder'] = 'Search models...';
+            }
+        } elseif ($part === 'PromptInputTextarea') {
+            if (!array_key_exists('placeholder', $props)) {
+                $props['placeholder'] = 'Let’s start building it';
+            }
+            if (!array_key_exists('multiline', $props)) {
+                $props['multiline'] = true;
             }
         } elseif ($part === 'MessageBranch') {
             if (
@@ -1840,6 +1854,30 @@ final class ComponentRenderer
     }
 
     /**
+     * Applies the same event contract when a component originates from a
+     * declarative `.pam` tag rather than the fluent PHP facade.
+     *
+     * @param array<string, mixed> $props
+     */
+    public static function adaptTemplateEvent(
+        string $part,
+        EventKind $kind,
+        Closure $handler,
+        array $props,
+    ): Closure {
+        $parent = is_array($props['__parentVariants'] ?? null)
+            ? $props['__parentVariants']
+            : [];
+        $events = self::componentEvents(
+            $part,
+            [...$parent, ...$props],
+            [$kind->value => $handler],
+        );
+
+        return $events[$kind->value] ?? $handler;
+    }
+
+    /**
      * @param array<string, mixed> $props
      * @param array<int, Closure> $events
      * @return array<int, Closure>
@@ -1849,6 +1887,22 @@ final class ComponentRenderer
         array $props,
         array $events,
     ): array {
+        if ($part === 'PromptInput') {
+            $handler = $events[EventKind::Submit->value] ?? null;
+            if ($handler === null) {
+                return $events;
+            }
+            $files = self::promptFiles($props) ?? [];
+            $events[EventKind::Submit->value] =
+                static function (string $text) use ($handler, $files): void {
+                    $handler([
+                        'text' => $text,
+                        'files' => $files,
+                    ]);
+                };
+
+            return $events;
+        }
         if ($part !== 'Calendar') {
             return $events;
         }
@@ -2766,6 +2820,63 @@ final class ComponentRenderer
     }
 
     /**
+     * Normalizes the upstream FileUIPart contract once during PHP composition.
+     * Files stay in PHP memory; only their count is sent to Android.
+     *
+     * @param array<string, mixed> $props
+     * @return list<array<string, string|int|float|bool|null>>|null
+     */
+    private static function promptFiles(array $props): ?array
+    {
+        if (
+            !array_key_exists('files', $props)
+            && !array_key_exists('attachments', $props)
+        ) {
+            return null;
+        }
+        $source = $props['files'] ?? $props['attachments'];
+        if (!is_array($source)) {
+            return [];
+        }
+
+        $files = [];
+        foreach (array_slice(array_values($source), 0, 256) as $index => $sourceFile) {
+            if (!is_array($sourceFile)) {
+                continue;
+            }
+            $file = [];
+            foreach ($sourceFile as $name => $value) {
+                if ($name === 'type') {
+                    $file['type'] = match (true) {
+                        $value instanceof AttachmentType => $value->value,
+                        $value === AttachmentType::SourceDocument->value,
+                        $value === 'source-document' =>
+                            AttachmentType::SourceDocument->value,
+                        default => AttachmentType::File->value,
+                    };
+                    continue;
+                }
+                if (
+                    !is_string($name)
+                    || preg_match('/^[A-Za-z][A-Za-z0-9_]{0,127}$/D', $name)
+                        !== 1
+                    || (!is_scalar($value) && $value !== null)
+                ) {
+                    continue;
+                }
+                $file[$name] = $value;
+            }
+            $file['type'] ??= AttachmentType::File->value;
+            if (!isset($file['id']) || !is_string($file['id']) || $file['id'] === '') {
+                $file['id'] = 'attachment-'.$index;
+            }
+            $files[] = $file;
+        }
+
+        return $files;
+    }
+
+    /**
      * @param array<string, mixed> $props
      * @param list<Element> $children
      * @return list<Element>
@@ -2839,7 +2950,11 @@ final class ComponentRenderer
             return self::attachmentPreviewChildren($props);
         }
         if ($part === 'AttachmentEmpty') {
-            return [Text::make('No attachments')];
+            return [
+                Text::make(
+                    self::text($props, 'text', 'No attachments'),
+                ),
+            ];
         }
         if ($part === 'ModelSelectorEmpty') {
             return [Text::make('No models found.')];
