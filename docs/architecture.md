@@ -32,6 +32,22 @@ Custom native hosts may contain normal PAM children. The renderer mounts these
 children into a `ViewGroup` returned by the plugin factory; this is required for
 compound controls whose content is still authored declaratively in PHP.
 
+## Utility class pipeline
+
+PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI
+uses that extension to compile application classes with the same
+`TailwindStyleCompiler` used for upstream recipes. The result is validated
+against `PropKey` and applied to the immutable element:
+
+1. exact theme/application class lookup;
+2. mobile utility compiler lookup;
+3. explicit template error when no resolver recognizes the class;
+4. numeric/string scalar properties encoded by the normal binary tree protocol.
+
+The resolver never runs on Android and is not part of a frame loop. Platform
+conditions that intentionally do not apply may resolve to an empty property map;
+unknown utilities cannot silently disappear.
+
 ## Threading
 
 - All view creation, updates, releases and Android view mutations run on the

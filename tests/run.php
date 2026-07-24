@@ -435,6 +435,16 @@ $assert(
     $advanced[PropKey::PointerEvents->value] === PointerEvents::None->value,
     'Pointer event recipes must compile to the native interaction policy enum.',
 );
+$negativeSpace = TailwindStyleCompiler::compile(
+    ['-space-x-2'],
+    [],
+    Themes::light(),
+)->properties();
+$assert(
+    $negativeSpace[PropKey::Gap->value] === -8.0
+        && $negativeSpace[PropKey::FlexDirection->value] === FlexDirection::Row->value,
+    'Negative horizontal spacing utilities must compile to native row overlap.',
+);
 $nativeEffects = TailwindStyleCompiler::compile(
     [
         'placeholder:text-muted-foreground fill-primary scale-[0.75] '
@@ -499,6 +509,34 @@ $assert(
     $templateButtonText->properties()[PropKey::TextColor->value]
         === Themes::light()->color(ColorToken::Foreground),
     'Tag syntax must propagate parent variants to styled anatomy children.',
+);
+$halfWidthClass = TemplateRegistry::classProperties('w-1/2');
+$assert(
+    $halfWidthClass !== null
+        && $halfWidthClass[PropKey::WidthPercent->value] === 50.0,
+    'PAM Mobile UI must compile application utility classes through the plugin registry.',
+);
+$assert(
+    TemplateRegistry::classProperties('unsupported-community-utility') === null,
+    'Unsupported application classes must remain explicit instead of silently disappearing.',
+);
+
+require dirname(__DIR__).'/examples/kitchen-sink/src/Catalog.php';
+$catalogSource = file_get_contents(
+    dirname(__DIR__).'/examples/kitchen-sink/resources/native/catalog.pam',
+);
+if ($catalogSource === false) {
+    throw new RuntimeException('The kitchen-sink catalog template must be readable.');
+}
+$catalog = TemplateRenderer::render(
+    TemplateCompiler::compile($catalogSource),
+    new \App\Catalog(),
+    [],
+);
+$assert(
+    $catalog->kind() === NodeKind::SafeAreaView
+        && count($catalog->children()) === 4,
+    'The kitchen sink must compile every showcase section and its native overlay hosts.',
 );
 
 echo "PAM Mobile UI PHP tests passed.\n";

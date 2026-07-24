@@ -6,6 +6,7 @@ namespace Pam\MobileUi;
 
 use Pam\MobileUi\Component\UiComponent;
 use Pam\MobileUi\Generated\ComponentMap;
+use Pam\MobileUi\Rendering\TailwindStyleCompiler;
 use Pam\MobileUi\Theme\ThemeClassRegistry;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
@@ -33,6 +34,25 @@ final class MobileUiPluginProvider implements PluginProvider
 
         $theme = ThemeManager::current();
         ThemeClassRegistry::apply($theme);
+        TemplateRegistry::styleResolver(
+            static function (string $class) use ($theme): ?array {
+                if (
+                    TailwindStyleCompiler::unsupportedUtilities(
+                        [$class],
+                        [],
+                        $theme,
+                    ) !== []
+                ) {
+                    return null;
+                }
+
+                return TailwindStyleCompiler::compile(
+                    [$class],
+                    [],
+                    $theme,
+                )->properties();
+            },
+        );
         TemplateRegistry::style('ui-surface', [
             PropKey::BackgroundColor->value => $theme->color(\Pam\MobileUi\Enum\ColorToken::Background),
             PropKey::TextColor->value => $theme->color(\Pam\MobileUi\Enum\ColorToken::Foreground),

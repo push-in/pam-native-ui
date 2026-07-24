@@ -63,6 +63,19 @@ Applications are never forced into either form. Raw `Pam\Native\UI` elements,
 custom components, `.pam` tags, fluent classes, and native plugins can be mixed
 in the same tree.
 
+Application utility classes use the same mobile compiler as the captured
+component recipes:
+
+```xml
+<Card class="w-1/2 p-4 gap-2 justify-between">
+    <Heading size="lg">Fast by construction</Heading>
+    <Text class="ui-text-muted">Only packed numeric style properties cross.</Text>
+</Card>
+```
+
+Plugins resolve these classes lazily while composing a changed tree. Unsupported
+utilities fail explicitly; CSS or class strings are never sent to Android.
+
 See the installable catalog in
 [`examples/kitchen-sink`](examples/kitchen-sink) and the generated inventory in
 [`docs/catalog.md`](docs/catalog.md).

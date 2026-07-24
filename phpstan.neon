@@ -4,6 +4,7 @@ parameters:
         - tests/bootstrap.php
     paths:
         - benchmarks
+        - examples/kitchen-sink/src
         - src
         - tests
     tmpDir: .build/phpstan

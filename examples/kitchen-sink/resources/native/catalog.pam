@@ -1,79 +1,388 @@
 <SafeAreaView class="ui-bg">
-    <ScrollView>
-        <VStack class="p-4 gap-4">
-            <Heading size="2xl">PAM Mobile UI</Heading>
-            <Text>Native components, PHP ergonomics, zero JavaScript runtime.</Text>
-
-            <Card>
-                <VStack space="sm">
-                    <Heading size="lg">Form</Heading>
-                    <FormControl>
-                        <FormControlLabel>
-                            <FormControlLabelText>Email</FormControlLabelText>
-                        </FormControlLabel>
-                        <Input>
-                            <InputField placeholder="you@example.com" />
-                        </Input>
-                        <FormControlHelper>
-                            <FormControlHelperText>We never share your email.</FormControlHelperText>
-                        </FormControlHelper>
-                    </FormControl>
-                    <Button variant="default" on:press="toggle">
-                        <ButtonText>Continue</ButtonText>
-                    </Button>
-                </VStack>
-            </Card>
-
-            <HStack space="sm">
-                <CheckIcon size="lg" accessibilityLabel="Native check icon" />
+    <ScrollView showsScrollIndicator="false">
+        <VStack class="p-4 gap-6">
+            <VStack class="gap-2">
                 <Badge variant="secondary">
-                    <BadgeText>Native</BadgeText>
+                    <BadgeText>pushinbr/pam-mobile-ui</BadgeText>
                 </Badge>
-                <Switch checked="{{ $checked }}" on:toggle="toggle" />
-                <Spinner />
-            </HStack>
+                <Heading size="3xl">Build native. Write PHP.</Heading>
+                <Text class="ui-text-muted">
+                    Declarative tags, typed classes and Android behavior without a JavaScript runtime.
+                </Text>
+                <HStack space="sm">
+                    <Button size="lg" on:press="toggleModal">
+                        <ButtonText>Open modal</ButtonText>
+                    </Button>
+                    <Button variant="outline" size="lg" on:press="toggleSheet">
+                        <ButtonText>Open sheet</ButtonText>
+                    </Button>
+                </HStack>
+            </VStack>
 
-            <Progress value="{{ $progress }}">
-                <ProgressFilledTrack />
-            </Progress>
-            <Slider value="{{ $progress }}" min="0" max="100" on:change="updateProgress">
-                <SliderTrack>
-                    <SliderFilledTrack />
-                </SliderTrack>
-                <SliderThumb />
-            </Slider>
+            <Divider />
 
-            <Accordion>
-                <AccordionItem value="performance">
-                    <AccordionHeader>
-                        <AccordionTrigger>
-                            <AccordionTitleText>Why is it fast?</AccordionTitleText>
-                            <AccordionIcon />
-                        </AccordionTrigger>
-                    </AccordionHeader>
-                    <AccordionContent>
-                        <AccordionContentText>
-                            Gestures and animations remain on Android's UI thread.
-                        </AccordionContentText>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
+            <VStack class="gap-3">
+                <Heading size="xl">Identity and data</Heading>
+                <Card>
+                    <HStack class="items-center gap-3">
+                        <Avatar size="lg">
+                            <AvatarFallback>
+                                <AvatarFallbackText>DB</AvatarFallbackText>
+                            </AvatarFallback>
+                            <AvatarBadge />
+                        </Avatar>
+                        <VStack class="gap-1">
+                            <Heading size="md">David Balbino</Heading>
+                            <Text class="ui-text-muted">PAM Native builder</Text>
+                            <HStack space="xs">
+                                <Badge><BadgeText>PHP</BadgeText></Badge>
+                                <Badge variant="outline"><BadgeText>Android</BadgeText></Badge>
+                                <Badge variant="secondary"><BadgeText>Native</BadgeText></Badge>
+                            </HStack>
+                        </VStack>
+                    </HStack>
+                </Card>
 
-            <Tabs value="{{ $tab }}" on:change="selectTab">
-                <TabsList>
-                    <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
-                    <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
-                    <TabsTrigger value="3"><TabsTriggerText>Billing</TabsTriggerText></TabsTrigger>
-                </TabsList>
-                <TabsContent value="1"><Text>Account content</Text></TabsContent>
-                <TabsContent value="2"><Text>Security content</Text></TabsContent>
-                <TabsContent value="3"><Text>Billing content</Text></TabsContent>
-            </Tabs>
+                <Grid class="gap-3">
+                    <GridItem class="w-1/2">
+                        <Card><Heading size="lg">326</Heading><Text>Typed facades</Text></Card>
+                    </GridItem>
+                    <GridItem class="w-1/2">
+                        <Card><Heading size="lg">55</Heading><Text>Native icons</Text></Card>
+                    </GridItem>
+                </Grid>
+            </VStack>
 
-            <SkeletonText />
-            <Alert variant="default">
-                <AlertText>TalkBack, font scaling, dark mode and 48 dp targets are built in.</AlertText>
-            </Alert>
+            <VStack class="gap-3">
+                <Heading size="xl">Forms</Heading>
+                <Card>
+                    <VStack space="md">
+                        <FormControl required="true">
+                            <FormControlLabel>
+                                <FormControlLabelText>Email</FormControlLabelText>
+                                <FormControlLabelAstrick>*</FormControlLabelAstrick>
+                            </FormControlLabel>
+                            <Input variant="outline" size="lg">
+                                <InputSlot><MailIcon /></InputSlot>
+                                <InputField
+                                    placeholder="you@example.com"
+                                    keyboardType="email"
+                                />
+                            </Input>
+                            <FormControlHelper>
+                                <FormControlHelperText>We never share your email.</FormControlHelperText>
+                            </FormControlHelper>
+                        </FormControl>
+
+                        <FormControl>
+                            <FormControlLabel>
+                                <FormControlLabelText>About you</FormControlLabelText>
+                            </FormControlLabel>
+                            <Textarea>
+                                <TextareaInput
+                                    multiline="true"
+                                    placeholder="Tell the community what you are building"
+                                />
+                            </Textarea>
+                        </FormControl>
+
+                        <Select open="{{ $selectOpen }}" on:event="closeSelect">
+                            <SelectTrigger on:press="toggleSelect">
+                                <SelectInput value="{{ $framework }}" placeholder="Choose a stack" />
+                                <SelectIcon><ChevronDownIcon /></SelectIcon>
+                            </SelectTrigger>
+                            <SelectPortal>
+                                <SelectBackdrop on:press="closeSelect" />
+                                <SelectContent>
+                                    <SelectDragIndicatorWrapper>
+                                        <SelectDragIndicator />
+                                    </SelectDragIndicatorWrapper>
+                                    <SelectItem label="Laravel" value="Laravel" on:press="chooseLaravel" />
+                                    <SelectItem label="Symfony" value="Symfony" on:press="chooseSymfony" />
+                                    <SelectItem label="Raw PHP" value="Raw PHP" on:press="choosePhp" />
+                                </SelectContent>
+                            </SelectPortal>
+                        </Select>
+
+                        <Checkbox checked="{{ $checked }}" on:toggle="toggle">
+                            <CheckboxIndicator><CheckboxIcon /></CheckboxIndicator>
+                            <CheckboxLabel>Receive native build updates</CheckboxLabel>
+                        </Checkbox>
+
+                        <RadioGroup value="{{ $plan }}">
+                            <HStack space="md">
+                                <Radio value="starter" checked="{{ $starterPlan }}" on:press="chooseStarter">
+                                    <RadioIndicator><RadioIcon /></RadioIndicator>
+                                    <RadioLabel>Starter</RadioLabel>
+                                </Radio>
+                                <Radio value="pro" checked="{{ $proPlan }}" on:press="choosePro">
+                                    <RadioIndicator><RadioIcon /></RadioIndicator>
+                                    <RadioLabel>Pro</RadioLabel>
+                                </Radio>
+                            </HStack>
+                        </RadioGroup>
+
+                        <HStack class="items-center justify-between">
+                            <Text>System theme</Text>
+                            <Switch checked="{{ $checked }}" on:toggle="toggle" />
+                        </HStack>
+
+                        <Button size="lg" on:press="submit">
+                            <ButtonText>Save profile</ButtonText>
+                        </Button>
+                    </VStack>
+                </Card>
+            </VStack>
+
+            <VStack class="gap-3">
+                <Heading size="xl">Feedback and progress</Heading>
+                <Alert action="success" variant="subtle">
+                    <CheckCircleIcon />
+                    <AlertText>{{ $notice }}</AlertText>
+                </Alert>
+                <Progress value="{{ $progress }}">
+                    <ProgressFilledTrack />
+                </Progress>
+                <Slider
+                    value="{{ $progress }}"
+                    min="0"
+                    max="100"
+                    step="5"
+                    accessibilityLabel="Build progress"
+                    on:change="updateProgress"
+                >
+                    <SliderTrack><SliderFilledTrack /></SliderTrack>
+                    <SliderThumb />
+                </Slider>
+                <HStack class="items-center gap-3">
+                    <Spinner />
+                    <Skeleton class="w-12 h-12 rounded-full" />
+                    <VStack class="flex-1 gap-2">
+                        <SkeletonText />
+                        <SkeletonText />
+                    </VStack>
+                </HStack>
+                <Toast action="info" variant="outline">
+                    <ToastTitle>Native notification</ToastTitle>
+                    <ToastDescription>Mounted and announced on Android.</ToastDescription>
+                </Toast>
+            </VStack>
+
+            <VStack class="gap-3">
+                <Heading size="xl">Disclosure and navigation</Heading>
+                <Accordion>
+                    <AccordionItem value="performance">
+                        <AccordionHeader>
+                            <AccordionTrigger>
+                                <AccordionTitleText>Why is it fast?</AccordionTitleText>
+                                <AccordionIcon />
+                            </AccordionTrigger>
+                        </AccordionHeader>
+                        <AccordionContent>
+                            <AccordionContentText>
+                                Gestures, overlays and animations stay on Android's UI thread.
+                            </AccordionContentText>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="freedom">
+                        <AccordionHeader>
+                            <AccordionTrigger>
+                                <AccordionTitleText>Can I mix APIs?</AccordionTitleText>
+                                <AccordionIcon />
+                            </AccordionTrigger>
+                        </AccordionHeader>
+                        <AccordionContent>
+                            <AccordionContentText>
+                                Tags, typed PHP, raw PAM elements and native plugins can share one tree.
+                            </AccordionContentText>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
+                <Tabs value="{{ $tab }}" on:change="selectTab">
+                    <TabsList>
+                        <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
+                        <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
+                        <TabsTrigger value="3"><TabsTriggerText>Billing</TabsTriggerText></TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="1"><Card><Text>Account content</Text></Card></TabsContent>
+                    <TabsContent value="2"><Card><Text>Security content</Text></Card></TabsContent>
+                    <TabsContent value="3"><Card><Text>Billing content</Text></Card></TabsContent>
+                </Tabs>
+
+                <HStack space="sm">
+                    <Button variant="outline" on:press="toggleDrawer">
+                        <MenuIcon />
+                        <ButtonText>Drawer</ButtonText>
+                    </Button>
+                    <Popover open="{{ $popoverOpen }}" placement="bottom-start">
+                        <Button variant="outline" on:press="togglePopover">
+                            <InfoIcon />
+                            <ButtonText>Popover</ButtonText>
+                        </Button>
+                        <PopoverContent>
+                            <PopoverArrow />
+                            <PopoverHeader><Heading size="sm">Local overlay</Heading></PopoverHeader>
+                            <PopoverBody><Text>No PHP roundtrip while positioning.</Text></PopoverBody>
+                        </PopoverContent>
+                    </Popover>
+                </HStack>
+            </VStack>
+
+            <VStack class="gap-3">
+                <Heading size="xl">Dates</Heading>
+                <DateTimePicker
+                    mode="date"
+                    value="{{ $selectedDate }}"
+                    on:change="selectDate"
+                >
+                    <DateTimePickerTrigger>
+                        <DateTimePickerIcon><CalendarDaysIcon /></DateTimePickerIcon>
+                        <DateTimePickerInput value="{{ $selectedDate }}" />
+                    </DateTimePickerTrigger>
+                </DateTimePicker>
+                <Calendar year="2026" month="7" on:change="selectDate">
+                    <CalendarHeader>
+                        <CalendarHeaderPrevButton><ChevronLeftIcon /></CalendarHeaderPrevButton>
+                        <CalendarHeaderTitle>July 2026</CalendarHeaderTitle>
+                        <CalendarHeaderNextButton><ChevronRightIcon /></CalendarHeaderNextButton>
+                    </CalendarHeader>
+                    <CalendarWeekDaysHeader>
+                        <CalendarWeekDay>Sun</CalendarWeekDay>
+                        <CalendarWeekDay>Mon</CalendarWeekDay>
+                        <CalendarWeekDay>Tue</CalendarWeekDay>
+                        <CalendarWeekDay>Wed</CalendarWeekDay>
+                        <CalendarWeekDay>Thu</CalendarWeekDay>
+                        <CalendarWeekDay>Fri</CalendarWeekDay>
+                        <CalendarWeekDay>Sat</CalendarWeekDay>
+                    </CalendarWeekDaysHeader>
+                    <CalendarBody><CalendarGrid /></CalendarBody>
+                </Calendar>
+            </VStack>
+
+            <VStack class="gap-3">
+                <Heading size="xl">AI and attachments</Heading>
+                <Conversation>
+                    <ConversationContent>
+                        <Message role="assistant">
+                            <MessageContent>
+                                <MessageResponse>
+                                    PAM renders this response as a compact native tree.
+                                </MessageResponse>
+                            </MessageContent>
+                        </Message>
+                        <Message role="user">
+                            <MessageContent><Text>Show me the Android architecture.</Text></MessageContent>
+                        </Message>
+                    </ConversationContent>
+                </Conversation>
+
+                <Attachments variant="list">
+                    <Attachment>
+                        <AttachmentPreview><PaperclipIcon /></AttachmentPreview>
+                        <VStack class="flex-1">
+                            <Text>architecture.md</Text>
+                            <Text class="ui-text-muted">24 KB</Text>
+                        </VStack>
+                        <AttachmentRemove accessibilityLabel="Remove attachment">
+                            <CloseIcon />
+                        </AttachmentRemove>
+                    </Attachment>
+                </Attachments>
+
+                <PromptInput>
+                    <PromptInputBody>
+                        <PromptInputTextarea
+                            multiline="true"
+                            placeholder="Ask PAM anything"
+                        />
+                    </PromptInputBody>
+                    <PromptInputFooter>
+                        <PromptInputTools>
+                            <PromptInputButton><PaperclipIcon /></PromptInputButton>
+                            <PromptInputButton><GlobeIcon /></PromptInputButton>
+                        </PromptInputTools>
+                        <PromptInputSubmit accessibilityLabel="Send prompt">
+                            <ArrowUpIcon />
+                        </PromptInputSubmit>
+                    </PromptInputFooter>
+                </PromptInput>
+            </VStack>
+
+            <VStack class="gap-3">
+                <Heading size="xl">Data table</Heading>
+                <Table>
+                    <TableCaption>Runtime work allocation</TableCaption>
+                    <TableHeader>
+                        <TableRow isHeaderRow="true">
+                            <TableHead>Layer</TableHead>
+                            <TableHead>Responsibility</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow>
+                            <TableData>PHP</TableData>
+                            <TableData>State and business logic</TableData>
+                        </TableRow>
+                        <TableRow>
+                            <TableData>Rust</TableData>
+                            <TableData>Layout and binary protocol</TableData>
+                        </TableRow>
+                        <TableRow>
+                            <TableData>Android</TableData>
+                            <TableData>Rendering, gestures and motion</TableData>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </VStack>
+
+            <Text class="ui-text-muted">
+                The full generated inventory lives in docs/catalog.md.
+            </Text>
         </VStack>
     </ScrollView>
+
+    <Modal open="{{ $modalOpen }}" on:event="closeModal">
+        <ModalBackdrop on:press="closeModal" />
+        <ModalContent>
+            <ModalHeader>
+                <Heading size="lg">Native modal</Heading>
+                <ModalCloseButton on:press="closeModal"><CloseIcon /></ModalCloseButton>
+            </ModalHeader>
+            <ModalBody>
+                <Text>Focus is trapped, Back dismisses, and prior focus is restored.</Text>
+            </ModalBody>
+            <ModalFooter>
+                <Button variant="outline" on:press="closeModal"><ButtonText>Cancel</ButtonText></Button>
+                <Button on:press="closeModal"><ButtonText>Confirm</ButtonText></Button>
+            </ModalFooter>
+        </ModalContent>
+    </Modal>
+
+    <Actionsheet open="{{ $sheetOpen }}" on:event="closeSheet">
+        <ActionsheetBackdrop on:press="closeSheet" />
+        <ActionsheetContent>
+            <ActionsheetDragIndicatorWrapper><ActionsheetDragIndicator /></ActionsheetDragIndicatorWrapper>
+            <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Take photo</ActionsheetItemText></ActionsheetItem>
+            <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Choose file</ActionsheetItemText></ActionsheetItem>
+            <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Cancel</ActionsheetItemText></ActionsheetItem>
+        </ActionsheetContent>
+    </Actionsheet>
+
+    <Drawer open="{{ $drawerOpen }}" anchor="left" on:event="closeDrawer">
+        <DrawerBackdrop on:press="closeDrawer" />
+        <DrawerContent size="md">
+            <DrawerHeader>
+                <Heading size="lg">PAM Mobile UI</Heading>
+                <DrawerCloseButton on:press="closeDrawer"><CloseIcon /></DrawerCloseButton>
+            </DrawerHeader>
+            <DrawerBody>
+                <VStack class="gap-2">
+                    <Button variant="ghost"><ButtonText>Components</ButtonText></Button>
+                    <Button variant="ghost"><ButtonText>Themes</ButtonText></Button>
+                    <Button variant="ghost"><ButtonText>Performance</ButtonText></Button>
+                </VStack>
+            </DrawerBody>
+        </DrawerContent>
+    </Drawer>
 </SafeAreaView>
