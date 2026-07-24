@@ -29,4 +29,5 @@ enum NativeBehavior: int
     case Tooltip = 21;
     case DateTimePicker = 22;
     case Portal = 23;
+    case AccordionGroup = 24;
 }

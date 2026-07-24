@@ -80,7 +80,8 @@ internal class MobileUiHost(
         MENU(20),
         TOOLTIP(21),
         DATE_TIME_PICKER(22),
-        PORTAL(23);
+        PORTAL(23),
+        ACCORDION_GROUP(24);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -155,6 +156,7 @@ internal class MobileUiHost(
     private var showOutsideDays = true
     private var fixedWeeks = false
     private var readOnly = false
+    private var collapsible = true
     private var calendarLocale = Locale.getDefault()
     private var calendarSelectedTextColor = Color.WHITE
     private val selectedDates = LinkedHashSet<LocalDate>()
@@ -235,6 +237,7 @@ internal class MobileUiHost(
     private var dragOrigin = 0f
     private var dragOriginSecondary = 0f
     private var dragging = false
+    private var accordionTouchActive = false
     private var pressedSelectionIndex = -1
     private var imageScale = 1f
     private var imageTranslationX = 0f
@@ -323,7 +326,10 @@ internal class MobileUiHost(
                 "mode",
                 properties.integer(
                     "type",
-                    if (behavior == Behavior.CALENDAR) {
+                    if (
+                        behavior == Behavior.CALENDAR
+                        || behavior == Behavior.ACCORDION_GROUP
+                    ) {
                         ComponentMode.SINGLE.value.toLong()
                     } else {
                         ComponentMode.DATETIME.value.toLong()
@@ -346,6 +352,10 @@ internal class MobileUiHost(
         showOutsideDays = properties.flag("showOutsideDays", true)
         fixedWeeks = properties.flag("fixedWeeks", false)
         readOnly = properties.flag("readOnly", properties.flag("isReadOnly", false))
+        collapsible = properties.flag(
+            "collapsible",
+            properties.flag("isCollapsible", true),
+        )
         calendarLocale = properties.text("locale")
             ?.let(Locale::forLanguageTag)
             ?.takeUnless { it.language.isEmpty() }
@@ -410,13 +420,9 @@ internal class MobileUiHost(
 
     override fun onViewAdded(child: View) {
         super.onViewAdded(child)
-        if (
-            behavior == Behavior.ACCORDION
-            && indexOfChild(child) > 0
-            && !expanded
-        ) {
-            child.alpha = 0f
-            child.scaleY = 0.98f
+        if (behavior == Behavior.ACCORDION) {
+            applyAccordionState(animate = false)
+            updateAccordionAccessibility()
         }
         if (behavior == Behavior.CALENDAR) {
             post(::updateCalendarTitle)
@@ -448,12 +454,51 @@ internal class MobileUiHost(
         }
     }
 
-    override fun onInterceptTouchEvent(event: MotionEvent): Boolean =
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         if (behavior == Behavior.DATE_TIME_PICKER && isEnabled) {
-            true
-        } else {
-            super.onInterceptTouchEvent(event)
+            return true
         }
+        if (
+            behavior == Behavior.ACCORDION
+            && isEnabled
+            && event.actionMasked == MotionEvent.ACTION_DOWN
+            && accordionTriggerBounds().contains(event.x, event.y)
+        ) {
+            return true
+        }
+
+        return super.onInterceptTouchEvent(event)
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (behavior != Behavior.ACCORDION) {
+            return super.onTouchEvent(event)
+        }
+        if (!isEnabled) return false
+
+        return when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                accordionTouchActive = accordionTriggerBounds().contains(event.x, event.y)
+                accordionTouchActive
+            }
+            MotionEvent.ACTION_MOVE -> accordionTouchActive
+            MotionEvent.ACTION_UP -> {
+                val activate = accordionTouchActive
+                    && accordionTriggerBounds().contains(event.x, event.y)
+                accordionTouchActive = false
+                if (activate) performClick()
+                activate
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                val claimed = accordionTouchActive
+                accordionTouchActive = false
+                claimed
+            }
+            else -> accordionTouchActive
+        }
+    }
+
+    override fun performClick(): Boolean = super.performClick()
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
@@ -539,7 +584,15 @@ internal class MobileUiHost(
         )
         if (behavior == Behavior.ACCORDION) {
             info.className = "android.widget.Button"
+            info.isClickable = isEnabled
             info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            info.addAction(
+                if (expanded) {
+                    AccessibilityNodeInfo.ACTION_COLLAPSE
+                } else {
+                    AccessibilityNodeInfo.ACTION_EXPAND
+                },
+            )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 stateDescription = if (expanded) "Expanded" else "Collapsed"
             }
@@ -664,6 +717,23 @@ internal class MobileUiHost(
             showDateTimePicker()
             return true
         }
+        if (
+            behavior == Behavior.ACCORDION
+            && isEnabled
+            && action in setOf(
+                AccessibilityNodeInfo.ACTION_CLICK,
+                AccessibilityNodeInfo.ACTION_EXPAND,
+                AccessibilityNodeInfo.ACTION_COLLAPSE,
+            )
+        ) {
+            val requested = when (action) {
+                AccessibilityNodeInfo.ACTION_EXPAND -> true
+                AccessibilityNodeInfo.ACTION_COLLAPSE -> false
+                else -> !expanded
+            }
+            setAccordionExpanded(requested)
+            return true
+        }
 
         return super.performAccessibilityAction(action, arguments)
     }
@@ -703,6 +773,7 @@ internal class MobileUiHost(
         pendingDismiss = null
         activePickerDialog?.dismiss()
         activePickerDialog = null
+        accordionTouchActive = false
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -740,15 +811,10 @@ internal class MobileUiHost(
 
         if (
             behavior == Behavior.CHECKBOX ||
-            behavior == Behavior.RADIO ||
-            behavior == Behavior.ACCORDION
+            behavior == Behavior.RADIO
         ) {
             setOnClickListener {
-                if (behavior == Behavior.ACCORDION) {
-                    expanded = !expanded
-                    isActivated = expanded
-                    animateExpanded()
-                } else if (behavior == Behavior.RADIO) {
+                if (behavior == Behavior.RADIO) {
                     checked = true
                     isActivated = true
                 } else {
@@ -762,6 +828,12 @@ internal class MobileUiHost(
                     (if (behavior == Behavior.ACCORDION) expanded else checked)
                         .toEventPayload(),
                 )
+            }
+        } else if (behavior == Behavior.ACCORDION) {
+            setOnClickListener {
+                if (isEnabled) {
+                    setAccordionExpanded(!expanded)
+                }
             }
         } else if (behavior == Behavior.DATE_TIME_PICKER) {
             setOnClickListener { showDateTimePicker() }
@@ -806,27 +878,138 @@ internal class MobileUiHost(
             minimumWidth = max(minimumWidth, (48f * density).toInt())
             minimumHeight = max(minimumHeight, (48f * density).toInt())
         }
-        importantForAccessibility = if (behavior.isOverlay() && !open) {
-            IMPORTANT_FOR_ACCESSIBILITY_NO
-        } else {
-            IMPORTANT_FOR_ACCESSIBILITY_YES
+        importantForAccessibility = when {
+            behavior == Behavior.ACCORDION_GROUP -> IMPORTANT_FOR_ACCESSIBILITY_NO
+            behavior.isOverlay() && !open -> IMPORTANT_FOR_ACCESSIBILITY_NO
+            else -> IMPORTANT_FOR_ACCESSIBILITY_YES
         }
     }
 
     private fun animateExpanded() {
-        if (!animationsEnabled()) {
-            accordionChildren().forEach { child ->
-                child.alpha = if (expanded) 1f else 0f
-                child.scaleY = if (expanded) 1f else 0.98f
+        applyAccordionState(animate = true)
+    }
+
+    private fun applyAccordionState(animate: Boolean) {
+        val content = accordionContentViews()
+        val icon = findTaggedDescendant(this, ACCORDION_ICON_TAG)
+        val targetRotation = if (expanded) ACCORDION_EXPANDED_ROTATION else 0f
+
+        content.forEach { child ->
+            child.animate().cancel()
+            child.importantForAccessibility = if (expanded) {
+                IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
             }
-            return
+            if (expanded) {
+                child.visibility = VISIBLE
+            }
+            if (!animate || !animationsEnabled()) {
+                child.alpha = if (expanded) 1f else 0f
+                child.scaleY = if (expanded) 1f else ACCORDION_COLLAPSED_SCALE
+                child.visibility = if (expanded) VISIBLE else GONE
+            } else {
+                child.animate()
+                    .alpha(if (expanded) 1f else 0f)
+                    .scaleY(if (expanded) 1f else ACCORDION_COLLAPSED_SCALE)
+                    .setDuration(ACCORDION_ANIMATION_DURATION_MILLIS)
+                    .withEndAction {
+                        if (!expanded) {
+                            child.visibility = GONE
+                        }
+                    }
+                    .start()
+            }
         }
-        accordionChildren().forEach { child ->
-            child.animate()
-                .alpha(if (expanded) 1f else 0f)
-                .scaleY(if (expanded) 1f else 0.98f)
-                .setDuration(180L)
-                .start()
+
+        icon?.animate()?.cancel()
+        if (icon != null) {
+            if (animate && animationsEnabled()) {
+                icon.animate()
+                    .rotation(targetRotation)
+                    .setDuration(ACCORDION_ANIMATION_DURATION_MILLIS)
+                    .start()
+            } else {
+                icon.rotation = targetRotation
+            }
+        }
+        updateAccordionAccessibility()
+    }
+
+    private fun setAccordionExpanded(
+        requested: Boolean,
+        emit: Boolean = true,
+        fromGroup: Boolean = false,
+    ) {
+        if (!fromGroup && !requested && !collapsible) return
+        if (!fromGroup && !accordionGroupAllows(requested)) return
+        if (expanded == requested) return
+        expanded = requested
+        isActivated = requested
+        animateExpanded()
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (emit) {
+            emitter.emit(NativeViewEventKind.TOGGLE, requested.toEventPayload())
+        }
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+    }
+
+    private fun accordionGroupAllows(requested: Boolean): Boolean {
+        var ancestor = parent
+        while (ancestor is View) {
+            if (
+                ancestor is MobileUiHost
+                && ancestor.behavior == Behavior.ACCORDION_GROUP
+            ) {
+                return ancestor.handleAccordionItemRequest(this, requested)
+            }
+            ancestor = ancestor.parent
+        }
+        return requested || collapsible
+    }
+
+    private fun handleAccordionItemRequest(
+        item: MobileUiHost,
+        requested: Boolean,
+    ): Boolean {
+        if (!isEnabled || (!requested && !collapsible)) return false
+        if (requested && componentMode == ComponentMode.SINGLE) {
+            accordionItems(this).forEach { sibling ->
+                if (sibling !== item && sibling.expanded) {
+                    sibling.setAccordionExpanded(
+                        requested = false,
+                        emit = false,
+                        fromGroup = true,
+                    )
+                }
+            }
+        }
+        return true
+    }
+
+    private fun accordionItems(root: ViewGroup): Sequence<MobileUiHost> =
+        sequence {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                when {
+                    child is MobileUiHost
+                        && child.behavior == Behavior.ACCORDION -> yield(child)
+                    child is MobileUiHost
+                        && child.behavior == Behavior.ACCORDION_GROUP -> Unit
+                    child is ViewGroup -> yieldAll(accordionItems(child))
+                }
+            }
+        }
+
+    private fun updateAccordionAccessibility() {
+        if (behavior != Behavior.ACCORDION) return
+        val trigger = findTaggedDescendant(this, ACCORDION_TRIGGER_TAG)
+        val title = findFirstText(trigger ?: getChildAtOrNull(0))
+        if (contentDescription.isNullOrEmpty() && !title.isNullOrEmpty()) {
+            contentDescription = title
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = if (expanded) "Expanded" else "Collapsed"
         }
     }
 
@@ -1834,8 +2017,34 @@ internal class MobileUiHost(
             repeat(childCount) { index -> yield(getChildAt(index)) }
         }
 
-    private fun accordionChildren(): Sequence<View> =
-        children().filterIndexed { index, _ -> index > 0 }
+    private fun accordionContentViews(): List<View> {
+        val tagged = findTaggedDescendant(this, ACCORDION_CONTENT_TAG)
+        if (tagged != null) return listOf(tagged)
+
+        return children()
+            .filterIndexed { index, _ -> index > 0 }
+            .toList()
+    }
+
+    private fun accordionTriggerBounds(): RectF {
+        val trigger = findTaggedDescendant(this, ACCORDION_TRIGGER_TAG)
+            ?: getChildAtOrNull(0)
+            ?: this
+
+        return boundsInHost(trigger)
+    }
+
+    private fun findFirstText(root: View?): String? {
+        if (root is TextView && root.text.isNotEmpty()) return root.text.toString()
+        if (root !is ViewGroup) return null
+        repeat(root.childCount) { index ->
+            findFirstText(root.getChildAt(index))?.let { return it }
+        }
+        return null
+    }
+
+    private fun getChildAtOrNull(index: Int): View? =
+        if (index in 0 until childCount) getChildAt(index) else null
 
     private fun overlayContent(): View? =
         if (childCount > 0) getChildAt(childCount - 1) else null
@@ -2063,6 +2272,12 @@ internal class MobileUiHost(
         const val OUTSIDE_MONTH_ALPHA = 112
         const val RANGE_BACKGROUND_ALPHA = 42
         const val OPAQUE_ALPHA = 255
+        const val ACCORDION_TRIGGER_TAG = "pam:accordion-trigger"
+        const val ACCORDION_CONTENT_TAG = "pam:accordion-content"
+        const val ACCORDION_ICON_TAG = "pam:accordion-icon"
+        const val ACCORDION_EXPANDED_ROTATION = 180f
+        const val ACCORDION_COLLAPSED_SCALE = 0.98f
+        const val ACCORDION_ANIMATION_DURATION_MILLIS = 200L
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

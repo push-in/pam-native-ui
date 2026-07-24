@@ -76,6 +76,30 @@ wrappers:
 </RadioGroup>
 ```
 
+Accordion state also stays local to Android between controlled updates:
+
+```xml
+<Accordion type="multiple" value="{{ $openSections }}" on:change="setSections">
+    <AccordionItem value="performance">
+        <AccordionHeader>
+            <AccordionTrigger>
+                <AccordionTitleText>Performance</AccordionTitleText>
+                <AccordionIcon><ChevronDownIcon /></AccordionIcon>
+            </AccordionTrigger>
+        </AccordionHeader>
+        <AccordionContent>
+            <AccordionContentText>
+                Animation and visibility run on the native UI thread.
+            </AccordionContentText>
+        </AccordionContent>
+    </AccordionItem>
+</Accordion>
+```
+
+Only the trigger owns the toggle gesture. Collapsed content is removed from
+layout and TalkBack, the icon rotates with the system animation setting, and
+PHP receives one final boolean semantic event per item interaction.
+
 Gesture-heavy components keep transient work on Android's UI thread. The
 calendar supports single, multiple and range selection, disabled/min/max dates,
 localized month navigation, first-day-of-week and fixed-week layouts:

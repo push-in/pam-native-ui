@@ -90,6 +90,12 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:calendar-next');
         } elseif ($part === 'CalendarHeaderTitle') {
             $element = $element->property(PropKey::Value, 'pam:calendar-title');
+        } elseif ($part === 'AccordionTrigger') {
+            $element = $element->property(PropKey::Value, 'pam:accordion-trigger');
+        } elseif ($part === 'AccordionContent') {
+            $element = $element->property(PropKey::Value, 'pam:accordion-content');
+        } elseif ($part === 'AccordionIcon') {
+            $element = $element->property(PropKey::Value, 'pam:accordion-icon');
         }
 
         if ($styleOverride !== null) {
@@ -306,6 +312,7 @@ final class ComponentRenderer
     public static function nativeBehavior(string $part): NativeBehavior
     {
         return match ($part) {
+            'Accordion' => NativeBehavior::AccordionGroup,
             'AccordionItem' => NativeBehavior::Accordion,
             'Actionsheet',
             'BottomSheetPortal',
@@ -630,6 +637,7 @@ final class ComponentRenderer
         $parentValue = match ($part) {
             'MenuItem' => $parentProps['selectedKeys'] ?? null,
             'SelectItem' => $parentProps['selectedValue'] ?? $parentProps['value'] ?? null,
+            'AccordionItem' => $parentProps['value'] ?? $parentProps['defaultValue'] ?? null,
             default => $parentProps['value'] ?? null,
         };
         $selected = is_array($parentValue)

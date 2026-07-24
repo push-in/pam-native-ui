@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -104,6 +105,34 @@ class MobileUiHostPerformanceInstrumentedTest {
                 dateTimeEvents.isEmpty(),
             )
 
+            var accordionEvents = 0
+            val accordion = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.TOGGLE) accordionEvents++
+            }
+            accordion.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(2),
+                    "component" to WireValue.Integer(GeneratedComponents.ACCORDION_ITEM.toLong()),
+                    "expanded" to WireValue.Flag(false),
+                ),
+            )
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                accordion.performAccessibilityAction(accordionAction(iteration), null)
+            }
+            accordionEvents = 0
+            val accordionToggle = measure(SAMPLE_ITERATIONS) { iteration ->
+                accordion.performAccessibilityAction(accordionAction(iteration), null)
+            }
+            assertTrue(
+                "Accordion toggle p99 ${accordionToggle.p99Micros}µs exceeded 4ms",
+                accordionToggle.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Accordion must emit exactly one semantic event per completed toggle",
+                SAMPLE_ITERATIONS,
+                accordionEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -127,11 +156,13 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"sliderMove\":${gesture.json()},")
                     append("\"calendarDraw\":${calendarDraw.json()},")
                     append("\"dateTimeUpdate\":${dateTimeUpdate.json()},")
+                    append("\"accordionToggle\":${accordionToggle.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
                     append("\"calendarBridgeEvents\":${calendarEvents.size},")
-                    append("\"dateTimeBridgeEvents\":${dateTimeEvents.size}")
+                    append("\"dateTimeBridgeEvents\":${dateTimeEvents.size},")
+                    append("\"accordionBridgeEvents\":$accordionEvents")
                     append('}')
                 },
             )
@@ -141,6 +172,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             calendar.release()
             calendarBitmap.recycle()
             dateTime.release()
+            accordion.release()
         }
     }
 
@@ -189,6 +221,13 @@ class MobileUiHostPerformanceInstrumentedTest {
             "is24Hour" to WireValue.Flag(true),
         )
     }
+
+    private fun accordionAction(iteration: Int): Int =
+        if (iteration % 2 == 0) {
+            AccessibilityNodeInfo.ACTION_EXPAND
+        } else {
+            AccessibilityNodeInfo.ACTION_COLLAPSE
+        }
 
     private fun measure(iterations: Int, block: (Int) -> Unit): Statistics {
         val samples = LongArray(iterations)

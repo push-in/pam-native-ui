@@ -612,24 +612,151 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
-    fun accordionKeepsItsHeaderVisibleWhileCollapsingContentLocally() {
+    fun accordionOwnsHeaderTouchesAndRemovesCollapsedContentFromTalkBack() {
         onMain {
-            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.TOGGLE) payloads += payload
+            }
             host.update(
                 mapOf(
                     "behavior" to WireValue.Integer(2),
                     "expanded" to WireValue.Flag(false),
                 ),
             )
-            val header = View(host.context)
-            val content = View(host.context)
+            val header = FrameLayout(host.context)
+            val trigger = FrameLayout(host.context).apply {
+                tag = "pam:accordion-trigger"
+            }
+            val title = TextView(host.context).apply {
+                text = "Performance"
+            }
+            val icon = View(host.context).apply {
+                tag = "pam:accordion-icon"
+            }
+            trigger.addView(title)
+            trigger.addView(icon)
+            header.addView(trigger)
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:accordion-content"
+            }
             host.addView(header)
             host.addView(content)
+            host.layout(0, 0, 400, 300)
+            header.layout(0, 0, 400, 100)
+            trigger.layout(0, 0, 400, 100)
+            title.layout(0, 0, 300, 100)
+            icon.layout(300, 0, 400, 100)
+            content.layout(0, 100, 400, 300)
 
             assertEquals(1f, header.alpha, 0f)
+            assertEquals(View.GONE, content.visibility)
             assertEquals(0f, content.alpha, 0f)
             assertEquals(0.98f, content.scaleY, 0f)
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
+                content.importantForAccessibility,
+            )
+            assertEquals(0f, icon.rotation, 0f)
+            assertEquals("Performance", host.contentDescription)
+
+            val info = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("android.widget.Button", info.className)
+            assertTrue(
+                info.actionList.any {
+                    it.id == AccessibilityNodeInfo.ACTION_EXPAND
+                },
+            )
+            assertTrue(
+                host.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_EXPAND,
+                    null,
+                ),
+            )
+            assertEquals(View.VISIBLE, content.visibility)
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_AUTO,
+                content.importantForAccessibility,
+            )
+            assertEquals("Expanded", host.stateDescription)
+            assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
+
+            assertTrue(!host.onTouchEvent(motion(MotionEvent.ACTION_DOWN, 200f, 200f)))
+            assertEquals(1, payloads.size)
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 200f, 50f)))
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 200f, 50f)))
+            assertEquals(listOf("1", "0"), payloads.map(ByteArray::decodeToString))
+
             host.release()
+            info.recycle()
+        }
+    }
+
+    @Test
+    fun accordionGroupCoordinatesSingleNonCollapsibleItemsWithoutPhpRoundTrips() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val emitter = { kind: NativeViewEventKind, payload: ByteArray ->
+                if (kind == NativeViewEventKind.TOGGLE) payloads += payload
+            }
+            val group = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                emitter(kind, payload)
+            }
+            group.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(24),
+                    "type" to WireValue.Integer(1),
+                    "isCollapsible" to WireValue.Flag(false),
+                ),
+            )
+            val wrapper = FrameLayout(group.context)
+            val first = MobileUiHost(group.context) { kind, payload ->
+                emitter(kind, payload)
+            }
+            first.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(2),
+                    "expanded" to WireValue.Flag(true),
+                    "isCollapsible" to WireValue.Flag(false),
+                ),
+            )
+            val second = MobileUiHost(group.context) { kind, payload ->
+                emitter(kind, payload)
+            }
+            second.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(2),
+                    "expanded" to WireValue.Flag(false),
+                    "isCollapsible" to WireValue.Flag(false),
+                ),
+            )
+            wrapper.addView(first)
+            wrapper.addView(second)
+            group.addView(wrapper)
+
+            assertTrue(
+                first.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_COLLAPSE,
+                    null,
+                ),
+            )
+            assertTrue(payloads.isEmpty())
+            assertEquals("Expanded", first.stateDescription)
+
+            assertTrue(
+                second.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_EXPAND,
+                    null,
+                ),
+            )
+            assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
+            assertEquals("Collapsed", first.stateDescription)
+            assertEquals("Expanded", second.stateDescription)
+
+            first.release()
+            second.release()
+            group.release()
         }
     }
 

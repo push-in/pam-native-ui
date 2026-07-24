@@ -5,7 +5,13 @@ declare(strict_types=1);
 use Pam\MobileUi\Component\Button;
 use Pam\MobileUi\Component\ButtonText;
 use Pam\MobileUi\Component\Accordion;
+use Pam\MobileUi\Component\AccordionContent;
+use Pam\MobileUi\Component\AccordionContentText;
+use Pam\MobileUi\Component\AccordionHeader;
+use Pam\MobileUi\Component\AccordionIcon;
 use Pam\MobileUi\Component\AccordionItem;
+use Pam\MobileUi\Component\AccordionTitleText;
+use Pam\MobileUi\Component\AccordionTrigger;
 use Pam\MobileUi\Component\BottomSheet;
 use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\Checkbox;
@@ -223,6 +229,7 @@ if (!is_array($parity) || !is_array($parity['modules'] ?? null)) {
     throw new RuntimeException('The parity catalog is missing.');
 }
 $assert(count($parity['modules']) === 61, 'The parity gate must cover all technical modules.');
+$accordionParity = null;
 $calendarParity = null;
 $dateTimeParity = null;
 foreach ($parity['modules'] as $module) {
@@ -235,7 +242,25 @@ foreach ($parity['modules'] as $module) {
     if (($module['name'] ?? null) === 'date-time-picker') {
         $dateTimeParity = $module['verification'] ?? null;
     }
+    if (($module['name'] ?? null) === 'accordion') {
+        $accordionParity = $module['verification'] ?? null;
+    }
 }
+$assert(
+    $accordionParity === [
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::NotApplicable->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+    ],
+    'Accordion verification evidence must survive deterministic regeneration.',
+);
 $assert(
     $calendarParity === array_fill(0, 10, VerificationStatus::Verified->value),
     'Calendar verification evidence must survive deterministic regeneration.',
@@ -766,27 +791,90 @@ $assert(
 $expandedItems = [];
 $accordion = Accordion::make(
     [
-        'type' => 'multiple',
+        'type' => ComponentMode::Multiple,
         'value' => ['performance'],
     ],
-    AccordionItem::make(['value' => 'freedom']),
+    AccordionItem::make(
+        ['value' => 'freedom'],
+        AccordionHeader::make(
+            AccordionTrigger::make(
+                AccordionTitleText::make('Freedom'),
+                AccordionIcon::make(),
+            ),
+        ),
+        AccordionContent::make(
+            AccordionContentText::make('Build any application.'),
+        ),
+    ),
 )->onChange(static function (array $values) use (&$expandedItems): void {
     $expandedItems = $values;
 })->toElement();
 $semanticAccordionItem = $accordion->children()[0] ?? null;
+$semanticAccordionHeader = $semanticAccordionItem?->children()[0] ?? null;
+$semanticAccordionTrigger = $semanticAccordionHeader?->children()[0] ?? null;
+$semanticAccordionIcon = $semanticAccordionTrigger?->children()[1] ?? null;
+$semanticAccordionContent = $semanticAccordionItem?->children()[1] ?? null;
 $semanticAccordionToggle = $semanticAccordionItem?->events()[
     \Pam\Native\EventKind::Toggle->value
 ] ?? null;
 if (
     !$semanticAccordionItem instanceof \Pam\Native\Element
+    || !$semanticAccordionTrigger instanceof \Pam\Native\Element
+    || !$semanticAccordionIcon instanceof \Pam\Native\Element
+    || !$semanticAccordionContent instanceof \Pam\Native\Element
     || !$semanticAccordionToggle instanceof Closure
 ) {
-    throw new RuntimeException('Accordion must bind its controlled value list to every item.');
+    throw new RuntimeException('Accordion must compile its complete native anatomy.');
 }
+$semanticAccordionNative = $semanticAccordionItem->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$semanticAccordionGroupNative = $accordion->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$semanticAccordionNative instanceof BinaryValue
+    || !$semanticAccordionGroupNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Accordion and AccordionItem must provide packed native state.');
+}
+$semanticAccordionProperties = Wire::decodeMap($semanticAccordionNative->bytes);
+$semanticAccordionGroupProperties = Wire::decodeMap($semanticAccordionGroupNative->bytes);
 $semanticAccordionToggle('1');
 $assert(
-    $expandedItems === ['performance', 'freedom'],
-    'Accordion must publish its next controlled list from the item toggle event.',
+    $expandedItems === ['performance', 'freedom']
+        && $semanticAccordionGroupProperties['behavior']
+            === NativeBehavior::AccordionGroup->value
+        && $semanticAccordionGroupProperties['type'] === ComponentMode::Multiple->value
+        && $semanticAccordionProperties['behavior'] === NativeBehavior::Accordion->value
+        && $semanticAccordionProperties['expanded'] === false
+        && $semanticAccordionTrigger->properties()[PropKey::Value->value]
+            === 'pam:accordion-trigger'
+        && $semanticAccordionIcon->properties()[PropKey::Value->value]
+            === 'pam:accordion-icon'
+        && $semanticAccordionContent->properties()[PropKey::Value->value]
+            === 'pam:accordion-content',
+    'Accordion must preserve its controlled list, anatomy and packed native state.',
+);
+$defaultAccordion = Accordion::make(
+    [
+        'defaultValue' => ['freedom'],
+        'isCollapsible' => false,
+    ],
+    AccordionItem::make(['value' => 'freedom']),
+)->toElement();
+$defaultAccordionItem = $defaultAccordion->children()[0] ?? null;
+$defaultAccordionNative = $defaultAccordionItem?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (!$defaultAccordionNative instanceof BinaryValue) {
+    throw new RuntimeException('Uncontrolled AccordionItem must provide packed native state.');
+}
+$defaultAccordionProperties = Wire::decodeMap($defaultAccordionNative->bytes);
+$assert(
+    $defaultAccordionProperties['expanded'] === true
+        && $defaultAccordionProperties['isCollapsible'] === false,
+    'Accordion defaultValue and non-collapsible state must reach the native group.',
 );
 
 $selectedMenuItem = null;
