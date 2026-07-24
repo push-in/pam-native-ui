@@ -32,6 +32,7 @@ use Pam\Native\PositionType;
 use Pam\Native\PointerEvents;
 use Pam\Native\PropKey;
 use Pam\Native\ReturnKeyType;
+use Pam\Native\SafeAreaMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
 use Pam\Native\UI\ActivityIndicator;
@@ -622,13 +623,26 @@ final class ComponentRenderer
             );
         }
         if ($part === 'SafeAreaView') {
-            return SafeAreaView::make(...$children);
+            $edges = self::safeAreaEdges($props);
+
+            return SafeAreaView::make(...$children)
+                ->edges(
+                    $edges['top'],
+                    $edges['right'],
+                    $edges['bottom'],
+                    $edges['left'],
+                )
+                ->mode(self::safeAreaMode($props));
         }
         if ($part === 'KeyboardAvoidingView') {
             return KeyboardAvoidingView::make(
                 self::oneChild($children),
                 self::keyboardAvoidingBehavior($props),
-            );
+            )
+                ->verticalOffset(
+                    self::number($props, 'keyboardVerticalOffset', 0.0),
+                )
+                ->avoidingEnabled(self::flag($props, 'enabled', true));
         }
         if ($part === 'InputAccessoryView') {
             return InputAccessoryView::make(...$children);
@@ -2862,6 +2876,71 @@ final class ComponentRenderer
             KeyboardAvoidingBehavior::Padding->value,
             'padding' => KeyboardAvoidingBehavior::Padding,
             default => KeyboardAvoidingBehavior::Resize,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array{top: bool, right: bool, bottom: bool, left: bool}
+     */
+    private static function safeAreaEdges(array $props): array
+    {
+        $value = $props['edges'] ?? null;
+        if ($value === null) {
+            return [
+                'top' => true,
+                'right' => true,
+                'bottom' => true,
+                'left' => true,
+            ];
+        }
+        if (is_string($value)) {
+            $value = preg_split('/[\s,;|]+/', strtolower($value)) ?: [];
+        }
+        if (!is_array($value)) {
+            return [
+                'top' => true,
+                'right' => true,
+                'bottom' => true,
+                'left' => true,
+            ];
+        }
+
+        $associative = array_filter(
+            array_keys($value),
+            static fn (int|string $key): bool => is_string($key),
+        ) !== [];
+        if ($associative) {
+            return [
+                'top' => self::booleanValue($value['top'] ?? false) ?? false,
+                'right' => self::booleanValue($value['right'] ?? false) ?? false,
+                'bottom' => self::booleanValue($value['bottom'] ?? false) ?? false,
+                'left' => self::booleanValue($value['left'] ?? false) ?? false,
+            ];
+        }
+
+        $edges = array_map(
+            static fn (mixed $edge): string => is_string($edge)
+                ? strtolower($edge)
+                : '',
+            $value,
+        );
+        $all = in_array('all', $edges, true);
+
+        return [
+            'top' => $all || in_array('top', $edges, true),
+            'right' => $all || in_array('right', $edges, true),
+            'bottom' => $all || in_array('bottom', $edges, true),
+            'left' => $all || in_array('left', $edges, true),
+        ];
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function safeAreaMode(array $props): SafeAreaMode
+    {
+        return match ($props['mode'] ?? null) {
+            SafeAreaMode::Margin->value, 'margin' => SafeAreaMode::Margin,
+            default => SafeAreaMode::Padding,
         };
     }
 

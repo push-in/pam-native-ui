@@ -161,6 +161,7 @@ use Pam\MobileUi\Component\SkeletonText;
 use Pam\MobileUi\Component\Spinner;
 use Pam\MobileUi\Component\StatusBar;
 use Pam\MobileUi\Component\ScrollView;
+use Pam\MobileUi\Component\SafeAreaView;
 use Pam\MobileUi\Component\Tabs;
 use Pam\MobileUi\Component\TabsContent;
 use Pam\MobileUi\Component\TabsContentWrapper;
@@ -226,6 +227,7 @@ use Pam\Native\PointerEvents;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
 use Pam\Native\ReturnKeyType;
+use Pam\Native\SafeAreaMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\TemplateRegistry;
 use Pam\Native\TextDecoration;
@@ -999,8 +1001,19 @@ $scrollPrimitive = ScrollView::make(
     Text::make('Scrollable'),
 )->toElement();
 $keyboardPrimitive = KeyboardAvoidingView::make(
-    ['behavior' => 'padding'],
+    [
+        'behavior' => 'padding',
+        'keyboardVerticalOffset' => 24,
+        'enabled' => false,
+    ],
     Text::make('Form'),
+)->toElement();
+$safeAreaPrimitive = SafeAreaView::make(
+    [
+        'edges' => ['top', 'bottom'],
+        'mode' => 'margin',
+    ],
+    Text::make('Safe content'),
 )->toElement();
 $statusPrimitive = StatusBar::make([
     'backgroundColor' => '#171717',
@@ -1097,6 +1110,18 @@ $assert(
         && $scrollPrimitive->properties()[PropKey::ShowsScrollIndicator->value] === false
         && $keyboardPrimitive->properties()[PropKey::KeyboardBehavior->value]
             === KeyboardAvoidingBehavior::Padding->value
+        && $keyboardPrimitive
+            ->properties()[PropKey::KeyboardVerticalOffset->value] === 24.0
+        && $keyboardPrimitive
+            ->properties()[PropKey::KeyboardAvoidingEnabled->value] === false
+        && $safeAreaPrimitive->properties()[PropKey::SafeAreaTop->value] === true
+        && $safeAreaPrimitive
+            ->properties()[PropKey::SafeAreaRight->value] === false
+        && $safeAreaPrimitive
+            ->properties()[PropKey::SafeAreaBottomEdge->value] === true
+        && $safeAreaPrimitive->properties()[PropKey::SafeAreaLeft->value] === false
+        && $safeAreaPrimitive->properties()[PropKey::SafeAreaMode->value]
+            === SafeAreaMode::Margin->value
         && $statusPrimitive->properties()[PropKey::StatusBarColor->value]
             === 0xff171717
         && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]

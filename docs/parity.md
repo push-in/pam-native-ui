@@ -15,6 +15,9 @@ The original documentation navigation exposes fewer cards than the source tree.
 PAM tracks all 61 source modules, including `FlatList`, `SafeAreaView`,
 `StatusBar`, provider/util modules, and the full Chat AI anatomy. Core
 passthroughs use PAM primitives while remaining present in the public catalog.
+`SafeAreaView` forwards per-edge padding/margin insets and
+`KeyboardAvoidingView` forwards height/position/padding behavior, vertical
+offset and enabled state to the Android UI thread.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

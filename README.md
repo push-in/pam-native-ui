@@ -161,6 +161,13 @@ available. `InputSlot` defaults to focusing the field and supports the
 integer-backed `focus`, `clear`, `toggle-password` and `none` actions through
 `Pam\MobileUi\Enum\InputSlotAction`.
 
+Core layout wrappers forward their platform controls without adding a PHP
+interaction hop. For example, `SafeAreaView` accepts `edges="top,bottom"` and
+`mode="padding|margin"`, while `KeyboardAvoidingView` accepts
+`behavior="height|position|padding"`, `keyboardVerticalOffset` and `enabled`.
+Android calculates system-bar and IME insets and updates the view on the UI
+thread.
+
 Focus/invalid outlines, disabled/read-only editing policy, clear/password
 actions and selection remain on the Android UI thread. `FormControl` links its
 label, helper and error to the native field, injects the required asterisk,
