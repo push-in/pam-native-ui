@@ -392,6 +392,11 @@ internal class MobileUiHost(
     private var tabsActivationMode = TABS_ACTIVATION_AUTOMATIC
     private var tabsIndicatorAnimator: ValueAnimator? = null
     private var tabsContentAnimator: ValueAnimator? = null
+    private var treeReconciliationScheduled = false
+    private val treeReconciliation = Runnable {
+        treeReconciliationScheduled = false
+        reconcileChildState()
+    }
     private val scaleDetector = ScaleGestureDetector(
         context,
         object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -899,7 +904,7 @@ internal class MobileUiHost(
                 || previousToastAction != toastAction
             )
         ) {
-            post(::applyToastSemantics)
+            applyToastSemantics()
         }
         applyComponentDefaults()
         applySelectionVisualState()
@@ -908,12 +913,10 @@ internal class MobileUiHost(
         updateRangeAccessibility()
         updateCalendarTitle()
         if (behavior == Behavior.TABS) {
-            post {
-                applyTabsState(
-                    animate = previousBehavior == Behavior.TABS
-                        && previousTabValue != tabValue,
-                )
-            }
+            applyTabsState(
+                animate = previousBehavior == Behavior.TABS
+                    && previousTabValue != tabValue,
+            )
         } else if (behavior == Behavior.TAB_TRIGGER) {
             updateTabTriggerAccessibility()
         } else if (behavior == Behavior.SHEET_ITEM) {
@@ -922,39 +925,37 @@ internal class MobileUiHost(
             updateMenuItemAccessibility()
         } else if (behavior == Behavior.INPUT_GROUP) {
             applyInputGroupState()
-            if (isAttachedToWindow) post(::applyInputGroupState)
         } else if (behavior == Behavior.INPUT_SLOT) {
             updateInputSlotAccessibility()
         } else if (behavior == Behavior.FORM_CONTROL) {
             applyFormControlSemantics()
-            if (isAttachedToWindow) post(::applyFormControlSemantics)
         } else if (behavior == Behavior.TABLE) {
             applyTableSemantics()
-            if (isAttachedToWindow) post(::applyTableSemantics)
         } else if (behavior == Behavior.IMAGE_VIEWER) {
-            post { applyImageViewerState(announce = false) }
+            applyImageViewerState(announce = false)
         } else if (behavior == Behavior.IMAGE_VIEWER_CONTROL) {
             updateImageViewerControlAccessibility()
         } else if (behavior == Behavior.MESSAGE_BRANCH) {
-            post { applyMessageBranchState(announce = false) }
+            applyMessageBranchState(announce = false)
         } else if (behavior == Behavior.MESSAGE_BRANCH_CONTROL) {
             updateMessageBranchControlAccessibility()
         } else if (behavior == Behavior.PROMPT_INPUT) {
-            post(::applyPromptInputState)
+            applyPromptInputState()
         } else if (behavior == Behavior.PROMPT_INPUT_SUBMIT) {
             updatePromptSubmitAccessibility()
         } else if (behavior == Behavior.CHAT) {
-            post(::applyConversationState)
+            applyConversationState()
         } else if (behavior == Behavior.CONVERSATION_SCROLL_BUTTON) {
             updateConversationScrollButtonAccessibility()
         } else if (behavior == Behavior.FILE_TREE) {
-            post { applyFileTreeState(announce = false) }
+            applyFileTreeState(announce = false)
         } else if (
             behavior == Behavior.FILE_TREE_FOLDER
             || behavior == Behavior.FILE_TREE_FILE
         ) {
             updateFileTreeItemAccessibility()
         }
+        scheduleAttachedTreeReconciliation()
         if (behavior.isAnchoredOverlay() && previousOpen == open) {
             post { applyAnchoredOverlayState(animate = false) }
         }
@@ -980,13 +981,13 @@ internal class MobileUiHost(
             updateSelectionAccessibility()
         }
         if (behavior == Behavior.SLIDER || behavior == Behavior.PROGRESS) {
-            post(::applyRangeVisualState)
+            applyRangeVisualState()
         }
         if (behavior == Behavior.CALENDAR) {
-            post(::updateCalendarTitle)
+            updateCalendarTitle()
         }
         if (behavior == Behavior.TABS) {
-            post { applyTabsState(animate = false) }
+            applyTabsState(animate = false)
         }
         if (behavior == Behavior.BOTTOM_SHEET) {
             post { applySheetLayout(animate = false) }
@@ -995,32 +996,33 @@ internal class MobileUiHost(
             updateMenuItemAccessibility()
         }
         if (behavior == Behavior.INPUT_GROUP) {
-            post(::applyInputGroupState)
+            applyInputGroupState()
         }
         if (behavior == Behavior.FORM_CONTROL) {
-            post(::applyFormControlSemantics)
+            applyFormControlSemantics()
         }
         if (behavior == Behavior.TABLE) {
-            post(::applyTableSemantics)
+            applyTableSemantics()
         }
         if (behavior == Behavior.TOAST) {
-            post(::applyToastSemantics)
+            applyToastSemantics()
         }
         if (behavior == Behavior.IMAGE_VIEWER) {
-            post { applyImageViewerState(announce = false) }
+            applyImageViewerState(announce = false)
         }
         if (behavior == Behavior.MESSAGE_BRANCH) {
-            post { applyMessageBranchState(announce = false) }
+            applyMessageBranchState(announce = false)
         }
         if (behavior == Behavior.PROMPT_INPUT) {
-            post(::applyPromptInputState)
+            applyPromptInputState()
         }
         if (behavior == Behavior.CHAT) {
-            post(::applyConversationState)
+            applyConversationState()
         }
         if (behavior == Behavior.FILE_TREE) {
-            post { applyFileTreeState(announce = false) }
+            applyFileTreeState(announce = false)
         }
+        scheduleAttachedTreeReconciliation()
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
         }
@@ -1034,19 +1036,52 @@ internal class MobileUiHost(
             tableAncestor()?.tableSemanticsDirty = true
         }
         if (behavior == Behavior.IMAGE_VIEWER) {
-            post { applyImageViewerState(announce = false) }
+            applyImageViewerState(announce = false)
         }
         if (behavior == Behavior.MESSAGE_BRANCH) {
-            post { applyMessageBranchState(announce = false) }
+            applyMessageBranchState(announce = false)
         }
         if (behavior == Behavior.PROMPT_INPUT) {
-            post(::applyPromptInputState)
+            applyPromptInputState()
         }
         if (behavior == Behavior.CHAT) {
-            post(::applyConversationState)
+            applyConversationState()
         }
         if (behavior == Behavior.FILE_TREE) {
-            post { applyFileTreeState(announce = false) }
+            applyFileTreeState(announce = false)
+        }
+        scheduleAttachedTreeReconciliation()
+    }
+
+    private fun scheduleAttachedTreeReconciliation() {
+        if (
+            !isAttachedToWindow
+            || treeReconciliationScheduled
+            || behavior !in CHILD_RECONCILIATION_BEHAVIORS
+        ) {
+            return
+        }
+        treeReconciliationScheduled = true
+        post(treeReconciliation)
+    }
+
+    private fun reconcileChildState() {
+        when (behavior) {
+            Behavior.SLIDER,
+            Behavior.PROGRESS,
+            -> applyRangeVisualState()
+            Behavior.CALENDAR -> updateCalendarTitle()
+            Behavior.TABS -> applyTabsState(animate = false)
+            Behavior.INPUT_GROUP -> applyInputGroupState()
+            Behavior.FORM_CONTROL -> applyFormControlSemantics()
+            Behavior.TABLE -> applyTableSemantics()
+            Behavior.TOAST -> applyToastSemantics()
+            Behavior.IMAGE_VIEWER -> applyImageViewerState(announce = false)
+            Behavior.MESSAGE_BRANCH -> applyMessageBranchState(announce = false)
+            Behavior.PROMPT_INPUT -> applyPromptInputState()
+            Behavior.CHAT -> applyConversationState()
+            Behavior.FILE_TREE -> applyFileTreeState(announce = false)
+            else -> Unit
         }
     }
 
@@ -2016,6 +2051,8 @@ internal class MobileUiHost(
         tabsIndicatorAnimator = null
         tabsContentAnimator?.cancel()
         tabsContentAnimator = null
+        removeCallbacks(treeReconciliation)
+        treeReconciliationScheduled = false
         sheetVelocityTracker?.recycle()
         sheetVelocityTracker = null
         anchoredTriggerTouchActive = false
@@ -6551,6 +6588,21 @@ internal class MobileUiHost(
         }
 
     private companion object {
+        val CHILD_RECONCILIATION_BEHAVIORS = setOf(
+            Behavior.SLIDER,
+            Behavior.PROGRESS,
+            Behavior.CALENDAR,
+            Behavior.TABS,
+            Behavior.INPUT_GROUP,
+            Behavior.FORM_CONTROL,
+            Behavior.TABLE,
+            Behavior.TOAST,
+            Behavior.IMAGE_VIEWER,
+            Behavior.MESSAGE_BRANCH,
+            Behavior.PROMPT_INPUT,
+            Behavior.CHAT,
+            Behavior.FILE_TREE,
+        )
         const val DAYS_PER_WEEK = 7
         const val MIN_CALENDAR_ROWS = 4
         const val MAX_CALENDAR_ROWS = 6

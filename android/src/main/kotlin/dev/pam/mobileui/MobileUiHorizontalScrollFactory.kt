@@ -102,7 +102,7 @@ internal class MobileUiHorizontalScrollView(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         getChildAt(0)?.let { child ->
             val current = child.layoutParams
-            if (current.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+            if (current.width == ViewGroup.LayoutParams.MATCH_PARENT) {
                 current.width = ViewGroup.LayoutParams.WRAP_CONTENT
                 child.layoutParams = current
             }

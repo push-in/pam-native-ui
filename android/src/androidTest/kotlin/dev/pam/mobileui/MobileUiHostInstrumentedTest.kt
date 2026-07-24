@@ -283,7 +283,10 @@ class MobileUiHostInstrumentedTest {
             host.release()
             host.release()
 
-            assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_YES, host.importantForAccessibility)
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
+                host.importantForAccessibility,
+            )
         }
     }
 
@@ -361,6 +364,10 @@ class MobileUiHostInstrumentedTest {
             }
             slider.addView(track)
             slider.addView(thumb)
+            slider.measure(
+                View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(100, View.MeasureSpec.EXACTLY),
+            )
             slider.layout(0, 0, 400, 100)
 
             assertEquals(0.25f, filled.scaleX, 0.001f)
@@ -394,6 +401,10 @@ class MobileUiHostInstrumentedTest {
                 layoutParams = FrameLayout.LayoutParams(24, 400)
             }
             progress.addView(progressFill)
+            progress.measure(
+                View.MeasureSpec.makeMeasureSpec(24, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+            )
             progress.layout(0, 0, 24, 400)
 
             val progressInfo = AccessibilityNodeInfo.obtain()
@@ -475,9 +486,13 @@ class MobileUiHostInstrumentedTest {
 
     @Test
     fun tabsPublishTheAuthoredSemanticValueInsteadOfAVisualIndex() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        val payloads = CopyOnWriteArrayList<ByteArray>()
+        lateinit var host: MobileUiHost
+        lateinit var list: FrameLayout
         onMain {
-            val payloads = CopyOnWriteArrayList<ByteArray>()
-            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+            host = MobileUiHost(activity) { kind, payload ->
                 if (kind == NativeViewEventKind.CHANGE) payloads += payload
             }
             host.update(
@@ -486,11 +501,15 @@ class MobileUiHostInstrumentedTest {
                     "defaultValue" to WireValue.Text("account"),
                 ),
             )
-            val list = FrameLayout(host.context)
+            list = FrameLayout(host.context)
             listOf("account", "security", "billing").forEach { value ->
                 list.addView(tabTrigger(host, value))
             }
             host.addView(list)
+            activity.setContentView(host)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             host.layout(0, 0, 300, 160)
             list.layout(0, 0, 300, 80)
             repeat(3) { index ->
@@ -499,24 +518,35 @@ class MobileUiHostInstrumentedTest {
 
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 150f, 40f))
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 150f, 40f))
-
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             assertEquals("security", payloads.single().decodeToString())
             host.release()
+            activity.finish()
         }
     }
 
     @Test
     fun tabsUseActualTriggerGeometryAndDoNotClaimVisualGaps() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        val payloads = CopyOnWriteArrayList<ByteArray>()
+        lateinit var host: MobileUiHost
+        lateinit var list: FrameLayout
         onMain {
-            val payloads = CopyOnWriteArrayList<ByteArray>()
-            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+            host = MobileUiHost(activity) { kind, payload ->
                 if (kind == NativeViewEventKind.CHANGE) payloads += payload
             }
             host.update(mapOf("behavior" to WireValue.Integer(6)))
-            val list = FrameLayout(host.context)
+            list = FrameLayout(host.context)
             list.addView(tabTrigger(host, "short"))
             list.addView(tabTrigger(host, "wide"))
             host.addView(list)
+            activity.setContentView(host)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             host.layout(0, 0, 400, 160)
             list.layout(20, 20, 380, 100)
             list.getChildAt(0).layout(0, 0, 80, 80)
@@ -528,17 +558,24 @@ class MobileUiHostInstrumentedTest {
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 120f, 40f))
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 300f, 40f))
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 300f, 40f))
-
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             assertEquals(listOf("short", "wide"), payloads.map(ByteArray::decodeToString))
             host.release()
+            activity.finish()
         }
     }
 
     @Test
     fun verticalTabsSelectByActualTriggerBounds() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        val payloads = CopyOnWriteArrayList<ByteArray>()
+        lateinit var host: MobileUiHost
+        lateinit var list: FrameLayout
         onMain {
-            val payloads = CopyOnWriteArrayList<ByteArray>()
-            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+            host = MobileUiHost(activity) { kind, payload ->
                 if (kind == NativeViewEventKind.CHANGE) payloads += payload
             }
             host.update(
@@ -547,10 +584,14 @@ class MobileUiHostInstrumentedTest {
                     "orientation" to WireValue.Integer(2),
                 ),
             )
-            val list = FrameLayout(host.context)
+            list = FrameLayout(host.context)
             list.addView(tabTrigger(host, "overview"))
             list.addView(tabTrigger(host, "settings"))
             host.addView(list)
+            activity.setContentView(host)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             host.layout(0, 0, 240, 400)
             list.layout(20, 20, 220, 380)
             list.getChildAt(0).layout(0, 0, 200, 100)
@@ -558,9 +599,12 @@ class MobileUiHostInstrumentedTest {
 
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 100f, 240f))
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 100f, 240f))
-
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             assertEquals("settings", payloads.single().decodeToString())
             host.release()
+            activity.finish()
         }
     }
 
@@ -984,10 +1028,15 @@ class MobileUiHostInstrumentedTest {
 
     @Test
     fun menuCoordinatesSelectionKeyboardAndCollectionSemanticsOnTheUiThread() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        val rootEvents = CopyOnWriteArrayList<ByteArray>()
+        val itemEvents = CopyOnWriteArrayList<ByteArray>()
+        lateinit var menu: MobileUiHost
+        lateinit var first: MobileUiHost
+        lateinit var second: MobileUiHost
         onMain {
-            val rootEvents = CopyOnWriteArrayList<ByteArray>()
-            val itemEvents = CopyOnWriteArrayList<ByteArray>()
-            val menu = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+            menu = MobileUiHost(activity) { kind, payload ->
                 if (kind == NativeViewEventKind.NATIVE) rootEvents += payload
             }
             menu.update(
@@ -1001,7 +1050,7 @@ class MobileUiHostInstrumentedTest {
             val content = FrameLayout(menu.context).apply {
                 tag = "pam:overlay-content"
             }
-            val first = MobileUiHost(menu.context) { kind, payload ->
+            first = MobileUiHost(menu.context) { kind, payload ->
                 if (kind == NativeViewEventKind.PRESS) itemEvents += payload
             }
             first.update(
@@ -1013,7 +1062,7 @@ class MobileUiHostInstrumentedTest {
                 ),
             )
             first.addView(TextView(menu.context).apply { text = "Settings" })
-            val second = MobileUiHost(menu.context) { kind, payload ->
+            second = MobileUiHost(menu.context) { kind, payload ->
                 if (kind == NativeViewEventKind.PRESS) itemEvents += payload
             }
             second.update(
@@ -1028,6 +1077,10 @@ class MobileUiHostInstrumentedTest {
             content.addView(first)
             content.addView(second)
             menu.addView(content)
+            activity.setContentView(menu)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
 
             assertTrue(first.performClick())
             assertEquals(1, itemEvents.size)
@@ -1061,6 +1114,7 @@ class MobileUiHostInstrumentedTest {
             first.release()
             second.release()
             menu.release()
+            activity.finish()
             menuInfo.recycle()
             firstInfo.recycle()
         }
@@ -1701,9 +1755,11 @@ class MobileUiHostInstrumentedTest {
 
     @Test
     fun inputAndFormControlKeepCompoundInteractionAndSemanticsOnTheUiThread() {
+        val activity = launchTestHostActivity()
         onMain {
-            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val context = activity
             val inputEvents = CopyOnWriteArrayList<NativeViewEventKind>()
+            val root = FrameLayout(context)
             val inputGroup = MobileUiHost(context) { _, _ -> }
             inputGroup.update(
                 mapOf(
@@ -1733,6 +1789,8 @@ class MobileUiHostInstrumentedTest {
             inputGroup.addView(input)
             inputGroup.addView(clear)
             inputGroup.addView(password)
+            root.addView(inputGroup)
+            activity.setContentView(root)
             inputGroup.layout(0, 0, 600, 120)
 
             assertTrue(inputGroup.performClick())
@@ -1784,6 +1842,7 @@ class MobileUiHostInstrumentedTest {
             form.addView(field)
             form.addView(helper)
             form.addView(error)
+            root.addView(form)
             form.layout(0, 0, 600, 360)
             label.layout(0, 0, 600, 72)
             field.layout(0, 72, 600, 180)
@@ -1810,6 +1869,7 @@ class MobileUiHostInstrumentedTest {
             password.release()
             inputGroup.release()
             form.release()
+            activity.finish()
         }
     }
 
@@ -2255,6 +2315,17 @@ class MobileUiHostInstrumentedTest {
 
     private fun motion(action: Int, x: Float, y: Float): MotionEvent =
         MotionEvent.obtain(0L, 0L, action, x, y, 0)
+
+    private fun launchTestHostActivity(): TestHostActivity {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+
+        return instrumentation.startActivitySync(
+            Intent(
+                instrumentation.targetContext,
+                TestHostActivity::class.java,
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        ) as TestHostActivity
+    }
 
     private fun onMain(block: () -> Unit) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
