@@ -78,9 +78,9 @@ reference table until a physical run records them.
 The pending physical suite also lays out a 20-row by 4-column semantic table
 10,000 times. Its cached accessibility coordinates must keep steady-layout p99
 below 4 ms and emit zero bridge events. Scalar `FlatList`, `VirtualizedList`
-and `SectionList` use PAM core's recycled Android adapters; an end-to-end scroll
-and memory profile remains part of the full-renderer benchmark rather than this
-plugin-host microbenchmark.
+and `SectionList` use PAM core's RecyclerView host, recycled pool and bounded
+GapWorker prefetch; an end-to-end scroll and memory profile remains part of the
+full-renderer benchmark rather than this plugin-host microbenchmark.
 
 The same suite performs 10,000 paired steady updates of a multi-line Skeleton
 and persistent Toast. The single pulse animator and identity-stable timer must

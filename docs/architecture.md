@@ -34,13 +34,19 @@ compound controls whose content is still authored declaratively in PHP.
 
 ## Native data views
 
-`FlatList` and `VirtualizedList` keep the PAM core packed-string adapter:
-Android recycles `TextView` rows, applies the fixed estimated row height and
+`FlatList` and `VirtualizedList` keep PAM core's packed-string data source and
+mount it through one AndroidX `RecyclerView`. Android recycles `TextView` rows,
+applies the fixed estimated row height, schedules bounded GapWorker prefetch and
 detects the end threshold without calling PHP for visible-item rendering.
-`SectionList` uses the equivalent packed section/header adapter. The mobile UI
-facades only normalize familiar prop names (`rowHeight`, `itemHeight`,
-`estimatedItemSize`, indicator and scrolling flags) onto those core
+`SectionList` uses the equivalent packed section/header adapter, with headers
+spanning the complete native grid. The mobile UI facades only normalize
+familiar prop names (`rowHeight`, `itemHeight`, `estimatedItemSize`,
+`horizontal`, `numColumns`, `inverted`, `initialScrollIndex`,
+`removeClippedSubviews`, `prefetch`, `maxToRenderPerBatch`,
+`initialNumToRender`, indicator and scrolling flags) onto those core
 properties, so the optimized path does not gain an extra host or bridge layer.
+Visible-range changes stay native unless requested; `onScroll` is coalesced to
+one semantic event per VSYNC.
 The `Actionsheet*List`, `BottomSheet*List` and `Select*List` aliases resolve to
 these exact native list nodes rather than styled generic containers.
 

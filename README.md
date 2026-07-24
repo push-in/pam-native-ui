@@ -587,21 +587,31 @@ Large scalar data sets use PAM's recycled Android list primitives directly:
 <FlatList
     items="$packages"
     rowHeight="48"
+    numColumns="2"
+    prefetch="8"
+    initialScrollIndex="20"
+    removeClippedSubviews="true"
     showsVerticalScrollIndicator="false"
     onEndReachedThreshold="0.25"
+    on:scroll="rememberOffset"
     on:endReached="loadMore"
 />
 
 <SectionList
     sections="$groupedPackages"
     itemHeight="52"
+    inverted="true"
 />
 ```
 
 `FlatList` and `VirtualizedList` pack scalar rows into a compact payload and
-reuse Android row views. `SectionList` does the same for titled groups.
-`rowHeight`, `itemHeight`, scrolling, indicators and the end-reached threshold
-map to the core native list instead of creating a PHP component per row.
+mount them through AndroidX `RecyclerView`; `SectionList` does the same for
+titled groups. `rowHeight`/`itemHeight`, `horizontal`, `numColumns`, `inverted`,
+`initialScrollIndex`, `removeClippedSubviews`, `prefetch`,
+`maxToRenderPerBatch`, `initialNumToRender`, scrolling, indicators and the
+end-reached threshold map to the core native list instead of creating a PHP
+component per row. RecyclerView owns recycling, its GapWorker owns prefetch, and
+PAM coalesces `on:scroll` to one event per VSYNC.
 Arbitrary rich row trees remain possible through ordinary PAM composition or a
 specialized native plugin; the scalar fast path deliberately does not invoke a
 PHP `renderItem` callback while scrolling.

@@ -4459,6 +4459,46 @@ final class ComponentRenderer
                 max(1.0, (float) $rowHeight),
             );
         }
+        $prefetch = $props['prefetch']
+            ?? $props['maxToRenderPerBatch']
+            ?? $props['initialNumToRender']
+            ?? null;
+        if (is_numeric($prefetch)) {
+            $list = $list->property(
+                PropKey::ListPrefetch,
+                min(32, max(1, (int) $prefetch)),
+            );
+        }
+        if (array_key_exists('horizontal', $props)) {
+            $list = $list->property(
+                PropKey::ListHorizontal,
+                self::flag($props, 'horizontal'),
+            );
+        }
+        if (is_numeric($props['numColumns'] ?? null)) {
+            $list = $list->property(
+                PropKey::ListNumColumns,
+                max(1, (int) $props['numColumns']),
+            );
+        }
+        if (array_key_exists('inverted', $props)) {
+            $list = $list->property(
+                PropKey::ListInverted,
+                self::flag($props, 'inverted'),
+            );
+        }
+        if (is_numeric($props['initialScrollIndex'] ?? null)) {
+            $list = $list->property(
+                PropKey::ListInitialScrollIndex,
+                max(0, (int) $props['initialScrollIndex']),
+            );
+        }
+        if (array_key_exists('removeClippedSubviews', $props)) {
+            $list = $list->property(
+                PropKey::ListRemoveClippedSubviews,
+                self::flag($props, 'removeClippedSubviews', true),
+            );
+        }
         if (
             array_key_exists('scrollEnabled', $props)
             || array_key_exists('isScrollEnabled', $props)

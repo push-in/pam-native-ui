@@ -26,6 +26,11 @@ scaling/fitting, break/hyphenation strategy and local data detectors.
 Status bars merge by mount order and forward animated color, icon appearance,
 visibility and pre-Android-15 translucency while respecting mandatory modern
 edge-to-edge behavior.
+Flat, virtualized and section lists forward fixed row extent, bounded prefetch,
+horizontal/grid/inverted layout, initial position, clipping policy, scrolling,
+indicators and end threshold to one AndroidX RecyclerView host. Packed rows are
+decoded only while binding visible/prefetched holders, and requested scroll
+events are limited to one per display frame.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

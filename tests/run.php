@@ -1799,6 +1799,10 @@ $listEndReached = 0;
 $flatList = FlatList::make([
     'items' => ['Laravel', 'PAM', 'Android'],
     'rowHeight' => 64,
+    'prefetch' => 8,
+    'numColumns' => 2,
+    'initialScrollIndex' => 1,
+    'removeClippedSubviews' => false,
     'showsVerticalScrollIndicator' => false,
     'onEndReachedThreshold' => 0.25,
 ])->onEndReached(static function () use (&$listEndReached): void {
@@ -1814,7 +1818,11 @@ $sectionList = SectionList::make([
 $virtualizedList = VirtualizedList::make([
     'items' => ['One', 'Two'],
     'scrollEnabled' => false,
-])->toElement();
+    'horizontal' => true,
+    'inverted' => true,
+    'maxToRenderPerBatch' => 6,
+])->onScroll(static function (): void {
+})->toElement();
 $sheetListKinds = [
     ActionsheetFlatList::make(['items' => ['One']])->toElement()->kind(),
     ActionsheetVirtualizedList::make(['items' => ['One']])->toElement()->kind(),
@@ -1836,6 +1844,11 @@ $sheetSectionKinds = [
 $assert(
     $flatList->kind() === NodeKind::List
         && $flatList->properties()[PropKey::ListRowHeight->value] === 64.0
+        && $flatList->properties()[PropKey::ListPrefetch->value] === 8
+        && $flatList->properties()[PropKey::ListNumColumns->value] === 2
+        && $flatList->properties()[PropKey::ListInitialScrollIndex->value] === 1
+        && $flatList
+            ->properties()[PropKey::ListRemoveClippedSubviews->value] === false
         && $flatList->properties()[PropKey::ShowsScrollIndicator->value] === false
         && $flatList->properties()[PropKey::EndReachedThreshold->value] === 0.25
         && isset($flatList->events()[\Pam\Native\EventKind::EndReached->value])
@@ -1843,6 +1856,10 @@ $assert(
         && $sectionList->properties()[PropKey::ListRowHeight->value] === 56.0
         && $virtualizedList->kind() === NodeKind::List
         && $virtualizedList->properties()[PropKey::ScrollEnabled->value] === false
+        && $virtualizedList->properties()[PropKey::ListHorizontal->value] === true
+        && $virtualizedList->properties()[PropKey::ListInverted->value] === true
+        && $virtualizedList->properties()[PropKey::ListPrefetch->value] === 6
+        && isset($virtualizedList->events()[\Pam\Native\EventKind::Scroll->value])
         && count(array_filter(
             $sheetListKinds,
             static fn (NodeKind $kind): bool => $kind === NodeKind::List,
