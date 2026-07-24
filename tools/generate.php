@@ -516,7 +516,7 @@ foreach ($recipesByKey as $key => $recipe) {
 
 $styleAliases = [
     'avatar' => [
-        'AvatarFallback' => 'avatarStyle',
+        'AvatarFallback' => 'avatarFallbackTextStyle',
     ],
     'bottomsheet' => [
         'BottomSheetDragIndicator' => 'bottomSheetHandleStyle',

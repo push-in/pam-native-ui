@@ -415,7 +415,13 @@ final class ComponentRenderer
         if ($shouldHide) {
             $element = $element->visible(false);
         }
-        $label = $props['accessibilityLabel'] ?? $props['ariaLabel'] ?? null;
+        $label = $props['accessibilityLabel']
+            ?? $props['ariaLabel']
+            ?? (
+                self::isImage($part) || $part === 'ImageBackground'
+                    ? ($props['alt'] ?? null)
+                    : null
+            );
         if (is_string($label) && $label !== '') {
             $element = $element->accessibilityLabel($label);
         }
@@ -504,7 +510,7 @@ final class ComponentRenderer
         }
         if (self::isImage($part)) {
             $image = Image::make(
-                self::text($props, 'source', self::text($props, 'src')),
+                self::imageSource($props),
             )->fit(self::imageFit($props));
             $tint = self::packedColor($props['tintColor'] ?? null);
 
@@ -512,12 +518,18 @@ final class ComponentRenderer
         }
         if ($part === 'ImageBackground') {
             return ImageBackground::make(
-                self::text($props, 'source', self::text($props, 'src')),
+                self::imageSource($props),
                 ...$children,
             )->fit(self::imageFit($props));
         }
         if ($part === 'Spinner' || $part === 'ButtonSpinner') {
-            $spinner = ActivityIndicator::make(($props['visible'] ?? true) !== false);
+            $spinner = ActivityIndicator::make(
+                self::flag(
+                    $props,
+                    'animating',
+                    self::flag($props, 'visible', true),
+                ),
+            );
             $color = self::packedColor($props['color'] ?? null);
 
             return $color === null ? $spinner : $spinner->color($color);
@@ -1328,6 +1340,7 @@ final class ComponentRenderer
             || str_ends_with($part, 'Description')
             || str_ends_with($part, 'Caption')
             || in_array($part, [
+                'AvatarFallback',
                 'MessageBranchPage',
                 'ModelSelectorName',
                 'TableHead',
@@ -2092,6 +2105,31 @@ final class ComponentRenderer
     }
 
     /** @param array<string, mixed> $props */
+    private static function imageSource(array $props): string
+    {
+        $source = $props['source'] ?? $props['src'] ?? '';
+        if (is_scalar($source)) {
+            return (string) $source;
+        }
+        if (!is_array($source)) {
+            return '';
+        }
+        $uri = $source['uri'] ?? null;
+        if (is_scalar($uri)) {
+            return (string) $uri;
+        }
+        foreach ($source as $candidate) {
+            if (!is_array($candidate) || !is_scalar($candidate['uri'] ?? null)) {
+                continue;
+            }
+
+            return (string) $candidate['uri'];
+        }
+
+        return '';
+    }
+
+    /** @param array<string, mixed> $props */
     private static function keyboardAvoidingBehavior(
         array $props,
     ): KeyboardAvoidingBehavior {
@@ -2625,7 +2663,10 @@ final class ComponentRenderer
 
         if (
             isset($props['text'])
-            && in_array($part, ['Button', 'Badge', 'Fab', 'Link', 'MenuItem', 'SelectItem'], true)
+            && (
+                self::isPressable($part)
+                || in_array($part, ['Badge', 'InputSlot'], true)
+            )
         ) {
             return [Text::make(self::text($props, 'text'))];
         }

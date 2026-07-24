@@ -6411,7 +6411,7 @@ final class StyleRecipes
   'Attachments' => 80,
   'Avatar' => 36,
   'AvatarBadge' => 32,
-  'AvatarFallback' => 36,
+  'AvatarFallback' => 33,
   'AvatarFallbackText' => 33,
   'AvatarGroup' => 34,
   'AvatarImage' => 35,

@@ -77,6 +77,15 @@ root. Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider`
 return their single child directly; multiple children use a reconciler node
 that PAM's Android renderer flattens before native layout.
 
+Image facades accept both PAM URI strings and React Native-compatible
+`source="{{ ['uri' => $url] }}"` values (including source candidate lists).
+`alt` becomes the native accessibility label, `resizeMode` stays on the image
+primitive, and `AvatarFallback` is the same uppercase text alias exposed by
+gluestack/shadcn. Scalar content passed through the fluent class API also
+becomes a native text child for items, triggers and action buttons, so
+`BottomSheetItem::make('Save')` and `PromptInputButton::make('Attach')` render
+the same content as their tag equivalents.
+
 Responsive grids keep the same class vocabulary used by gluestack:
 
 ```xml

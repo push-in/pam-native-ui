@@ -103,6 +103,13 @@ Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider` return
 one child directly. A multi-child provider emits a property-free View that
 PAM's layout-only optimization flattens, so Android allocates no provider host.
 
+React Native image-source objects are normalized to one bounded URI during PHP
+composition; Android still receives only PAM's scalar `Source` property. The
+same path covers `Image`, `ImageBackground`, `AvatarImage` and image-viewer
+content, while `alt` is copied to native accessibility metadata. Generated
+style aliases preserve `AvatarFallback` as text rather than allocating a second
+avatar container.
+
 `FileTree` packs controlled/default expanded paths into one bounded newline
 payload. Folder and file hosts retain their authored nested PHP content while
 the root coordinates selection, expansion, chevron/content animation and

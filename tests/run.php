@@ -85,6 +85,8 @@ use Pam\MobileUi\Component\AttachmentHoverCardContent;
 use Pam\MobileUi\Component\AttachmentPreview;
 use Pam\MobileUi\Component\AttachmentRemove;
 use Pam\MobileUi\Component\Attachments;
+use Pam\MobileUi\Component\AvatarFallback;
+use Pam\MobileUi\Component\AvatarImage;
 use Pam\MobileUi\Component\Conversation;
 use Pam\MobileUi\Component\ConversationContent;
 use Pam\MobileUi\Component\ConversationScrollButton;
@@ -123,6 +125,7 @@ use Pam\MobileUi\Component\PromptInputActionMenu;
 use Pam\MobileUi\Component\PromptInputActionMenuContent;
 use Pam\MobileUi\Component\PromptInputActionMenuTrigger;
 use Pam\MobileUi\Component\PromptInputBody;
+use Pam\MobileUi\Component\PromptInputButton;
 use Pam\MobileUi\Component\PromptInputSubmit;
 use Pam\MobileUi\Component\PromptInputTextarea;
 use Pam\MobileUi\Component\Progress;
@@ -951,7 +954,14 @@ $imageBackground = ImageBackground::make(
     ['source' => 'file:///background.png', 'resizeMode' => 'center'],
     Text::make('Overlay'),
 )->toElement();
+$reactNativeImage = AvatarImage::make([
+    'source' => ['uri' => 'https://example.test/david.png'],
+    'alt' => 'David Balbino',
+])->toElement();
+$avatarFallback = AvatarFallback::make('db')->toElement();
 $spinnerPrimitive = Spinner::make(['color' => '#dc2626'])->toElement();
+$stoppedSpinner = Spinner::make(['animating' => false])->toElement();
+$promptButton = PromptInputButton::make('Attach')->toElement();
 $scrollPrimitive = ScrollView::make(
     [
         'scrollEnabled' => false,
@@ -977,8 +987,21 @@ $assert(
             === 0xff2563eb
         && $imageBackground->properties()[PropKey::ImageFit->value]
             === ImageFit::Center->value
+        && $reactNativeImage->kind() === NodeKind::Image
+        && $reactNativeImage->properties()[PropKey::Source->value]
+            === 'https://example.test/david.png'
+        && $reactNativeImage->properties()[PropKey::AccessibilityLabel->value]
+            === 'David Balbino'
+        && $avatarFallback->kind() === NodeKind::Text
+        && $avatarFallback->properties()[PropKey::Text->value] === 'db'
+        && $avatarFallback->properties()[PropKey::TextTransform->value]
+            === TextTransform::Uppercase->value
         && $spinnerPrimitive->properties()[PropKey::ProgressColor->value]
             === 0xffdc2626
+        && $stoppedSpinner->properties()[PropKey::Visible->value] === false
+        && $promptButton->kind() === NodeKind::Pressable
+        && $promptButton->children()[0]->properties()[PropKey::Text->value]
+            === 'Attach'
         && $scrollPrimitive->properties()[PropKey::ScrollEnabled->value] === false
         && $scrollPrimitive->properties()[PropKey::ShowsScrollIndicator->value] === false
         && $keyboardPrimitive->properties()[PropKey::KeyboardBehavior->value]
@@ -988,7 +1011,7 @@ $assert(
         && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]
             === StatusBarAppearance::Light->value
         && $statusPrimitive->properties()[PropKey::StatusBarHidden->value] === true,
-    'React Native core facades must forward native image, spinner, scroll, keyboard and status properties.',
+    'Core facades and aliases must forward image, a11y, spinner, text action, scroll, keyboard and status properties.',
 );
 
 $calendarAnatomy = Calendar::make(
@@ -1983,6 +2006,8 @@ $assert(
         && $bottomSheetIndicator->properties()[PropKey::Value->value]
             === 'pam:sheet-drag-indicator'
         && $bottomSheetItem->kind() === NodeKind::CustomView
+        && $bottomSheetItem->children()[0]
+            ->properties()[PropKey::Text->value] === 'Save'
         && $bottomSheetItemNative['behavior'] === NativeBehavior::SheetItem->value,
     'BottomSheet must pack snap points and coordinate its complete native anatomy.',
 );
