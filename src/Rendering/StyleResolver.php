@@ -63,6 +63,14 @@ final class StyleResolver
             return TailwindStyleCompiler::compile($recipe, $props, $theme);
         }
 
+        if ($part === 'GluestackUIProvider') {
+            return new Style(
+                widthPercent: 100.0,
+                heightPercent: 100.0,
+                flexGrow: 1.0,
+            );
+        }
+
         $size = is_int($props['size'] ?? null) ? $props['size'] : 3;
         $variant = is_int($props['variant'] ?? null) ? $props['variant'] : 1;
         $disabled = ($props['disabled'] ?? false) === true;

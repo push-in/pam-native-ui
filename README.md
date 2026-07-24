@@ -63,6 +63,20 @@ Applications are never forced into either form. Raw `Pam\Native\UI` elements,
 custom components, `.pam` tags, fluent classes, and native plugins can be mixed
 in the same tree.
 
+The upstream provider API is available without a JavaScript context layer:
+
+```xml
+<GluestackUIProvider mode="system">
+    <App />
+</GluestackUIProvider>
+```
+
+`light`, `dark` and `system` scope token resolution to the provider subtree and
+do not leak into adjacent renders. The provider itself is the full-size app
+root. Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider`
+return their single child directly; multiple children use a reconciler node
+that PAM's Android renderer flattens before native layout.
+
 Responsive grids keep the same class vocabulary used by gluestack:
 
 ```xml
@@ -427,6 +441,29 @@ remaining ordinary compound tags:
     </PromptInputBody>
     <PromptInputSubmit><ArrowUpIcon /></PromptInputSubmit>
 </PromptInput>
+
+<ModelSelector
+    open="{{ $modelSelectorOpen }}"
+    value="{{ $model }}"
+    size="sm"
+    on:toggle="setModelSelectorOpen"
+    on:change="selectModel"
+>
+    <ModelSelectorTrigger asChild="true">
+        <Button><ButtonText>Choose model</ButtonText></Button>
+    </ModelSelectorTrigger>
+    <ModelSelectorContent title="Choose a model">
+        <ModelSelectorInput sync="native" />
+        <ModelSelectorList>
+            <ModelSelectorGroup heading="PAM">
+                <ModelSelectorItem value="pam-fast">
+                    <ModelSelectorLogo provider="pam" />
+                    <ModelSelectorName>PAM Fast</ModelSelectorName>
+                </ModelSelectorItem>
+            </ModelSelectorGroup>
+        </ModelSelectorList>
+    </ModelSelectorContent>
+</ModelSelector>
 ```
 
 `ConversationContent` is a real Android scroll container. The latest-message
@@ -436,6 +473,14 @@ responses, counter and accessibility state on the UI thread, emitting one final
 index. Prompt text enables/disables Submit locally; submit trims and optionally
 clears the field, then sends one semantic string to PHP. With `sync="native"`,
 typing itself does not cross the bridge.
+
+`ModelSelector` preserves the upstream controlled contract. Its root is a
+flattened provider node, `asChild` keeps the authored trigger primitive, and
+only the content owns a PAM native modal. Header, screen-reader title, close
+control, bounded scroll body, group headings, selected item state and
+`xs`/`sm`/`md`/`lg`/`full` sizing are composed automatically. Trigger,
+selection, close button and Android Back each emit one semantic event; input
+editing can stay entirely native with `sync="native"`.
 
 `MessageResponse` supports headings, ordered/unordered lists, quotes, bold,
 italic, strike-through, inline/fenced code and safe links in one intrinsic

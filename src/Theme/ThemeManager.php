@@ -22,6 +22,11 @@ final class ThemeManager
         self::$mode = $mode;
     }
 
+    public static function configuredMode(): ThemeMode
+    {
+        return self::$mode;
+    }
+
     public static function systemDark(bool $dark): void
     {
         self::$systemDark = $dark;

@@ -23,6 +23,8 @@ use Pam\MobileUi\Component\BottomSheetFlatList;
 use Pam\MobileUi\Component\BottomSheetItem;
 use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\BottomSheetSectionList;
+use Pam\MobileUi\Component\BlankContext;
+use Pam\MobileUi\Component\BlankProvider;
 use Pam\MobileUi\Component\Checkbox;
 use Pam\MobileUi\Component\CheckboxGroup;
 use Pam\MobileUi\Component\CheckboxIcon;
@@ -47,6 +49,7 @@ use Pam\MobileUi\Component\DateTimePickerInput;
 use Pam\MobileUi\Component\DateTimePickerTrigger;
 use Pam\MobileUi\Component\Grid;
 use Pam\MobileUi\Component\GridItem;
+use Pam\MobileUi\Component\GluestackUIProvider;
 use Pam\MobileUi\Component\HStack;
 use Pam\MobileUi\Component\FormControl;
 use Pam\MobileUi\Component\FormControlError;
@@ -103,14 +106,19 @@ use Pam\MobileUi\Component\Menu;
 use Pam\MobileUi\Component\MenuItem;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
+use Pam\MobileUi\Component\ModelSelectorGroup;
 use Pam\MobileUi\Component\ModelSelectorInput;
+use Pam\MobileUi\Component\ModelSelectorItem;
+use Pam\MobileUi\Component\ModelSelectorList;
 use Pam\MobileUi\Component\ModelSelectorLogo;
 use Pam\MobileUi\Component\ModelSelectorName;
+use Pam\MobileUi\Component\ModelSelectorTrigger;
 use Pam\MobileUi\Component\Popover;
 use Pam\MobileUi\Component\PopoverArrow;
 use Pam\MobileUi\Component\PopoverCloseButton;
 use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
+use Pam\MobileUi\Component\PromptInputProvider;
 use Pam\MobileUi\Component\PromptInputActionMenu;
 use Pam\MobileUi\Component\PromptInputActionMenuContent;
 use Pam\MobileUi\Component\PromptInputActionMenuTrigger;
@@ -419,6 +427,33 @@ $assert(
 $assert(
     Themes::dark()->color(ColorToken::Background) === 0xff0a0a0a,
     'The upstream dark background token changed unexpectedly.',
+);
+$themedProvider = GluestackUIProvider::make(
+    ['mode' => 'dark'],
+    Button::make('Scoped theme'),
+)->toElement();
+$themedButton = $themedProvider->children()[0] ?? null;
+$blankChild = BlankProvider::make(Text::make('Blank'))->toElement();
+$blankContextChild = BlankContext::make(Text::make('Context'))->toElement();
+$promptProvider = PromptInputProvider::make(
+    null,
+    Text::make('One'),
+    Text::make('Two'),
+)->toElement();
+$assert(
+    $themedProvider->kind() === NodeKind::View
+        && $themedProvider->properties()[PropKey::WidthPercent->value] === 100.0
+        && $themedProvider->properties()[PropKey::HeightPercent->value] === 100.0
+        && $themedProvider->properties()[PropKey::FlexGrow->value] === 1.0
+        && $themedButton?->properties()[PropKey::BackgroundColor->value]
+            === Themes::dark()->color(ColorToken::Primary)
+        && ThemeManager::configuredMode() === ThemeMode::Light
+        && $blankChild->kind() === NodeKind::Text
+        && $blankContextChild->kind() === NodeKind::Text
+        && $promptProvider->kind() === NodeKind::View
+        && $promptProvider->properties()[PropKey::Collapsable->value] === true
+        && count($promptProvider->children()) === 2,
+    'Providers must scope theme rendering and avoid unnecessary native layout hosts.',
 );
 
 $button = Button::make('Continue')
@@ -1723,31 +1758,108 @@ $assert(
         && $formError->properties()[PropKey::Visible->value] === false,
     'FormControl must inject required anatomy, hide inactive feedback and link native field state.',
 );
+$modelSelectorOpenChanges = [];
+$modelSelectorValues = [];
+$modelSelectorNativeEvents = [];
 $modelSelector = ModelSelector::make(
-    ['open' => false],
-    ModelSelectorContent::make(),
-)->onNativeEvent(static function (): void {
-})->toElement();
-$modelSelectorContent = $modelSelector->children()[0] ?? null;
+    ['open' => false, 'size' => ComponentSize::Small, 'value' => 'pam-fast'],
+    ModelSelectorContent::make(
+        ['title' => 'Choose a model'],
+        ModelSelectorInput::make(),
+        ModelSelectorList::make(
+            ModelSelectorGroup::make(
+                ['heading' => 'PAM'],
+                ModelSelectorItem::make(
+                    ['value' => 'pam-fast'],
+                    ModelSelectorName::make('PAM Fast'),
+                ),
+            ),
+        ),
+    ),
+    ModelSelectorTrigger::make(
+        ['asChild' => true],
+        Button::make('Choose model'),
+    ),
+)->onToggle(
+    static function (bool $open) use (&$modelSelectorOpenChanges): void {
+        $modelSelectorOpenChanges[] = $open;
+    },
+)->onChange(
+    static function (string $value) use (&$modelSelectorValues): void {
+        $modelSelectorValues[] = $value;
+    },
+)->onNativeEvent(
+    static function (string $payload) use (&$modelSelectorNativeEvents): void {
+        $modelSelectorNativeEvents[] = $payload;
+    },
+)->toElement();
+$modelSelectorTrigger = $modelSelector->children()[0] ?? null;
+$modelSelectorContent = $modelSelector->children()[1] ?? null;
 $modelSelectorHost = $modelSelectorContent?->children()[0] ?? null;
+$modelSelectorHeader = $modelSelectorHost?->children()[0] ?? null;
+$modelSelectorTitle = $modelSelectorHeader?->children()[0] ?? null;
+$modelSelectorClose = $modelSelectorHeader?->children()[1] ?? null;
+$modelSelectorBody = $modelSelectorHost?->children()[1]?->children()[0] ?? null;
+$modelSelectorInput = $modelSelectorBody?->children()[0] ?? null;
+$modelSelectorList = $modelSelectorBody?->children()[1] ?? null;
+$modelSelectorGroup = $modelSelectorList?->children()[0] ?? null;
+$modelSelectorHeading = $modelSelectorGroup?->children()[0] ?? null;
+$modelSelectorItem = $modelSelectorGroup?->children()[1] ?? null;
+$modelSelectorCloseNative = $modelSelectorClose?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
 if (
-    !$modelSelectorContent instanceof \Pam\Native\Element
+    !$modelSelectorTrigger instanceof \Pam\Native\Element
+    || !$modelSelectorContent instanceof \Pam\Native\Element
     || !$modelSelectorHost instanceof \Pam\Native\Element
+    || !$modelSelectorHeader instanceof \Pam\Native\Element
+    || !$modelSelectorTitle instanceof \Pam\Native\Element
+    || !$modelSelectorCloseNative instanceof BinaryValue
+    || !$modelSelectorBody instanceof \Pam\Native\Element
+    || !$modelSelectorInput instanceof \Pam\Native\Element
+    || !$modelSelectorHeading instanceof \Pam\Native\Element
+    || !$modelSelectorItem instanceof \Pam\Native\Element
 ) {
     throw new RuntimeException('ModelSelector must render its controlled content.');
 }
+$modelSelectorCloseProperties = Wire::decodeMap($modelSelectorCloseNative->bytes);
+$modelSelectorTrigger->events()[\Pam\Native\EventKind::Press->value]();
+$modelSelectorItem->events()[\Pam\Native\EventKind::Press->value]();
+$modelSelectorHost->events()[\Pam\Native\EventKind::Native->value](
+    Wire::map(['action' => 1, 'dismissed' => true]),
+);
 $assert(
     $modelSelector->kind() === NodeKind::View
+        && $modelSelector->properties()[PropKey::Collapsable->value] === true
         && !isset($modelSelector->properties()[PropKey::Visible->value])
         && $modelSelectorContent->properties()[PropKey::Visible->value] === false,
     'ModelSelector must keep its trigger host mounted while hiding controlled content.',
 );
 $assert(
-    $modelSelectorContent->kind() === NodeKind::Modal
+    $modelSelectorTrigger->kind() === NodeKind::Pressable
+        && $modelSelectorContent->kind() === NodeKind::Modal
         && $modelSelectorHost->kind() === NodeKind::CustomView
         && isset($modelSelectorContent->events()[\Pam\Native\EventKind::Native->value])
-        && isset($modelSelectorHost->events()[\Pam\Native\EventKind::Native->value]),
-    'ModelSelector events must reach both native window dismissal and its semantic host.',
+        && isset($modelSelectorHost->events()[\Pam\Native\EventKind::Native->value])
+        && $modelSelectorHost->properties()[PropKey::AccessibilityLabel->value]
+            === 'Choose a model'
+        && $modelSelectorHost->properties()[PropKey::WidthPercent->value] === 70.0
+        && $modelSelectorHost->properties()[PropKey::MaxWidth->value] === 420.0
+        && $modelSelectorTitle->properties()[PropKey::Width->value] === 1.0
+        && $modelSelectorTitle->properties()[PropKey::Height->value] === 1.0
+        && $modelSelectorCloseProperties['behavior']
+            === NativeBehavior::OverlayDismiss->value
+        && $modelSelectorInput->kind() === NodeKind::Input
+        && $modelSelectorInput->properties()[PropKey::Placeholder->value]
+            === 'Search models...'
+        && $modelSelectorHeading->properties()[PropKey::Text->value] === 'PAM'
+        && $modelSelectorHeading->properties()[PropKey::Value->value]
+            === 'pam:model-selector-heading'
+        && $modelSelectorItem->properties()[PropKey::Selected->value] === true
+        && $modelSelectorOpenChanges === [true, false]
+        && $modelSelectorValues === ['pam-fast']
+        && count($modelSelectorNativeEvents) === 1,
+    'ModelSelector must preserve provider, modal anatomy, sizing, selection and controlled open events.',
 );
 $closedSelect = Select::make(
     ['open' => false],

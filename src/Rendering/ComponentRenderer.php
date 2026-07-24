@@ -73,6 +73,23 @@ final class ComponentRenderer
 
         $props = self::withDefaults($part, $props);
         $children = self::fallbackChildren($part, $props, $children);
+        if (self::isTransparentProvider($part)) {
+            $provider = self::transparentChildren($children);
+            if ($elementKey !== null) {
+                $provider = $provider->key($elementKey);
+            }
+
+            return $provider;
+        }
+        if ($part === 'ModelSelector') {
+            $selector = View::make(...self::modelSelectorRootChildren($children))
+                ->collapsable();
+            if ($elementKey !== null) {
+                $selector = $selector->key($elementKey);
+            }
+
+            return $selector;
+        }
         if (
             in_array($part, ['Skeleton', 'SkeletonText'], true)
             && self::flag($props, 'isLoaded')
@@ -120,10 +137,19 @@ final class ComponentRenderer
         $props = self::controlledItemState($part, $props, $parentProps);
         $runtimeProps = [...$parentProps, ...$props];
         $events = self::componentEvents($part, $runtimeProps, $events);
+        $children = self::modelSelectorChildren(
+            $part,
+            $runtimeProps,
+            $children,
+        );
         $children = self::formControlChildren($part, $runtimeProps, $children);
         $children = self::inputEventChildren($part, $events, $children);
         $children = self::messageResponseEventChildren($part, $events, $children);
-        $style = StyleResolver::resolve($part, $props, ThemeManager::current());
+        $style = StyleResolver::resolve(
+            $part === 'ModelSelectorContent' ? 'ModalContent' : $part,
+            $props,
+            ThemeManager::current(),
+        );
         $nativeBackground = $style->backgroundColor;
         if ($styleOverride !== null && $styleOverride->backgroundColor !== null) {
             $nativeBackground = $styleOverride->backgroundColor;
@@ -597,6 +623,13 @@ final class ComponentRenderer
         if ($part === 'Grid') {
             return self::grid($props, $children);
         }
+        if (
+            $part === 'ModelSelectorTrigger'
+            && self::flag($props, 'asChild')
+            && count($children) === 1
+        ) {
+            return $children[0];
+        }
 
         $behavior = self::nativeBehavior($part);
         if ($behavior !== NativeBehavior::Container) {
@@ -794,6 +827,32 @@ final class ComponentRenderer
         } elseif ($part === 'TableFooter') {
             $props['isFooterRow'] = true;
         }
+        if ($part === 'GluestackUIProvider' && !array_key_exists('mode', $props)) {
+            $props['mode'] = 'system';
+        }
+        if ($part === 'ModelSelector') {
+            if (
+                !array_key_exists('open', $props)
+                && !array_key_exists('isOpen', $props)
+                && !array_key_exists('defaultIsOpen', $props)
+            ) {
+                $props['defaultIsOpen'] = false;
+            }
+            if (!array_key_exists('size', $props)) {
+                $props['size'] = 3;
+            }
+        } elseif ($part === 'ModelSelectorContent') {
+            if (!array_key_exists('title', $props)) {
+                $props['title'] = 'Model Selector';
+            }
+            if (!array_key_exists('accessibilityLabel', $props)) {
+                $props['accessibilityLabel'] = self::text(
+                    $props,
+                    'title',
+                    'Model Selector',
+                );
+            }
+        }
         if ($part === 'Conversation' && !array_key_exists('autoScroll', $props)) {
             $props['autoScroll'] = true;
         } elseif ($part === 'SelectInput') {
@@ -939,9 +998,41 @@ final class ComponentRenderer
                 return $inherited;
             }
         }
+        if ($source === 'ModelSelector') {
+            if ($target === 'ModelSelectorTrigger') {
+                $toggle = $events[EventKind::Toggle->value] ?? null;
+
+                return $toggle === null
+                    ? []
+                    : [
+                        EventKind::Press->value =>
+                            static function () use ($toggle): void {
+                                $toggle(true);
+                            },
+                    ];
+            }
+            if ($target === 'ModelSelectorContent') {
+                $inherited = $events;
+                $native = $events[EventKind::Native->value] ?? null;
+                $toggle = $events[EventKind::Toggle->value] ?? null;
+                if ($toggle !== null) {
+                    $inherited[EventKind::Native->value] =
+                        static function (string $payload) use (
+                            $native,
+                            $toggle,
+                        ): void {
+                            $native?->__invoke($payload);
+                            if (self::nativeEventAction($payload) === 1) {
+                                $toggle(false);
+                            }
+                        };
+                }
+
+                return $inherited;
+            }
+        }
         if (
             ($source === 'BottomSheet' && $target === 'BottomSheetPortal')
-            || ($source === 'ModelSelector' && $target === 'ModelSelectorContent')
         ) {
             return $events;
         }
@@ -962,6 +1053,7 @@ final class ComponentRenderer
 
         if (
             ($source === 'Select' && $target === 'SelectItem')
+            || ($source === 'ModelSelector' && $target === 'ModelSelectorItem')
         ) {
             return [
                 EventKind::Press->value => self::scalarSelectionHandler(
@@ -1366,9 +1458,142 @@ final class ComponentRenderer
         return match ($part) {
             'AccordionItem' => [...$props, 'expanded' => $selected],
             'Checkbox', 'Radio', 'SelectItem' => [...$props, 'checked' => $selected],
-            'MenuItem', 'TabsTrigger' => [...$props, 'selected' => $selected],
+            'MenuItem',
+            'ModelSelectorItem',
+            'TabsTrigger' => [...$props, 'selected' => $selected],
             default => $props,
         };
+    }
+
+    private static function isTransparentProvider(string $part): bool
+    {
+        return in_array($part, [
+            'BlankContext',
+            'BlankProvider',
+            'PromptInputProvider',
+        ], true);
+    }
+
+    /**
+     * React context providers do not create a native layout node. PAM returns
+     * the only child directly and uses an Android-layout-only View as the
+     * fragment carrier when a provider has multiple children.
+     *
+     * @param list<Element> $children
+     */
+    private static function transparentChildren(array $children): Element
+    {
+        return count($children) === 1
+            ? $children[0]
+            : View::make(...$children)->collapsable();
+    }
+
+    /**
+     * Upstream extracts modal content from the trigger fragment and mounts it
+     * last. Keeping the same order also restores focus to a mounted trigger.
+     *
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function modelSelectorRootChildren(array $children): array
+    {
+        $triggers = [];
+        $content = [];
+        foreach ($children as $child) {
+            if ($child->kind() === NodeKind::Modal) {
+                $content[] = $child;
+            } else {
+                $triggers[] = $child;
+            }
+        }
+
+        return [...$triggers, ...$content];
+    }
+
+    /**
+     * Synthesizes the same fixed anatomy as gluestack's ModelSelectorContent
+     * and ModelSelectorGroup while keeping authored list/items untouched.
+     *
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function modelSelectorChildren(
+        string $part,
+        array $props,
+        array $children,
+    ): array {
+        if ($part === 'ModelSelectorGroup') {
+            $heading = self::text($props, 'heading');
+            if ($heading === '') {
+                return $children;
+            }
+
+            $headingElement = Text::make($heading)
+                ->style(
+                    StyleResolver::resolve(
+                        'Text',
+                        [
+                            'className' =>
+                                'px-4 py-2 text-sm font-semibold text-muted-foreground',
+                        ],
+                        ThemeManager::current(),
+                    ),
+                )
+                ->property(PropKey::Value, 'pam:model-selector-heading');
+
+            return [$headingElement, ...$children];
+        }
+        if ($part !== 'ModelSelectorContent') {
+            return $children;
+        }
+
+        $title = self::text($props, 'title', 'Model Selector');
+        $titleElement = Text::make($title)
+            ->style(
+                StyleResolver::resolve(
+                    'Text',
+                    ['className' => 'sr-only'],
+                    ThemeManager::current(),
+                ),
+            );
+        $closeIcon = self::render(
+            'CloseIcon',
+            ['size' => 4],
+            [],
+            [],
+            null,
+            null,
+        );
+        $close = self::render(
+            'ModalCloseButton',
+            ['accessibilityLabel' => 'Close model selector'],
+            [$closeIcon],
+            [],
+            null,
+            null,
+        );
+        $header = self::render(
+            'ModalHeader',
+            [],
+            [$titleElement, $close],
+            [],
+            null,
+            null,
+        );
+        $body = self::render(
+            'ModalBody',
+            [],
+            $children,
+            [],
+            null,
+            null,
+        );
+        $scroll = Scroll::make($body)
+            ->showsIndicator(true)
+            ->style(new Style(maxHeight: 500.0));
+
+        return [$header, $scroll];
     }
 
     /** @param array<string, mixed> $props

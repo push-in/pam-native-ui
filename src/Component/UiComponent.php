@@ -8,6 +8,8 @@ use BackedEnum;
 use Closure;
 use Pam\MobileUi\Rendering\ComponentRenderer;
 use Pam\MobileUi\Rendering\ValueNormalizer;
+use Pam\MobileUi\Enum\ThemeMode;
+use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
@@ -275,67 +277,88 @@ abstract class UiComponent implements Renderable
             static::COMPONENT,
             $this->props,
         );
-        $events = $this->events;
-        foreach ($this->eventContexts as $source => $context) {
-            $events = self::mergeEvents(
-                $events,
-                ComponentRenderer::inheritedEvents(
-                    $source,
-                    static::COMPONENT,
+        $previousThemeMode = null;
+        if (static::COMPONENT === 'GluestackUIProvider') {
+            $previousThemeMode = ThemeManager::configuredMode();
+            ThemeManager::mode(self::providerThemeMode($componentProps['mode'] ?? null));
+        }
+
+        try {
+            $events = $this->events;
+            foreach ($this->eventContexts as $source => $context) {
+                $events = self::mergeEvents(
+                    $events,
+                    ComponentRenderer::inheritedEvents(
+                        $source,
+                        static::COMPONENT,
+                        $componentProps,
+                        $context['props'],
+                        $context['events'],
+                    ),
+                );
+            }
+            $eventContexts = $this->eventContexts;
+            if (
+                $this->events !== []
+                && ComponentRenderer::forwardsEventsToDescendants(static::COMPONENT)
+            ) {
+                $eventContexts[static::COMPONENT] = [
+                    'props' => $componentProps,
+                    'events' => $this->events,
+                ];
+            }
+            $context = [
+                ...$this->parentVariants,
+                ...array_filter(
                     $componentProps,
-                    $context['props'],
-                    $context['events'],
+                    static fn (mixed $value, string $name): bool =>
+                        self::isContextValue($name, $value),
+                    ARRAY_FILTER_USE_BOTH,
                 ),
-            );
-        }
-        $eventContexts = $this->eventContexts;
-        if (
-            $this->events !== []
-            && ComponentRenderer::forwardsEventsToDescendants(static::COMPONENT)
-        ) {
-            $eventContexts[static::COMPONENT] = [
-                'props' => $componentProps,
-                'events' => $this->events,
             ];
+            $children = array_map(
+                static function (Renderable $child) use (
+                    $context,
+                    $eventContexts,
+                ): Element {
+                    if ($child instanceof UiComponent) {
+                        $child = $child
+                            ->withParentVariants($context)
+                            ->withEventContexts($eventContexts);
+                    }
+
+                    return $child->toElement();
+                },
+                $this->children,
+            );
+            $props = $componentProps;
+
+            if ($this->parentVariants !== []) {
+                $props['__parentVariants'] = $this->parentVariants;
+            }
+
+            return ComponentRenderer::render(
+                static::COMPONENT,
+                $props,
+                $children,
+                $events,
+                $this->styleOverride,
+                $this->elementKey,
+            );
+        } finally {
+            if ($previousThemeMode !== null) {
+                ThemeManager::mode($previousThemeMode);
+            }
         }
-        $context = [
-            ...$this->parentVariants,
-            ...array_filter(
-                $componentProps,
-                static fn (mixed $value, string $name): bool =>
-                    self::isContextValue($name, $value),
-                ARRAY_FILTER_USE_BOTH,
-            ),
-        ];
-        $children = array_map(
-            static function (Renderable $child) use (
-                $context,
-                $eventContexts,
-            ): Element {
-                if ($child instanceof UiComponent) {
-                    $child = $child
-                        ->withParentVariants($context)
-                        ->withEventContexts($eventContexts);
-                }
+    }
 
-                return $child->toElement();
-            },
-            $this->children,
-        );
-        $props = $componentProps;
-
-        if ($this->parentVariants !== []) {
-            $props['__parentVariants'] = $this->parentVariants;
-        }
-
-        return ComponentRenderer::render(
-            static::COMPONENT,
-            $props,
-            $children,
-            $events,
-            $this->styleOverride,
-            $this->elementKey,
-        );
+    private static function providerThemeMode(mixed $mode): ThemeMode
+    {
+        return match ($mode) {
+            ThemeMode::Light->value, 'light' => ThemeMode::Light,
+            ThemeMode::Dark->value, 'dark' => ThemeMode::Dark,
+            default => ThemeMode::System,
+        };
     }
 
     /**

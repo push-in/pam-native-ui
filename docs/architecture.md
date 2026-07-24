@@ -96,6 +96,13 @@ WebView, JavaScript runtime or nested text-view-per-token tree is created.
 application policy instead of opening an external activity implicitly. File
 parts remain ordinary PAM images, including base64 data URIs.
 
+`GluestackUIProvider` scopes light/dark/system token resolution while PHP
+composes its subtree, then restores the previous theme before an adjacent tree
+is rendered. Its one full-size View matches the upstream provider root.
+Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider` return
+one child directly. A multi-child provider emits a property-free View that
+PAM's layout-only optimization flattens, so Android allocates no provider host.
+
 `FileTree` packs controlled/default expanded paths into one bounded newline
 payload. Folder and file hosts retain their authored nested PHP content while
 the root coordinates selection, expansion, chevron/content animation and
@@ -125,12 +132,23 @@ collection row/column metadata to accessibility services. Rotation and
 responsive relayout do not require a PHP callback.
 
 Controlled compound overlays keep their trigger subtree mounted when
-`open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
-layout root plus a dedicated portal/content child backed by PAM's native
-`Modal` node. Only that child owns the Android `Dialog`/sheet window. Root event
-handlers are copied to the native child host at composition time, so dismiss,
-selection and drag-end events still target the application callback without a
-runtime lookup or an extra bridge hop.
+`open=false`. `Select` and `BottomSheet` render a stable layout root plus a
+dedicated portal child. `ModelSelector` uses a keyed, layout-only provider root
+that Android flattens, matching React context/fragment semantics without
+allocating a container. Its content is still a dedicated PAM native `Modal`
+node and is ordered after every trigger. Only the portal/content child owns the
+Android `Dialog`/sheet window. Root event handlers are copied to the native
+child host at composition time, so dismiss, selection and drag-end events
+still target the application callback without a runtime lookup or an extra
+bridge hop.
+
+`ModelSelectorContent` composes its fixed upstream anatomy once: a modal header,
+1 dp screen-reader title, native dismiss control, a maximum-500 dp scroll
+viewport and modal body around the authored children. The root `size` resolves
+through the original ModalContent width recipes. `asChild` applies trigger
+styles and events to the existing child instead of wrapping it. Group headings
+and controlled selected-item state are inherited during composition; opening,
+selection and dismissal each emit one bounded semantic event.
 
 Closed portal/backdrop/content parts become `GONE`; their native controller
 also disables click, focus, accessibility and gesture handling. Touches
