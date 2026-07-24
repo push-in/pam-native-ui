@@ -44,8 +44,8 @@ internal class MobileUiGridView(
     private var lastPlan = GridPlan(emptyList(), 0, GridSpec.DEFAULT_COLUMNS)
 
     init {
-        clipChildren = true
-        clipToPadding = true
+        clipChildren = false
+        clipToPadding = false
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
     }
 

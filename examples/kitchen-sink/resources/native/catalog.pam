@@ -241,7 +241,7 @@
                     </AccordionItem>
                 </Accordion>
 
-                <Tabs value="{{ $tab }}" variant="filled" on:change="selectTab">
+                <Tabs defaultValue="1" variant="filled">
                     <TabsList>
                         <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
                         <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
@@ -255,13 +255,13 @@
                     </TabsContentWrapper>
                 </Tabs>
 
-                <Grid class="grid-cols-1 sm:grid-cols-2 gap-3">
-                    <GridItem><Button class="w-full" variant="outline" on:press="toggleDrawer">
+                <VStack class="gap-3">
+                    <Button class="w-full" variant="outline" on:press="toggleDrawer">
                         <MenuIcon />
                         <ButtonText>Drawer</ButtonText>
-                    </Button></GridItem>
-                    <GridItem><Popover class="w-full" open="{{ $popoverOpen }}" placement="bottom-start">
-                        <Button class="w-full" variant="outline" on:press="togglePopover">
+                    </Button>
+                    <Popover class="w-full" placement="bottom-start">
+                        <Button class="w-full" variant="outline">
                             <InfoIcon />
                             <ButtonText>Popover</ButtonText>
                         </Button>
@@ -270,16 +270,16 @@
                             <PopoverHeader><Heading size="sm">Local overlay</Heading></PopoverHeader>
                             <PopoverBody><Text>No PHP roundtrip while positioning.</Text></PopoverBody>
                         </PopoverContent>
-                    </Popover></GridItem>
-                    <GridItem><Menu class="w-full" placement="bottom-end" on:change="chooseMenu">
+                    </Popover>
+                    <Menu class="w-full" placement="bottom-end" on:change="chooseMenu">
                         <Button class="w-full" variant="outline">
                             <MenuIcon />
                             <ButtonText>Menu</ButtonText>
                         </Button>
                         <MenuItem key="share"><MenuItemLabel>Share</MenuItemLabel></MenuItem>
                         <MenuItem key="archive"><MenuItemLabel>Archive</MenuItemLabel></MenuItem>
-                    </Menu></GridItem>
-                    <GridItem><Tooltip class="w-full" openDelay="400" closeDelay="100" placement="top">
+                    </Menu>
+                    <Tooltip class="w-full" openDelay="400" closeDelay="100" placement="top">
                         <Button class="w-full" variant="outline" accessibilityLabel="Performance details">
                             <InfoIcon />
                             <ButtonText>Details</ButtonText>
@@ -287,8 +287,8 @@
                         <TooltipContent>
                             <TooltipText>Positioned entirely on Android.</TooltipText>
                         </TooltipContent>
-                    </Tooltip></GridItem>
-                </Grid>
+                    </Tooltip>
+                </VStack>
             </VStack>
 
             <VStack class="gap-3">
@@ -301,9 +301,9 @@
                     format="DD/MM/YYYY"
                     on:change="selectDate"
                 >
-                    <DateTimePickerTrigger>
+                    <DateTimePickerTrigger class="items-center">
                         <DateTimePickerIcon><CalendarDaysIcon /></DateTimePickerIcon>
-                        <DateTimePickerInput value="{{ $selectedDate }}" />
+                        <DateTimePickerInput class="text-center" value="{{ $selectedDate }}" />
                     </DateTimePickerTrigger>
                 </DateTimePicker>
                 <Calendar
@@ -376,11 +376,7 @@
                     </MessageBranchSelector>
                 </MessageBranch>
 
-                <FileTree
-                    defaultExpanded="$expandedFolders"
-                    selectedPath="{{ $selectedFile }}"
-                    on:change="selectFile"
-                >
+                <FileTree defaultExpanded="$expandedFolders">
                     <FileTreeFolder path="/src" name="src">
                         <FileTreeFile path="/src/App.php" name="App.php" />
                         <FileTreeFile path="/src/Theme.php" name="Theme.php" />

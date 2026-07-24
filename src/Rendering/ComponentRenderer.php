@@ -316,7 +316,17 @@ final class ComponentRenderer
             'SelectContent',
             'TooltipContent',
         ], true)) {
-            $element = $element->property(PropKey::Value, 'pam:overlay-content');
+            $element = $element
+                ->property(PropKey::Value, 'pam:overlay-content')
+                ->property(
+                    PropKey::PositionType,
+                    PositionType::Absolute->value,
+                );
+            if ($part === 'PopoverContent') {
+                $element = $element->property(PropKey::MinHeight, 88.0);
+            } elseif ($part === 'TooltipContent') {
+                $element = $element->property(PropKey::MinHeight, 44.0);
+            }
         } elseif ($part === 'PopoverArrow') {
             $element = $element->property(PropKey::Value, 'pam:overlay-arrow');
         } elseif (in_array($part, [
@@ -347,6 +357,7 @@ final class ComponentRenderer
         } elseif ($part === 'TabsIndicator' || $part === 'TabsAnimatedIndicator') {
             $element = $element
                 ->property(PropKey::Value, 'pam:tabs-indicator')
+                ->property(PropKey::PointerEvents, PointerEvents::None->value)
                 ->property(PropKey::PositionType, PositionType::Absolute->value)
                 ->property(PropKey::Left, 0.0)
                 ->property(PropKey::Top, 0.0);
@@ -472,7 +483,14 @@ final class ComponentRenderer
                 self::isClosed($runtimeProps)
                 && (
                     self::hidesEntireRootWhenClosed($part)
-                    || self::isOverlayContent($part)
+                    || (
+                        self::isOverlayContent($part)
+                        && !in_array($part, [
+                            'PopoverBackdrop',
+                            'PopoverContent',
+                            'TooltipContent',
+                        ], true)
+                    )
                 )
             )
         );
@@ -812,7 +830,16 @@ final class ComponentRenderer
         if ($part === 'HStack' || $part === 'ButtonGroup' || $part === 'AvatarGroup') {
             return Row::make(...$children);
         }
-        if ($part === 'VStack' || $part === 'Conversation' || $part === 'FileTree') {
+        if (
+            $part === 'VStack'
+            || $part === 'Conversation'
+            || $part === 'FileTree'
+            || in_array($part, [
+                'PopoverContent',
+                'PopoverBody',
+                'TooltipContent',
+            ], true)
+        ) {
             return Column::make(...$children);
         }
         if (self::isPressable($part)) {
@@ -1034,6 +1061,9 @@ final class ComponentRenderer
      */
     public static function withDefaults(string $part, array $props): array
     {
+        if (self::isIcon($part) && !array_key_exists('size', $props)) {
+            $props['size'] = 'sm';
+        }
         if ($part === 'TableHeader') {
             $props['isHeaderRow'] = true;
         } elseif ($part === 'TableFooter') {
@@ -2308,7 +2338,6 @@ final class ComponentRenderer
             return $children;
         }
 
-        $closed = self::isClosed($props);
         if ($overlayPart === 'Menu') {
             $hasTrigger = self::flag(
                 $props,
@@ -2325,11 +2354,12 @@ final class ComponentRenderer
                 'pam:overlay-trigger',
             );
             $content = Column::make(...array_slice($children, 1))
-                ->property(PropKey::Value, 'pam:overlay-content');
-            if ($closed) {
-                $content = $content->visible(false);
-            }
-
+                ->property(PropKey::Value, 'pam:overlay-content')
+                ->property(
+                    PropKey::PositionType,
+                    PositionType::Absolute->value,
+                )
+                ->property(PropKey::MinHeight, 88.0);
             return [$trigger, $content];
         }
 
@@ -2344,9 +2374,6 @@ final class ComponentRenderer
                     && str_starts_with($tag, 'pam:overlay-backdrop:')
                 )
             ) {
-                if ($closed) {
-                    $children[$index] = $child->visible(false);
-                }
                 continue;
             }
             if (!$triggerMarked) {
@@ -4436,10 +4463,11 @@ final class ComponentRenderer
      */
     private static function fileTreeNativeProperties(array $props): array
     {
-        $expanded = $props['expanded']
-            ?? $props['expandedPaths']
-            ?? $props['defaultExpanded']
-            ?? [];
+        $controlled = array_key_exists('expanded', $props)
+            || array_key_exists('expandedPaths', $props);
+        $expanded = $controlled
+            ? ($props['expanded'] ?? $props['expandedPaths'] ?? [])
+            : ($props['defaultExpanded'] ?? []);
         if (is_string($expanded)) {
             $expanded = preg_split('/[\r\n,;|]+/', $expanded) ?: [];
         }
@@ -4458,7 +4486,10 @@ final class ComponentRenderer
             ),
         );
 
-        return ['expandedPaths' => implode("\n", $paths)];
+        return [
+            $controlled ? 'expandedPaths' : 'defaultExpandedPaths' =>
+                implode("\n", $paths),
+        ];
     }
 
     /**

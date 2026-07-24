@@ -13,11 +13,9 @@ final class Catalog extends Component
 {
     private bool $checked = true;
     private float $progress = 64.0;
-    private int $tab = 1;
     private bool $modalOpen = false;
     private bool $sheetOpen = false;
     private bool $drawerOpen = false;
-    private bool $popoverOpen = false;
     private bool $selectOpen = false;
     private bool $galleryOpen = false;
     private int $galleryIndex = 0;
@@ -26,7 +24,6 @@ final class Catalog extends Component
     private string $email = '';
     private string $plan = 'starter';
     private string $selectedDate = '2026-07-23';
-    private string $selectedFile = '/src/App.php';
     private string $notice = 'All interactions use semantic native events.';
     /** @var list<string> */
     private array $nativePackages = [
@@ -91,11 +88,6 @@ final class Catalog extends Component
         $this->email = $email;
     }
 
-    public function selectTab(string $payload): void
-    {
-        $this->tab = max(1, min(3, (int) $payload));
-    }
-
     public function updateProgress(string $payload): void
     {
         $this->progress = max(0.0, min(100.0, (float) $payload));
@@ -129,11 +121,6 @@ final class Catalog extends Component
     public function closeDrawer(): void
     {
         $this->drawerOpen = false;
-    }
-
-    public function togglePopover(): void
-    {
-        $this->popoverOpen = !$this->popoverOpen;
     }
 
     public function chooseMenu(string $action): void
@@ -204,12 +191,6 @@ final class Catalog extends Component
         $this->notice = "Markdown link activated: {$uri}";
     }
 
-    public function selectFile(string $path): void
-    {
-        $this->selectedFile = $path;
-        $this->notice = "Selected file: {$path}";
-    }
-
     public function selectDate(string $payload): void
     {
         if ($payload !== '') {
@@ -221,11 +202,9 @@ final class Catalog extends Component
      * @return array{
      *     checked: bool,
      *     progress: float,
-     *     tab: int,
      *     modalOpen: bool,
      *     sheetOpen: bool,
      *     drawerOpen: bool,
-     *     popoverOpen: bool,
      *     selectOpen: bool,
      *     galleryOpen: bool,
      *     galleryIndex: int,
@@ -235,7 +214,6 @@ final class Catalog extends Component
      *     email: string,
      *     plan: string,
      *     selectedDate: string,
-     *     selectedFile: string,
      *     expandedFolders: list<string>,
      *     expandedAccordions: list<string>,
      *     nativePackages: list<string>,
@@ -247,11 +225,9 @@ final class Catalog extends Component
         return [
             'checked' => $this->checked,
             'progress' => $this->progress,
-            'tab' => $this->tab,
             'modalOpen' => $this->modalOpen,
             'sheetOpen' => $this->sheetOpen,
             'drawerOpen' => $this->drawerOpen,
-            'popoverOpen' => $this->popoverOpen,
             'selectOpen' => $this->selectOpen,
             'galleryOpen' => $this->galleryOpen,
             'galleryIndex' => $this->galleryIndex,
@@ -261,7 +237,6 @@ final class Catalog extends Component
             'email' => $this->email,
             'plan' => $this->plan,
             'selectedDate' => $this->selectedDate,
-            'selectedFile' => $this->selectedFile,
             'expandedFolders' => $this->expandedFolders,
             'expandedAccordions' => $this->expandedAccordions,
             'nativePackages' => $this->nativePackages,

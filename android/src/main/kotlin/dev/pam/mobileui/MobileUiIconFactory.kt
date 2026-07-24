@@ -8,6 +8,7 @@ import android.graphics.Path
 import android.view.View
 import dev.pam.nativeapp.protocol.WireValue
 import dev.pam.nativeapp.views.NativeViewFactory
+import kotlin.math.max
 
 class MobileUiIconFactory(
     @Suppress("UNUSED_PARAMETER") context: Context,
@@ -46,6 +47,14 @@ private class MobileUiIcon(context: Context) : View(context) {
         strokeJoin = Paint.Join.ROUND
     }
 
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val desired = dp(DEFAULT_SIZE_DP)
+        setMeasuredDimension(
+            resolveSize(desired, widthMeasureSpec),
+            resolveSize(desired, heightMeasureSpec),
+        )
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (parsedPaths.isEmpty()) return
@@ -61,5 +70,12 @@ private class MobileUiIcon(context: Context) : View(context) {
             canvas.drawPath(path, paint)
         }
         canvas.restore()
+    }
+
+    private fun dp(value: Float): Int =
+        max(1, (value * resources.displayMetrics.density + 0.5f).toInt())
+
+    private companion object {
+        const val DEFAULT_SIZE_DP = 20f
     }
 }

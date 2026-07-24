@@ -203,6 +203,8 @@ internal class MobileUiHost(
     private var closeOnClick = true
     private var pendingAnchoredOpen: Runnable? = null
     private var pendingAnchoredClose: Runnable? = null
+    private var anchoredTouchCatcher: View? = null
+    private var anchoredTouchInsideContent = false
     private var dismissible = true
     private var closeOnOverlayClick = true
     private var backdropPressBehavior = BACKDROP_PRESS_CLOSE
@@ -440,6 +442,11 @@ internal class MobileUiHost(
         setWillNotDraw(false)
     }
 
+    override fun onDetachedFromWindow() {
+        removeAnchoredTouchDelegate()
+        super.onDetachedFromWindow()
+    }
+
     fun update(properties: Map<String, WireValue>) {
         require(Looper.myLooper() == Looper.getMainLooper()) {
             "PAM Mobile UI updates must run on Android's UI thread"
@@ -616,7 +623,13 @@ internal class MobileUiHost(
                 || previousBehavior != behavior
             ) {
                 fileTreeExpandedPaths.clear()
-                properties.text("expandedPaths")
+                properties.text(
+                    if (properties.containsKey("expandedPaths")) {
+                        "expandedPaths"
+                    } else {
+                        "defaultExpandedPaths"
+                    },
+                )
                     ?.lineSequence()
                     ?.filter(String::isNotEmpty)
                     ?.forEach(fileTreeExpandedPaths::add)
@@ -1108,6 +1121,10 @@ internal class MobileUiHost(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        if (behavior.isAnchoredOverlay() && childCount > 0) {
+            measureAnchoredOverlay(widthMeasureSpec, heightMeasureSpec)
+            return
+        }
         if (behavior != Behavior.TABLE_ROW || childCount == 0) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             return
@@ -1130,6 +1147,103 @@ internal class MobileUiHost(
             resolveSize(width, widthMeasureSpec),
             resolveSize(height, heightMeasureSpec),
         )
+    }
+
+    private fun measureAnchoredOverlay(
+        widthMeasureSpec: Int,
+        heightMeasureSpec: Int,
+    ) {
+        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+        val contentBranch = content?.let(::directChildContaining)
+        val backdrop = findTaggedDescendant(this, OVERLAY_BACKDROP_TAG)
+            ?: findTaggedDescendantWithPrefix(this, "$OVERLAY_BACKDROP_TAG:")
+        val backdropBranch = backdrop?.let(::directChildContaining)
+        var desiredWidth = paddingLeft + paddingRight
+        var desiredHeight = paddingTop + paddingBottom
+        var childState = 0
+
+        repeat(childCount) { index ->
+            val child = getChildAt(index)
+            if (
+                child.visibility == GONE
+                || child === contentBranch
+                || child === backdropBranch
+            ) {
+                return@repeat
+            }
+            measureChildWithMargins(
+                child,
+                widthMeasureSpec,
+                0,
+                heightMeasureSpec,
+                0,
+            )
+            val params = child.layoutParams as MarginLayoutParams
+            desiredWidth = max(
+                desiredWidth,
+                paddingLeft + paddingRight + child.measuredWidth
+                    + params.leftMargin + params.rightMargin,
+            )
+            desiredHeight = max(
+                desiredHeight,
+                paddingTop + paddingBottom + child.measuredHeight
+                    + params.topMargin + params.bottomMargin,
+            )
+            childState = combineMeasuredStates(childState, child.measuredState)
+        }
+
+        val visibleFrame = Rect()
+        rootView.getWindowVisibleDisplayFrame(visibleFrame)
+        val screenMargin = (ANCHORED_OVERLAY_SCREEN_MARGIN_DP * density)
+            .roundToInt() * 2
+        val overlayWidth = (
+            if (visibleFrame.width() > 0) {
+                visibleFrame.width()
+            } else {
+                resources.displayMetrics.widthPixels
+            } - screenMargin
+        ).coerceAtLeast(0)
+        val overlayHeight = (
+            if (visibleFrame.height() > 0) {
+                visibleFrame.height()
+            } else {
+                resources.displayMetrics.heightPixels
+            } - screenMargin
+        ).coerceAtLeast(0)
+        contentBranch?.takeUnless { it.visibility == GONE }?.let { child ->
+            child.measure(
+                MeasureSpec.makeMeasureSpec(overlayWidth, MeasureSpec.AT_MOST),
+                MeasureSpec.makeMeasureSpec(overlayHeight, MeasureSpec.AT_MOST),
+            )
+            childState = combineMeasuredStates(childState, child.measuredState)
+        }
+        backdropBranch
+            ?.takeUnless { it.visibility == GONE || it === contentBranch }
+            ?.measure(
+                MeasureSpec.makeMeasureSpec(overlayWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(overlayHeight, MeasureSpec.EXACTLY),
+            )
+
+        setMeasuredDimension(
+            resolveSizeAndState(
+                max(desiredWidth, suggestedMinimumWidth),
+                widthMeasureSpec,
+                childState,
+            ),
+            resolveSizeAndState(
+                max(desiredHeight, suggestedMinimumHeight),
+                heightMeasureSpec,
+                childState shl MEASURED_HEIGHT_STATE_SHIFT,
+            ),
+        )
+    }
+
+    private fun directChildContaining(descendant: View): View? {
+        var current = descendant
+        while (current.parent is View && current.parent !== this) {
+            current = current.parent as View
+        }
+        return current.takeIf { it.parent === this }
     }
 
     override fun onLayout(
@@ -1194,6 +1308,15 @@ internal class MobileUiHost(
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         if (
+            behavior == Behavior.FILE_TREE_FILE
+        ) {
+            return isEnabled
+        }
+        if (behavior == Behavior.FILE_TREE_FOLDER && isEnabled) {
+            val header = findTaggedDescendant(this, FILE_TREE_HEADER_TAG)
+            return header != null && boundsInHost(header).contains(event.x, event.y)
+        }
+        if (
             behavior.isAnchoredOverlay()
             && isEnabled
             && !open
@@ -1255,6 +1378,24 @@ internal class MobileUiHost(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (
+            behavior == Behavior.TAB_TRIGGER
+            || behavior == Behavior.FILE_TREE_FOLDER
+            || behavior == Behavior.FILE_TREE_FILE
+        ) {
+            if (!isEffectivelyEnabled()) return false
+            return when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_MOVE,
+                -> true
+                MotionEvent.ACTION_UP -> {
+                    performClick()
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> true
+                else -> true
+            }
+        }
         if (
             behavior.isAnchoredOverlay()
             && !open
@@ -1336,7 +1477,16 @@ internal class MobileUiHost(
         }
     }
 
-    override fun performClick(): Boolean = super.performClick()
+    override fun performClick(): Boolean =
+        when (behavior) {
+            Behavior.TAB_TRIGGER ->
+                tabsAncestor()?.selectTab(this, emit = true) == true
+            Behavior.FILE_TREE_FOLDER ->
+                fileTreeAncestor()?.toggleFileTreeFolder(this) == true
+            Behavior.FILE_TREE_FILE ->
+                fileTreeAncestor()?.selectFileTreeItem(this) == true
+            else -> super.performClick()
+        }
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
@@ -4006,39 +4156,17 @@ internal class MobileUiHost(
         animate: Boolean,
     ) {
         val indicator = findTaggedDescendant(this, TABS_INDICATOR_TAG) ?: return
-        if (trigger == null || trigger.width <= 0 || trigger.height <= 0) {
-            indicator.visibility = INVISIBLE
-            return
-        }
-        val parent = indicator.parent as? View ?: return
-        val triggerBounds = boundsInHost(trigger)
-        val parentBounds = boundsInHost(parent)
-        val targetX = triggerBounds.left - parentBounds.left
-        val targetY = triggerBounds.top - parentBounds.top
-        val layout = indicator.layoutParams
-        if (layout.width != trigger.width || layout.height != trigger.height) {
-            layout.width = trigger.width
-            layout.height = trigger.height
-            indicator.layoutParams = layout
-        }
-        indicator.visibility = VISIBLE
+        // The authored indicator is a decorative sibling layered above the
+        // triggers. Android hit-testing can retain that translated sibling as
+        // the touch target after it has crossed every tab, which makes later
+        // taps appear to freeze. Selection is already represented by each
+        // trigger's activated/selected drawable and accessibility state.
+        indicator.visibility = GONE
+        indicator.isClickable = false
+        indicator.isLongClickable = false
+        indicator.isFocusable = false
+        indicator.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         tabsIndicatorAnimator?.cancel()
-        if (!animate || !animationsEnabled()) {
-            indicator.translationX = targetX
-            indicator.translationY = targetY
-            return
-        }
-        val fromX = indicator.translationX
-        val fromY = indicator.translationY
-        tabsIndicatorAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = TABS_INDICATOR_ANIMATION_DURATION_MILLIS
-            addUpdateListener { animation ->
-                val progress = animation.animatedFraction
-                indicator.translationX = fromX + (targetX - fromX) * progress
-                indicator.translationY = fromY + (targetY - fromY) * progress
-            }
-            start()
-        }
     }
 
     private fun animateTabsContentHeight(content: View?, animate: Boolean) {
@@ -6124,6 +6252,7 @@ internal class MobileUiHost(
             backdrop?.importantForAccessibility =
                 IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
             positionAnchoredContent()
+            installAnchoredTouchDelegate()
             if (animate && animationsEnabled()) {
                 content.alpha = 0f
                 content.scaleX = ANCHORED_OVERLAY_ENTRANCE_SCALE
@@ -6146,6 +6275,7 @@ internal class MobileUiHost(
                 backdrop?.alpha = 1f
             }
         } else {
+            removeAnchoredTouchDelegate()
             content.importantForAccessibility =
                 IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
             backdrop?.importantForAccessibility =
@@ -6357,6 +6487,84 @@ internal class MobileUiHost(
             targetX,
             targetY,
         )
+        installAnchoredTouchDelegate()
+    }
+
+    private fun installAnchoredTouchDelegate() {
+        if (!behavior.isAnchoredOverlay() || !open || !isAttachedToWindow) return
+        if (anchoredTouchCatcher != null) return
+        val root = context.findActivity()
+            ?.findViewById<ViewGroup>(android.R.id.content)
+            ?: return
+        anchoredTouchCatcher = View(context).apply {
+            isClickable = true
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+            setBackgroundColor(Color.TRANSPARENT)
+            setOnTouchListener { catcher, event ->
+                val handled = forwardAnchoredOverlayTouch(catcher, event)
+                if (event.actionMasked == MotionEvent.ACTION_UP) {
+                    catcher.performClick()
+                }
+                handled
+            }
+        }.also { catcher ->
+            root.addView(
+                catcher,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                ),
+            )
+        }
+    }
+
+    private fun removeAnchoredTouchDelegate() {
+        anchoredTouchCatcher?.let { catcher ->
+            (catcher.parent as? ViewGroup)?.removeView(catcher)
+        }
+        anchoredTouchCatcher = null
+        anchoredTouchInsideContent = false
+    }
+
+    private fun forwardAnchoredOverlayTouch(
+        catcher: View,
+        event: MotionEvent,
+    ): Boolean {
+        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+            ?: return true
+        val catcherLocation = IntArray(2)
+        val contentLocation = IntArray(2)
+        catcher.getLocationOnScreen(catcherLocation)
+        content.getLocationOnScreen(contentLocation)
+        val contentBounds = RectF(
+            contentLocation[0].toFloat(),
+            contentLocation[1].toFloat(),
+            contentLocation[0] + content.width.toFloat(),
+            contentLocation[1] + content.height.toFloat(),
+        )
+        val screenX = catcherLocation[0] + event.x
+        val screenY = catcherLocation[1] + event.y
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            anchoredTouchInsideContent = contentBounds.contains(screenX, screenY)
+        }
+        if (anchoredTouchInsideContent) {
+            val delegated = MotionEvent.obtain(event)
+            delegated.setLocation(
+                screenX - contentLocation[0],
+                screenY - contentLocation[1],
+            )
+            content.dispatchTouchEvent(delegated)
+            delegated.recycle()
+        } else if (event.actionMasked == MotionEvent.ACTION_UP) {
+            requestOverlayDismiss()
+        }
+        if (
+            event.actionMasked == MotionEvent.ACTION_CANCEL
+            || event.actionMasked == MotionEvent.ACTION_UP
+        ) {
+            anchoredTouchInsideContent = false
+        }
+        return true
     }
 
     private fun anchoredPlacementCandidate(
@@ -6760,6 +6968,7 @@ internal class MobileUiHost(
         const val DISABLED_CONTROL_ALPHA = 0.5f
         const val FILE_TREE_ACTION_EXPANDED = 1L
         const val FILE_TREE_CONTENT_TAG = "pam:file-tree-content"
+        const val FILE_TREE_HEADER_TAG = "pam:file-tree-header"
         const val FILE_TREE_CHEVRON_TAG = "pam:file-tree-chevron"
         const val FILE_TREE_NAME_TAG = "pam:file-tree-name"
         const val FILE_TREE_ANIMATION_DURATION_MILLIS = 180L

@@ -2251,7 +2251,8 @@ $fileTree->events()[\Pam\Native\EventKind::Native->value](
 );
 $assert(
     $fileTreeProperties['behavior'] === NativeBehavior::FileTree->value
-        && $fileTreeProperties['expandedPaths'] === '/src'
+        && $fileTreeProperties['defaultExpandedPaths'] === '/src'
+        && !array_key_exists('expandedPaths', $fileTreeProperties)
         && $fileTreeFolderProperties['behavior']
             === NativeBehavior::FileTreeFolder->value
         && $fileTreeFolderProperties['path'] === '/src'
@@ -3203,7 +3204,7 @@ $assert(
             === 'pam:overlay-trigger'
         && $anchoredMenuContent->properties()[PropKey::Value->value]
             === 'pam:overlay-content'
-        && $anchoredMenuContent->properties()[PropKey::Visible->value] === false
+        && !isset($anchoredMenuContent->properties()[PropKey::Visible->value])
         && $anchoredMenuNative['defaultIsOpen'] === false
         && $anchoredMenuNative['selectionMode'] === SelectionMode::Multiple->value
         && $anchoredMenuNative['placement'] === Placement::BottomStart->value
@@ -3227,8 +3228,8 @@ if (
 }
 $assert(
     !isset($closedPopoverTrigger->properties()[PropKey::Visible->value])
-        && $closedPopoverContent->properties()[PropKey::Visible->value] === false,
-    'A closed Popover must never remove its trigger from the main tree.',
+        && !isset($closedPopoverContent->properties()[PropKey::Visible->value]),
+    'A closed Popover must preserve trigger and measurable overlay geometry.',
 );
 $openPopover = Popover::make(
     ['isOpen' => true, 'placement' => Placement::Top],
@@ -3277,7 +3278,7 @@ $assert(
             === 'pam:overlay-trigger'
         && $tooltipContent->properties()[PropKey::Value->value]
             === 'pam:overlay-content'
-        && $tooltipContent->properties()[PropKey::Visible->value] === false,
+        && !isset($tooltipContent->properties()[PropKey::Visible->value]),
     'Popover and Tooltip must tag triggers, content and arrows for native positioning.',
 );
 
