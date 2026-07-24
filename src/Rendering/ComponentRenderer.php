@@ -31,6 +31,7 @@ use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
 use Pam\Native\PointerEvents;
 use Pam\Native\PropKey;
+use Pam\Native\RefreshIndicatorSize;
 use Pam\Native\ReturnKeyType;
 use Pam\Native\SafeAreaMode;
 use Pam\Native\StatusBarAppearance;
@@ -617,10 +618,26 @@ final class ComponentRenderer
                 );
         }
         if ($part === 'RefreshControl') {
-            return RefreshControl::make(
+            $control = RefreshControl::make(
                 self::oneChild($children),
                 self::flag($props, 'refreshing'),
+            )
+                ->enabled(self::flag($props, 'enabled', true))
+                ->progressViewOffset(
+                    self::number($props, 'progressViewOffset', 0.0),
+                )
+                ->size(self::refreshIndicatorSize($props));
+            $colors = self::refreshColors($props);
+            if ($colors !== []) {
+                $control = $control->colors(...$colors);
+            }
+            $background = self::packedColor(
+                $props['progressBackgroundColor'] ?? null,
             );
+
+            return $background === null
+                ? $control
+                : $control->progressBackgroundColor($background);
         }
         if ($part === 'SafeAreaView') {
             $edges = self::safeAreaEdges($props);
@@ -2941,6 +2958,45 @@ final class ComponentRenderer
         return match ($props['mode'] ?? null) {
             SafeAreaMode::Margin->value, 'margin' => SafeAreaMode::Margin,
             default => SafeAreaMode::Padding,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return list<int>
+     */
+    private static function refreshColors(array $props): array
+    {
+        $value = $props['colors'] ?? null;
+        $values = is_array($value)
+            ? $value
+            : ($value === null ? [] : [$value]);
+        if ($values === []) {
+            $fallback = $props['tintColor'] ?? $props['color'] ?? null;
+            if ($fallback !== null) {
+                $values = [$fallback];
+            }
+        }
+
+        $colors = [];
+        foreach ($values as $candidate) {
+            $color = self::packedColor($candidate);
+            if ($color !== null) {
+                $colors[] = $color;
+            }
+        }
+
+        return $colors;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function refreshIndicatorSize(
+        array $props,
+    ): RefreshIndicatorSize {
+        return match ($props['size'] ?? null) {
+            0, RefreshIndicatorSize::Large->value, 'large' =>
+                RefreshIndicatorSize::Large,
+            default => RefreshIndicatorSize::Default,
         };
     }
 

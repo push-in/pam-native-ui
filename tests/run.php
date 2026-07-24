@@ -75,6 +75,7 @@ use Pam\MobileUi\Component\ImageViewerNavigation;
 use Pam\MobileUi\Component\ImageViewerTrigger;
 use Pam\MobileUi\Component\KeyboardAvoidingView;
 use Pam\MobileUi\Component\Link;
+use Pam\MobileUi\Component\RefreshControl;
 use Pam\MobileUi\Component\FlatList;
 use Pam\MobileUi\Component\SectionList;
 use Pam\MobileUi\Component\VirtualizedList;
@@ -226,6 +227,7 @@ use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
+use Pam\Native\RefreshIndicatorSize;
 use Pam\Native\ReturnKeyType;
 use Pam\Native\SafeAreaMode;
 use Pam\Native\StatusBarAppearance;
@@ -1015,6 +1017,17 @@ $safeAreaPrimitive = SafeAreaView::make(
     ],
     Text::make('Safe content'),
 )->toElement();
+$refreshPrimitive = RefreshControl::make(
+    [
+        'refreshing' => true,
+        'colors' => ['#112233', 'rgba(68, 85, 102, 0.75)'],
+        'progressBackgroundColor' => '#f8fafc',
+        'progressViewOffset' => 16,
+        'enabled' => false,
+        'size' => 'large',
+    ],
+    Text::make('Refresh content'),
+)->toElement();
 $statusPrimitive = StatusBar::make([
     'backgroundColor' => '#171717',
     'barStyle' => 'light-content',
@@ -1122,6 +1135,17 @@ $assert(
         && $safeAreaPrimitive->properties()[PropKey::SafeAreaLeft->value] === false
         && $safeAreaPrimitive->properties()[PropKey::SafeAreaMode->value]
             === SafeAreaMode::Margin->value
+        && $refreshPrimitive->properties()[PropKey::Refreshing->value] === true
+        && $refreshPrimitive->properties()[PropKey::RefreshColors->value]
+            === implode(',', [0xff112233, 0xbf445566])
+        && $refreshPrimitive
+            ->properties()[PropKey::RefreshProgressBackgroundColor->value]
+            === 0xfff8fafc
+        && $refreshPrimitive
+            ->properties()[PropKey::RefreshProgressViewOffset->value] === 16.0
+        && $refreshPrimitive->properties()[PropKey::Enabled->value] === false
+        && $refreshPrimitive->properties()[PropKey::RefreshIndicatorSize->value]
+            === RefreshIndicatorSize::Large->value
         && $statusPrimitive->properties()[PropKey::StatusBarColor->value]
             === 0xff171717
         && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]

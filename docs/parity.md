@@ -18,6 +18,9 @@ passthroughs use PAM primitives while remaining present in the public catalog.
 `SafeAreaView` forwards per-edge padding/margin insets and
 `KeyboardAvoidingView` forwards height/position/padding behavior, vertical
 offset and enabled state to the Android UI thread.
+`RefreshControl` forwards Android colors, background, progress offset, size
+and enabled state, with native vertical-gesture arbitration and indicator
+animation.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

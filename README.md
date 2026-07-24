@@ -168,6 +168,11 @@ interaction hop. For example, `SafeAreaView` accepts `edges="top,bottom"` and
 Android calculates system-bar and IME insets and updates the view on the UI
 thread.
 
+`RefreshControl` accepts React Native-compatible `colors`, `enabled`,
+`progressBackgroundColor`, `progressViewOffset`, `size` and `tintColor`
+fallback props. Pull detection, drag feedback and indicator animation are
+native; the bridge carries only the semantic `onRefresh` event.
+
 Focus/invalid outlines, disabled/read-only editing policy, clear/password
 actions and selection remain on the Android UI thread. `FormControl` links its
 label, helper and error to the native field, injects the required asterisk,
