@@ -21,7 +21,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.pam.nativeapp.protocol.WireValue
 import dev.pam.nativeapp.protocol.WireMap
 import dev.pam.nativeapp.views.NativeViewEventKind
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -121,6 +123,7 @@ class MobileUiHostInstrumentedTest {
             activity.setContentView(root)
         }
         instrumentation.waitForIdleSync()
+        awaitNextFrame(scroll)
         onMain {
             assertTrue(!scroll.isEnabled)
             assertTrue(scroll.isHorizontalScrollBarEnabled)
@@ -2341,6 +2344,17 @@ class MobileUiHostInstrumentedTest {
                 TestHostActivity::class.java,
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         ) as TestHostActivity
+    }
+
+    private fun awaitNextFrame(view: View) {
+        val frame = CountDownLatch(1)
+        onMain {
+            view.postOnAnimation(frame::countDown)
+        }
+        assertTrue(
+            "Android did not produce the next UI frame.",
+            frame.await(5, TimeUnit.SECONDS),
+        )
     }
 
     private fun onMain(block: () -> Unit) {
