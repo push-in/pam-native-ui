@@ -2814,6 +2814,79 @@ $assert(
         ],
     'Tag PromptInput must adapt the upstream text-and-files callback without a file bridge payload.',
 );
+$compoundEventScope = new class {
+    public string $selected = '';
+
+    /** @var list<bool> */
+    public array $toggles = [];
+
+    public function selectValue(string $value): void
+    {
+        $this->selected = $value;
+    }
+
+    public function toggleSheet(bool $open): void
+    {
+        $this->toggles[] = $open;
+    }
+};
+$templateSelect = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        <<<'PAM'
+<Select on:change="selectValue">
+    <SelectTrigger><SelectInput /></SelectTrigger>
+    <SelectPortal>
+        <SelectContent>
+            <SelectItem value="laravel" label="Laravel" />
+        </SelectContent>
+    </SelectPortal>
+</Select>
+PAM,
+    ),
+    $compoundEventScope,
+    [],
+);
+$templateSelectPortal = $templateSelect->children()[1] ?? null;
+$templateSelectHost = $templateSelectPortal?->children()[0] ?? null;
+$templateSelectContent = $templateSelectHost?->children()[0] ?? null;
+$templateSelectItem = $templateSelectContent?->children()[0] ?? null;
+if (!$templateSelectItem instanceof \Pam\Native\Element) {
+    throw new RuntimeException('Tag Select item must retain inherited events.');
+}
+$templateSelectItem->events()[\Pam\Native\EventKind::Press->value]();
+
+$templateSheet = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        <<<'PAM'
+<BottomSheet on:toggle="toggleSheet">
+    <BottomSheetTrigger>Open sheet</BottomSheetTrigger>
+    <BottomSheetPortal>
+        <BottomSheetContent />
+    </BottomSheetPortal>
+</BottomSheet>
+PAM,
+    ),
+    $compoundEventScope,
+    [],
+);
+$templateSheetTrigger = $templateSheet->children()[0] ?? null;
+$templateSheetModal = $templateSheet->children()[1] ?? null;
+$templateSheetHost = $templateSheetModal?->children()[0] ?? null;
+if (
+    !$templateSheetTrigger instanceof \Pam\Native\Element
+    || !$templateSheetHost instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Tag BottomSheet must retain trigger and native host events.');
+}
+$templateSheetTrigger->events()[\Pam\Native\EventKind::Press->value]();
+$templateSheetHost->events()[\Pam\Native\EventKind::Native->value](
+    Wire::map(['action' => 1, 'dismissed' => true]),
+);
+$assert(
+    $compoundEventScope->selected === 'laravel'
+        && $compoundEventScope->toggles === [true, false],
+    'Tag compound roots must forward selection, trigger and dismissal events during composition.',
+);
 $templateRange = TemplateRenderer::render(
     TemplateCompiler::compile(
         <<<'PAM'

@@ -156,6 +156,12 @@ are copied to triggers and native child hosts at composition time, so open,
 dismiss, selection and drag-end events still target the application callback
 without a runtime lookup or an extra bridge hop.
 
+The same composition path is used by fluent PHP and `.pam` tags. The template
+renderer carries only bounded ancestor handler context while descending the
+compiled tree; each registered child asks the UI renderer for its exact
+inherited semantic event before creating the native element. No post-render
+reflection walk or Android-side component-name lookup is required.
+
 `ModelSelectorContent` composes its fixed upstream anatomy once: a modal header,
 1 dp screen-reader title, native dismiss control, a maximum-500 dp scroll
 viewport and modal body around the authored children. The root `size` resolves

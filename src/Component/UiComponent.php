@@ -9,6 +9,7 @@ use Closure;
 use Pam\MobileUi\Rendering\ComponentRenderer;
 use Pam\MobileUi\Rendering\ValueNormalizer;
 use Pam\MobileUi\Enum\ThemeMode;
+use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\Element;
@@ -82,7 +83,59 @@ abstract class UiComponent implements Renderable
      */
     final public static function fromTemplate(array $props, array $children): static
     {
-        return new static($props, $children);
+        $rawContexts = $props['__pamEventContexts'] ?? [];
+        unset($props['__pamEventContexts']);
+        $component = new static($props, $children);
+        if (!is_array($rawContexts)) {
+            return $component;
+        }
+
+        foreach ($rawContexts as $source => $context) {
+            if (
+                !is_string($source)
+                || !isset(ComponentMap::IDS[$source])
+                || !ComponentRenderer::forwardsEventsToDescendants($source)
+                || !is_array($context)
+                || !is_array($context['props'] ?? null)
+                || !is_array($context['events'] ?? null)
+            ) {
+                continue;
+            }
+            $events = [];
+            foreach ($context['events'] as $kind => $handler) {
+                if (is_int($kind) && $handler instanceof Closure) {
+                    $events[$kind] = $handler;
+                }
+            }
+            if ($events === []) {
+                continue;
+            }
+            $contextProps = [];
+            $validProps = true;
+            foreach ($context['props'] as $name => $value) {
+                if (
+                    !is_string($name)
+                    || preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,127}$/D', $name)
+                        !== 1
+                ) {
+                    $validProps = false;
+                    break;
+                }
+                $contextProps[$name] = $value;
+            }
+            if (!$validProps) {
+                continue;
+            }
+            $component->eventContexts[$source] = [
+                'props' => ComponentRenderer::withDefaults(
+                    $source,
+                    ValueNormalizer::props($contextProps),
+                ),
+                'events' => $events,
+            ];
+        }
+
+        return $component;
     }
 
     final public function prop(string $name, mixed $value): static
