@@ -21,6 +21,7 @@ use Pam\MobileUi\Component\SliderTrack;
 use Pam\MobileUi\Component\Tabs;
 use Pam\MobileUi\Component\TabsContent;
 use Pam\MobileUi\Component\TabsList;
+use Pam\MobileUi\Component\TabsTrigger;
 use Pam\MobileUi\Component\Toast;
 use Pam\MobileUi\Component\ToastTitle;
 use Pam\MobileUi\Component\SwitchControl;
@@ -309,18 +310,31 @@ $assert(
 
 $tabs = Tabs::make(
     ['value' => 2],
-    TabsList::make(),
+    TabsList::make(
+        TabsTrigger::make(['value' => 'account']),
+        TabsTrigger::make(['value' => 'security']),
+    ),
     TabsContent::make(['value' => 1], Text::make('First')),
     TabsContent::make(['value' => 2], Text::make('Second')),
 )->toElement();
+$tabsList = $tabs->children()[0] ?? null;
 $firstTabContent = $tabs->children()[1] ?? null;
 $secondTabContent = $tabs->children()[2] ?? null;
 if (
-    !$firstTabContent instanceof \Pam\Native\Element
+    !$tabsList instanceof \Pam\Native\Element
+    || !$firstTabContent instanceof \Pam\Native\Element
     || !$secondTabContent instanceof \Pam\Native\Element
 ) {
     throw new RuntimeException('Tabs must render controlled content children.');
 }
+$firstTabsTrigger = $tabsList->children()[0] ?? null;
+if (!$firstTabsTrigger instanceof \Pam\Native\Element) {
+    throw new RuntimeException('Tabs list must render its semantic triggers.');
+}
+$assert(
+    $firstTabsTrigger->properties()[PropKey::Value->value] === 'account',
+    'Tab trigger values must reach Android as scalar semantic tags.',
+);
 $assert(
     $firstTabContent->properties()[PropKey::Visible->value] === false
         && !isset($secondTabContent->properties()[PropKey::Visible->value]),

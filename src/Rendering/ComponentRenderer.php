@@ -70,6 +70,14 @@ final class ComponentRenderer
         $element = self::primitive($part, $runtimeProps, $children)
             ->style($style);
 
+        if (
+            $part === 'TabsTrigger'
+            && isset($props['value'])
+            && is_scalar($props['value'])
+        ) {
+            $element = $element->property(PropKey::Value, $props['value']);
+        }
+
         if ($styleOverride !== null) {
             $element = $element->style($styleOverride);
         }

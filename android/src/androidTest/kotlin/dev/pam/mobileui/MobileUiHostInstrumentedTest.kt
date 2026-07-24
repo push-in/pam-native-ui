@@ -1,7 +1,9 @@
 package dev.pam.mobileui
 
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -52,8 +54,10 @@ class MobileUiHostInstrumentedTest {
     fun checkboxPublishesACompactToggleEventAndNativeCheckedState() {
         onMain {
             val events = CopyOnWriteArrayList<NativeViewEventKind>()
-            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, _ ->
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
                 events += kind
+                payloads += payload
             }
             host.update(
                 mapOf(
@@ -68,6 +72,7 @@ class MobileUiHostInstrumentedTest {
             host.onInitializeAccessibilityNodeInfo(info)
             assertEquals(listOf(NativeViewEventKind.TOGGLE), events)
             assertTrue(info.isChecked)
+            assertEquals("1", payloads.single().decodeToString())
             host.release()
             info.recycle()
         }
@@ -108,8 +113,60 @@ class MobileUiHostInstrumentedTest {
                     null,
                 ),
             )
-            val value = WireMap.decode(payloads.single())["value"] as WireValue.Decimal
-            assertEquals(45.0, value.value, 0.0)
+            assertEquals("45.0", payloads.single().decodeToString())
+            host.release()
+        }
+    }
+
+    @Test
+    fun tabsPublishTheAuthoredSemanticValueInsteadOfAVisualIndex() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(mapOf("behavior" to WireValue.Integer(6)))
+            val list = FrameLayout(host.context)
+            repeat(3) { index ->
+                list.addView(View(host.context).apply {
+                    tag = listOf("account", "security", "billing")[index]
+                })
+            }
+            host.addView(list)
+            host.layout(0, 0, 300, 160)
+            list.layout(0, 0, 300, 80)
+            repeat(3) { index ->
+                list.getChildAt(index).layout(index * 100, 0, (index + 1) * 100, 80)
+            }
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 150f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 150f, 40f))
+
+            assertEquals("security", payloads.single().decodeToString())
+            host.release()
+        }
+    }
+
+    @Test
+    fun nonDismissibleSheetNeverAnimatesAwayOrEmitsDismissal() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "dismissible" to WireValue.Flag(false),
+                ),
+            )
+            host.layout(0, 0, 300, 300)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 100f, 0f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 100f, 200f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 100f, 200f))
+
+            assertTrue(payloads.isEmpty())
             host.release()
         }
     }
@@ -180,7 +237,7 @@ class MobileUiHostInstrumentedTest {
             assertTrue(host.performClick())
             assertEquals(2, payloads.size)
             payloads.forEach { payload ->
-                assertTrue((WireMap.decode(payload)["checked"] as WireValue.Flag).value)
+                assertEquals("1", payload.decodeToString())
             }
             host.release()
         }
@@ -188,6 +245,9 @@ class MobileUiHostInstrumentedTest {
 
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun motion(action: Int, x: Float, y: Float): MotionEvent =
+        MotionEvent.obtain(0L, 0L, action, x, y, 0)
 
     private fun onMain(block: () -> Unit) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(block)

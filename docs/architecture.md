@@ -48,6 +48,26 @@ The resolver never runs on Android and is not part of a frame loop. Platform
 conditions that intentionally do not apply may resolve to an empty property map;
 unknown utilities cannot silently disappear.
 
+## Event payload policy
+
+Controls whose public event has one semantic value emit that scalar directly:
+slider progress, tab value, calendar/picker date, checked state and accordion
+expanded state. A `.pam` handler therefore receives the same compact string
+shape as a core input event, without decoding a map:
+
+```php
+public function selectTab(string $value): void
+{
+    $this->tab = $value;
+}
+```
+
+Multi-field native lifecycle events such as dismiss, zoom and image navigation
+remain bounded binary maps on `on:event`. This keeps ordinary form/state code
+simple while preserving structured detail for advanced native interactions.
+Tab trigger values are stored as scalar semantic tags on their Android views,
+so reordering or styling a tab never changes the value delivered to PHP.
+
 ## Threading
 
 - All view creation, updates, releases and Android view mutations run on the

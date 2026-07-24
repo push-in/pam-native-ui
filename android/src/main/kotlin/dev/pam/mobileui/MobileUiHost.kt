@@ -444,13 +444,8 @@ internal class MobileUiHost(
                 invalidate()
                 emitter.emit(
                     NativeViewEventKind.TOGGLE,
-                    WireMap.encode(
-                        if (behavior == Behavior.ACCORDION) {
-                            mapOf("expanded" to WireValue.Flag(expanded))
-                        } else {
-                            mapOf("checked" to WireValue.Flag(checked))
-                        },
-                    ),
+                    (if (behavior == Behavior.ACCORDION) expanded else checked)
+                        .toEventPayload(),
                 )
             }
         } else if (behavior == Behavior.DATE_TIME_PICKER) {
@@ -605,7 +600,9 @@ internal class MobileUiHost(
                     }
                     val distance = if (horizontal) abs(translationX) else abs(translationY)
                     val size = if (horizontal) width else height
-                    val dismiss = distance > size * 0.28f
+                    val dismiss = event.actionMasked == MotionEvent.ACTION_UP
+                        && dismissible
+                        && distance > size * 0.28f
                     val target = when (anchor) {
                         1, 3 -> -size.toFloat()
                         else -> size.toFloat()
@@ -633,11 +630,13 @@ internal class MobileUiHost(
                 return@OnTouchListener false
             }
             val content = if (childCount == 0) null else getChildAt(childCount - 1)
+            val contentLeft = content?.x ?: 0f
+            val contentTop = content?.y ?: 0f
             val insideContent = content != null
-                && event.x >= content.left
-                && event.x <= content.right
-                && event.y >= content.top
-                && event.y <= content.bottom
+                && event.x >= contentLeft
+                && event.x <= contentLeft + content.width
+                && event.y >= contentTop
+                && event.y <= contentTop + content.height
             if (!insideContent) {
                 emitDismiss()
                 performClick()
@@ -666,7 +665,9 @@ internal class MobileUiHost(
                     if (event.actionMasked == MotionEvent.ACTION_UP) {
                         performClick()
                     }
-                    val dismiss = translationY > height * 0.28f
+                    val dismiss = event.actionMasked == MotionEvent.ACTION_UP
+                        && dismissible
+                        && translationY > height * 0.28f
                     animate()
                         .translationY(if (dismiss) height.toFloat() else 0f)
                         .setDuration(180L)
@@ -702,9 +703,10 @@ internal class MobileUiHost(
                     selected = true
                     isSelected = true
                     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    val trigger = list.getChildAt(index)
                     emitter.emit(
                         NativeViewEventKind.CHANGE,
-                        WireMap.encode(mapOf("index" to WireValue.Integer(index.toLong()))),
+                        trigger.tag.toEventPayload(index + 1),
                     )
                     performClick()
                     true
@@ -732,14 +734,9 @@ internal class MobileUiHost(
                     if (day in 1..first.lengthOfMonth()) {
                         emitter.emit(
                             NativeViewEventKind.CHANGE,
-                            WireMap.encode(
-                                mapOf(
-                                    "action" to WireValue.Integer(HostAction.SELECT.value),
-                                    "year" to WireValue.Integer(calendarYear.toLong()),
-                                    "month" to WireValue.Integer(calendarMonth.toLong()),
-                                    "day" to WireValue.Integer(day.toLong()),
-                                ),
-                            ),
+                            LocalDate.of(calendarYear, calendarMonth, day)
+                                .toString()
+                                .encodeToByteArray(),
                         )
                         performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                     }
@@ -802,20 +799,14 @@ internal class MobileUiHost(
     }
 
     private fun emitDateTime(dateTime: LocalDateTime) {
-        dateTimeValue = dateTime.toString()
+        dateTimeValue = when (dateTimeMode) {
+            "date" -> dateTime.toLocalDate().toString()
+            "time" -> dateTime.toLocalTime().toString()
+            else -> dateTime.toString()
+        }
         emitter.emit(
             NativeViewEventKind.CHANGE,
-            WireMap.encode(
-                mapOf(
-                    "action" to WireValue.Integer(HostAction.SELECT.value),
-                    "value" to WireValue.Text(dateTimeValue.orEmpty()),
-                    "year" to WireValue.Integer(dateTime.year.toLong()),
-                    "month" to WireValue.Integer(dateTime.monthValue.toLong()),
-                    "day" to WireValue.Integer(dateTime.dayOfMonth.toLong()),
-                    "hour" to WireValue.Integer(dateTime.hour.toLong()),
-                    "minute" to WireValue.Integer(dateTime.minute.toLong()),
-                ),
-            ),
+            dateTimeValue.orEmpty().encodeToByteArray(),
         )
     }
 
@@ -1123,7 +1114,7 @@ internal class MobileUiHost(
     private fun emitValue() {
         emitter.emit(
             NativeViewEventKind.CHANGE,
-            WireMap.encode(mapOf("value" to WireValue.Decimal(value))),
+            value.toString().encodeToByteArray(),
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             stateDescription = value.toString()
@@ -1175,4 +1166,18 @@ internal class MobileUiHost(
 
     private fun Map<String, WireValue>.text(key: String): String? =
         (this[key] as? WireValue.Text)?.value
+
+    private fun Boolean.toEventPayload(): ByteArray =
+        if (this) byteArrayOf('1'.code.toByte()) else byteArrayOf('0'.code.toByte())
+
+    private fun Any?.toEventPayload(fallback: Int): ByteArray =
+        when (this) {
+            is String -> encodeToByteArray()
+            is Long -> toString().encodeToByteArray()
+            is Int -> toString().encodeToByteArray()
+            is Double -> toString().encodeToByteArray()
+            is Float -> toString().encodeToByteArray()
+            is Boolean -> toEventPayload()
+            else -> fallback.toString().encodeToByteArray()
+        }
 }
