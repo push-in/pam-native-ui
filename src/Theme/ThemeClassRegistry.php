@@ -28,6 +28,14 @@ final class ThemeClassRegistry
             'ui-bg' => [
                 PropKey::BackgroundColor->value => $theme->color(ColorToken::Background),
             ],
+            'ui-surface' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::Background),
+                PropKey::TextColor->value => $theme->color(ColorToken::Foreground),
+            ],
+            'ui-muted' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::Muted),
+                PropKey::TextColor->value => $theme->color(ColorToken::MutedForeground),
+            ],
             'ui-card' => [
                 PropKey::BackgroundColor->value => $theme->color(ColorToken::Card),
                 PropKey::BorderColor->value => $theme->color(ColorToken::Border),

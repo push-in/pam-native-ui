@@ -476,6 +476,37 @@ $assert(
     Themes::dark()->color(ColorToken::Background) === 0xff0f172a,
     'The upstream dark background token changed unexpectedly.',
 );
+$previousSystemDark = getenv('PAM_SYSTEM_DARK');
+ThemeManager::reset();
+putenv('PAM_SYSTEM_DARK=1');
+$systemDarkTheme = ThemeManager::current();
+$darkBackgroundClass = TemplateRegistry::classProperties('ui-bg');
+$darkBackground = $darkBackgroundClass[PropKey::BackgroundColor->value] ?? null;
+$assert(
+    ThemeManager::resolvedMode() === ThemeMode::Dark
+        && $systemDarkTheme->color(ColorToken::Background)
+            === Themes::dark()->color(ColorToken::Background)
+        && $darkBackground === Themes::dark()->color(ColorToken::Background),
+    'System theme mode must resolve Android dark appearance automatically.',
+);
+putenv('PAM_SYSTEM_DARK=0');
+$systemLightTheme = ThemeManager::current();
+$lightBackgroundClass = TemplateRegistry::classProperties('ui-bg');
+$lightBackground = $lightBackgroundClass[PropKey::BackgroundColor->value] ?? null;
+$assert(
+    ThemeManager::resolvedMode() === ThemeMode::Light
+        && $systemLightTheme->color(ColorToken::Background)
+            === Themes::light()->color(ColorToken::Background)
+        && $lightBackground === Themes::light()->color(ColorToken::Background),
+    'System theme mode must react to Android appearance changes.',
+);
+if ($previousSystemDark === false) {
+    putenv('PAM_SYSTEM_DARK');
+} else {
+    putenv('PAM_SYSTEM_DARK='.$previousSystemDark);
+}
+ThemeManager::reset();
+ThemeManager::mode(ThemeMode::Light);
 $themedProvider = PamUIProvider::make(
     ['mode' => 'dark'],
     Button::make('Scoped theme'),
@@ -742,7 +773,12 @@ foreach ($defaultClosedOverlays as $defaultClosedOverlay) {
 $defaultModal = Modal::make(
     ModalContent::make(Text::make('Sized modal')),
 )->toElement();
-$defaultModalContent = $defaultModal->children()[0]?->children()[0] ?? null;
+$defaultModalChildren = $defaultModal->children();
+$defaultModalContainer = $defaultModalChildren[0] ?? null;
+$defaultModalContainerChildren = $defaultModalContainer instanceof \Pam\Native\Element
+    ? $defaultModalContainer->children()
+    : [];
+$defaultModalContent = $defaultModalContainerChildren[0] ?? null;
 $assert(
     $defaultModalContent instanceof \Pam\Native\Element
         && $defaultModalContent->properties()[PropKey::WidthPercent->value]
@@ -1029,17 +1065,26 @@ $defaultTabs = Tabs::make(
     ),
 )->toElement();
 $defaultTabsList = $defaultTabs->children()[0] ?? null;
-$defaultHomeTrigger = $defaultTabsList?->children()[0] ?? null;
+if (!$defaultTabsList instanceof \Pam\Native\Element) {
+    throw new RuntimeException('Tabs must render their tab list.');
+}
+$defaultHomeTrigger = $defaultTabsList->children()[0] ?? null;
 $defaultHomeContent = $defaultTabs->children()[1] ?? null;
 $forcedProfileContent = $defaultTabs->children()[2] ?? null;
+if (
+    !$defaultHomeTrigger instanceof \Pam\Native\Element
+    || !$forcedProfileContent instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Tabs must render their trigger and forced content.');
+}
 $assert(
-    $defaultHomeTrigger?->properties()[PropKey::Selected->value] === true
-        && $defaultTabsList?->properties()[PropKey::FlexDirection->value]
+    $defaultHomeTrigger->properties()[PropKey::Selected->value] === true
+        && $defaultTabsList->properties()[PropKey::FlexDirection->value]
             === FlexDirection::Row->value
-        && $defaultHomeTrigger?->properties()[PropKey::FlexGrow->value] === 1.0
+        && $defaultHomeTrigger->properties()[PropKey::FlexGrow->value] === 1.0
         && !isset($defaultHomeContent?->properties()[PropKey::Visible->value])
-        && !isset($forcedProfileContent?->properties()[PropKey::Visible->value])
-        && $forcedProfileContent?->properties()[PropKey::Value->value]
+        && !isset($forcedProfileContent->properties()[PropKey::Visible->value])
+        && $forcedProfileContent->properties()[PropKey::Value->value]
             === 'pam:tabs-content-force:profile',
     'Tabs defaultValue and forceMount must preserve upstream uncontrolled behavior.',
 );
@@ -1708,6 +1753,7 @@ if (!$gridNative instanceof BinaryValue) {
     throw new RuntimeException('Grid must pack responsive rules for Android.');
 }
 $gridProperties = Wire::decodeMap($gridNative->bytes);
+$gridMinHeight = $grid->properties()[PropKey::MinHeight->value] ?? null;
 $assert(
     $grid->kind() === NodeKind::CustomView
         && $grid->properties()[PropKey::HostName->value]
@@ -1720,9 +1766,8 @@ $assert(
             === 'pam:grid-item:1,2,2,2,2,2'
         && $grid->children()[2]->properties()[PropKey::Value->value]
             === 'pam:grid-item:2,3,3,3,3,3'
-        && abs(
-            $grid->properties()[PropKey::MinHeight->value] - 51.2,
-        ) < 0.001,
+        && is_numeric($gridMinHeight)
+        && abs((float) $gridMinHeight - 51.2) < 0.001,
     'Grid must preserve responsive columns, spans and independent native gaps.',
 );
 
@@ -1741,10 +1786,10 @@ $contentGrid = Grid::make(
         ),
     ),
 )->toElement();
+$contentGridMinHeight = $contentGrid->properties()[PropKey::MinHeight->value] ?? null;
 $assert(
-    abs(
-        $contentGrid->properties()[PropKey::MinHeight->value] - 103.6,
-    ) < 0.001,
+    is_numeric($contentGridMinHeight)
+        && abs((float) $contentGridMinHeight - 103.6) < 0.001,
     'Grid must reserve the recursive intrinsic height of content-sized cards.',
 );
 
@@ -2340,7 +2385,7 @@ $assert(
     $tableNative['behavior'] === NativeBehavior::Table->value
         && $table->properties()[PropKey::WidthPercent->value] === 100.0
         && $tableHeaderRowNative['behavior'] === NativeBehavior::TableRow->value
-        && $tableHeaderRow?->properties()[PropKey::FlexDirection->value]
+        && $tableHeaderRow->properties()[PropKey::FlexDirection->value]
             === FlexDirection::Row->value
         && $tableHeaderRowNative['isHeaderRow'] === true
         && count($tableHeaderRow->children()) === 2,

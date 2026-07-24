@@ -51,7 +51,8 @@ final class MobileUiPluginProvider implements PluginProvider
         $theme = ThemeManager::current();
         ThemeClassRegistry::apply($theme);
         TemplateRegistry::styleResolver(
-            static function (string $class) use ($theme): ?array {
+            static function (string $class): ?array {
+                $theme = ThemeManager::current();
                 if (
                     preg_match(
                         '/^(?:(?:sm|md|lg|xl|2xl):)?'
@@ -78,14 +79,6 @@ final class MobileUiPluginProvider implements PluginProvider
                 )->properties();
             },
         );
-        TemplateRegistry::style('ui-surface', [
-            PropKey::BackgroundColor->value => $theme->color(\Pam\MobileUi\Enum\ColorToken::Background),
-            PropKey::TextColor->value => $theme->color(\Pam\MobileUi\Enum\ColorToken::Foreground),
-        ]);
-        TemplateRegistry::style('ui-muted', [
-            PropKey::BackgroundColor->value => $theme->color(\Pam\MobileUi\Enum\ColorToken::Muted),
-            PropKey::TextColor->value => $theme->color(\Pam\MobileUi\Enum\ColorToken::MutedForeground),
-        ]);
         TemplateRegistry::style('ui-touch-target', [
             PropKey::MinWidth->value => 48.0,
             PropKey::MinHeight->value => 48.0,

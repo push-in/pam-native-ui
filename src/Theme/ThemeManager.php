@@ -11,7 +11,8 @@ final class ThemeManager
     private static ThemeMode $mode = ThemeMode::System;
     private static ?Theme $customLight = null;
     private static ?Theme $customDark = null;
-    private static bool $systemDark = false;
+    private static ?bool $systemDark = null;
+    private static ?Theme $registeredTheme = null;
 
     private function __construct()
     {
@@ -36,6 +37,7 @@ final class ThemeManager
     {
         self::$customLight = $light;
         self::$customDark = $dark;
+        self::$registeredTheme = null;
     }
 
     public static function current(): Theme
@@ -43,12 +45,18 @@ final class ThemeManager
         $dark = match (self::$mode) {
             ThemeMode::Dark => true,
             ThemeMode::Light => false,
-            ThemeMode::System => self::$systemDark,
+            ThemeMode::System => self::isSystemDark(),
         };
 
-        return $dark
+        $theme = $dark
             ? (self::$customDark ?? Themes::dark())
             : (self::$customLight ?? Themes::light());
+        if (self::$registeredTheme !== $theme) {
+            ThemeClassRegistry::apply($theme);
+            self::$registeredTheme = $theme;
+        }
+
+        return $theme;
     }
 
     public static function resolvedMode(): ThemeMode
@@ -56,7 +64,7 @@ final class ThemeManager
         return match (self::$mode) {
             ThemeMode::Light => ThemeMode::Light,
             ThemeMode::Dark => ThemeMode::Dark,
-            ThemeMode::System => self::$systemDark ? ThemeMode::Dark : ThemeMode::Light,
+            ThemeMode::System => self::isSystemDark() ? ThemeMode::Dark : ThemeMode::Light,
         };
     }
 
@@ -65,6 +73,19 @@ final class ThemeManager
         self::$mode = ThemeMode::System;
         self::$customLight = null;
         self::$customDark = null;
-        self::$systemDark = false;
+        self::$systemDark = null;
+        self::$registeredTheme = null;
+    }
+
+    private static function isSystemDark(): bool
+    {
+        if (self::$systemDark !== null) {
+            return self::$systemDark;
+        }
+
+        $value = getenv('PAM_SYSTEM_DARK');
+
+        return $value !== false
+            && in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
     }
 }

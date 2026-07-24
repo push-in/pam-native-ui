@@ -4148,7 +4148,8 @@ final class ComponentRenderer
             $lineHeight = is_numeric($properties[PropKey::LineHeight->value] ?? null)
                 ? max(1.0, (float) $properties[PropKey::LineHeight->value])
                 : max(14.0, $fontSize * 1.4);
-            $text = (string) ($properties[PropKey::Text->value] ?? '');
+            $textValue = $properties[PropKey::Text->value] ?? '';
+            $text = is_string($textValue) ? $textValue : '';
             $lines = max(1, substr_count($text, "\n") + 1);
             $limit = $properties[PropKey::NumberOfLines->value] ?? null;
             if (is_numeric($limit) && (int) $limit > 0) {
@@ -4208,8 +4209,10 @@ final class ComponentRenderer
             PropKey::PaddingBottom,
             $paddingVertical,
         );
-        $direction = (int) ($properties[PropKey::FlexDirection->value]
-            ?? ($element->kind() === NodeKind::Row ? 2 : 1));
+        $directionValue = $properties[PropKey::FlexDirection->value] ?? null;
+        $direction = is_int($directionValue)
+            ? $directionValue
+            : ($element->kind() === NodeKind::Row ? 2 : 1);
         $childHeights = array_map(
             static function (Element $child): float {
                 $properties = $child->properties();
@@ -4590,6 +4593,7 @@ final class ComponentRenderer
     }
 
     /**
+     * @param array<string, mixed> $props
      * @param list<Element> $children
      * @return list<Element>
      */
