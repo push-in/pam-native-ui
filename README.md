@@ -168,6 +168,41 @@ bridge. `pressBehavior` supports `close`, `collapse` and `none` (or
 `closeOnSelect` control item dismissal. Android Back, TalkBack scroll actions,
 focus trapping, reduced motion and a 48 dp drag target are supported.
 
+Anchored overlays use the same compact tag convention. The first child is the
+trigger; Popover/Tooltip content or Menu items follow:
+
+```xml
+<Menu
+    selectionMode="multiple"
+    selectedKeys="{{ $selectedActions }}"
+    placement="bottom-start"
+    on:change="selectActions"
+>
+    <Button variant="outline"><ButtonText>Actions</ButtonText></Button>
+    <MenuItem key="share"><MenuItemLabel>Share</MenuItemLabel></MenuItem>
+    <MenuItem key="archive"><MenuItemLabel>Archive</MenuItemLabel></MenuItem>
+</Menu>
+
+<Tooltip openDelay="400" closeDelay="100" placement="top">
+    <Button accessibilityLabel="Help"><InfoIcon /></Button>
+    <TooltipContent><TooltipText>Open documentation</TooltipText></TooltipContent>
+</Tooltip>
+```
+
+Uncontrolled Menu, Popover and Tooltip triggers open locally, so displaying an
+overlay does not require a PHP render. Controlled `isOpen` remains available.
+Android resolves all 12 placements against the visible window, applies
+`offset`/`crossOffset`, flips to the opposite side only when it reduces
+overflow, clamps to an 8 dp screen gutter and aligns `PopoverArrow` after the
+final placement. Entrance/exit motion uses only opacity and scale.
+
+Menu items are 48 dp native hosts with ripple feedback, single/multiple/none
+selection (`Pam\MobileUi\Enum\SelectionMode`), disabled keys, Home/End, wrapping
+arrow navigation, type-ahead search and TalkBack collection semantics. Item
+activation emits one semantic event; `closeOnSelect` dismisses locally for an
+uncontrolled menu. Popover close buttons, backdrop, Android Back and
+accessibility dismiss share one bounded lifecycle event.
+
 Gesture-heavy components keep transient work on Android's UI thread. The
 calendar supports single, multiple and range selection, disabled/min/max dates,
 localized month navigation, first-day-of-week and fixed-week layouts:

@@ -35,4 +35,6 @@ enum NativeBehavior: int
     case SwitchControl = 27;
     case TabsTrigger = 28;
     case SheetItem = 29;
+    case MenuItem = 30;
+    case OverlayDismiss = 31;
 }

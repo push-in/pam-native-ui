@@ -758,6 +758,229 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun anchoredOverlayOpensAndDismissesUncontrolledContentNatively() {
+        onMain {
+            var triggerPresses = 0
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val closePresses = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(19),
+                    "defaultIsOpen" to WireValue.Flag(false),
+                    "placement" to WireValue.Integer(4),
+                ),
+            )
+            val trigger = View(host.context).apply {
+                tag = "pam:overlay-trigger"
+                isClickable = true
+                setOnClickListener { triggerPresses++ }
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:overlay-content"
+            }
+            content.addView(View(host.context).apply {
+                tag = "pam:overlay-arrow"
+            })
+            val close = MobileUiHost(host.context) { kind, payload ->
+                if (kind == NativeViewEventKind.PRESS) closePresses += payload
+            }
+            close.update(mapOf("behavior" to WireValue.Integer(31)))
+            content.addView(close)
+            host.addView(trigger)
+            host.addView(content)
+            host.layout(0, 0, 500, 800)
+            trigger.layout(100, 100, 300, 180)
+            content.layout(100, 200, 400, 500)
+
+            assertEquals(View.GONE, content.visibility)
+            assertTrue(!host.acceptsOverlayInteraction())
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 180f, 140f)))
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 180f, 140f)))
+            assertEquals(1, triggerPresses)
+            assertEquals(View.VISIBLE, content.visibility)
+            assertTrue(host.acceptsOverlayInteraction())
+            assertEquals("Expanded", trigger.stateDescription)
+
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 20f, 700f)))
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 20f, 700f)))
+            assertTrue(!host.acceptsOverlayInteraction())
+            assertEquals("Collapsed", trigger.stateDescription)
+            assertEquals(2, payloads.size)
+            val opening = WireMap.decode(payloads[0])
+            val dismissal = WireMap.decode(payloads[1])
+            assertEquals(3L, (opening["action"] as WireValue.Integer).value)
+            assertTrue((opening["open"] as WireValue.Flag).value)
+            assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
+            assertTrue((dismissal["dismissed"] as WireValue.Flag).value)
+
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 180f, 140f)))
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 180f, 140f)))
+            assertTrue(close.performClick())
+            assertEquals(1, closePresses.size)
+            assertEquals(4, payloads.size)
+            assertEquals(
+                3L,
+                (WireMap.decode(payloads[2])["action"] as WireValue.Integer).value,
+            )
+            assertEquals(
+                1L,
+                (WireMap.decode(payloads[3])["action"] as WireValue.Integer).value,
+            )
+            assertTrue(!host.acceptsOverlayInteraction())
+
+            close.release()
+            host.release()
+        }
+    }
+
+    @Test
+    fun menuCoordinatesSelectionKeyboardAndCollectionSemanticsOnTheUiThread() {
+        onMain {
+            val rootEvents = CopyOnWriteArrayList<ByteArray>()
+            val itemEvents = CopyOnWriteArrayList<ByteArray>()
+            val menu = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) rootEvents += payload
+            }
+            menu.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(20),
+                    "defaultIsOpen" to WireValue.Flag(true),
+                    "selectionMode" to WireValue.Integer(2),
+                    "closeOnSelect" to WireValue.Flag(false),
+                ),
+            )
+            val content = FrameLayout(menu.context).apply {
+                tag = "pam:overlay-content"
+            }
+            val first = MobileUiHost(menu.context) { kind, payload ->
+                if (kind == NativeViewEventKind.PRESS) itemEvents += payload
+            }
+            first.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(30),
+                    "selectionMode" to WireValue.Integer(2),
+                    "selected" to WireValue.Flag(false),
+                    "closeOnSelect" to WireValue.Flag(false),
+                ),
+            )
+            first.addView(TextView(menu.context).apply { text = "Settings" })
+            val second = MobileUiHost(menu.context) { kind, payload ->
+                if (kind == NativeViewEventKind.PRESS) itemEvents += payload
+            }
+            second.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(30),
+                    "selectionMode" to WireValue.Integer(2),
+                    "selected" to WireValue.Flag(true),
+                    "closeOnSelect" to WireValue.Flag(false),
+                ),
+            )
+            second.addView(TextView(menu.context).apply { text = "Billing" })
+            content.addView(first)
+            content.addView(second)
+            menu.addView(content)
+
+            assertTrue(first.performClick())
+            assertEquals(1, itemEvents.size)
+            assertTrue(rootEvents.isEmpty())
+            assertTrue(first.isSelected)
+            assertTrue(second.isSelected)
+
+            val menuInfo = AccessibilityNodeInfo.obtain()
+            val firstInfo = AccessibilityNodeInfo.obtain()
+            menu.onInitializeAccessibilityNodeInfo(menuInfo)
+            first.onInitializeAccessibilityNodeInfo(firstInfo)
+            assertEquals("android.widget.ListView", menuInfo.className)
+            assertEquals(2, menuInfo.collectionInfo?.rowCount)
+            assertEquals(
+                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_MULTIPLE,
+                menuInfo.collectionInfo?.selectionMode,
+            )
+            assertEquals("android.widget.CheckedTextView", firstInfo.className)
+            assertTrue(firstInfo.isCheckable)
+            assertTrue(firstInfo.isChecked)
+            assertEquals(0, firstInfo.collectionItemInfo?.rowIndex)
+            assertEquals("Settings", first.contentDescription)
+
+            assertTrue(
+                first.dispatchKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN),
+                ),
+            )
+            assertTrue(second.hasFocus())
+
+            first.release()
+            second.release()
+            menu.release()
+            menuInfo.recycle()
+            firstInfo.recycle()
+        }
+    }
+
+    @Test
+    fun anchoredOverlayFlipsAboveTheTriggerAndKeepsItsArrowAligned() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(
+            Intent(
+                instrumentation.targetContext,
+                TestHostActivity::class.java,
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        ) as TestHostActivity
+        instrumentation.waitForIdleSync()
+        lateinit var host: MobileUiHost
+        lateinit var trigger: View
+        lateinit var content: FrameLayout
+        lateinit var arrow: View
+        onMain {
+            host = MobileUiHost(activity) { _, _ -> }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(19),
+                    "isOpen" to WireValue.Flag(true),
+                    "placement" to WireValue.Integer(4),
+                    "shouldFlip" to WireValue.Flag(true),
+                    "offset" to WireValue.Decimal(8.0),
+                ),
+            )
+            trigger = View(activity).apply {
+                tag = "pam:overlay-trigger"
+                layoutParams = FrameLayout.LayoutParams(180, 80, Gravity.BOTTOM).apply {
+                    leftMargin = 120
+                    bottomMargin = 12
+                }
+            }
+            content = FrameLayout(activity).apply {
+                tag = "pam:overlay-content"
+                layoutParams = FrameLayout.LayoutParams(320, 240)
+            }
+            arrow = View(activity).apply {
+                tag = "pam:overlay-arrow"
+                layoutParams = FrameLayout.LayoutParams(24, 24)
+            }
+            content.addView(arrow)
+            host.addView(trigger)
+            host.addView(content)
+            activity.setContentView(host)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
+            val contentTop = content.y
+            assertTrue(contentTop + content.height <= trigger.y)
+            assertEquals(180f, arrow.rotation, 0f)
+            assertTrue(arrow.translationX > 0f)
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO,
+                arrow.importantForAccessibility,
+            )
+            host.release()
+            activity.finish()
+        }
+    }
+
+    @Test
     fun overlayHitTestingIncludesNestedTranslationWithoutDismissing() {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()

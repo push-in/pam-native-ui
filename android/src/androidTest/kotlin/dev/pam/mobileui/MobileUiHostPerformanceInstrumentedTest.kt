@@ -412,6 +412,104 @@ class MobileUiHostPerformanceInstrumentedTest {
                 sheetItemEvents,
             )
 
+            val anchoredEvents = ArrayList<NativeViewEventKind>()
+            val anchored = MobileUiHost(context) { kind, _ -> anchoredEvents += kind }
+            anchored.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(19),
+                    "isOpen" to WireValue.Flag(true),
+                    "placement" to WireValue.Integer(4),
+                    "shouldFlip" to WireValue.Flag(true),
+                    "crossOffset" to WireValue.Decimal(4.0),
+                ),
+            )
+            anchored.addView(View(context).apply {
+                tag = "pam:overlay-trigger"
+                layoutParams = FrameLayout.LayoutParams(240, 72).apply {
+                    leftMargin = 420
+                    topMargin = 1_760
+                }
+            })
+            anchored.addView(FrameLayout(context).apply {
+                tag = "pam:overlay-content"
+                layoutParams = FrameLayout.LayoutParams(360, 280)
+                addView(View(context).apply {
+                    tag = "pam:overlay-arrow"
+                    layoutParams = FrameLayout.LayoutParams(24, 24)
+                })
+            })
+            anchored.measure(
+                View.MeasureSpec.makeMeasureSpec(1_080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1_920, View.MeasureSpec.EXACTLY),
+            )
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                anchored.layout(0, 0, 1_080 + iteration % 2, 1_920)
+            }
+            val anchoredPosition = measure(SAMPLE_ITERATIONS) { iteration ->
+                anchored.layout(0, 0, 1_080 + iteration % 2, 1_920)
+            }
+            assertTrue(
+                "Anchored overlay layout p99 ${anchoredPosition.p99Micros}µs exceeded 4ms",
+                anchoredPosition.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Anchored positioning must never cross the PAM bridge",
+                anchoredEvents.isEmpty(),
+            )
+
+            var menuEvents = 0
+            val menu = MobileUiHost(context) { _, _ -> }
+            menu.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(20),
+                    "defaultIsOpen" to WireValue.Flag(true),
+                    "selectionMode" to WireValue.Integer(2),
+                    "closeOnSelect" to WireValue.Flag(false),
+                ),
+            )
+            val menuContent = FrameLayout(context).apply {
+                tag = "pam:overlay-content"
+            }
+            val firstMenuItem = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.PRESS) menuEvents++
+            }
+            firstMenuItem.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(30),
+                    "selectionMode" to WireValue.Integer(2),
+                    "closeOnSelect" to WireValue.Flag(false),
+                ),
+            )
+            val secondMenuItem = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.PRESS) menuEvents++
+            }
+            secondMenuItem.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(30),
+                    "selectionMode" to WireValue.Integer(2),
+                    "closeOnSelect" to WireValue.Flag(false),
+                ),
+            )
+            menuContent.addView(firstMenuItem)
+            menuContent.addView(secondMenuItem)
+            menu.addView(menuContent)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                menuItemAt(firstMenuItem, secondMenuItem, iteration).performClick()
+            }
+            menuEvents = 0
+            val menuSelection = measure(SAMPLE_ITERATIONS) { iteration ->
+                menuItemAt(firstMenuItem, secondMenuItem, iteration).performClick()
+            }
+            assertTrue(
+                "Menu selection p99 ${menuSelection.p99Micros}µs exceeded 4ms",
+                menuSelection.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Menu must emit one semantic event per completed selection",
+                SAMPLE_ITERATIONS,
+                menuEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -443,6 +541,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"tabsSelection\":${tabsSelection.json()},")
                     append("\"sheetSnap\":${sheetSnap.json()},")
                     append("\"sheetItemPress\":${sheetItemPress.json()},")
+                    append("\"anchoredPosition\":${anchoredPosition.json()},")
+                    append("\"menuSelection\":${menuSelection.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
@@ -455,7 +555,9 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"switchBridgeEvents\":$switchEvents,")
                     append("\"tabsBridgeEvents\":$tabsEvents,")
                     append("\"sheetBridgeEvents\":$sheetEvents,")
-                    append("\"sheetItemBridgeEvents\":$sheetItemEvents")
+                    append("\"sheetItemBridgeEvents\":$sheetItemEvents,")
+                    append("\"anchoredBridgeEvents\":${anchoredEvents.size},")
+                    append("\"menuBridgeEvents\":$menuEvents")
                     append('}')
                 },
             )
@@ -477,6 +579,10 @@ class MobileUiHostPerformanceInstrumentedTest {
             tabs.release()
             sheetItem.release()
             sheet.release()
+            firstMenuItem.release()
+            secondMenuItem.release()
+            menu.release()
+            anchored.release()
         }
     }
 
@@ -551,6 +657,12 @@ class MobileUiHostPerformanceInstrumentedTest {
         } else {
             AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
+
+    private fun menuItemAt(
+        first: MobileUiHost,
+        second: MobileUiHost,
+        iteration: Int,
+    ): MobileUiHost = if (iteration % 2 == 0) first else second
 
     private fun measure(iterations: Int, block: (Int) -> Unit): Statistics {
         val samples = LongArray(iterations)

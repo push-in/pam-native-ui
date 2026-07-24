@@ -83,6 +83,11 @@ final class Catalog extends Component
         $this->popoverOpen = !$this->popoverOpen;
     }
 
+    public function chooseMenu(string $action): void
+    {
+        $this->notice = "Native menu action: {$action}.";
+    }
+
     public function toggleSelect(): void
     {
         $this->selectOpen = !$this->selectOpen;

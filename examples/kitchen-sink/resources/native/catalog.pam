@@ -236,6 +236,24 @@
                         </PopoverContent>
                     </Popover>
                 </HStack>
+                <HStack space="sm">
+                    <Menu placement="bottom-end" on:change="chooseMenu">
+                        <Button variant="outline">
+                            <MenuIcon />
+                            <ButtonText>Menu</ButtonText>
+                        </Button>
+                        <MenuItem key="share"><MenuItemLabel>Share</MenuItemLabel></MenuItem>
+                        <MenuItem key="archive"><MenuItemLabel>Archive</MenuItemLabel></MenuItem>
+                    </Menu>
+                    <Tooltip openDelay="400" closeDelay="100" placement="top">
+                        <Button variant="ghost" accessibilityLabel="Performance details">
+                            <InfoIcon />
+                        </Button>
+                        <TooltipContent>
+                            <TooltipText>Positioned entirely on Android.</TooltipText>
+                        </TooltipContent>
+                    </Tooltip>
+                </HStack>
             </VStack>
 
             <VStack class="gap-3">

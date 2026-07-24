@@ -9,6 +9,7 @@ import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -16,6 +17,8 @@ import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.RectF
 import android.graphics.Shader
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
@@ -88,7 +91,9 @@ internal class MobileUiHost(
         RADIO_GROUP(26),
         SWITCH(27),
         TAB_TRIGGER(28),
-        SHEET_ITEM(29);
+        SHEET_ITEM(29),
+        MENU_ITEM(30),
+        OVERLAY_DISMISS(31);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -153,6 +158,7 @@ internal class MobileUiHost(
     private var indeterminate = false
     private var selected = false
     private var open = true
+    private var openControlled = false
     private var value = 0.0
     private var minimum = 0.0
     private var maximum = 100.0
@@ -163,7 +169,16 @@ internal class MobileUiHost(
     private var reversed = false
     private var anchor = 1
     private var placement = 1
+    private var resolvedPlacement = 1
     private var offset = 8.0
+    private var crossOffset = 0.0
+    private var shouldFlip = true
+    private var shouldOverlapWithTrigger = false
+    private var openDelayMillis = 0L
+    private var closeDelayMillis = 0L
+    private var closeOnClick = true
+    private var pendingAnchoredOpen: Runnable? = null
+    private var pendingAnchoredClose: Runnable? = null
     private var dismissible = true
     private var closeOnOverlayClick = true
     private var backdropPressBehavior = BACKDROP_PRESS_CLOSE
@@ -176,6 +191,11 @@ internal class MobileUiHost(
     private var sheetBackdropBaseAlpha: Float? = null
     private var sheetVelocityTracker: VelocityTracker? = null
     private var closeSheetItemOnPress = false
+    private var closeMenuItemOnPress = true
+    private var menuSelectionMode = MENU_SELECTION_NONE
+    private var anchoredTriggerTouchActive = false
+    private var menuTypeaheadPrefix = ""
+    private var menuTypeaheadAtMillis = 0L
     private var trapFocus = true
     private var keyboardDismissable = true
     private var componentMode = ComponentMode.DATETIME
@@ -353,6 +373,10 @@ internal class MobileUiHost(
         val previousOpen = open
         val previousComponentMode = componentMode
         val previousTabValue = tabValue
+        pendingAnchoredOpen?.let(::removeCallbacks)
+        pendingAnchoredOpen = null
+        pendingAnchoredClose?.let(::removeCallbacks)
+        pendingAnchoredClose = null
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         if (previousBehavior != behavior) {
             sheetBackdropBaseAlpha = null
@@ -392,7 +416,10 @@ internal class MobileUiHost(
             "pressBehavior",
             backdropPressBehavior.toLong(),
         ).toInt().coerceIn(BACKDROP_PRESS_CLOSE, BACKDROP_PRESS_NONE)
-        trapFocus = properties.flag("trapFocus", trapFocus)
+        trapFocus = properties.flag(
+            "trapFocus",
+            properties.flag("focusScope", trapFocus),
+        )
         keyboardDismissable = properties.flag(
             "isKeyboardDismissable",
             keyboardDismissable,
@@ -443,13 +470,19 @@ internal class MobileUiHost(
             properties.flag("isIndeterminate", false),
         )
         selected = properties.flag("selected", properties.flag("isSelected", selected))
-        open = properties.flag(
-            "open",
+        val wasOpenControlled = openControlled
+        openControlled = properties.containsKey("open")
+            || properties.containsKey("isOpen")
+        open = if (openControlled) {
             properties.flag(
-                "isOpen",
-                properties.flag("defaultIsOpen", open),
-            ),
-        )
+                "open",
+                properties.flag("isOpen", open),
+            )
+        } else if (previousBehavior != behavior || wasOpenControlled) {
+            properties.flag("defaultIsOpen", open)
+        } else {
+            open
+        }
         if (
             behavior != Behavior.SWITCH
             && behavior != Behavior.TABS
@@ -483,7 +516,19 @@ internal class MobileUiHost(
         reversed = properties.flag("isReversed", properties.flag("reversed", reversed))
         anchor = properties.integer("anchor", anchor.toLong()).toInt()
         placement = properties.integer("placement", placement.toLong()).toInt().coerceIn(1, 13)
+        resolvedPlacement = placement
         offset = properties.decimal("offset", offset)
+        crossOffset = properties.decimal("crossOffset", crossOffset)
+        shouldFlip = properties.flag("shouldFlip", shouldFlip)
+        shouldOverlapWithTrigger = properties.flag(
+            "shouldOverlapWithTrigger",
+            shouldOverlapWithTrigger,
+        )
+        openDelayMillis = properties.integer("openDelay", openDelayMillis)
+            .coerceIn(0L, MAX_ANCHORED_OVERLAY_DELAY_MILLIS)
+        closeDelayMillis = properties.integer("closeDelay", closeDelayMillis)
+            .coerceIn(0L, MAX_ANCHORED_OVERLAY_DELAY_MILLIS)
+        closeOnClick = properties.flag("closeOnClick", closeOnClick)
         dismissible = properties.flag(
             "dismissible",
             properties.flag("isDismissable", dismissible),
@@ -492,6 +537,11 @@ internal class MobileUiHost(
             "closeOnOverlayClick",
             properties.flag("closeOnOverlay", closeOnOverlayClick),
         )
+        menuSelectionMode = properties.integer(
+            "selectionMode",
+            menuSelectionMode.toLong(),
+        ).toInt().coerceIn(MENU_SELECTION_SINGLE, MENU_SELECTION_NONE)
+        closeMenuItemOnPress = properties.flag("closeOnSelect", true)
         componentMode = ComponentMode.from(
             properties.integer(
                 "mode",
@@ -589,6 +639,8 @@ internal class MobileUiHost(
             if (behavior.isOverlay() && open) {
                 isFocusableInTouchMode = true
                 captureAndMoveFocus()
+            } else if (behavior.isAnchoredOverlay()) {
+                post { applyAnchoredOverlayState(animate = false) }
             }
         } else if (previousOpen != open && behavior.isOverlay()) {
             if (open) {
@@ -598,6 +650,9 @@ internal class MobileUiHost(
                 animate().cancel()
                 translationX = 0f
                 translationY = 0f
+                if (behavior.isAnchoredOverlay()) {
+                    applyAnchoredOverlayState(animate = true)
+                }
                 restoreFocus()
             }
         }
@@ -631,6 +686,11 @@ internal class MobileUiHost(
             updateTabTriggerAccessibility()
         } else if (behavior == Behavior.SHEET_ITEM) {
             updateSheetItemAccessibility()
+        } else if (behavior == Behavior.MENU_ITEM) {
+            updateMenuItemAccessibility()
+        }
+        if (behavior.isAnchoredOverlay() && previousOpen == open) {
+            post { applyAnchoredOverlayState(animate = false) }
         }
         invalidate()
     }
@@ -656,6 +716,12 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.BOTTOM_SHEET) {
             post { applySheetLayout(animate = false) }
+        }
+        if (behavior == Behavior.MENU_ITEM) {
+            updateMenuItemAccessibility()
+        }
+        if (behavior.isAnchoredOverlay()) {
+            post { applyAnchoredOverlayState(animate = false) }
         }
     }
 
@@ -696,10 +762,30 @@ internal class MobileUiHost(
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
+            if (!open) {
+                applyAnchoredOverlayState(animate = false)
+            }
         }
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        if (
+            behavior.isAnchoredOverlay()
+            && isEnabled
+            && !open
+            && !openControlled
+        ) {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    anchoredTriggerTouchActive = anchoredTriggerBounds()
+                        ?.contains(event.x, event.y) == true
+                    if (anchoredTriggerTouchActive) {
+                        return true
+                    }
+                }
+                MotionEvent.ACTION_CANCEL -> anchoredTriggerTouchActive = false
+            }
+        }
         if (
             behavior == Behavior.SLIDER
             && isEnabled
@@ -726,6 +812,38 @@ internal class MobileUiHost(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (
+            behavior.isAnchoredOverlay()
+            && !open
+            && !openControlled
+            && anchoredTriggerTouchActive
+        ) {
+            return when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_MOVE,
+                -> true
+                MotionEvent.ACTION_UP -> {
+                    val activate = anchoredTriggerBounds()
+                        ?.contains(event.x, event.y) == true
+                    anchoredTriggerTouchActive = false
+                    if (activate) {
+                        anchoredTrigger()?.performClick()
+                        if (behavior == Behavior.TOOLTIP && openDelayMillis > 0L) {
+                            scheduleTooltipState(true)
+                        } else {
+                            requestAnchoredOverlayOpen()
+                        }
+                        performClick()
+                    }
+                    activate
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    anchoredTriggerTouchActive = false
+                    true
+                }
+                else -> true
+            }
+        }
         if (behavior != Behavior.ACCORDION) {
             return super.onTouchEvent(event)
         }
@@ -773,6 +891,12 @@ internal class MobileUiHost(
         }
 
     override fun dispatchHoverEvent(event: MotionEvent): Boolean {
+        if (behavior == Behavior.TOOLTIP && isEnabled) {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_HOVER_ENTER -> scheduleTooltipState(true)
+                MotionEvent.ACTION_HOVER_EXIT -> scheduleTooltipState(false)
+            }
+        }
         if (
             behavior == Behavior.CALENDAR
             && accessibilityManager?.isTouchExplorationEnabled == true
@@ -839,7 +963,10 @@ internal class MobileUiHost(
             Behavior.CHECKBOX,
             Behavior.RADIO,
             Behavior.SWITCH,
-        )
+        ) || (
+            behavior == Behavior.MENU_ITEM
+                && menuSelectionMode != MENU_SELECTION_NONE
+            )
         if (info.isCheckable) {
             info.isClickable = isEnabled && !readOnly
             info.isContentInvalid = invalid
@@ -911,6 +1038,21 @@ internal class MobileUiHost(
                 )
             }
         }
+        if (behavior == Behavior.MENU) {
+            val items = menuItems()
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                items.size,
+                1,
+                false,
+                when (menuSelectionMode) {
+                    MENU_SELECTION_SINGLE ->
+                        AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE
+                    MENU_SELECTION_MULTIPLE ->
+                        AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_MULTIPLE
+                    else -> AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_NONE
+                },
+            )
+        }
         if (behavior == Behavior.SHEET_ITEM) {
             val selectOption = component == GeneratedComponents.SELECT_ITEM
             info.className = if (selectOption) {
@@ -928,6 +1070,26 @@ internal class MobileUiHost(
                 info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
             }
             sheetAncestor()?.sheetCollectionItemInfo(this)?.let { item ->
+                info.collectionItemInfo = item
+            }
+        }
+        if (behavior == Behavior.MENU_ITEM) {
+            val selectable = menuSelectionMode != MENU_SELECTION_NONE
+            info.className = if (selectable) {
+                "android.widget.CheckedTextView"
+            } else {
+                "android.widget.Button"
+            }
+            info.isClickable = isEnabled
+            info.isSelected = selected
+            info.isCheckable = selectable
+            info.isChecked = selectable && selected
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+            menuAncestor()?.menuCollectionItemInfo(this)?.let { item ->
                 info.collectionItemInfo = item
             }
         }
@@ -1013,6 +1175,13 @@ internal class MobileUiHost(
             } else {
                 "android.widget.Button"
             }
+            Behavior.MENU -> "android.widget.ListView"
+            Behavior.MENU_ITEM -> if (menuSelectionMode == MENU_SELECTION_NONE) {
+                "android.widget.Button"
+            } else {
+                "android.widget.CheckedTextView"
+            }
+            Behavior.OVERLAY_DISMISS -> "android.widget.Button"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
             Behavior.MODAL,
             Behavior.ALERT_DIALOG,
@@ -1094,7 +1263,7 @@ internal class MobileUiHost(
             if (behavior == Behavior.BOTTOM_SHEET) {
                 dismissSheet()
             } else {
-                emitDismiss()
+                requestOverlayDismiss()
             }
             return true
         }
@@ -1163,7 +1332,7 @@ internal class MobileUiHost(
                 if (behavior == Behavior.BOTTOM_SHEET) {
                     dismissSheet()
                 } else {
-                    emitDismiss()
+                    requestOverlayDismiss()
                 }
                 return true
             }
@@ -1175,6 +1344,8 @@ internal class MobileUiHost(
                 Behavior.SWITCH,
                 Behavior.TAB_TRIGGER,
                 Behavior.SHEET_ITEM,
+                Behavior.MENU_ITEM,
+                Behavior.OVERLAY_DISMISS,
             )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
@@ -1186,6 +1357,21 @@ internal class MobileUiHost(
             )
         ) {
             performClick()
+            return true
+        }
+        if (
+            behavior == Behavior.MENU_ITEM
+            && isEnabled
+            && event.action == KeyEvent.ACTION_DOWN
+            && menuAncestor()?.handleMenuKey(this, event) == true
+        ) {
+            return true
+        }
+        if (
+            behavior == Behavior.MENU
+            && event.action == KeyEvent.ACTION_DOWN
+            && handleMenuKey(null, event)
+        ) {
             return true
         }
         if (
@@ -1242,6 +1428,10 @@ internal class MobileUiHost(
         animator = null
         pendingDismiss?.let(::removeCallbacks)
         pendingDismiss = null
+        pendingAnchoredOpen?.let(::removeCallbacks)
+        pendingAnchoredOpen = null
+        pendingAnchoredClose?.let(::removeCallbacks)
+        pendingAnchoredClose = null
         activePickerDialog?.dismiss()
         activePickerDialog = null
         accordionTouchActive = false
@@ -1257,6 +1447,9 @@ internal class MobileUiHost(
         tabsContentAnimator = null
         sheetVelocityTracker?.recycle()
         sheetVelocityTracker = null
+        anchoredTriggerTouchActive = false
+        menuTypeaheadPrefix = ""
+        menuTypeaheadAtMillis = 0L
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -1320,6 +1513,24 @@ internal class MobileUiHost(
                     }
                 }
             }
+        } else if (behavior == Behavior.MENU_ITEM) {
+            setOnClickListener {
+                if (isEnabled) {
+                    val menu = menuAncestor()
+                    if (menu != null) {
+                        menu.activateMenuItem(this)
+                    } else {
+                        emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+                    }
+                }
+            }
+        } else if (behavior == Behavior.OVERLAY_DISMISS) {
+            setOnClickListener {
+                if (isEnabled) {
+                    emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+                    overlayAncestor()?.requestOverlayDismiss()
+                }
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -1362,6 +1573,8 @@ internal class MobileUiHost(
             Behavior.TABS,
             Behavior.TAB_TRIGGER,
             Behavior.SHEET_ITEM,
+            Behavior.MENU_ITEM,
+            Behavior.OVERLAY_DISMISS,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -1374,6 +1587,24 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.SWITCH) {
             minimumWidth = max(minimumWidth, (SWITCH_TRACK_WIDTH_DP * density).toInt())
+        }
+        foreground = if (
+            behavior in setOf(
+                Behavior.TAB_TRIGGER,
+                Behavior.SHEET_ITEM,
+                Behavior.MENU_ITEM,
+                Behavior.OVERLAY_DISMISS,
+            )
+        ) {
+            RippleDrawable(
+                ColorStateList.valueOf(
+                    (fillPaint.color and 0x00ffffff) or RIPPLE_ALPHA_MASK,
+                ),
+                null,
+                ColorDrawable(Color.WHITE),
+            )
+        } else {
+            null
         }
         importantForAccessibility = when {
             behavior in setOf(
@@ -1865,6 +2096,10 @@ internal class MobileUiHost(
     private fun animateEntrance() {
         if (!open) return
         if (!behavior.isOverlay() && behavior != Behavior.TOAST) return
+        if (behavior.isAnchoredOverlay()) {
+            applyAnchoredOverlayState(animate = true)
+            return
+        }
         if (!animationsEnabled()) return
         if (behavior == Behavior.BOTTOM_SHEET) {
             alpha = 1f
@@ -2046,7 +2281,16 @@ internal class MobileUiHost(
             val insideContent = content != null
                 && boundsInHost(content).contains(event.x, event.y)
             if (!insideContent) {
-                emitDismiss()
+                val insideTrigger = anchoredTriggerBounds()
+                    ?.contains(event.x, event.y) == true
+                if (
+                    behavior == Behavior.TOOLTIP
+                    && insideTrigger
+                    && !closeOnClick
+                ) {
+                    return@OnTouchListener false
+                }
+                requestOverlayDismiss()
                 performClick()
                 true
             } else {
@@ -2199,6 +2443,158 @@ internal class MobileUiHost(
             current = current.parent
         }
         return null
+    }
+
+    private fun menuAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (current is MobileUiHost && current.behavior == Behavior.MENU) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun overlayAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (current is MobileUiHost && current.behavior.isOverlay()) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun menuItems(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (child is MobileUiHost && child.behavior == Behavior.MENU_ITEM) {
+                    add(child)
+                } else if (
+                    child is MobileUiHost
+                    && child.behavior == Behavior.MENU
+                ) {
+                    Unit
+                } else if (child is ViewGroup) {
+                    addAll(menuItems(child))
+                }
+            }
+        }
+
+    @Suppress("DEPRECATION")
+    private fun menuCollectionItemInfo(
+        item: MobileUiHost,
+    ): AccessibilityNodeInfo.CollectionItemInfo? {
+        val items = menuItems()
+        val index = items.indexOf(item)
+        if (index < 0) return null
+        return AccessibilityNodeInfo.CollectionItemInfo.obtain(
+            index,
+            1,
+            0,
+            1,
+            false,
+            item.selected,
+        )
+    }
+
+    private fun updateMenuItemAccessibility() {
+        if (behavior != Behavior.MENU_ITEM) return
+        val label = findFirstText(this)
+        if (contentDescription.isNullOrEmpty() && !label.isNullOrEmpty()) {
+            contentDescription = label
+        }
+        isActivated = selected
+    }
+
+    private fun activateMenuItem(item: MobileUiHost): Boolean {
+        if (
+            behavior != Behavior.MENU
+            || !open
+            || !isEnabled
+            || !item.isEnabled
+        ) {
+            return false
+        }
+        when (menuSelectionMode) {
+            MENU_SELECTION_SINGLE -> {
+                menuItems().forEach { candidate ->
+                    candidate.selected = candidate === item
+                    candidate.isSelected = candidate.selected
+                    candidate.isActivated = candidate.selected
+                    candidate.invalidate()
+                }
+            }
+            MENU_SELECTION_MULTIPLE -> {
+                item.selected = !item.selected
+                item.isSelected = item.selected
+                item.isActivated = item.selected
+                item.invalidate()
+            }
+            else -> Unit
+        }
+        item.emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+        item.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        item.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
+        if (item.closeMenuItemOnPress) {
+            requestOverlayDismiss()
+        }
+        return true
+    }
+
+    private fun handleMenuKey(
+        source: MobileUiHost?,
+        event: KeyEvent,
+    ): Boolean {
+        if (behavior != Behavior.MENU || !open || !isEnabled) return false
+        if (event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+            requestOverlayDismiss()
+            return true
+        }
+        val items = menuItems().filter { item -> item.isEnabled }
+        if (items.isEmpty()) return false
+        val current = items.indexOf(source).takeIf { index -> index >= 0 }
+            ?: items.indexOfFirst(View::hasFocus).takeIf { index -> index >= 0 }
+            ?: 0
+        val targetIndex = when (event.keyCode) {
+            KeyEvent.KEYCODE_DPAD_DOWN -> (current + 1).mod(items.size)
+            KeyEvent.KEYCODE_DPAD_UP -> (current - 1).mod(items.size)
+            KeyEvent.KEYCODE_MOVE_HOME -> 0
+            KeyEvent.KEYCODE_MOVE_END -> items.lastIndex
+            else -> null
+        }
+        if (targetIndex != null) {
+            items[targetIndex].requestFocus()
+            items[targetIndex].sendAccessibilityEvent(
+                AccessibilityEvent.TYPE_VIEW_FOCUSED,
+            )
+            return true
+        }
+
+        val character = event.unicodeChar
+            .takeIf { code -> code > 0 && !event.isAltPressed && !event.isCtrlPressed }
+            ?.toChar()
+            ?.lowercaseChar()
+            ?: return false
+        val now = event.eventTime
+        if (now - menuTypeaheadAtMillis > MENU_TYPEAHEAD_TIMEOUT_MILLIS) {
+            menuTypeaheadPrefix = ""
+        }
+        menuTypeaheadAtMillis = now
+        menuTypeaheadPrefix += character
+        val ordered = (items.drop(current + 1) + items.take(current + 1))
+        val match = ordered.firstOrNull { item ->
+            findFirstText(item)
+                ?.trim()
+                ?.lowercase(Locale.getDefault())
+                ?.startsWith(menuTypeaheadPrefix) == true
+        } ?: return false
+        match.requestFocus()
+        match.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
+        return true
     }
 
     private fun sheetItems(root: ViewGroup = this): List<MobileUiHost> =
@@ -3324,6 +3720,15 @@ internal class MobileUiHost(
         findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
             ?: if (childCount > 0) getChildAt(childCount - 1) else null
 
+    private fun anchoredTrigger(): View? =
+        findTaggedDescendant(this, OVERLAY_TRIGGER_TAG)
+            ?: getChildAtOrNull(0)?.takeUnless { candidate ->
+                candidate === overlayContent()
+            }
+
+    private fun anchoredTriggerBounds(): RectF? =
+        anchoredTrigger()?.let(::boundsInHost)
+
     private fun sheetContent(): View? = overlayContent()
 
     private fun sheetBackdrop(): View? =
@@ -3551,41 +3956,391 @@ internal class MobileUiHost(
         return RectF(left, top, left + view.width, top + view.height)
     }
 
-    private fun positionAnchoredContent() {
-        if (childCount < 2) return
-        val trigger = getChildAt(0)
-        val content = getChildAt(childCount - 1)
-        if (trigger === content || content.width <= 0 || content.height <= 0) return
-        val gap = (offset * density).toFloat()
-        val centeredX = trigger.left + (trigger.width - content.width) / 2f
-        val centeredY = trigger.top + (trigger.height - content.height) / 2f
-        val target = when (placement) {
-            1 -> centeredX to (trigger.top - content.height - gap)
-            2 -> trigger.left.toFloat() to (trigger.top - content.height - gap)
-            3 -> (trigger.right - content.width).toFloat() to
-                (trigger.top - content.height - gap)
-            4 -> centeredX to (trigger.bottom + gap)
-            5 -> trigger.left.toFloat() to (trigger.bottom + gap)
-            6 -> (trigger.right - content.width).toFloat() to (trigger.bottom + gap)
-            7 -> (trigger.left - content.width - gap) to centeredY
-            8 -> (trigger.left - content.width - gap) to trigger.top.toFloat()
-            9 -> (trigger.left - content.width - gap) to
-                (trigger.bottom - content.height).toFloat()
-            10 -> (trigger.right + gap) to centeredY
-            11 -> (trigger.right + gap) to trigger.top.toFloat()
-            12 -> (trigger.right + gap) to (trigger.bottom - content.height).toFloat()
-            else -> ((width - content.width) / 2f) to ((height - content.height) / 2f)
+    private fun applyAnchoredOverlayState(animate: Boolean) {
+        if (!behavior.isAnchoredOverlay()) return
+        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG) ?: return
+        val backdrop = findTaggedDescendant(this, OVERLAY_BACKDROP_TAG)
+            ?: findTaggedDescendantWithPrefix(this, "$OVERLAY_BACKDROP_TAG:")
+        val trigger = anchoredTrigger()
+        trigger?.isActivated = open
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            trigger?.stateDescription = if (open) "Expanded" else "Collapsed"
         }
-        val targetX = target.first.coerceIn(0f, max(0, width - content.width).toFloat())
-        val targetY = target.second.coerceIn(0f, max(0, height - content.height).toFloat())
-        content.translationX = targetX - content.left
-        content.translationY = targetY - content.top
+        if (behavior == Behavior.TOOLTIP) {
+            trigger?.tooltipText = findFirstText(content)
+        }
+        isClickable = open || (!openControlled && trigger != null)
+        isFocusable = open
+        content.animate().cancel()
+        backdrop?.animate()?.cancel()
+        if (open) {
+            content.visibility = VISIBLE
+            content.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            backdrop?.visibility = VISIBLE
+            backdrop?.importantForAccessibility =
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            positionAnchoredContent()
+            if (animate && animationsEnabled()) {
+                content.alpha = 0f
+                content.scaleX = ANCHORED_OVERLAY_ENTRANCE_SCALE
+                content.scaleY = ANCHORED_OVERLAY_ENTRANCE_SCALE
+                content.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(ANCHORED_OVERLAY_ENTRANCE_DURATION_MILLIS)
+                    .start()
+                backdrop?.alpha = 0f
+                backdrop?.animate()
+                    ?.alpha(1f)
+                    ?.setDuration(ANCHORED_OVERLAY_ENTRANCE_DURATION_MILLIS)
+                    ?.start()
+            } else {
+                content.alpha = 1f
+                content.scaleX = 1f
+                content.scaleY = 1f
+                backdrop?.alpha = 1f
+            }
+        } else {
+            content.importantForAccessibility =
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            backdrop?.importantForAccessibility =
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            if (
+                animate
+                && animationsEnabled()
+                && content.visibility == VISIBLE
+            ) {
+                content.animate()
+                    .alpha(0f)
+                    .scaleX(ANCHORED_OVERLAY_ENTRANCE_SCALE)
+                    .scaleY(ANCHORED_OVERLAY_ENTRANCE_SCALE)
+                    .setDuration(ANCHORED_OVERLAY_EXIT_DURATION_MILLIS)
+                    .withEndAction {
+                        if (!open) {
+                            content.visibility = GONE
+                        }
+                    }
+                    .start()
+                backdrop?.animate()
+                    ?.alpha(0f)
+                    ?.setDuration(ANCHORED_OVERLAY_EXIT_DURATION_MILLIS)
+                    ?.withEndAction {
+                        if (!open) {
+                            backdrop.visibility = GONE
+                        }
+                    }
+                    ?.start()
+            } else {
+                content.alpha = 0f
+                content.scaleX = ANCHORED_OVERLAY_ENTRANCE_SCALE
+                content.scaleY = ANCHORED_OVERLAY_ENTRANCE_SCALE
+                content.visibility = GONE
+                backdrop?.alpha = 0f
+                backdrop?.visibility = GONE
+            }
+        }
+    }
+
+    private fun setAnchoredOverlayOpen(requested: Boolean, emit: Boolean) {
+        if (!behavior.isAnchoredOverlay() || openControlled || open == requested) {
+            return
+        }
+        open = requested
+        if (requested) {
+            applyAnchoredOverlayState(animate = true)
+            captureAndMoveFocus()
+        } else {
+            applyAnchoredOverlayState(animate = true)
+            restoreFocus()
+        }
+        if (emit) {
+            emitter.emit(
+                NativeViewEventKind.NATIVE,
+                WireMap.encode(
+                    mapOf(
+                        "action" to WireValue.Integer(
+                            if (requested) {
+                                HostAction.OPEN.value
+                            } else {
+                                HostAction.DISMISS.value
+                            },
+                        ),
+                        "open" to WireValue.Flag(requested),
+                    ),
+                ),
+            )
+        }
+    }
+
+    private fun requestAnchoredOverlayOpen() {
+        if (!behavior.isAnchoredOverlay() || !isEnabled || open) return
+        if (openControlled) {
+            emitAnchoredOpenRequest()
+        } else {
+            setAnchoredOverlayOpen(true, emit = true)
+        }
+    }
+
+    private fun emitAnchoredOpenRequest() {
+        emitter.emit(
+            NativeViewEventKind.NATIVE,
+            WireMap.encode(
+                mapOf(
+                    "action" to WireValue.Integer(HostAction.OPEN.value),
+                    "open" to WireValue.Flag(true),
+                ),
+            ),
+        )
+    }
+
+    private fun scheduleTooltipState(requested: Boolean) {
+        if (behavior != Behavior.TOOLTIP || !isEnabled) return
+        pendingAnchoredOpen?.let(::removeCallbacks)
+        pendingAnchoredOpen = null
+        pendingAnchoredClose?.let(::removeCallbacks)
+        pendingAnchoredClose = null
+        val action = Runnable {
+            if (requested) {
+                requestAnchoredOverlayOpen()
+            } else if (open) {
+                requestOverlayDismiss()
+            }
+        }
+        val delay = if (requested) openDelayMillis else closeDelayMillis
+        if (requested) {
+            pendingAnchoredOpen = action
+        } else {
+            pendingAnchoredClose = action
+        }
+        if (delay == 0L) {
+            action.run()
+        } else {
+            postDelayed(action, delay)
+        }
+    }
+
+    private fun requestOverlayDismiss() {
+        if (!behavior.isOverlay() || !dismissible || !open) return
+        if (behavior.isAnchoredOverlay() && !openControlled) {
+            setAnchoredOverlayOpen(false, emit = false)
+        }
+        emitDismiss()
+    }
+
+    private fun positionAnchoredContent() {
+        if (!behavior.isAnchoredOverlay() || !open) return
+        val trigger = anchoredTrigger() ?: return
+        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG) ?: return
+        if (
+            trigger === content
+            || trigger.width <= 0
+            || trigger.height <= 0
+            || content.width <= 0
+            || content.height <= 0
+        ) {
+            return
+        }
+
+        val visibleFrame = Rect()
+        rootView.getWindowVisibleDisplayFrame(visibleFrame)
+        val safeMargin = ANCHORED_OVERLAY_SCREEN_MARGIN_DP * density
+        val available = RectF(
+            visibleFrame.left + safeMargin,
+            visibleFrame.top + safeMargin,
+            visibleFrame.right - safeMargin,
+            visibleFrame.bottom - safeMargin,
+        )
+        val triggerLocation = IntArray(2)
+        val hostLocation = IntArray(2)
+        trigger.getLocationOnScreen(triggerLocation)
+        getLocationOnScreen(hostLocation)
+        val triggerBounds = RectF(
+            triggerLocation[0].toFloat(),
+            triggerLocation[1].toFloat(),
+            triggerLocation[0] + trigger.width.toFloat(),
+            triggerLocation[1] + trigger.height.toFloat(),
+        )
+        val requested = anchoredPlacementCandidate(
+            placement,
+            triggerBounds,
+            content.width.toFloat(),
+            content.height.toFloat(),
+        )
+        val oppositePlacement = oppositePlacement(placement)
+        val opposite = anchoredPlacementCandidate(
+            oppositePlacement,
+            triggerBounds,
+            content.width.toFloat(),
+            content.height.toFloat(),
+        )
+        val requestedOverflow = overflowScore(
+            requested,
+            content.width.toFloat(),
+            content.height.toFloat(),
+            available,
+        )
+        val oppositeOverflow = overflowScore(
+            opposite,
+            content.width.toFloat(),
+            content.height.toFloat(),
+            available,
+        )
+        val selected = if (
+            shouldFlip
+            && oppositePlacement != placement
+            && oppositeOverflow < requestedOverflow
+        ) {
+            resolvedPlacement = oppositePlacement
+            opposite
+        } else {
+            resolvedPlacement = placement
+            requested
+        }
+        val targetX = selected.first.coerceIn(
+            available.left,
+            max(available.left, available.right - content.width),
+        )
+        val targetY = selected.second.coerceIn(
+            available.top,
+            max(available.top, available.bottom - content.height),
+        )
+        content.translationX = targetX - hostLocation[0] - content.left
+        content.translationY = targetY - hostLocation[1] - content.top
+        positionAnchoredArrow(
+            content,
+            triggerBounds,
+            targetX,
+            targetY,
+        )
+    }
+
+    private fun anchoredPlacementCandidate(
+        requestedPlacement: Int,
+        trigger: RectF,
+        contentWidth: Float,
+        contentHeight: Float,
+    ): Pair<Float, Float> {
+        val vertical = requestedPlacement in 1..6
+        val overlap = if (shouldOverlapWithTrigger) {
+            if (vertical) {
+                minOf(trigger.height(), contentHeight)
+            } else {
+                minOf(trigger.width(), contentWidth)
+            }
+        } else {
+            0f
+        }
+        val gap = (offset * density).toFloat() - overlap
+        val cross = (crossOffset * density).toFloat()
+        val centeredX = trigger.centerX() - contentWidth / 2f + cross
+        val centeredY = trigger.centerY() - contentHeight / 2f + cross
+        return when (requestedPlacement) {
+            1 -> centeredX to (trigger.top - contentHeight - gap)
+            2 -> (trigger.left + cross) to (trigger.top - contentHeight - gap)
+            3 -> (trigger.right - contentWidth + cross) to
+                (trigger.top - contentHeight - gap)
+            4 -> centeredX to (trigger.bottom + gap)
+            5 -> (trigger.left + cross) to (trigger.bottom + gap)
+            6 -> (trigger.right - contentWidth + cross) to (trigger.bottom + gap)
+            7 -> (trigger.left - contentWidth - gap) to centeredY
+            8 -> (trigger.left - contentWidth - gap) to (trigger.top + cross)
+            9 -> (trigger.left - contentWidth - gap) to
+                (trigger.bottom - contentHeight + cross)
+            10 -> (trigger.right + gap) to centeredY
+            11 -> (trigger.right + gap) to (trigger.top + cross)
+            12 -> (trigger.right + gap) to
+                (trigger.bottom - contentHeight + cross)
+            else -> trigger.centerX() - contentWidth / 2f to
+                trigger.centerY() - contentHeight / 2f
+        }
+    }
+
+    private fun oppositePlacement(requestedPlacement: Int): Int =
+        when (requestedPlacement) {
+            1 -> 4
+            2 -> 5
+            3 -> 6
+            4 -> 1
+            5 -> 2
+            6 -> 3
+            7 -> 10
+            8 -> 11
+            9 -> 12
+            10 -> 7
+            11 -> 8
+            12 -> 9
+            else -> requestedPlacement
+        }
+
+    private fun overflowScore(
+        origin: Pair<Float, Float>,
+        contentWidth: Float,
+        contentHeight: Float,
+        available: RectF,
+    ): Float =
+        max(0f, available.left - origin.first) +
+            max(0f, origin.first + contentWidth - available.right) +
+            max(0f, available.top - origin.second) +
+            max(0f, origin.second + contentHeight - available.bottom)
+
+    private fun positionAnchoredArrow(
+        content: View,
+        trigger: RectF,
+        contentScreenX: Float,
+        contentScreenY: Float,
+    ) {
+        val arrow = findTaggedDescendant(content, OVERLAY_ARROW_TAG) ?: return
+        arrow.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        val edgeInset = 8f * density
+        if (resolvedPlacement in 1..6) {
+            val desiredCenter = (
+                trigger.centerX() - contentScreenX
+            ).coerceIn(
+                edgeInset + arrow.width / 2f,
+                content.width - edgeInset - arrow.width / 2f,
+            )
+            arrow.translationX = desiredCenter - arrow.left - arrow.width / 2f
+            arrow.translationY = if (resolvedPlacement in 1..3) {
+                content.height - arrow.top - arrow.height / 2f
+            } else {
+                -arrow.top - arrow.height / 2f
+            }
+            arrow.rotation = if (resolvedPlacement in 1..3) 180f else 0f
+        } else {
+            val desiredCenter = (
+                trigger.centerY() - contentScreenY
+            ).coerceIn(
+                edgeInset + arrow.height / 2f,
+                content.height - edgeInset - arrow.height / 2f,
+            )
+            arrow.translationY = desiredCenter - arrow.top - arrow.height / 2f
+            arrow.translationX = if (resolvedPlacement in 7..9) {
+                content.width - arrow.left - arrow.width / 2f
+            } else {
+                -arrow.left - arrow.width / 2f
+            }
+            arrow.rotation = if (resolvedPlacement in 7..9) 90f else -90f
+        }
     }
 
     private fun captureAndMoveFocus() {
         if (!open || !isShown) return
         val focused = rootView.findFocus()
-        if (focused != null && focused !== this && !contains(focused)) {
+        val anchoredContent = if (behavior.isAnchoredOverlay()) {
+            findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+        } else {
+            null
+        }
+        if (
+            focused != null
+            && focused !== this
+            && (
+                anchoredContent?.let { scope ->
+                    !containsView(scope, focused)
+                } ?: !contains(focused)
+                )
+        ) {
             previousFocus = focused
         }
         post {
@@ -3604,10 +4359,24 @@ internal class MobileUiHost(
 
     private fun overlayFocusables(): List<View> {
         val focusables = ArrayList<View>()
-        addFocusables(focusables, FOCUS_FORWARD, FOCUSABLES_ALL)
+        val scope = if (behavior.isAnchoredOverlay()) {
+            findTaggedDescendant(this, OVERLAY_CONTENT_TAG) ?: this
+        } else {
+            this
+        }
+        scope.addFocusables(focusables, FOCUS_FORWARD, FOCUSABLES_ALL)
         return focusables.filter {
             it !== this && it.visibility == VISIBLE && it.isEnabled
         }
+    }
+
+    private fun containsView(scope: View, candidate: View): Boolean {
+        var current: View? = candidate
+        while (current != null) {
+            if (current === scope) return true
+            current = current.parent as? View
+        }
+        return false
     }
 
     private fun contains(candidate: View): Boolean {
@@ -3749,6 +4518,7 @@ internal class MobileUiHost(
         const val DISABLED_ALPHA = 76
         const val OUTSIDE_MONTH_ALPHA = 112
         const val RANGE_BACKGROUND_ALPHA = 42
+        const val RIPPLE_ALPHA_MASK = 0x22000000
         const val OPAQUE_ALPHA = 255
         const val ACCORDION_TRIGGER_TAG = "pam:accordion-trigger"
         const val ACCORDION_CONTENT_TAG = "pam:accordion-content"
@@ -3771,8 +4541,19 @@ internal class MobileUiHost(
         const val TABS_ACTIVATION_MANUAL = 2
         const val TABS_INDICATOR_ANIMATION_DURATION_MILLIS = 180L
         const val TABS_CONTENT_ANIMATION_DURATION_MILLIS = 100L
+        const val OVERLAY_TRIGGER_TAG = "pam:overlay-trigger"
         const val OVERLAY_BACKDROP_TAG = "pam:overlay-backdrop"
         const val OVERLAY_CONTENT_TAG = "pam:overlay-content"
+        const val OVERLAY_ARROW_TAG = "pam:overlay-arrow"
+        const val ANCHORED_OVERLAY_SCREEN_MARGIN_DP = 8f
+        const val ANCHORED_OVERLAY_ENTRANCE_SCALE = 0.96f
+        const val ANCHORED_OVERLAY_ENTRANCE_DURATION_MILLIS = 180L
+        const val ANCHORED_OVERLAY_EXIT_DURATION_MILLIS = 120L
+        const val MAX_ANCHORED_OVERLAY_DELAY_MILLIS = 60_000L
+        const val MENU_SELECTION_SINGLE = 1
+        const val MENU_SELECTION_MULTIPLE = 2
+        const val MENU_SELECTION_NONE = 3
+        const val MENU_TYPEAHEAD_TIMEOUT_MILLIS = 700L
         const val SHEET_DRAG_INDICATOR_TAG = "pam:sheet-drag-indicator"
         const val SHEET_DRAG_INDICATOR_WRAPPER_TAG =
             "pam:sheet-drag-indicator-wrapper"

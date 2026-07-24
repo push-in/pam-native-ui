@@ -8,6 +8,8 @@ use Closure;
 use InvalidArgumentException;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\NativeBehavior;
+use Pam\MobileUi\Enum\Placement;
+use Pam\MobileUi\Enum\SelectionMode;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
@@ -17,6 +19,7 @@ use Pam\Native\InputSyncMode;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalPresentation;
+use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
 use Pam\Native\Style;
@@ -63,7 +66,9 @@ final class ComponentRenderer
             throw new InvalidArgumentException("Unknown PAM Mobile UI component {$part}.");
         }
 
+        $props = self::withDefaults($part, $props);
         $children = self::fallbackChildren($part, $props, $children);
+        $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
             : [];
@@ -94,13 +99,28 @@ final class ComponentRenderer
         if ($styleOverride !== null && $styleOverride->backgroundColor !== null) {
             $nativeBackground = $styleOverride->backgroundColor;
         }
+        $styleAppliedToContent = false;
+        $rootStyle = $style;
+        if (
+            $part === 'Menu'
+            && isset($children[1])
+            && ($children[1]->properties()[PropKey::Value->value] ?? null)
+                === 'pam:overlay-content'
+        ) {
+            $children[1] = $children[1]->style($style);
+            if ($styleOverride !== null) {
+                $children[1] = $children[1]->style($styleOverride);
+            }
+            $rootStyle = new Style();
+            $styleAppliedToContent = true;
+        }
         $element = self::primitive(
             $part,
             $runtimeProps,
             $children,
             $nativeBackground,
         )
-            ->style($style);
+            ->style($rootStyle);
 
         if (
             self::hasSemanticValue($part)
@@ -136,6 +156,7 @@ final class ComponentRenderer
         } elseif (in_array($part, [
             'ActionsheetBackdrop',
             'BottomSheetBackdrop',
+            'PopoverBackdrop',
             'SelectBackdrop',
         ], true)) {
             $backdropTag = 'pam:overlay-backdrop';
@@ -146,9 +167,13 @@ final class ComponentRenderer
         } elseif (in_array($part, [
             'ActionsheetContent',
             'BottomSheetContent',
+            'PopoverContent',
             'SelectContent',
+            'TooltipContent',
         ], true)) {
             $element = $element->property(PropKey::Value, 'pam:overlay-content');
+        } elseif ($part === 'PopoverArrow') {
+            $element = $element->property(PropKey::Value, 'pam:overlay-arrow');
         } elseif (in_array($part, [
             'ActionsheetDragIndicator',
             'BottomSheetDragIndicator',
@@ -190,7 +215,7 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:progress-filled-track');
         }
 
-        if ($styleOverride !== null) {
+        if ($styleOverride !== null && !$styleAppliedToContent) {
             $element = $element->style($styleOverride);
         }
         $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
@@ -454,6 +479,11 @@ final class ComponentRenderer
             'ActionsheetItem',
             'BottomSheetItem',
             'SelectItem' => NativeBehavior::SheetItem,
+            'MenuItem' => NativeBehavior::MenuItem,
+            'AlertDialogCloseButton',
+            'DrawerCloseButton',
+            'ModalCloseButton',
+            'PopoverCloseButton' => NativeBehavior::OverlayDismiss,
             'Calendar' => NativeBehavior::Calendar,
             'DateTimePicker' => NativeBehavior::DateTimePicker,
             'Skeleton', 'SkeletonText' => NativeBehavior::Skeleton,
@@ -472,6 +502,40 @@ final class ComponentRenderer
             'Portal' => NativeBehavior::Portal,
             default => NativeBehavior::Container,
         };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array<string, mixed>
+     */
+    public static function withDefaults(string $part, array $props): array
+    {
+        if (!in_array($part, ['Menu', 'Popover', 'Tooltip'], true)) {
+            return $props;
+        }
+        if (
+            !array_key_exists('open', $props)
+            && !array_key_exists('isOpen', $props)
+            && !array_key_exists('defaultIsOpen', $props)
+        ) {
+            $props['defaultIsOpen'] = false;
+        }
+        if (!array_key_exists('placement', $props)) {
+            $props['placement'] = match ($part) {
+                'Menu' => Placement::BottomStart->value,
+                default => Placement::Bottom->value,
+            };
+        }
+        if ($part === 'Menu' && !array_key_exists('selectionMode', $props)) {
+            $props['selectionMode'] = array_key_exists('selectedKeys', $props)
+                ? SelectionMode::Single->value
+                : SelectionMode::None->value;
+        }
+        if ($part === 'Tooltip' && !array_key_exists('trapFocus', $props)) {
+            $props['trapFocus'] = false;
+        }
+
+        return $props;
     }
 
     public static function forwardsEventsToDescendants(string $part): bool
@@ -523,8 +587,25 @@ final class ComponentRenderer
 
         if (
             ($source === 'Select' && $target === 'SelectItem')
-            || ($source === 'Menu' && $target === 'MenuItem')
         ) {
+            return [
+                EventKind::Press->value => self::scalarSelectionHandler(
+                    $handler,
+                    $semanticValue,
+                ),
+            ];
+        }
+        if ($source === 'Menu' && $target === 'MenuItem') {
+            if (($sourceProps['selectionMode'] ?? 1) === 2) {
+                return [
+                    EventKind::Press->value => self::listSelectionHandler(
+                        $handler,
+                        $semanticValue,
+                        self::menuSelectedValues($sourceProps),
+                    ),
+                ];
+            }
+
             return [
                 EventKind::Press->value => self::scalarSelectionHandler(
                     $handler,
@@ -618,7 +699,6 @@ final class ComponentRenderer
             'Actionsheet',
             'AlertDialog',
             'Drawer',
-            'Menu',
             'Modal',
             'Toast',
         ], true);
@@ -648,6 +728,76 @@ final class ComponentRenderer
             'SelectPortal',
             'TooltipContent',
         ], true);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function anchoredOverlayChildren(
+        string $part,
+        array $props,
+        array $children,
+    ): array {
+        if (
+            !in_array($part, ['Menu', 'Popover', 'Tooltip'], true)
+            || $children === []
+        ) {
+            return $children;
+        }
+
+        $closed = self::isClosed($props);
+        if ($part === 'Menu') {
+            $hasTrigger = self::flag(
+                $props,
+                'hasTrigger',
+                count($children) > 1
+                    && $children[0]->kind() !== NodeKind::CustomView,
+            );
+            if (!$hasTrigger) {
+                return $children;
+            }
+
+            $trigger = $children[0]->property(
+                PropKey::Value,
+                'pam:overlay-trigger',
+            );
+            $content = Column::make(...array_slice($children, 1))
+                ->property(PropKey::Value, 'pam:overlay-content');
+            if ($closed) {
+                $content = $content->visible(false);
+            }
+
+            return [$trigger, $content];
+        }
+
+        $triggerMarked = false;
+        foreach ($children as $index => $child) {
+            $tag = $child->properties()[PropKey::Value->value] ?? null;
+            if (
+                $tag === 'pam:overlay-content'
+                || $tag === 'pam:overlay-backdrop'
+                || (
+                    is_string($tag)
+                    && str_starts_with($tag, 'pam:overlay-backdrop:')
+                )
+            ) {
+                if ($closed) {
+                    $children[$index] = $child->visible(false);
+                }
+                continue;
+            }
+            if (!$triggerMarked) {
+                $children[$index] = $child->property(
+                    PropKey::Value,
+                    'pam:overlay-trigger',
+                );
+                $triggerMarked = true;
+            }
+        }
+
+        return $children;
     }
 
     private static function usesNativeWindow(string $part): bool
@@ -794,6 +944,13 @@ final class ComponentRenderer
         $selected = is_array($parentValue)
             ? in_array($itemValue, $parentValue, true)
             : self::sameScalar($parentValue, $itemValue);
+        if (
+            $part === 'MenuItem'
+            && is_array($parentProps['disabledKeys'] ?? null)
+            && in_array($itemValue, $parentProps['disabledKeys'], true)
+        ) {
+            $props['disabled'] = true;
+        }
 
         return match ($part) {
             'AccordionItem' => [...$props, 'expanded' => $selected],
@@ -801,6 +958,24 @@ final class ComponentRenderer
             'MenuItem', 'TabsTrigger' => [...$props, 'selected' => $selected],
             default => $props,
         };
+    }
+
+    /** @param array<string, mixed> $props
+     *  @return list<string|int|float|bool>
+     */
+    private static function menuSelectedValues(array $props): array
+    {
+        $selected = $props['selectedKeys'] ?? [];
+        if (!is_array($selected)) {
+            return is_scalar($selected) ? [$selected] : [];
+        }
+
+        return array_values(
+            array_filter(
+                $selected,
+                static fn (mixed $item): bool => is_scalar($item),
+            ),
+        );
     }
 
     /** @param array<string, mixed> $props */

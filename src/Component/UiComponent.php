@@ -261,6 +261,10 @@ abstract class UiComponent implements Renderable
 
     final public function toElement(): Element
     {
+        $componentProps = ComponentRenderer::withDefaults(
+            static::COMPONENT,
+            $this->props,
+        );
         $events = $this->events;
         foreach ($this->eventContexts as $source => $context) {
             $events = self::mergeEvents(
@@ -268,7 +272,7 @@ abstract class UiComponent implements Renderable
                 ComponentRenderer::inheritedEvents(
                     $source,
                     static::COMPONENT,
-                    $this->props,
+                    $componentProps,
                     $context['props'],
                     $context['events'],
                 ),
@@ -280,14 +284,14 @@ abstract class UiComponent implements Renderable
             && ComponentRenderer::forwardsEventsToDescendants(static::COMPONENT)
         ) {
             $eventContexts[static::COMPONENT] = [
-                'props' => $this->props,
+                'props' => $componentProps,
                 'events' => $this->events,
             ];
         }
         $context = [
             ...$this->parentVariants,
             ...array_filter(
-                $this->props,
+                $componentProps,
                 self::isContextValue(...),
             ),
         ];
@@ -306,7 +310,7 @@ abstract class UiComponent implements Renderable
             },
             $this->children,
         );
-        $props = $this->props;
+        $props = $componentProps;
 
         if ($this->parentVariants !== []) {
             $props['__parentVariants'] = $this->parentVariants;

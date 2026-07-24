@@ -69,6 +69,21 @@ surface moves. A 48 dp drag region, TalkBack scroll alternatives, modal
 dismissal, collection/item semantics and focus trapping keep drag behavior
 optional rather than required.
 
+Anchored overlays keep the trigger in ordinary layout and tag only the trigger,
+content, optional backdrop and arrow. Android converts the trigger bounds to
+window coordinates, evaluates the requested and opposite placements, selects
+the lower-overflow candidate, clamps it to a safe gutter and translates the
+content back into host coordinates. `offset`, `crossOffset`, overlap and arrow
+alignment therefore never require a PHP layout callback.
+
+An uncontrolled Menu, Popover or Tooltip owns its open/close state locally.
+Opening emits one lifecycle request for optional application observation;
+positioning and motion emit nothing. Controlled overlays keep the authored
+state until PHP responds. Menu items are native hosts coordinated by their
+ancestor for single/multiple/none selection, disabled keys, type-ahead,
+wrapping keyboard focus and close-on-select. The item sends its semantic press
+first and the root sends at most one separate dismissal lifecycle event.
+
 ## Utility class pipeline
 
 PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI

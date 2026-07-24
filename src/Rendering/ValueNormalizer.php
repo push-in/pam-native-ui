@@ -64,6 +64,11 @@ final class ValueNormalizer
             'collapse' => 2,
             'none' => 3,
         ],
+        'selectionMode' => [
+            'single' => 1,
+            'multiple' => 2,
+            'none' => 3,
+        ],
         'placement' => [
             'top' => 1,
             'top-start' => 2,

@@ -62,6 +62,12 @@ semantic event per operation. Those two rows will be added to the reference
 table only after a new physical-device run; static compilation is not reported
 as measured runtime evidence.
 
+The same pending physical run now includes 10,000 collision-aware anchored
+layouts and 10,000 Menu selections. Positioning must emit zero bridge events;
+each Menu activation must emit exactly one semantic event. Both use the same
+p99 below 4 ms gate and remain excluded from the reference table until measured
+on hardware.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

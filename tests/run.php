@@ -46,6 +46,8 @@ use Pam\MobileUi\Component\MenuItem;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
 use Pam\MobileUi\Component\Popover;
+use Pam\MobileUi\Component\PopoverArrow;
+use Pam\MobileUi\Component\PopoverCloseButton;
 use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
 use Pam\MobileUi\Component\PromptInputTextarea;
@@ -73,6 +75,8 @@ use Pam\MobileUi\Component\TabsList;
 use Pam\MobileUi\Component\TabsTrigger;
 use Pam\MobileUi\Component\Toast;
 use Pam\MobileUi\Component\ToastTitle;
+use Pam\MobileUi\Component\Tooltip;
+use Pam\MobileUi\Component\TooltipContent;
 use Pam\MobileUi\Component\SwitchControl;
 use Pam\MobileUi\Enum\ButtonVariant;
 use Pam\MobileUi\Enum\BackdropPressBehavior;
@@ -92,6 +96,7 @@ use Pam\MobileUi\Enum\Orientation;
 use Pam\MobileUi\Enum\ParityGate;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\PrimitiveKind;
+use Pam\MobileUi\Enum\SelectionMode;
 use Pam\MobileUi\Enum\SkeletonSpeed;
 use Pam\MobileUi\Enum\TabsActivationMode;
 use Pam\MobileUi\Enum\ThemeMode;
@@ -1279,6 +1284,72 @@ $assert(
         && $semanticMenuItem->properties()[PropKey::Selected->value] === true,
     'MenuItem must inherit selected keys and publish its key through the root handler.',
 );
+$multipleMenuSelection = null;
+$anchoredMenu = Menu::make(
+    [
+        'defaultIsOpen' => false,
+        'selectionMode' => SelectionMode::Multiple,
+        'selectedKeys' => ['settings'],
+        'disabledKeys' => ['billing'],
+        'placement' => Placement::BottomStart,
+        'crossOffset' => 4,
+        'shouldFlip' => true,
+    ],
+    Button::make('More'),
+    MenuItem::make(['key' => 'settings', 'textValue' => 'Settings']),
+    MenuItem::make(['key' => 'billing', 'textValue' => 'Billing']),
+)->onChange(
+    static function (array $values) use (&$multipleMenuSelection): void {
+        $multipleMenuSelection = $values;
+    },
+)->toElement();
+$anchoredMenuTrigger = $anchoredMenu->children()[0] ?? null;
+$anchoredMenuContent = $anchoredMenu->children()[1] ?? null;
+$anchoredMenuItem = $anchoredMenuContent?->children()[0] ?? null;
+$disabledMenuItem = $anchoredMenuContent?->children()[1] ?? null;
+if (
+    !$anchoredMenuTrigger instanceof \Pam\Native\Element
+    || !$anchoredMenuContent instanceof \Pam\Native\Element
+    || !$anchoredMenuItem instanceof \Pam\Native\Element
+    || !$disabledMenuItem instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Menu must preserve its trigger and native item collection.');
+}
+$anchoredMenuHostProperties = $anchoredMenu->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$anchoredMenuItemProperties = $anchoredMenuItem->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$anchoredMenuHostProperties instanceof BinaryValue
+    || !$anchoredMenuItemProperties instanceof BinaryValue
+) {
+    throw new RuntimeException('Menu root and items must carry packed native state.');
+}
+$anchoredMenuNative = Wire::decodeMap($anchoredMenuHostProperties->bytes);
+$anchoredMenuItemNative = Wire::decodeMap($anchoredMenuItemProperties->bytes);
+$anchoredMenuPress = $anchoredMenuItem->events()[
+    \Pam\Native\EventKind::Press->value
+] ?? null;
+if (!$anchoredMenuPress instanceof Closure) {
+    throw new RuntimeException('Menu items must inherit the root selection callback.');
+}
+$anchoredMenuPress();
+$assert(
+    $multipleMenuSelection === []
+        && $anchoredMenuTrigger->properties()[PropKey::Value->value]
+            === 'pam:overlay-trigger'
+        && $anchoredMenuContent->properties()[PropKey::Value->value]
+            === 'pam:overlay-content'
+        && $anchoredMenuContent->properties()[PropKey::Visible->value] === false
+        && $anchoredMenuNative['defaultIsOpen'] === false
+        && $anchoredMenuNative['selectionMode'] === SelectionMode::Multiple->value
+        && $anchoredMenuNative['placement'] === Placement::BottomStart->value
+        && $anchoredMenuItemNative['behavior'] === NativeBehavior::MenuItem->value
+        && $disabledMenuItem->properties()[PropKey::Enabled->value] === false,
+    'Menu must package its anchored trigger, collection modes and disabled keys.',
+);
 
 $closedPopover = Popover::make(
     ['open' => false],
@@ -1297,6 +1368,56 @@ $assert(
     !isset($closedPopoverTrigger->properties()[PropKey::Visible->value])
         && $closedPopoverContent->properties()[PropKey::Visible->value] === false,
     'A closed Popover must never remove its trigger from the main tree.',
+);
+$openPopover = Popover::make(
+    ['isOpen' => true, 'placement' => Placement::Top],
+    Button::make('Open'),
+    PopoverContent::make(
+        PopoverArrow::make(),
+        PopoverCloseButton::make(),
+    ),
+)->toElement();
+$openPopoverTrigger = $openPopover->children()[0] ?? null;
+$openPopoverContent = $openPopover->children()[1] ?? null;
+$openPopoverArrow = $openPopoverContent?->children()[0] ?? null;
+$openPopoverClose = $openPopoverContent?->children()[1] ?? null;
+$tooltip = Tooltip::make(
+    Button::make('Help'),
+    TooltipContent::make('Native hint'),
+)->toElement();
+$tooltipTrigger = $tooltip->children()[0] ?? null;
+$tooltipContent = $tooltip->children()[1] ?? null;
+if (
+    !$openPopoverTrigger instanceof \Pam\Native\Element
+    || !$openPopoverContent instanceof \Pam\Native\Element
+    || !$openPopoverArrow instanceof \Pam\Native\Element
+    || !$openPopoverClose instanceof \Pam\Native\Element
+    || !$tooltipTrigger instanceof \Pam\Native\Element
+    || !$tooltipContent instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Popover and Tooltip must expose their anchored anatomy.');
+}
+$popoverCloseProperties = $openPopoverClose->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (!$popoverCloseProperties instanceof BinaryValue) {
+    throw new RuntimeException('PopoverCloseButton must carry native dismiss behavior.');
+}
+$popoverCloseNative = Wire::decodeMap($popoverCloseProperties->bytes);
+$assert(
+    $openPopoverTrigger->properties()[PropKey::Value->value]
+        === 'pam:overlay-trigger'
+        && $openPopoverContent->properties()[PropKey::Value->value]
+            === 'pam:overlay-content'
+        && $openPopoverArrow->properties()[PropKey::Value->value]
+            === 'pam:overlay-arrow'
+        && $popoverCloseNative['behavior'] === NativeBehavior::OverlayDismiss->value
+        && $tooltipTrigger->properties()[PropKey::Value->value]
+            === 'pam:overlay-trigger'
+        && $tooltipContent->properties()[PropKey::Value->value]
+            === 'pam:overlay-content'
+        && $tooltipContent->properties()[PropKey::Visible->value] === false,
+    'Popover and Tooltip must tag triggers, content and arrows for native positioning.',
 );
 
 $advanced = TailwindStyleCompiler::compile(
