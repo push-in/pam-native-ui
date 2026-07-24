@@ -1772,6 +1772,9 @@ class MobileUiHostInstrumentedTest {
         lateinit var input: EditText
         lateinit var clear: MobileUiHost
         lateinit var password: MobileUiHost
+        lateinit var form: MobileUiHost
+        lateinit var formInput: EditText
+        lateinit var error: FrameLayout
         onMain {
             val context = activity
             root = FrameLayout(context)
@@ -1835,7 +1838,7 @@ class MobileUiHostInstrumentedTest {
             assertTrue(input.isEnabled)
             assertTrue(input.keyListener == null)
 
-            val form = MobileUiHost(context) { _, _ -> }
+            form = MobileUiHost(context) { _, _ -> }
             form.update(
                 mapOf(
                     "behavior" to WireValue.Integer(34),
@@ -1847,13 +1850,13 @@ class MobileUiHostInstrumentedTest {
                 tag = "pam:form-label"
                 addView(TextView(context).apply { text = "Email" })
             }
-            val formInput = EditText(context)
+            formInput = EditText(context)
             val field = FrameLayout(context).apply { addView(formInput) }
             val helper = FrameLayout(context).apply {
                 tag = "pam:form-helper"
                 addView(TextView(context).apply { text = "Use your work email." })
             }
-            val error = FrameLayout(context).apply {
+            error = FrameLayout(context).apply {
                 tag = "pam:form-error"
                 addView(TextView(context).apply { text = "Email is invalid." })
             }
@@ -1866,6 +1869,11 @@ class MobileUiHostInstrumentedTest {
             label.layout(0, 0, 600, 72)
             field.layout(0, 72, 600, 180)
             form.layout(0, 0, 601, 360)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
+            assertTrue(formInput.width > 0)
+            assertTrue(formInput.height > 0)
 
             val info = formInput.createAccessibilityNodeInfo()
             assertEquals("Email", formInput.contentDescription)
