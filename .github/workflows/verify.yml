@@ -14,13 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PAM Mobile UI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout PAM Native
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: push-in/pam-native
           path: pam-native
+          ssh-key: ${{ secrets.PAM_NATIVE_DEPLOY_KEY }}
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -49,13 +50,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PAM Mobile UI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout PAM Native
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: push-in/pam-native
           path: pam-native
+          ssh-key: ${{ secrets.PAM_NATIVE_DEPLOY_KEY }}
 
       - name: Set up Java
         uses: actions/setup-java@v4
