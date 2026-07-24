@@ -90,10 +90,9 @@ See the installable catalog in
 - Animations use native properties and respect the system animator scale.
 
 See [`docs/architecture.md`](docs/architecture.md) and
-[`docs/parity.md`](docs/parity.md). Run `composer benchmark` for a local,
-reproducible measurement of PHP composition plus binary tree encoding; published
-performance claims require Android frame-time evidence, not this microbenchmark
-alone.
+[`docs/parity.md`](docs/parity.md). The reproducible PHP and physical-device
+results, commands, limits and claim boundary are recorded in
+[`docs/performance.md`](docs/performance.md).
 
 ## Status
 

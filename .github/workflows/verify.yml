@@ -75,3 +75,47 @@ jobs:
           -PpamNativeRoot=${{ github.workspace }}/pam-native
           testDebugUnitTest
           lintDebug
+
+  instrumented:
+    name: Android instrumented
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PAM Mobile UI
+        uses: actions/checkout@v6
+
+      - name: Checkout PAM Native
+        uses: actions/checkout@v6
+        with:
+          repository: push-in/pam-native
+          path: pam-native
+          ssh-key: ${{ secrets.PAM_NATIVE_DEPLOY_KEY }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run behavioral tests on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          script: >-
+            pam-native/android/gradlew
+            -p android
+            -PpamNativeRoot=${{ github.workspace }}/pam-native
+            connectedDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.class=dev.pam.mobileui.MobileUiHostInstrumentedTest
