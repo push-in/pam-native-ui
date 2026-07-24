@@ -87,6 +87,23 @@ class MobileUiHostPerformanceInstrumentedTest {
                 calendarEvents.isEmpty(),
             )
 
+            val dateTimeEvents = ArrayList<NativeViewEventKind>()
+            val dateTime = MobileUiHost(context) { kind, _ -> dateTimeEvents += kind }
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                dateTime.update(dateTimeProperties(iteration))
+            }
+            val dateTimeUpdate = measure(SAMPLE_ITERATIONS) { iteration ->
+                dateTime.update(dateTimeProperties(iteration))
+            }
+            assertTrue(
+                "DateTimePicker update p99 ${dateTimeUpdate.p99Micros}µs exceeded 4ms",
+                dateTimeUpdate.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "DateTimePicker property updates must never emit bridge events",
+                dateTimeEvents.isEmpty(),
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -109,10 +126,12 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"update\":${update.json()},")
                     append("\"sliderMove\":${gesture.json()},")
                     append("\"calendarDraw\":${calendarDraw.json()},")
+                    append("\"dateTimeUpdate\":${dateTimeUpdate.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
-                    append("\"calendarBridgeEvents\":${calendarEvents.size}")
+                    append("\"calendarBridgeEvents\":${calendarEvents.size},")
+                    append("\"dateTimeBridgeEvents\":${dateTimeEvents.size}")
                     append('}')
                 },
             )
@@ -121,6 +140,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             slider.release()
             calendar.release()
             calendarBitmap.recycle()
+            dateTime.release()
         }
     }
 
@@ -153,6 +173,22 @@ class MobileUiHostPerformanceInstrumentedTest {
             "rangeTo" to WireValue.Text("2026-07-23"),
             "disabledDates" to WireValue.Text("2026-07-04\n2026-07-11"),
         )
+
+    private fun dateTimeProperties(iteration: Int): Map<String, WireValue> {
+        val day = (iteration % 28 + 1).toString().padStart(2, '0')
+        val minute = (iteration % 60).toString().padStart(2, '0')
+
+        return mapOf(
+            "behavior" to WireValue.Integer(22),
+            "component" to WireValue.Integer(GeneratedComponents.DATE_TIME_PICKER.toLong()),
+            "mode" to WireValue.Integer(6),
+            "value" to WireValue.Text("2026-07-${day}T14:${minute}:00-03:00"),
+            "minimumDate" to WireValue.Text("2026-01-01"),
+            "maximumDate" to WireValue.Text("2026-12-31"),
+            "timeZoneOffsetInMinutes" to WireValue.Integer(-180),
+            "is24Hour" to WireValue.Flag(true),
+        )
+    }
 
     private fun measure(iterations: Int, block: (Int) -> Unit): Statistics {
         val samples = LongArray(iterations)

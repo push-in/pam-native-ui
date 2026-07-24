@@ -239,6 +239,9 @@
                 <DateTimePicker
                     mode="date"
                     value="{{ $selectedDate }}"
+                    minimumDate="2026-01-01"
+                    maximumDate="2026-12-31"
+                    format="DD/MM/YYYY"
                     on:change="selectDate"
                 >
                     <DateTimePickerTrigger>

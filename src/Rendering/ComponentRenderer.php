@@ -860,7 +860,10 @@ final class ComponentRenderer
             'submit', 5 => InputSyncMode::OnSubmit,
             default => InputSyncMode::Debounced,
         };
-        $input = Input::make(self::text($props, 'value'))
+        $value = $part === 'DateTimePickerInput'
+            ? self::dateTimeDisplayValue($props)
+            : self::text($props, 'value');
+        $input = Input::make($value)
             ->placeholder(self::text($props, 'placeholder'))
             ->nativeState(
                 $syncMode,
@@ -900,6 +903,31 @@ final class ComponentRenderer
         }
 
         return $input;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function dateTimeDisplayValue(array $props): string
+    {
+        $value = self::text($props, 'value');
+        $format = self::text($props, 'format');
+        if ($value === '' || $format === '') {
+            return $value;
+        }
+
+        try {
+            $date = new \DateTimeImmutable($value);
+        } catch (\Exception) {
+            return $value;
+        }
+
+        return strtr($format, [
+            'YYYY' => $date->format('Y'),
+            'MM' => $date->format('m'),
+            'DD' => $date->format('d'),
+            'HH' => $date->format('H'),
+            'mm' => $date->format('i'),
+            'ss' => $date->format('s'),
+        ]);
     }
 
     /** @param array<string, mixed> $props */

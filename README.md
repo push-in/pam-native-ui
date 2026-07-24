@@ -104,6 +104,13 @@ checks happen natively. PHP receives one semantic event after selection; list
 and range modes are decoded into typed arrays before the application handler is
 called. `Pam\MobileUi\Enum\ComponentMode` provides the equivalent fluent API.
 
+`DateTimePicker` uses Android's system date/time dialogs, including the native
+two-step flow for `datetime`. It supports `minimumDate`, `maximumDate`,
+`locale`, `timeZoneOffsetInMinutes`, `is24Hour`, `placeholder` and the same
+`YYYY`, `MM`, `DD`, `HH`, `mm`, `ss` display-format tokens as the reference
+component. A child trigger can contain any PAM layout; the native host owns the
+tap so no PHP event is needed merely to open the picker.
+
 Application utility classes use the same mobile compiler as the captured
 component recipes:
 

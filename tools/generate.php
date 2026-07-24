@@ -140,6 +140,20 @@ $serviceModules = array_fill_keys([
     'gluestack-ui-provider',
     'utils',
 ], true);
+$verificationOverridesContents = file_get_contents(
+    $root.'/resources/verification-overrides.json',
+);
+if ($verificationOverridesContents === false) {
+    throw new RuntimeException('Verification overrides must be readable.');
+}
+$verificationOverrides = json_decode(
+    $verificationOverridesContents,
+    true,
+    flags: JSON_THROW_ON_ERROR,
+);
+if (!is_array($verificationOverrides)) {
+    throw new RuntimeException('Verification overrides must be a JSON object.');
+}
 $parityModules = [];
 
 foreach ($catalog['modules'] as $index => $module) {
@@ -151,6 +165,37 @@ foreach ($catalog['modules'] as $index => $module) {
         default => 1,
     };
     $hasVariants = ($module['variants'] ?? []) !== [];
+    $verification = [
+        2,
+        2,
+        $implementation === 4 ? 4 : 2,
+        $hasVariants ? 2 : 4,
+        $implementation === 4 ? 4 : 2,
+        2,
+        2,
+        ($module['examples'] ?? 0) > 0 ? 2 : 1,
+        2,
+        1,
+    ];
+    if (isset($verificationOverrides[$name])) {
+        $override = $verificationOverrides[$name];
+        if (
+            !is_array($override)
+            || !array_is_list($override)
+            || count($override) !== 10
+            || array_filter(
+                $override,
+                static fn (mixed $status): bool =>
+                    !is_int($status) || $status < 1 || $status > 4,
+            ) !== []
+        ) {
+            throw new RuntimeException(
+                "Verification override for {$name} must contain ten status IDs from 1 to 4.",
+            );
+        }
+        /** @var list<int> $override */
+        $verification = $override;
+    }
     $parityModules[] = [
         'id' => $index + 1,
         'name' => $name,
@@ -169,18 +214,7 @@ foreach ($catalog['modules'] as $index => $module) {
             array_keys($module['variants'] ?? []),
         )),
         'examples' => $module['examples'] ?? 0,
-        'verification' => [
-            2,
-            2,
-            $implementation === 4 ? 4 : 2,
-            $hasVariants ? 2 : 4,
-            $implementation === 4 ? 4 : 2,
-            2,
-            2,
-            ($module['examples'] ?? 0) > 0 ? 2 : 1,
-            2,
-            1,
-        ],
+        'verification' => $verification,
     ];
 }
 

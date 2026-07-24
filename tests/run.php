@@ -19,6 +19,9 @@ use Pam\MobileUi\Component\CalendarHeaderPrevButton;
 use Pam\MobileUi\Component\CalendarHeaderTitle;
 use Pam\MobileUi\Component\Drawer;
 use Pam\MobileUi\Component\DrawerContent;
+use Pam\MobileUi\Component\DateTimePicker;
+use Pam\MobileUi\Component\DateTimePickerInput;
+use Pam\MobileUi\Component\DateTimePickerTrigger;
 use Pam\MobileUi\Component\HStack;
 use Pam\MobileUi\Component\Attachment;
 use Pam\MobileUi\Component\AttachmentPreview;
@@ -220,6 +223,27 @@ if (!is_array($parity) || !is_array($parity['modules'] ?? null)) {
     throw new RuntimeException('The parity catalog is missing.');
 }
 $assert(count($parity['modules']) === 61, 'The parity gate must cover all technical modules.');
+$calendarParity = null;
+$dateTimeParity = null;
+foreach ($parity['modules'] as $module) {
+    if (!is_array($module)) {
+        continue;
+    }
+    if (($module['name'] ?? null) === 'calendar') {
+        $calendarParity = $module['verification'] ?? null;
+    }
+    if (($module['name'] ?? null) === 'date-time-picker') {
+        $dateTimeParity = $module['verification'] ?? null;
+    }
+}
+$assert(
+    $calendarParity === array_fill(0, 10, VerificationStatus::Verified->value),
+    'Calendar verification evidence must survive deterministic regeneration.',
+);
+$assert(
+    $dateTimeParity === array_fill(0, 10, VerificationStatus::Verified->value),
+    'DateTimePicker verification evidence must survive deterministic regeneration.',
+);
 $assert(count(ComponentMap::TAGS) >= 300, 'The generated public component anatomy is incomplete.');
 $assert(
     array_values(ComponentMap::IDS) === range(1, count(ComponentMap::IDS)),
@@ -459,6 +483,40 @@ $assert(
             'to' => '2026-07-27',
         ],
     'Calendar range payloads must cross the bridge once as a bounded native value.',
+);
+$dateTimePicker = DateTimePicker::make(
+    [
+        'mode' => ComponentMode::DateTime,
+        'value' => '2026-07-23T14:35:40-03:00',
+        'minimumDate' => '2026-07-01',
+        'maximumDate' => '2026-07-31',
+        'timeZoneOffsetInMinutes' => -180,
+        'format' => 'DD/MM/YYYY HH:mm',
+        'is24Hour' => true,
+    ],
+    DateTimePickerTrigger::make(
+        DateTimePickerInput::make(),
+    ),
+)->onChange(static function (string $value): void {
+})->toElement();
+$dateTimeProperties = $dateTimePicker->properties()[PropKey::HostProperties->value] ?? null;
+$dateTimeTrigger = $dateTimePicker->children()[0] ?? null;
+$dateTimeInput = $dateTimeTrigger?->children()[0] ?? null;
+if (
+    !$dateTimeProperties instanceof BinaryValue
+    || !$dateTimeInput instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('DateTimePicker must compile its native host and input.');
+}
+$dateTimeNative = Wire::decodeMap($dateTimeProperties->bytes);
+$assert(
+    $dateTimeNative['mode'] === ComponentMode::DateTime->value
+        && $dateTimeNative['minimumDate'] === '2026-07-01'
+        && $dateTimeNative['maximumDate'] === '2026-07-31'
+        && $dateTimeNative['timeZoneOffsetInMinutes'] === -180
+        && $dateTimeNative['is24Hour'] === true
+        && $dateTimeInput->properties()[PropKey::Value->value] === '23/07/2026 14:35',
+    'DateTimePicker must preserve its native limits, time zone and display format.',
 );
 $assert(
     $firstTabContent->properties()[PropKey::Visible->value] === false

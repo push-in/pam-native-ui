@@ -5,8 +5,10 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -37,7 +39,10 @@ import dev.pam.nativeapp.views.NativeViewEventKind
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeParseException
 import java.time.format.DateTimeFormatter
 import java.util.LinkedHashSet
@@ -141,6 +146,7 @@ internal class MobileUiHost(
     private var minimumLocalDate: LocalDate? = null
     private var maximumLocalDate: LocalDate? = null
     private var is24Hour = false
+    private var timeZoneOffsetInMinutes: Int? = null
     private var calendarYear = LocalDate.now().year
     private var calendarMonth = LocalDate.now().monthValue
     private var minimumCalendarYear: Int? = null
@@ -234,6 +240,7 @@ internal class MobileUiHost(
     private var imageTranslationX = 0f
     private var imageTranslationY = 0f
     private var animator: ValueAnimator? = null
+    private var activePickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
     private var previousFocus: View? = null
     private val scaleDetector = ScaleGestureDetector(
@@ -330,6 +337,7 @@ internal class MobileUiHost(
         minimumLocalDate = minimumDate?.let(::parseDate)
         maximumLocalDate = maximumDate?.let(::parseDate)
         is24Hour = properties.flag("is24Hour", is24Hour)
+        timeZoneOffsetInMinutes = properties.integerOrNull("timeZoneOffsetInMinutes")
         calendarYear = properties.integer("year", calendarYear.toLong()).toInt()
         calendarMonth = properties.integer("month", calendarMonth.toLong()).toInt().coerceIn(1, 12)
         minimumCalendarYear = properties.integerOrNull("minYear")
@@ -344,6 +352,10 @@ internal class MobileUiHost(
             ?: Locale.getDefault()
         updateCalendarSelection(properties, previousComponentMode != componentMode)
         isEnabled = !properties.flag("disabled", false)
+        if ((!isEnabled || behavior != Behavior.DATE_TIME_PICKER) && activePickerDialog != null) {
+            activePickerDialog?.dismiss()
+            activePickerDialog = null
+        }
         isClickable = !behavior.isOverlay() || open
         isFocusable = !behavior.isOverlay() || open
         isSelected = selected
@@ -435,6 +447,13 @@ internal class MobileUiHost(
             positionAnchoredContent()
         }
     }
+
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean =
+        if (behavior == Behavior.DATE_TIME_PICKER && isEnabled) {
+            true
+        } else {
+            super.onInterceptTouchEvent(event)
+        }
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
@@ -579,6 +598,20 @@ internal class MobileUiHost(
             -> "android.app.Dialog"
             else -> info.className
         }
+        if (behavior == Behavior.DATE_TIME_PICKER) {
+            info.className = if (componentMode == ComponentMode.TIME) {
+                "android.widget.TimePicker"
+            } else {
+                "android.widget.DatePicker"
+            }
+            info.isClickable = isEnabled
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                stateDescription = dateTimeValue
+            }
+        }
     }
 
     override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
@@ -623,6 +656,14 @@ internal class MobileUiHost(
             emitDismiss()
             return true
         }
+        if (
+            behavior == Behavior.DATE_TIME_PICKER
+            && action == AccessibilityNodeInfo.ACTION_CLICK
+            && isEnabled
+        ) {
+            showDateTimePicker()
+            return true
+        }
 
         return super.performAccessibilityAction(action, arguments)
     }
@@ -660,6 +701,8 @@ internal class MobileUiHost(
         animator = null
         pendingDismiss?.let(::removeCallbacks)
         pendingDismiss = null
+        activePickerDialog?.dismiss()
+        activePickerDialog = null
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -1049,7 +1092,9 @@ internal class MobileUiHost(
 
     private fun showDateTimePicker() {
         if (!isEnabled) return
-        val activity = context as? Activity ?: return
+        if (activePickerDialog?.isShowing == true) return
+        val activity = context.findActivity() ?: return
+        if (activity.isFinishing || activity.isDestroyed) return
         val initial = parsedDateTime()
 
         if (componentMode == ComponentMode.TIME) {
@@ -1057,7 +1102,9 @@ internal class MobileUiHost(
             return
         }
 
-        DatePickerDialog(
+        val initialDate = clampedDate(initial.toLocalDate())
+        lateinit var dialog: DatePickerDialog
+        dialog = DatePickerDialog(
             activity,
             { _, year, zeroBasedMonth, day ->
                 val date = LocalDate.of(year, zeroBasedMonth + 1, day)
@@ -1067,15 +1114,21 @@ internal class MobileUiHost(
                     emitDateTime(LocalDateTime.of(date, LocalTime.MIDNIGHT))
                 }
             },
-            initial.year,
-            initial.monthValue - 1,
-            initial.dayOfMonth,
+            initialDate.year,
+            initialDate.monthValue - 1,
+            initialDate.dayOfMonth,
         ).apply {
             minimumLocalDate?.let { datePicker.minDate = it.toEpochMillis() }
             maximumLocalDate?.let { datePicker.maxDate = it.toEpochMillis() }
             setOnCancelListener { emitDismiss() }
-            show()
+            setOnDismissListener {
+                if (activePickerDialog === dialog) {
+                    activePickerDialog = null
+                }
+            }
         }
+        activePickerDialog = dialog
+        dialog.show()
     }
 
     private fun showTimePicker(
@@ -1083,7 +1136,8 @@ internal class MobileUiHost(
         date: LocalDate,
         time: LocalTime,
     ) {
-        TimePickerDialog(
+        lateinit var dialog: TimePickerDialog
+        dialog = TimePickerDialog(
             activity,
             { _, hour, minute ->
                 emitDateTime(LocalDateTime.of(date, LocalTime.of(hour, minute)))
@@ -1093,15 +1147,25 @@ internal class MobileUiHost(
             is24Hour,
         ).apply {
             setOnCancelListener { emitDismiss() }
-            show()
+            setOnDismissListener {
+                if (activePickerDialog === dialog) {
+                    activePickerDialog = null
+                }
+            }
         }
+        activePickerDialog = dialog
+        dialog.show()
     }
 
     private fun emitDateTime(dateTime: LocalDateTime) {
         dateTimeValue = when (componentMode) {
             ComponentMode.DATE -> dateTime.toLocalDate().toString()
             ComponentMode.TIME -> dateTime.toLocalTime().toString()
-            else -> dateTime.toString()
+            else -> timeZoneOffsetInMinutes
+                ?.let(::zoneOffset)
+                ?.let(dateTime::atOffset)
+                ?.toString()
+                ?: dateTime.toString()
         }
         emitter.emit(
             NativeViewEventKind.CHANGE,
@@ -1111,12 +1175,66 @@ internal class MobileUiHost(
 
     private fun parsedDateTime(): LocalDateTime {
         val raw = dateTimeValue ?: return LocalDateTime.now()
+
+        if (componentMode == ComponentMode.TIME) {
+            return try {
+                LocalTime.parse(raw).atDate(LocalDate.now())
+            } catch (_: DateTimeParseException) {
+                LocalDateTime.now()
+            }
+        }
+        parseDate(raw)?.let { date ->
+            if (componentMode == ComponentMode.DATE || raw.length <= 10) {
+                return date.atStartOfDay()
+            }
+        }
+
+        return parseOffsetDateTime(raw)
+            ?: try {
+                LocalDateTime.parse(raw)
+            } catch (_: DateTimeParseException) {
+                LocalDateTime.now()
+            }
+    }
+
+    private fun parseOffsetDateTime(raw: String): LocalDateTime? {
+        val targetOffset = timeZoneOffsetInMinutes?.let(::zoneOffset)
+            ?: ZoneId.systemDefault().rules.getOffset(Instant.now())
+
         return try {
-            LocalDateTime.parse(raw)
+            OffsetDateTime.parse(raw)
+                .withOffsetSameInstant(targetOffset)
+                .toLocalDateTime()
         } catch (_: DateTimeParseException) {
-            parseDate(raw)?.atStartOfDay() ?: LocalDateTime.now()
+            try {
+                Instant.parse(raw)
+                    .atOffset(targetOffset)
+                    .toLocalDateTime()
+            } catch (_: DateTimeParseException) {
+                null
+            }
         }
     }
+
+    private fun clampedDate(date: LocalDate): LocalDate =
+        date
+            .let { value -> minimumLocalDate?.let { maxOf(value, it) } ?: value }
+            .let { value -> maximumLocalDate?.let { minOf(value, it) } ?: value }
+
+    private fun zoneOffset(minutes: Int): ZoneOffset =
+        ZoneOffset.ofTotalSeconds(
+            minutes.coerceIn(MIN_TIME_ZONE_OFFSET_MINUTES, MAX_TIME_ZONE_OFFSET_MINUTES)
+                * SECONDS_PER_MINUTE,
+        )
+
+    private fun Context.findActivity(): Activity? =
+        when (this) {
+            is Activity -> this
+            is ContextWrapper -> baseContext
+                .takeUnless { it === this }
+                ?.findActivity()
+            else -> null
+        }
 
     private fun parseDate(value: String): LocalDate? =
         try {
@@ -1945,5 +2063,8 @@ internal class MobileUiHost(
         const val OUTSIDE_MONTH_ALPHA = 112
         const val RANGE_BACKGROUND_ALPHA = 42
         const val OPAQUE_ALPHA = 255
+        const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
+        const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
+        const val SECONDS_PER_MINUTE = 60
     }
 }

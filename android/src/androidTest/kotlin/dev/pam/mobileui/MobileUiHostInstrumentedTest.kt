@@ -1,6 +1,8 @@
 package dev.pam.mobileui
 
+import android.content.Intent
 import android.os.Looper
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
@@ -529,6 +531,83 @@ class MobileUiHostInstrumentedTest {
             assertTrue((payload["dismissed"] as WireValue.Flag).value)
             host.release()
             info.recycle()
+        }
+    }
+
+    @Test
+    fun dateTimePickerUsesNativeModeSemanticsAndInterceptsItsAuthoredTrigger() {
+        onMain {
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(22),
+                    "mode" to WireValue.Integer(5),
+                    "value" to WireValue.Text("14:35"),
+                    "timeZoneOffsetInMinutes" to WireValue.Integer(-180),
+                    "is24Hour" to WireValue.Flag(true),
+                ),
+            )
+            host.addView(View(host.context).apply {
+                isClickable = true
+            })
+            host.layout(0, 0, 400, 100)
+            host.getChildAt(0).layout(0, 0, 400, 100)
+
+            val info = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("android.widget.TimePicker", info.className)
+            assertTrue(info.isClickable)
+            assertTrue(
+                info.actionList.any {
+                    it.id == AccessibilityNodeInfo.ACTION_CLICK
+                },
+            )
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 200f, 50f)))
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 200f, 50f)))
+            host.release()
+            info.recycle()
+        }
+    }
+
+    @Test
+    fun dateTimePickerOpensTheSystemDialogFromAWrappedActivityContext() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(
+            Intent(
+                instrumentation.targetContext,
+                TestHostActivity::class.java,
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        ) as TestHostActivity
+        instrumentation.waitForIdleSync()
+        val payloads = CopyOnWriteArrayList<ByteArray>()
+        lateinit var host: MobileUiHost
+        onMain {
+            host = MobileUiHost(activity) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(22),
+                    "mode" to WireValue.Integer(4),
+                    "value" to WireValue.Text("2026-07-23"),
+                    "minimumDate" to WireValue.Text("2026-07-01"),
+                    "maximumDate" to WireValue.Text("2026-07-31"),
+                ),
+            )
+            activity.setContentView(host)
+            assertTrue(host.performClick())
+        }
+
+        instrumentation.waitForIdleSync()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        instrumentation.waitForIdleSync()
+
+        val dismissal = WireMap.decode(payloads.single())
+        assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
+        assertTrue((dismissal["dismissed"] as WireValue.Flag).value)
+        onMain {
+            host.release()
+            activity.finish()
         }
     }
 
