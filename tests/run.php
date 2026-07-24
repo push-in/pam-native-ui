@@ -46,6 +46,13 @@ use Pam\MobileUi\Component\FormControlLabelText;
 use Pam\MobileUi\Component\Input;
 use Pam\MobileUi\Component\InputField;
 use Pam\MobileUi\Component\InputSlot;
+use Pam\MobileUi\Component\Image;
+use Pam\MobileUi\Component\ImageViewer;
+use Pam\MobileUi\Component\ImageViewerCloseButton;
+use Pam\MobileUi\Component\ImageViewerContent;
+use Pam\MobileUi\Component\ImageViewerCounter;
+use Pam\MobileUi\Component\ImageViewerNavigation;
+use Pam\MobileUi\Component\ImageViewerTrigger;
 use Pam\MobileUi\Component\FlatList;
 use Pam\MobileUi\Component\SectionList;
 use Pam\MobileUi\Component\VirtualizedList;
@@ -111,6 +118,7 @@ use Pam\MobileUi\Enum\ComponentType;
 use Pam\MobileUi\Enum\ComponentVariant;
 use Pam\MobileUi\Enum\DrawerAnchor;
 use Pam\MobileUi\Enum\ImplementationKind;
+use Pam\MobileUi\Enum\ImageViewerControlAction;
 use Pam\MobileUi\Enum\InputSlotAction;
 use Pam\MobileUi\Enum\MessageRole;
 use Pam\MobileUi\Enum\NativeBehavior;
@@ -195,6 +203,7 @@ foreach ([
     ComponentType::cases(),
     ComponentVariant::cases(),
     DrawerAnchor::cases(),
+    ImageViewerControlAction::cases(),
     ButtonVariant::cases(),
     Orientation::cases(),
     ParityGate::cases(),
@@ -966,6 +975,92 @@ $assert(
         && count($tableHeaderRow->children()) === 2,
     'Table must retain authored cells while packing header-row collection semantics.',
 );
+
+$imageViewerOpenChanges = [];
+$imageViewerIndexes = [];
+$imageViewer = ImageViewer::make(
+    [
+        'images' => [
+            ['url' => 'file:///mountain.jpg', 'alt' => 'Mountain'],
+            ['url' => 'file:///ocean.jpg', 'alt' => 'Ocean'],
+        ],
+        'open' => true,
+        'initialIndex' => 1,
+    ],
+    ImageViewerTrigger::make(
+        Image::make(['source' => 'file:///thumbnail.jpg']),
+    ),
+    ImageViewerContent::make(
+        ImageViewerNavigation::make(),
+        ImageViewerCounter::make(),
+        ImageViewerCloseButton::make(),
+    ),
+)->onToggle(
+    static function (bool $open) use (&$imageViewerOpenChanges): void {
+        $imageViewerOpenChanges[] = $open;
+    },
+)->onChange(
+    static function (string $index) use (&$imageViewerIndexes): void {
+        $imageViewerIndexes[] = (int) $index;
+    },
+)->toElement();
+$imageViewerTrigger = $imageViewer->children()[0] ?? null;
+$imageViewerModal = $imageViewer->children()[1] ?? null;
+$imageViewerContent = $imageViewerModal?->children()[0] ?? null;
+$imageViewerNavigation = $imageViewerContent?->children()[2] ?? null;
+$imageViewerCounter = $imageViewerContent?->children()[3] ?? null;
+$imageViewerClose = $imageViewerContent?->children()[4] ?? null;
+$imageViewerProperties = $imageViewerContent?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$imagePreviousProperties = $imageViewerNavigation?->children()[0]
+    ?->properties()[PropKey::HostProperties->value] ?? null;
+$imageCloseProperties = $imageViewerClose?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$imageViewerTrigger instanceof \Pam\Native\Element
+    || !$imageViewerContent instanceof \Pam\Native\Element
+    || !$imageViewerNavigation instanceof \Pam\Native\Element
+    || !$imageViewerCounter instanceof \Pam\Native\Element
+    || !$imageViewerProperties instanceof BinaryValue
+    || !$imagePreviousProperties instanceof BinaryValue
+    || !$imageCloseProperties instanceof BinaryValue
+) {
+    throw new RuntimeException('ImageViewer must compile its gallery and native controls.');
+}
+$imageViewerNative = Wire::decodeMap($imageViewerProperties->bytes);
+$imagePreviousNative = Wire::decodeMap($imagePreviousProperties->bytes);
+$imageCloseNative = Wire::decodeMap($imageCloseProperties->bytes);
+$imageViewerTrigger->events()[\Pam\Native\EventKind::Press->value]();
+$imageViewerContent->events()[\Pam\Native\EventKind::Change->value]('0');
+$imageViewerContent->events()[\Pam\Native\EventKind::Native->value](
+    Wire::map(['action' => 1, 'dismissed' => true]),
+);
+$assert(
+    $imageViewerContent->kind() === NodeKind::CustomView
+        && $imageViewerNative['behavior'] === NativeBehavior::ImageViewer->value
+        && $imageViewerNative['initialIndex'] === 1
+        && count($imageViewerContent->children()) === 5
+        && $imageViewerContent->children()[0]
+            ->properties()[PropKey::Value->value]
+            === 'pam:image-viewer-image:0'
+        && $imageViewerContent->children()[1]
+            ->properties()[PropKey::AccessibilityLabel->value] === 'Ocean'
+        && count($imageViewerNavigation->children()) === 2
+        && $imagePreviousNative['behavior']
+            === NativeBehavior::ImageViewerControl->value
+        && $imagePreviousNative['navigationAction']
+            === ImageViewerControlAction::Previous->value
+        && $imageViewerCounter->children()[0]
+            ->properties()[PropKey::Value->value]
+            === 'pam:image-viewer-counter'
+        && $imageCloseNative['behavior'] === NativeBehavior::OverlayDismiss->value
+        && $imageViewerOpenChanges === [true, false]
+        && $imageViewerIndexes === [0],
+    'ImageViewer must synthesize images, navigation, counter and semantic events.',
+);
+
 $inputChanges = [];
 $compoundInput = Input::make(
     ['type' => 'password', 'readOnly' => true],
@@ -1791,6 +1886,48 @@ $assert(
         && $templateTabsTriggerNative['selected'] === true
         && $templateTabsInactiveContent->properties()[PropKey::Visible->value] === false,
     'Tag Tabs must normalize activation mode and uncontrolled state to integer native values.',
+);
+$templateGallery = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        <<<'PAM'
+<ImageViewer images="$gallery" open="true" initialIndex="1" loop="true">
+    <ImageViewerTrigger><Button><ButtonText>Open</ButtonText></Button></ImageViewerTrigger>
+    <ImageViewerContent>
+        <ImageViewerNavigation />
+        <ImageViewerCounter />
+        <ImageViewerCloseButton />
+    </ImageViewerContent>
+</ImageViewer>
+PAM,
+    ),
+    null,
+    [
+        'gallery' => [
+            ['url' => 'file:///mountain.jpg', 'alt' => 'Mountain'],
+            ['url' => 'file:///ocean.jpg', 'alt' => 'Ocean'],
+        ],
+    ],
+);
+$templateGalleryModal = $templateGallery->children()[1] ?? null;
+$templateGalleryContent = $templateGalleryModal?->children()[0] ?? null;
+$templateGalleryNative = $templateGalleryContent?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$templateGalleryContent instanceof \Pam\Native\Element
+    || !$templateGalleryNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Tag ImageViewer must compile its native gallery.');
+}
+$templateGalleryProperties = Wire::decodeMap($templateGalleryNative->bytes);
+$assert(
+    $templateGalleryProperties['behavior'] === NativeBehavior::ImageViewer->value
+        && $templateGalleryProperties['initialIndex'] === 1
+        && $templateGalleryProperties['loop'] === true
+        && count($templateGalleryContent->children()) === 5
+        && $templateGalleryContent->children()[1]
+            ->properties()[PropKey::AccessibilityLabel->value] === 'Ocean',
+    'Bound gallery arrays must flow through tag context into optimized native children.',
 );
 $templateRange = TemplateRenderer::render(
     TemplateCompiler::compile(

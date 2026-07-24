@@ -103,7 +103,8 @@ internal class MobileUiHost(
         INPUT_SLOT(33),
         FORM_CONTROL(34),
         TABLE(35),
-        TABLE_ROW(36);
+        TABLE_ROW(36),
+        IMAGE_VIEWER_CONTROL(37);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -343,6 +344,11 @@ internal class MobileUiHost(
     private var imageScale = 1f
     private var imageTranslationX = 0f
     private var imageTranslationY = 0f
+    private var imageDragStartTranslationX = 0f
+    private var imageDragStartTranslationY = 0f
+    private var imageIndex = 0
+    private var imageLoop = false
+    private var imageNavigationAction = IMAGE_NAVIGATION_PREVIOUS
     private var animator: ValueAnimator? = null
     private var activePickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
@@ -376,7 +382,7 @@ internal class MobileUiHost(
             override fun onDown(event: MotionEvent): Boolean = true
 
             override fun onDoubleTap(event: MotionEvent): Boolean {
-                imageScale = if (imageScale > 1f) 1f else 2f
+                imageScale = if (imageScale > 1f) 1f else 2.5f
                 if (imageScale == 1f) {
                     imageTranslationX = 0f
                     imageTranslationY = 0f
@@ -487,6 +493,26 @@ internal class MobileUiHost(
             }
         } else if (behavior == Behavior.TAB_TRIGGER) {
             tabValue = properties.scalarText("value") ?: tabValue
+        }
+        if (behavior == Behavior.IMAGE_VIEWER) {
+            val indexControlled = properties.containsKey("currentIndex")
+                || properties.containsKey("index")
+            imageIndex = if (indexControlled) {
+                properties.integer(
+                    "currentIndex",
+                    properties.integer("index", imageIndex.toLong()),
+                ).toInt().coerceAtLeast(0)
+            } else if (previousBehavior != behavior) {
+                properties.integer("initialIndex", 0L).toInt().coerceAtLeast(0)
+            } else {
+                imageIndex
+            }
+            imageLoop = properties.flag("loop", false)
+        } else if (behavior == Behavior.IMAGE_VIEWER_CONTROL) {
+            imageNavigationAction = properties.integer(
+                "navigationAction",
+                IMAGE_NAVIGATION_PREVIOUS.toLong(),
+            ).toInt().coerceIn(IMAGE_NAVIGATION_PREVIOUS, IMAGE_NAVIGATION_NEXT)
         }
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
         val defaultChecked = if (behavior == Behavior.SWITCH) {
@@ -795,6 +821,10 @@ internal class MobileUiHost(
         } else if (behavior == Behavior.TABLE) {
             applyTableSemantics()
             if (isAttachedToWindow) post(::applyTableSemantics)
+        } else if (behavior == Behavior.IMAGE_VIEWER) {
+            post { applyImageViewerState(announce = false) }
+        } else if (behavior == Behavior.IMAGE_VIEWER_CONTROL) {
+            updateImageViewerControlAccessibility()
         }
         if (behavior.isAnchoredOverlay() && previousOpen == open) {
             post { applyAnchoredOverlayState(animate = false) }
@@ -847,6 +877,9 @@ internal class MobileUiHost(
         if (behavior == Behavior.TOAST) {
             post(::applyToastSemantics)
         }
+        if (behavior == Behavior.IMAGE_VIEWER) {
+            post { applyImageViewerState(announce = false) }
+        }
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
         }
@@ -858,6 +891,9 @@ internal class MobileUiHost(
             tableSemanticsDirty = true
         } else if (behavior == Behavior.TABLE_ROW) {
             tableAncestor()?.tableSemanticsDirty = true
+        }
+        if (behavior == Behavior.IMAGE_VIEWER) {
+            post { applyImageViewerState(announce = false) }
         }
     }
 
@@ -905,6 +941,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.TABLE) {
             applyTableSemantics()
+        }
+        if (behavior == Behavior.IMAGE_VIEWER) {
+            applyImageViewerState(announce = false)
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
@@ -1312,6 +1351,30 @@ internal class MobileUiHost(
         if (behavior == Behavior.SKELETON) {
             info.className = "android.view.View"
         }
+        if (behavior == Behavior.IMAGE_VIEWER) {
+            val images = imageTargets()
+            info.className = "android.widget.Gallery"
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                1,
+                images.size,
+                false,
+                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE,
+            )
+            if (images.size > 1) {
+                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+            }
+        }
+        if (behavior == Behavior.IMAGE_VIEWER_CONTROL) {
+            info.className = "android.widget.Button"
+            info.isEnabled = isEnabled
+            info.isClickable = isEnabled
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -1405,6 +1468,8 @@ internal class MobileUiHost(
             Behavior.FORM_CONTROL,
             -> "android.view.ViewGroup"
             Behavior.INPUT_SLOT -> "android.widget.Button"
+            Behavior.IMAGE_VIEWER -> "android.widget.Gallery"
+            Behavior.IMAGE_VIEWER_CONTROL -> "android.widget.Button"
             Behavior.TABLE -> "android.widget.TableLayout"
             Behavior.TABLE_ROW -> "android.widget.TableRow"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
@@ -1479,6 +1544,22 @@ internal class MobileUiHost(
             val forward = action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
                 || action == AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
             return navigateCalendar(if (forward) 1 else -1)
+        }
+        if (
+            behavior == Behavior.IMAGE_VIEWER
+            && action in setOf(
+                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
+                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id,
+            )
+        ) {
+            val next = action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                || action == AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+            return selectImage(
+                if (next) IMAGE_NAVIGATION_NEXT else IMAGE_NAVIGATION_PREVIOUS,
+                emit = true,
+            )
         }
         if (
             action == AccessibilityNodeInfo.ACTION_DISMISS
@@ -1572,6 +1653,7 @@ internal class MobileUiHost(
                 Behavior.MENU_ITEM,
                 Behavior.OVERLAY_DISMISS,
                 Behavior.INPUT_SLOT,
+                Behavior.IMAGE_VIEWER_CONTROL,
             )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
@@ -1692,6 +1774,9 @@ internal class MobileUiHost(
         imageScale = 1f
         imageTranslationX = 0f
         imageTranslationY = 0f
+        imageDragStartTranslationX = 0f
+        imageDragStartTranslationY = 0f
+        imageIndex = 0
         applyImageTransform()
         restoreFocus()
         accessibilityFocusedCalendarCell = CALENDAR_TARGET_NONE
@@ -1781,6 +1866,15 @@ internal class MobileUiHost(
             setOnClickListener {
                 if (isEnabled) activateInputSlot()
             }
+        } else if (behavior == Behavior.IMAGE_VIEWER_CONTROL) {
+            setOnClickListener {
+                if (isEnabled) {
+                    imageViewerAncestor()?.selectImage(
+                        imageNavigationAction,
+                        emit = true,
+                    )
+                }
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -1826,6 +1920,7 @@ internal class MobileUiHost(
             Behavior.MENU_ITEM,
             Behavior.OVERLAY_DISMISS,
             Behavior.INPUT_SLOT,
+            Behavior.IMAGE_VIEWER_CONTROL,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -1846,6 +1941,7 @@ internal class MobileUiHost(
                 Behavior.MENU_ITEM,
                 Behavior.OVERLAY_DISMISS,
                 Behavior.INPUT_SLOT,
+                Behavior.IMAGE_VIEWER_CONTROL,
             )
         ) {
             RippleDrawable(
@@ -4069,6 +4165,8 @@ internal class MobileUiHost(
                 MotionEvent.ACTION_DOWN -> {
                     dragOrigin = event.rawX
                     dragOriginSecondary = event.rawY
+                    imageDragStartTranslationX = imageTranslationX
+                    imageDragStartTranslationY = imageTranslationY
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -4078,8 +4176,16 @@ internal class MobileUiHost(
                         val target = imageTarget()
                         val maxX = max(0f, ((imageScale - 1f) * (target?.width ?: width)) / 2f)
                         val maxY = max(0f, ((imageScale - 1f) * (target?.height ?: height)) / 2f)
-                        imageTranslationX = (event.rawX - dragOrigin).coerceIn(-maxX, maxX)
-                        imageTranslationY = (event.rawY - dragOriginSecondary).coerceIn(-maxY, maxY)
+                        imageTranslationX = (
+                            imageDragStartTranslationX
+                                + event.rawX
+                                - dragOrigin
+                            ).coerceIn(-maxX, maxX)
+                        imageTranslationY = (
+                            imageDragStartTranslationY
+                                + event.rawY
+                                - dragOriginSecondary
+                            ).coerceIn(-maxY, maxY)
                         applyImageTransform()
                     } else {
                         translationX = event.rawX - dragOrigin
@@ -4098,14 +4204,13 @@ internal class MobileUiHost(
                             else -> 0L
                         }
                         if (direction != 0L) {
-                            emitter.emit(
-                                NativeViewEventKind.CHANGE,
-                                WireMap.encode(
-                                    mapOf(
-                                        "action" to WireValue.Integer(HostAction.SELECT.value),
-                                        "direction" to WireValue.Integer(direction),
-                                    ),
-                                ),
+                            selectImage(
+                                if (direction > 0L) {
+                                    IMAGE_NAVIGATION_NEXT
+                                } else {
+                                    IMAGE_NAVIGATION_PREVIOUS
+                                },
+                                emit = true,
                             )
                         }
                     }
@@ -4135,7 +4240,160 @@ internal class MobileUiHost(
             }
         }
 
-    private fun imageTarget(): View? = if (childCount > 0) getChildAt(0) else null
+    private fun imageTarget(): View? =
+        imageTargets().getOrNull(imageIndex)
+            ?: if (childCount > 0) getChildAt(0) else null
+
+    private fun imageTargets(root: ViewGroup = this): List<View> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                val tag = child.tag as? String
+                if (tag?.startsWith(IMAGE_VIEWER_IMAGE_TAG_PREFIX) == true) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.IMAGE_VIEWER)
+                ) {
+                    addAll(imageTargets(child))
+                }
+            }
+        }
+
+    private fun imageViewerControls(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (
+                    child is MobileUiHost
+                    && child.behavior == Behavior.IMAGE_VIEWER_CONTROL
+                ) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.IMAGE_VIEWER)
+                ) {
+                    addAll(imageViewerControls(child))
+                }
+            }
+        }
+
+    private fun applyImageViewerState(announce: Boolean) {
+        if (behavior != Behavior.IMAGE_VIEWER) return
+        val images = imageTargets()
+        if (images.isEmpty()) return
+        imageIndex = imageIndex.coerceIn(0, images.lastIndex)
+        images.forEachIndexed { index, image ->
+            val active = index == imageIndex
+            image.visibility = if (active) VISIBLE else GONE
+            image.importantForAccessibility = if (active) {
+                IMPORTANT_FOR_ACCESSIBILITY_YES
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            }
+            image.isSelected = active
+        }
+        imageViewerControls().forEach { control ->
+            val enabled = when (control.imageNavigationAction) {
+                IMAGE_NAVIGATION_PREVIOUS -> imageLoop || imageIndex > 0
+                else -> imageLoop || imageIndex < images.lastIndex
+            }
+            control.isEnabled = enabled
+            control.visibility = if (enabled) VISIBLE else INVISIBLE
+            control.updateImageViewerControlAccessibility()
+        }
+        (findTaggedDescendant(this, IMAGE_VIEWER_COUNTER_TAG) as? TextView)
+            ?.let { counter ->
+                counter.text = context.getString(
+                    R.string.pam_image_viewer_counter,
+                    imageIndex + 1,
+                    images.size,
+                )
+                counter.contentDescription = context.getString(
+                    R.string.pam_image_viewer_position,
+                    imageIndex + 1,
+                    images.size,
+                )
+                counter.accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_POLITE
+            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = context.getString(
+                R.string.pam_image_viewer_position,
+                imageIndex + 1,
+                images.size,
+            )
+        }
+        if (announce) {
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
+        }
+    }
+
+    private fun selectImage(action: Int, emit: Boolean): Boolean {
+        if (behavior != Behavior.IMAGE_VIEWER) return false
+        val images = imageTargets()
+        if (images.size <= 1) return false
+        val delta = if (
+            action == IMAGE_NAVIGATION_PREVIOUS
+        ) {
+            -1
+        } else {
+            1
+        }
+        val requested = imageIndex + delta
+        val next = if (imageLoop) {
+            (requested + images.size) % images.size
+        } else {
+            requested.coerceIn(0, images.lastIndex)
+        }
+        if (next == imageIndex) return false
+        val previousTarget = imageTarget()
+        previousTarget?.animate()?.cancel()
+        previousTarget?.scaleX = 1f
+        previousTarget?.scaleY = 1f
+        previousTarget?.translationX = 0f
+        previousTarget?.translationY = 0f
+        imageIndex = next
+        imageScale = 1f
+        imageTranslationX = 0f
+        imageTranslationY = 0f
+        applyImageViewerState(announce = true)
+        applyImageTransform(animate = false)
+        if (emit) {
+            emitter.emit(
+                NativeViewEventKind.CHANGE,
+                imageIndex.toString().encodeToByteArray(),
+            )
+        }
+
+        return true
+    }
+
+    private fun imageViewerAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (
+                current is MobileUiHost
+                && current.behavior == Behavior.IMAGE_VIEWER
+            ) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun updateImageViewerControlAccessibility() {
+        if (behavior != Behavior.IMAGE_VIEWER_CONTROL) return
+        if (contentDescription.isNullOrEmpty()) {
+            contentDescription = if (
+                imageNavigationAction == IMAGE_NAVIGATION_PREVIOUS
+            ) {
+                "Previous image"
+            } else {
+                "Next image"
+            }
+        }
+    }
 
     private fun applyImageTransform(animate: Boolean = false) {
         val target = imageTarget() ?: return
@@ -5309,6 +5567,10 @@ internal class MobileUiHost(
         const val TOAST_ACTION_ERROR = 4
         const val TOAST_ACTION_ATTENTION = 6
         const val TOAST_EXIT_ANIMATION_DURATION_MILLIS = 140L
+        const val IMAGE_NAVIGATION_PREVIOUS = 1
+        const val IMAGE_NAVIGATION_NEXT = 2
+        const val IMAGE_VIEWER_IMAGE_TAG_PREFIX = "pam:image-viewer-image:"
+        const val IMAGE_VIEWER_COUNTER_TAG = "pam:image-viewer-counter"
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

@@ -87,6 +87,13 @@ and persistent Toast. The single pulse animator and identity-stable timer must
 keep p99 below 4 ms with zero bridge events; the result remains excluded from
 the reference table until measured on hardware.
 
+ImageViewer adds a pending 10,000-operation native navigation gate. Every
+selection must update active-image visibility, counter, control state and
+accessibility metadata below 4 ms p99 while emitting exactly one scalar semantic
+index. Pinch, pan and the animation between settled states remain bridge-free.
+This row is excluded from the reference table until the physical-device suite
+records it.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

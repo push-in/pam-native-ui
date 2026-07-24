@@ -54,6 +54,34 @@
             </VStack>
 
             <VStack class="gap-3">
+                <Heading size="xl">Native gallery</Heading>
+                <Text class="ui-text-muted">
+                    Swipe, zoom, navigation and image visibility stay on the Android UI thread.
+                </Text>
+                <ImageViewer
+                    images="$gallery"
+                    open="{{ $galleryOpen }}"
+                    initialIndex="{{ $galleryIndex }}"
+                    loop="true"
+                    on:toggle="setGalleryOpen"
+                    on:change="selectGalleryImage"
+                >
+                    <ImageViewerTrigger>
+                        <Button size="lg" variant="outline">
+                            <ButtonText>Open image gallery</ButtonText>
+                        </Button>
+                    </ImageViewerTrigger>
+                    <ImageViewerContent>
+                        <ImageViewerNavigation />
+                        <ImageViewerCounter />
+                        <ImageViewerCloseButton accessibilityLabel="Close gallery">
+                            <CloseIcon />
+                        </ImageViewerCloseButton>
+                    </ImageViewerContent>
+                </ImageViewer>
+            </VStack>
+
+            <VStack class="gap-3">
                 <Heading size="xl">Forms</Heading>
                 <Card>
                     <VStack space="md">

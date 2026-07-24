@@ -302,7 +302,9 @@ abstract class UiComponent implements Renderable
             ...$this->parentVariants,
             ...array_filter(
                 $componentProps,
-                self::isContextValue(...),
+                static fn (mixed $value, string $name): bool =>
+                    self::isContextValue($name, $value),
+                ARRAY_FILTER_USE_BOTH,
             ),
         ];
         $children = array_map(
@@ -388,13 +390,29 @@ abstract class UiComponent implements Renderable
         return $merged;
     }
 
-    private static function isContextValue(mixed $value): bool
+    private static function isContextValue(string $name, mixed $value): bool
     {
         if (is_scalar($value)) {
             return true;
         }
         if (!is_array($value)) {
             return false;
+        }
+
+        if ($name === 'images') {
+            foreach ($value as $image) {
+                if (is_string($image)) {
+                    continue;
+                }
+                if (
+                    !is_array($image)
+                    || !is_string($image['url'] ?? null)
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         foreach ($value as $item) {

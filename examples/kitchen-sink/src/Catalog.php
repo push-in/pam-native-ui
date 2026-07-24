@@ -18,6 +18,8 @@ final class Catalog extends Component
     private bool $drawerOpen = false;
     private bool $popoverOpen = false;
     private bool $selectOpen = false;
+    private bool $galleryOpen = false;
+    private int $galleryIndex = 0;
     private string $framework = 'Laravel';
     private string $email = '';
     private string $plan = 'starter';
@@ -29,6 +31,21 @@ final class Catalog extends Component
         'pushinbr/pam-mobile-ui',
         'pushinbr/pam-plugin-api',
         'pushinbr/pam-cli',
+    ];
+    /** @var list<array{url: string, alt: string}> */
+    private array $gallery = [
+        [
+            'url' => 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600',
+            'alt' => 'Mountains under a bright sky',
+        ],
+        [
+            'url' => 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1600',
+            'alt' => 'Sunrise over a green landscape',
+        ],
+        [
+            'url' => 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600',
+            'alt' => 'Sunlight crossing a forest',
+        ],
     ];
 
     public function render(): Renderable
@@ -111,6 +128,19 @@ final class Catalog extends Component
         $this->selectOpen = false;
     }
 
+    public function setGalleryOpen(bool $open): void
+    {
+        $this->galleryOpen = $open;
+    }
+
+    public function selectGalleryImage(string $payload): void
+    {
+        $this->galleryIndex = max(
+            0,
+            min(count($this->gallery) - 1, (int) $payload),
+        );
+    }
+
     public function selectDate(string $payload): void
     {
         if ($payload !== '') {
@@ -128,6 +158,9 @@ final class Catalog extends Component
      *     drawerOpen: bool,
      *     popoverOpen: bool,
      *     selectOpen: bool,
+     *     galleryOpen: bool,
+     *     galleryIndex: int,
+     *     gallery: list<array{url: string, alt: string}>,
      *     framework: string,
      *     email: string,
      *     plan: string,
@@ -147,6 +180,9 @@ final class Catalog extends Component
             'drawerOpen' => $this->drawerOpen,
             'popoverOpen' => $this->popoverOpen,
             'selectOpen' => $this->selectOpen,
+            'galleryOpen' => $this->galleryOpen,
+            'galleryIndex' => $this->galleryIndex,
+            'gallery' => $this->gallery,
             'framework' => $this->framework,
             'email' => $this->email,
             'plan' => $this->plan,

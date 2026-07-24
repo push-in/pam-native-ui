@@ -1758,6 +1758,102 @@ class MobileUiHostInstrumentedTest {
         }
     }
 
+    @Test
+    fun imageViewerCoordinatesGalleryNavigationAndDismissalOnTheUiThread() {
+        onMain {
+            val events = CopyOnWriteArrayList<NativeViewEventKind>()
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val viewer = MobileUiHost(context) { kind, payload ->
+                events += kind
+                payloads += payload
+            }
+            viewer.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(13),
+                    "initialIndex" to WireValue.Integer(0),
+                ),
+            )
+            val first = View(context).apply {
+                tag = "pam:image-viewer-image:0"
+                contentDescription = "Mountain"
+            }
+            val second = View(context).apply {
+                tag = "pam:image-viewer-image:1"
+                contentDescription = "Ocean"
+            }
+            val third = View(context).apply {
+                tag = "pam:image-viewer-image:2"
+                contentDescription = "Desert"
+            }
+            val counter = TextView(context).apply {
+                tag = "pam:image-viewer-counter"
+            }
+            val previous = MobileUiHost(context) { _, _ -> }
+            previous.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(37),
+                    "navigationAction" to WireValue.Integer(1),
+                ),
+            )
+            val next = MobileUiHost(context) { _, _ -> }
+            next.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(37),
+                    "navigationAction" to WireValue.Integer(2),
+                ),
+            )
+            val close = MobileUiHost(context) { _, _ -> }
+            close.update(mapOf("behavior" to WireValue.Integer(31)))
+            viewer.addView(first)
+            viewer.addView(second)
+            viewer.addView(third)
+            viewer.addView(counter)
+            viewer.addView(previous)
+            viewer.addView(next)
+            viewer.addView(close)
+            viewer.layout(0, 0, 1_080, 2_000)
+
+            assertEquals(View.VISIBLE, first.visibility)
+            assertEquals(View.GONE, second.visibility)
+            assertEquals(View.INVISIBLE, previous.visibility)
+            assertEquals(View.VISIBLE, next.visibility)
+            assertEquals("1 / 3", counter.text.toString())
+
+            assertTrue(
+                viewer.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
+                    null,
+                ),
+            )
+            assertEquals(View.GONE, first.visibility)
+            assertEquals(View.VISIBLE, second.visibility)
+            assertEquals("2 / 3", counter.text.toString())
+            assertEquals(NativeViewEventKind.CHANGE, events[0])
+            assertEquals("1", payloads[0].decodeToString())
+
+            assertTrue(previous.performClick())
+            assertEquals(View.VISIBLE, first.visibility)
+            assertEquals("0", payloads[1].decodeToString())
+            assertTrue(close.performClick())
+            val dismissal = WireMap.decode(payloads.last())
+            assertEquals(NativeViewEventKind.NATIVE, events.last())
+            assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
+            assertTrue((dismissal["dismissed"] as WireValue.Flag).value)
+
+            val info = AccessibilityNodeInfo.obtain()
+            viewer.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("android.widget.Gallery", info.className)
+            assertEquals(3, info.collectionInfo?.columnCount)
+
+            info.recycle()
+            previous.release()
+            next.release()
+            close.release()
+            viewer.release()
+        }
+    }
+
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
 

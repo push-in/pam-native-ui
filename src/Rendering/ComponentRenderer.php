@@ -7,6 +7,7 @@ namespace Pam\MobileUi\Rendering;
 use Closure;
 use InvalidArgumentException;
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\ImageViewerControlAction;
 use Pam\MobileUi\Enum\InputSlotAction;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
@@ -17,6 +18,7 @@ use Pam\Native\AccessibilityRole;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
 use Pam\Native\InputSyncMode;
+use Pam\Native\ImageFit;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalPresentation;
@@ -86,6 +88,7 @@ final class ComponentRenderer
         if (in_array($part, ['Skeleton', 'SkeletonText'], true)) {
             $children = [];
         }
+        $children = self::imageViewerChildren($part, $props, $children);
         $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
@@ -585,6 +588,7 @@ final class ComponentRenderer
             'MenuItem' => NativeBehavior::MenuItem,
             'AlertDialogCloseButton',
             'DrawerCloseButton',
+            'ImageViewerCloseButton',
             'ModalCloseButton',
             'PopoverCloseButton' => NativeBehavior::OverlayDismiss,
             'Input',
@@ -662,6 +666,7 @@ final class ComponentRenderer
             'ModelSelector',
             'RadioGroup',
             'Select',
+            'ImageViewer',
         ], true);
     }
 
@@ -678,6 +683,51 @@ final class ComponentRenderer
         array $sourceProps,
         array $events,
     ): array {
+        if ($source === 'ImageViewer') {
+            if ($target === 'ImageViewerTrigger') {
+                $toggle = $events[EventKind::Toggle->value] ?? null;
+                $press = $events[EventKind::Press->value] ?? null;
+                if ($toggle === null && $press === null) {
+                    return [];
+                }
+
+                return [
+                    EventKind::Press->value => static function () use (
+                        $toggle,
+                        $press,
+                    ): void {
+                        $press?->__invoke();
+                        $toggle?->__invoke(true);
+                    },
+                ];
+            }
+            if ($target === 'ImageViewerContent') {
+                $inherited = [];
+                $change = $events[EventKind::Change->value] ?? null;
+                $native = $events[EventKind::Native->value] ?? null;
+                $toggle = $events[EventKind::Toggle->value] ?? null;
+                if ($change !== null) {
+                    $inherited[EventKind::Change->value] = $change;
+                }
+                if ($native !== null || $toggle !== null) {
+                    $inherited[EventKind::Native->value] =
+                        static function (string $payload) use (
+                            $native,
+                            $toggle,
+                        ): void {
+                            $native?->__invoke($payload);
+                            if (
+                                $toggle !== null
+                                && self::nativeEventAction($payload) === 1
+                            ) {
+                                $toggle(false);
+                            }
+                        };
+                }
+
+                return $inherited;
+            }
+        }
         if (
             ($source === 'BottomSheet' && $target === 'BottomSheetPortal')
             || ($source === 'ModelSelector' && $target === 'ModelSelectorContent')
@@ -1658,8 +1708,121 @@ final class ComponentRenderer
         if (in_array($part, ['Input', 'Textarea'], true)) {
             return [self::input($part === 'Textarea' ? 'TextareaInput' : 'InputField', $props)];
         }
+        if ($part === 'ImageViewerNavigation') {
+            return self::imageViewerNavigationChildren();
+        }
+        if ($part === 'ImageViewerCounter') {
+            return [
+                Text::make('1 / 1')
+                    ->property(PropKey::Value, 'pam:image-viewer-counter'),
+            ];
+        }
 
         return [];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function imageViewerChildren(
+        string $part,
+        array $props,
+        array $children,
+    ): array {
+        if ($part !== 'ImageViewerContent') {
+            return $children;
+        }
+        $parent = is_array($props['__parentVariants'] ?? null)
+            ? $props['__parentVariants']
+            : [];
+        $images = $props['images'] ?? $parent['images'] ?? [];
+        if (!is_array($images)) {
+            return $children;
+        }
+        $generated = [];
+        foreach (array_values($images) as $index => $image) {
+            $url = is_string($image)
+                ? $image
+                : (is_array($image) && is_string($image['url'] ?? null)
+                    ? $image['url']
+                    : null);
+            if ($url === null || $url === '') {
+                continue;
+            }
+            $alt = is_array($image) && is_string($image['alt'] ?? null)
+                ? $image['alt']
+                : 'Image '.($index + 1);
+            $generated[] = Image::make($url)
+                ->fit(ImageFit::Contain)
+                ->property(PropKey::Value, 'pam:image-viewer-image:'.$index)
+                ->property(PropKey::PositionType, PositionType::Absolute->value)
+                ->property(PropKey::Left, 0.0)
+                ->property(PropKey::Top, 0.0)
+                ->property(PropKey::WidthPercent, 100.0)
+                ->property(PropKey::HeightPercent, 100.0)
+                ->accessibilityLabel($alt)
+                ->accessibilityRole(AccessibilityRole::Image);
+        }
+
+        return $generated === [] ? $children : [...$generated, ...$children];
+    }
+
+    /** @return list<Element> */
+    private static function imageViewerNavigationChildren(): array
+    {
+        $component = ComponentMap::IDS['ImageViewerNavigation'];
+        $control = static function (
+            ImageViewerControlAction $action,
+            string $label,
+            string $glyph,
+        ) use ($component): Element {
+            return CustomView::make(
+                'pam.mobile_ui.host',
+                [
+                    'part' => $component,
+                    'component' => $component,
+                    'behavior' => NativeBehavior::ImageViewerControl->value,
+                    'navigationAction' => $action->value,
+                ],
+                Text::make($glyph),
+            )
+                ->style(new Style(
+                    width: 48.0,
+                    height: 48.0,
+                    borderRadius: 24.0,
+                    alignItems: \Pam\Native\Align::Center,
+                    justifyContent: \Pam\Native\Justify::Center,
+                ))
+                ->accessibilityLabel($label)
+                ->accessibilityRole(AccessibilityRole::Button);
+        };
+
+        return [
+            $control(
+                ImageViewerControlAction::Previous,
+                'Previous image',
+                '‹',
+            ),
+            $control(
+                ImageViewerControlAction::Next,
+                'Next image',
+                '›',
+            ),
+        ];
+    }
+
+    private static function nativeEventAction(string $payload): ?int
+    {
+        try {
+            $values = \Pam\Native\Internal\Wire::decodeMap($payload);
+        } catch (\Throwable) {
+            return null;
+        }
+        $action = $values['action'] ?? null;
+
+        return is_int($action) ? $action : null;
     }
 
     /** @param array<string, mixed> $props */

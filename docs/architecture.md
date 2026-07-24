@@ -61,6 +61,16 @@ native timer: a stable rerender cannot postpone dismissal, persistent toasts do
 not allocate timers, and Android performs the exit motion and accessibility
 announcement before emitting one semantic dismissal.
 
+`ImageViewer` receives its PHP gallery as bounded declarative context. During
+composition, the renderer creates ordinary PAM image nodes with stable semantic
+tags and keeps navigation, counter and close controls as authored compound
+children. Android discovers those mounted nodes once structure changes, then
+owns active-image visibility, looping, swipe selection, zoom/pan transforms,
+counter text and control availability on the UI thread. Pinch and pan emit no
+bridge traffic; a completed navigation emits one scalar index. The native host
+also exposes collection metadata, accessibility scroll alternatives and a
+position announcement, so touch gestures are never the only path.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native

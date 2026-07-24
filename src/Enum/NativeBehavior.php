@@ -42,4 +42,5 @@ enum NativeBehavior: int
     case FormControl = 34;
     case Table = 35;
     case TableRow = 36;
+    case ImageViewerControl = 37;
 }

@@ -331,6 +331,43 @@ animator. Toast duration is scheduled once per identity rather than restarted
 by unrelated renders; transient hide/exit motion and TalkBack live-region
 announcement stay on Android, with one final dismiss event for PHP.
 
+Image galleries accept ordinary PHP arrays without serializing that collection
+through every child tag:
+
+```php
+$gallery = [
+    ['url' => 'file:///mountain.jpg', 'alt' => 'Mountain at sunrise'],
+    ['url' => 'file:///ocean.jpg', 'alt' => 'Ocean after sunset'],
+];
+```
+
+```xml
+<ImageViewer
+    images="$gallery"
+    open="{{ $galleryOpen }}"
+    initialIndex="{{ $galleryIndex }}"
+    loop="true"
+    on:toggle="setGalleryOpen"
+    on:change="selectGalleryImage"
+>
+    <ImageViewerTrigger>
+        <Button><ButtonText>Open gallery</ButtonText></Button>
+    </ImageViewerTrigger>
+    <ImageViewerContent>
+        <ImageViewerNavigation />
+        <ImageViewerCounter />
+        <ImageViewerCloseButton><CloseIcon /></ImageViewerCloseButton>
+    </ImageViewerContent>
+</ImageViewer>
+```
+
+PAM expands the bounded declarative array into native image children once.
+Android then owns active-image visibility, previous/next controls, looping,
+horizontal swipe, double-tap zoom, pan, counter updates and TalkBack collection
+actions. Gesture progress emits no PHP callback; `on:change` receives one
+zero-based index after a semantic selection and `on:toggle` receives the final
+open state.
+
 Large scalar data sets use PAM's recycled Android list primitives directly:
 
 ```xml

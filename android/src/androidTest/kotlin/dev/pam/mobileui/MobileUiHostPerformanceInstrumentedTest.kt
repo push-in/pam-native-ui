@@ -597,6 +597,45 @@ class MobileUiHostPerformanceInstrumentedTest {
                 feedbackEvents.isEmpty(),
             )
 
+            val imageEvents = ArrayList<NativeViewEventKind>()
+            val imageViewer = MobileUiHost(context) { kind, _ -> imageEvents += kind }
+            imageViewer.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(13),
+                    "loop" to WireValue.Flag(true),
+                ),
+            )
+            repeat(3) { index ->
+                imageViewer.addView(View(context).apply {
+                    tag = "pam:image-viewer-image:$index"
+                })
+            }
+            val imageNext = MobileUiHost(context) { _, _ -> }
+            imageNext.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(37),
+                    "navigationAction" to WireValue.Integer(2),
+                ),
+            )
+            imageViewer.addView(imageNext)
+            imageViewer.layout(0, 0, 1_080, 2_000)
+            repeat(WARMUP_ITERATIONS) {
+                imageNext.performClick()
+            }
+            imageEvents.clear()
+            val imageNavigation = measure(SAMPLE_ITERATIONS) {
+                imageNext.performClick()
+            }
+            assertTrue(
+                "Image navigation p99 ${imageNavigation.p99Micros}µs exceeded 4ms",
+                imageNavigation.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Image navigation must emit one final index per activation",
+                SAMPLE_ITERATIONS,
+                imageEvents.size,
+            )
+
             val tableEvents = ArrayList<NativeViewEventKind>()
             val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
             table.update(mapOf("behavior" to WireValue.Integer(35)))
@@ -667,6 +706,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"inputState\":${inputState.json()},")
                     append("\"inputSlotPress\":${inputSlotPress.json()},")
                     append("\"feedbackUpdate\":${feedbackUpdate.json()},")
+                    append("\"imageNavigation\":${imageNavigation.json()},")
                     append("\"tableLayout\":${tableLayout.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
@@ -686,6 +726,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"inputStateBridgeEvents\":${inputGroupEvents.size},")
                     append("\"inputSlotBridgeEvents\":$inputSlotEvents,")
                     append("\"feedbackBridgeEvents\":${feedbackEvents.size},")
+                    append("\"imageBridgeEvents\":${imageEvents.size},")
                     append("\"tableBridgeEvents\":${tableEvents.size}")
                     append('}')
                 },
@@ -716,6 +757,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             inputGroup.release()
             skeleton.release()
             toast.release()
+            imageNext.release()
+            imageViewer.release()
             repeat(table.childCount) { index ->
                 (table.getChildAt(index) as? MobileUiHost)?.release()
             }
