@@ -137,6 +137,37 @@ receives only the selected scalar value. TalkBack sees a single-selection tab
 collection with selected item position. The fluent API uses
 `Pam\MobileUi\Enum\TabsActivationMode`.
 
+Bottom sheets, action sheets and select portals share one native controller:
+
+```xml
+<BottomSheet
+    isOpen="{{ $filtersOpen }}"
+    snapPoints="25,50,90"
+    snapToIndex="1"
+    on:change="rememberSheetPosition"
+    on:event="closeFilters"
+>
+    <BottomSheetPortal>
+        <BottomSheetBackdrop pressBehavior="collapse" />
+        <BottomSheetContent>
+            <BottomSheetDragIndicator />
+            <BottomSheetItem closeOnPress="false">
+                <BottomSheetItemText>Keep editing</BottomSheetItemText>
+            </BottomSheetItem>
+        </BottomSheetContent>
+    </BottomSheetPortal>
+</BottomSheet>
+```
+
+The tag API accepts comma-separated percentages; the fluent API also accepts
+`[25, 50, 90]`. Drag position, velocity prediction, backdrop opacity and snap
+selection stay on Android's UI thread. PHP receives one final snap index through
+`on:change`, and dismissals through `on:event`; no movement frame crosses the
+bridge. `pressBehavior` supports `close`, `collapse` and `none` (or
+`Pam\MobileUi\Enum\BackdropPressBehavior`), while `closeOnPress` and
+`closeOnSelect` control item dismissal. Android Back, TalkBack scroll actions,
+focus trapping, reduced motion and a 48 dp drag target are supported.
+
 Gesture-heavy components keep transient work on Android's UI thread. The
 calendar supports single, multiple and range selection, disabled/min/max dates,
 localized month navigation, first-day-of-week and fixed-week layouts:

@@ -326,6 +326,92 @@ class MobileUiHostPerformanceInstrumentedTest {
                 tabsEvents,
             )
 
+            var sheetEvents = 0
+            val sheet = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.CHANGE) sheetEvents++
+            }
+            sheet.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.BOTTOM_SHEET_PORTAL.toLong(),
+                    ),
+                    "open" to WireValue.Flag(true),
+                    "snapPoints" to WireValue.Text("25\n50\n90"),
+                    "snapToIndex" to WireValue.Integer(0),
+                ),
+            )
+            sheet.addView(View(context).apply {
+                tag = "pam:overlay-backdrop"
+                alpha = 0.5f
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+            })
+            sheet.addView(FrameLayout(context).apply {
+                tag = "pam:overlay-content"
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    1_728,
+                    android.view.Gravity.BOTTOM,
+                )
+                addView(View(context).apply {
+                    tag = "pam:sheet-drag-indicator"
+                    layoutParams = FrameLayout.LayoutParams(120, 48)
+                })
+            })
+            sheet.measure(
+                View.MeasureSpec.makeMeasureSpec(1_080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1_920, View.MeasureSpec.EXACTLY),
+            )
+            sheet.layout(0, 0, 1_080, 1_920)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                sheet.performAccessibilityAction(sheetAction(iteration), null)
+            }
+            sheetEvents = 0
+            val sheetSnap = measure(SAMPLE_ITERATIONS) { iteration ->
+                sheet.performAccessibilityAction(sheetAction(iteration), null)
+            }
+            assertTrue(
+                "BottomSheet snap p99 ${sheetSnap.p99Micros}µs exceeded 4ms",
+                sheetSnap.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "BottomSheet must emit one semantic event per completed snap",
+                SAMPLE_ITERATIONS,
+                sheetEvents,
+            )
+
+            var sheetItemEvents = 0
+            val sheetItem = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.PRESS) sheetItemEvents++
+            }
+            sheetItem.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(29),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.ACTIONSHEET_ITEM.toLong(),
+                    ),
+                ),
+            )
+            repeat(WARMUP_ITERATIONS) {
+                sheetItem.performClick()
+            }
+            sheetItemEvents = 0
+            val sheetItemPress = measure(SAMPLE_ITERATIONS) {
+                sheetItem.performClick()
+            }
+            assertTrue(
+                "Sheet item press p99 ${sheetItemPress.p99Micros}µs exceeded 4ms",
+                sheetItemPress.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Sheet items must emit one semantic event per activation",
+                SAMPLE_ITERATIONS,
+                sheetItemEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -355,6 +441,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"progressUpdate\":${progressUpdate.json()},")
                     append("\"switchToggle\":${switchToggle.json()},")
                     append("\"tabsSelection\":${tabsSelection.json()},")
+                    append("\"sheetSnap\":${sheetSnap.json()},")
+                    append("\"sheetItemPress\":${sheetItemPress.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
@@ -365,7 +453,9 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"radioBridgeEvents\":$radioEvents,")
                     append("\"progressBridgeEvents\":${progressEvents.size},")
                     append("\"switchBridgeEvents\":$switchEvents,")
-                    append("\"tabsBridgeEvents\":$tabsEvents")
+                    append("\"tabsBridgeEvents\":$tabsEvents,")
+                    append("\"sheetBridgeEvents\":$sheetEvents,")
+                    append("\"sheetItemBridgeEvents\":$sheetItemEvents")
                     append('}')
                 },
             )
@@ -385,6 +475,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             firstTab.release()
             secondTab.release()
             tabs.release()
+            sheetItem.release()
+            sheet.release()
         }
     }
 
@@ -452,6 +544,13 @@ class MobileUiHostPerformanceInstrumentedTest {
         second: MobileUiHost,
         iteration: Int,
     ): MobileUiHost = if (iteration % 2 == 0) second else first
+
+    private fun sheetAction(iteration: Int): Int =
+        if (iteration % 2 == 0) {
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+        } else {
+            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        }
 
     private fun measure(iterations: Int, block: (Int) -> Unit): Statistics {
         val samples = LongArray(iterations)

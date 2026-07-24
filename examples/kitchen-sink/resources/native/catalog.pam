@@ -88,6 +88,7 @@
 
                         <Select
                             open="{{ $selectOpen }}"
+                            snapPoints="35,60"
                             selectedValue="{{ $framework }}"
                             on:change="chooseFramework"
                             on:event="closeSelect"
@@ -96,7 +97,7 @@
                                 <SelectInput value="{{ $framework }}" placeholder="Choose a stack" />
                                 <SelectIcon><ChevronDownIcon /></SelectIcon>
                             </SelectTrigger>
-                            <SelectPortal>
+                            <SelectPortal snapToIndex="1">
                                 <SelectBackdrop on:press="closeSelect" />
                                 <SelectContent>
                                     <SelectDragIndicatorWrapper>
@@ -377,8 +378,13 @@
         </ModalContent>
     </Modal>
 
-    <Actionsheet open="{{ $sheetOpen }}" on:event="closeSheet">
-        <ActionsheetBackdrop on:press="closeSheet" />
+    <Actionsheet
+        open="{{ $sheetOpen }}"
+        snapPoints="30,55,85"
+        snapToIndex="1"
+        on:event="closeSheet"
+    >
+        <ActionsheetBackdrop pressBehavior="collapse" />
         <ActionsheetContent>
             <ActionsheetDragIndicatorWrapper><ActionsheetDragIndicator /></ActionsheetDragIndicatorWrapper>
             <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Take photo</ActionsheetItemText></ActionsheetItem>

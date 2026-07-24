@@ -13,6 +13,10 @@ use Pam\MobileUi\Component\AccordionItem;
 use Pam\MobileUi\Component\AccordionTitleText;
 use Pam\MobileUi\Component\AccordionTrigger;
 use Pam\MobileUi\Component\BottomSheet;
+use Pam\MobileUi\Component\BottomSheetBackdrop;
+use Pam\MobileUi\Component\BottomSheetContent;
+use Pam\MobileUi\Component\BottomSheetDragIndicator;
+use Pam\MobileUi\Component\BottomSheetItem;
 use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\Checkbox;
 use Pam\MobileUi\Component\CheckboxGroup;
@@ -71,6 +75,7 @@ use Pam\MobileUi\Component\Toast;
 use Pam\MobileUi\Component\ToastTitle;
 use Pam\MobileUi\Component\SwitchControl;
 use Pam\MobileUi\Enum\ButtonVariant;
+use Pam\MobileUi\Enum\BackdropPressBehavior;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentCategory;
 use Pam\MobileUi\Enum\ComponentMaturity;
@@ -884,27 +889,98 @@ $assert(
         && isset($closedSelectHost->events()[\Pam\Native\EventKind::Native->value]),
     'Select must forward dismissals and semantic events into its native sheet.',
 );
+$defaultClosedSheet = BottomSheet::make(
+    ['defaultIsOpen' => false],
+    BottomSheetPortal::make(['snapPoints' => '25%, 50; 90']),
+)->toElement();
+$defaultClosedSheetWindow = $defaultClosedSheet->children()[0] ?? null;
+$defaultClosedSheetHost = $defaultClosedSheetWindow?->children()[0] ?? null;
+if (
+    !$defaultClosedSheetWindow instanceof \Pam\Native\Element
+    || !$defaultClosedSheetHost instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Default-closed BottomSheet must render its stable window.');
+}
+$defaultClosedSheetProperties = $defaultClosedSheetHost->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (!$defaultClosedSheetProperties instanceof BinaryValue) {
+    throw new RuntimeException('Default-closed BottomSheet must carry native state.');
+}
+$defaultClosedSheetNative = Wire::decodeMap($defaultClosedSheetProperties->bytes);
+$assert(
+    $defaultClosedSheetWindow->properties()[PropKey::Visible->value] === false
+        && $defaultClosedSheetNative['defaultIsOpen'] === false
+        && $defaultClosedSheetNative['snapPoints'] === "25\n50\n90",
+    'BottomSheet must support defaultIsOpen and tag-friendly snap point strings.',
+);
 $bottomSheet = BottomSheet::make(
     ['open' => true],
-    BottomSheetPortal::make(),
+    BottomSheetPortal::make(
+        [
+            'snapPoints' => ['25%', 50, 90],
+            'snapToIndex' => 1,
+            'pressBehavior' => BackdropPressBehavior::Collapse,
+        ],
+        BottomSheetBackdrop::make(),
+        BottomSheetContent::make(
+            BottomSheetDragIndicator::make(),
+            BottomSheetItem::make('Save')->onPress(static function (): void {
+            }),
+        ),
+    ),
 )->onChange(static function (): void {
 })->toElement();
 $bottomSheetWindow = $bottomSheet->children()[0] ?? null;
 $bottomSheetHost = $bottomSheetWindow?->children()[0] ?? null;
+$bottomSheetBackdrop = $bottomSheetHost?->children()[0] ?? null;
+$bottomSheetContent = $bottomSheetHost?->children()[1] ?? null;
+$bottomSheetIndicator = $bottomSheetContent?->children()[0] ?? null;
+$bottomSheetItem = $bottomSheetContent?->children()[1] ?? null;
 if (
     !$bottomSheetWindow instanceof \Pam\Native\Element
     || !$bottomSheetHost instanceof \Pam\Native\Element
+    || !$bottomSheetBackdrop instanceof \Pam\Native\Element
+    || !$bottomSheetContent instanceof \Pam\Native\Element
+    || !$bottomSheetIndicator instanceof \Pam\Native\Element
+    || !$bottomSheetItem instanceof \Pam\Native\Element
 ) {
     throw new RuntimeException('BottomSheet must render its native portal window.');
 }
+$bottomSheetProperties = $bottomSheetHost->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$bottomSheetItemProperties = $bottomSheetItem->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$bottomSheetProperties instanceof BinaryValue
+    || !$bottomSheetItemProperties instanceof BinaryValue
+) {
+    throw new RuntimeException('BottomSheet host and item must carry native state.');
+}
+$bottomSheetNative = Wire::decodeMap($bottomSheetProperties->bytes);
+$bottomSheetItemNative = Wire::decodeMap($bottomSheetItemProperties->bytes);
 $assert(
     $bottomSheet->kind() === NodeKind::View
         && $bottomSheetWindow->kind() === NodeKind::Modal
         && $bottomSheetWindow->properties()[PropKey::ModalPresentation->value]
             === ModalPresentation::Sheet->value
         && $bottomSheetHost->kind() === NodeKind::CustomView
-        && isset($bottomSheetHost->events()[\Pam\Native\EventKind::Change->value]),
-    'BottomSheet must keep its root stable and forward changes into its native sheet host.',
+        && isset($bottomSheetHost->events()[\Pam\Native\EventKind::Change->value])
+        && $bottomSheetNative['snapPoints'] === "25\n50\n90"
+        && $bottomSheetNative['snapToIndex'] === 1
+        && $bottomSheetNative['pressBehavior']
+            === BackdropPressBehavior::Collapse->value
+        && $bottomSheetBackdrop->properties()[PropKey::Value->value]
+            === 'pam:overlay-backdrop'
+        && $bottomSheetContent->properties()[PropKey::Value->value]
+            === 'pam:overlay-content'
+        && $bottomSheetIndicator->properties()[PropKey::Value->value]
+            === 'pam:sheet-drag-indicator'
+        && $bottomSheetItem->kind() === NodeKind::CustomView
+        && $bottomSheetItemNative['behavior'] === NativeBehavior::SheetItem->value,
+    'BottomSheet must pack snap points and coordinate its complete native anatomy.',
 );
 
 $selectedFramework = null;
@@ -940,6 +1016,7 @@ if (
 $semanticSelectPress();
 $assert(
     $selectedFramework === 'laravel'
+        && $semanticSelectItem->kind() === NodeKind::CustomView
         && $semanticSelectItem->properties()[PropKey::Value->value] === 'laravel'
         && $semanticSelectItem->properties()[PropKey::Checked->value] === true,
     'SelectItem must inherit controlled selection and deliver its value through the parent.',

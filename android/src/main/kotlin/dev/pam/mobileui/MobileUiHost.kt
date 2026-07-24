@@ -26,6 +26,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
+import android.view.VelocityTracker
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityNodeInfo
@@ -86,7 +87,8 @@ internal class MobileUiHost(
         CHECKBOX_GROUP(25),
         RADIO_GROUP(26),
         SWITCH(27),
-        TAB_TRIGGER(28);
+        TAB_TRIGGER(28),
+        SHEET_ITEM(29);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -164,6 +166,18 @@ internal class MobileUiHost(
     private var offset = 8.0
     private var dismissible = true
     private var closeOnOverlayClick = true
+    private var backdropPressBehavior = BACKDROP_PRESS_CLOSE
+    private var sheetSnapPoints = emptyList<Float>()
+    private var sheetSnapIndex = 0
+    private var sheetEnablePanDownToClose = true
+    private var sheetEnableDynamicSizing = false
+    private var sheetDragStartTranslation = 0f
+    private var sheetBackdropPressed = false
+    private var sheetBackdropBaseAlpha: Float? = null
+    private var sheetVelocityTracker: VelocityTracker? = null
+    private var closeSheetItemOnPress = false
+    private var trapFocus = true
+    private var keyboardDismissable = true
     private var componentMode = ComponentMode.DATETIME
     private var dateTimeValue: String? = null
     private var minimumDate: String? = null
@@ -340,10 +354,60 @@ internal class MobileUiHost(
         val previousComponentMode = componentMode
         val previousTabValue = tabValue
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
+        if (previousBehavior != behavior) {
+            sheetBackdropBaseAlpha = null
+        }
         pendingSliderChange?.let(::removeCallbacks)
         pendingSliderChange = null
         pendingSliderValue = null
         component = properties.integer("component", component.toLong()).toInt()
+        if (behavior == Behavior.BOTTOM_SHEET) {
+            sheetSnapPoints = properties.text("snapPoints")
+                ?.lineSequence()
+                ?.mapNotNull(String::toFloatOrNull)
+                ?.map { point -> point.coerceIn(1f, 100f) }
+                ?.distinct()
+                ?.toList()
+                ?: emptyList()
+        }
+        sheetSnapIndex = properties.integer(
+            "snapToIndex",
+            properties.integer(
+                "defaultSnapIndex",
+                sheetSnapIndex.toLong(),
+            ),
+        ).toInt().coerceAtLeast(0)
+        if (sheetSnapPoints.isNotEmpty()) {
+            sheetSnapIndex = sheetSnapIndex.coerceAtMost(sheetSnapPoints.lastIndex)
+        }
+        sheetEnablePanDownToClose = properties.flag(
+            "enablePanDownToClose",
+            sheetEnablePanDownToClose,
+        )
+        sheetEnableDynamicSizing = properties.flag(
+            "enableDynamicSizing",
+            sheetEnableDynamicSizing,
+        )
+        backdropPressBehavior = properties.integer(
+            "pressBehavior",
+            backdropPressBehavior.toLong(),
+        ).toInt().coerceIn(BACKDROP_PRESS_CLOSE, BACKDROP_PRESS_NONE)
+        trapFocus = properties.flag("trapFocus", trapFocus)
+        keyboardDismissable = properties.flag(
+            "isKeyboardDismissable",
+            keyboardDismissable,
+        )
+        val defaultCloseSheetItem = component in setOf(
+            GeneratedComponents.BOTTOM_SHEET_ITEM,
+            GeneratedComponents.SELECT_ITEM,
+        )
+        closeSheetItemOnPress = properties.flag(
+            "closeOnSelect",
+            properties.flag(
+                "closeOnPress",
+                defaultCloseSheetItem,
+            ),
+        )
         tabsActivationMode = properties.integer(
             "activationMode",
             tabsActivationMode.toLong(),
@@ -379,7 +443,13 @@ internal class MobileUiHost(
             properties.flag("isIndeterminate", false),
         )
         selected = properties.flag("selected", properties.flag("isSelected", selected))
-        open = properties.flag("open", properties.flag("isOpen", open))
+        open = properties.flag(
+            "open",
+            properties.flag(
+                "isOpen",
+                properties.flag("defaultIsOpen", open),
+            ),
+        )
         if (
             behavior != Behavior.SWITCH
             && behavior != Behavior.TABS
@@ -559,6 +629,8 @@ internal class MobileUiHost(
             }
         } else if (behavior == Behavior.TAB_TRIGGER) {
             updateTabTriggerAccessibility()
+        } else if (behavior == Behavior.SHEET_ITEM) {
+            updateSheetItemAccessibility()
         }
         invalidate()
     }
@@ -581,6 +653,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.TABS) {
             post { applyTabsState(animate = false) }
+        }
+        if (behavior == Behavior.BOTTOM_SHEET) {
+            post { applySheetLayout(animate = false) }
         }
     }
 
@@ -615,6 +690,9 @@ internal class MobileUiHost(
         applyRangeVisualState()
         if (behavior == Behavior.TABS) {
             applyTabsState(animate = false)
+        }
+        if (behavior == Behavior.BOTTOM_SHEET) {
+            applySheetLayout(animate = false)
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
@@ -730,7 +808,12 @@ internal class MobileUiHost(
 
     override fun focusSearch(focused: View?, direction: Int): View? {
         val candidate = super.focusSearch(focused, direction)
-        if (!behavior.isOverlay() || candidate == null || contains(candidate)) {
+        if (
+            !behavior.isOverlay()
+            || !trapFocus
+            || candidate == null
+            || contains(candidate)
+        ) {
             return candidate
         }
         val focusables = overlayFocusables()
@@ -813,12 +896,51 @@ internal class MobileUiHost(
                 info.collectionItemInfo = item
             }
         }
+        if (behavior == Behavior.BOTTOM_SHEET) {
+            val items = sheetItems().filter { item -> item.isEnabled }
+            if (items.isNotEmpty()) {
+                info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                    items.size,
+                    1,
+                    false,
+                    if (component == GeneratedComponents.SELECT_PORTAL) {
+                        AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE
+                    } else {
+                        AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_NONE
+                    },
+                )
+            }
+        }
+        if (behavior == Behavior.SHEET_ITEM) {
+            val selectOption = component == GeneratedComponents.SELECT_ITEM
+            info.className = if (selectOption) {
+                "android.widget.CheckedTextView"
+            } else {
+                "android.widget.Button"
+            }
+            info.isClickable = isEnabled
+            info.isSelected = checked || selected
+            info.isCheckable = selectOption
+            info.isChecked = selectOption && (checked || selected)
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+            sheetAncestor()?.sheetCollectionItemInfo(this)?.let { item ->
+                info.collectionItemInfo = item
+            }
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
             Behavior.IMAGE_VIEWER,
             Behavior.SLIDER,
         )
+        if (behavior == Behavior.BOTTOM_SHEET && sheetSnapPoints.size > 1) {
+            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+        }
         if (behavior == Behavior.ACCORDION) {
             info.className = "android.widget.Button"
             info.isClickable = isEnabled
@@ -886,6 +1008,11 @@ internal class MobileUiHost(
             Behavior.RADIO_GROUP -> "android.widget.RadioGroup"
             Behavior.TABS -> "android.widget.TabWidget"
             Behavior.TAB_TRIGGER -> "android.widget.Button"
+            Behavior.SHEET_ITEM -> if (component == GeneratedComponents.SELECT_ITEM) {
+                "android.widget.CheckedTextView"
+            } else {
+                "android.widget.Button"
+            }
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
             Behavior.MODAL,
             Behavior.ALERT_DIALOG,
@@ -964,7 +1091,34 @@ internal class MobileUiHost(
             && behavior.isOverlay()
             && dismissible
         ) {
-            emitDismiss()
+            if (behavior == Behavior.BOTTOM_SHEET) {
+                dismissSheet()
+            } else {
+                emitDismiss()
+            }
+            return true
+        }
+        if (
+            behavior == Behavior.BOTTOM_SHEET
+            && action in setOf(
+                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
+                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
+            )
+            && sheetSnapPoints.size > 1
+        ) {
+            val direction = if (
+                action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            ) {
+                1
+            } else {
+                -1
+            }
+            val requested = (sheetSnapIndex + direction).coerceIn(
+                0,
+                sheetSnapPoints.lastIndex,
+            )
+            if (requested == sheetSnapIndex) return false
+            settleSheetTo(requested, emit = true)
             return true
         }
         if (
@@ -1005,8 +1159,12 @@ internal class MobileUiHost(
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP && event.keyCode == KeyEvent.KEYCODE_BACK) {
-            if (behavior.isOverlay() && dismissible) {
-                emitDismiss()
+            if (behavior.isOverlay() && dismissible && keyboardDismissable) {
+                if (behavior == Behavior.BOTTOM_SHEET) {
+                    dismissSheet()
+                } else {
+                    emitDismiss()
+                }
                 return true
             }
         }
@@ -1016,6 +1174,7 @@ internal class MobileUiHost(
                 Behavior.RADIO,
                 Behavior.SWITCH,
                 Behavior.TAB_TRIGGER,
+                Behavior.SHEET_ITEM,
             )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
@@ -1096,6 +1255,8 @@ internal class MobileUiHost(
         tabsIndicatorAnimator = null
         tabsContentAnimator?.cancel()
         tabsContentAnimator = null
+        sheetVelocityTracker?.recycle()
+        sheetVelocityTracker = null
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -1147,6 +1308,18 @@ internal class MobileUiHost(
                     tabsAncestor()?.selectTab(this, emit = true)
                 }
             }
+        } else if (behavior == Behavior.SHEET_ITEM) {
+            setOnClickListener {
+                if (isEnabled) {
+                    emitter.emit(
+                        NativeViewEventKind.PRESS,
+                        byteArrayOf(),
+                    )
+                    if (closeSheetItemOnPress) {
+                        sheetAncestor()?.dismissSheetFromItem()
+                    }
+                }
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -1188,6 +1361,7 @@ internal class MobileUiHost(
             Behavior.SWITCH,
             Behavior.TABS,
             Behavior.TAB_TRIGGER,
+            Behavior.SHEET_ITEM,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -1692,9 +1866,32 @@ internal class MobileUiHost(
         if (!open) return
         if (!behavior.isOverlay() && behavior != Behavior.TOAST) return
         if (!animationsEnabled()) return
+        if (behavior == Behavior.BOTTOM_SHEET) {
+            alpha = 1f
+            post {
+                val content = sheetContent() ?: return@post
+                applySheetLayout(animate = false)
+                val target = content.translationY
+                content.translationY = sheetDismissTranslation(content)
+                content.animate()
+                    .translationY(target)
+                    .setDuration(SHEET_ENTRANCE_ANIMATION_DURATION_MILLIS)
+                    .start()
+                val backdrop = sheetBackdrop()
+                if (backdrop != null) {
+                    val targetAlpha = sheetBackdropBaseAlpha ?: backdrop.alpha
+                    sheetBackdropBaseAlpha = targetAlpha
+                    backdrop.alpha = 0f
+                    backdrop.animate()
+                        .alpha(targetAlpha)
+                        .setDuration(SHEET_ENTRANCE_ANIMATION_DURATION_MILLIS)
+                        .start()
+                }
+            }
+            return
+        }
         alpha = 0f
         when (behavior) {
-            Behavior.BOTTOM_SHEET -> translationY = 24f * density
             Behavior.DRAWER -> when (anchor) {
                 1 -> translationX = -24f * density
                 2 -> translationX = 24f * density
@@ -1860,42 +2057,119 @@ internal class MobileUiHost(
     private fun sheetTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
             if (!acceptsOverlayInteraction()) return@OnTouchListener false
+            val content = sheetContent() ?: return@OnTouchListener false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
+                    sheetVelocityTracker?.recycle()
+                    sheetVelocityTracker = VelocityTracker.obtain().also {
+                        it.addMovement(event)
+                    }
+                    sheetBackdropPressed = !boundsInHost(content).contains(
+                        event.x,
+                        event.y,
+                    )
+                    if (sheetBackdropPressed) {
+                        dragging = false
+                        return@OnTouchListener true
+                    }
                     if (!isSheetHandle(event.x, event.y)) {
                         dragging = false
                         return@OnTouchListener false
                     }
                     dragging = true
                     dragOrigin = event.rawY
-                    animate().cancel()
+                    sheetDragStartTranslation = content.translationY
+                    content.animate().cancel()
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (!dragging) return@OnTouchListener false
-                    translationY = max(0f, event.rawY - dragOrigin)
+                    sheetVelocityTracker?.addMovement(event)
+                    val maximum = if (sheetEnablePanDownToClose) {
+                        sheetDismissTranslation(content)
+                    } else if (sheetSnapPoints.isNotEmpty()) {
+                        sheetSnapTranslation(0, content)
+                    } else {
+                        0f
+                    }
+                    content.translationY = (
+                        sheetDragStartTranslation + event.rawY - dragOrigin
+                    ).coerceIn(0f, maximum)
+                    updateSheetBackdrop(content.translationY)
                     true
                 }
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL,
                 -> {
-                    if (!dragging) return@OnTouchListener false
-                    dragging = false
                     if (event.actionMasked == MotionEvent.ACTION_UP) {
                         performClick()
                     }
-                    val dismiss = event.actionMasked == MotionEvent.ACTION_UP
-                        && dismissible
-                        && translationY > height * 0.28f
-                    animate()
-                        .translationY(if (dismiss) height.toFloat() else 0f)
-                        .setDuration(180L)
-                        .withEndAction {
-                            if (dismiss) {
-                                emitDismiss()
+                    sheetVelocityTracker?.addMovement(event)
+                    if (sheetBackdropPressed) {
+                        sheetBackdropPressed = false
+                        sheetVelocityTracker?.recycle()
+                        sheetVelocityTracker = null
+                        if (
+                            event.actionMasked == MotionEvent.ACTION_UP
+                            && dismissible
+                            && closeOnOverlayClick
+                        ) {
+                            when (backdropPressBehavior) {
+                                BACKDROP_PRESS_COLLAPSE -> {
+                                    if (sheetSnapPoints.isEmpty()) {
+                                        dismissSheet()
+                                    } else {
+                                        settleSheetTo(0, emit = true)
+                                    }
+                                }
+                                BACKDROP_PRESS_NONE -> return@OnTouchListener false
+                                else -> dismissSheet()
                             }
+                            return@OnTouchListener true
                         }
-                        .start()
+                        return@OnTouchListener false
+                    }
+                    if (!dragging) {
+                        sheetVelocityTracker?.recycle()
+                        sheetVelocityTracker = null
+                        return@OnTouchListener false
+                    }
+                    dragging = false
+                    sheetVelocityTracker?.computeCurrentVelocity(1_000)
+                    val velocityY = sheetVelocityTracker?.yVelocity ?: 0f
+                    sheetVelocityTracker?.recycle()
+                    sheetVelocityTracker = null
+                    if (event.actionMasked == MotionEvent.ACTION_CANCEL) {
+                        settleSheetTo(sheetSnapIndex, emit = false)
+                        return@OnTouchListener true
+                    }
+
+                    val dismissDistance = sheetDismissTranslation(content)
+                    val shouldDismiss = dismissible
+                        && sheetEnablePanDownToClose
+                        && (
+                            content.translationY > dismissDistance * 0.5f
+                                || (
+                                    velocityY > SHEET_DISMISS_VELOCITY_PX_PER_SECOND
+                                        && content.translationY > 8f * density
+                                    )
+                            )
+                    if (shouldDismiss) {
+                        dismissSheet()
+                        return@OnTouchListener true
+                    }
+
+                    if (sheetSnapPoints.isEmpty()) {
+                        settleSheetTo(0, emit = false)
+                        return@OnTouchListener true
+                    }
+                    val predicted = (
+                        content.translationY + velocityY * SHEET_VELOCITY_PREDICTION_SECONDS
+                    ).coerceIn(0f, dismissDistance)
+                    val closest = sheetSnapPoints.indices.minByOrNull { index ->
+                        abs(sheetSnapTranslation(index, content) - predicted)
+                    } ?: sheetSnapIndex
+                    settleSheetTo(closest, emit = true)
                     true
                 }
                 else -> false
@@ -1911,6 +2185,94 @@ internal class MobileUiHost(
             current = current.parent
         }
         return null
+    }
+
+    private fun sheetAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (
+                current is MobileUiHost
+                && current.behavior == Behavior.BOTTOM_SHEET
+            ) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun sheetItems(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (child is MobileUiHost && child.behavior == Behavior.SHEET_ITEM) {
+                    add(child)
+                } else if (child is ViewGroup) {
+                    addAll(sheetItems(child))
+                }
+            }
+        }
+
+    @Suppress("DEPRECATION")
+    private fun sheetCollectionItemInfo(
+        item: MobileUiHost,
+    ): AccessibilityNodeInfo.CollectionItemInfo? {
+        val items = sheetItems()
+        val index = items.indexOf(item)
+        if (index < 0) return null
+        return AccessibilityNodeInfo.CollectionItemInfo.obtain(
+            index,
+            1,
+            0,
+            1,
+            false,
+            item.checked || item.selected,
+        )
+    }
+
+    private fun updateSheetItemAccessibility() {
+        if (behavior != Behavior.SHEET_ITEM) return
+        val label = findFirstText(this)
+        if (contentDescription.isNullOrEmpty() && !label.isNullOrEmpty()) {
+            contentDescription = label
+        }
+        isSelected = checked || selected
+        isActivated = checked || selected
+    }
+
+    private fun dismissSheetFromItem() {
+        if (behavior != Behavior.BOTTOM_SHEET || !dismissible) return
+        dismissSheet()
+    }
+
+    private fun dismissSheet() {
+        if (behavior != Behavior.BOTTOM_SHEET || !dismissible) return
+        val content = sheetContent()
+        if (content != null) {
+            val target = sheetDismissTranslation(content)
+            content.animate().cancel()
+            if (animationsEnabled()) {
+                content.animate()
+                    .translationY(target)
+                    .setDuration(SHEET_SETTLE_ANIMATION_DURATION_MILLIS)
+                    .start()
+            } else {
+                content.translationY = target
+            }
+        }
+        val backdrop = sheetBackdrop()
+        if (backdrop != null) {
+            backdrop.animate().cancel()
+            if (animationsEnabled()) {
+                backdrop.animate()
+                    .alpha(0f)
+                    .setDuration(SHEET_SETTLE_ANIMATION_DURATION_MILLIS)
+                    .start()
+            } else {
+                backdrop.alpha = 0f
+            }
+        }
+        emitDismiss()
     }
 
     private fun tabTriggers(root: ViewGroup = this): List<MobileUiHost> =
@@ -2959,10 +3321,167 @@ internal class MobileUiHost(
         if (index in 0 until childCount) getChildAt(index) else null
 
     private fun overlayContent(): View? =
-        if (childCount > 0) getChildAt(childCount - 1) else null
+        findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+            ?: if (childCount > 0) getChildAt(childCount - 1) else null
+
+    private fun sheetContent(): View? = overlayContent()
+
+    private fun sheetBackdrop(): View? =
+        findTaggedDescendant(this, OVERLAY_BACKDROP_TAG)
+            ?: findTaggedDescendantWithPrefix(
+                this,
+                "$OVERLAY_BACKDROP_TAG:",
+            )
+
+    private fun applySheetLayout(animate: Boolean) {
+        if (behavior != Behavior.BOTTOM_SHEET || dragging) return
+        val content = sheetContent() ?: return
+        val backdrop = sheetBackdrop()
+        if (backdrop != null) {
+            (backdrop.tag as? String)
+                ?.substringAfter("$OVERLAY_BACKDROP_TAG:", "")
+                ?.toIntOrNull()
+                ?.let { behavior ->
+                    backdropPressBehavior = behavior.coerceIn(
+                        BACKDROP_PRESS_CLOSE,
+                        BACKDROP_PRESS_NONE,
+                    )
+                }
+            if (sheetBackdropBaseAlpha == null && backdrop.alpha > 0f) {
+                sheetBackdropBaseAlpha = backdrop.alpha
+            }
+            backdrop.importantForAccessibility =
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        }
+        findTaggedDescendant(this, SHEET_DRAG_INDICATOR_TAG)
+            ?.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+
+        if (
+            sheetSnapPoints.isNotEmpty()
+            && height > 0
+            && !sheetEnableDynamicSizing
+        ) {
+            val maximumHeight = (
+                height * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
+            ).roundToInt().coerceAtLeast(1)
+            val layout = content.layoutParams
+            if (layout.height != maximumHeight) {
+                layout.height = maximumHeight
+                content.layoutParams = layout
+            }
+        }
+
+        if (sheetSnapPoints.isNotEmpty()) {
+            sheetSnapIndex = sheetSnapIndex.coerceIn(0, sheetSnapPoints.lastIndex)
+        } else {
+            sheetSnapIndex = 0
+        }
+        val target = sheetSnapTranslation(sheetSnapIndex, content)
+        if (animate && animationsEnabled()) {
+            content.animate()
+                .translationY(target)
+                .setDuration(SHEET_SETTLE_ANIMATION_DURATION_MILLIS)
+                .start()
+        } else {
+            content.animate().cancel()
+            content.translationY = target
+        }
+        updateSheetBackdrop(target)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = if (sheetSnapPoints.isEmpty()) {
+                "Expanded"
+            } else {
+                "Snap ${sheetSnapIndex + 1} of ${sheetSnapPoints.size}"
+            }
+        }
+    }
+
+    private fun sheetSnapTranslation(index: Int, content: View): Float {
+        if (sheetSnapPoints.isEmpty() || height <= 0) return 0f
+        val safeIndex = index.coerceIn(0, sheetSnapPoints.lastIndex)
+        val maximumHeight = height * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
+        val selectedHeight = height * sheetSnapPoints[safeIndex] / 100f
+        return (maximumHeight - selectedHeight)
+            .coerceIn(0f, sheetDismissTranslation(content))
+    }
+
+    private fun sheetDismissTranslation(content: View): Float {
+        val bounds = boundsInHost(content)
+        return maxOf(
+            content.height.toFloat(),
+            height - bounds.top,
+            1f,
+        ) + 32f * density
+    }
+
+    private fun updateSheetBackdrop(contentTranslation: Float) {
+        val backdrop = sheetBackdrop() ?: return
+        val baseAlpha = sheetBackdropBaseAlpha ?: backdrop.alpha.also {
+            sheetBackdropBaseAlpha = it
+        }
+        val content = sheetContent() ?: return
+        val dismissDistance = sheetDismissTranslation(content)
+        val progress = (
+            contentTranslation / dismissDistance
+        ).coerceIn(0f, 1f)
+        backdrop.alpha = baseAlpha * (1f - progress)
+    }
+
+    private fun settleSheetTo(index: Int, emit: Boolean) {
+        val content = sheetContent() ?: return
+        val previous = sheetSnapIndex
+        sheetSnapIndex = if (sheetSnapPoints.isEmpty()) {
+            0
+        } else {
+            index.coerceIn(0, sheetSnapPoints.lastIndex)
+        }
+        val target = sheetSnapTranslation(sheetSnapIndex, content)
+        content.animate().cancel()
+        val backdrop = sheetBackdrop()
+        backdrop?.animate()?.cancel()
+        if (animationsEnabled()) {
+            content.animate()
+                .translationY(target)
+                .setDuration(SHEET_SETTLE_ANIMATION_DURATION_MILLIS)
+                .start()
+            backdrop?.animate()
+                ?.alpha(sheetBackdropBaseAlpha ?: 1f)
+                ?.setDuration(SHEET_SETTLE_ANIMATION_DURATION_MILLIS)
+                ?.start()
+        } else {
+            content.translationY = target
+            backdrop?.alpha = sheetBackdropBaseAlpha ?: 1f
+        }
+        if (emit && previous != sheetSnapIndex) {
+            emitter.emit(
+                NativeViewEventKind.CHANGE,
+                sheetSnapIndex.toString().encodeToByteArray(),
+            )
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = if (sheetSnapPoints.isEmpty()) {
+                "Expanded"
+            } else {
+                "Snap ${sheetSnapIndex + 1} of ${sheetSnapPoints.size}"
+            }
+        }
+    }
 
     internal fun isSheetHandle(x: Float, y: Float): Boolean {
-        val content = if (childCount > 0) getChildAt(childCount - 1) else null
+        val explicitHandle = findTaggedDescendant(
+            this,
+            SHEET_DRAG_INDICATOR_WRAPPER_TAG,
+        ) ?: findTaggedDescendant(this, SHEET_DRAG_INDICATOR_TAG)
+        if (explicitHandle != null) {
+            val bounds = boundsInHost(explicitHandle)
+            val minimumTarget = 48f * density
+            val verticalInset = max(0f, (minimumTarget - bounds.height()) / 2f)
+            return bounds.apply {
+                inset(0f, -verticalInset)
+            }.contains(x, y)
+        }
+        val content = sheetContent()
         if (content == null) return y <= 64f * density
         val bounds = boundsInHost(content)
         return x in bounds.left..bounds.right
@@ -2996,6 +3515,21 @@ internal class MobileUiHost(
         if (root !is ViewGroup) return null
         repeat(root.childCount) { index ->
             findTaggedDescendant(root.getChildAt(index), tag)?.let { return it }
+        }
+        return null
+    }
+
+    private fun findTaggedDescendantWithPrefix(
+        root: View,
+        prefix: String,
+    ): View? {
+        if ((root.tag as? String)?.startsWith(prefix) == true) return root
+        if (root !is ViewGroup) return null
+        repeat(root.childCount) { index ->
+            findTaggedDescendantWithPrefix(
+                root.getChildAt(index),
+                prefix,
+            )?.let { return it }
         }
         return null
     }
@@ -3237,6 +3771,18 @@ internal class MobileUiHost(
         const val TABS_ACTIVATION_MANUAL = 2
         const val TABS_INDICATOR_ANIMATION_DURATION_MILLIS = 180L
         const val TABS_CONTENT_ANIMATION_DURATION_MILLIS = 100L
+        const val OVERLAY_BACKDROP_TAG = "pam:overlay-backdrop"
+        const val OVERLAY_CONTENT_TAG = "pam:overlay-content"
+        const val SHEET_DRAG_INDICATOR_TAG = "pam:sheet-drag-indicator"
+        const val SHEET_DRAG_INDICATOR_WRAPPER_TAG =
+            "pam:sheet-drag-indicator-wrapper"
+        const val BACKDROP_PRESS_CLOSE = 1
+        const val BACKDROP_PRESS_COLLAPSE = 2
+        const val BACKDROP_PRESS_NONE = 3
+        const val SHEET_SETTLE_ANIMATION_DURATION_MILLIS = 220L
+        const val SHEET_ENTRANCE_ANIMATION_DURATION_MILLIS = 200L
+        const val SHEET_DISMISS_VELOCITY_PX_PER_SECOND = 1_250f
+        const val SHEET_VELOCITY_PREDICTION_SECONDS = 0.08f
         const val SWITCH_TRACK_WIDTH_DP = 52f
         const val SWITCH_TRACK_HEIGHT_DP = 32f
         const val SWITCH_THUMB_INSET_DP = 2f

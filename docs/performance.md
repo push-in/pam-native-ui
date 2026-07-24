@@ -56,6 +56,12 @@ exceeds 4 ms, or lifecycle p99 exceeds 8 ms. Run it on a connected device:
 
 The JSON result is logged under `PamMobileUiBench`.
 
+The current benchmark source additionally gates 10,000 native sheet snap
+changes and 10,000 sheet-item activations at p99 below 4 ms, with exactly one
+semantic event per operation. Those two rows will be added to the reference
+table only after a new physical-device run; static compilation is not reported
+as measured runtime evidence.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

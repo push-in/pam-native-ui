@@ -133,6 +133,36 @@ final class ComponentRenderer
                     ? 'pam:selection-icon-force'
                     : 'pam:selection-icon',
             );
+        } elseif (in_array($part, [
+            'ActionsheetBackdrop',
+            'BottomSheetBackdrop',
+            'SelectBackdrop',
+        ], true)) {
+            $backdropTag = 'pam:overlay-backdrop';
+            if (isset($props['pressBehavior']) && is_scalar($props['pressBehavior'])) {
+                $backdropTag .= ':'.(string) $props['pressBehavior'];
+            }
+            $element = $element->property(PropKey::Value, $backdropTag);
+        } elseif (in_array($part, [
+            'ActionsheetContent',
+            'BottomSheetContent',
+            'SelectContent',
+        ], true)) {
+            $element = $element->property(PropKey::Value, 'pam:overlay-content');
+        } elseif (in_array($part, [
+            'ActionsheetDragIndicator',
+            'BottomSheetDragIndicator',
+            'SelectDragIndicator',
+        ], true)) {
+            $element = $element->property(PropKey::Value, 'pam:sheet-drag-indicator');
+        } elseif (in_array($part, [
+            'ActionsheetDragIndicatorWrapper',
+            'SelectDragIndicatorWrapper',
+        ], true)) {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:sheet-drag-indicator-wrapper',
+            );
         } elseif ($part === 'TabsList') {
             $element = $element->property(PropKey::Value, 'pam:tabs-list');
         } elseif ($part === 'TabsContentWrapper') {
@@ -385,6 +415,9 @@ final class ComponentRenderer
         if ($behavior === NativeBehavior::Calendar) {
             $values = [...$values, ...self::calendarNativeProperties($props)];
         }
+        if ($behavior === NativeBehavior::BottomSheet) {
+            $values = [...$values, ...self::sheetNativeProperties($props)];
+        }
         if (
             $behavior === NativeBehavior::Slider
             || $behavior === NativeBehavior::Progress
@@ -418,6 +451,9 @@ final class ComponentRenderer
             'Slider' => NativeBehavior::Slider,
             'Tabs' => NativeBehavior::Tabs,
             'TabsTrigger' => NativeBehavior::TabsTrigger,
+            'ActionsheetItem',
+            'BottomSheetItem',
+            'SelectItem' => NativeBehavior::SheetItem,
             'Calendar' => NativeBehavior::Calendar,
             'DateTimePicker' => NativeBehavior::DateTimePicker,
             'Skeleton', 'SkeletonText' => NativeBehavior::Skeleton,
@@ -557,14 +593,22 @@ final class ComponentRenderer
     /** @param array<string, mixed> $props */
     private static function isClosed(array $props): bool
     {
-        if (!array_key_exists('open', $props) && !array_key_exists('isOpen', $props)) {
+        if (
+            !array_key_exists('open', $props)
+            && !array_key_exists('isOpen', $props)
+            && !array_key_exists('defaultIsOpen', $props)
+        ) {
             return false;
         }
 
         return !self::flag(
             $props,
             'open',
-            self::flag($props, 'isOpen'),
+            self::flag(
+                $props,
+                'isOpen',
+                self::flag($props, 'defaultIsOpen'),
+            ),
         );
     }
 
@@ -1116,6 +1160,44 @@ final class ComponentRenderer
                 $disabled,
             );
             $values['disabledDates'] = implode("\n", array_filter($dates));
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array<string, string|int|float|bool>
+     */
+    private static function sheetNativeProperties(array $props): array
+    {
+        $values = [];
+        $snapPoints = $props['snapPoints'] ?? null;
+        if (is_string($snapPoints)) {
+            $snapPoints = preg_split('/[\s,;|]+/', trim($snapPoints)) ?: [];
+        }
+        if (is_array($snapPoints)) {
+            $normalized = [];
+            foreach ($snapPoints as $point) {
+                if (is_string($point)) {
+                    $point = rtrim(trim($point), '%');
+                }
+                if (!is_numeric($point)) {
+                    continue;
+                }
+                $normalized[] = min(100.0, max(1.0, (float) $point));
+            }
+            if ($normalized !== []) {
+                $values['snapPoints'] = implode("\n", $normalized);
+            }
+        }
+
+        $index = $props['snapToIndex']
+            ?? $props['defaultSnapIndex']
+            ?? $props['index']
+            ?? null;
+        if (is_numeric($index)) {
+            $values['snapToIndex'] = max(0, (int) $index);
         }
 
         return $values;

@@ -53,6 +53,22 @@ bounded native dismissal event as backdrop/drag dismissal. Controlled overlays
 remain visible until the application publishes `open=false`; after the window
 closes, Android restores the view that held focus before presentation.
 
+`BottomSheet`, `Actionsheet` and `Select` use the same anatomy-aware controller.
+PHP packs authored snap percentages into one bounded newline payload. Android
+then owns handle hit-testing, live `translationY`, velocity prediction, nearest
+snap selection, backdrop opacity and entrance/dismiss motion. A drag emits no
+progress messages and exactly one semantic snap index when it settles. Backdrop
+behavior is represented by sequential integer codes (`close=1`, `collapse=2`,
+`none=3`), and native item hosts can dismiss the enclosing sheet after their
+single press event without another application round-trip.
+
+The controller animates only transform and opacity, cancels in-flight motion
+when a new gesture begins and bypasses animation when the system animator scale
+is disabled. The authored backdrop remains stationary while only the content
+surface moves. A 48 dp drag region, TalkBack scroll alternatives, modal
+dismissal, collection/item semantics and focus trapping keep drag behavior
+optional rather than required.
+
 ## Utility class pipeline
 
 PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI

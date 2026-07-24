@@ -5,6 +5,7 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.view.accessibility.AccessibilityNodeInfo
@@ -599,6 +600,160 @@ class MobileUiHostInstrumentedTest {
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 150f, 900f))
             assertEquals(0f, host.translationY, 0f)
             host.release()
+        }
+    }
+
+    @Test
+    fun sheetSnapsOnceAfterDragAndCollapsesFromTheBackdrop() {
+        onMain {
+            val events = CopyOnWriteArrayList<NativeViewEventKind>()
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                events += kind
+                payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "open" to WireValue.Flag(true),
+                    "snapPoints" to WireValue.Text("25\n50\n90"),
+                    "snapToIndex" to WireValue.Integer(2),
+                    "pressBehavior" to WireValue.Integer(2),
+                ),
+            )
+            val backdrop = View(host.context).apply {
+                tag = "pam:overlay-backdrop"
+                alpha = 0.5f
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:overlay-content"
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    900,
+                    Gravity.BOTTOM,
+                )
+            }
+            val handle = View(host.context).apply {
+                tag = "pam:sheet-drag-indicator"
+                layoutParams = FrameLayout.LayoutParams(120, 48, Gravity.TOP or Gravity.CENTER_HORIZONTAL)
+            }
+            content.addView(handle)
+            host.addView(backdrop)
+            host.addView(content)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1_000, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, 300, 1_000)
+
+            assertEquals(0f, content.translationY, 0f)
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 150f, 120f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 150f, 510f))
+            assertTrue(events.isEmpty())
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 150f, 510f))
+
+            assertEquals(
+                listOf(NativeViewEventKind.CHANGE),
+                events,
+            )
+            assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 150f, 40f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 150f, 40f))
+            assertEquals(
+                listOf(
+                    NativeViewEventKind.CHANGE,
+                    NativeViewEventKind.CHANGE,
+                ),
+                events,
+            )
+            assertEquals(listOf("1", "0"), payloads.map(ByteArray::decodeToString))
+
+            val info = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("Snap 1 of 3", host.stateDescription)
+            assertTrue(info.isScrollable)
+            assertTrue(
+                info.actionList.any {
+                    it.id == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                },
+            )
+
+            host.release()
+            info.recycle()
+        }
+    }
+
+    @Test
+    fun sheetItemsPublishTheirPressAndCloseAccordingToComponentPolicy() {
+        onMain {
+            val dismissals = CopyOnWriteArrayList<ByteArray>()
+            val presses = CopyOnWriteArrayList<ByteArray>()
+            val sheet = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) dismissals += payload
+            }
+            sheet.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "open" to WireValue.Flag(true),
+                ),
+            )
+            val content = FrameLayout(sheet.context).apply {
+                tag = "pam:overlay-content"
+            }
+            val selectItem = MobileUiHost(sheet.context) { kind, payload ->
+                if (kind == NativeViewEventKind.PRESS) presses += payload
+            }
+            selectItem.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(29),
+                    "component" to WireValue.Integer(GeneratedComponents.SELECT_ITEM.toLong()),
+                    "checked" to WireValue.Flag(true),
+                ),
+            )
+            content.addView(selectItem)
+            sheet.addView(content)
+
+            assertTrue(selectItem.performClick())
+            assertEquals(1, presses.size)
+            assertEquals(1, dismissals.size)
+
+            val sheetInfo = AccessibilityNodeInfo.obtain()
+            val itemInfo = AccessibilityNodeInfo.obtain()
+            sheet.onInitializeAccessibilityNodeInfo(sheetInfo)
+            selectItem.onInitializeAccessibilityNodeInfo(itemInfo)
+            assertEquals(1, sheetInfo.collectionInfo?.rowCount)
+            assertEquals(0, itemInfo.collectionItemInfo?.rowIndex)
+            assertTrue(itemInfo.isSelected)
+            assertTrue(itemInfo.isChecked)
+            assertEquals("android.widget.CheckedTextView", itemInfo.className)
+
+            dismissals.clear()
+            val actionItem = MobileUiHost(sheet.context) { kind, payload ->
+                if (kind == NativeViewEventKind.PRESS) presses += payload
+            }
+            actionItem.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(29),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.ACTIONSHEET_ITEM.toLong(),
+                    ),
+                ),
+            )
+            content.addView(actionItem)
+            assertTrue(actionItem.performClick())
+            assertEquals(2, presses.size)
+            assertTrue(dismissals.isEmpty())
+
+            selectItem.release()
+            actionItem.release()
+            sheet.release()
+            sheetInfo.recycle()
+            itemInfo.recycle()
         }
     }
 

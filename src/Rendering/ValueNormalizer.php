@@ -59,6 +59,11 @@ final class ValueNormalizer
             'automatic' => 1,
             'manual' => 2,
         ],
+        'pressBehavior' => [
+            'close' => 1,
+            'collapse' => 2,
+            'none' => 3,
+        ],
         'placement' => [
             'top' => 1,
             'top-start' => 2,
