@@ -15,8 +15,14 @@ use Pam\MobileUi\Component\Attachments;
 use Pam\MobileUi\Component\Message;
 use Pam\MobileUi\Component\MessageContent;
 use Pam\MobileUi\Component\ModelSelector;
+use Pam\MobileUi\Component\ModelSelectorContent;
+use Pam\MobileUi\Component\Popover;
+use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
 use Pam\MobileUi\Component\PromptInputTextarea;
+use Pam\MobileUi\Component\Select;
+use Pam\MobileUi\Component\SelectPortal;
+use Pam\MobileUi\Component\SelectTrigger;
 use Pam\MobileUi\Component\Slider;
 use Pam\MobileUi\Component\SliderTrack;
 use Pam\MobileUi\Component\Tabs;
@@ -413,11 +419,56 @@ $assert(
     PromptInputTextarea::make()->toElement()->kind() === NodeKind::Input,
     'PromptInputTextarea must use the optimized native input primitive.',
 );
-$modelSelector = ModelSelector::make(['open' => false])->toElement();
+$modelSelector = ModelSelector::make(
+    ['open' => false],
+    ModelSelectorContent::make(),
+)->toElement();
+$modelSelectorContent = $modelSelector->children()[0] ?? null;
+if (!$modelSelectorContent instanceof \Pam\Native\Element) {
+    throw new RuntimeException('ModelSelector must render its controlled content.');
+}
 $assert(
     $modelSelector->kind() === NodeKind::CustomView
-        && $modelSelector->properties()[PropKey::Visible->value] === false,
-    'ModelSelector must use the local modal host and honor controlled visibility.',
+        && !isset($modelSelector->properties()[PropKey::Visible->value])
+        && $modelSelectorContent->properties()[PropKey::Visible->value] === false,
+    'ModelSelector must keep its trigger host mounted while hiding controlled content.',
+);
+$closedSelect = Select::make(
+    ['open' => false],
+    SelectTrigger::make('Choose stack'),
+    SelectPortal::make(),
+)->toElement();
+$closedSelectTrigger = $closedSelect->children()[0] ?? null;
+$closedSelectPortal = $closedSelect->children()[1] ?? null;
+if (
+    !$closedSelectTrigger instanceof \Pam\Native\Element
+    || !$closedSelectPortal instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Select must render both trigger and portal.');
+}
+$assert(
+    !isset($closedSelect->properties()[PropKey::Visible->value])
+        && !isset($closedSelectTrigger->properties()[PropKey::Visible->value])
+        && $closedSelectPortal->properties()[PropKey::Visible->value] === false,
+    'A closed Select must keep its trigger mounted and hide only its portal.',
+);
+$closedPopover = Popover::make(
+    ['open' => false],
+    Button::make('Open'),
+    PopoverContent::make('Details'),
+)->toElement();
+$closedPopoverTrigger = $closedPopover->children()[0] ?? null;
+$closedPopoverContent = $closedPopover->children()[1] ?? null;
+if (
+    !$closedPopoverTrigger instanceof \Pam\Native\Element
+    || !$closedPopoverContent instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Popover must render both trigger and content.');
+}
+$assert(
+    !isset($closedPopoverTrigger->properties()[PropKey::Visible->value])
+        && $closedPopoverContent->properties()[PropKey::Visible->value] === false,
+    'A closed Popover must never remove its trigger from the main tree.',
 );
 
 $advanced = TailwindStyleCompiler::compile(

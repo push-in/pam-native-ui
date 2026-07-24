@@ -94,16 +94,11 @@ final class ComponentRenderer
                 && !self::sameScalar($parentProps['value'], $props['value'])
             )
             || (
-                (
-                    array_key_exists('open', $runtimeProps)
-                    || array_key_exists('isOpen', $runtimeProps)
+                self::isClosed($runtimeProps)
+                && (
+                    self::hidesEntireRootWhenClosed($part)
+                    || self::isOverlayContent($part)
                 )
-                && !self::flag(
-                    $runtimeProps,
-                    'open',
-                    self::flag($runtimeProps, 'isOpen'),
-                )
-                && self::isOverlayRoot($part)
             )
         ) {
             $element = $element->visible(false);
@@ -324,22 +319,55 @@ final class ComponentRenderer
         return AccessibilityRole::Generic;
     }
 
-    private static function isOverlayRoot(string $part): bool
+    /** @param array<string, mixed> $props */
+    private static function isClosed(array $props): bool
+    {
+        if (!array_key_exists('open', $props) && !array_key_exists('isOpen', $props)) {
+            return false;
+        }
+
+        return !self::flag(
+            $props,
+            'open',
+            self::flag($props, 'isOpen'),
+        );
+    }
+
+    private static function hidesEntireRootWhenClosed(string $part): bool
     {
         return in_array($part, [
             'Actionsheet',
             'AlertDialog',
-            'BottomSheet',
             'Drawer',
-            'ImageViewerContent',
             'Menu',
             'Modal',
-            'ModelSelector',
-            'Popover',
-            'Portal',
-            'Select',
             'Toast',
-            'Tooltip',
+        ], true);
+    }
+
+    private static function isOverlayContent(string $part): bool
+    {
+        return in_array($part, [
+            'ActionsheetBackdrop',
+            'ActionsheetContent',
+            'AlertDialogBackdrop',
+            'AlertDialogContent',
+            'BottomSheetBackdrop',
+            'BottomSheetContent',
+            'BottomSheetPortal',
+            'DrawerBackdrop',
+            'DrawerContent',
+            'ImageViewerContent',
+            'ModalBackdrop',
+            'ModalContent',
+            'ModelSelectorContent',
+            'PopoverBackdrop',
+            'PopoverContent',
+            'Portal',
+            'SelectBackdrop',
+            'SelectContent',
+            'SelectPortal',
+            'TooltipContent',
         ], true);
     }
 

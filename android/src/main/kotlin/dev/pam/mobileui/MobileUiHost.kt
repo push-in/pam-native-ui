@@ -94,6 +94,7 @@ internal class MobileUiHost(
     private var expanded = false
     private var checked = false
     private var selected = false
+    private var open = true
     private var value = 0.0
     private var minimum = 0.0
     private var maximum = 100.0
@@ -172,11 +173,13 @@ internal class MobileUiHost(
         val previousBehavior = behavior
         val previousExpanded = expanded
         val previousSelected = selected
+        val previousOpen = open
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         component = properties.integer("component", component.toLong()).toInt()
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
         checked = properties.flag("checked", properties.flag("isChecked", checked))
         selected = properties.flag("selected", properties.flag("isSelected", selected))
+        open = properties.flag("open", properties.flag("isOpen", open))
         value = properties.decimal("value", value)
         minimum = properties.decimal("min", minimum)
         maximum = max(minimum + 0.000_001, properties.decimal("max", maximum))
@@ -202,6 +205,8 @@ internal class MobileUiHost(
         calendarYear = properties.integer("year", calendarYear.toLong()).toInt()
         calendarMonth = properties.integer("month", calendarMonth.toLong()).toInt().coerceIn(1, 12)
         isEnabled = !properties.flag("disabled", false)
+        isClickable = !behavior.isOverlay() || open
+        isFocusable = !behavior.isOverlay() || open
         isSelected = selected
         isActivated = checked || expanded
         contentDescription = properties.text("accessibilityLabel")
@@ -214,10 +219,22 @@ internal class MobileUiHost(
 
         if (previousBehavior != behavior) {
             installBehavior()
-            animateEntrance()
-            if (behavior.isOverlay()) {
+            if (open) {
+                animateEntrance()
+            }
+            if (behavior.isOverlay() && open) {
                 isFocusableInTouchMode = true
                 captureAndMoveFocus()
+            }
+        } else if (previousOpen != open && behavior.isOverlay()) {
+            if (open) {
+                animateEntrance()
+                captureAndMoveFocus()
+            } else {
+                animate().cancel()
+                translationX = 0f
+                translationY = 0f
+                restoreFocus()
             }
         }
         if (previousExpanded != expanded) {
@@ -501,7 +518,11 @@ internal class MobileUiHost(
             minimumWidth = max(minimumWidth, (48f * density).toInt())
             minimumHeight = max(minimumHeight, (48f * density).toInt())
         }
-        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+        importantForAccessibility = if (behavior.isOverlay() && !open) {
+            IMPORTANT_FOR_ACCESSIBILITY_NO
+        } else {
+            IMPORTANT_FOR_ACCESSIBILITY_YES
+        }
     }
 
     private fun animateExpanded() {
@@ -522,6 +543,7 @@ internal class MobileUiHost(
     }
 
     private fun animateEntrance() {
+        if (!open) return
         if (!behavior.isOverlay() && behavior != Behavior.TOAST) return
         if (!animationsEnabled()) return
         alpha = 0f
@@ -584,7 +606,7 @@ internal class MobileUiHost(
 
     private fun drawerTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
-            if (!isEnabled) return@OnTouchListener false
+            if (!acceptsOverlayInteraction()) return@OnTouchListener false
             val horizontal = anchor == 1 || anchor == 2
             val coordinate = if (horizontal) event.rawX else event.rawY
             when (event.actionMasked) {
@@ -642,7 +664,8 @@ internal class MobileUiHost(
     private fun overlayTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
             if (
-                !dismissible
+                !acceptsOverlayInteraction()
+                || !dismissible
                 || !closeOnOverlayClick
                 || event.actionMasked != MotionEvent.ACTION_UP
             ) {
@@ -662,7 +685,7 @@ internal class MobileUiHost(
 
     private fun sheetTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
-            if (!isEnabled) return@OnTouchListener false
+            if (!acceptsOverlayInteraction()) return@OnTouchListener false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     if (!isSheetHandle(event.x, event.y)) {
@@ -860,7 +883,7 @@ internal class MobileUiHost(
 
     private fun imageViewerTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
-            if (!isEnabled) return@OnTouchListener false
+            if (!acceptsOverlayInteraction()) return@OnTouchListener false
             scaleDetector.onTouchEvent(event)
             gestureDetector.onTouchEvent(event)
             when (event.actionMasked) {
@@ -1080,6 +1103,8 @@ internal class MobileUiHost(
     internal fun isCalendarGridPoint(x: Float, y: Float): Boolean =
         calendarGridBounds().contains(x, y)
 
+    internal fun acceptsOverlayInteraction(): Boolean = isEnabled && open
+
     private fun isDrawerHandle(x: Float, y: Float): Boolean {
         val content = if (childCount > 0) getChildAt(childCount - 1) else null
             ?: return true
@@ -1164,7 +1189,7 @@ internal class MobileUiHost(
     }
 
     private fun captureAndMoveFocus() {
-        if (!isShown) return
+        if (!open || !isShown) return
         val focused = rootView.findFocus()
         if (focused != null && focused !== this && !contains(focused)) {
             previousFocus = focused

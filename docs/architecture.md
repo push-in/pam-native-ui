@@ -32,6 +32,13 @@ Custom native hosts may contain normal PAM children. The renderer mounts these
 children into a `ViewGroup` returned by the plugin factory; this is required for
 compound controls whose content is still authored declaratively in PHP.
 
+Controlled compound overlays keep their trigger subtree mounted when
+`open=false`. Only portal/backdrop/content parts become `GONE`; the native
+controller disables its own click, focus, accessibility and gesture handling so
+touches continue to the trigger and surrounding app. Opening the same stable
+host enables UI-thread positioning, focus capture and entrance motion without
+recreating the trigger.
+
 ## Utility class pipeline
 
 PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI

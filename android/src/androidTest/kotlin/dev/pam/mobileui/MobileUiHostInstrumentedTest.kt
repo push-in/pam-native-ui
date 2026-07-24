@@ -231,6 +231,39 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun closedCompoundSheetLeavesItsTriggerInteractive() {
+        onMain {
+            var triggerPresses = 0
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, payload ->
+                payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "open" to WireValue.Flag(false),
+                ),
+            )
+            val trigger = View(host.context).apply {
+                setOnClickListener { triggerPresses++ }
+            }
+            val content = FrameLayout(host.context)
+            host.addView(trigger)
+            host.addView(content)
+            host.layout(0, 0, 300, 1_000)
+            trigger.layout(0, 0, 300, 100)
+            content.layout(0, 600, 300, 1_000)
+
+            trigger.performClick()
+
+            assertTrue(!host.acceptsOverlayInteraction())
+            assertEquals(1, triggerPresses)
+            assertTrue(payloads.isEmpty())
+            host.release()
+        }
+    }
+
+    @Test
     fun sheetContentOutsideTheHandleIsNotClaimedByTheDragGesture() {
         onMain {
             val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
