@@ -333,12 +333,15 @@ class MobileUiHostInstrumentedTest {
             val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
                 if (kind == NativeViewEventKind.CHANGE) payloads += payload
             }
-            host.update(mapOf("behavior" to WireValue.Integer(6)))
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(6),
+                    "defaultValue" to WireValue.Text("account"),
+                ),
+            )
             val list = FrameLayout(host.context)
-            repeat(3) { index ->
-                list.addView(View(host.context).apply {
-                    tag = listOf("account", "security", "billing")[index]
-                })
+            listOf("account", "security", "billing").forEach { value ->
+                list.addView(tabTrigger(host, value))
             }
             host.addView(list)
             host.layout(0, 0, 300, 160)
@@ -364,8 +367,8 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(mapOf("behavior" to WireValue.Integer(6)))
             val list = FrameLayout(host.context)
-            list.addView(View(host.context).apply { tag = "short" })
-            list.addView(View(host.context).apply { tag = "wide" })
+            list.addView(tabTrigger(host, "short"))
+            list.addView(tabTrigger(host, "wide"))
             host.addView(list)
             host.layout(0, 0, 400, 160)
             list.layout(20, 20, 380, 100)
@@ -398,8 +401,8 @@ class MobileUiHostInstrumentedTest {
                 ),
             )
             val list = FrameLayout(host.context)
-            list.addView(View(host.context).apply { tag = "overview" })
-            list.addView(View(host.context).apply { tag = "settings" })
+            list.addView(tabTrigger(host, "overview"))
+            list.addView(tabTrigger(host, "settings"))
             host.addView(list)
             host.layout(0, 0, 240, 400)
             list.layout(20, 20, 220, 380)
@@ -410,6 +413,111 @@ class MobileUiHostInstrumentedTest {
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 100f, 240f))
 
             assertEquals("settings", payloads.single().decodeToString())
+            host.release()
+        }
+    }
+
+    @Test
+    fun tabsCoordinateIndicatorContentKeyboardAndAccessibilityLocally() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(6),
+                    "value" to WireValue.Text("account"),
+                    "orientation" to WireValue.Integer(1),
+                    "activationMode" to WireValue.Integer(1),
+                ),
+            )
+            val list = FrameLayout(host.context).apply { tag = "pam:tabs-list" }
+            val account = tabTrigger(host, "account", selected = true)
+            val security = tabTrigger(host, "security")
+            val indicator = View(host.context).apply { tag = "pam:tabs-indicator" }
+            list.addView(account)
+            list.addView(security)
+            list.addView(indicator)
+            val contentWrapper = FrameLayout(host.context).apply {
+                tag = "pam:tabs-content-wrapper"
+            }
+            val accountContent = View(host.context).apply {
+                tag = "pam:tabs-content:account"
+            }
+            val securityContent = View(host.context).apply {
+                tag = "pam:tabs-content:security"
+            }
+            contentWrapper.addView(accountContent)
+            contentWrapper.addView(securityContent)
+            host.addView(list)
+            host.addView(contentWrapper)
+
+            host.layout(0, 0, 400, 320)
+            list.layout(20, 20, 380, 100)
+            account.layout(0, 0, 140, 80)
+            security.layout(160, 0, 360, 80)
+            indicator.layout(0, 0, 1, 1)
+            contentWrapper.layout(20, 120, 380, 300)
+            accountContent.layout(0, 0, 360, 80)
+            securityContent.layout(0, 0, 360, 140)
+
+            assertTrue(security.performClick())
+            assertEquals(listOf("security"), payloads.map(ByteArray::decodeToString))
+            assertTrue(security.isSelected)
+            assertTrue(!account.isSelected)
+            assertEquals(View.GONE, accountContent.visibility)
+            assertEquals(View.VISIBLE, securityContent.visibility)
+            assertEquals(200, indicator.layoutParams.width)
+            assertEquals(80, indicator.layoutParams.height)
+
+            val rootInfo = AccessibilityNodeInfo.obtain()
+            val securityInfo = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(rootInfo)
+            security.onInitializeAccessibilityNodeInfo(securityInfo)
+            assertEquals("android.widget.TabWidget", rootInfo.className)
+            assertEquals(1, rootInfo.collectionInfo?.rowCount)
+            assertEquals(2, rootInfo.collectionInfo?.columnCount)
+            assertEquals(
+                "Tab",
+                securityInfo.extras.getCharSequence(
+                    "AccessibilityNodeInfo.roleDescription",
+                ),
+            )
+            assertTrue(securityInfo.isSelected)
+            assertEquals(1, securityInfo.collectionItemInfo?.columnIndex)
+
+            assertTrue(
+                security.dispatchKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT),
+                ),
+            )
+            assertEquals(
+                listOf("security", "account"),
+                payloads.map(ByteArray::decodeToString),
+            )
+            assertTrue(account.isSelected)
+
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(6),
+                    "value" to WireValue.Text("account"),
+                    "orientation" to WireValue.Integer(1),
+                    "activationMode" to WireValue.Integer(2),
+                ),
+            )
+            assertTrue(
+                account.dispatchKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT),
+                ),
+            )
+            assertEquals(2, payloads.size)
+            assertTrue(account.isSelected)
+
+            rootInfo.recycle()
+            securityInfo.recycle()
+            account.release()
+            security.release()
             host.release()
         }
     }
@@ -1045,6 +1153,23 @@ class MobileUiHostInstrumentedTest {
 
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun tabTrigger(
+        parent: MobileUiHost,
+        value: String,
+        selected: Boolean = false,
+        disabled: Boolean = false,
+    ): MobileUiHost =
+        MobileUiHost(parent.context) { _, _ -> }.apply {
+            update(
+                mapOf(
+                    "behavior" to WireValue.Integer(28),
+                    "value" to WireValue.Text(value),
+                    "selected" to WireValue.Flag(selected),
+                    "disabled" to WireValue.Flag(disabled),
+                ),
+            )
+        }
 
     private fun motion(action: Int, x: Float, y: Float): MotionEvent =
         MotionEvent.obtain(0L, 0L, action, x, y, 0)

@@ -17,6 +17,7 @@ use Pam\Native\InputSyncMode;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalPresentation;
+use Pam\Native\PositionType;
 use Pam\Native\PropKey;
 use Pam\Native\Style;
 use Pam\Native\UI\ActivityIndicator;
@@ -132,6 +133,23 @@ final class ComponentRenderer
                     ? 'pam:selection-icon-force'
                     : 'pam:selection-icon',
             );
+        } elseif ($part === 'TabsList') {
+            $element = $element->property(PropKey::Value, 'pam:tabs-list');
+        } elseif ($part === 'TabsContentWrapper') {
+            $element = $element->property(PropKey::Value, 'pam:tabs-content-wrapper');
+        } elseif ($part === 'TabsContent' && isset($props['value']) && is_scalar($props['value'])) {
+            $element = $element->property(
+                PropKey::Value,
+                (self::flag($props, 'forceMount')
+                    ? 'pam:tabs-content-force:'
+                    : 'pam:tabs-content:') . (string) $props['value'],
+            );
+        } elseif ($part === 'TabsIndicator' || $part === 'TabsAnimatedIndicator') {
+            $element = $element
+                ->property(PropKey::Value, 'pam:tabs-indicator')
+                ->property(PropKey::PositionType, PositionType::Absolute->value)
+                ->property(PropKey::Left, 0.0)
+                ->property(PropKey::Top, 0.0);
         } elseif ($part === 'SliderTrack') {
             $element = $element->property(PropKey::Value, 'pam:slider-track');
         } elseif ($part === 'SliderFilledTrack') {
@@ -159,9 +177,16 @@ final class ComponentRenderer
             self::flag($props, 'hidden')
             || (
                 $part === 'TabsContent'
-                && array_key_exists('value', $parentProps)
+                && !self::flag($props, 'forceMount')
+                && (
+                    array_key_exists('value', $parentProps)
+                    || array_key_exists('defaultValue', $parentProps)
+                )
                 && array_key_exists('value', $props)
-                && !self::sameScalar($parentProps['value'], $props['value'])
+                && !self::sameScalar(
+                    $parentProps['value'] ?? $parentProps['defaultValue'],
+                    $props['value'],
+                )
             )
             || (
                 self::isClosed($runtimeProps)
@@ -392,6 +417,7 @@ final class ComponentRenderer
             'SelectPortal' => NativeBehavior::BottomSheet,
             'Slider' => NativeBehavior::Slider,
             'Tabs' => NativeBehavior::Tabs,
+            'TabsTrigger' => NativeBehavior::TabsTrigger,
             'Calendar' => NativeBehavior::Calendar,
             'DateTimePicker' => NativeBehavior::DateTimePicker,
             'Skeleton', 'SkeletonText' => NativeBehavior::Skeleton,
@@ -719,7 +745,7 @@ final class ComponentRenderer
             'SelectItem' => $parentProps['selectedValue'] ?? $parentProps['value'] ?? null,
             'AccordionItem' => $parentProps['value'] ?? $parentProps['defaultValue'] ?? null,
             'Checkbox', 'Radio' => $parentProps['value'] ?? $parentProps['defaultValue'] ?? null,
-            default => $parentProps['value'] ?? null,
+            default => $parentProps['value'] ?? $parentProps['defaultValue'] ?? null,
         };
         $selected = is_array($parentValue)
             ? in_array($itemValue, $parentValue, true)

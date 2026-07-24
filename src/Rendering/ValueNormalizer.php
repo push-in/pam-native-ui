@@ -55,6 +55,10 @@ final class ValueNormalizer
             'horizontal' => 1,
             'vertical' => 2,
         ],
+        'activationMode' => [
+            'automatic' => 1,
+            'manual' => 2,
+        ],
         'placement' => [
             'top' => 1,
             'top-start' => 2,

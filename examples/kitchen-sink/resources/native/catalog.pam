@@ -209,10 +209,13 @@
                         <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
                         <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
                         <TabsTrigger value="3"><TabsTriggerText>Billing</TabsTriggerText></TabsTrigger>
+                        <TabsIndicator />
                     </TabsList>
-                    <TabsContent value="1"><Card><Text>Account content</Text></Card></TabsContent>
-                    <TabsContent value="2"><Card><Text>Security content</Text></Card></TabsContent>
-                    <TabsContent value="3"><Card><Text>Billing content</Text></Card></TabsContent>
+                    <TabsContentWrapper>
+                        <TabsContent value="1"><Card><Text>Account content</Text></Card></TabsContent>
+                        <TabsContent value="2"><Card><Text>Security content</Text></Card></TabsContent>
+                        <TabsContent value="3"><Card><Text>Billing content</Text></Card></TabsContent>
+                    </TabsContentWrapper>
                 </Tabs>
 
                 <HStack space="sm">

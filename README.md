@@ -108,6 +108,35 @@ Only the trigger owns the toggle gesture. Collapsed content is removed from
 layout and TalkBack, the icon rotates with the system animation setting, and
 PHP receives one final boolean semantic event per item interaction.
 
+Tabs use the complete upstream anatomy without a JavaScript/Reanimated layer:
+
+```xml
+<Tabs
+    value="{{ $tab }}"
+    orientation="horizontal"
+    activationMode="automatic"
+    on:change="selectTab"
+>
+    <TabsList>
+        <TabsTrigger value="account"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
+        <TabsTrigger value="security"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
+        <TabsIndicator />
+    </TabsList>
+    <TabsContentWrapper>
+        <TabsContent value="account"><Text>Account settings</Text></TabsContent>
+        <TabsContent value="security"><Text>Security settings</Text></TabsContent>
+    </TabsContentWrapper>
+</Tabs>
+```
+
+Controlled `value` and uncontrolled `defaultValue`, horizontal/vertical
+orientation, disabled triggers, `forceMount`, automatic/manual activation and
+wrapping arrow/Home/End keyboard navigation are supported. Android moves the
+indicator, swaps content and animates content height on the UI thread; PHP
+receives only the selected scalar value. TalkBack sees a single-selection tab
+collection with selected item position. The fluent API uses
+`Pam\MobileUi\Enum\TabsActivationMode`.
+
 Gesture-heavy components keep transient work on Android's UI thread. The
 calendar supports single, multiple and range selection, disabled/min/max dates,
 localized month navigation, first-day-of-week and fixed-week layouts:

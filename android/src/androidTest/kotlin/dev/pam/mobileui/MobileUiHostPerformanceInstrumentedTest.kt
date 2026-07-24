@@ -280,6 +280,52 @@ class MobileUiHostPerformanceInstrumentedTest {
                 switchEvents,
             )
 
+            var tabsEvents = 0
+            val tabs = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.CHANGE) tabsEvents++
+            }
+            tabs.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(6),
+                    "defaultValue" to WireValue.Text("first"),
+                ),
+            )
+            val tabsList = FrameLayout(context)
+            val firstTab = MobileUiHost(context) { _, _ -> }
+            firstTab.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(28),
+                    "value" to WireValue.Text("first"),
+                    "selected" to WireValue.Flag(true),
+                ),
+            )
+            val secondTab = MobileUiHost(context) { _, _ -> }
+            secondTab.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(28),
+                    "value" to WireValue.Text("second"),
+                ),
+            )
+            tabsList.addView(firstTab)
+            tabsList.addView(secondTab)
+            tabs.addView(tabsList)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                tabAt(firstTab, secondTab, iteration).performClick()
+            }
+            tabsEvents = 0
+            val tabsSelection = measure(SAMPLE_ITERATIONS) { iteration ->
+                tabAt(firstTab, secondTab, iteration).performClick()
+            }
+            assertTrue(
+                "Tabs selection p99 ${tabsSelection.p99Micros}µs exceeded 4ms",
+                tabsSelection.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Tabs must emit exactly one semantic event per completed selection",
+                SAMPLE_ITERATIONS,
+                tabsEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -308,6 +354,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"radioSelection\":${radioSelection.json()},")
                     append("\"progressUpdate\":${progressUpdate.json()},")
                     append("\"switchToggle\":${switchToggle.json()},")
+                    append("\"tabsSelection\":${tabsSelection.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
@@ -317,7 +364,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"checkboxBridgeEvents\":$checkboxEvents,")
                     append("\"radioBridgeEvents\":$radioEvents,")
                     append("\"progressBridgeEvents\":${progressEvents.size},")
-                    append("\"switchBridgeEvents\":$switchEvents")
+                    append("\"switchBridgeEvents\":$switchEvents,")
+                    append("\"tabsBridgeEvents\":$tabsEvents")
                     append('}')
                 },
             )
@@ -334,6 +382,9 @@ class MobileUiHostPerformanceInstrumentedTest {
             radioGroup.release()
             progress.release()
             switch.release()
+            firstTab.release()
+            secondTab.release()
+            tabs.release()
         }
     }
 
@@ -391,6 +442,12 @@ class MobileUiHostPerformanceInstrumentedTest {
         }
 
     private fun radioAt(
+        first: MobileUiHost,
+        second: MobileUiHost,
+        iteration: Int,
+    ): MobileUiHost = if (iteration % 2 == 0) second else first
+
+    private fun tabAt(
         first: MobileUiHost,
         second: MobileUiHost,
         iteration: Int,

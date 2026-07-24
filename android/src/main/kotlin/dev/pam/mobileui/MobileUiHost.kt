@@ -85,7 +85,8 @@ internal class MobileUiHost(
         ACCORDION_GROUP(24),
         CHECKBOX_GROUP(25),
         RADIO_GROUP(26),
-        SWITCH(27);
+        SWITCH(27),
+        TAB_TRIGGER(28);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -114,6 +115,12 @@ internal class MobileUiHost(
                 entries.firstOrNull { it.value == value } ?: SINGLE
         }
     }
+
+    private data class TabContent(
+        val view: View,
+        val value: String,
+        val forceMounted: Boolean,
+    )
 
     private val density = resources.displayMetrics.density
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -262,7 +269,6 @@ internal class MobileUiHost(
     private var dragOriginSecondary = 0f
     private var dragging = false
     private var accordionTouchActive = false
-    private var pressedSelectionIndex = -1
     private var imageScale = 1f
     private var imageTranslationX = 0f
     private var imageTranslationY = 0f
@@ -275,6 +281,10 @@ internal class MobileUiHost(
     private var sliderTouchActive = false
     private var pendingSliderValue: Double? = null
     private var pendingSliderChange: Runnable? = null
+    private var tabValue: String? = null
+    private var tabsActivationMode = TABS_ACTIVATION_AUTOMATIC
+    private var tabsIndicatorAnimator: ValueAnimator? = null
+    private var tabsContentAnimator: ValueAnimator? = null
     private val scaleDetector = ScaleGestureDetector(
         context,
         object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -328,11 +338,26 @@ internal class MobileUiHost(
         val previousSelected = selected
         val previousOpen = open
         val previousComponentMode = componentMode
+        val previousTabValue = tabValue
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         pendingSliderChange?.let(::removeCallbacks)
         pendingSliderChange = null
         pendingSliderValue = null
         component = properties.integer("component", component.toLong()).toInt()
+        tabsActivationMode = properties.integer(
+            "activationMode",
+            tabsActivationMode.toLong(),
+        ).toInt().coerceIn(TABS_ACTIVATION_AUTOMATIC, TABS_ACTIVATION_MANUAL)
+        if (behavior == Behavior.TABS) {
+            val controlledValue = properties.scalarText("value")
+            if (controlledValue != null) {
+                tabValue = controlledValue
+            } else if (previousBehavior != Behavior.TABS) {
+                tabValue = properties.scalarText("defaultValue")
+            }
+        } else if (behavior == Behavior.TAB_TRIGGER) {
+            tabValue = properties.scalarText("value") ?: tabValue
+        }
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
         val defaultChecked = if (behavior == Behavior.SWITCH) {
             properties.flag(
@@ -355,7 +380,11 @@ internal class MobileUiHost(
         )
         selected = properties.flag("selected", properties.flag("isSelected", selected))
         open = properties.flag("open", properties.flag("isOpen", open))
-        if (behavior != Behavior.SWITCH) {
+        if (
+            behavior != Behavior.SWITCH
+            && behavior != Behavior.TABS
+            && behavior != Behavior.TAB_TRIGGER
+        ) {
             value = properties.decimal(
                 "value",
                 properties.decimal("defaultValue", value),
@@ -514,9 +543,6 @@ internal class MobileUiHost(
             }
             updateSwitchAccessibility()
         }
-        if (previousSelected != selected && behavior == Behavior.TABS) {
-            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
-        }
         scheduleToast(properties)
         applyComponentDefaults()
         applySelectionVisualState()
@@ -524,6 +550,16 @@ internal class MobileUiHost(
         applyRangeVisualState()
         updateRangeAccessibility()
         updateCalendarTitle()
+        if (behavior == Behavior.TABS) {
+            post {
+                applyTabsState(
+                    animate = previousBehavior == Behavior.TABS
+                        && previousTabValue != tabValue,
+                )
+            }
+        } else if (behavior == Behavior.TAB_TRIGGER) {
+            updateTabTriggerAccessibility()
+        }
         invalidate()
     }
 
@@ -542,6 +578,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.CALENDAR) {
             post(::updateCalendarTitle)
+        }
+        if (behavior == Behavior.TABS) {
+            post { applyTabsState(animate = false) }
         }
     }
 
@@ -574,6 +613,9 @@ internal class MobileUiHost(
     ) {
         super.onLayout(changed, left, top, right, bottom)
         applyRangeVisualState()
+        if (behavior == Behavior.TABS) {
+            applyTabsState(animate = false)
+        }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
         }
@@ -741,6 +783,36 @@ internal class MobileUiHost(
                 },
             )
         }
+        if (behavior == Behavior.TABS) {
+            val triggers = tabTriggers().filter(MobileUiHost::isEffectivelyEnabled)
+            val horizontal = orientation == 1
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                if (horizontal) 1 else triggers.size,
+                if (horizontal) triggers.size else 1,
+                false,
+                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE,
+            )
+        }
+        if (behavior == Behavior.TAB_TRIGGER) {
+            val tabs = tabsAncestor()
+            val enabled = isEnabled && tabs?.isEnabled != false
+            info.className = "android.widget.Button"
+            info.extras.putCharSequence(
+                "AccessibilityNodeInfo.roleDescription",
+                "Tab",
+            )
+            info.isSelected = selected
+            info.isEnabled = enabled
+            info.isClickable = enabled
+            if (enabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+            tabs?.tabCollectionItemInfo(this)?.let { item ->
+                info.collectionItemInfo = item
+            }
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -813,6 +885,7 @@ internal class MobileUiHost(
             Behavior.CHECKBOX_GROUP -> "android.view.ViewGroup"
             Behavior.RADIO_GROUP -> "android.widget.RadioGroup"
             Behavior.TABS -> "android.widget.TabWidget"
+            Behavior.TAB_TRIGGER -> "android.widget.Button"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
             Behavior.MODAL,
             Behavior.ALERT_DIALOG,
@@ -938,7 +1011,12 @@ internal class MobileUiHost(
             }
         }
         if (
-            behavior in setOf(Behavior.CHECKBOX, Behavior.RADIO, Behavior.SWITCH)
+            behavior in setOf(
+                Behavior.CHECKBOX,
+                Behavior.RADIO,
+                Behavior.SWITCH,
+                Behavior.TAB_TRIGGER,
+            )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
             && event.action == KeyEvent.ACTION_UP
@@ -950,6 +1028,29 @@ internal class MobileUiHost(
         ) {
             performClick()
             return true
+        }
+        if (
+            behavior == Behavior.TAB_TRIGGER
+            && isEnabled
+            && event.action == KeyEvent.ACTION_DOWN
+        ) {
+            val tabs = tabsAncestor() ?: return super.dispatchKeyEvent(event)
+            val direction = when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT ->
+                    if (tabs.orientation == 1) -1 else 0
+                KeyEvent.KEYCODE_DPAD_RIGHT ->
+                    if (tabs.orientation == 1) 1 else 0
+                KeyEvent.KEYCODE_DPAD_UP ->
+                    if (tabs.orientation == 2) -1 else 0
+                KeyEvent.KEYCODE_DPAD_DOWN ->
+                    if (tabs.orientation == 2) 1 else 0
+                KeyEvent.KEYCODE_MOVE_HOME -> Int.MIN_VALUE
+                KeyEvent.KEYCODE_MOVE_END -> Int.MAX_VALUE
+                else -> 0
+            }
+            if (direction != 0) {
+                return tabs.moveTabFocus(this, direction)
+            }
         }
         if (
             behavior == Behavior.SLIDER
@@ -991,6 +1092,10 @@ internal class MobileUiHost(
         pendingSliderValue = null
         switchAnimator?.cancel()
         switchAnimator = null
+        tabsIndicatorAnimator?.cancel()
+        tabsIndicatorAnimator = null
+        tabsContentAnimator?.cancel()
+        tabsContentAnimator = null
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -1015,7 +1120,6 @@ internal class MobileUiHost(
                 Behavior.SLIDER -> sliderTouchListener()
                 Behavior.BOTTOM_SHEET -> sheetTouchListener()
                 Behavior.DRAWER -> drawerTouchListener()
-                Behavior.TABS -> indexedSelectionTouchListener()
                 Behavior.CALENDAR -> calendarTouchListener()
                 Behavior.IMAGE_VIEWER -> imageViewerTouchListener()
                 Behavior.OVERLAY,
@@ -1037,6 +1141,12 @@ internal class MobileUiHost(
             setOnClickListener { toggleSelection() }
         } else if (behavior == Behavior.SWITCH) {
             setOnClickListener { toggleSwitch() }
+        } else if (behavior == Behavior.TAB_TRIGGER) {
+            setOnClickListener {
+                if (isEnabled) {
+                    tabsAncestor()?.selectTab(this, emit = true)
+                }
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -1077,6 +1187,7 @@ internal class MobileUiHost(
             Behavior.RADIO,
             Behavior.SWITCH,
             Behavior.TABS,
+            Behavior.TAB_TRIGGER,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -1791,41 +1902,248 @@ internal class MobileUiHost(
             }
         }
 
-    private fun indexedSelectionTouchListener(): OnTouchListener =
-        OnTouchListener { _, event ->
-            if (!isEnabled) return@OnTouchListener false
-            val list = getChildAt(0) as? ViewGroup ?: this
-            val index = selectionIndexAt(list, event.x, event.y)
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    pressedSelectionIndex = index
-                    index >= 0
+    private fun tabsAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (current is MobileUiHost && current.behavior == Behavior.TABS) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun tabTriggers(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (child is MobileUiHost && child.behavior == Behavior.TAB_TRIGGER) {
+                    add(child)
+                } else if (child is ViewGroup) {
+                    addAll(tabTriggers(child))
                 }
-                MotionEvent.ACTION_UP -> {
-                    if (index < 0 || index != pressedSelectionIndex) {
-                        pressedSelectionIndex = -1
-                        return@OnTouchListener false
-                    }
-                    pressedSelectionIndex = -1
-                    selected = true
-                    isSelected = true
-                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    val trigger = list.getChildAt(index)
-                    emitter.emit(
-                        NativeViewEventKind.CHANGE,
-                        trigger.tag.toEventPayload(index + 1),
-                    )
-                    performClick()
-                    true
-                }
-                MotionEvent.ACTION_CANCEL -> {
-                    val claimed = pressedSelectionIndex >= 0
-                    pressedSelectionIndex = -1
-                    claimed
-                }
-                else -> false
             }
         }
+
+    private fun isEffectivelyEnabled(): Boolean =
+        isEnabled && tabsAncestor()?.isEnabled != false
+
+    private fun selectTab(trigger: MobileUiHost, emit: Boolean): Boolean {
+        if (
+            behavior != Behavior.TABS
+            || !isEnabled
+            || !trigger.isEffectivelyEnabled()
+        ) {
+            return false
+        }
+        val requested = trigger.tabValue ?: return false
+        val changed = requested != tabValue
+        tabValue = requested
+        applyTabsState(animate = changed)
+        trigger.requestFocus()
+        trigger.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (changed) {
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
+        }
+        if (emit) {
+            emitter.emit(
+                NativeViewEventKind.CHANGE,
+                requested.encodeToByteArray(),
+            )
+        }
+        return true
+    }
+
+    private fun moveTabFocus(trigger: MobileUiHost, direction: Int): Boolean {
+        val triggers = tabTriggers().filter(MobileUiHost::isEffectivelyEnabled)
+        if (triggers.isEmpty()) return false
+        val current = triggers.indexOf(trigger)
+        if (current < 0) return false
+        val nextIndex = when (direction) {
+            Int.MIN_VALUE -> 0
+            Int.MAX_VALUE -> triggers.lastIndex
+            else -> (current + direction).mod(triggers.size)
+        }
+        val next = triggers[nextIndex]
+        next.requestFocus()
+        if (tabsActivationMode == TABS_ACTIVATION_AUTOMATIC) {
+            selectTab(next, emit = next.tabValue != tabValue)
+        }
+        return true
+    }
+
+    @Suppress("DEPRECATION")
+    private fun tabCollectionItemInfo(
+        trigger: MobileUiHost,
+    ): AccessibilityNodeInfo.CollectionItemInfo? {
+        val triggers = tabTriggers()
+        val index = triggers.indexOf(trigger)
+        if (index < 0) return null
+        val horizontal = orientation == 1
+        return AccessibilityNodeInfo.CollectionItemInfo.obtain(
+            if (horizontal) 0 else index,
+            1,
+            if (horizontal) index else 0,
+            1,
+            false,
+            trigger.selected,
+        )
+    }
+
+    private fun updateTabTriggerAccessibility() {
+        if (behavior != Behavior.TAB_TRIGGER) return
+        isSelected = selected
+        isActivated = selected
+        alpha = when {
+            !isEffectivelyEnabled() -> 0.4f
+            selected -> 1f
+            else -> 0.72f
+        }
+    }
+
+    private fun applyTabsState(animate: Boolean) {
+        if (behavior != Behavior.TABS) return
+        val triggers = tabTriggers()
+        triggers.forEach { trigger ->
+            val nextSelected = trigger.tabValue == tabValue
+            if (trigger.selected != nextSelected) {
+                trigger.selected = nextSelected
+                trigger.updateTabTriggerAccessibility()
+                trigger.sendAccessibilityEvent(
+                    AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
+                )
+            } else {
+                trigger.updateTabTriggerAccessibility()
+            }
+        }
+
+        val contents = tabContents()
+        val selectedContent = contents.firstOrNull { content ->
+            content.value == tabValue
+        }
+        contents.forEach { content ->
+            content.view.visibility = if (
+                content.forceMounted || content.value == tabValue
+            ) {
+                VISIBLE
+            } else {
+                GONE
+            }
+        }
+        applyTabsIndicator(
+            triggers.firstOrNull { trigger -> trigger.selected },
+            animate,
+        )
+        animateTabsContentHeight(selectedContent?.view, animate)
+    }
+
+    private fun tabContents(): List<TabContent> =
+        buildList {
+            descendantViews(this@MobileUiHost).forEach { view ->
+                val value = view.tag as? String ?: return@forEach
+                when {
+                    value.startsWith(TABS_FORCE_CONTENT_TAG_PREFIX) -> add(
+                        TabContent(
+                            view,
+                            value.removePrefix(TABS_FORCE_CONTENT_TAG_PREFIX),
+                            true,
+                        ),
+                    )
+                    value.startsWith(TABS_CONTENT_TAG_PREFIX) -> add(
+                        TabContent(
+                            view,
+                            value.removePrefix(TABS_CONTENT_TAG_PREFIX),
+                            false,
+                        ),
+                    )
+                }
+            }
+        }
+
+    private fun descendantViews(root: ViewGroup): Sequence<View> =
+        sequence {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                yield(child)
+                if (child is ViewGroup) {
+                    yieldAll(descendantViews(child))
+                }
+            }
+        }
+
+    private fun applyTabsIndicator(
+        trigger: MobileUiHost?,
+        animate: Boolean,
+    ) {
+        val indicator = findTaggedDescendant(this, TABS_INDICATOR_TAG) ?: return
+        if (trigger == null || trigger.width <= 0 || trigger.height <= 0) {
+            indicator.visibility = INVISIBLE
+            return
+        }
+        val parent = indicator.parent as? View ?: return
+        val triggerBounds = boundsInHost(trigger)
+        val parentBounds = boundsInHost(parent)
+        val targetX = triggerBounds.left - parentBounds.left
+        val targetY = triggerBounds.top - parentBounds.top
+        val layout = indicator.layoutParams
+        if (layout.width != trigger.width || layout.height != trigger.height) {
+            layout.width = trigger.width
+            layout.height = trigger.height
+            indicator.layoutParams = layout
+        }
+        indicator.visibility = VISIBLE
+        tabsIndicatorAnimator?.cancel()
+        if (!animate || !animationsEnabled()) {
+            indicator.translationX = targetX
+            indicator.translationY = targetY
+            return
+        }
+        val fromX = indicator.translationX
+        val fromY = indicator.translationY
+        tabsIndicatorAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = TABS_INDICATOR_ANIMATION_DURATION_MILLIS
+            addUpdateListener { animation ->
+                val progress = animation.animatedFraction
+                indicator.translationX = fromX + (targetX - fromX) * progress
+                indicator.translationY = fromY + (targetY - fromY) * progress
+            }
+            start()
+        }
+    }
+
+    private fun animateTabsContentHeight(content: View?, animate: Boolean) {
+        if (content == null) return
+        val wrapper = findTaggedDescendant(
+            this,
+            TABS_CONTENT_WRAPPER_TAG,
+        ) as? ViewGroup ?: return
+        val width = wrapper.width.coerceAtLeast(content.measuredWidth)
+        val laidOutHeight = content.height
+        content.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        val targetHeight = maxOf(laidOutHeight, content.measuredHeight)
+        if (targetHeight <= 0) return
+        val layout = wrapper.layoutParams
+        val currentHeight = wrapper.height.takeIf { it > 0 } ?: targetHeight
+        tabsContentAnimator?.cancel()
+        if (!animate || !animationsEnabled() || currentHeight == targetHeight) {
+            if (layout.height != targetHeight) {
+                layout.height = targetHeight
+                wrapper.layoutParams = layout
+            }
+            return
+        }
+        tabsContentAnimator = ValueAnimator.ofInt(currentHeight, targetHeight).apply {
+            duration = TABS_CONTENT_ANIMATION_DURATION_MILLIS
+            addUpdateListener { animation ->
+                layout.height = animation.animatedValue as Int
+                wrapper.layoutParams = layout
+            }
+            start()
+        }
+    }
 
     private fun calendarTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
@@ -2685,15 +3003,6 @@ internal class MobileUiHost(
     private fun calendarGridBounds(): RectF =
         boundsInHost(findTaggedDescendant(this, "pam:calendar-grid") ?: this)
 
-    private fun selectionIndexAt(list: ViewGroup, x: Float, y: Float): Int {
-        repeat(list.childCount) { index ->
-            if (boundsInHost(list.getChildAt(index)).contains(x, y)) {
-                return index
-            }
-        }
-        return -1
-    }
-
     private fun boundsInHost(view: View): RectF {
         if (view === this) return RectF(0f, 0f, width.toFloat(), height.toFloat())
         var current = view
@@ -2873,6 +3182,15 @@ internal class MobileUiHost(
     private fun Map<String, WireValue>.text(key: String): String? =
         (this[key] as? WireValue.Text)?.value
 
+    private fun Map<String, WireValue>.scalarText(key: String): String? =
+        when (val value = this[key]) {
+            is WireValue.Text -> value.value
+            is WireValue.Integer -> value.value.toString()
+            is WireValue.Decimal -> formatRangeValue(value.value)
+            is WireValue.Flag -> if (value.value) "1" else "0"
+            else -> null
+        }
+
     private fun Boolean.toEventPayload(): ByteArray =
         if (this) byteArrayOf('1'.code.toByte()) else byteArrayOf('0'.code.toByte())
 
@@ -2911,6 +3229,14 @@ internal class MobileUiHost(
         const val SLIDER_FILLED_TRACK_TAG = "pam:slider-filled-track"
         const val SLIDER_THUMB_TAG = "pam:slider-thumb"
         const val PROGRESS_FILLED_TRACK_TAG = "pam:progress-filled-track"
+        const val TABS_CONTENT_TAG_PREFIX = "pam:tabs-content:"
+        const val TABS_FORCE_CONTENT_TAG_PREFIX = "pam:tabs-content-force:"
+        const val TABS_CONTENT_WRAPPER_TAG = "pam:tabs-content-wrapper"
+        const val TABS_INDICATOR_TAG = "pam:tabs-indicator"
+        const val TABS_ACTIVATION_AUTOMATIC = 1
+        const val TABS_ACTIVATION_MANUAL = 2
+        const val TABS_INDICATOR_ANIMATION_DURATION_MILLIS = 180L
+        const val TABS_CONTENT_ANIMATION_DURATION_MILLIS = 100L
         const val SWITCH_TRACK_WIDTH_DP = 52f
         const val SWITCH_TRACK_HEIGHT_DP = 32f
         const val SWITCH_THUMB_INSET_DP = 2f

@@ -63,6 +63,8 @@ use Pam\MobileUi\Component\SliderThumb;
 use Pam\MobileUi\Component\SliderTrack;
 use Pam\MobileUi\Component\Tabs;
 use Pam\MobileUi\Component\TabsContent;
+use Pam\MobileUi\Component\TabsContentWrapper;
+use Pam\MobileUi\Component\TabsIndicator;
 use Pam\MobileUi\Component\TabsList;
 use Pam\MobileUi\Component\TabsTrigger;
 use Pam\MobileUi\Component\Toast;
@@ -86,6 +88,7 @@ use Pam\MobileUi\Enum\ParityGate;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\PrimitiveKind;
 use Pam\MobileUi\Enum\SkeletonSpeed;
+use Pam\MobileUi\Enum\TabsActivationMode;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Enum\ToastAction;
 use Pam\MobileUi\Enum\VerificationStatus;
@@ -560,31 +563,64 @@ $assert(
 );
 
 $tabs = Tabs::make(
-    ['value' => 2],
+    [
+        'value' => 'security',
+        'activationMode' => TabsActivationMode::Manual,
+    ],
     TabsList::make(
         TabsTrigger::make(['value' => 'account']),
         TabsTrigger::make(['value' => 'security']),
+        TabsIndicator::make(),
     ),
-    TabsContent::make(['value' => 1], Text::make('First')),
-    TabsContent::make(['value' => 2], Text::make('Second')),
+    TabsContentWrapper::make(
+        TabsContent::make(['value' => 'account'], Text::make('First')),
+        TabsContent::make(['value' => 'security'], Text::make('Second')),
+    ),
 )->toElement();
 $tabsList = $tabs->children()[0] ?? null;
-$firstTabContent = $tabs->children()[1] ?? null;
-$secondTabContent = $tabs->children()[2] ?? null;
+$tabsContentWrapper = $tabs->children()[1] ?? null;
+$firstTabContent = $tabsContentWrapper?->children()[0] ?? null;
+$secondTabContent = $tabsContentWrapper?->children()[1] ?? null;
 if (
     !$tabsList instanceof \Pam\Native\Element
+    || !$tabsContentWrapper instanceof \Pam\Native\Element
     || !$firstTabContent instanceof \Pam\Native\Element
     || !$secondTabContent instanceof \Pam\Native\Element
 ) {
     throw new RuntimeException('Tabs must render controlled content children.');
 }
 $firstTabsTrigger = $tabsList->children()[0] ?? null;
-if (!$firstTabsTrigger instanceof \Pam\Native\Element) {
+$secondTabsTrigger = $tabsList->children()[1] ?? null;
+$tabsIndicator = $tabsList->children()[2] ?? null;
+if (
+    !$firstTabsTrigger instanceof \Pam\Native\Element
+    || !$secondTabsTrigger instanceof \Pam\Native\Element
+    || !$tabsIndicator instanceof \Pam\Native\Element
+) {
     throw new RuntimeException('Tabs list must render its semantic triggers.');
 }
+$firstTabsTriggerProperties = $firstTabsTrigger->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (!$firstTabsTriggerProperties instanceof BinaryValue) {
+    throw new RuntimeException('TabsTrigger must use the native semantic host.');
+}
+$firstTabsTriggerNative = Wire::decodeMap($firstTabsTriggerProperties->bytes);
 $assert(
-    $firstTabsTrigger->properties()[PropKey::Value->value] === 'account',
-    'Tab trigger values must reach Android as scalar semantic tags.',
+    $firstTabsTrigger->kind() === NodeKind::CustomView
+        && $firstTabsTriggerNative['behavior'] === NativeBehavior::TabsTrigger->value
+        && $firstTabsTriggerNative['value'] === 'account'
+        && !isset($firstTabsTrigger->properties()[PropKey::Selected->value])
+        && $secondTabsTrigger->properties()[PropKey::Selected->value] === true
+        && $tabsList->properties()[PropKey::Value->value] === 'pam:tabs-list'
+        && $tabsContentWrapper->properties()[PropKey::Value->value]
+            === 'pam:tabs-content-wrapper'
+        && $tabsIndicator->properties()[PropKey::Value->value] === 'pam:tabs-indicator'
+        && $firstTabContent->properties()[PropKey::Value->value]
+            === 'pam:tabs-content:account'
+        && $secondTabContent->properties()[PropKey::Value->value]
+            === 'pam:tabs-content:security',
+    'Tabs anatomy and semantic values must reach the coordinated native hosts.',
 );
 $assert(
     CalendarGrid::make()->toElement()->properties()[PropKey::Value->value]
@@ -703,6 +739,30 @@ $assert(
     $firstTabContent->properties()[PropKey::Visible->value] === false
         && !isset($secondTabContent->properties()[PropKey::Visible->value]),
     'Tabs must hide inactive panels without a PHP callback on every frame.',
+);
+$defaultTabs = Tabs::make(
+    ['defaultValue' => 'home'],
+    TabsList::make(
+        TabsTrigger::make(['value' => 'home']),
+        TabsTrigger::make(['value' => 'profile']),
+    ),
+    TabsContent::make(['value' => 'home'], Text::make('Home')),
+    TabsContent::make(
+        ['value' => 'profile', 'forceMount' => true],
+        Text::make('Profile'),
+    ),
+)->toElement();
+$defaultTabsList = $defaultTabs->children()[0] ?? null;
+$defaultHomeTrigger = $defaultTabsList?->children()[0] ?? null;
+$defaultHomeContent = $defaultTabs->children()[1] ?? null;
+$forcedProfileContent = $defaultTabs->children()[2] ?? null;
+$assert(
+    $defaultHomeTrigger?->properties()[PropKey::Selected->value] === true
+        && !isset($defaultHomeContent?->properties()[PropKey::Visible->value])
+        && !isset($forcedProfileContent?->properties()[PropKey::Visible->value])
+        && $forcedProfileContent?->properties()[PropKey::Value->value]
+            === 'pam:tabs-content-force:profile',
+    'Tabs defaultValue and forceMount must preserve upstream uncontrolled behavior.',
 );
 
 $toast = Toast::make(
@@ -1276,6 +1336,52 @@ $assert(
     $templateButtonText->properties()[PropKey::TextColor->value]
         === Themes::light()->color(ColorToken::Foreground),
     'Tag syntax must propagate parent variants to styled anatomy children.',
+);
+$templateTabs = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        <<<'PAM'
+<Tabs defaultValue="account" activationMode="manual">
+    <TabsList>
+        <TabsTrigger value="account"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
+        <TabsTrigger value="security"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
+        <TabsIndicator />
+    </TabsList>
+    <TabsContentWrapper>
+        <TabsContent value="account"><Text>Account content</Text></TabsContent>
+        <TabsContent value="security"><Text>Security content</Text></TabsContent>
+    </TabsContentWrapper>
+</Tabs>
+PAM,
+    ),
+    null,
+    [],
+);
+$templateTabsProperties = $templateTabs->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$templateTabsList = $templateTabs->children()[0] ?? null;
+$templateTabsTrigger = $templateTabsList?->children()[0] ?? null;
+$templateTabsWrapper = $templateTabs->children()[1] ?? null;
+$templateTabsInactiveContent = $templateTabsWrapper?->children()[1] ?? null;
+$templateTabsTriggerProperties = $templateTabsTrigger?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$templateTabsProperties instanceof BinaryValue
+    || !$templateTabsTriggerProperties instanceof BinaryValue
+    || !$templateTabsInactiveContent instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Tag Tabs must compile its native anatomy.');
+}
+$templateTabsNative = Wire::decodeMap($templateTabsProperties->bytes);
+$templateTabsTriggerNative = Wire::decodeMap($templateTabsTriggerProperties->bytes);
+$assert(
+    $templateTabsNative['activationMode'] === TabsActivationMode::Manual->value
+        && $templateTabsNative['defaultValue'] === 'account'
+        && $templateTabsTriggerNative['behavior'] === NativeBehavior::TabsTrigger->value
+        && $templateTabsTriggerNative['selected'] === true
+        && $templateTabsInactiveContent->properties()[PropKey::Visible->value] === false,
+    'Tag Tabs must normalize activation mode and uncontrolled state to integer native values.',
 );
 $templateRange = TemplateRenderer::render(
     TemplateCompiler::compile(

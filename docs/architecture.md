@@ -89,6 +89,13 @@ simple while preserving structured detail for advanced native interactions.
 Tab trigger values are stored as scalar semantic tags on their Android views,
 so reordering or styling a tab never changes the value delivered to PHP.
 
+Tabs use a lightweight native trigger host inside the ordinary authored
+`TabsList`. The root discovers those hosts through the mounted view hierarchy,
+coordinates single selection, panel visibility, indicator geometry and content
+height, and implements automatic/manual keyboard activation. This lets custom
+wrappers, icons and arbitrary panel content remain normal PAM children while
+all transient tab motion and focus work stays on the UI thread.
+
 Compound events are routed while PHP composes the immutable tree. A single
 `on:change` on `Select`, `RadioGroup`, `CheckboxGroup`, `Accordion` or `Menu`
 is bound to the relevant descendant item, even through layout wrappers. The
