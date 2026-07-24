@@ -1268,9 +1268,45 @@ final class ComponentRenderer
         string $part,
         array $props,
     ): AccessibilityRole {
-        $explicit = $props['accessibilityRole'] ?? null;
-        if (is_int($explicit)) {
-            return AccessibilityRole::tryFrom($explicit) ?? AccessibilityRole::Generic;
+        $explicit = $part !== 'Message' && array_key_exists('role', $props)
+            ? $props['role']
+            : ($props['accessibilityRole'] ?? null);
+        $explicitRole = self::namedAccessibilityRole($explicit);
+        if ($explicitRole !== null) {
+            return $explicitRole;
+        }
+
+        $semanticRole = match ($part) {
+            'Heading' => AccessibilityRole::Header,
+            'Link' => AccessibilityRole::Link,
+            'Alert', 'AlertDialog' => AccessibilityRole::Alert,
+            'Checkbox' => AccessibilityRole::Checkbox,
+            'Radio' => AccessibilityRole::Radio,
+            'RadioGroup' => AccessibilityRole::RadioGroup,
+            'SelectTrigger', 'ModelSelectorTrigger' => AccessibilityRole::ComboBox,
+            'Menu' => AccessibilityRole::Menu,
+            'MenuItem' => AccessibilityRole::MenuItem,
+            'Progress' => AccessibilityRole::ProgressBar,
+            'Slider' => AccessibilityRole::Adjustable,
+            'TabsList' => AccessibilityRole::TabList,
+            'TabsTrigger' => AccessibilityRole::Tab,
+            'Grid', 'Table' => AccessibilityRole::Grid,
+            'FlatList',
+            'VirtualizedList',
+            'SectionList',
+            'ActionsheetFlatList',
+            'ActionsheetVirtualizedList',
+            'ActionsheetSectionList',
+            'BottomSheetFlatList',
+            'BottomSheetSectionList',
+            'SelectFlatList',
+            'SelectVirtualizedList',
+            'SelectSectionList' => AccessibilityRole::List,
+            'AccordionTrigger' => AccessibilityRole::ToggleButton,
+            default => null,
+        };
+        if ($semanticRole !== null) {
+            return $semanticRole;
         }
 
         if (self::isInput($part)) {
@@ -1287,6 +1323,55 @@ final class ComponentRenderer
         }
 
         return AccessibilityRole::Generic;
+    }
+
+    private static function namedAccessibilityRole(
+        mixed $value,
+    ): ?AccessibilityRole {
+        if (is_int($value)) {
+            return AccessibilityRole::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'generic' => AccessibilityRole::Generic,
+            'button' => AccessibilityRole::Button,
+            'input' => AccessibilityRole::Input,
+            'image', 'img' => AccessibilityRole::Image,
+            'switch' => AccessibilityRole::Switch,
+            'adjustable', 'slider' => AccessibilityRole::Adjustable,
+            'alert' => AccessibilityRole::Alert,
+            'checkbox' => AccessibilityRole::Checkbox,
+            'combobox' => AccessibilityRole::ComboBox,
+            'header', 'heading' => AccessibilityRole::Header,
+            'imagebutton' => AccessibilityRole::ImageButton,
+            'keyboardkey' => AccessibilityRole::KeyboardKey,
+            'link' => AccessibilityRole::Link,
+            'menu' => AccessibilityRole::Menu,
+            'menubar' => AccessibilityRole::MenuBar,
+            'menuitem' => AccessibilityRole::MenuItem,
+            'none' => AccessibilityRole::None,
+            'presentation' => AccessibilityRole::Presentation,
+            'progressbar' => AccessibilityRole::ProgressBar,
+            'radio' => AccessibilityRole::Radio,
+            'radiogroup' => AccessibilityRole::RadioGroup,
+            'scrollbar' => AccessibilityRole::ScrollBar,
+            'search', 'searchbox' => AccessibilityRole::Search,
+            'spinbutton' => AccessibilityRole::SpinButton,
+            'summary' => AccessibilityRole::Summary,
+            'tab' => AccessibilityRole::Tab,
+            'tablist' => AccessibilityRole::TabList,
+            'text' => AccessibilityRole::Text,
+            'timer' => AccessibilityRole::Timer,
+            'togglebutton' => AccessibilityRole::ToggleButton,
+            'toolbar' => AccessibilityRole::Toolbar,
+            'grid' => AccessibilityRole::Grid,
+            'list' => AccessibilityRole::List,
+            'listitem' => AccessibilityRole::ListItem,
+            default => null,
+        };
     }
 
     /**

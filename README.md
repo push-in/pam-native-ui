@@ -95,6 +95,14 @@ accept scalar or per-side `hitSlop`, `android_ripple.color`/`rippleColor` and
 then Android owns hit testing, ripple, selection and IME behavior on the UI
 thread.
 
+`role` (preferred, matching current React Native) and `accessibilityRole` accept
+the full mobile role vocabulary. `role` wins when both are present. Components
+also infer their semantic role: headings, links, alerts, checkboxes, radio
+groups, combo-box triggers, menus, progress, sliders, tabs, grids and recycled
+lists reach TalkBack with native class/heading/checkable metadata. You can
+override the inference or use `none`/`presentation` without changing the visual
+component.
+
 Responsive grids keep the same class vocabulary used by gluestack:
 
 ```xml

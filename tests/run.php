@@ -54,6 +54,7 @@ use Pam\MobileUi\Component\Grid;
 use Pam\MobileUi\Component\GridItem;
 use Pam\MobileUi\Component\GluestackUIProvider;
 use Pam\MobileUi\Component\HStack;
+use Pam\MobileUi\Component\Heading;
 use Pam\MobileUi\Component\FormControl;
 use Pam\MobileUi\Component\FormControlError;
 use Pam\MobileUi\Component\FormControlErrorText;
@@ -73,6 +74,7 @@ use Pam\MobileUi\Component\ImageViewerCounter;
 use Pam\MobileUi\Component\ImageViewerNavigation;
 use Pam\MobileUi\Component\ImageViewerTrigger;
 use Pam\MobileUi\Component\KeyboardAvoidingView;
+use Pam\MobileUi\Component\Link;
 use Pam\MobileUi\Component\FlatList;
 use Pam\MobileUi\Component\SectionList;
 use Pam\MobileUi\Component\VirtualizedList;
@@ -206,6 +208,7 @@ use Pam\MobileUi\Rendering\TailwindStyleCompiler;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
 use Pam\Native\FlexDirection;
+use Pam\Native\AccessibilityRole;
 use Pam\Native\FontStyle;
 use Pam\Native\Align;
 use Pam\Native\Internal\TemplateCompiler;
@@ -1021,6 +1024,21 @@ $nativePressableProps = Pressable::make(
     ],
     Text::make('Native pressable'),
 )->toElement();
+$headingSemantics = Heading::make('Account')->toElement();
+$linkSemantics = Link::make('Open documentation')->toElement();
+$checkboxSemantics = Checkbox::make(['value' => 'terms'])->toElement();
+$radioSemantics = Radio::make(['value' => 'monthly'])->toElement();
+$progressSemantics = Progress::make(['value' => 40])->toElement();
+$listSemantics = FlatList::make(['items' => ['One', 'Two']])->toElement();
+$tabListSemantics = TabsList::make()->toElement();
+$tabSemantics = TabsTrigger::make(['value' => 'profile'])->toElement();
+$rolePrecedence = Pressable::make(
+    [
+        'accessibilityRole' => 'button',
+        'role' => 'link',
+    ],
+    Text::make('Role precedence'),
+)->toElement();
 $assert(
     Wire::decodeMap($singleSkeletonNative->bytes)['behavior']
         === NativeBehavior::Skeleton->value
@@ -1066,7 +1084,25 @@ $assert(
         && $nativePressableProps->properties()[PropKey::RippleColor->value]
             === 0x80010203
         && $nativePressableProps->properties()[PropKey::PressOpacity->value] === 0.5
-        && $nativePressableProps->properties()[PropKey::HitSlop->value] === 12,
+        && $nativePressableProps->properties()[PropKey::HitSlop->value] === 12
+        && $headingSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::Header->value
+        && $linkSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::Link->value
+        && $checkboxSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::Checkbox->value
+        && $radioSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::Radio->value
+        && $progressSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::ProgressBar->value
+        && $listSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::List->value
+        && $tabListSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::TabList->value
+        && $tabSemantics->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::Tab->value
+        && $rolePrecedence->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::Link->value,
     'Core facades and aliases must forward image, a11y, spinner, text action, scroll, keyboard and status properties.',
 );
 

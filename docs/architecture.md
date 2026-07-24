@@ -188,6 +188,13 @@ pointer routing, ripple/opacity state, text selection and `EditorInfo` actions
 locally, so a press or keyboard action does not cross PHP until an authored
 semantic callback actually fires.
 
+Accessibility roles use one sequential integer enum shared by PHP templates,
+fluent components and Android. Component anatomy supplies roles for headings,
+links, selection controls, combo boxes, menus, ranges, tabs and collections;
+an explicit React Native `role` has precedence over `accessibilityRole`.
+Android maps the resolved role to its TalkBack class and heading/checkable
+metadata during mount, without reflection or a component-name lookup.
+
 Android Back is intercepted by PAM's window host and delivered through the same
 bounded native dismissal event as backdrop/drag dismissal. Controlled overlays
 remain visible until the application publishes `open=false`; after the window
