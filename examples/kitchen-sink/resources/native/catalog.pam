@@ -51,6 +51,11 @@
                         <Card><Heading size="lg">55</Heading><Text>Native icons</Text></Card>
                     </GridItem>
                 </Grid>
+
+                <TypedCommunityCard
+                    title="Classes and tags together"
+                    description="This tag renders a reusable component authored entirely with typed PHP facades."
+                />
             </VStack>
 
             <VStack class="gap-3">

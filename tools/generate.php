@@ -172,15 +172,16 @@ foreach ($catalog['modules'] as $index => $module) {
         default => 1,
     };
     $hasVariants = ($module['variants'] ?? []) !== [];
+    $hasPublicTag = ($modules[$name] ?? []) !== [];
     $verification = [
-        2,
-        2,
+        $hasPublicTag ? 3 : 4,
+        $hasPublicTag ? 3 : 4,
         $implementation === 4 ? 4 : 2,
-        $hasVariants ? 2 : 4,
+        $hasVariants ? 3 : 4,
         $implementation === 4 ? 4 : 2,
         2,
-        2,
-        ($module['examples'] ?? 0) > 0 ? 2 : 1,
+        $hasPublicTag ? 3 : 4,
+        $hasPublicTag ? 3 : 4,
         2,
         1,
     ];
@@ -323,6 +324,26 @@ foreach ($parityModules as $module) {
     $catalogMarkdown .= '- Variants: '.($variantNames === [] ? 'none' : implode(', ', $variantNames))."\n";
     $catalogMarkdown .= '- Upstream examples captured: '.$module['examples']."\n";
     $catalogMarkdown .= '- Tags: '.($tagNames === [] ? 'none' : implode(', ', $tagNames))."\n";
+
+    $firstTag = $module['parts'][0] ?? null;
+    if (is_string($firstTag)) {
+        $class = $tags[$firstTag];
+        $catalogMarkdown .= "\n### Minimal construction\n\n";
+        $catalogMarkdown .= "```xml\n<{$firstTag} />\n```\n\n";
+        $catalogMarkdown .= "```php\n";
+        $catalogMarkdown .= "use Pam\\MobileUi\\Component\\{$class};\n\n";
+        $catalogMarkdown .= "\$component = {$class}::make();\n";
+        $catalogMarkdown .= "```\n";
+        $catalogMarkdown .= "\n### Complete module API\n\n";
+        $catalogMarkdown .= "| Tag | Typed PHP construction |\n";
+        $catalogMarkdown .= "| --- | --- |\n";
+        foreach ($module['parts'] as $part) {
+            $partClass = $tags[$part];
+            $catalogMarkdown .= "| `{$part}` | `{$partClass}::make()` |\n";
+        }
+    } else {
+        $catalogMarkdown .= "\nThis is an aggregate/build-time module with no standalone runtime tag.\n";
+    }
 }
 
 $catalogMarkdown .= "\n";

@@ -15,6 +15,31 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 7
 - Tags: `Accordion`, `AccordionContent`, `AccordionContentText`, `AccordionHeader`, `AccordionIcon`, `AccordionItem`, `AccordionTitleText`, `AccordionTrigger`
 
+### Minimal construction
+
+```xml
+<Accordion />
+```
+
+```php
+use Pam\MobileUi\Component\Accordion;
+
+$component = Accordion::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Accordion` | `Accordion::make()` |
+| `AccordionContent` | `AccordionContent::make()` |
+| `AccordionContentText` | `AccordionContentText::make()` |
+| `AccordionHeader` | `AccordionHeader::make()` |
+| `AccordionIcon` | `AccordionIcon::make()` |
+| `AccordionItem` | `AccordionItem::make()` |
+| `AccordionTitleText` | `AccordionTitleText::make()` |
+| `AccordionTrigger` | `AccordionTrigger::make()` |
+
 ## actionsheet
 
 - Category: Overlay
@@ -23,6 +48,36 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `isTruncated`, `bold`, `underline`, `strikeThrough`, `sub`, `italic`, `highlight`
 - Upstream examples captured: 9
 - Tags: `Actionsheet`, `ActionsheetBackdrop`, `ActionsheetContent`, `ActionsheetDragIndicator`, `ActionsheetDragIndicatorWrapper`, `ActionsheetFlatList`, `ActionsheetIcon`, `ActionsheetItem`, `ActionsheetItemText`, `ActionsheetScrollView`, `ActionsheetSectionHeaderText`, `ActionsheetSectionList`, `ActionsheetVirtualizedList`
+
+### Minimal construction
+
+```xml
+<Actionsheet />
+```
+
+```php
+use Pam\MobileUi\Component\Actionsheet;
+
+$component = Actionsheet::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Actionsheet` | `Actionsheet::make()` |
+| `ActionsheetBackdrop` | `ActionsheetBackdrop::make()` |
+| `ActionsheetContent` | `ActionsheetContent::make()` |
+| `ActionsheetDragIndicator` | `ActionsheetDragIndicator::make()` |
+| `ActionsheetDragIndicatorWrapper` | `ActionsheetDragIndicatorWrapper::make()` |
+| `ActionsheetFlatList` | `ActionsheetFlatList::make()` |
+| `ActionsheetIcon` | `ActionsheetIcon::make()` |
+| `ActionsheetItem` | `ActionsheetItem::make()` |
+| `ActionsheetItemText` | `ActionsheetItemText::make()` |
+| `ActionsheetScrollView` | `ActionsheetScrollView::make()` |
+| `ActionsheetSectionHeaderText` | `ActionsheetSectionHeaderText::make()` |
+| `ActionsheetSectionList` | `ActionsheetSectionList::make()` |
+| `ActionsheetVirtualizedList` | `ActionsheetVirtualizedList::make()` |
 
 ## alert
 
@@ -33,6 +88,26 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 5
 - Tags: `Alert`, `AlertIcon`, `AlertText`
 
+### Minimal construction
+
+```xml
+<Alert />
+```
+
+```php
+use Pam\MobileUi\Component\Alert;
+
+$component = Alert::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Alert` | `Alert::make()` |
+| `AlertIcon` | `AlertIcon::make()` |
+| `AlertText` | `AlertText::make()` |
+
 ## alert-dialog
 
 - Category: Overlay
@@ -41,6 +116,30 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 4
 - Tags: `AlertDialog`, `AlertDialogBackdrop`, `AlertDialogBody`, `AlertDialogCloseButton`, `AlertDialogContent`, `AlertDialogFooter`, `AlertDialogHeader`
+
+### Minimal construction
+
+```xml
+<AlertDialog />
+```
+
+```php
+use Pam\MobileUi\Component\AlertDialog;
+
+$component = AlertDialog::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `AlertDialog` | `AlertDialog::make()` |
+| `AlertDialogBackdrop` | `AlertDialogBackdrop::make()` |
+| `AlertDialogBody` | `AlertDialogBody::make()` |
+| `AlertDialogCloseButton` | `AlertDialogCloseButton::make()` |
+| `AlertDialogContent` | `AlertDialogContent::make()` |
+| `AlertDialogFooter` | `AlertDialogFooter::make()` |
+| `AlertDialogHeader` | `AlertDialogHeader::make()` |
 
 ## all-components
 
@@ -51,6 +150,8 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 0
 - Tags: none
 
+This is an aggregate/build-time module with no standalone runtime tag.
+
 ## avatar
 
 - Category: Media
@@ -59,6 +160,29 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 9
 - Tags: `Avatar`, `AvatarBadge`, `AvatarFallback`, `AvatarFallbackText`, `AvatarGroup`, `AvatarImage`
+
+### Minimal construction
+
+```xml
+<Avatar />
+```
+
+```php
+use Pam\MobileUi\Component\Avatar;
+
+$component = Avatar::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Avatar` | `Avatar::make()` |
+| `AvatarBadge` | `AvatarBadge::make()` |
+| `AvatarFallback` | `AvatarFallback::make()` |
+| `AvatarFallbackText` | `AvatarFallbackText::make()` |
+| `AvatarGroup` | `AvatarGroup::make()` |
+| `AvatarImage` | `AvatarImage::make()` |
 
 ## badge
 
@@ -69,6 +193,26 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 3
 - Tags: `Badge`, `BadgeIcon`, `BadgeText`
 
+### Minimal construction
+
+```xml
+<Badge />
+```
+
+```php
+use Pam\MobileUi\Component\Badge;
+
+$component = Badge::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Badge` | `Badge::make()` |
+| `BadgeIcon` | `BadgeIcon::make()` |
+| `BadgeText` | `BadgeText::make()` |
+
 ## bottomsheet
 
 - Category: Overlay
@@ -77,6 +221,36 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 4
 - Tags: `BottomSheet`, `BottomSheetPortal`, `BottomSheetTrigger`, `BottomSheetBackdrop`, `BottomSheetDragIndicator`, `BottomSheetContent`, `BottomSheetFooter`, `BottomSheetItem`, `BottomSheetItemText`, `BottomSheetTextInput`, `BottomSheetScrollView`, `BottomSheetFlatList`, `BottomSheetSectionList`
+
+### Minimal construction
+
+```xml
+<BottomSheet />
+```
+
+```php
+use Pam\MobileUi\Component\BottomSheet;
+
+$component = BottomSheet::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `BottomSheet` | `BottomSheet::make()` |
+| `BottomSheetPortal` | `BottomSheetPortal::make()` |
+| `BottomSheetTrigger` | `BottomSheetTrigger::make()` |
+| `BottomSheetBackdrop` | `BottomSheetBackdrop::make()` |
+| `BottomSheetDragIndicator` | `BottomSheetDragIndicator::make()` |
+| `BottomSheetContent` | `BottomSheetContent::make()` |
+| `BottomSheetFooter` | `BottomSheetFooter::make()` |
+| `BottomSheetItem` | `BottomSheetItem::make()` |
+| `BottomSheetItemText` | `BottomSheetItemText::make()` |
+| `BottomSheetTextInput` | `BottomSheetTextInput::make()` |
+| `BottomSheetScrollView` | `BottomSheetScrollView::make()` |
+| `BottomSheetFlatList` | `BottomSheetFlatList::make()` |
+| `BottomSheetSectionList` | `BottomSheetSectionList::make()` |
 
 ## box
 
@@ -87,6 +261,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 1
 - Tags: `Box`
 
+### Minimal construction
+
+```xml
+<Box />
+```
+
+```php
+use Pam\MobileUi\Component\Box;
+
+$component = Box::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Box` | `Box::make()` |
+
 ## button
 
 - Category: Forms
@@ -95,6 +287,28 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `variant`, `size`, `space`, `isAttached`, `flexDirection`
 - Upstream examples captured: 6
 - Tags: `Button`, `ButtonGroup`, `ButtonIcon`, `ButtonSpinner`, `ButtonText`
+
+### Minimal construction
+
+```xml
+<Button />
+```
+
+```php
+use Pam\MobileUi\Component\Button;
+
+$component = Button::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Button` | `Button::make()` |
+| `ButtonGroup` | `ButtonGroup::make()` |
+| `ButtonIcon` | `ButtonIcon::make()` |
+| `ButtonSpinner` | `ButtonSpinner::make()` |
+| `ButtonText` | `ButtonText::make()` |
 
 ## calendar
 
@@ -105,6 +319,40 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 7
 - Tags: `Calendar`, `CalendarHeader`, `CalendarHeaderPrevButton`, `CalendarHeaderNextButton`, `CalendarHeaderTitle`, `CalendarHeaderMonthSelect`, `CalendarHeaderYearSelect`, `CalendarWeekDaysHeader`, `CalendarWeekDay`, `CalendarBody`, `CalendarGrid`, `CalendarWeek`, `CalendarDay`, `CalendarDayText`, `CalendarDayIndicator`, `CalendarWeekNumber`, `CalendarFooter`
 
+### Minimal construction
+
+```xml
+<Calendar />
+```
+
+```php
+use Pam\MobileUi\Component\Calendar;
+
+$component = Calendar::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Calendar` | `Calendar::make()` |
+| `CalendarHeader` | `CalendarHeader::make()` |
+| `CalendarHeaderPrevButton` | `CalendarHeaderPrevButton::make()` |
+| `CalendarHeaderNextButton` | `CalendarHeaderNextButton::make()` |
+| `CalendarHeaderTitle` | `CalendarHeaderTitle::make()` |
+| `CalendarHeaderMonthSelect` | `CalendarHeaderMonthSelect::make()` |
+| `CalendarHeaderYearSelect` | `CalendarHeaderYearSelect::make()` |
+| `CalendarWeekDaysHeader` | `CalendarWeekDaysHeader::make()` |
+| `CalendarWeekDay` | `CalendarWeekDay::make()` |
+| `CalendarBody` | `CalendarBody::make()` |
+| `CalendarGrid` | `CalendarGrid::make()` |
+| `CalendarWeek` | `CalendarWeek::make()` |
+| `CalendarDay` | `CalendarDay::make()` |
+| `CalendarDayText` | `CalendarDayText::make()` |
+| `CalendarDayIndicator` | `CalendarDayIndicator::make()` |
+| `CalendarWeekNumber` | `CalendarWeekNumber::make()` |
+| `CalendarFooter` | `CalendarFooter::make()` |
+
 ## card
 
 - Category: Data display
@@ -113,6 +361,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `size`
 - Upstream examples captured: 5
 - Tags: `Card`
+
+### Minimal construction
+
+```xml
+<Card />
+```
+
+```php
+use Pam\MobileUi\Component\Card;
+
+$component = Card::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Card` | `Card::make()` |
 
 ## center
 
@@ -123,6 +389,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 1
 - Tags: `Center`
 
+### Minimal construction
+
+```xml
+<Center />
+```
+
+```php
+use Pam\MobileUi\Component\Center;
+
+$component = Center::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Center` | `Center::make()` |
+
 ## chat-ai
 
 - Category: AI
@@ -131,6 +415,77 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 3
 - Tags: `Attachments`, `Attachment`, `AttachmentPreview`, `AttachmentRemove`, `AttachmentHoverCard`, `AttachmentHoverCardContent`, `AttachmentHoverCardText`, `AttachmentEmpty`, `BlankContext`, `BlankProvider`, `Conversation`, `ConversationEmptyState`, `ConversationContent`, `ConversationScrollButton`, `ConversationDownload`, `FileTree`, `FileTreeFolder`, `FileTreeFile`, `FileTreeActions`, `Message`, `MessageContent`, `MessageResponse`, `MessageToolbar`, `MessageAction`, `MessageBranch`, `MessageBranchContent`, `MessageBranchSelector`, `MessageBranchPrevious`, `MessageBranchNext`, `MessageBranchPage`, `ModelSelector`, `ModelSelectorTrigger`, `ModelSelectorContent`, `ModelSelectorInput`, `ModelSelectorList`, `ModelSelectorEmpty`, `ModelSelectorGroup`, `ModelSelectorItem`, `ModelSelectorShortcut`, `ModelSelectorSeparator`, `ModelSelectorLogo`, `ModelSelectorLogoGroup`, `ModelSelectorName`, `PromptInputProvider`, `PromptInput`, `PromptInputBody`, `PromptInputTextarea`, `PromptInputFooter`, `PromptInputTools`, `PromptInputButton`, `PromptInputSubmit`, `PromptInputActionMenu`, `PromptInputActionMenuTrigger`, `PromptInputActionMenuContent`
+
+### Minimal construction
+
+```xml
+<Attachments />
+```
+
+```php
+use Pam\MobileUi\Component\Attachments;
+
+$component = Attachments::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Attachments` | `Attachments::make()` |
+| `Attachment` | `Attachment::make()` |
+| `AttachmentPreview` | `AttachmentPreview::make()` |
+| `AttachmentRemove` | `AttachmentRemove::make()` |
+| `AttachmentHoverCard` | `AttachmentHoverCard::make()` |
+| `AttachmentHoverCardContent` | `AttachmentHoverCardContent::make()` |
+| `AttachmentHoverCardText` | `AttachmentHoverCardText::make()` |
+| `AttachmentEmpty` | `AttachmentEmpty::make()` |
+| `BlankContext` | `BlankContext::make()` |
+| `BlankProvider` | `BlankProvider::make()` |
+| `Conversation` | `Conversation::make()` |
+| `ConversationEmptyState` | `ConversationEmptyState::make()` |
+| `ConversationContent` | `ConversationContent::make()` |
+| `ConversationScrollButton` | `ConversationScrollButton::make()` |
+| `ConversationDownload` | `ConversationDownload::make()` |
+| `FileTree` | `FileTree::make()` |
+| `FileTreeFolder` | `FileTreeFolder::make()` |
+| `FileTreeFile` | `FileTreeFile::make()` |
+| `FileTreeActions` | `FileTreeActions::make()` |
+| `Message` | `Message::make()` |
+| `MessageContent` | `MessageContent::make()` |
+| `MessageResponse` | `MessageResponse::make()` |
+| `MessageToolbar` | `MessageToolbar::make()` |
+| `MessageAction` | `MessageAction::make()` |
+| `MessageBranch` | `MessageBranch::make()` |
+| `MessageBranchContent` | `MessageBranchContent::make()` |
+| `MessageBranchSelector` | `MessageBranchSelector::make()` |
+| `MessageBranchPrevious` | `MessageBranchPrevious::make()` |
+| `MessageBranchNext` | `MessageBranchNext::make()` |
+| `MessageBranchPage` | `MessageBranchPage::make()` |
+| `ModelSelector` | `ModelSelector::make()` |
+| `ModelSelectorTrigger` | `ModelSelectorTrigger::make()` |
+| `ModelSelectorContent` | `ModelSelectorContent::make()` |
+| `ModelSelectorInput` | `ModelSelectorInput::make()` |
+| `ModelSelectorList` | `ModelSelectorList::make()` |
+| `ModelSelectorEmpty` | `ModelSelectorEmpty::make()` |
+| `ModelSelectorGroup` | `ModelSelectorGroup::make()` |
+| `ModelSelectorItem` | `ModelSelectorItem::make()` |
+| `ModelSelectorShortcut` | `ModelSelectorShortcut::make()` |
+| `ModelSelectorSeparator` | `ModelSelectorSeparator::make()` |
+| `ModelSelectorLogo` | `ModelSelectorLogo::make()` |
+| `ModelSelectorLogoGroup` | `ModelSelectorLogoGroup::make()` |
+| `ModelSelectorName` | `ModelSelectorName::make()` |
+| `PromptInputProvider` | `PromptInputProvider::make()` |
+| `PromptInput` | `PromptInput::make()` |
+| `PromptInputBody` | `PromptInputBody::make()` |
+| `PromptInputTextarea` | `PromptInputTextarea::make()` |
+| `PromptInputFooter` | `PromptInputFooter::make()` |
+| `PromptInputTools` | `PromptInputTools::make()` |
+| `PromptInputButton` | `PromptInputButton::make()` |
+| `PromptInputSubmit` | `PromptInputSubmit::make()` |
+| `PromptInputActionMenu` | `PromptInputActionMenu::make()` |
+| `PromptInputActionMenuTrigger` | `PromptInputActionMenuTrigger::make()` |
+| `PromptInputActionMenuContent` | `PromptInputActionMenuContent::make()` |
 
 ## checkbox
 
@@ -141,6 +496,28 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 9
 - Tags: `Checkbox`, `CheckboxGroup`, `CheckboxIcon`, `CheckboxIndicator`, `CheckboxLabel`
 
+### Minimal construction
+
+```xml
+<Checkbox />
+```
+
+```php
+use Pam\MobileUi\Component\Checkbox;
+
+$component = Checkbox::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Checkbox` | `Checkbox::make()` |
+| `CheckboxGroup` | `CheckboxGroup::make()` |
+| `CheckboxIcon` | `CheckboxIcon::make()` |
+| `CheckboxIndicator` | `CheckboxIndicator::make()` |
+| `CheckboxLabel` | `CheckboxLabel::make()` |
+
 ## date-time-picker
 
 - Category: Forms
@@ -149,6 +526,27 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `size`, `variant`
 - Upstream examples captured: 4
 - Tags: `DateTimePicker`, `DateTimePickerIcon`, `DateTimePickerInput`, `DateTimePickerTrigger`
+
+### Minimal construction
+
+```xml
+<DateTimePicker />
+```
+
+```php
+use Pam\MobileUi\Component\DateTimePicker;
+
+$component = DateTimePicker::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `DateTimePicker` | `DateTimePicker::make()` |
+| `DateTimePickerIcon` | `DateTimePickerIcon::make()` |
+| `DateTimePickerInput` | `DateTimePickerInput::make()` |
+| `DateTimePickerTrigger` | `DateTimePickerTrigger::make()` |
 
 ## divider
 
@@ -159,6 +557,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 5
 - Tags: `Divider`
 
+### Minimal construction
+
+```xml
+<Divider />
+```
+
+```php
+use Pam\MobileUi\Component\Divider;
+
+$component = Divider::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Divider` | `Divider::make()` |
+
 ## drawer
 
 - Category: Overlay
@@ -167,6 +583,30 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `size`, `anchor`
 - Upstream examples captured: 3
 - Tags: `Drawer`, `DrawerBackdrop`, `DrawerBody`, `DrawerCloseButton`, `DrawerContent`, `DrawerFooter`, `DrawerHeader`
+
+### Minimal construction
+
+```xml
+<Drawer />
+```
+
+```php
+use Pam\MobileUi\Component\Drawer;
+
+$component = Drawer::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Drawer` | `Drawer::make()` |
+| `DrawerBackdrop` | `DrawerBackdrop::make()` |
+| `DrawerBody` | `DrawerBody::make()` |
+| `DrawerCloseButton` | `DrawerCloseButton::make()` |
+| `DrawerContent` | `DrawerContent::make()` |
+| `DrawerFooter` | `DrawerFooter::make()` |
+| `DrawerHeader` | `DrawerHeader::make()` |
 
 ## fab
 
@@ -177,6 +617,26 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 5
 - Tags: `Fab`, `FabIcon`, `FabLabel`
 
+### Minimal construction
+
+```xml
+<Fab />
+```
+
+```php
+use Pam\MobileUi\Component\Fab;
+
+$component = Fab::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Fab` | `Fab::make()` |
+| `FabIcon` | `FabIcon::make()` |
+| `FabLabel` | `FabLabel::make()` |
+
 ## flat-list
 
 - Category: System
@@ -185,6 +645,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `FlatList`
+
+### Minimal construction
+
+```xml
+<FlatList />
+```
+
+```php
+use Pam\MobileUi\Component\FlatList;
+
+$component = FlatList::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `FlatList` | `FlatList::make()` |
 
 ## form-control
 
@@ -195,6 +673,32 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 7
 - Tags: `FormControl`, `FormControlError`, `FormControlErrorText`, `FormControlErrorIcon`, `FormControlLabel`, `FormControlLabelText`, `FormControlLabelAstrick`, `FormControlHelper`, `FormControlHelperText`
 
+### Minimal construction
+
+```xml
+<FormControl />
+```
+
+```php
+use Pam\MobileUi\Component\FormControl;
+
+$component = FormControl::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `FormControl` | `FormControl::make()` |
+| `FormControlError` | `FormControlError::make()` |
+| `FormControlErrorText` | `FormControlErrorText::make()` |
+| `FormControlErrorIcon` | `FormControlErrorIcon::make()` |
+| `FormControlLabel` | `FormControlLabel::make()` |
+| `FormControlLabelText` | `FormControlLabelText::make()` |
+| `FormControlLabelAstrick` | `FormControlLabelAstrick::make()` |
+| `FormControlHelper` | `FormControlHelper::make()` |
+| `FormControlHelperText` | `FormControlHelperText::make()` |
+
 ## gluestack-ui-provider
 
 - Category: System
@@ -203,6 +707,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `GluestackUIProvider`
+
+### Minimal construction
+
+```xml
+<GluestackUIProvider />
+```
+
+```php
+use Pam\MobileUi\Component\GluestackUIProvider;
+
+$component = GluestackUIProvider::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `GluestackUIProvider` | `GluestackUIProvider::make()` |
 
 ## grid
 
@@ -213,6 +735,25 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 5
 - Tags: `Grid`, `GridItem`
 
+### Minimal construction
+
+```xml
+<Grid />
+```
+
+```php
+use Pam\MobileUi\Component\Grid;
+
+$component = Grid::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Grid` | `Grid::make()` |
+| `GridItem` | `GridItem::make()` |
+
 ## heading
 
 - Category: Typography
@@ -221,6 +762,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `isTruncated`, `bold`, `underline`, `strikeThrough`, `sub`, `italic`, `highlight`, `size`
 - Upstream examples captured: 2
 - Tags: `Heading`
+
+### Minimal construction
+
+```xml
+<Heading />
+```
+
+```php
+use Pam\MobileUi\Component\Heading;
+
+$component = Heading::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Heading` | `Heading::make()` |
 
 ## hstack
 
@@ -231,6 +790,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 2
 - Tags: `HStack`
 
+### Minimal construction
+
+```xml
+<HStack />
+```
+
+```php
+use Pam\MobileUi\Component\HStack;
+
+$component = HStack::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `HStack` | `HStack::make()` |
+
 ## icon
 
 - Category: Media
@@ -239,6 +816,79 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `size`
 - Upstream examples captured: 4
 - Tags: `Icon`, `AddIcon`, `AlertCircleIcon`, `ArrowUpIcon`, `ArrowDownIcon`, `ArrowRightIcon`, `ArrowLeftIcon`, `AtSignIcon`, `BellIcon`, `CalendarDaysIcon`, `CheckIcon`, `CheckCircleIcon`, `ChevronUpIcon`, `ChevronDownIcon`, `ChevronLeftIcon`, `ChevronRightIcon`, `ChevronsLeftIcon`, `ChevronsRightIcon`, `ChevronsUpDownIcon`, `CircleIcon`, `ClockIcon`, `CloseIcon`, `CloseCircleIcon`, `CopyIcon`, `DownloadIcon`, `EditIcon`, `EyeIcon`, `EyeOffIcon`, `FavouriteIcon`, `GlobeIcon`, `GripVerticalIcon`, `HelpCircleIcon`, `InfoIcon`, `LinkIcon`, `ExternalLinkIcon`, `LoaderIcon`, `LockIcon`, `MailIcon`, `MenuIcon`, `MessageCircleIcon`, `MoonIcon`, `PaperclipIcon`, `PhoneIcon`, `PlayIcon`, `RemoveIcon`, `RepeatIcon`, `Repeat1Icon`, `SearchIcon`, `SettingsIcon`, `ShareIcon`, `SlashIcon`, `StarIcon`, `SunIcon`, `ThreeDotsIcon`, `TrashIcon`, `UnlockIcon`
+
+### Minimal construction
+
+```xml
+<Icon />
+```
+
+```php
+use Pam\MobileUi\Component\Icon;
+
+$component = Icon::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Icon` | `Icon::make()` |
+| `AddIcon` | `AddIcon::make()` |
+| `AlertCircleIcon` | `AlertCircleIcon::make()` |
+| `ArrowUpIcon` | `ArrowUpIcon::make()` |
+| `ArrowDownIcon` | `ArrowDownIcon::make()` |
+| `ArrowRightIcon` | `ArrowRightIcon::make()` |
+| `ArrowLeftIcon` | `ArrowLeftIcon::make()` |
+| `AtSignIcon` | `AtSignIcon::make()` |
+| `BellIcon` | `BellIcon::make()` |
+| `CalendarDaysIcon` | `CalendarDaysIcon::make()` |
+| `CheckIcon` | `CheckIcon::make()` |
+| `CheckCircleIcon` | `CheckCircleIcon::make()` |
+| `ChevronUpIcon` | `ChevronUpIcon::make()` |
+| `ChevronDownIcon` | `ChevronDownIcon::make()` |
+| `ChevronLeftIcon` | `ChevronLeftIcon::make()` |
+| `ChevronRightIcon` | `ChevronRightIcon::make()` |
+| `ChevronsLeftIcon` | `ChevronsLeftIcon::make()` |
+| `ChevronsRightIcon` | `ChevronsRightIcon::make()` |
+| `ChevronsUpDownIcon` | `ChevronsUpDownIcon::make()` |
+| `CircleIcon` | `CircleIcon::make()` |
+| `ClockIcon` | `ClockIcon::make()` |
+| `CloseIcon` | `CloseIcon::make()` |
+| `CloseCircleIcon` | `CloseCircleIcon::make()` |
+| `CopyIcon` | `CopyIcon::make()` |
+| `DownloadIcon` | `DownloadIcon::make()` |
+| `EditIcon` | `EditIcon::make()` |
+| `EyeIcon` | `EyeIcon::make()` |
+| `EyeOffIcon` | `EyeOffIcon::make()` |
+| `FavouriteIcon` | `FavouriteIcon::make()` |
+| `GlobeIcon` | `GlobeIcon::make()` |
+| `GripVerticalIcon` | `GripVerticalIcon::make()` |
+| `HelpCircleIcon` | `HelpCircleIcon::make()` |
+| `InfoIcon` | `InfoIcon::make()` |
+| `LinkIcon` | `LinkIcon::make()` |
+| `ExternalLinkIcon` | `ExternalLinkIcon::make()` |
+| `LoaderIcon` | `LoaderIcon::make()` |
+| `LockIcon` | `LockIcon::make()` |
+| `MailIcon` | `MailIcon::make()` |
+| `MenuIcon` | `MenuIcon::make()` |
+| `MessageCircleIcon` | `MessageCircleIcon::make()` |
+| `MoonIcon` | `MoonIcon::make()` |
+| `PaperclipIcon` | `PaperclipIcon::make()` |
+| `PhoneIcon` | `PhoneIcon::make()` |
+| `PlayIcon` | `PlayIcon::make()` |
+| `RemoveIcon` | `RemoveIcon::make()` |
+| `RepeatIcon` | `RepeatIcon::make()` |
+| `Repeat1Icon` | `Repeat1Icon::make()` |
+| `SearchIcon` | `SearchIcon::make()` |
+| `SettingsIcon` | `SettingsIcon::make()` |
+| `ShareIcon` | `ShareIcon::make()` |
+| `SlashIcon` | `SlashIcon::make()` |
+| `StarIcon` | `StarIcon::make()` |
+| `SunIcon` | `SunIcon::make()` |
+| `ThreeDotsIcon` | `ThreeDotsIcon::make()` |
+| `TrashIcon` | `TrashIcon::make()` |
+| `UnlockIcon` | `UnlockIcon::make()` |
 
 ## image
 
@@ -249,6 +899,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 2
 - Tags: `Image`
 
+### Minimal construction
+
+```xml
+<Image />
+```
+
+```php
+use Pam\MobileUi\Component\Image;
+
+$component = Image::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Image` | `Image::make()` |
+
 ## image-background
 
 - Category: Media
@@ -257,6 +925,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `ImageBackground`
+
+### Minimal construction
+
+```xml
+<ImageBackground />
+```
+
+```php
+use Pam\MobileUi\Component\ImageBackground;
+
+$component = ImageBackground::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `ImageBackground` | `ImageBackground::make()` |
 
 ## image-viewer
 
@@ -267,6 +953,29 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 3
 - Tags: `ImageViewer`, `ImageViewerTrigger`, `ImageViewerContent`, `ImageViewerCloseButton`, `ImageViewerNavigation`, `ImageViewerCounter`
 
+### Minimal construction
+
+```xml
+<ImageViewer />
+```
+
+```php
+use Pam\MobileUi\Component\ImageViewer;
+
+$component = ImageViewer::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `ImageViewer` | `ImageViewer::make()` |
+| `ImageViewerTrigger` | `ImageViewerTrigger::make()` |
+| `ImageViewerContent` | `ImageViewerContent::make()` |
+| `ImageViewerCloseButton` | `ImageViewerCloseButton::make()` |
+| `ImageViewerNavigation` | `ImageViewerNavigation::make()` |
+| `ImageViewerCounter` | `ImageViewerCounter::make()` |
+
 ## input
 
 - Category: Forms
@@ -275,6 +984,27 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 3
 - Tags: `Input`, `InputField`, `InputIcon`, `InputSlot`
+
+### Minimal construction
+
+```xml
+<Input />
+```
+
+```php
+use Pam\MobileUi\Component\Input;
+
+$component = Input::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Input` | `Input::make()` |
+| `InputField` | `InputField::make()` |
+| `InputIcon` | `InputIcon::make()` |
+| `InputSlot` | `InputSlot::make()` |
 
 ## input-accessory-view
 
@@ -285,6 +1015,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 0
 - Tags: `InputAccessoryView`
 
+### Minimal construction
+
+```xml
+<InputAccessoryView />
+```
+
+```php
+use Pam\MobileUi\Component\InputAccessoryView;
+
+$component = InputAccessoryView::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `InputAccessoryView` | `InputAccessoryView::make()` |
+
 ## keyboard-avoiding-view
 
 - Category: System
@@ -293,6 +1041,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `KeyboardAvoidingView`
+
+### Minimal construction
+
+```xml
+<KeyboardAvoidingView />
+```
+
+```php
+use Pam\MobileUi\Component\KeyboardAvoidingView;
+
+$component = KeyboardAvoidingView::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `KeyboardAvoidingView` | `KeyboardAvoidingView::make()` |
 
 ## link
 
@@ -303,6 +1069,25 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 3
 - Tags: `Link`, `LinkText`
 
+### Minimal construction
+
+```xml
+<Link />
+```
+
+```php
+use Pam\MobileUi\Component\Link;
+
+$component = Link::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Link` | `Link::make()` |
+| `LinkText` | `LinkText::make()` |
+
 ## liquid-glass
 
 - Category: Overlay
@@ -311,6 +1096,25 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 4
 - Tags: `GlassView`, `GlassContainer`
+
+### Minimal construction
+
+```xml
+<GlassView />
+```
+
+```php
+use Pam\MobileUi\Component\GlassView;
+
+$component = GlassView::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `GlassView` | `GlassView::make()` |
+| `GlassContainer` | `GlassContainer::make()` |
 
 ## menu
 
@@ -321,6 +1125,27 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 3
 - Tags: `Menu`, `MenuItem`, `MenuItemLabel`, `MenuSeparator`
 
+### Minimal construction
+
+```xml
+<Menu />
+```
+
+```php
+use Pam\MobileUi\Component\Menu;
+
+$component = Menu::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Menu` | `Menu::make()` |
+| `MenuItem` | `MenuItem::make()` |
+| `MenuItemLabel` | `MenuItemLabel::make()` |
+| `MenuSeparator` | `MenuSeparator::make()` |
+
 ## modal
 
 - Category: Overlay
@@ -329,6 +1154,30 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `size`
 - Upstream examples captured: 5
 - Tags: `Modal`, `ModalBackdrop`, `ModalBody`, `ModalCloseButton`, `ModalContent`, `ModalFooter`, `ModalHeader`
+
+### Minimal construction
+
+```xml
+<Modal />
+```
+
+```php
+use Pam\MobileUi\Component\Modal;
+
+$component = Modal::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Modal` | `Modal::make()` |
+| `ModalBackdrop` | `ModalBackdrop::make()` |
+| `ModalBody` | `ModalBody::make()` |
+| `ModalCloseButton` | `ModalCloseButton::make()` |
+| `ModalContent` | `ModalContent::make()` |
+| `ModalFooter` | `ModalFooter::make()` |
+| `ModalHeader` | `ModalHeader::make()` |
 
 ## popover
 
@@ -339,6 +1188,31 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 6
 - Tags: `Popover`, `PopoverArrow`, `PopoverBackdrop`, `PopoverBody`, `PopoverCloseButton`, `PopoverContent`, `PopoverFooter`, `PopoverHeader`
 
+### Minimal construction
+
+```xml
+<Popover />
+```
+
+```php
+use Pam\MobileUi\Component\Popover;
+
+$component = Popover::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Popover` | `Popover::make()` |
+| `PopoverArrow` | `PopoverArrow::make()` |
+| `PopoverBackdrop` | `PopoverBackdrop::make()` |
+| `PopoverBody` | `PopoverBody::make()` |
+| `PopoverCloseButton` | `PopoverCloseButton::make()` |
+| `PopoverContent` | `PopoverContent::make()` |
+| `PopoverFooter` | `PopoverFooter::make()` |
+| `PopoverHeader` | `PopoverHeader::make()` |
+
 ## portal
 
 - Category: Overlay
@@ -347,6 +1221,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 1
 - Tags: `Portal`
+
+### Minimal construction
+
+```xml
+<Portal />
+```
+
+```php
+use Pam\MobileUi\Component\Portal;
+
+$component = Portal::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Portal` | `Portal::make()` |
 
 ## pressable
 
@@ -357,6 +1249,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 2
 - Tags: `Pressable`
 
+### Minimal construction
+
+```xml
+<Pressable />
+```
+
+```php
+use Pam\MobileUi\Component\Pressable;
+
+$component = Pressable::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Pressable` | `Pressable::make()` |
+
 ## progress
 
 - Category: Feedback
@@ -365,6 +1275,25 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `orientation`
 - Upstream examples captured: 4
 - Tags: `Progress`, `ProgressFilledTrack`
+
+### Minimal construction
+
+```xml
+<Progress />
+```
+
+```php
+use Pam\MobileUi\Component\Progress;
+
+$component = Progress::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Progress` | `Progress::make()` |
+| `ProgressFilledTrack` | `ProgressFilledTrack::make()` |
 
 ## radio
 
@@ -375,6 +1304,28 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 9
 - Tags: `Radio`, `RadioGroup`, `RadioIcon`, `RadioIndicator`, `RadioLabel`
 
+### Minimal construction
+
+```xml
+<Radio />
+```
+
+```php
+use Pam\MobileUi\Component\Radio;
+
+$component = Radio::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Radio` | `Radio::make()` |
+| `RadioGroup` | `RadioGroup::make()` |
+| `RadioIcon` | `RadioIcon::make()` |
+| `RadioIndicator` | `RadioIndicator::make()` |
+| `RadioLabel` | `RadioLabel::make()` |
+
 ## refresh-control
 
 - Category: System
@@ -383,6 +1334,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `RefreshControl`
+
+### Minimal construction
+
+```xml
+<RefreshControl />
+```
+
+```php
+use Pam\MobileUi\Component\RefreshControl;
+
+$component = RefreshControl::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `RefreshControl` | `RefreshControl::make()` |
 
 ## safe-area-view
 
@@ -393,6 +1362,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 0
 - Tags: `SafeAreaView`
 
+### Minimal construction
+
+```xml
+<SafeAreaView />
+```
+
+```php
+use Pam\MobileUi\Component\SafeAreaView;
+
+$component = SafeAreaView::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `SafeAreaView` | `SafeAreaView::make()` |
+
 ## scroll-view
 
 - Category: System
@@ -401,6 +1388,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `ScrollView`
+
+### Minimal construction
+
+```xml
+<ScrollView />
+```
+
+```php
+use Pam\MobileUi\Component\ScrollView;
+
+$component = ScrollView::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `ScrollView` | `ScrollView::make()` |
 
 ## section-list
 
@@ -411,6 +1416,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 0
 - Tags: `SectionList`
 
+### Minimal construction
+
+```xml
+<SectionList />
+```
+
+```php
+use Pam\MobileUi\Component\SectionList;
+
+$component = SectionList::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `SectionList` | `SectionList::make()` |
+
 ## select
 
 - Category: Forms
@@ -419,6 +1442,51 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `size`, `variant`, `isTruncated`, `bold`, `underline`, `strikeThrough`, `sub`, `italic`, `highlight`
 - Upstream examples captured: 2
 - Tags: `Select`, `SelectTrigger`, `SelectInput`, `SelectIcon`, `SelectPortal`, `SelectBackdrop`, `SelectContent`, `SelectDragIndicator`, `SelectDragIndicatorWrapper`, `SelectItem`, `SelectScrollView`, `SelectVirtualizedList`, `SelectFlatList`, `SelectSectionList`, `SelectSectionHeaderText`, `Actionsheet`, `ActionsheetContent`, `ActionsheetItem`, `ActionsheetItemText`, `ActionsheetDragIndicator`, `ActionsheetDragIndicatorWrapper`, `ActionsheetBackdrop`, `ActionsheetScrollView`, `ActionsheetVirtualizedList`, `ActionsheetFlatList`, `ActionsheetSectionList`, `ActionsheetSectionHeaderText`, `ActionsheetIcon`
+
+### Minimal construction
+
+```xml
+<Select />
+```
+
+```php
+use Pam\MobileUi\Component\Select;
+
+$component = Select::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Select` | `Select::make()` |
+| `SelectTrigger` | `SelectTrigger::make()` |
+| `SelectInput` | `SelectInput::make()` |
+| `SelectIcon` | `SelectIcon::make()` |
+| `SelectPortal` | `SelectPortal::make()` |
+| `SelectBackdrop` | `SelectBackdrop::make()` |
+| `SelectContent` | `SelectContent::make()` |
+| `SelectDragIndicator` | `SelectDragIndicator::make()` |
+| `SelectDragIndicatorWrapper` | `SelectDragIndicatorWrapper::make()` |
+| `SelectItem` | `SelectItem::make()` |
+| `SelectScrollView` | `SelectScrollView::make()` |
+| `SelectVirtualizedList` | `SelectVirtualizedList::make()` |
+| `SelectFlatList` | `SelectFlatList::make()` |
+| `SelectSectionList` | `SelectSectionList::make()` |
+| `SelectSectionHeaderText` | `SelectSectionHeaderText::make()` |
+| `Actionsheet` | `Actionsheet::make()` |
+| `ActionsheetContent` | `ActionsheetContent::make()` |
+| `ActionsheetItem` | `ActionsheetItem::make()` |
+| `ActionsheetItemText` | `ActionsheetItemText::make()` |
+| `ActionsheetDragIndicator` | `ActionsheetDragIndicator::make()` |
+| `ActionsheetDragIndicatorWrapper` | `ActionsheetDragIndicatorWrapper::make()` |
+| `ActionsheetBackdrop` | `ActionsheetBackdrop::make()` |
+| `ActionsheetScrollView` | `ActionsheetScrollView::make()` |
+| `ActionsheetVirtualizedList` | `ActionsheetVirtualizedList::make()` |
+| `ActionsheetFlatList` | `ActionsheetFlatList::make()` |
+| `ActionsheetSectionList` | `ActionsheetSectionList::make()` |
+| `ActionsheetSectionHeaderText` | `ActionsheetSectionHeaderText::make()` |
+| `ActionsheetIcon` | `ActionsheetIcon::make()` |
 
 ## skeleton
 
@@ -429,6 +1497,25 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 2
 - Tags: `Skeleton`, `SkeletonText`
 
+### Minimal construction
+
+```xml
+<Skeleton />
+```
+
+```php
+use Pam\MobileUi\Component\Skeleton;
+
+$component = Skeleton::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Skeleton` | `Skeleton::make()` |
+| `SkeletonText` | `SkeletonText::make()` |
+
 ## slider
 
 - Category: Forms
@@ -437,6 +1524,27 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `orientation`, `isReversed`
 - Upstream examples captured: 1
 - Tags: `Slider`, `SliderFilledTrack`, `SliderThumb`, `SliderTrack`
+
+### Minimal construction
+
+```xml
+<Slider />
+```
+
+```php
+use Pam\MobileUi\Component\Slider;
+
+$component = Slider::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Slider` | `Slider::make()` |
+| `SliderFilledTrack` | `SliderFilledTrack::make()` |
+| `SliderThumb` | `SliderThumb::make()` |
+| `SliderTrack` | `SliderTrack::make()` |
 
 ## spinner
 
@@ -447,6 +1555,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 3
 - Tags: `Spinner`
 
+### Minimal construction
+
+```xml
+<Spinner />
+```
+
+```php
+use Pam\MobileUi\Component\Spinner;
+
+$component = Spinner::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Spinner` | `Spinner::make()` |
+
 ## status-bar
 
 - Category: System
@@ -455,6 +1581,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: `StatusBar`
+
+### Minimal construction
+
+```xml
+<StatusBar />
+```
+
+```php
+use Pam\MobileUi\Component\StatusBar;
+
+$component = StatusBar::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `StatusBar` | `StatusBar::make()` |
 
 ## switch
 
@@ -465,6 +1609,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 3
 - Tags: `Switch`
 
+### Minimal construction
+
+```xml
+<Switch />
+```
+
+```php
+use Pam\MobileUi\Component\SwitchControl;
+
+$component = SwitchControl::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Switch` | `SwitchControl::make()` |
+
 ## table
 
 - Category: Data display
@@ -473,6 +1635,31 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `isHeaderRow`, `isFooterRow`
 - Upstream examples captured: 5
 - Tags: `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableData`, `TableCaption`
+
+### Minimal construction
+
+```xml
+<Table />
+```
+
+```php
+use Pam\MobileUi\Component\Table;
+
+$component = Table::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Table` | `Table::make()` |
+| `TableHeader` | `TableHeader::make()` |
+| `TableBody` | `TableBody::make()` |
+| `TableFooter` | `TableFooter::make()` |
+| `TableHead` | `TableHead::make()` |
+| `TableRow` | `TableRow::make()` |
+| `TableData` | `TableData::make()` |
+| `TableCaption` | `TableCaption::make()` |
 
 ## tabs
 
@@ -483,6 +1670,32 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 7
 - Tags: `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `TabsContentWrapper`, `TabsTriggerText`, `TabsTriggerIcon`, `TabsIndicator`, `TabsAnimatedIndicator`
 
+### Minimal construction
+
+```xml
+<Tabs />
+```
+
+```php
+use Pam\MobileUi\Component\Tabs;
+
+$component = Tabs::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Tabs` | `Tabs::make()` |
+| `TabsList` | `TabsList::make()` |
+| `TabsTrigger` | `TabsTrigger::make()` |
+| `TabsContent` | `TabsContent::make()` |
+| `TabsContentWrapper` | `TabsContentWrapper::make()` |
+| `TabsTriggerText` | `TabsTriggerText::make()` |
+| `TabsTriggerIcon` | `TabsTriggerIcon::make()` |
+| `TabsIndicator` | `TabsIndicator::make()` |
+| `TabsAnimatedIndicator` | `TabsAnimatedIndicator::make()` |
+
 ## text
 
 - Category: Typography
@@ -491,6 +1704,24 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `isTruncated`, `bold`, `underline`, `strikeThrough`, `size`, `sub`, `italic`, `highlight`
 - Upstream examples captured: 2
 - Tags: `Text`
+
+### Minimal construction
+
+```xml
+<Text />
+```
+
+```php
+use Pam\MobileUi\Component\Text;
+
+$component = Text::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Text` | `Text::make()` |
 
 ## textarea
 
@@ -501,6 +1732,25 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 2
 - Tags: `Textarea`, `TextareaInput`
 
+### Minimal construction
+
+```xml
+<Textarea />
+```
+
+```php
+use Pam\MobileUi\Component\Textarea;
+
+$component = Textarea::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Textarea` | `Textarea::make()` |
+| `TextareaInput` | `TextareaInput::make()` |
+
 ## toast
 
 - Category: Feedback
@@ -509,6 +1759,26 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `action`, `variant`, `isTruncated`, `bold`, `underline`, `strikeThrough`, `size`
 - Upstream examples captured: 5
 - Tags: `Toast`, `ToastDescription`, `ToastTitle`
+
+### Minimal construction
+
+```xml
+<Toast />
+```
+
+```php
+use Pam\MobileUi\Component\Toast;
+
+$component = Toast::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Toast` | `Toast::make()` |
+| `ToastDescription` | `ToastDescription::make()` |
+| `ToastTitle` | `ToastTitle::make()` |
 
 ## tooltip
 
@@ -519,6 +1789,26 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 4
 - Tags: `Tooltip`, `TooltipContent`, `TooltipText`
 
+### Minimal construction
+
+```xml
+<Tooltip />
+```
+
+```php
+use Pam\MobileUi\Component\Tooltip;
+
+$component = Tooltip::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `Tooltip` | `Tooltip::make()` |
+| `TooltipContent` | `TooltipContent::make()` |
+| `TooltipText` | `TooltipText::make()` |
+
 ## utils
 
 - Category: System
@@ -527,6 +1817,8 @@ facades under `Pam\MobileUi\Component`.
 - Variants: none
 - Upstream examples captured: 0
 - Tags: none
+
+This is an aggregate/build-time module with no standalone runtime tag.
 
 ## view
 
@@ -537,6 +1829,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 0
 - Tags: `View`
 
+### Minimal construction
+
+```xml
+<View />
+```
+
+```php
+use Pam\MobileUi\Component\View;
+
+$component = View::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `View` | `View::make()` |
+
 ## virtualized-list
 
 - Category: System
@@ -546,6 +1856,24 @@ facades under `Pam\MobileUi\Component`.
 - Upstream examples captured: 0
 - Tags: `VirtualizedList`
 
+### Minimal construction
+
+```xml
+<VirtualizedList />
+```
+
+```php
+use Pam\MobileUi\Component\VirtualizedList;
+
+$component = VirtualizedList::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `VirtualizedList` | `VirtualizedList::make()` |
+
 ## vstack
 
 - Category: Layout
@@ -554,3 +1882,21 @@ facades under `Pam\MobileUi\Component`.
 - Variants: `space`, `reversed`
 - Upstream examples captured: 2
 - Tags: `VStack`
+
+### Minimal construction
+
+```xml
+<VStack />
+```
+
+```php
+use Pam\MobileUi\Component\VStack;
+
+$component = VStack::make();
+```
+
+### Complete module API
+
+| Tag | Typed PHP construction |
+| --- | --- |
+| `VStack` | `VStack::make()` |

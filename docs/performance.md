@@ -139,15 +139,20 @@ bridge events; this row stays excluded until recorded on physical hardware.
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded
-the complete PAM binary tree 2,000 times:
+the complete PAM binary tree 2,000 times per sample. The table reports the
+median of five measured samples after the benchmark's 100-tree warm-up:
 
 | Metric | Result |
 | --- | ---: |
-| Total | 788.420 ms |
-| Throughput | 2,536.7 trees/s |
-| Encoded frame | 1,884 bytes |
-| Peak PHP memory | 4 MiB |
+| Median total | 996.910 ms |
+| Median throughput | 2,006.2 trees/s |
+| Encoded frame | 2,148 bytes |
+| Peak PHP memory | 8 MiB |
 | PHP | 8.4.23 |
+
+Reference host: Intel Core Ultra 9 185H, 22 logical CPUs, 30 GiB RAM, Linux
+7.0.11 x86-64. The five measured totals were 1,096.115 ms, 974.398 ms,
+981.180 ms, 1,042.991 ms and 996.910 ms.
 
 Reproduce it with `composer benchmark`.
 

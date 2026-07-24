@@ -7,4 +7,5 @@ parameters:
         - examples/kitchen-sink/src
         - src
         - tests
+        - tools/release-check.php
     tmpDir: .build/phpstan

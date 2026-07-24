@@ -63,6 +63,13 @@ Applications are never forced into either form. Raw `Pam\Native\UI` elements,
 custom components, `.pam` tags, fluent classes, and native plugins can be mixed
 in the same tree.
 
+The complete authoring guide covers custom tags, typed application components,
+themes and native escape hatches in
+[`docs/authoring.md`](docs/authoring.md). A runnable project that combines all
+of them lives in [`examples/kitchen-sink`](examples/kitchen-sink). Extension and
+validation rules for community contributions are in
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 The upstream provider API is available without a JavaScript context layer:
 
 ```xml
@@ -717,3 +724,9 @@ themes, recipe/state matrix expansion, PHPStan level 9, Android
 compilation/lint, and the initial kitchen sink are implemented. Entries remain
 explicitly `planned`, `implemented`, `verified`, or `not-applicable` per gate;
 no unverified component is presented as finished.
+
+`composer release:check` verifies the public `pushinbr/pam-*` identities,
+pinned upstream inventory, sequential protocol-facing IDs, all generated
+tag/class documentation and the pending-gate boundary. Comparative performance
+remains false until every matched-device benchmark is recorded; the check does
+not turn missing measurements into a marketing claim.

@@ -47,6 +47,7 @@
         "audit:styles": "php tools/audit-styles.php --strict",
         "analyse": "tools/phpstan/vendor/bin/phpstan analyse --level=9 --no-progress --debug",
         "benchmark": "php benchmarks/php.php",
+        "release:check": "php tools/release-check.php",
         "test:recipes": "php tests/recipe-matrix.php",
         "test": "php tests/run.php",
         "verify": [
@@ -54,7 +55,8 @@
             "@audit:styles",
             "@analyse",
             "@test:recipes",
-            "@test"
+            "@test",
+            "@release:check"
         ]
     },
     "config": {

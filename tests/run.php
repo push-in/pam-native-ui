@@ -3564,6 +3564,8 @@ $assert(
 );
 
 require dirname(__DIR__).'/examples/kitchen-sink/src/Catalog.php';
+require dirname(__DIR__).'/examples/kitchen-sink/src/TypedCommunityCard.php';
+\App\TypedCommunityCard::register();
 $catalogSource = file_get_contents(
     dirname(__DIR__).'/examples/kitchen-sink/resources/native/catalog.pam',
 );
