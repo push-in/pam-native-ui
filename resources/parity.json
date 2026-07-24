@@ -701,7 +701,7 @@
             "name": "chat-ai",
             "category": 10,
             "maturity": 1,
-            "implementation": 1,
+            "implementation": 2,
             "exports": [
                 "getMediaCategory",
                 "getAttachmentLabel",

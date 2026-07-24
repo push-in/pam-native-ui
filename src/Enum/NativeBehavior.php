@@ -43,4 +43,9 @@ enum NativeBehavior: int
     case Table = 35;
     case TableRow = 36;
     case ImageViewerControl = 37;
+    case MessageBranch = 38;
+    case MessageBranchControl = 39;
+    case PromptInput = 40;
+    case PromptInputSubmit = 41;
+    case ConversationScrollButton = 42;
 }

@@ -2,4 +2,10 @@
 <resources>
     <string name="pam_image_viewer_counter">%1$d / %2$d</string>
     <string name="pam_image_viewer_position">Image %1$d of %2$d</string>
+    <string name="pam_message_branch_counter">%1$d of %2$d</string>
+    <string name="pam_message_branch_position">Response %1$d of %2$d</string>
+    <string name="pam_previous_response">Previous response</string>
+    <string name="pam_next_response">Next response</string>
+    <string name="pam_send_prompt">Send prompt</string>
+    <string name="pam_scroll_to_latest_message">Scroll to latest message</string>
 </resources>

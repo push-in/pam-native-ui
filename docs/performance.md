@@ -94,6 +94,13 @@ index. Pinch, pan and the animation between settled states remain bridge-free.
 This row is excluded from the reference table until the physical-device suite
 records it.
 
+Chat AI adds two pending 10,000-operation gates. MessageBranch navigation must
+update page visibility, counter, controls and accessibility below 4 ms p99 with
+exactly one index event per activation. PromptInput must recompute enabled
+state, submit, trim and clear below 4 ms p99 with exactly one `SUBMIT` event.
+Conversation scroll progress and button visibility remain entirely native; its
+large-history memory/frame profile belongs to the full-renderer benchmark.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

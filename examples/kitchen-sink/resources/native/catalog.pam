@@ -343,7 +343,30 @@
                             <MessageContent><Text>Show me the Android architecture.</Text></MessageContent>
                         </Message>
                     </ConversationContent>
+                    <ConversationScrollButton accessibilityLabel="Latest message">
+                        <ArrowDownIcon />
+                    </ConversationScrollButton>
                 </Conversation>
+
+                <MessageBranch
+                    currentBranch="{{ $responseBranch }}"
+                    loop="true"
+                    on:change="selectResponseBranch"
+                >
+                    <MessageBranchContent>
+                        <MessageContent>
+                            <Text>Fast path: authored compound components.</Text>
+                        </MessageContent>
+                        <MessageContent>
+                            <Text>Escape hatch: raw PAM or a native plugin.</Text>
+                        </MessageContent>
+                    </MessageBranchContent>
+                    <MessageBranchSelector>
+                        <MessageBranchPrevious />
+                        <MessageBranchPage />
+                        <MessageBranchNext />
+                    </MessageBranchSelector>
+                </MessageBranch>
 
                 <Attachments variant="list">
                     <Attachment>
@@ -358,11 +381,12 @@
                     </Attachment>
                 </Attachments>
 
-                <PromptInput>
+                <PromptInput on:submit="sendPrompt">
                     <PromptInputBody>
                         <PromptInputTextarea
                             multiline="true"
                             placeholder="Ask PAM anything"
+                            sync="native"
                         />
                     </PromptInputBody>
                     <PromptInputFooter>

@@ -22,6 +22,8 @@ import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
 import android.text.method.TransformationMethod
 import android.text.method.KeyListener
@@ -40,6 +42,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeProvider
 import android.widget.FrameLayout
 import android.widget.EditText
+import android.widget.ScrollView
 import android.widget.TextView
 import dev.pam.nativeapp.protocol.WireMap
 import dev.pam.nativeapp.protocol.WireValue
@@ -104,7 +107,12 @@ internal class MobileUiHost(
         FORM_CONTROL(34),
         TABLE(35),
         TABLE_ROW(36),
-        IMAGE_VIEWER_CONTROL(37);
+        IMAGE_VIEWER_CONTROL(37),
+        MESSAGE_BRANCH(38),
+        MESSAGE_BRANCH_CONTROL(39),
+        PROMPT_INPUT(40),
+        PROMPT_INPUT_SUBMIT(41),
+        CONVERSATION_SCROLL_BUTTON(42);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -349,6 +357,17 @@ internal class MobileUiHost(
     private var imageIndex = 0
     private var imageLoop = false
     private var imageNavigationAction = IMAGE_NAVIGATION_PREVIOUS
+    private var branchIndex = 0
+    private var branchLoop = true
+    private var branchNavigationAction = BRANCH_NAVIGATION_PREVIOUS
+    private var promptClearOnSubmit = true
+    private var promptTrimOnSubmit = true
+    private var promptLoading = false
+    private var promptInput: EditText? = null
+    private var promptTextWatcher: TextWatcher? = null
+    private var conversationAutoScroll = true
+    private var conversationMessageCount = 0
+    private var conversationScrollView: ScrollView? = null
     private var animator: ValueAnimator? = null
     private var activePickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
@@ -425,6 +444,14 @@ internal class MobileUiHost(
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         if (previousBehavior != behavior) {
             sheetBackdropBaseAlpha = null
+            if (previousBehavior == Behavior.PROMPT_INPUT) {
+                removePromptInputObserver()
+            }
+            if (previousBehavior == Behavior.CHAT) {
+                conversationScrollView?.setOnScrollChangeListener(null)
+                conversationScrollView = null
+                conversationMessageCount = 0
+            }
         }
         pendingSliderChange?.let(::removeCallbacks)
         pendingSliderChange = null
@@ -513,6 +540,55 @@ internal class MobileUiHost(
                 "navigationAction",
                 IMAGE_NAVIGATION_PREVIOUS.toLong(),
             ).toInt().coerceIn(IMAGE_NAVIGATION_PREVIOUS, IMAGE_NAVIGATION_NEXT)
+        }
+        if (behavior == Behavior.MESSAGE_BRANCH) {
+            val controlled = properties.containsKey("branch")
+                || properties.containsKey("currentBranch")
+            branchIndex = if (controlled) {
+                properties.integer(
+                    "branch",
+                    properties.integer(
+                        "currentBranch",
+                        branchIndex.toLong(),
+                    ),
+                ).toInt().coerceAtLeast(0)
+            } else if (previousBehavior != behavior) {
+                properties.integer("defaultBranch", 0L).toInt().coerceAtLeast(0)
+            } else {
+                branchIndex
+            }
+            branchLoop = properties.flag(
+                "loop",
+                if (previousBehavior == behavior) branchLoop else true,
+            )
+        } else if (behavior == Behavior.MESSAGE_BRANCH_CONTROL) {
+            branchNavigationAction = properties.integer(
+                "navigationAction",
+                BRANCH_NAVIGATION_PREVIOUS.toLong(),
+            ).toInt().coerceIn(
+                BRANCH_NAVIGATION_PREVIOUS,
+                BRANCH_NAVIGATION_NEXT,
+            )
+        }
+        if (behavior == Behavior.PROMPT_INPUT) {
+            promptClearOnSubmit = properties.flag(
+                "clearOnSubmit",
+                if (previousBehavior == behavior) promptClearOnSubmit else true,
+            )
+            promptTrimOnSubmit = properties.flag(
+                "trimOnSubmit",
+                if (previousBehavior == behavior) promptTrimOnSubmit else true,
+            )
+            promptLoading = properties.flag(
+                "loading",
+                properties.flag("isSubmitting", false),
+            )
+        }
+        if (behavior == Behavior.CHAT) {
+            conversationAutoScroll = properties.flag(
+                "autoScroll",
+                if (previousBehavior == behavior) conversationAutoScroll else true,
+            )
         }
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
         val defaultChecked = if (behavior == Behavior.SWITCH) {
@@ -825,6 +901,18 @@ internal class MobileUiHost(
             post { applyImageViewerState(announce = false) }
         } else if (behavior == Behavior.IMAGE_VIEWER_CONTROL) {
             updateImageViewerControlAccessibility()
+        } else if (behavior == Behavior.MESSAGE_BRANCH) {
+            post { applyMessageBranchState(announce = false) }
+        } else if (behavior == Behavior.MESSAGE_BRANCH_CONTROL) {
+            updateMessageBranchControlAccessibility()
+        } else if (behavior == Behavior.PROMPT_INPUT) {
+            post(::applyPromptInputState)
+        } else if (behavior == Behavior.PROMPT_INPUT_SUBMIT) {
+            updatePromptSubmitAccessibility()
+        } else if (behavior == Behavior.CHAT) {
+            post(::applyConversationState)
+        } else if (behavior == Behavior.CONVERSATION_SCROLL_BUTTON) {
+            updateConversationScrollButtonAccessibility()
         }
         if (behavior.isAnchoredOverlay() && previousOpen == open) {
             post { applyAnchoredOverlayState(animate = false) }
@@ -880,6 +968,15 @@ internal class MobileUiHost(
         if (behavior == Behavior.IMAGE_VIEWER) {
             post { applyImageViewerState(announce = false) }
         }
+        if (behavior == Behavior.MESSAGE_BRANCH) {
+            post { applyMessageBranchState(announce = false) }
+        }
+        if (behavior == Behavior.PROMPT_INPUT) {
+            post(::applyPromptInputState)
+        }
+        if (behavior == Behavior.CHAT) {
+            post(::applyConversationState)
+        }
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
         }
@@ -894,6 +991,15 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.IMAGE_VIEWER) {
             post { applyImageViewerState(announce = false) }
+        }
+        if (behavior == Behavior.MESSAGE_BRANCH) {
+            post { applyMessageBranchState(announce = false) }
+        }
+        if (behavior == Behavior.PROMPT_INPUT) {
+            post(::applyPromptInputState)
+        }
+        if (behavior == Behavior.CHAT) {
+            post(::applyConversationState)
         }
     }
 
@@ -944,6 +1050,15 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.IMAGE_VIEWER) {
             applyImageViewerState(announce = false)
+        }
+        if (behavior == Behavior.MESSAGE_BRANCH) {
+            applyMessageBranchState(announce = false)
+        }
+        if (behavior == Behavior.PROMPT_INPUT) {
+            applyPromptInputState()
+        }
+        if (behavior == Behavior.CHAT) {
+            applyConversationState()
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
@@ -1375,10 +1490,39 @@ internal class MobileUiHost(
                 info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
             }
         }
+        if (behavior == Behavior.MESSAGE_BRANCH) {
+            val pages = messageBranchPages()
+            info.className = "androidx.viewpager.widget.ViewPager"
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                1,
+                pages.size,
+                false,
+                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE,
+            )
+            if (pages.size > 1) {
+                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+            }
+        }
+        if (
+            behavior == Behavior.MESSAGE_BRANCH_CONTROL
+            || behavior == Behavior.PROMPT_INPUT_SUBMIT
+            || behavior == Behavior.CONVERSATION_SCROLL_BUTTON
+        ) {
+            info.className = "android.widget.Button"
+            info.isEnabled = isEnabled
+            info.isClickable = isEnabled
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
             Behavior.IMAGE_VIEWER,
+            Behavior.MESSAGE_BRANCH,
             Behavior.SLIDER,
         )
         if (behavior == Behavior.BOTTOM_SHEET && sheetSnapPoints.size > 1) {
@@ -1470,6 +1614,13 @@ internal class MobileUiHost(
             Behavior.INPUT_SLOT -> "android.widget.Button"
             Behavior.IMAGE_VIEWER -> "android.widget.Gallery"
             Behavior.IMAGE_VIEWER_CONTROL -> "android.widget.Button"
+            Behavior.CHAT -> "android.widget.ListView"
+            Behavior.MESSAGE_BRANCH -> "androidx.viewpager.widget.ViewPager"
+            Behavior.MESSAGE_BRANCH_CONTROL,
+            Behavior.PROMPT_INPUT_SUBMIT,
+            Behavior.CONVERSATION_SCROLL_BUTTON,
+            -> "android.widget.Button"
+            Behavior.PROMPT_INPUT -> "android.view.ViewGroup"
             Behavior.TABLE -> "android.widget.TableLayout"
             Behavior.TABLE_ROW -> "android.widget.TableRow"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
@@ -1558,6 +1709,22 @@ internal class MobileUiHost(
                 || action == AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
             return selectImage(
                 if (next) IMAGE_NAVIGATION_NEXT else IMAGE_NAVIGATION_PREVIOUS,
+                emit = true,
+            )
+        }
+        if (
+            behavior == Behavior.MESSAGE_BRANCH
+            && action in setOf(
+                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
+                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id,
+            )
+        ) {
+            val next = action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                || action == AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+            return selectMessageBranch(
+                if (next) BRANCH_NAVIGATION_NEXT else BRANCH_NAVIGATION_PREVIOUS,
                 emit = true,
             )
         }
@@ -1654,6 +1821,9 @@ internal class MobileUiHost(
                 Behavior.OVERLAY_DISMISS,
                 Behavior.INPUT_SLOT,
                 Behavior.IMAGE_VIEWER_CONTROL,
+                Behavior.MESSAGE_BRANCH_CONTROL,
+                Behavior.PROMPT_INPUT_SUBMIT,
+                Behavior.CONVERSATION_SCROLL_BUTTON,
             )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
@@ -1768,6 +1938,10 @@ internal class MobileUiHost(
         formAppliedLabel = null
         formAppliedHelper = null
         inputSlotAppliedLabel = null
+        removePromptInputObserver()
+        conversationScrollView?.setOnScrollChangeListener(null)
+        conversationScrollView = null
+        conversationMessageCount = 0
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -1777,6 +1951,7 @@ internal class MobileUiHost(
         imageDragStartTranslationX = 0f
         imageDragStartTranslationY = 0f
         imageIndex = 0
+        branchIndex = 0
         applyImageTransform()
         restoreFocus()
         accessibilityFocusedCalendarCell = CALENDAR_TARGET_NONE
@@ -1875,6 +2050,27 @@ internal class MobileUiHost(
                     )
                 }
             }
+        } else if (behavior == Behavior.MESSAGE_BRANCH_CONTROL) {
+            setOnClickListener {
+                if (isEnabled) {
+                    messageBranchAncestor()?.selectMessageBranch(
+                        branchNavigationAction,
+                        emit = true,
+                    )
+                }
+            }
+        } else if (behavior == Behavior.PROMPT_INPUT_SUBMIT) {
+            setOnClickListener {
+                if (isEnabled) {
+                    promptInputAncestor()?.submitPrompt()
+                }
+            }
+        } else if (behavior == Behavior.CONVERSATION_SCROLL_BUTTON) {
+            setOnClickListener {
+                if (isEnabled) {
+                    conversationAncestor()?.scrollConversationToBottom()
+                }
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -1921,6 +2117,9 @@ internal class MobileUiHost(
             Behavior.OVERLAY_DISMISS,
             Behavior.INPUT_SLOT,
             Behavior.IMAGE_VIEWER_CONTROL,
+            Behavior.MESSAGE_BRANCH_CONTROL,
+            Behavior.PROMPT_INPUT_SUBMIT,
+            Behavior.CONVERSATION_SCROLL_BUTTON,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -1942,6 +2141,9 @@ internal class MobileUiHost(
                 Behavior.OVERLAY_DISMISS,
                 Behavior.INPUT_SLOT,
                 Behavior.IMAGE_VIEWER_CONTROL,
+                Behavior.MESSAGE_BRANCH_CONTROL,
+                Behavior.PROMPT_INPUT_SUBMIT,
+                Behavior.CONVERSATION_SCROLL_BUTTON,
             )
         ) {
             RippleDrawable(
@@ -4395,6 +4597,385 @@ internal class MobileUiHost(
         }
     }
 
+    private fun messageBranchPages(root: ViewGroup = this): List<View> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                val tag = child.tag as? String
+                if (tag?.startsWith(MESSAGE_BRANCH_PAGE_TAG_PREFIX) == true) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.MESSAGE_BRANCH)
+                ) {
+                    addAll(messageBranchPages(child))
+                }
+            }
+        }
+
+    private fun messageBranchControls(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (
+                    child is MobileUiHost
+                    && child.behavior == Behavior.MESSAGE_BRANCH_CONTROL
+                ) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.MESSAGE_BRANCH)
+                ) {
+                    addAll(messageBranchControls(child))
+                }
+            }
+        }
+
+    private fun applyMessageBranchState(announce: Boolean) {
+        if (behavior != Behavior.MESSAGE_BRANCH) return
+        val pages = messageBranchPages()
+        if (pages.isEmpty()) return
+        branchIndex = branchIndex.coerceIn(0, pages.lastIndex)
+        pages.forEachIndexed { index, page ->
+            val active = index == branchIndex
+            page.visibility = if (active) VISIBLE else GONE
+            page.importantForAccessibility = if (active) {
+                IMPORTANT_FOR_ACCESSIBILITY_YES
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            }
+            page.isSelected = active
+        }
+        findTaggedDescendant(this, MESSAGE_BRANCH_SELECTOR_TAG)?.let { selector ->
+            selector.visibility = if (pages.size > 1) VISIBLE else GONE
+            selector.importantForAccessibility = if (pages.size > 1) {
+                IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            }
+        }
+        messageBranchControls().forEach { control ->
+            val enabled = pages.size > 1 && when (control.branchNavigationAction) {
+                BRANCH_NAVIGATION_PREVIOUS -> branchLoop || branchIndex > 0
+                else -> branchLoop || branchIndex < pages.lastIndex
+            }
+            control.isEnabled = enabled
+            control.updateMessageBranchControlAccessibility()
+        }
+        (findTaggedDescendant(this, MESSAGE_BRANCH_COUNTER_TAG) as? TextView)
+            ?.let { counter ->
+                counter.text = context.getString(
+                    R.string.pam_message_branch_counter,
+                    branchIndex + 1,
+                    pages.size,
+                )
+                counter.contentDescription = context.getString(
+                    R.string.pam_message_branch_position,
+                    branchIndex + 1,
+                    pages.size,
+                )
+                counter.accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_POLITE
+            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = context.getString(
+                R.string.pam_message_branch_position,
+                branchIndex + 1,
+                pages.size,
+            )
+        }
+        if (announce) {
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
+        }
+    }
+
+    private fun selectMessageBranch(action: Int, emit: Boolean): Boolean {
+        if (behavior != Behavior.MESSAGE_BRANCH) return false
+        val pages = messageBranchPages()
+        if (pages.size <= 1) return false
+        val requested = branchIndex + if (
+            action == BRANCH_NAVIGATION_PREVIOUS
+        ) {
+            -1
+        } else {
+            1
+        }
+        val next = if (branchLoop) {
+            (requested + pages.size) % pages.size
+        } else {
+            requested.coerceIn(0, pages.lastIndex)
+        }
+        if (next == branchIndex) return false
+        branchIndex = next
+        applyMessageBranchState(announce = true)
+        if (emit) {
+            emitter.emit(
+                NativeViewEventKind.CHANGE,
+                branchIndex.toString().encodeToByteArray(),
+            )
+        }
+
+        return true
+    }
+
+    private fun messageBranchAncestor(): MobileUiHost? =
+        ancestorWithBehavior(Behavior.MESSAGE_BRANCH)
+
+    private fun updateMessageBranchControlAccessibility() {
+        if (behavior != Behavior.MESSAGE_BRANCH_CONTROL) return
+        if (contentDescription.isNullOrEmpty()) {
+            contentDescription = context.getString(
+                if (branchNavigationAction == BRANCH_NAVIGATION_PREVIOUS) {
+                    R.string.pam_previous_response
+                } else {
+                    R.string.pam_next_response
+                },
+            )
+        }
+    }
+
+    private fun applyPromptInputState() {
+        if (behavior != Behavior.PROMPT_INPUT) return
+        val nextInput = findFirstEditText(this)
+        if (nextInput !== promptInput) {
+            removePromptInputObserver()
+            promptInput = nextInput
+            if (nextInput != null) {
+                promptTextWatcher = object : TextWatcher {
+                    override fun beforeTextChanged(
+                        value: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int,
+                    ) = Unit
+
+                    override fun onTextChanged(
+                        value: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int,
+                    ) = Unit
+
+                    override fun afterTextChanged(value: Editable?) {
+                        updatePromptSubmitState()
+                    }
+                }.also(nextInput::addTextChangedListener)
+            }
+        }
+        updatePromptSubmitState()
+    }
+
+    private fun updatePromptSubmitState() {
+        if (behavior != Behavior.PROMPT_INPUT) return
+        val text = promptInput?.text?.toString().orEmpty()
+        val hasText = if (promptTrimOnSubmit) {
+            text.isNotBlank()
+        } else {
+            text.isNotEmpty()
+        }
+        val enabled = isEnabled
+            && !promptLoading
+            && (hasText || promptAttachmentCount() > 0)
+        promptSubmitControls().forEach { control ->
+            control.isEnabled = enabled
+            control.alpha = if (enabled) 1f else DISABLED_CONTROL_ALPHA
+            control.updatePromptSubmitAccessibility()
+        }
+    }
+
+    private fun promptSubmitControls(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (
+                    child is MobileUiHost
+                    && child.behavior == Behavior.PROMPT_INPUT_SUBMIT
+                ) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.PROMPT_INPUT)
+                ) {
+                    addAll(promptSubmitControls(child))
+                }
+            }
+        }
+
+    private fun promptAttachmentCount(root: ViewGroup = this): Int {
+        var count = 0
+        repeat(root.childCount) { index ->
+            val child = root.getChildAt(index)
+            if (
+                child.tag == PROMPT_ATTACHMENT_TAG
+                && child.visibility == VISIBLE
+            ) {
+                count++
+            } else if (
+                child is ViewGroup
+                && !(child is MobileUiHost && child.behavior == Behavior.PROMPT_INPUT)
+            ) {
+                count += promptAttachmentCount(child)
+            }
+        }
+        return count
+    }
+
+    private fun submitPrompt(): Boolean {
+        if (behavior != Behavior.PROMPT_INPUT) return false
+        applyPromptInputState()
+        if (promptSubmitControls().none { control -> control.isEnabled }) return false
+        val raw = promptInput?.text?.toString().orEmpty()
+        val payload = if (promptTrimOnSubmit) raw.trim() else raw
+        emitter.emit(
+            NativeViewEventKind.SUBMIT,
+            payload.encodeToByteArray(),
+        )
+        if (promptClearOnSubmit) {
+            promptInput?.setText("")
+        }
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED)
+        return true
+    }
+
+    private fun removePromptInputObserver() {
+        val input = promptInput
+        val watcher = promptTextWatcher
+        if (input != null && watcher != null) {
+            input.removeTextChangedListener(watcher)
+        }
+        promptTextWatcher = null
+        promptInput = null
+    }
+
+    private fun promptInputAncestor(): MobileUiHost? =
+        ancestorWithBehavior(Behavior.PROMPT_INPUT)
+
+    private fun updatePromptSubmitAccessibility() {
+        if (behavior != Behavior.PROMPT_INPUT_SUBMIT) return
+        if (contentDescription.isNullOrEmpty()) {
+            contentDescription = context.getString(R.string.pam_send_prompt)
+        }
+    }
+
+    private fun applyConversationState() {
+        if (behavior != Behavior.CHAT) return
+        val nextScroll = findFirstScrollView(this)
+        if (nextScroll !== conversationScrollView) {
+            conversationScrollView?.setOnScrollChangeListener(null)
+            conversationScrollView = nextScroll
+            nextScroll?.setOnScrollChangeListener { _, _, _, _, _ ->
+                updateConversationScrollButton()
+            }
+        }
+        val messages = conversationMessages()
+        val shouldFollow = conversationAutoScroll
+            && messages.size > conversationMessageCount
+            && (messages.lastOrNull()?.tag as? String)
+                ?.endsWith(":$MESSAGE_ROLE_USER") == true
+        conversationMessageCount = messages.size
+        updateConversationScrollButton()
+        if (shouldFollow) {
+            post(::scrollConversationToBottom)
+        }
+    }
+
+    private fun conversationMessages(root: ViewGroup = this): List<View> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (
+                    (child.tag as? String)
+                        ?.startsWith(CONVERSATION_MESSAGE_TAG_PREFIX) == true
+                ) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.CHAT)
+                ) {
+                    addAll(conversationMessages(child))
+                }
+            }
+        }
+
+    private fun conversationScrollButtons(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (
+                    child is MobileUiHost
+                    && child.behavior == Behavior.CONVERSATION_SCROLL_BUTTON
+                ) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.CHAT)
+                ) {
+                    addAll(conversationScrollButtons(child))
+                }
+            }
+        }
+
+    private fun updateConversationScrollButton() {
+        val visible = conversationScrollView?.canScrollVertically(1) == true
+        conversationScrollButtons().forEach { button ->
+            button.visibility = if (visible) VISIBLE else GONE
+            button.importantForAccessibility = if (visible) {
+                IMPORTANT_FOR_ACCESSIBILITY_YES
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            }
+        }
+    }
+
+    private fun scrollConversationToBottom(): Boolean {
+        if (behavior != Behavior.CHAT) return false
+        val scroll = conversationScrollView ?: findFirstScrollView(this)
+            ?: return false
+        if (animationsEnabled()) {
+            val bottom = if (scroll.childCount > 0) {
+                scroll.getChildAt(0).height
+            } else {
+                scroll.height
+            }
+            scroll.smoothScrollTo(0, bottom)
+        } else {
+            scroll.fullScroll(View.FOCUS_DOWN)
+        }
+        post(::updateConversationScrollButton)
+        return true
+    }
+
+    private fun findFirstScrollView(root: View?): ScrollView? {
+        if (root is ScrollView) return root
+        if (root !is ViewGroup) return null
+        repeat(root.childCount) { index ->
+            findFirstScrollView(root.getChildAt(index))?.let { return it }
+        }
+        return null
+    }
+
+    private fun conversationAncestor(): MobileUiHost? =
+        ancestorWithBehavior(Behavior.CHAT)
+
+    private fun updateConversationScrollButtonAccessibility() {
+        if (behavior != Behavior.CONVERSATION_SCROLL_BUTTON) return
+        if (contentDescription.isNullOrEmpty()) {
+            contentDescription = context.getString(
+                R.string.pam_scroll_to_latest_message,
+            )
+        }
+    }
+
+    private fun ancestorWithBehavior(expected: Behavior): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (current is MobileUiHost && current.behavior == expected) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
     private fun applyImageTransform(animate: Boolean = false) {
         val target = imageTarget() ?: return
         if (animate && animationsEnabled()) {
@@ -5571,6 +6152,15 @@ internal class MobileUiHost(
         const val IMAGE_NAVIGATION_NEXT = 2
         const val IMAGE_VIEWER_IMAGE_TAG_PREFIX = "pam:image-viewer-image:"
         const val IMAGE_VIEWER_COUNTER_TAG = "pam:image-viewer-counter"
+        const val BRANCH_NAVIGATION_PREVIOUS = 1
+        const val BRANCH_NAVIGATION_NEXT = 2
+        const val MESSAGE_BRANCH_PAGE_TAG_PREFIX = "pam:message-branch-page:"
+        const val MESSAGE_BRANCH_SELECTOR_TAG = "pam:message-branch-selector"
+        const val MESSAGE_BRANCH_COUNTER_TAG = "pam:message-branch-counter"
+        const val PROMPT_ATTACHMENT_TAG = "pam:prompt-attachment"
+        const val CONVERSATION_MESSAGE_TAG_PREFIX = "pam:message:"
+        const val MESSAGE_ROLE_USER = 1
+        const val DISABLED_CONTROL_ALPHA = 0.5f
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

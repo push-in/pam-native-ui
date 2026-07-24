@@ -103,6 +103,7 @@ $nativeModules = array_fill_keys([
     'alert-dialog',
     'bottomsheet',
     'calendar',
+    'chat-ai',
     'checkbox',
     'date-time-picker',
     'drawer',

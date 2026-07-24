@@ -65,7 +65,16 @@ use Pam\MobileUi\Component\TableRow;
 use Pam\MobileUi\Component\Attachment;
 use Pam\MobileUi\Component\AttachmentPreview;
 use Pam\MobileUi\Component\Attachments;
+use Pam\MobileUi\Component\Conversation;
+use Pam\MobileUi\Component\ConversationContent;
+use Pam\MobileUi\Component\ConversationScrollButton;
 use Pam\MobileUi\Component\Message;
+use Pam\MobileUi\Component\MessageBranch;
+use Pam\MobileUi\Component\MessageBranchContent;
+use Pam\MobileUi\Component\MessageBranchNext;
+use Pam\MobileUi\Component\MessageBranchPage;
+use Pam\MobileUi\Component\MessageBranchPrevious;
+use Pam\MobileUi\Component\MessageBranchSelector;
 use Pam\MobileUi\Component\MessageContent;
 use Pam\MobileUi\Component\Menu;
 use Pam\MobileUi\Component\MenuItem;
@@ -76,6 +85,8 @@ use Pam\MobileUi\Component\PopoverArrow;
 use Pam\MobileUi\Component\PopoverCloseButton;
 use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
+use Pam\MobileUi\Component\PromptInputBody;
+use Pam\MobileUi\Component\PromptInputSubmit;
 use Pam\MobileUi\Component\PromptInputTextarea;
 use Pam\MobileUi\Component\Progress;
 use Pam\MobileUi\Component\ProgressFilledTrack;
@@ -108,6 +119,7 @@ use Pam\MobileUi\Component\TooltipContent;
 use Pam\MobileUi\Component\SwitchControl;
 use Pam\MobileUi\Enum\ButtonVariant;
 use Pam\MobileUi\Enum\BackdropPressBehavior;
+use Pam\MobileUi\Enum\BranchControlAction;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentCategory;
 use Pam\MobileUi\Enum\ComponentMaturity;
@@ -203,6 +215,7 @@ foreach ([
     ComponentType::cases(),
     ComponentVariant::cases(),
     DrawerAnchor::cases(),
+    BranchControlAction::cases(),
     ImageViewerControlAction::cases(),
     ButtonVariant::cases(),
     Orientation::cases(),
@@ -899,9 +912,149 @@ $assert(
     'Chat role recipes must preserve the upstream user bubble layout.',
 );
 
+$branchIndexes = [];
+$messageBranch = MessageBranch::make(
+    ['defaultBranch' => 1, 'loop' => false],
+    MessageBranchContent::make(
+        Text::make('First response'),
+        Text::make('Second response'),
+    ),
+    MessageBranchSelector::make(
+        MessageBranchPrevious::make(),
+        MessageBranchPage::make(),
+        MessageBranchNext::make(),
+    ),
+)->onChange(
+    static function (string $index) use (&$branchIndexes): void {
+        $branchIndexes[] = (int) $index;
+    },
+)->toElement();
+$messageBranchContent = $messageBranch->children()[0] ?? null;
+$messageBranchSelector = $messageBranch->children()[1] ?? null;
+$messageBranchPrevious = $messageBranchSelector?->children()[0] ?? null;
+$messageBranchCounter = $messageBranchSelector?->children()[1] ?? null;
+$messageBranchNative = $messageBranch->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$messageBranchPreviousNative = $messageBranchPrevious?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$messageBranchContent instanceof \Pam\Native\Element
+    || !$messageBranchSelector instanceof \Pam\Native\Element
+    || !$messageBranchPreviousNative instanceof BinaryValue
+    || !$messageBranchNative instanceof BinaryValue
+) {
+    throw new RuntimeException('MessageBranch must compile its native pager anatomy.');
+}
+$messageBranchProperties = Wire::decodeMap($messageBranchNative->bytes);
+$messageBranchPreviousProperties = Wire::decodeMap(
+    $messageBranchPreviousNative->bytes,
+);
+$messageBranch->events()[\Pam\Native\EventKind::Change->value]('0');
 $assert(
-    PromptInput::make(PromptInputTextarea::make())->toElement()->kind() === NodeKind::View,
-    'PromptInput must remain a styled container instead of becoming a text field.',
+    $messageBranchProperties['behavior'] === NativeBehavior::MessageBranch->value
+        && $messageBranchProperties['defaultBranch'] === 1
+        && $messageBranchProperties['loop'] === false
+        && $messageBranchContent->children()[0]
+            ->properties()[PropKey::Value->value]
+            === 'pam:message-branch-page:0'
+        && $messageBranchSelector->properties()[PropKey::Value->value]
+            === 'pam:message-branch-selector'
+        && $messageBranchPreviousProperties['behavior']
+            === NativeBehavior::MessageBranchControl->value
+        && $messageBranchPreviousProperties['navigationAction']
+            === BranchControlAction::Previous->value
+        && $messageBranchCounter?->properties()[PropKey::Value->value]
+            === 'pam:message-branch-counter'
+        && $branchIndexes === [0],
+    'Message branches must navigate locally and expose one semantic index.',
+);
+
+$submittedPrompts = [];
+$prompt = PromptInput::make(
+    PromptInputBody::make(
+        PromptInputTextarea::make(['value' => 'Build a PAM screen']),
+    ),
+    PromptInputSubmit::make(),
+)->onSubmit(
+    static function (string $prompt) use (&$submittedPrompts): void {
+        $submittedPrompts[] = $prompt;
+    },
+)->toElement();
+$promptBody = $prompt->children()[0] ?? null;
+$promptTextarea = $promptBody?->children()[0] ?? null;
+$promptSubmit = $prompt->children()[1] ?? null;
+$promptNative = $prompt->properties()[PropKey::HostProperties->value] ?? null;
+$promptSubmitNative = $promptSubmit?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$promptTextarea instanceof \Pam\Native\Element
+    || !$promptNative instanceof BinaryValue
+    || !$promptSubmitNative instanceof BinaryValue
+) {
+    throw new RuntimeException('PromptInput must compile its native submit coordinator.');
+}
+$promptProperties = Wire::decodeMap($promptNative->bytes);
+$promptSubmitProperties = Wire::decodeMap($promptSubmitNative->bytes);
+$prompt->events()[\Pam\Native\EventKind::Submit->value]('Ship it');
+$assert(
+    $prompt->kind() === NodeKind::CustomView
+        && $promptTextarea->kind() === NodeKind::Input
+        && $promptProperties['behavior'] === NativeBehavior::PromptInput->value
+        && $promptProperties['clearOnSubmit'] === true
+        && $promptProperties['trimOnSubmit'] === true
+        && $promptSubmitProperties['behavior']
+            === NativeBehavior::PromptInputSubmit->value
+        && $submittedPrompts === ['Ship it'],
+    'PromptInput must submit and clear through one Android-owned coordinator.',
+);
+
+$conversation = Conversation::make(
+    ConversationContent::make(
+        Message::make(
+            ['role' => MessageRole::Assistant],
+            MessageContent::make(Text::make('Ready')),
+        ),
+    ),
+    ConversationScrollButton::make(),
+)->toElement();
+$conversationContent = $conversation->children()[0] ?? null;
+$conversationScrollButton = $conversation->children()[1] ?? null;
+$conversationNative = $conversation->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$conversationScrollButtonNative = $conversationScrollButton?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$conversationContent instanceof \Pam\Native\Element
+    || !$conversationNative instanceof BinaryValue
+    || !$conversationScrollButtonNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Conversation must compile its native scroll coordinator.');
+}
+$conversationProperties = Wire::decodeMap($conversationNative->bytes);
+$conversationScrollProperties = Wire::decodeMap(
+    $conversationScrollButtonNative->bytes,
+);
+$assert(
+    $conversation->kind() === NodeKind::CustomView
+        && $conversationProperties['behavior'] === NativeBehavior::Chat->value
+        && $conversationProperties['autoScroll'] === true
+        && $conversationContent->kind() === NodeKind::Scroll
+        && $conversationContent->properties()[PropKey::Value->value]
+            === 'pam:conversation-content'
+        && $conversationScrollProperties['behavior']
+            === NativeBehavior::ConversationScrollButton->value,
+    'Conversation must own scrolling and latest-message affordance natively.',
+);
+
+$assert(
+    PromptInput::make(PromptInputTextarea::make())->toElement()->kind()
+        === NodeKind::CustomView,
+    'PromptInput must remain a styled native container instead of becoming a text field.',
 );
 $assert(
     PromptInputTextarea::make()->toElement()->kind() === NodeKind::Input,

@@ -71,6 +71,21 @@ bridge traffic; a completed navigation emits one scalar index. The native host
 also exposes collection metadata, accessibility scroll alternatives and a
 position announcement, so touch gestures are never the only path.
 
+Chat AI uses three small anatomy-aware hosts rather than a JavaScript state
+provider. `Conversation` observes its descendant Android `ScrollView`, hides or
+shows the latest-message affordance from native scroll position and follows a
+new user message without a PHP layout callback. Authored message bubbles remain
+ordinary PAM children, so application-specific content is unrestricted.
+
+`MessageBranch` tags authored response pages during composition. Android owns
+the active index, page visibility, looping, previous/next availability,
+counter and pager accessibility metadata, then emits one scalar index after a
+settled selection. `PromptInput` observes its mounted `EditText` directly,
+derives Submit availability from trimmed text or mounted attachments, clears
+locally when requested and emits one `SUBMIT` payload. Native input sync avoids
+per-keystroke PHP callbacks; attachment removal and actual message creation
+remain application state.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native
@@ -222,6 +237,9 @@ application explicitly subscribes to it.
   this keeps the painted grid flat without sacrificing touch exploration.
 - Modal focus is trapped and restored; dismiss/back remains available.
 - Motion respects system animation scale and avoids required gesture-only paths.
+- Conversation scrolling, branch navigation and prompt submission expose
+  button/pager/list semantics and keyboard activation without gesture-only
+  actions.
 - Light and dark semantic pairs meet WCAG AA contrast.
 
 ## Compatibility definition

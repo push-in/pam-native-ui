@@ -6,6 +6,7 @@ namespace Pam\MobileUi\Rendering;
 
 use Closure;
 use InvalidArgumentException;
+use Pam\MobileUi\Enum\BranchControlAction;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ImageViewerControlAction;
 use Pam\MobileUi\Enum\InputSlotAction;
@@ -89,6 +90,7 @@ final class ComponentRenderer
             $children = [];
         }
         $children = self::imageViewerChildren($part, $props, $children);
+        $children = self::messageBranchChildren($part, $children);
         $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
@@ -272,6 +274,32 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:form-helper');
         } elseif ($part === 'FormControlError') {
             $element = $element->property(PropKey::Value, 'pam:form-error');
+        } elseif ($part === 'ConversationContent') {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:conversation-content',
+            );
+        } elseif ($part === 'Message') {
+            $role = self::integer($runtimeProps, 'role', 2);
+            $element = $element->property(
+                PropKey::Value,
+                'pam:message:'.max(1, min(3, $role)),
+            );
+        } elseif ($part === 'MessageBranchSelector') {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:message-branch-selector',
+            );
+        } elseif ($part === 'MessageBranchPage') {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:message-branch-counter',
+            );
+        } elseif ($part === 'Attachment') {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:prompt-attachment',
+            );
         }
 
         if ($styleOverride !== null && !$styleAppliedToContent) {
@@ -423,6 +451,17 @@ final class ComponentRenderer
                 $props,
             );
         }
+        if ($part === 'ConversationContent') {
+            return Scroll::make(self::oneChild($children))
+                ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
+                ->showsIndicator(
+                    self::flag(
+                        $props,
+                        'showsVerticalScrollIndicator',
+                        false,
+                    ),
+                );
+        }
         if (in_array($part, [
             'ScrollView',
             'ActionsheetScrollView',
@@ -564,6 +603,12 @@ final class ComponentRenderer
                 ),
             );
         }
+        if ($behavior === NativeBehavior::MessageBranchControl) {
+            $values['navigationAction'] = match ($part) {
+                'MessageBranchNext' => BranchControlAction::Next->value,
+                default => BranchControlAction::Previous->value,
+            };
+        }
 
         return $values;
     }
@@ -571,6 +616,13 @@ final class ComponentRenderer
     public static function nativeBehavior(string $part): NativeBehavior
     {
         return match ($part) {
+            'Conversation' => NativeBehavior::Chat,
+            'ConversationScrollButton' => NativeBehavior::ConversationScrollButton,
+            'MessageBranch' => NativeBehavior::MessageBranch,
+            'MessageBranchPrevious',
+            'MessageBranchNext' => NativeBehavior::MessageBranchControl,
+            'PromptInput' => NativeBehavior::PromptInput,
+            'PromptInputSubmit' => NativeBehavior::PromptInputSubmit,
             'Accordion' => NativeBehavior::AccordionGroup,
             'AccordionItem' => NativeBehavior::Accordion,
             'CheckboxGroup' => NativeBehavior::CheckboxGroup,
@@ -627,6 +679,27 @@ final class ComponentRenderer
             $props['isHeaderRow'] = true;
         } elseif ($part === 'TableFooter') {
             $props['isFooterRow'] = true;
+        }
+        if ($part === 'Conversation' && !array_key_exists('autoScroll', $props)) {
+            $props['autoScroll'] = true;
+        } elseif ($part === 'MessageBranch') {
+            if (
+                !array_key_exists('branch', $props)
+                && !array_key_exists('currentBranch', $props)
+                && !array_key_exists('defaultBranch', $props)
+            ) {
+                $props['defaultBranch'] = 0;
+            }
+            if (!array_key_exists('loop', $props)) {
+                $props['loop'] = true;
+            }
+        } elseif ($part === 'PromptInput') {
+            if (!array_key_exists('clearOnSubmit', $props)) {
+                $props['clearOnSubmit'] = true;
+            }
+            if (!array_key_exists('trimOnSubmit', $props)) {
+                $props['trimOnSubmit'] = true;
+            }
         }
         if (!in_array($part, ['Menu', 'Popover', 'Tooltip'], true)) {
             return $props;
@@ -1717,8 +1790,46 @@ final class ComponentRenderer
                     ->property(PropKey::Value, 'pam:image-viewer-counter'),
             ];
         }
+        if ($part === 'MessageBranchPrevious') {
+            return [Text::make('‹')];
+        }
+        if ($part === 'MessageBranchNext') {
+            return [Text::make('›')];
+        }
+        if ($part === 'MessageBranchPage') {
+            return [Text::make('1 of 1')];
+        }
+        if ($part === 'PromptInputSubmit') {
+            return [Text::make('↑')];
+        }
+        if ($part === 'ConversationScrollButton') {
+            return [Text::make('↓')];
+        }
 
         return [];
+    }
+
+    /**
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function messageBranchChildren(
+        string $part,
+        array $children,
+    ): array {
+        if ($part !== 'MessageBranchContent') {
+            return $children;
+        }
+
+        return array_map(
+            static fn (Element $child, int $index): Element =>
+                Column::make($child)->property(
+                    PropKey::Value,
+                    'pam:message-branch-page:'.$index,
+                ),
+            $children,
+            array_keys($children),
+        );
     }
 
     /**

@@ -1854,6 +1854,132 @@ class MobileUiHostInstrumentedTest {
         }
     }
 
+    @Test
+    fun chatAiCoordinatesBranchesPromptSubmissionAndScrollControlsNatively() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val branchEvents = CopyOnWriteArrayList<NativeViewEventKind>()
+            val branchPayloads = CopyOnWriteArrayList<ByteArray>()
+            val branch = MobileUiHost(context) { kind, payload ->
+                branchEvents += kind
+                branchPayloads += payload
+            }
+            branch.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(38),
+                    "defaultBranch" to WireValue.Integer(0),
+                    "loop" to WireValue.Flag(false),
+                ),
+            )
+            val first = View(context).apply {
+                tag = "pam:message-branch-page:0"
+            }
+            val second = View(context).apply {
+                tag = "pam:message-branch-page:1"
+            }
+            val selector = FrameLayout(context).apply {
+                tag = "pam:message-branch-selector"
+            }
+            val previous = MobileUiHost(context) { _, _ -> }
+            previous.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(39),
+                    "navigationAction" to WireValue.Integer(1),
+                ),
+            )
+            val page = TextView(context).apply {
+                tag = "pam:message-branch-counter"
+            }
+            val next = MobileUiHost(context) { _, _ -> }
+            next.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(39),
+                    "navigationAction" to WireValue.Integer(2),
+                ),
+            )
+            selector.addView(previous)
+            selector.addView(page)
+            selector.addView(next)
+            branch.addView(first)
+            branch.addView(second)
+            branch.addView(selector)
+            branch.layout(0, 0, 1_080, 800)
+
+            assertEquals(View.VISIBLE, first.visibility)
+            assertEquals(View.GONE, second.visibility)
+            assertTrue(!previous.isEnabled)
+            assertTrue(next.isEnabled)
+            assertEquals("1 of 2", page.text.toString())
+            assertTrue(next.performClick())
+            assertEquals(View.GONE, first.visibility)
+            assertEquals(View.VISIBLE, second.visibility)
+            assertEquals("2 of 2", page.text.toString())
+            assertEquals(NativeViewEventKind.CHANGE, branchEvents.single())
+            assertEquals("1", branchPayloads.single().decodeToString())
+
+            val branchInfo = AccessibilityNodeInfo.obtain()
+            branch.onInitializeAccessibilityNodeInfo(branchInfo)
+            assertEquals("androidx.viewpager.widget.ViewPager", branchInfo.className)
+            assertEquals(2, branchInfo.collectionInfo?.columnCount)
+
+            val promptEvents = CopyOnWriteArrayList<NativeViewEventKind>()
+            val promptPayloads = CopyOnWriteArrayList<ByteArray>()
+            val prompt = MobileUiHost(context) { kind, payload ->
+                promptEvents += kind
+                promptPayloads += payload
+            }
+            prompt.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(40),
+                    "clearOnSubmit" to WireValue.Flag(true),
+                    "trimOnSubmit" to WireValue.Flag(true),
+                ),
+            )
+            val input = EditText(context)
+            val submit = MobileUiHost(context) { _, _ -> }
+            submit.update(mapOf("behavior" to WireValue.Integer(41)))
+            prompt.addView(input)
+            prompt.addView(submit)
+            prompt.layout(0, 0, 1_080, 240)
+
+            assertTrue(!submit.isEnabled)
+            input.setText("  Build PAM  ")
+            assertTrue(submit.isEnabled)
+            assertTrue(submit.performClick())
+            assertEquals(NativeViewEventKind.SUBMIT, promptEvents.single())
+            assertEquals("Build PAM", promptPayloads.single().decodeToString())
+            assertEquals("", input.text.toString())
+            assertTrue(!submit.isEnabled)
+            assertEquals("Send prompt", submit.contentDescription)
+
+            val conversation = MobileUiHost(context) { _, _ -> }
+            conversation.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(14),
+                    "autoScroll" to WireValue.Flag(true),
+                ),
+            )
+            val scrollButton = MobileUiHost(context) { _, _ -> }
+            scrollButton.update(mapOf("behavior" to WireValue.Integer(42)))
+            conversation.addView(scrollButton)
+            conversation.layout(0, 0, 1_080, 800)
+            val conversationInfo = AccessibilityNodeInfo.obtain()
+            conversation.onInitializeAccessibilityNodeInfo(conversationInfo)
+            assertEquals("android.widget.ListView", conversationInfo.className)
+            assertEquals("Scroll to latest message", scrollButton.contentDescription)
+
+            conversationInfo.recycle()
+            branchInfo.recycle()
+            scrollButton.release()
+            conversation.release()
+            submit.release()
+            prompt.release()
+            previous.release()
+            next.release()
+            branch.release()
+        }
+    }
+
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
 

@@ -20,6 +20,7 @@ final class Catalog extends Component
     private bool $selectOpen = false;
     private bool $galleryOpen = false;
     private int $galleryIndex = 0;
+    private int $responseBranch = 0;
     private string $framework = 'Laravel';
     private string $email = '';
     private string $plan = 'starter';
@@ -141,6 +142,18 @@ final class Catalog extends Component
         );
     }
 
+    public function selectResponseBranch(string $payload): void
+    {
+        $this->responseBranch = max(0, min(1, (int) $payload));
+    }
+
+    public function sendPrompt(string $prompt): void
+    {
+        $this->notice = $prompt === ''
+            ? 'Submitted prompt with attachments.'
+            : "Submitted prompt: {$prompt}";
+    }
+
     public function selectDate(string $payload): void
     {
         if ($payload !== '') {
@@ -161,6 +174,7 @@ final class Catalog extends Component
      *     galleryOpen: bool,
      *     galleryIndex: int,
      *     gallery: list<array{url: string, alt: string}>,
+     *     responseBranch: int,
      *     framework: string,
      *     email: string,
      *     plan: string,
@@ -183,6 +197,7 @@ final class Catalog extends Component
             'galleryOpen' => $this->galleryOpen,
             'galleryIndex' => $this->galleryIndex,
             'gallery' => $this->gallery,
+            'responseBranch' => $this->responseBranch,
             'framework' => $this->framework,
             'email' => $this->email,
             'plan' => $this->plan,

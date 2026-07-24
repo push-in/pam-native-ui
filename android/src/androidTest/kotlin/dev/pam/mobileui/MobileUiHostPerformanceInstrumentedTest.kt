@@ -636,6 +636,78 @@ class MobileUiHostPerformanceInstrumentedTest {
                 imageEvents.size,
             )
 
+            val branchEvents = ArrayList<NativeViewEventKind>()
+            val messageBranch = MobileUiHost(context) { kind, _ -> branchEvents += kind }
+            messageBranch.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(38),
+                    "loop" to WireValue.Flag(true),
+                ),
+            )
+            repeat(3) { index ->
+                messageBranch.addView(View(context).apply {
+                    tag = "pam:message-branch-page:$index"
+                })
+            }
+            val branchNext = MobileUiHost(context) { _, _ -> }
+            branchNext.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(39),
+                    "navigationAction" to WireValue.Integer(2),
+                ),
+            )
+            messageBranch.addView(branchNext)
+            messageBranch.layout(0, 0, 1_080, 800)
+            repeat(WARMUP_ITERATIONS) {
+                branchNext.performClick()
+            }
+            branchEvents.clear()
+            val branchNavigation = measure(SAMPLE_ITERATIONS) {
+                branchNext.performClick()
+            }
+            assertTrue(
+                "Message branch p99 ${branchNavigation.p99Micros}µs exceeded 4ms",
+                branchNavigation.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Message branches must emit one final index per activation",
+                SAMPLE_ITERATIONS,
+                branchEvents.size,
+            )
+
+            val promptEvents = ArrayList<NativeViewEventKind>()
+            val prompt = MobileUiHost(context) { kind, _ -> promptEvents += kind }
+            prompt.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(40),
+                    "clearOnSubmit" to WireValue.Flag(true),
+                ),
+            )
+            val promptField = EditText(context)
+            val promptSubmit = MobileUiHost(context) { _, _ -> }
+            promptSubmit.update(mapOf("behavior" to WireValue.Integer(41)))
+            prompt.addView(promptField)
+            prompt.addView(promptSubmit)
+            prompt.layout(0, 0, 1_080, 240)
+            repeat(WARMUP_ITERATIONS) {
+                promptField.setText("warmup")
+                promptSubmit.performClick()
+            }
+            promptEvents.clear()
+            val promptSubmission = measure(SAMPLE_ITERATIONS) {
+                promptField.setText("prompt")
+                promptSubmit.performClick()
+            }
+            assertTrue(
+                "Prompt submission p99 ${promptSubmission.p99Micros}µs exceeded 4ms",
+                promptSubmission.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Prompt submit must emit one semantic event per activation",
+                SAMPLE_ITERATIONS,
+                promptEvents.size,
+            )
+
             val tableEvents = ArrayList<NativeViewEventKind>()
             val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
             table.update(mapOf("behavior" to WireValue.Integer(35)))
@@ -707,6 +779,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"inputSlotPress\":${inputSlotPress.json()},")
                     append("\"feedbackUpdate\":${feedbackUpdate.json()},")
                     append("\"imageNavigation\":${imageNavigation.json()},")
+                    append("\"branchNavigation\":${branchNavigation.json()},")
+                    append("\"promptSubmission\":${promptSubmission.json()},")
                     append("\"tableLayout\":${tableLayout.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
@@ -727,6 +801,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"inputSlotBridgeEvents\":$inputSlotEvents,")
                     append("\"feedbackBridgeEvents\":${feedbackEvents.size},")
                     append("\"imageBridgeEvents\":${imageEvents.size},")
+                    append("\"branchBridgeEvents\":${branchEvents.size},")
+                    append("\"promptBridgeEvents\":${promptEvents.size},")
                     append("\"tableBridgeEvents\":${tableEvents.size}")
                     append('}')
                 },
@@ -759,6 +835,10 @@ class MobileUiHostPerformanceInstrumentedTest {
             toast.release()
             imageNext.release()
             imageViewer.release()
+            branchNext.release()
+            messageBranch.release()
+            promptSubmit.release()
+            prompt.release()
             repeat(table.childCount) { index ->
                 (table.getChildAt(index) as? MobileUiHost)?.release()
             }

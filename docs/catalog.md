@@ -127,7 +127,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: AI
 - Maturity: Stable
-- Runtime: PHP composition
+- Runtime: Android native host
 - Variants: none
 - Upstream examples captured: 3
 - Tags: `Attachments`, `Attachment`, `AttachmentPreview`, `AttachmentRemove`, `AttachmentHoverCard`, `AttachmentHoverCardContent`, `AttachmentHoverCardText`, `AttachmentEmpty`, `BlankContext`, `BlankProvider`, `Conversation`, `ConversationEmptyState`, `ConversationContent`, `ConversationScrollButton`, `ConversationDownload`, `FileTree`, `FileTreeFolder`, `FileTreeFile`, `FileTreeActions`, `Message`, `MessageContent`, `MessageResponse`, `MessageToolbar`, `MessageAction`, `MessageBranch`, `MessageBranchContent`, `MessageBranchSelector`, `MessageBranchPrevious`, `MessageBranchNext`, `MessageBranchPage`, `ModelSelector`, `ModelSelectorTrigger`, `ModelSelectorContent`, `ModelSelectorInput`, `ModelSelectorList`, `ModelSelectorEmpty`, `ModelSelectorGroup`, `ModelSelectorItem`, `ModelSelectorShortcut`, `ModelSelectorSeparator`, `ModelSelectorLogo`, `ModelSelectorLogoGroup`, `ModelSelectorName`, `PromptInputProvider`, `PromptInput`, `PromptInputBody`, `PromptInputTextarea`, `PromptInputFooter`, `PromptInputTools`, `PromptInputButton`, `PromptInputSubmit`, `PromptInputActionMenu`, `PromptInputActionMenuTrigger`, `PromptInputActionMenuContent`

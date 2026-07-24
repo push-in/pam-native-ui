@@ -368,6 +368,53 @@ actions. Gesture progress emits no PHP callback; `on:change` receives one
 zero-based index after a semantic selection and `on:toggle` receives the final
 open state.
 
+Chat interfaces keep their high-frequency interaction state native while
+remaining ordinary compound tags:
+
+```xml
+<Conversation>
+    <ConversationContent>
+        <Message role="assistant">
+            <MessageContent>
+                <MessageResponse>Choose an implementation.</MessageResponse>
+            </MessageContent>
+        </Message>
+    </ConversationContent>
+    <ConversationScrollButton><ArrowDownIcon /></ConversationScrollButton>
+</Conversation>
+
+<MessageBranch
+    currentBranch="{{ $branch }}"
+    loop="true"
+    on:change="selectBranch"
+>
+    <MessageBranchContent>
+        <MessageContent><Text>Typed PHP components</Text></MessageContent>
+        <MessageContent><Text>Raw PAM elements</Text></MessageContent>
+    </MessageBranchContent>
+    <MessageBranchSelector>
+        <MessageBranchPrevious />
+        <MessageBranchPage />
+        <MessageBranchNext />
+    </MessageBranchSelector>
+</MessageBranch>
+
+<PromptInput on:submit="sendPrompt">
+    <PromptInputBody>
+        <PromptInputTextarea sync="native" placeholder="Ask PAM anything" />
+    </PromptInputBody>
+    <PromptInputSubmit><ArrowUpIcon /></PromptInputSubmit>
+</PromptInput>
+```
+
+`ConversationContent` is a real Android scroll container. The latest-message
+button observes scroll position and moves locally, while a newly appended user
+message follows the upstream auto-scroll rule. Message branches switch mounted
+responses, counter and accessibility state on the UI thread, emitting one final
+index. Prompt text enables/disables Submit locally; submit trims and optionally
+clears the field, then sends one semantic string to PHP. With `sync="native"`,
+typing itself does not cross the bridge.
+
 Large scalar data sets use PAM's recycled Android list primitives directly:
 
 ```xml
