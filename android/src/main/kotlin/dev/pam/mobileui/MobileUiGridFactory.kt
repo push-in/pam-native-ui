@@ -44,8 +44,8 @@ internal class MobileUiGridView(
     private var lastPlan = GridPlan(emptyList(), 0, GridSpec.DEFAULT_COLUMNS)
 
     init {
-        clipChildren = false
-        clipToPadding = false
+        clipChildren = true
+        clipToPadding = true
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
     }
 
@@ -90,12 +90,34 @@ internal class MobileUiGridView(
             resources.configuration.screenWidthDp,
         )
         val activeColumns = columns[responsiveIndex].coerceAtLeast(1)
-        val childHeights = visibleChildren.map { child ->
-            val height = child.layoutParams?.height ?: 0
-            if (height > 0) height else child.minimumHeight.coerceAtLeast(1)
-        }
         val spans = visibleChildren.map { child ->
             GridSpec.span(child.tag, responsiveIndex, activeColumns)
+        }
+        val widthPlan = GridPlanner.plan(
+            contentWidth,
+            activeColumns,
+            columnGaps[responsiveIndex].rounded(),
+            rowGaps[responsiveIndex].rounded(),
+            spans,
+            List(visibleChildren.size) { 1 },
+            direction,
+        )
+        val childHeights = visibleChildren.mapIndexed { index, child ->
+            val plannedWidth = widthPlan.items[index].bounds.width
+            constrainCellContent(child, plannedWidth)
+            child.measure(
+                MeasureSpec.makeMeasureSpec(plannedWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+            )
+            val content = (child as? ViewGroup)?.getChildAt(0)
+            val contentHeight = max(
+                content?.measuredHeight ?: 0,
+                content?.layoutParams?.height ?: 0,
+            )
+            max(
+                max(child.measuredHeight, contentHeight),
+                max(child.layoutParams?.height ?: 0, child.minimumHeight),
+            ).coerceAtLeast(1)
         }
         lastPlan = GridPlanner.plan(
             contentWidth,
@@ -154,7 +176,11 @@ internal class MobileUiGridView(
     @Suppress("DEPRECATION")
     override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
         super.onInitializeAccessibilityNodeInfo(info)
-        info.className = "android.view.ViewGroup"
+        info.className = if ((tag as? String)?.startsWith("pam:table-row") == true) {
+            "android.widget.TableRow"
+        } else {
+            "android.view.ViewGroup"
+        }
         info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
             lastPlan.rows,
             lastPlan.columns,
@@ -169,6 +195,14 @@ internal class MobileUiGridView(
                 getChildAt(index).takeIf { it.visibility != GONE }?.let(::add)
             }
         }
+
+    private fun constrainCellContent(cell: View, width: Int) {
+        val content = (cell as? ViewGroup)?.getChildAt(0) ?: return
+        val params = content.layoutParams ?: return
+        if (params.width == width) return
+        params.width = width
+        content.layoutParams = params
+    }
 
     private fun Float.rounded(): Int = floor(this + 0.5f).toInt()
 }

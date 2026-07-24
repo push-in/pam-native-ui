@@ -68,6 +68,8 @@ final class Catalog extends Component
     ];
     /** @var list<string> */
     private array $expandedFolders = ['/src'];
+    /** @var list<string> */
+    private array $expandedAccordions = ['performance', 'freedom'];
 
     public function render(): Renderable
     {
@@ -235,6 +237,7 @@ final class Catalog extends Component
      *     selectedDate: string,
      *     selectedFile: string,
      *     expandedFolders: list<string>,
+     *     expandedAccordions: list<string>,
      *     nativePackages: list<string>,
      *     notice: string
      * }
@@ -260,6 +263,7 @@ final class Catalog extends Component
             'selectedDate' => $this->selectedDate,
             'selectedFile' => $this->selectedFile,
             'expandedFolders' => $this->expandedFolders,
+            'expandedAccordions' => $this->expandedAccordions,
             'nativePackages' => $this->nativePackages,
             'notice' => $this->notice,
         ];

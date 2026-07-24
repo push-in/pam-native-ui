@@ -859,6 +859,7 @@ internal class MobileUiHost(
 
         if (previousBehavior != behavior) {
             installBehavior()
+            requestLayout()
             if (open) {
                 animateEntrance()
             }
@@ -1106,6 +1107,31 @@ internal class MobileUiHost(
         }
     }
 
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        if (behavior != Behavior.TABLE_ROW || childCount == 0) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            return
+        }
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val height = MeasureSpec.getSize(heightMeasureSpec)
+        val columnWidth = (
+            width - paddingLeft - paddingRight
+        ).coerceAtLeast(0) / childCount
+        repeat(childCount) { index ->
+            getChildAt(index).measure(
+                MeasureSpec.makeMeasureSpec(columnWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(
+                    (height - paddingTop - paddingBottom).coerceAtLeast(0),
+                    MeasureSpec.EXACTLY,
+                ),
+            )
+        }
+        setMeasuredDimension(
+            resolveSize(width, widthMeasureSpec),
+            resolveSize(height, heightMeasureSpec),
+        )
+    }
+
     override fun onLayout(
         changed: Boolean,
         left: Int,
@@ -1114,6 +1140,19 @@ internal class MobileUiHost(
         bottom: Int,
     ) {
         super.onLayout(changed, left, top, right, bottom)
+        if (behavior == Behavior.TABLE_ROW && childCount > 0) {
+            val contentWidth = (width - paddingLeft - paddingRight).coerceAtLeast(0)
+            repeat(childCount) { index ->
+                val childLeft = paddingLeft + contentWidth * index / childCount
+                val childRight = paddingLeft + contentWidth * (index + 1) / childCount
+                getChildAt(index).layout(
+                    childLeft,
+                    paddingTop,
+                    childRight,
+                    height - paddingBottom,
+                )
+            }
+        }
         applyRangeVisualState()
         if (behavior == Behavior.TABS) {
             applyTabsState(animate = false)
@@ -2990,6 +3029,12 @@ internal class MobileUiHost(
 
     private fun applySelectionVisualState() {
         if (behavior != Behavior.CHECKBOX && behavior != Behavior.RADIO) return
+        findTaggedDescendant(this, SELECTION_INDICATOR_TAG)?.apply {
+            isClickable = false
+            isLongClickable = false
+            isFocusable = false
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
         val forcedIcon = findTaggedDescendant(this, SELECTION_FORCE_ICON_TAG)
         val icon = forcedIcon
             ?: findTaggedDescendant(this, SELECTION_ICON_TAG)
@@ -3003,6 +3048,9 @@ internal class MobileUiHost(
         } else {
             GONE
         }
+        icon.isClickable = false
+        icon.isLongClickable = false
+        icon.isFocusable = false
         icon.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
     }
 
@@ -3101,9 +3149,11 @@ internal class MobileUiHost(
         if (orientation == 2) {
             val targetY = trackBounds.bottom - trackBounds.height() * position
             thumb.translationY = targetY - thumbBounds.centerY()
+            thumb.translationX = trackBounds.centerX() - thumbBounds.centerX()
         } else {
             val targetX = trackBounds.left + trackBounds.width() * position
             thumb.translationX = targetX - thumbBounds.centerX()
+            thumb.translationY = trackBounds.centerY() - thumbBounds.centerY()
         }
     }
 
@@ -5616,9 +5666,6 @@ internal class MobileUiHost(
     }
 
     private fun drawSelectionGlyph(canvas: Canvas, radio: Boolean) {
-        val icon = findTaggedDescendant(this, SELECTION_FORCE_ICON_TAG)
-            ?: findTaggedDescendant(this, SELECTION_ICON_TAG)
-        if (icon?.visibility == VISIBLE) return
         val bounds = selectionIndicatorBounds()
         if (bounds.width() <= 0f || bounds.height() <= 0f) return
         val centerX = bounds.centerX()

@@ -27,8 +27,8 @@ final class StyleRecipeResolver
         'SelectInput' => 'flex-1 min-w-0',
         'Table' => 'w-full',
         'TableRow' => 'flex-row',
-        'TabsList' => 'w-full flex-row',
-        'TabsTrigger' => 'flex-1',
+        'TabsList' => 'w-full min-h-12 flex-row',
+        'TabsTrigger' => 'flex-1 min-h-11 rounded-md',
         'Tooltip' => 'w-auto h-auto items-stretch justify-start',
     ];
 

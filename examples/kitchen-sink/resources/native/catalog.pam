@@ -204,7 +204,7 @@
                         <SkeletonText _lines="2" gap="2" speed="fast" />
                     </VStack>
                 </HStack>
-                <Toast action="info" variant="outline">
+                <Toast action="info" variant="outline" persistent="true">
                     <ToastTitle>Native notification</ToastTitle>
                     <ToastDescription>Mounted and announced on Android.</ToastDescription>
                 </Toast>
@@ -212,7 +212,7 @@
 
             <VStack class="gap-3">
                 <Heading size="xl">Disclosure and navigation</Heading>
-                <Accordion defaultValue="performance">
+                <Accordion type="multiple" defaultValue="$expandedAccordions">
                     <AccordionItem value="performance">
                         <AccordionHeader>
                             <AccordionTrigger>
@@ -241,7 +241,7 @@
                     </AccordionItem>
                 </Accordion>
 
-                <Tabs value="{{ $tab }}" on:change="selectTab">
+                <Tabs value="{{ $tab }}" variant="filled" on:change="selectTab">
                     <TabsList>
                         <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
                         <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
@@ -255,13 +255,13 @@
                     </TabsContentWrapper>
                 </Tabs>
 
-                <HStack space="sm">
-                    <Button variant="outline" on:press="toggleDrawer">
+                <Grid class="grid-cols-1 sm:grid-cols-2 gap-3">
+                    <GridItem><Button class="w-full" variant="outline" on:press="toggleDrawer">
                         <MenuIcon />
                         <ButtonText>Drawer</ButtonText>
-                    </Button>
-                    <Popover open="{{ $popoverOpen }}" placement="bottom-start">
-                        <Button variant="outline" on:press="togglePopover">
+                    </Button></GridItem>
+                    <GridItem><Popover class="w-full" open="{{ $popoverOpen }}" placement="bottom-start">
+                        <Button class="w-full" variant="outline" on:press="togglePopover">
                             <InfoIcon />
                             <ButtonText>Popover</ButtonText>
                         </Button>
@@ -270,26 +270,25 @@
                             <PopoverHeader><Heading size="sm">Local overlay</Heading></PopoverHeader>
                             <PopoverBody><Text>No PHP roundtrip while positioning.</Text></PopoverBody>
                         </PopoverContent>
-                    </Popover>
-                </HStack>
-                <HStack space="sm">
-                    <Menu placement="bottom-end" on:change="chooseMenu">
-                        <Button variant="outline">
+                    </Popover></GridItem>
+                    <GridItem><Menu class="w-full" placement="bottom-end" on:change="chooseMenu">
+                        <Button class="w-full" variant="outline">
                             <MenuIcon />
                             <ButtonText>Menu</ButtonText>
                         </Button>
                         <MenuItem key="share"><MenuItemLabel>Share</MenuItemLabel></MenuItem>
                         <MenuItem key="archive"><MenuItemLabel>Archive</MenuItemLabel></MenuItem>
-                    </Menu>
-                    <Tooltip openDelay="400" closeDelay="100" placement="top">
-                        <Button variant="ghost" accessibilityLabel="Performance details">
+                    </Menu></GridItem>
+                    <GridItem><Tooltip class="w-full" openDelay="400" closeDelay="100" placement="top">
+                        <Button class="w-full" variant="outline" accessibilityLabel="Performance details">
                             <InfoIcon />
+                            <ButtonText>Details</ButtonText>
                         </Button>
                         <TooltipContent>
                             <TooltipText>Positioned entirely on Android.</TooltipText>
                         </TooltipContent>
-                    </Tooltip>
-                </HStack>
+                    </Tooltip></GridItem>
+                </Grid>
             </VStack>
 
             <VStack class="gap-3">
@@ -396,65 +395,59 @@
                 </FileTree>
 
                 <PromptInputProvider files="$promptFiles">
-                    <If condition="$promptFiles">
-                        <Attachments variant="list">
-                            <Each items="$promptFiles" as="file">
-                                <Attachment data="$file" key="{{ $file.id }}">
-                                    <AttachmentPreview />
-                                    <VStack class="flex-1">
-                                        <Text>{{ $file.filename }}</Text>
-                                        <Text class="ui-text-muted">{{ $file.mediaType }}</Text>
-                                    </VStack>
-                                </Attachment>
-                            </Each>
-                        </Attachments>
-                    </If>
+                    <VStack class="gap-3">
+                        <If condition="$promptFiles">
+                            <Attachments variant="list">
+                                <Each items="$promptFiles" as="file">
+                                    <Attachment data="$file" key="{{ $file.id }}">
+                                        <AttachmentPreview />
+                                        <VStack class="flex-1">
+                                            <Text>{{ $file.filename }}</Text>
+                                            <Text class="ui-text-muted">{{ $file.mediaType }}</Text>
+                                        </VStack>
+                                    </Attachment>
+                                </Each>
+                            </Attachments>
+                        </If>
 
-                    <PromptInput on:submit="sendPrompt">
-                        <PromptInputBody>
-                            <PromptInputTextarea
-                                placeholder="Ask PAM anything"
-                                sync="native"
-                            />
-                        </PromptInputBody>
-                        <PromptInputFooter>
-                            <PromptInputTools>
-                                <PromptInputButton><PaperclipIcon /></PromptInputButton>
-                                <PromptInputButton><GlobeIcon /></PromptInputButton>
-                            </PromptInputTools>
-                            <PromptInputSubmit accessibilityLabel="Send prompt">
-                                <ArrowUpIcon />
-                            </PromptInputSubmit>
-                        </PromptInputFooter>
-                    </PromptInput>
+                        <PromptInput on:submit="sendPrompt">
+                            <PromptInputBody>
+                                <PromptInputTextarea
+                                    placeholder="Ask PAM anything"
+                                    sync="native"
+                                />
+                            </PromptInputBody>
+                            <PromptInputFooter>
+                                <PromptInputTools>
+                                    <PromptInputButton><PaperclipIcon /></PromptInputButton>
+                                    <PromptInputButton><GlobeIcon /></PromptInputButton>
+                                </PromptInputTools>
+                                <PromptInputSubmit accessibilityLabel="Send prompt">
+                                    <ArrowUpIcon />
+                                </PromptInputSubmit>
+                            </PromptInputFooter>
+                        </PromptInput>
+                    </VStack>
                 </PromptInputProvider>
             </VStack>
 
             <VStack class="gap-3">
-                <Heading size="xl">Data table</Heading>
-                <Table>
-                    <TableCaption>Runtime work allocation</TableCaption>
-                    <TableHeader>
-                        <TableRow isHeaderRow="true">
-                            <TableHead>Layer</TableHead>
-                            <TableHead>Responsibility</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow>
-                            <TableData>PHP</TableData>
-                            <TableData>State and business logic</TableData>
-                        </TableRow>
-                        <TableRow>
-                            <TableData>Rust</TableData>
-                            <TableData>Layout and binary protocol</TableData>
-                        </TableRow>
-                        <TableRow>
-                            <TableData>Android</TableData>
-                            <TableData>Rendering, gestures and motion</TableData>
-                        </TableRow>
-                    </TableBody>
-                </Table>
+                <Heading size="xl">Runtime architecture</Heading>
+                <Text class="ui-text-muted">Clear ownership across the native stack.</Text>
+                <Grid class="grid-cols-1 md:grid-cols-3 gap-3">
+                    <GridItem><Card>
+                        <Heading size="md">PHP</Heading>
+                        <Text class="ui-text-muted">State and business logic</Text>
+                    </Card></GridItem>
+                    <GridItem><Card>
+                        <Heading size="md">Rust</Heading>
+                        <Text class="ui-text-muted">Layout and binary protocol</Text>
+                    </Card></GridItem>
+                    <GridItem><Card>
+                        <Heading size="md">Android</Heading>
+                        <Text class="ui-text-muted">Rendering, gestures and motion</Text>
+                    </Card></GridItem>
+                </Grid>
             </VStack>
 
             <VStack class="gap-3">
@@ -466,6 +459,7 @@
                     items="$nativePackages"
                     height="192"
                     rowHeight="48"
+                    scrollEnabled="false"
                     showsVerticalScrollIndicator="false"
                     onEndReachedThreshold="0.25"
                     on:endReached="loadMorePackages"
@@ -513,9 +507,9 @@
     <Drawer open="{{ $drawerOpen }}" anchor="left" on:event="closeDrawer">
         <DrawerBackdrop on:press="closeDrawer" />
         <DrawerContent size="md">
-            <DrawerHeader>
-                <Heading size="lg">PAM Mobile UI</Heading>
-                <DrawerCloseButton on:press="closeDrawer"><CloseIcon /></DrawerCloseButton>
+            <DrawerHeader class="pr-4">
+                <Heading size="lg">PamUI</Heading>
+                <DrawerCloseButton accessibilityLabel="Close drawer" on:press="closeDrawer"><CloseIcon /></DrawerCloseButton>
             </DrawerHeader>
             <DrawerBody>
                 <VStack class="gap-2">

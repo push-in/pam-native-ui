@@ -1767,7 +1767,7 @@ $assert(
         && $grid->children()[2]->properties()[PropKey::Value->value]
             === 'pam:grid-item:2,3,3,3,3,3'
         && is_numeric($gridMinHeight)
-        && abs((float) $gridMinHeight - 51.2) < 0.001,
+        && abs((float) $gridMinHeight - 75.2) < 0.001,
     'Grid must preserve responsive columns, spans and independent native gaps.',
 );
 
@@ -1789,7 +1789,7 @@ $contentGrid = Grid::make(
 $contentGridMinHeight = $contentGrid->properties()[PropKey::MinHeight->value] ?? null;
 $assert(
     is_numeric($contentGridMinHeight)
-        && abs((float) $contentGridMinHeight - 103.6) < 0.001,
+        && abs((float) $contentGridMinHeight - 115.6) < 0.001,
     'Grid must reserve the recursive intrinsic height of content-sized cards.',
 );
 
@@ -2370,24 +2370,20 @@ $table = Table::make(
 $tableNativeValue = $table->properties()[PropKey::HostProperties->value] ?? null;
 $tableHeader = $table->children()[0] ?? null;
 $tableHeaderRow = $tableHeader?->children()[0] ?? null;
-$tableHeaderRowNativeValue = $tableHeaderRow?->properties()[
-    PropKey::HostProperties->value
-] ?? null;
 if (
     !$tableNativeValue instanceof BinaryValue
-    || !$tableHeaderRowNativeValue instanceof BinaryValue
+    || !$tableHeaderRow instanceof \Pam\Native\Element
 ) {
-    throw new RuntimeException('Table and TableRow must render native semantic hosts.');
+    throw new RuntimeException('Table and TableRow must render native semantic layouts.');
 }
 $tableNative = Wire::decodeMap($tableNativeValue->bytes);
-$tableHeaderRowNative = Wire::decodeMap($tableHeaderRowNativeValue->bytes);
 $assert(
     $tableNative['behavior'] === NativeBehavior::Table->value
         && $table->properties()[PropKey::WidthPercent->value] === 100.0
-        && $tableHeaderRowNative['behavior'] === NativeBehavior::TableRow->value
-        && $tableHeaderRow->properties()[PropKey::FlexDirection->value]
-            === FlexDirection::Row->value
-        && $tableHeaderRowNative['isHeaderRow'] === true
+        && $tableHeaderRow->properties()[PropKey::HostName->value]
+            === 'pam.mobile_ui.grid'
+        && $tableHeaderRow->properties()[PropKey::Value->value]
+            === 'pam:table-row:header'
         && count($tableHeaderRow->children()) === 2,
     'Table must retain authored cells while packing header-row collection semantics.',
 );

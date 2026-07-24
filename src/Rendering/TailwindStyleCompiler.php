@@ -253,6 +253,7 @@ final class TailwindStyleCompiler
 
         if ($utility === 'flex-1') {
             $values['flexGrow'] = 1.0;
+            $values['flexShrink'] = 1.0;
         } elseif ($utility === 'shrink-0') {
             $values['flexShrink'] = 0.0;
         } elseif ($utility === 'shrink') {

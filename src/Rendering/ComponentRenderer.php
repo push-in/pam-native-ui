@@ -284,14 +284,18 @@ final class ComponentRenderer
         } elseif ($part === 'AccordionIcon') {
             $element = $element->property(PropKey::Value, 'pam:accordion-icon');
         } elseif ($part === 'CheckboxIndicator' || $part === 'RadioIndicator') {
-            $element = $element->property(PropKey::Value, 'pam:selection-indicator');
+            $element = $element
+                ->property(PropKey::Value, 'pam:selection-indicator')
+                ->property(PropKey::PointerEvents, PointerEvents::None->value);
         } elseif ($part === 'CheckboxIcon' || $part === 'RadioIcon') {
-            $element = $element->property(
-                PropKey::Value,
-                self::flag($props, 'forceMount')
-                    ? 'pam:selection-icon-force'
-                    : 'pam:selection-icon',
-            );
+            $element = $element
+                ->property(
+                    PropKey::Value,
+                    self::flag($props, 'forceMount')
+                        ? 'pam:selection-icon-force'
+                        : 'pam:selection-icon',
+                )
+                ->property(PropKey::PointerEvents, PointerEvents::None->value);
         } elseif (in_array($part, [
             'ActionsheetBackdrop',
             'BottomSheetBackdrop',
@@ -351,7 +355,11 @@ final class ComponentRenderer
         } elseif ($part === 'SliderFilledTrack') {
             $element = $element->property(PropKey::Value, 'pam:slider-filled-track');
         } elseif ($part === 'SliderThumb') {
-            $element = $element->property(PropKey::Value, 'pam:slider-thumb');
+            $element = $element
+                ->property(PropKey::Value, 'pam:slider-thumb')
+                ->property(PropKey::PositionType, PositionType::Absolute->value)
+                ->property(PropKey::Left, 0.0)
+                ->property(PropKey::Top, 0.0);
         } elseif ($part === 'ProgressFilledTrack') {
             $element = $element->property(PropKey::Value, 'pam:progress-filled-track');
         } elseif ($part === 'FormControlLabel') {
@@ -470,6 +478,11 @@ final class ComponentRenderer
         );
         if ($shouldHide) {
             $element = $element->visible(false);
+            if ($part === 'AccordionContent') {
+                $element = $element
+                    ->property(PropKey::Height, 0.0)
+                    ->property(PropKey::MinHeight, 0.0);
+            }
         }
         $label = $props['accessibilityLabel']
             ?? $props['ariaLabel']
@@ -588,6 +601,9 @@ final class ComponentRenderer
                     'text',
                     $part === 'MessageBranchPage' ? '1 of 1' : '',
                 ),
+            )->property(
+                PropKey::TextColor,
+                ThemeManager::current()->color(ColorToken::Foreground),
             );
         }
         if (self::isInput($part)) {
@@ -756,6 +772,22 @@ final class ComponentRenderer
         if ($part === 'Grid') {
             return self::grid($props, $children);
         }
+        if ($part === 'TableRow') {
+            $cells = array_map(
+                static fn (Element $child): Element => View::make($child)
+                    ->property(PropKey::Value, 'pam:grid-item:1,1,1,1,1,1'),
+                $children,
+            );
+            return self::grid(
+                ['columns' => max(1, count($cells))],
+                $cells,
+            )->property(
+                PropKey::Value,
+                self::flag($props, 'isHeaderRow')
+                    ? 'pam:table-row:header'
+                    : 'pam:table-row',
+            );
+        }
         if (
             $part === 'ModelSelectorTrigger'
             && self::flag($props, 'asChild')
@@ -763,7 +795,6 @@ final class ComponentRenderer
         ) {
             return $children[0];
         }
-
         $behavior = self::nativeBehavior($part);
         if ($behavior !== NativeBehavior::Container) {
             return CustomView::make(
@@ -2401,6 +2432,14 @@ final class ComponentRenderer
                 'TableHead',
                 'TableData',
             ], true);
+    }
+
+    private static function themedText(string $value): Text
+    {
+        return Text::make($value)->property(
+            PropKey::TextColor,
+            ThemeManager::current()->color(ColorToken::Foreground),
+        );
     }
 
     private static function isInput(string $part): bool
@@ -4057,7 +4096,8 @@ final class ComponentRenderer
                         self::gridChildHeight($child),
                     $children,
                 ),
-            ) + ($rowGaps[0] ?? 0.0) * max(0, count($children) - 1);
+            ) + ($rowGaps[0] ?? 0.0) * max(0, count($children) - 1)
+                + 12.0 * count($children);
         }
         $maximum = 0.0;
         foreach ($columns as $breakpoint => $columnCount) {
@@ -4090,6 +4130,10 @@ final class ComponentRenderer
                 $rows++;
             }
             $height += ($rowGaps[$breakpoint] ?? 0.0) * max(0, $rows - 1);
+            // Android text/icon metrics can exceed the platform-neutral
+            // intrinsic estimate at large font scales. Reserve a compact
+            // per-row guard so content never bleeds into the next section.
+            $height += 12.0 * $rows;
             $maximum = max($maximum, $height);
         }
 
@@ -4495,7 +4539,7 @@ final class ComponentRenderer
                 || in_array($part, ['Badge', 'InputSlot'], true)
             )
         ) {
-            return [Text::make(self::text($props, 'text'))];
+            return [self::themedText(self::text($props, 'text'))];
         }
 
         if (in_array($part, ['Input', 'Textarea'], true)) {
@@ -4506,24 +4550,24 @@ final class ComponentRenderer
         }
         if ($part === 'ImageViewerCounter') {
             return [
-                Text::make('1 / 1')
+                self::themedText('1 / 1')
                     ->property(PropKey::Value, 'pam:image-viewer-counter'),
             ];
         }
         if ($part === 'MessageBranchPrevious') {
-            return [Text::make('‹')];
+            return [self::themedText('‹')];
         }
         if ($part === 'MessageBranchNext') {
-            return [Text::make('›')];
+            return [self::themedText('›')];
         }
         if ($part === 'PromptInputSubmit') {
-            return [Text::make('↑')];
+            return [self::themedText('↑')];
         }
         if ($part === 'PromptInputActionMenuTrigger') {
-            return [Text::make('+')];
+            return [self::themedText('+')];
         }
         if ($part === 'ConversationScrollButton') {
-            return [Text::make('↓')];
+            return [self::themedText('↓')];
         }
         if ($part === 'ConversationDownload') {
             return [
@@ -4542,20 +4586,22 @@ final class ComponentRenderer
             ];
         }
         if ($part === 'FileTreeFile') {
-            return [Text::make(self::text($props, 'name', self::text($props, 'path')))];
+            return [self::themedText(
+                self::text($props, 'name', self::text($props, 'path')),
+            )];
         }
         if ($part === 'AttachmentPreview') {
             return self::attachmentPreviewChildren($props);
         }
         if ($part === 'AttachmentEmpty') {
             return [
-                Text::make(
+                self::themedText(
                     self::text($props, 'text', 'No attachments'),
                 ),
             ];
         }
         if ($part === 'ModelSelectorEmpty') {
-            return [Text::make('No models found.')];
+            return [self::themedText('No models found.')];
         }
         if ($part === 'ModelSelectorLogo') {
             $provider = self::text($props, 'provider', '?');
@@ -4563,10 +4609,10 @@ final class ComponentRenderer
                 ? mb_substr($provider, 0, 2)
                 : substr($provider, 0, 2);
 
-            return [Text::make(strtoupper($initials))];
+            return [self::themedText(strtoupper($initials))];
         }
         if (in_array($part, ['CalendarWeekDay', 'CalendarWeekNumber'], true)) {
-            return [Text::make(self::text($props, 'text'))];
+            return [self::themedText(self::text($props, 'text'))];
         }
         if (in_array($part, [
             'CalendarHeaderMonthSelect',
@@ -4863,11 +4909,11 @@ final class ComponentRenderer
 
         return [
             Row::make(
-                Text::make('›')->property(
+                self::themedText('›')->property(
                     PropKey::Value,
                     'pam:file-tree-chevron',
                 ),
-                Text::make($name)->property(
+                self::themedText($name)->property(
                     PropKey::Value,
                     'pam:file-tree-name',
                 ),
@@ -5154,7 +5200,7 @@ final class ComponentRenderer
             $input = $input->cursorColor($cursorColor);
         }
         $underlineColor = self::packedColor(
-            $props['underlineColorAndroid'] ?? null,
+            $props['underlineColorAndroid'] ?? 0x00000000,
         );
         if ($underlineColor !== null) {
             $input = $input->underlineColor($underlineColor);
@@ -5405,6 +5451,10 @@ final class ComponentRenderer
     /** @param array<string, mixed> $props */
     private static function configuredList(Element $list, array $props): Element
     {
+        $list = $list->property(
+            PropKey::TextColor,
+            ThemeManager::current()->color(ColorToken::Foreground),
+        );
         $rowHeight = $props['rowHeight']
             ?? $props['itemHeight']
             ?? $props['estimatedItemSize']
