@@ -209,6 +209,9 @@ use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
 use Pam\Native\FlexDirection;
 use Pam\Native\AccessibilityRole;
+use Pam\Native\AccessibilityCheckedState;
+use Pam\Native\AccessibilityImportance;
+use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\FontStyle;
 use Pam\Native\Align;
 use Pam\Native\Internal\TemplateCompiler;
@@ -1039,6 +1042,33 @@ $rolePrecedence = Pressable::make(
     ],
     Text::make('Role precedence'),
 )->toElement();
+$mixedCheckboxSemantics = Checkbox::make([
+    'ariaChecked' => 'mixed',
+    'ariaLive' => 'polite',
+    'importantForAccessibility' => 'yes',
+])->toElement();
+$busyButtonSemantics = Button::make(
+    [
+        'accessibilityState' => [
+            'busy' => true,
+            'disabled' => true,
+        ],
+    ],
+    ButtonText::make('Saving'),
+)->toElement();
+$expandedTriggerSemantics = AccordionTrigger::make([
+    'ariaExpanded' => true,
+])->toElement();
+$hiddenSemantics = Pressable::make(
+    ['ariaHidden' => true],
+    Text::make('Decorative'),
+)->toElement();
+$fluentRangeSemantics = Progress::make()
+    ->accessible()
+    ->accessibilityLiveRegion(AccessibilityLiveRegion::Assertive)
+    ->importantForAccessibility(AccessibilityImportance::Yes)
+    ->accessibilityValue(0.0, 1.0, 0.5, 'Half')
+    ->toElement();
 $assert(
     Wire::decodeMap($singleSkeletonNative->bytes)['behavior']
         === NativeBehavior::Skeleton->value
@@ -1102,7 +1132,38 @@ $assert(
         && $tabSemantics->properties()[PropKey::AccessibilityRole->value]
             === AccessibilityRole::Tab->value
         && $rolePrecedence->properties()[PropKey::AccessibilityRole->value]
-            === AccessibilityRole::Link->value,
+            === AccessibilityRole::Link->value
+        && $mixedCheckboxSemantics
+            ->properties()[PropKey::AccessibilityCheckedState->value]
+            === AccessibilityCheckedState::Mixed->value
+        && $mixedCheckboxSemantics->properties()[PropKey::Checked->value] === false
+        && $mixedCheckboxSemantics
+            ->properties()[PropKey::AccessibilityLiveRegion->value]
+            === AccessibilityLiveRegion::Polite->value
+        && $mixedCheckboxSemantics
+            ->properties()[PropKey::AccessibilityImportance->value]
+            === AccessibilityImportance::Yes->value
+        && $busyButtonSemantics
+            ->properties()[PropKey::AccessibilityBusy->value] === true
+        && $busyButtonSemantics->properties()[PropKey::Enabled->value] === false
+        && $expandedTriggerSemantics
+            ->properties()[PropKey::AccessibilityExpanded->value] === true
+        && $hiddenSemantics
+            ->properties()[PropKey::AccessibilityImportance->value]
+            === AccessibilityImportance::NoHideDescendants->value
+        && $progressSemantics
+            ->properties()[PropKey::AccessibilityValueMin->value] === 0.0
+        && $progressSemantics
+            ->properties()[PropKey::AccessibilityValueMax->value] === 100.0
+        && $progressSemantics
+            ->properties()[PropKey::AccessibilityValueNow->value] === 40.0
+        && $fluentRangeSemantics
+            ->properties()[PropKey::Accessible->value] === true
+        && $fluentRangeSemantics
+            ->properties()[PropKey::AccessibilityLiveRegion->value]
+            === AccessibilityLiveRegion::Assertive->value
+        && $fluentRangeSemantics
+            ->properties()[PropKey::AccessibilityValueText->value] === 'Half',
     'Core facades and aliases must forward image, a11y, spinner, text action, scroll, keyboard and status properties.',
 );
 

@@ -195,6 +195,13 @@ an explicit React Native `role` has precedence over `accessibilityRole`.
 Android maps the resolved role to its TalkBack class and heading/checkable
 metadata during mount, without reflection or a component-name lookup.
 
+The same delegate reads compact accessible, importance, live-region,
+checked/mixed, expanded, busy and range-value properties from the mounted node
+state. It exposes native range info and expand/collapse actions, uses AndroidX's
+compatible state-description extras below API 30, and notifies TalkBack only
+when semantic state changes on an attached view. PHP remains outside screen
+reader traversal and announcement timing.
+
 Android Back is intercepted by PAM's window host and delivered through the same
 bounded native dismissal event as backdrop/drag dismissal. Controlled overlays
 remain visible until the application publishes `open=false`; after the window

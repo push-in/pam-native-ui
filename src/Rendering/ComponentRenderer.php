@@ -17,6 +17,9 @@ use Pam\MobileUi\Enum\SelectionMode;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
+use Pam\Native\AccessibilityCheckedState;
+use Pam\Native\AccessibilityImportance;
+use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
 use Pam\Native\InputSyncMode;
@@ -356,7 +359,11 @@ final class ComponentRenderer
             $element = $element->style($styleOverride);
         }
         $element = self::explicitNativeProperties($part, $props, $element);
-        $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
+        $disabled = self::flag(
+            $props,
+            'disabled',
+            self::flag($props, 'isDisabled'),
+        ) || self::accessibilityStateBoolean($runtimeProps, 'disabled') === true;
         $readOnly = self::flag(
             $props,
             'readOnly',
@@ -434,21 +441,20 @@ final class ComponentRenderer
             $element = $element->accessibilityHint($hint);
         }
         $role = self::accessibilityRole($part, $props);
-        if ($role !== AccessibilityRole::Generic) {
+        if (
+            $role !== AccessibilityRole::Generic
+            || self::hasAccessibilityMetadata($runtimeProps)
+        ) {
             $element = $element->accessibilityRole($role);
         }
         if (isset($props['testId']) && is_string($props['testId'])) {
             $element = $element->testId($props['testId']);
         }
-        if (self::flag($props, 'selected', self::flag($props, 'isSelected'))) {
-            $element = $element->property(PropKey::Selected, true);
-        }
-        if (self::flag($props, 'checked', self::flag($props, 'isChecked'))) {
-            $element = $element->property(PropKey::Checked, true);
-        }
-        if (self::flag($props, 'loading', self::flag($props, 'isLoading'))) {
-            $element = $element->property(PropKey::Loading, true);
-        }
+        $element = self::accessibilityProperties(
+            $part,
+            $runtimeProps,
+            $element,
+        );
         foreach ($events as $event => $handler) {
             $kind = EventKind::from($event);
             $element = $element->on($kind, $handler);
@@ -1372,6 +1378,296 @@ final class ComponentRenderer
             'listitem' => AccessibilityRole::ListItem,
             default => null,
         };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function hasAccessibilityMetadata(array $props): bool
+    {
+        foreach ($props as $name => $_value) {
+            if (
+                str_starts_with($name, 'accessibility')
+                || str_starts_with($name, 'aria')
+                || in_array($name, [
+                    'accessible',
+                    'importantForAccessibility',
+                    'role',
+                ], true)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    private static function accessibilityProperties(
+        string $part,
+        array $props,
+        Element $element,
+    ): Element {
+        if (array_key_exists('accessible', $props)) {
+            $element = $element->accessible(
+                self::flag($props, 'accessible', true),
+            );
+        }
+
+        $liveRegion = self::accessibilityLiveRegion(
+            $props['ariaLive']
+                ?? $props['aria-live']
+                ?? $props['accessibilityLiveRegion']
+                ?? null,
+        );
+        if ($liveRegion !== null) {
+            $element = $element->accessibilityLiveRegion($liveRegion);
+        }
+
+        $importance = self::accessibilityImportance($props);
+        if ($importance !== null) {
+            $element = $element->accessibilityImportance($importance);
+        }
+
+        $selected = self::accessibilityStateBoolean($props, 'selected')
+            ?? self::flag(
+                $props,
+                'selected',
+                self::flag($props, 'isSelected'),
+            );
+        if ($selected) {
+            $element = $element->property(PropKey::Selected, true);
+        }
+
+        $checkedState = self::accessibilityCheckedState($part, $props);
+        if ($checkedState !== null) {
+            $element = $element
+                ->property(
+                    PropKey::Checked,
+                    $checkedState === AccessibilityCheckedState::Checked,
+                )
+                ->accessibilityChecked($checkedState);
+        }
+
+        $loading = self::flag(
+            $props,
+            'loading',
+            self::flag($props, 'isLoading'),
+        );
+        if ($loading) {
+            $element = $element->property(PropKey::Loading, true);
+        }
+        $busy = self::accessibilityStateBoolean($props, 'busy');
+        if ($busy !== null || $loading) {
+            $element = $element->accessibilityBusy($busy ?? true);
+        }
+
+        $expanded = self::accessibilityStateBoolean($props, 'expanded');
+        if ($expanded === null) {
+            if (array_key_exists('expanded', $props)) {
+                $expanded = self::flag($props, 'expanded');
+            } elseif (array_key_exists('isExpanded', $props)) {
+                $expanded = self::flag($props, 'isExpanded');
+            }
+        }
+        if ($expanded !== null) {
+            $element = $element->accessibilityExpanded($expanded);
+        }
+
+        $range = self::accessibilityRange($part, $props);
+        foreach ([
+            [PropKey::AccessibilityValueMin, $range['min']],
+            [PropKey::AccessibilityValueMax, $range['max']],
+            [PropKey::AccessibilityValueNow, $range['now']],
+            [PropKey::AccessibilityValueText, $range['text']],
+        ] as [$property, $value]) {
+            if ($value !== null) {
+                $element = $element->property($property, $value);
+            }
+        }
+
+        return $element;
+    }
+
+    private static function accessibilityLiveRegion(
+        mixed $value,
+    ): ?AccessibilityLiveRegion {
+        if (is_int($value)) {
+            return AccessibilityLiveRegion::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'none', 'off' => AccessibilityLiveRegion::None,
+            'polite' => AccessibilityLiveRegion::Polite,
+            'assertive' => AccessibilityLiveRegion::Assertive,
+            default => null,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function accessibilityImportance(
+        array $props,
+    ): ?AccessibilityImportance {
+        if (
+            self::booleanValue(
+                $props['ariaHidden']
+                    ?? $props['aria-hidden']
+                    ?? $props['accessibilityElementsHidden']
+                    ?? null,
+            ) === true
+        ) {
+            return AccessibilityImportance::NoHideDescendants;
+        }
+        $value = $props['importantForAccessibility'] ?? null;
+        if (is_int($value)) {
+            return AccessibilityImportance::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'auto' => AccessibilityImportance::Auto,
+            'yes' => AccessibilityImportance::Yes,
+            'no' => AccessibilityImportance::No,
+            'no-hide-descendants' => AccessibilityImportance::NoHideDescendants,
+            default => null,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    private static function accessibilityStateBoolean(
+        array $props,
+        string $name,
+    ): ?bool {
+        $pascal = ucfirst($name);
+        foreach (["aria{$pascal}", "aria-{$name}"] as $alias) {
+            if (array_key_exists($alias, $props)) {
+                return self::booleanValue($props[$alias]);
+            }
+        }
+        $state = $props['accessibilityState'] ?? null;
+        if (is_array($state) && array_key_exists($name, $state)) {
+            return self::booleanValue($state[$name]);
+        }
+
+        return null;
+    }
+
+    private static function booleanValue(mixed $value): ?bool
+    {
+        return match (true) {
+            is_bool($value) => $value,
+            is_int($value) => $value !== 0,
+            is_string($value) && in_array(
+                strtolower($value),
+                ['1', 'true', 'yes', 'on'],
+                true,
+            ) => true,
+            is_string($value) && in_array(
+                strtolower($value),
+                ['0', 'false', 'no', 'off'],
+                true,
+            ) => false,
+            default => null,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    private static function accessibilityCheckedState(
+        string $part,
+        array $props,
+    ): ?AccessibilityCheckedState {
+        $direct = $props['accessibilityCheckedState'] ?? null;
+        if (is_int($direct)) {
+            $state = AccessibilityCheckedState::tryFrom($direct);
+            if ($state !== null) {
+                return $state;
+            }
+        }
+        if (is_string($direct)) {
+            $state = match (strtolower($direct)) {
+                'unchecked', 'false' => AccessibilityCheckedState::Unchecked,
+                'checked', 'true' => AccessibilityCheckedState::Checked,
+                'mixed' => AccessibilityCheckedState::Mixed,
+                default => null,
+            };
+            if ($state !== null) {
+                return $state;
+            }
+        }
+
+        $state = $props['accessibilityState'] ?? null;
+        $value = $props['ariaChecked']
+            ?? $props['aria-checked']
+            ?? (is_array($state) ? ($state['checked'] ?? null) : null)
+            ?? $props['checked']
+            ?? $props['isChecked']
+            ?? (
+                $part === 'Switch'
+                    ? ($props['value'] ?? null)
+                    : null
+            );
+        if (is_string($value) && strtolower($value) === 'mixed') {
+            return AccessibilityCheckedState::Mixed;
+        }
+        $checked = self::booleanValue($value);
+        if ($checked !== null) {
+            return $checked
+                ? AccessibilityCheckedState::Checked
+                : AccessibilityCheckedState::Unchecked;
+        }
+
+        return in_array($part, ['Checkbox', 'Radio', 'Switch'], true)
+            ? AccessibilityCheckedState::Unchecked
+            : null;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array{min: float|null, max: float|null, now: float|null, text: string|null}
+     */
+    private static function accessibilityRange(
+        string $part,
+        array $props,
+    ): array {
+        $value = $props['accessibilityValue'] ?? null;
+        $range = is_array($value) ? $value : [];
+        if (in_array($part, ['Progress', 'Slider'], true)) {
+            $range['min'] ??= $props['minValue'] ?? $props['min'] ?? 0;
+            $range['max'] ??= $props['maxValue'] ?? $props['max'] ?? 100;
+            $range['now'] ??= $props['value'] ?? 0;
+        }
+        $range['min'] = $props['ariaValueMin']
+            ?? $props['aria-valuemin']
+            ?? $range['min']
+            ?? null;
+        $range['max'] = $props['ariaValueMax']
+            ?? $props['aria-valuemax']
+            ?? $range['max']
+            ?? null;
+        $range['now'] = $props['ariaValueNow']
+            ?? $props['aria-valuenow']
+            ?? $range['now']
+            ?? null;
+        $text = $props['ariaValueText']
+            ?? $props['aria-valuetext']
+            ?? $range['text']
+            ?? null;
+
+        return [
+            'min' => is_numeric($range['min']) ? (float) $range['min'] : null,
+            'max' => is_numeric($range['max']) ? (float) $range['max'] : null,
+            'now' => is_numeric($range['now']) ? (float) $range['now'] : null,
+            'text' => is_scalar($text) ? (string) $text : null,
+        ];
     }
 
     /**

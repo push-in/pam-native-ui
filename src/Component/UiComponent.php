@@ -12,6 +12,9 @@ use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
+use Pam\Native\AccessibilityCheckedState;
+use Pam\Native\AccessibilityImportance;
+use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
 use Pam\Native\Renderable;
@@ -219,6 +222,51 @@ abstract class UiComponent implements Renderable
     final public function accessibilityRole(AccessibilityRole $role): static
     {
         return $this->prop('accessibilityRole', $role);
+    }
+
+    final public function accessible(bool $accessible = true): static
+    {
+        return $this->prop('accessible', $accessible);
+    }
+
+    final public function accessibilityLiveRegion(
+        AccessibilityLiveRegion $region,
+    ): static {
+        return $this->prop('accessibilityLiveRegion', $region);
+    }
+
+    final public function importantForAccessibility(
+        AccessibilityImportance $importance,
+    ): static {
+        return $this->prop('importantForAccessibility', $importance);
+    }
+
+    final public function accessibilityBusy(bool $busy = true): static
+    {
+        return $this->prop('accessibilityBusy', $busy);
+    }
+
+    final public function accessibilityChecked(
+        AccessibilityCheckedState $state,
+    ): static {
+        return $this->prop('accessibilityCheckedState', $state);
+    }
+
+    final public function accessibilityValue(
+        float $minimum,
+        float $maximum,
+        float $current,
+        ?string $text = null,
+    ): static {
+        return $this->prop('accessibilityValue', array_filter(
+            [
+                'min' => $minimum,
+                'max' => $maximum,
+                'now' => $current,
+                'text' => $text,
+            ],
+            static fn (mixed $value): bool => $value !== null,
+        ));
     }
 
     final public function testId(string $testId): static

@@ -103,6 +103,14 @@ lists reach TalkBack with native class/heading/checkable metadata. You can
 override the inference or use `none`/`presentation` without changing the visual
 component.
 
+Accessibility state follows the same React Native names: `accessible`,
+`accessibilityState`, `accessibilityValue`, `accessibilityLiveRegion`,
+`importantForAccessibility` and their `aria*` aliases. Disabled, selected,
+checked/`mixed`, busy and expanded state compile to fixed protocol keys. Native
+TalkBack nodes own checkable state, expand/collapse actions, live announcements
+and numeric ranges; state changes emit an Android accessibility-content event,
+not a PHP render callback.
+
 Responsive grids keep the same class vocabulary used by gluestack:
 
 ```xml
