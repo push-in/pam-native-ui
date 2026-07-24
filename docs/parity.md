@@ -21,6 +21,8 @@ offset and enabled state to the Android UI thread.
 `RefreshControl` forwards Android colors, background, progress offset, size
 and enabled state, with native vertical-gesture arbitration and indicator
 animation.
+Text passthroughs preserve Android selection, ellipsis, accessible font
+scaling/fitting, break/hyphenation strategy and local data detectors.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

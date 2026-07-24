@@ -173,6 +173,11 @@ thread.
 fallback props. Pull detection, drag feedback and indicator animation are
 native; the bridge carries only the semantic `onRefresh` event.
 
+Text facades forward `selectable`, `selectionColor`, `numberOfLines`,
+`ellipsizeMode`, font scaling/fitting, `textBreakStrategy`,
+`android_hyphenationFrequency` and `dataDetectorType`. Selection, measurement,
+line breaking and detector spans remain inside Android `TextView`.
+
 Focus/invalid outlines, disabled/read-only editing policy, clear/password
 actions and selection remain on the Android UI thread. `FormControl` links its
 label, helper and error to the native field, injects the required asterisk,

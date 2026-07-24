@@ -232,7 +232,11 @@ use Pam\Native\ReturnKeyType;
 use Pam\Native\SafeAreaMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\TemplateRegistry;
+use Pam\Native\TextBreakStrategy;
+use Pam\Native\TextDataDetectorType;
 use Pam\Native\TextDecoration;
+use Pam\Native\TextEllipsizeMode;
+use Pam\Native\TextHyphenationFrequency;
 use Pam\Native\TextTransform;
 use Pam\Native\UI\Text;
 
@@ -1028,6 +1032,20 @@ $refreshPrimitive = RefreshControl::make(
     ],
     Text::make('Refresh content'),
 )->toElement();
+$nativeTextPrimitive = \Pam\MobileUi\Component\Text::make([
+    'text' => 'Selectable https://pam.dev',
+    'numberOfLines' => 2,
+    'selectable' => true,
+    'selectionColor' => '#11223366',
+    'ellipsizeMode' => 'middle',
+    'allowFontScaling' => true,
+    'maxFontSizeMultiplier' => 1.5,
+    'adjustsFontSizeToFit' => true,
+    'minimumFontScale' => 0.5,
+    'textBreakStrategy' => 'balanced',
+    'android_hyphenationFrequency' => 'full',
+    'dataDetectorType' => 'link',
+])->toElement();
 $statusPrimitive = StatusBar::make([
     'backgroundColor' => '#171717',
     'barStyle' => 'light-content',
@@ -1146,6 +1164,28 @@ $assert(
         && $refreshPrimitive->properties()[PropKey::Enabled->value] === false
         && $refreshPrimitive->properties()[PropKey::RefreshIndicatorSize->value]
             === RefreshIndicatorSize::Large->value
+        && $nativeTextPrimitive->properties()[PropKey::NumberOfLines->value] === 2
+        && $nativeTextPrimitive->properties()[PropKey::TextSelectable->value] === true
+        && $nativeTextPrimitive->properties()[PropKey::SelectionColor->value]
+            === 0x66112233
+        && $nativeTextPrimitive->properties()[PropKey::TextEllipsizeMode->value]
+            === TextEllipsizeMode::Middle->value
+        && $nativeTextPrimitive
+            ->properties()[PropKey::TextAllowFontScaling->value] === true
+        && $nativeTextPrimitive
+            ->properties()[PropKey::TextMaxFontSizeMultiplier->value] === 1.5
+        && $nativeTextPrimitive
+            ->properties()[PropKey::TextAdjustsFontSizeToFit->value] === true
+        && $nativeTextPrimitive
+            ->properties()[PropKey::TextMinimumFontScale->value] === 0.5
+        && $nativeTextPrimitive->properties()[PropKey::TextBreakStrategy->value]
+            === TextBreakStrategy::Balanced->value
+        && $nativeTextPrimitive
+            ->properties()[PropKey::TextHyphenationFrequency->value]
+            === TextHyphenationFrequency::Full->value
+        && $nativeTextPrimitive
+            ->properties()[PropKey::TextDataDetectorType->value]
+            === TextDataDetectorType::Link->value
         && $statusPrimitive->properties()[PropKey::StatusBarColor->value]
             === 0xff171717
         && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]

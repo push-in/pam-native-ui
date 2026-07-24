@@ -36,6 +36,10 @@ use Pam\Native\ReturnKeyType;
 use Pam\Native\SafeAreaMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
+use Pam\Native\TextBreakStrategy;
+use Pam\Native\TextDataDetectorType;
+use Pam\Native\TextEllipsizeMode;
+use Pam\Native\TextHyphenationFrequency;
 use Pam\Native\UI\ActivityIndicator;
 use Pam\Native\UI\Column;
 use Pam\Native\UI\CustomView;
@@ -1726,6 +1730,91 @@ final class ComponentRenderer
             );
         }
 
+        if (self::isText($part)) {
+            if (array_key_exists('numberOfLines', $props)) {
+                $element = $element->property(
+                    PropKey::NumberOfLines,
+                    max(0, self::integer($props, 'numberOfLines', 0)),
+                );
+            }
+            if (array_key_exists('selectable', $props)) {
+                $element = $element->property(
+                    PropKey::TextSelectable,
+                    self::flag($props, 'selectable'),
+                );
+            }
+            $selectionColor = self::packedColor($props['selectionColor'] ?? null);
+            if ($selectionColor !== null) {
+                $element = $element->property(
+                    PropKey::SelectionColor,
+                    $selectionColor,
+                );
+            }
+            $ellipsize = self::textEllipsizeMode($props['ellipsizeMode'] ?? null);
+            if ($ellipsize !== null) {
+                $element = $element->property(
+                    PropKey::TextEllipsizeMode,
+                    $ellipsize->value,
+                );
+            }
+            if (array_key_exists('allowFontScaling', $props)) {
+                $element = $element->property(
+                    PropKey::TextAllowFontScaling,
+                    self::flag($props, 'allowFontScaling', true),
+                );
+            }
+            if (is_numeric($props['maxFontSizeMultiplier'] ?? null)) {
+                $element = $element->property(
+                    PropKey::TextMaxFontSizeMultiplier,
+                    max(0.0, (float) $props['maxFontSizeMultiplier']),
+                );
+            }
+            if (array_key_exists('adjustsFontSizeToFit', $props)) {
+                $element = $element->property(
+                    PropKey::TextAdjustsFontSizeToFit,
+                    self::flag($props, 'adjustsFontSizeToFit'),
+                );
+            }
+            if (is_numeric($props['minimumFontScale'] ?? null)) {
+                $element = $element->property(
+                    PropKey::TextMinimumFontScale,
+                    min(
+                        1.0,
+                        max(0.01, (float) $props['minimumFontScale']),
+                    ),
+                );
+            }
+            $breakStrategy = self::textBreakStrategy(
+                $props['textBreakStrategy'] ?? null,
+            );
+            if ($breakStrategy !== null) {
+                $element = $element->property(
+                    PropKey::TextBreakStrategy,
+                    $breakStrategy->value,
+                );
+            }
+            $hyphenation = self::textHyphenationFrequency(
+                $props['android_hyphenationFrequency']
+                    ?? $props['androidHyphenationFrequency']
+                    ?? null,
+            );
+            if ($hyphenation !== null) {
+                $element = $element->property(
+                    PropKey::TextHyphenationFrequency,
+                    $hyphenation->value,
+                );
+            }
+            $detector = self::textDataDetectorType(
+                $props['dataDetectorType'] ?? null,
+            );
+            if ($detector !== null) {
+                $element = $element->property(
+                    PropKey::TextDataDetectorType,
+                    $detector->value,
+                );
+            }
+        }
+
         if (!self::isInput($part)) {
             return $element;
         }
@@ -1775,6 +1864,81 @@ final class ComponentRenderer
             'none' => PointerEvents::None,
             'box-none', 'boxnone' => PointerEvents::BoxNone,
             'box-only', 'boxonly' => PointerEvents::BoxOnly,
+            default => null,
+        };
+    }
+
+    private static function textEllipsizeMode(
+        mixed $value,
+    ): ?TextEllipsizeMode {
+        if (is_int($value)) {
+            return TextEllipsizeMode::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'tail' => TextEllipsizeMode::Tail,
+            'head' => TextEllipsizeMode::Head,
+            'middle' => TextEllipsizeMode::Middle,
+            'clip' => TextEllipsizeMode::Clip,
+            default => null,
+        };
+    }
+
+    private static function textBreakStrategy(
+        mixed $value,
+    ): ?TextBreakStrategy {
+        if (is_int($value)) {
+            return TextBreakStrategy::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'highquality', 'high-quality' => TextBreakStrategy::HighQuality,
+            'simple' => TextBreakStrategy::Simple,
+            'balanced' => TextBreakStrategy::Balanced,
+            default => null,
+        };
+    }
+
+    private static function textHyphenationFrequency(
+        mixed $value,
+    ): ?TextHyphenationFrequency {
+        if (is_int($value)) {
+            return TextHyphenationFrequency::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'none' => TextHyphenationFrequency::None,
+            'normal' => TextHyphenationFrequency::Normal,
+            'full' => TextHyphenationFrequency::Full,
+            default => null,
+        };
+    }
+
+    private static function textDataDetectorType(
+        mixed $value,
+    ): ?TextDataDetectorType {
+        if (is_int($value)) {
+            return TextDataDetectorType::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'none' => TextDataDetectorType::None,
+            'phonenumber', 'phone-number' => TextDataDetectorType::PhoneNumber,
+            'link' => TextDataDetectorType::Link,
+            'email' => TextDataDetectorType::Email,
+            'all' => TextDataDetectorType::All,
             default => null,
         };
     }
