@@ -16,6 +16,9 @@ use Pam\MobileUi\Component\BottomSheet;
 use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\Checkbox;
 use Pam\MobileUi\Component\CheckboxGroup;
+use Pam\MobileUi\Component\CheckboxIcon;
+use Pam\MobileUi\Component\CheckboxIndicator;
+use Pam\MobileUi\Component\CheckboxLabel;
 use Pam\MobileUi\Component\CheckIcon;
 use Pam\MobileUi\Component\Calendar;
 use Pam\MobileUi\Component\CalendarGrid;
@@ -44,6 +47,9 @@ use Pam\MobileUi\Component\PromptInput;
 use Pam\MobileUi\Component\PromptInputTextarea;
 use Pam\MobileUi\Component\Radio;
 use Pam\MobileUi\Component\RadioGroup;
+use Pam\MobileUi\Component\RadioIcon;
+use Pam\MobileUi\Component\RadioIndicator;
+use Pam\MobileUi\Component\RadioLabel;
 use Pam\MobileUi\Component\Select;
 use Pam\MobileUi\Component\SelectContent;
 use Pam\MobileUi\Component\SelectItem;
@@ -231,7 +237,9 @@ if (!is_array($parity) || !is_array($parity['modules'] ?? null)) {
 $assert(count($parity['modules']) === 61, 'The parity gate must cover all technical modules.');
 $accordionParity = null;
 $calendarParity = null;
+$checkboxParity = null;
 $dateTimeParity = null;
+$radioParity = null;
 foreach ($parity['modules'] as $module) {
     if (!is_array($module)) {
         continue;
@@ -241,6 +249,12 @@ foreach ($parity['modules'] as $module) {
     }
     if (($module['name'] ?? null) === 'date-time-picker') {
         $dateTimeParity = $module['verification'] ?? null;
+    }
+    if (($module['name'] ?? null) === 'checkbox') {
+        $checkboxParity = $module['verification'] ?? null;
+    }
+    if (($module['name'] ?? null) === 'radio') {
+        $radioParity = $module['verification'] ?? null;
     }
     if (($module['name'] ?? null) === 'accordion') {
         $accordionParity = $module['verification'] ?? null;
@@ -268,6 +282,25 @@ $assert(
 $assert(
     $dateTimeParity === array_fill(0, 10, VerificationStatus::Verified->value),
     'DateTimePicker verification evidence must survive deterministic regeneration.',
+);
+$assert(
+    $checkboxParity === [
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::NotApplicable->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+        VerificationStatus::Verified->value,
+    ],
+    'Checkbox verification evidence must survive deterministic regeneration.',
+);
+$assert(
+    $radioParity === array_fill(0, 10, VerificationStatus::Verified->value),
+    'Radio verification evidence must survive deterministic regeneration.',
 );
 $assert(count(ComponentMap::TAGS) >= 300, 'The generated public component anatomy is incomplete.');
 $assert(
@@ -734,58 +767,141 @@ $localRadioToggles = 0;
 $radioGroup = RadioGroup::make(
     ['value' => 'pro'],
     HStack::make(
-        Radio::make(['value' => 'pro'])->onToggle(
-            static function () use (&$localRadioToggles): void {
-                $localRadioToggles++;
-            },
-        ),
+        Radio::make(
+            ['value' => 'pro'],
+            RadioIndicator::make(RadioIcon::make()),
+            RadioLabel::make('Pro'),
+        )->onToggle(static function () use (&$localRadioToggles): void {
+            $localRadioToggles++;
+        }),
     ),
 )->onChange(static function (string $value) use (&$selectedPlan): void {
     $selectedPlan = $value;
 })->toElement();
 $radioRow = $radioGroup->children()[0] ?? null;
 $semanticRadio = $radioRow?->children()[0] ?? null;
+$semanticRadioIndicator = $semanticRadio?->children()[0] ?? null;
+$semanticRadioIcon = $semanticRadioIndicator?->children()[0] ?? null;
 $semanticRadioToggle = $semanticRadio?->events()[
     \Pam\Native\EventKind::Toggle->value
 ] ?? null;
 if (
     !$semanticRadio instanceof \Pam\Native\Element
+    || !$semanticRadioIndicator instanceof \Pam\Native\Element
+    || !$semanticRadioIcon instanceof \Pam\Native\Element
     || !$semanticRadioToggle instanceof Closure
 ) {
     throw new RuntimeException('RadioGroup must forward its handler through layout wrappers.');
 }
+$radioGroupNative = $radioGroup->properties()[PropKey::HostProperties->value] ?? null;
+$radioNative = $semanticRadio->properties()[PropKey::HostProperties->value] ?? null;
+if (!$radioGroupNative instanceof BinaryValue || !$radioNative instanceof BinaryValue) {
+    throw new RuntimeException('RadioGroup and Radio must provide packed native state.');
+}
+$radioGroupProperties = Wire::decodeMap($radioGroupNative->bytes);
+$radioProperties = Wire::decodeMap($radioNative->bytes);
 $semanticRadioToggle('1');
 $assert(
     $selectedPlan === 'pro'
         && $localRadioToggles === 1
+        && $radioGroupProperties['behavior'] === NativeBehavior::RadioGroup->value
+        && $radioProperties['behavior'] === NativeBehavior::Radio->value
         && $semanticRadio->properties()[PropKey::Value->value] === 'pro'
         && $semanticRadio->properties()[PropKey::Checked->value] === true,
     'RadioGroup must inherit controlled selection and preserve item and group callbacks.',
+);
+$defaultRadioGroup = RadioGroup::make(
+    ['defaultValue' => 'starter'],
+    Radio::make(['value' => 'starter']),
+)->toElement();
+$defaultRadio = $defaultRadioGroup->children()[0] ?? null;
+$defaultRadioNative = $defaultRadio?->properties()[PropKey::HostProperties->value] ?? null;
+if (!$defaultRadioNative instanceof BinaryValue) {
+    throw new RuntimeException('Uncontrolled Radio must provide packed native state.');
+}
+$assert(
+    Wire::decodeMap($defaultRadioNative->bytes)['checked'] === true
+        && $semanticRadioIndicator->properties()[PropKey::Value->value]
+            === 'pam:selection-indicator'
+        && $semanticRadioIcon->properties()[PropKey::Value->value]
+            === 'pam:selection-icon',
+    'RadioGroup defaultValue and native indicator anatomy must be preserved.',
 );
 
 $selectedFeatures = [];
 $checkboxGroup = CheckboxGroup::make(
     ['value' => ['camera']],
-    Checkbox::make(['value' => 'location']),
+    Checkbox::make(
+        ['value' => 'location'],
+        CheckboxIndicator::make(CheckboxIcon::make()),
+        CheckboxLabel::make('Location'),
+    ),
 )->onChange(
     static function (array $values) use (&$selectedFeatures): void {
         $selectedFeatures = $values;
     },
 )->toElement();
 $semanticCheckbox = $checkboxGroup->children()[0] ?? null;
+$semanticCheckboxIndicator = $semanticCheckbox?->children()[0] ?? null;
+$semanticCheckboxIcon = $semanticCheckboxIndicator?->children()[0] ?? null;
 $semanticCheckboxToggle = $semanticCheckbox?->events()[
     \Pam\Native\EventKind::Toggle->value
 ] ?? null;
 if (
     !$semanticCheckbox instanceof \Pam\Native\Element
+    || !$semanticCheckboxIndicator instanceof \Pam\Native\Element
+    || !$semanticCheckboxIcon instanceof \Pam\Native\Element
     || !$semanticCheckboxToggle instanceof Closure
 ) {
     throw new RuntimeException('CheckboxGroup must bind its value set to each checkbox.');
 }
+$checkboxGroupNative = $checkboxGroup->properties()[PropKey::HostProperties->value] ?? null;
+if (!$checkboxGroupNative instanceof BinaryValue) {
+    throw new RuntimeException('CheckboxGroup must provide packed native state.');
+}
 $semanticCheckboxToggle('1');
 $assert(
-    $selectedFeatures === ['camera', 'location'],
+    $selectedFeatures === ['camera', 'location']
+        && Wire::decodeMap($checkboxGroupNative->bytes)['behavior']
+            === NativeBehavior::CheckboxGroup->value
+        && $semanticCheckboxIndicator->properties()[PropKey::Value->value]
+            === 'pam:selection-indicator'
+        && $semanticCheckboxIcon->properties()[PropKey::Value->value]
+            === 'pam:selection-icon',
     'CheckboxGroup must publish the next selected value list without a second bridge event.',
+);
+$defaultCheckboxGroup = CheckboxGroup::make(
+    [
+        'defaultValue' => ['camera'],
+        'isReadOnly' => true,
+    ],
+    Checkbox::make(
+        ['value' => 'camera', 'isIndeterminate' => true],
+        CheckboxIndicator::make(
+            CheckboxIcon::make(['forceMount' => true]),
+        ),
+    ),
+)->toElement();
+$defaultCheckbox = $defaultCheckboxGroup->children()[0] ?? null;
+$defaultCheckboxIndicator = $defaultCheckbox?->children()[0] ?? null;
+$defaultCheckboxIcon = $defaultCheckboxIndicator?->children()[0] ?? null;
+$defaultCheckboxNative = $defaultCheckbox?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$defaultCheckboxIcon instanceof \Pam\Native\Element
+    || !$defaultCheckboxNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Uncontrolled Checkbox must provide its complete native state.');
+}
+$defaultCheckboxProperties = Wire::decodeMap($defaultCheckboxNative->bytes);
+$assert(
+    $defaultCheckboxProperties['checked'] === true
+        && $defaultCheckboxProperties['isIndeterminate'] === true
+        && $defaultCheckboxProperties['isReadOnly'] === true
+        && $defaultCheckboxIcon->properties()[PropKey::Value->value]
+            === 'pam:selection-icon-force',
+    'Checkbox defaultValue, mixed/read-only state and forceMount must reach Android.',
 );
 
 $expandedItems = [];

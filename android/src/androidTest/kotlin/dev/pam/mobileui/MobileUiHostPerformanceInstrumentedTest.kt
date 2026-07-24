@@ -133,6 +133,81 @@ class MobileUiHostPerformanceInstrumentedTest {
                 accordionEvents,
             )
 
+            var checkboxEvents = 0
+            val checkbox = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.TOGGLE) checkboxEvents++
+            }
+            checkbox.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(10),
+                    "component" to WireValue.Integer(GeneratedComponents.CHECKBOX.toLong()),
+                    "checked" to WireValue.Flag(false),
+                ),
+            )
+            repeat(WARMUP_ITERATIONS) {
+                checkbox.performClick()
+            }
+            checkboxEvents = 0
+            val checkboxToggle = measure(SAMPLE_ITERATIONS) {
+                checkbox.performClick()
+            }
+            assertTrue(
+                "Checkbox toggle p99 ${checkboxToggle.p99Micros}µs exceeded 4ms",
+                checkboxToggle.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Checkbox must emit exactly one semantic event per completed toggle",
+                SAMPLE_ITERATIONS,
+                checkboxEvents,
+            )
+
+            var radioEvents = 0
+            val radioGroup = MobileUiHost(context) { _, _ -> }
+            radioGroup.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(26),
+                    "component" to WireValue.Integer(GeneratedComponents.RADIO_GROUP.toLong()),
+                ),
+            )
+            val firstRadio = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.TOGGLE) radioEvents++
+            }
+            firstRadio.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(11),
+                    "component" to WireValue.Integer(GeneratedComponents.RADIO.toLong()),
+                    "checked" to WireValue.Flag(true),
+                ),
+            )
+            val secondRadio = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.TOGGLE) radioEvents++
+            }
+            secondRadio.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(11),
+                    "component" to WireValue.Integer(GeneratedComponents.RADIO.toLong()),
+                    "checked" to WireValue.Flag(false),
+                ),
+            )
+            radioGroup.addView(firstRadio)
+            radioGroup.addView(secondRadio)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                radioAt(firstRadio, secondRadio, iteration).performClick()
+            }
+            radioEvents = 0
+            val radioSelection = measure(SAMPLE_ITERATIONS) { iteration ->
+                radioAt(firstRadio, secondRadio, iteration).performClick()
+            }
+            assertTrue(
+                "Radio selection p99 ${radioSelection.p99Micros}µs exceeded 4ms",
+                radioSelection.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "RadioGroup must emit one event while unchecking its sibling locally",
+                SAMPLE_ITERATIONS,
+                radioEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -157,12 +232,16 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"calendarDraw\":${calendarDraw.json()},")
                     append("\"dateTimeUpdate\":${dateTimeUpdate.json()},")
                     append("\"accordionToggle\":${accordionToggle.json()},")
+                    append("\"checkboxToggle\":${checkboxToggle.json()},")
+                    append("\"radioSelection\":${radioSelection.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
                     append("\"calendarBridgeEvents\":${calendarEvents.size},")
                     append("\"dateTimeBridgeEvents\":${dateTimeEvents.size},")
-                    append("\"accordionBridgeEvents\":$accordionEvents")
+                    append("\"accordionBridgeEvents\":$accordionEvents,")
+                    append("\"checkboxBridgeEvents\":$checkboxEvents,")
+                    append("\"radioBridgeEvents\":$radioEvents")
                     append('}')
                 },
             )
@@ -173,6 +252,10 @@ class MobileUiHostPerformanceInstrumentedTest {
             calendarBitmap.recycle()
             dateTime.release()
             accordion.release()
+            checkbox.release()
+            firstRadio.release()
+            secondRadio.release()
+            radioGroup.release()
         }
     }
 
@@ -228,6 +311,12 @@ class MobileUiHostPerformanceInstrumentedTest {
         } else {
             AccessibilityNodeInfo.ACTION_COLLAPSE
         }
+
+    private fun radioAt(
+        first: MobileUiHost,
+        second: MobileUiHost,
+        iteration: Int,
+    ): MobileUiHost = if (iteration % 2 == 0) second else first
 
     private fun measure(iterations: Int, block: (Int) -> Unit): Statistics {
         val samples = LongArray(iterations)

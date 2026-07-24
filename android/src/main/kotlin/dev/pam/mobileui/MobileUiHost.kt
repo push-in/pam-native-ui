@@ -81,7 +81,9 @@ internal class MobileUiHost(
         TOOLTIP(21),
         DATE_TIME_PICKER(22),
         PORTAL(23),
-        ACCORDION_GROUP(24);
+        ACCORDION_GROUP(24),
+        CHECKBOX_GROUP(25),
+        RADIO_GROUP(26);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -123,10 +125,17 @@ internal class MobileUiHost(
         textAlign = Paint.Align.CENTER
         textSize = 14f * density
     }
+    private val selectionGlyphPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
     private var behavior = Behavior.CONTAINER
     private var component = 0
     private var expanded = false
     private var checked = false
+    private var indeterminate = false
     private var selected = false
     private var open = true
     private var value = 0.0
@@ -156,6 +165,8 @@ internal class MobileUiHost(
     private var showOutsideDays = true
     private var fixedWeeks = false
     private var readOnly = false
+    private var invalid = false
+    private var accessibilityErrorMessage: String? = null
     private var collapsible = true
     private var calendarLocale = Locale.getDefault()
     private var calendarSelectedTextColor = Color.WHITE
@@ -246,6 +257,7 @@ internal class MobileUiHost(
     private var activePickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
     private var previousFocus: View? = null
+    private var customStateDescription: String? = null
     private val scaleDetector = ScaleGestureDetector(
         context,
         object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -301,7 +313,17 @@ internal class MobileUiHost(
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         component = properties.integer("component", component.toLong()).toInt()
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
-        checked = properties.flag("checked", properties.flag("isChecked", checked))
+        checked = properties.flag(
+            "checked",
+            properties.flag(
+                "isChecked",
+                properties.flag("defaultIsChecked", checked),
+            ),
+        )
+        indeterminate = properties.flag(
+            "indeterminate",
+            properties.flag("isIndeterminate", false),
+        )
         selected = properties.flag("selected", properties.flag("isSelected", selected))
         open = properties.flag("open", properties.flag("isOpen", open))
         value = properties.decimal("value", value)
@@ -352,6 +374,9 @@ internal class MobileUiHost(
         showOutsideDays = properties.flag("showOutsideDays", true)
         fixedWeeks = properties.flag("fixedWeeks", false)
         readOnly = properties.flag("readOnly", properties.flag("isReadOnly", false))
+        invalid = properties.flag("invalid", properties.flag("isInvalid", false))
+        accessibilityErrorMessage = properties.text("accessibilityErrorMessage")
+            ?: properties.text("errorMessage")
         collapsible = properties.flag(
             "collapsible",
             properties.flag("isCollapsible", true),
@@ -382,8 +407,10 @@ internal class MobileUiHost(
             "selectedForegroundColor",
             calendarSelectedTextColor.toLong(),
         ).toInt()
+        selectionGlyphPaint.color = calendarSelectedTextColor
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            stateDescription = properties.text("stateDescription")
+            customStateDescription = properties.text("stateDescription")
+            stateDescription = customStateDescription
         }
 
         if (previousBehavior != behavior) {
@@ -414,6 +441,8 @@ internal class MobileUiHost(
         }
         scheduleToast(properties)
         applyComponentDefaults()
+        applySelectionVisualState()
+        updateSelectionAccessibility()
         updateCalendarTitle()
         invalidate()
     }
@@ -423,6 +452,10 @@ internal class MobileUiHost(
         if (behavior == Behavior.ACCORDION) {
             applyAccordionState(animate = false)
             updateAccordionAccessibility()
+        }
+        if (behavior == Behavior.CHECKBOX || behavior == Behavior.RADIO) {
+            applySelectionVisualState()
+            updateSelectionAccessibility()
         }
         if (behavior == Behavior.CALENDAR) {
             post(::updateCalendarTitle)
@@ -434,9 +467,18 @@ internal class MobileUiHost(
         when (behavior) {
             Behavior.SLIDER -> drawSlider(canvas)
             Behavior.PROGRESS -> drawProgress(canvas)
-            Behavior.CHECKBOX -> drawCheckbox(canvas, radio = false)
-            Behavior.RADIO -> drawCheckbox(canvas, radio = true)
+            Behavior.CHECKBOX -> drawSelectionGlyph(canvas, radio = false)
+            Behavior.RADIO -> drawSelectionGlyph(canvas, radio = true)
             Behavior.CALENDAR -> drawCalendar(canvas)
+            else -> Unit
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        when (behavior) {
+            Behavior.CHECKBOX -> drawSelectionIndicator(canvas, radio = false)
+            Behavior.RADIO -> drawSelectionIndicator(canvas, radio = true)
             else -> Unit
         }
     }
@@ -576,6 +618,32 @@ internal class MobileUiHost(
         info.isSelected = selected
         info.isChecked = checked
         info.isCheckable = behavior == Behavior.CHECKBOX || behavior == Behavior.RADIO
+        if (info.isCheckable) {
+            info.isClickable = isEnabled && !readOnly
+            info.isContentInvalid = invalid
+            if (invalid && !accessibilityErrorMessage.isNullOrEmpty()) {
+                info.error = accessibilityErrorMessage
+            }
+            if (!isEnabled || readOnly) {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+            selectionCollectionItemInfo()?.let { collectionItem ->
+                info.collectionItemInfo = collectionItem
+            }
+        }
+        if (behavior == Behavior.CHECKBOX_GROUP || behavior == Behavior.RADIO_GROUP) {
+            val items = selectionItems(this).count()
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                items,
+                1,
+                false,
+                if (behavior == Behavior.RADIO_GROUP) {
+                    AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE
+                } else {
+                    AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_MULTIPLE
+                },
+            )
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -644,6 +712,8 @@ internal class MobileUiHost(
             Behavior.SLIDER -> "android.widget.SeekBar"
             Behavior.CHECKBOX -> "android.widget.CheckBox"
             Behavior.RADIO -> "android.widget.RadioButton"
+            Behavior.CHECKBOX_GROUP -> "android.view.ViewGroup"
+            Behavior.RADIO_GROUP -> "android.widget.RadioGroup"
             Behavior.TABS -> "android.widget.TabWidget"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
             Behavior.MODAL,
@@ -746,6 +816,20 @@ internal class MobileUiHost(
             }
         }
         if (
+            behavior in setOf(Behavior.CHECKBOX, Behavior.RADIO)
+            && isEnabled
+            && !readOnly
+            && event.action == KeyEvent.ACTION_UP
+            && event.keyCode in setOf(
+                KeyEvent.KEYCODE_SPACE,
+                KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_DPAD_CENTER,
+            )
+        ) {
+            performClick()
+            return true
+        }
+        if (
             behavior == Behavior.SLIDER
             && event.action == KeyEvent.ACTION_DOWN
             && event.keyCode in setOf(
@@ -813,22 +897,7 @@ internal class MobileUiHost(
             behavior == Behavior.CHECKBOX ||
             behavior == Behavior.RADIO
         ) {
-            setOnClickListener {
-                if (behavior == Behavior.RADIO) {
-                    checked = true
-                    isActivated = true
-                } else {
-                    checked = !checked
-                    isActivated = checked
-                }
-                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                invalidate()
-                emitter.emit(
-                    NativeViewEventKind.TOGGLE,
-                    (if (behavior == Behavior.ACCORDION) expanded else checked)
-                        .toEventPayload(),
-                )
-            }
+            setOnClickListener { toggleSelection() }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -879,7 +948,11 @@ internal class MobileUiHost(
             minimumHeight = max(minimumHeight, (48f * density).toInt())
         }
         importantForAccessibility = when {
-            behavior == Behavior.ACCORDION_GROUP -> IMPORTANT_FOR_ACCESSIBILITY_NO
+            behavior in setOf(
+                Behavior.ACCORDION_GROUP,
+                Behavior.CHECKBOX_GROUP,
+                Behavior.RADIO_GROUP,
+            ) -> IMPORTANT_FOR_ACCESSIBILITY_NO
             behavior.isOverlay() && !open -> IMPORTANT_FOR_ACCESSIBILITY_NO
             else -> IMPORTANT_FOR_ACCESSIBILITY_YES
         }
@@ -1010,6 +1083,143 @@ internal class MobileUiHost(
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             stateDescription = if (expanded) "Expanded" else "Collapsed"
+        }
+    }
+
+    private fun toggleSelection() {
+        if (!isEnabled || readOnly) return
+        if (behavior == Behavior.RADIO) {
+            if (checked || !radioGroupAllowsSelection()) return
+            setSelectionChecked(true)
+        } else {
+            checked = if (indeterminate) true else !checked
+            indeterminate = false
+            setSelectionChecked(checked, force = true)
+        }
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        emitter.emit(NativeViewEventKind.TOGGLE, checked.toEventPayload())
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED)
+    }
+
+    private fun setSelectionChecked(
+        requested: Boolean,
+        force: Boolean = false,
+    ) {
+        if (!force && checked == requested) return
+        checked = requested
+        isActivated = requested
+        applySelectionVisualState()
+        updateSelectionAccessibility()
+        invalidate()
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+    }
+
+    private fun radioGroupAllowsSelection(): Boolean {
+        val group = selectionGroupAncestor()
+        return group?.takeIf { it.behavior == Behavior.RADIO_GROUP }
+            ?.selectRadioItem(this)
+            ?: true
+    }
+
+    private fun selectRadioItem(item: MobileUiHost): Boolean {
+        if (!isEnabled || readOnly) return false
+        selectionItems(this).forEach { sibling ->
+            if (
+                sibling !== item
+                && sibling.behavior == Behavior.RADIO
+                && sibling.checked
+            ) {
+                sibling.setSelectionChecked(false)
+            }
+        }
+        return true
+    }
+
+    private fun selectionItems(root: ViewGroup): Sequence<MobileUiHost> =
+        sequence {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                when {
+                    child is MobileUiHost
+                        && child.behavior in setOf(
+                            Behavior.CHECKBOX,
+                            Behavior.RADIO,
+                        ) -> yield(child)
+                    child is MobileUiHost
+                        && child.behavior in setOf(
+                            Behavior.CHECKBOX_GROUP,
+                            Behavior.RADIO_GROUP,
+                        ) -> Unit
+                    child is ViewGroup -> yieldAll(selectionItems(child))
+                }
+            }
+        }
+
+    @Suppress("DEPRECATION")
+    private fun selectionCollectionItemInfo():
+        AccessibilityNodeInfo.CollectionItemInfo? {
+        val group = selectionGroupAncestor() ?: return null
+        val items = selectionItems(group).toList()
+        val index = items.indexOf(this)
+        if (index < 0) return null
+        return AccessibilityNodeInfo.CollectionItemInfo.obtain(
+            index,
+            1,
+            0,
+            1,
+            false,
+            checked,
+        )
+    }
+
+    private fun selectionGroupAncestor(): MobileUiHost? {
+        var ancestor = parent
+        while (ancestor is View) {
+            if (
+                ancestor is MobileUiHost
+                && ancestor.behavior in setOf(
+                    Behavior.CHECKBOX_GROUP,
+                    Behavior.RADIO_GROUP,
+                )
+            ) {
+                return ancestor
+            }
+            ancestor = ancestor.parent
+        }
+        return null
+    }
+
+    private fun applySelectionVisualState() {
+        if (behavior != Behavior.CHECKBOX && behavior != Behavior.RADIO) return
+        val forcedIcon = findTaggedDescendant(this, SELECTION_FORCE_ICON_TAG)
+        val icon = forcedIcon
+            ?: findTaggedDescendant(this, SELECTION_ICON_TAG)
+            ?: return
+        icon.visibility = if (
+            forcedIcon != null
+            || checked
+            || indeterminate
+        ) {
+            VISIBLE
+        } else {
+            GONE
+        }
+        icon.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+    }
+
+    private fun updateSelectionAccessibility() {
+        if (behavior != Behavior.CHECKBOX && behavior != Behavior.RADIO) return
+        val label = findFirstText(this)
+        if (contentDescription.isNullOrEmpty() && !label.isNullOrEmpty()) {
+            contentDescription = label
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = when {
+                indeterminate && readOnly -> "Mixed, read only"
+                indeterminate -> "Mixed"
+                readOnly -> "Read only"
+                else -> customStateDescription
+            }
         }
     }
 
@@ -1913,26 +2123,86 @@ internal class MobileUiHost(
         canvas.drawRoundRect(0f, 0f, width * progress, height.toFloat(), radius, radius, fillPaint)
     }
 
-    private fun drawCheckbox(canvas: Canvas, radio: Boolean) {
-        val size = 20f * density
-        val indicator = if (childCount > 0) getChildAt(0) else null
-        val left = indicator?.let { it.left + (it.width - size) / 2f }
-            ?: ((width - size) / 2f)
-        val top = indicator?.let { it.top + (it.height - size) / 2f }
-            ?: ((height - size) / 2f)
-        val radius = if (radio) size / 2f else 4f * density
+    private fun drawSelectionIndicator(canvas: Canvas, radio: Boolean) {
+        val bounds = selectionIndicatorBounds()
+        if (bounds.width() <= 0f || bounds.height() <= 0f) return
+        val radius = if (radio) {
+            minOf(bounds.width(), bounds.height()) / 2f
+        } else {
+            4f * density
+        }
+        val previousTrackStyle = trackPaint.style
+        val previousTrackWidth = trackPaint.strokeWidth
+        val previousFillStyle = fillPaint.style
+
+        if (!radio && (checked || indeterminate)) {
+            fillPaint.style = Paint.Style.FILL
+            canvas.drawRoundRect(bounds, radius, radius, fillPaint)
+        }
         trackPaint.style = Paint.Style.STROKE
         trackPaint.strokeWidth = 2f * density
-        canvas.drawRoundRect(left, top, left + size, top + size, radius, radius, trackPaint)
-        trackPaint.style = Paint.Style.FILL
-        if (checked) {
-            canvas.drawCircle(
-                left + size / 2f,
-                top + size / 2f,
-                if (radio) 5f * density else 6f * density,
-                fillPaint,
+        canvas.drawRoundRect(bounds, radius, radius, trackPaint)
+
+        trackPaint.style = previousTrackStyle
+        trackPaint.strokeWidth = previousTrackWidth
+        fillPaint.style = previousFillStyle
+    }
+
+    private fun drawSelectionGlyph(canvas: Canvas, radio: Boolean) {
+        val icon = findTaggedDescendant(this, SELECTION_FORCE_ICON_TAG)
+            ?: findTaggedDescendant(this, SELECTION_ICON_TAG)
+        if (icon?.visibility == VISIBLE) return
+        val bounds = selectionIndicatorBounds()
+        if (bounds.width() <= 0f || bounds.height() <= 0f) return
+        val centerX = bounds.centerX()
+        val centerY = bounds.centerY()
+        val unit = minOf(bounds.width(), bounds.height())
+
+        if (radio) {
+            if (checked || indeterminate) {
+                canvas.drawCircle(centerX, centerY, unit * 0.28f, fillPaint)
+            }
+            return
+        }
+
+        if (indeterminate) {
+            selectionGlyphPaint.strokeWidth = maxOf(2f * density, unit * 0.12f)
+            canvas.drawLine(
+                centerX - unit * 0.25f,
+                centerY,
+                centerX + unit * 0.25f,
+                centerY,
+                selectionGlyphPaint,
+            )
+        } else if (checked) {
+            selectionGlyphPaint.strokeWidth = maxOf(2f * density, unit * 0.11f)
+            canvas.drawLine(
+                centerX - unit * 0.27f,
+                centerY,
+                centerX - unit * 0.07f,
+                centerY + unit * 0.2f,
+                selectionGlyphPaint,
+            )
+            canvas.drawLine(
+                centerX - unit * 0.07f,
+                centerY + unit * 0.2f,
+                centerX + unit * 0.3f,
+                centerY - unit * 0.24f,
+                selectionGlyphPaint,
             )
         }
+    }
+
+    private fun selectionIndicatorBounds(): RectF {
+        val indicator = findTaggedDescendant(this, SELECTION_INDICATOR_TAG)
+            ?: getChildAtOrNull(0)
+        if (indicator != null && indicator.width > 0 && indicator.height > 0) {
+            return boundsInHost(indicator)
+        }
+        val size = 20f * density
+        val left = (width - size) / 2f
+        val top = (height - size) / 2f
+        return RectF(left, top, left + size, top + size)
     }
 
     private fun drawCalendar(canvas: Canvas) {
@@ -2278,6 +2548,9 @@ internal class MobileUiHost(
         const val ACCORDION_EXPANDED_ROTATION = 180f
         const val ACCORDION_COLLAPSED_SCALE = 0.98f
         const val ACCORDION_ANIMATION_DURATION_MILLIS = 200L
+        const val SELECTION_INDICATOR_TAG = "pam:selection-indicator"
+        const val SELECTION_ICON_TAG = "pam:selection-icon"
+        const val SELECTION_FORCE_ICON_TAG = "pam:selection-icon-force"
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

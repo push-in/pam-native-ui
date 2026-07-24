@@ -30,4 +30,6 @@ enum NativeBehavior: int
     case DateTimePicker = 22;
     case Portal = 23;
     case AccordionGroup = 24;
+    case CheckboxGroup = 25;
+    case RadioGroup = 26;
 }

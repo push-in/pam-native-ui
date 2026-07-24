@@ -54,7 +54,7 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
-    fun checkboxPublishesACompactToggleEventAndNativeCheckedState() {
+    fun checkboxHandlesReadOnlyIndeterminateAndAuthoredIconStateNatively() {
         onMain {
             val events = CopyOnWriteArrayList<NativeViewEventKind>()
             val payloads = CopyOnWriteArrayList<ByteArray>()
@@ -65,16 +65,63 @@ class MobileUiHostInstrumentedTest {
             host.update(
                 mapOf(
                     "behavior" to WireValue.Integer(10),
-                    "checked" to WireValue.Flag(false),
+                    "defaultIsChecked" to WireValue.Flag(false),
+                    "isReadOnly" to WireValue.Flag(true),
                 ),
             )
+            val indicator = FrameLayout(host.context).apply {
+                tag = "pam:selection-indicator"
+            }
+            val icon = View(host.context).apply {
+                tag = "pam:selection-icon"
+            }
+            indicator.addView(icon)
+            val label = TextView(host.context).apply {
+                text = "Receive updates"
+            }
+            host.addView(indicator)
+            host.addView(label)
+            host.layout(0, 0, 400, 100)
+            indicator.layout(0, 25, 50, 75)
+            icon.layout(0, 0, 50, 50)
+            label.layout(60, 0, 400, 100)
 
             assertTrue(host.performClick())
+            assertTrue(events.isEmpty())
+            assertEquals(View.GONE, icon.visibility)
+
+            val readOnlyInfo = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(readOnlyInfo)
+            assertTrue(!readOnlyInfo.isClickable)
+            assertTrue(
+                readOnlyInfo.actionList.none {
+                    it.id == AccessibilityNodeInfo.ACTION_CLICK
+                },
+            )
+            assertEquals("Read only", host.stateDescription)
+            readOnlyInfo.recycle()
+
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(10),
+                    "isIndeterminate" to WireValue.Flag(true),
+                ),
+            )
+            assertEquals(View.VISIBLE, icon.visibility)
 
             val info = AccessibilityNodeInfo.obtain()
             host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("android.widget.CheckBox", info.className)
+            assertEquals("Receive updates", host.contentDescription)
+            assertEquals("Mixed", host.stateDescription)
+            assertTrue(info.isCheckable)
+            assertTrue(!info.isChecked)
+
+            assertTrue(host.performClick())
             assertEquals(listOf(NativeViewEventKind.TOGGLE), events)
+            host.onInitializeAccessibilityNodeInfo(info)
             assertTrue(info.isChecked)
+            assertTrue(host.stateDescription == null)
             assertEquals("1", payloads.single().decodeToString())
             host.release()
             info.recycle()
@@ -776,11 +823,65 @@ class MobileUiHostInstrumentedTest {
 
             assertTrue(host.performClick())
             assertTrue(host.performClick())
-            assertEquals(2, payloads.size)
-            payloads.forEach { payload ->
-                assertEquals("1", payload.decodeToString())
-            }
+            assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
             host.release()
+        }
+    }
+
+    @Test
+    fun radioGroupSelectsExactlyOneNestedItemOnTheUiThread() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val group = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
+            group.update(mapOf("behavior" to WireValue.Integer(26)))
+            val wrapper = FrameLayout(group.context)
+            val first = MobileUiHost(group.context) { kind, payload ->
+                if (kind == NativeViewEventKind.TOGGLE) payloads += payload
+            }
+            first.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(11),
+                    "checked" to WireValue.Flag(true),
+                ),
+            )
+            val second = MobileUiHost(group.context) { kind, payload ->
+                if (kind == NativeViewEventKind.TOGGLE) payloads += payload
+            }
+            second.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(11),
+                    "checked" to WireValue.Flag(false),
+                ),
+            )
+            wrapper.addView(first)
+            wrapper.addView(second)
+            group.addView(wrapper)
+
+            assertTrue(second.performClick())
+            assertTrue(second.performClick())
+            assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
+
+            val firstInfo = AccessibilityNodeInfo.obtain()
+            val secondInfo = AccessibilityNodeInfo.obtain()
+            val groupInfo = AccessibilityNodeInfo.obtain()
+            first.onInitializeAccessibilityNodeInfo(firstInfo)
+            second.onInitializeAccessibilityNodeInfo(secondInfo)
+            group.onInitializeAccessibilityNodeInfo(groupInfo)
+            assertTrue(!firstInfo.isChecked)
+            assertTrue(secondInfo.isChecked)
+            assertEquals("android.widget.RadioGroup", groupInfo.className)
+            assertEquals(2, groupInfo.collectionInfo?.rowCount)
+            assertEquals(0, firstInfo.collectionItemInfo?.rowIndex)
+            assertEquals(1, secondInfo.collectionItemInfo?.rowIndex)
+            assertTrue(firstInfo.collectionItemInfo?.isSelected == false)
+            assertTrue(secondInfo.collectionItemInfo?.isSelected == true)
+
+            first.release()
+            second.release()
+            group.release()
+            firstInfo.recycle()
+            secondInfo.recycle()
+            groupInfo.recycle()
         }
     }
 

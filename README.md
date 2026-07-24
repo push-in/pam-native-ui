@@ -76,6 +76,14 @@ wrappers:
 </RadioGroup>
 ```
 
+`Checkbox`, `CheckboxGroup`, `Radio` and `RadioGroup` keep selection on the
+Android UI thread. Uncontrolled `defaultValue` and `defaultIsChecked`,
+controlled values, read-only/disabled/invalid states, checkbox `indeterminate`
+state and authored or forced indicator icons are supported. A radio group
+unchecks its previous item locally and sends PHP exactly one semantic event
+for the newly selected value. Each row exposes native checkable and collection
+semantics to TalkBack, including keyboard activation and error text.
+
 Accordion state also stays local to Android between controlled updates:
 
 ```xml

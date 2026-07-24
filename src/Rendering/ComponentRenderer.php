@@ -67,6 +67,14 @@ final class ComponentRenderer
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
             : [];
+        if (
+            $part === 'Checkbox'
+            && !array_key_exists('checked', $props)
+            && !array_key_exists('isChecked', $props)
+            && array_key_exists('defaultIsChecked', $props)
+        ) {
+            $props['checked'] = self::flag($props, 'defaultIsChecked');
+        }
         $props = self::controlledItemState($part, $props, $parentProps);
         $runtimeProps = [...$parentProps, ...$props];
         $events = self::componentEvents($part, $runtimeProps, $events);
@@ -96,15 +104,28 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:accordion-content');
         } elseif ($part === 'AccordionIcon') {
             $element = $element->property(PropKey::Value, 'pam:accordion-icon');
+        } elseif ($part === 'CheckboxIndicator' || $part === 'RadioIndicator') {
+            $element = $element->property(PropKey::Value, 'pam:selection-indicator');
+        } elseif ($part === 'CheckboxIcon' || $part === 'RadioIcon') {
+            $element = $element->property(
+                PropKey::Value,
+                self::flag($props, 'forceMount')
+                    ? 'pam:selection-icon-force'
+                    : 'pam:selection-icon',
+            );
         }
 
         if ($styleOverride !== null) {
             $element = $element->style($styleOverride);
         }
-        if (
-            self::flag($props, 'disabled', self::flag($props, 'isDisabled'))
-            || self::flag($props, 'readOnly', self::flag($props, 'isReadOnly'))
-        ) {
+        $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
+        $readOnly = self::flag($props, 'readOnly', self::flag($props, 'isReadOnly'));
+        $nativeReadOnly = in_array(
+            $part,
+            ['Calendar', 'Checkbox', 'CheckboxGroup', 'Radio', 'RadioGroup'],
+            true,
+        );
+        if ($disabled || ($readOnly && !$nativeReadOnly)) {
             $element = $element->enabled(false);
         }
         $shouldHide = (
@@ -314,6 +335,8 @@ final class ComponentRenderer
         return match ($part) {
             'Accordion' => NativeBehavior::AccordionGroup,
             'AccordionItem' => NativeBehavior::Accordion,
+            'CheckboxGroup' => NativeBehavior::CheckboxGroup,
+            'RadioGroup' => NativeBehavior::RadioGroup,
             'Actionsheet',
             'BottomSheetPortal',
             'SelectPortal' => NativeBehavior::BottomSheet,
@@ -633,11 +656,19 @@ final class ComponentRenderer
         if ($itemValue === null) {
             return $props;
         }
+        if (
+            in_array($part, ['Checkbox', 'Radio'], true)
+            && !array_key_exists('value', $parentProps)
+            && !array_key_exists('defaultValue', $parentProps)
+        ) {
+            return $props;
+        }
 
         $parentValue = match ($part) {
             'MenuItem' => $parentProps['selectedKeys'] ?? null,
             'SelectItem' => $parentProps['selectedValue'] ?? $parentProps['value'] ?? null,
             'AccordionItem' => $parentProps['value'] ?? $parentProps['defaultValue'] ?? null,
+            'Checkbox', 'Radio' => $parentProps['value'] ?? $parentProps['defaultValue'] ?? null,
             default => $parentProps['value'] ?? null,
         };
         $selected = is_array($parentValue)
