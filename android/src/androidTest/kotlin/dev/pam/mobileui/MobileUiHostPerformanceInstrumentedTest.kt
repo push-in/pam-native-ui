@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -510,6 +511,59 @@ class MobileUiHostPerformanceInstrumentedTest {
                 menuEvents,
             )
 
+            val inputGroupEvents = ArrayList<NativeViewEventKind>()
+            val inputGroup = MobileUiHost(context) { kind, _ -> inputGroupEvents += kind }
+            inputGroup.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(32),
+                    "invalid" to WireValue.Flag(false),
+                ),
+            )
+            inputGroup.addView(EditText(context))
+            inputGroup.layout(0, 0, 1_080, 144)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                inputGroup.update(inputGroupProperties(iteration))
+            }
+            val inputState = measure(SAMPLE_ITERATIONS) { iteration ->
+                inputGroup.update(inputGroupProperties(iteration))
+            }
+            assertTrue(
+                "Input compound state p99 ${inputState.p99Micros}µs exceeded 4ms",
+                inputState.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Input focus/invalid state updates must never cross the PAM bridge",
+                inputGroupEvents.isEmpty(),
+            )
+
+            var inputSlotEvents = 0
+            val inputSlot = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.PRESS) inputSlotEvents++
+            }
+            inputSlot.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(33),
+                    "slotAction" to WireValue.Integer(1),
+                ),
+            )
+            inputGroup.addView(inputSlot)
+            repeat(WARMUP_ITERATIONS) {
+                inputSlot.performClick()
+            }
+            inputSlotEvents = 0
+            val inputSlotPress = measure(SAMPLE_ITERATIONS) {
+                inputSlot.performClick()
+            }
+            assertTrue(
+                "Input slot press p99 ${inputSlotPress.p99Micros}µs exceeded 4ms",
+                inputSlotPress.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Input slots must emit one semantic press per activation",
+                SAMPLE_ITERATIONS,
+                inputSlotEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -543,6 +597,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"sheetItemPress\":${sheetItemPress.json()},")
                     append("\"anchoredPosition\":${anchoredPosition.json()},")
                     append("\"menuSelection\":${menuSelection.json()},")
+                    append("\"inputState\":${inputState.json()},")
+                    append("\"inputSlotPress\":${inputSlotPress.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
@@ -557,7 +613,9 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"sheetBridgeEvents\":$sheetEvents,")
                     append("\"sheetItemBridgeEvents\":$sheetItemEvents,")
                     append("\"anchoredBridgeEvents\":${anchoredEvents.size},")
-                    append("\"menuBridgeEvents\":$menuEvents")
+                    append("\"menuBridgeEvents\":$menuEvents,")
+                    append("\"inputStateBridgeEvents\":${inputGroupEvents.size},")
+                    append("\"inputSlotBridgeEvents\":$inputSlotEvents")
                     append('}')
                 },
             )
@@ -583,6 +641,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             secondMenuItem.release()
             menu.release()
             anchored.release()
+            inputSlot.release()
+            inputGroup.release()
         }
     }
 
@@ -601,6 +661,15 @@ class MobileUiHostPerformanceInstrumentedTest {
             "behavior" to WireValue.Integer(15),
             "component" to WireValue.Integer(GeneratedComponents.PROGRESS.toLong()),
             "value" to WireValue.Decimal((iteration % 101).toDouble()),
+        )
+
+    private fun inputGroupProperties(iteration: Int): Map<String, WireValue> =
+        mapOf(
+            "behavior" to WireValue.Integer(32),
+            "invalid" to WireValue.Flag(iteration % 2 == 0),
+            "required" to WireValue.Flag(true),
+            "focusColor" to WireValue.Integer(0xff2563eb),
+            "invalidColor" to WireValue.Integer(0xffdc2626),
         )
 
     private fun calendarProperties(): Map<String, WireValue> =

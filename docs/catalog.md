@@ -190,7 +190,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: Forms
 - Maturity: Stable
-- Runtime: PHP composition
+- Runtime: Android native host
 - Variants: `isTruncated`, `bold`, `underline`, `strikeThrough`, `sub`, `italic`, `highlight`
 - Upstream examples captured: 7
 - Tags: `FormControl`, `FormControlError`, `FormControlErrorText`, `FormControlErrorIcon`, `FormControlLabel`, `FormControlLabelText`, `FormControlLabelAstrick`, `FormControlHelper`, `FormControlHelperText`
@@ -271,7 +271,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: Forms
 - Maturity: Stable
-- Runtime: PHP composition
+- Runtime: Android native host
 - Variants: none
 - Upstream examples captured: 3
 - Tags: `Input`, `InputField`, `InputIcon`, `InputSlot`
@@ -496,7 +496,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: Forms
 - Maturity: Stable
-- Runtime: PHP composition
+- Runtime: Android native host
 - Variants: `variant`, `size`
 - Upstream examples captured: 2
 - Tags: `Textarea`, `TextareaInput`

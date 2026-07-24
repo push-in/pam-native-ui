@@ -69,6 +69,13 @@ final class ValueNormalizer
             'multiple' => 2,
             'none' => 3,
         ],
+        'slotAction' => [
+            'focus' => 1,
+            'clear' => 2,
+            'toggle-password' => 3,
+            'togglePassword' => 3,
+            'none' => 4,
+        ],
         'placement' => [
             'top' => 1,
             'top-start' => 2,

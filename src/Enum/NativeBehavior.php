@@ -37,4 +37,7 @@ enum NativeBehavior: int
     case SheetItem = 29;
     case MenuItem = 30;
     case OverlayDismiss = 31;
+    case InputGroup = 32;
+    case InputSlot = 33;
+    case FormControl = 34;
 }

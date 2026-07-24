@@ -84,6 +84,21 @@ ancestor for single/multiple/none selection, disabled keys, type-ahead,
 wrapping keyboard focus and close-on-select. The item sends its semantic press
 first and the root sends at most one separate dismissal lifecycle event.
 
+Compound `Input`, `Textarea` and `FormControl` keep their authored slots,
+icons, label, helper and error as ordinary PAM children around a core Android
+`EditText`. A lightweight native ancestor observes focus without replacing the
+field's core callbacks, paints focus/invalid outlines, enforces read-only state
+and performs clear/password actions locally. The root `on:change` is bound
+directly to the field during PHP composition, so it has the same event path as
+an explicitly authored `InputField`.
+
+`sync=native`, blur and submit modes perform no bridge callback per keystroke;
+debounced and immediate modes remain explicit application choices. Form labels
+focus their descendant field, required markers are injected during composition,
+inactive errors become `GONE`, and Android exposes the associated label,
+helper, required/read-only state and current error through the field's
+accessibility node.
+
 ## Utility class pipeline
 
 PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI

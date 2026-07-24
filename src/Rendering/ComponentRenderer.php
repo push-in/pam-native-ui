@@ -7,6 +7,7 @@ namespace Pam\MobileUi\Rendering;
 use Closure;
 use InvalidArgumentException;
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\InputSlotAction;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\SelectionMode;
@@ -94,10 +95,29 @@ final class ComponentRenderer
         $props = self::controlledItemState($part, $props, $parentProps);
         $runtimeProps = [...$parentProps, ...$props];
         $events = self::componentEvents($part, $runtimeProps, $events);
+        $children = self::formControlChildren($part, $runtimeProps, $children);
+        $children = self::inputEventChildren($part, $events, $children);
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
         $nativeBackground = $style->backgroundColor;
         if ($styleOverride !== null && $styleOverride->backgroundColor !== null) {
             $nativeBackground = $styleOverride->backgroundColor;
+        }
+        if (in_array($part, ['Input', 'Textarea'], true)) {
+            $overrideRadius = $styleOverride === null
+                ? null
+                : $styleOverride->borderRadius;
+            $overrideWidth = $styleOverride === null
+                ? null
+                : $styleOverride->borderWidth;
+            $runtimeProps['outlineRadius'] = $overrideRadius
+                ?? $style->borderRadius
+                ?? ($part === 'Textarea' ? 4.0 : 6.0);
+            $runtimeProps['outlineWidth'] = max(
+                1.0,
+                $overrideWidth
+                    ?? $style->borderWidth
+                    ?? 1.0,
+            );
         }
         $styleAppliedToContent = false;
         $rootStyle = $style;
@@ -213,16 +233,40 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:slider-thumb');
         } elseif ($part === 'ProgressFilledTrack') {
             $element = $element->property(PropKey::Value, 'pam:progress-filled-track');
+        } elseif ($part === 'FormControlLabel') {
+            $element = $element->property(PropKey::Value, 'pam:form-label');
+        } elseif ($part === 'FormControlLabelAstrick') {
+            $element = $element->property(PropKey::Value, 'pam:form-required');
+        } elseif ($part === 'FormControlHelper') {
+            $element = $element->property(PropKey::Value, 'pam:form-helper');
+        } elseif ($part === 'FormControlError') {
+            $element = $element->property(PropKey::Value, 'pam:form-error');
         }
 
         if ($styleOverride !== null && !$styleAppliedToContent) {
             $element = $element->style($styleOverride);
         }
         $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
-        $readOnly = self::flag($props, 'readOnly', self::flag($props, 'isReadOnly'));
+        $readOnly = self::flag(
+            $props,
+            'readOnly',
+            self::flag($props, 'isReadOnly'),
+        ) || (
+            array_key_exists('editable', $props)
+            && !self::flag($props, 'editable', true)
+        );
         $nativeReadOnly = in_array(
             $part,
-            ['Calendar', 'Checkbox', 'CheckboxGroup', 'Radio', 'RadioGroup'],
+            [
+                'Calendar',
+                'Checkbox',
+                'CheckboxGroup',
+                'FormControl',
+                'Input',
+                'Radio',
+                'RadioGroup',
+                'Textarea',
+            ],
             true,
         );
         if ($disabled || ($readOnly && !$nativeReadOnly)) {
@@ -242,6 +286,10 @@ final class ComponentRenderer
                     $parentProps['value'] ?? $parentProps['defaultValue'],
                     $props['value'],
                 )
+            )
+            || (
+                $part === 'FormControlError'
+                && !self::flag($runtimeProps, 'invalid', self::flag($runtimeProps, 'isInvalid'))
             )
             || (
                 self::isClosed($runtimeProps)
@@ -458,6 +506,16 @@ final class ComponentRenderer
                 ),
             ];
         }
+        if (
+            $behavior === NativeBehavior::InputGroup
+            || $behavior === NativeBehavior::InputSlot
+            || $behavior === NativeBehavior::FormControl
+        ) {
+            $values = [
+                ...$values,
+                ...self::inputNativeProperties($part, $behavior, $props),
+            ];
+        }
 
         return $values;
     }
@@ -484,6 +542,10 @@ final class ComponentRenderer
             'DrawerCloseButton',
             'ModalCloseButton',
             'PopoverCloseButton' => NativeBehavior::OverlayDismiss,
+            'Input',
+            'Textarea' => NativeBehavior::InputGroup,
+            'InputSlot' => NativeBehavior::InputSlot,
+            'FormControl' => NativeBehavior::FormControl,
             'Calendar' => NativeBehavior::Calendar,
             'DateTimePicker' => NativeBehavior::DateTimePicker,
             'Skeleton', 'SkeletonText' => NativeBehavior::Skeleton,
@@ -841,8 +903,13 @@ final class ComponentRenderer
 
     private static function isText(string $part): bool
     {
+        if ($part === 'FormControlLabel') {
+            return false;
+        }
+
         return $part === 'Text'
             || $part === 'Heading'
+            || $part === 'FormControlLabelAstrick'
             || str_ends_with($part, 'Text')
             || str_ends_with($part, 'Label')
             || str_ends_with($part, 'Title')
@@ -1116,6 +1183,143 @@ final class ComponentRenderer
         };
 
         return $events;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function formControlChildren(
+        string $part,
+        array $props,
+        array $children,
+    ): array {
+        if (
+            $part !== 'FormControlLabel'
+            || !self::flag($props, 'required', self::flag($props, 'isRequired'))
+            || self::taggedElement($children, 'pam:form-required') !== null
+        ) {
+            return $children;
+        }
+
+        $asterisk = Text::make('*')
+            ->style(
+                StyleResolver::resolve(
+                    'FormControlLabelAstrick',
+                    $props,
+                    ThemeManager::current(),
+                ),
+            )
+            ->property(PropKey::Value, 'pam:form-required');
+
+        return [...$children, $asterisk];
+    }
+
+    /**
+     * A callback authored on the compound root belongs to its native EditText.
+     *
+     * @param array<int, Closure> $events
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function inputEventChildren(
+        string $part,
+        array $events,
+        array $children,
+    ): array {
+        if (!in_array($part, ['Input', 'Textarea'], true) || $events === []) {
+            return $children;
+        }
+
+        foreach ($children as $index => $child) {
+            if ($child->kind() !== NodeKind::Input) {
+                continue;
+            }
+            foreach ([
+                EventKind::Change,
+                EventKind::Focus,
+                EventKind::Blur,
+                EventKind::Submit,
+            ] as $kind) {
+                $handler = $events[$kind->value] ?? null;
+                if ($handler !== null) {
+                    $child = $child->on($kind, $handler);
+                }
+            }
+            $children[$index] = $child;
+            break;
+        }
+
+        return $children;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array<string, string|int|float|bool>
+     */
+    private static function inputNativeProperties(
+        string $part,
+        NativeBehavior $behavior,
+        array $props,
+    ): array {
+        if ($behavior === NativeBehavior::InputSlot) {
+            $action = $props['slotAction'] ?? $props['action'] ?? null;
+            $slotAction = match ($action) {
+                InputSlotAction::Focus->value, 'focus' => InputSlotAction::Focus,
+                InputSlotAction::Clear->value, 'clear' => InputSlotAction::Clear,
+                InputSlotAction::TogglePassword->value,
+                'toggle-password',
+                'togglePassword' => InputSlotAction::TogglePassword,
+                InputSlotAction::None->value, 'none' => InputSlotAction::None,
+                default => self::flag($props, 'focusOnPress', true)
+                    ? InputSlotAction::Focus
+                    : InputSlotAction::None,
+            };
+
+            return [
+                'slotAction' => $slotAction->value,
+                'focusOnPress' => self::flag($props, 'focusOnPress', true),
+            ];
+        }
+
+        $readOnly = self::flag(
+            $props,
+            'readOnly',
+            self::flag($props, 'isReadOnly'),
+        ) || (
+            array_key_exists('editable', $props)
+            && !self::flag($props, 'editable', true)
+        );
+
+        return [
+            'disabled' => self::flag(
+                $props,
+                'disabled',
+                self::flag($props, 'isDisabled'),
+            ),
+            'readOnly' => $readOnly,
+            'invalid' => self::flag(
+                $props,
+                'invalid',
+                self::flag($props, 'isInvalid'),
+            ),
+            'required' => self::flag(
+                $props,
+                'required',
+                self::flag($props, 'isRequired'),
+            ),
+            'focusColor' => self::packedColor($props['focusColor'] ?? null)
+                ?? ThemeManager::current()->color(ColorToken::Ring),
+            'invalidColor' => self::packedColor($props['invalidColor'] ?? null)
+                ?? ThemeManager::current()->color(ColorToken::Destructive),
+            'outlineRadius' => is_numeric($props['outlineRadius'] ?? null)
+                ? (float) $props['outlineRadius']
+                : ($part === 'Textarea' ? 4.0 : 6.0),
+            'outlineWidth' => is_numeric($props['outlineWidth'] ?? null)
+                ? max(1.0, (float) $props['outlineWidth'])
+                : 1.0,
+        ];
     }
 
     /**
@@ -1434,6 +1638,9 @@ final class ComponentRenderer
             $input = $input->multiline();
         }
         if (self::flag($props, 'secure', self::flag($props, 'secureTextEntry'))) {
+            $input = $input->secure();
+        }
+        if (($props['type'] ?? null) === 'password') {
             $input = $input->secure();
         }
         if (isset($props['maxLength'])) {

@@ -22,6 +22,9 @@ import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.text.method.PasswordTransformationMethod
+import android.text.method.TransformationMethod
+import android.text.method.KeyListener
 import android.view.GestureDetector
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
@@ -29,12 +32,14 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.VelocityTracker
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeProvider
 import android.widget.FrameLayout
+import android.widget.EditText
 import android.widget.TextView
 import dev.pam.nativeapp.protocol.WireMap
 import dev.pam.nativeapp.protocol.WireValue
@@ -93,7 +98,10 @@ internal class MobileUiHost(
         TAB_TRIGGER(28),
         SHEET_ITEM(29),
         MENU_ITEM(30),
-        OVERLAY_DISMISS(31);
+        OVERLAY_DISMISS(31),
+        INPUT_GROUP(32),
+        INPUT_SLOT(33),
+        FORM_CONTROL(34);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -215,7 +223,28 @@ internal class MobileUiHost(
     private var fixedWeeks = false
     private var readOnly = false
     private var invalid = false
+    private var required = false
+    private var inputFocusColor = Color.rgb(23, 23, 23)
+    private var inputInvalidColor = Color.rgb(220, 38, 38)
+    private var inputOutlineRadius = 6f
+    private var inputOutlineWidth = 1f
+    private var inputFocused = false
+    private var inputSlotAction = INPUT_SLOT_ACTION_FOCUS
+    private var inputSlotFocusOnPress = true
+    private var inputSlotAppliedLabel: String? = null
+    private var managedInput: EditText? = null
+    private var managedInputKeyListener: KeyListener? = null
+    private var managedInputTransformation: TransformationMethod? = null
+    private var inputFocusObserver: ViewTreeObserver.OnGlobalFocusChangeListener? = null
+    private var formLabelTouchActive = false
+    private var formInput: EditText? = null
+    private var formSignature: String? = null
+    private var formAppliedLabel: String? = null
+    private var formAppliedHelper: String? = null
     private var accessibilityErrorMessage: String? = null
+    private val inputOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
     private var switchTrackOffColor = Color.rgb(212, 212, 212)
     private var switchTrackOnColor = Color.rgb(82, 82, 82)
     private var switchThumbColor = Color.rgb(250, 250, 250)
@@ -574,6 +603,35 @@ internal class MobileUiHost(
         fixedWeeks = properties.flag("fixedWeeks", false)
         readOnly = properties.flag("readOnly", properties.flag("isReadOnly", false))
         invalid = properties.flag("invalid", properties.flag("isInvalid", false))
+        required = properties.flag("required", properties.flag("isRequired", false))
+        inputFocusColor = properties.integer(
+            "focusColor",
+            inputFocusColor.toLong(),
+        ).toInt()
+        inputInvalidColor = properties.integer(
+            "invalidColor",
+            inputInvalidColor.toLong(),
+        ).toInt()
+        inputOutlineRadius = properties.decimal(
+            "outlineRadius",
+            inputOutlineRadius.toDouble(),
+        ).toFloat().coerceAtLeast(0f)
+        inputOutlineWidth = properties.decimal(
+            "outlineWidth",
+            inputOutlineWidth.toDouble(),
+        ).toFloat().coerceAtLeast(1f)
+        inputSlotAction = properties.integer(
+            "slotAction",
+            if (previousBehavior == behavior) {
+                inputSlotAction.toLong()
+            } else {
+                INPUT_SLOT_ACTION_FOCUS.toLong()
+            },
+        ).toInt().coerceIn(INPUT_SLOT_ACTION_FOCUS, INPUT_SLOT_ACTION_NONE)
+        inputSlotFocusOnPress = properties.flag(
+            "focusOnPress",
+            if (previousBehavior == behavior) inputSlotFocusOnPress else true,
+        )
         accessibilityErrorMessage = properties.text("accessibilityErrorMessage")
             ?: properties.text("errorMessage")
         switchTrackOffColor = properties.integer(
@@ -688,6 +746,14 @@ internal class MobileUiHost(
             updateSheetItemAccessibility()
         } else if (behavior == Behavior.MENU_ITEM) {
             updateMenuItemAccessibility()
+        } else if (behavior == Behavior.INPUT_GROUP) {
+            applyInputGroupState()
+            if (isAttachedToWindow) post(::applyInputGroupState)
+        } else if (behavior == Behavior.INPUT_SLOT) {
+            updateInputSlotAccessibility()
+        } else if (behavior == Behavior.FORM_CONTROL) {
+            applyFormControlSemantics()
+            if (isAttachedToWindow) post(::applyFormControlSemantics)
         }
         if (behavior.isAnchoredOverlay() && previousOpen == open) {
             post { applyAnchoredOverlayState(animate = false) }
@@ -697,6 +763,9 @@ internal class MobileUiHost(
 
     override fun onViewAdded(child: View) {
         super.onViewAdded(child)
+        if (behavior == Behavior.INPUT_SLOT) {
+            child.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        }
         if (behavior == Behavior.ACCORDION) {
             applyAccordionState(animate = false)
             updateAccordionAccessibility()
@@ -720,6 +789,12 @@ internal class MobileUiHost(
         if (behavior == Behavior.MENU_ITEM) {
             updateMenuItemAccessibility()
         }
+        if (behavior == Behavior.INPUT_GROUP) {
+            post(::applyInputGroupState)
+        }
+        if (behavior == Behavior.FORM_CONTROL) {
+            post(::applyFormControlSemantics)
+        }
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
         }
@@ -731,6 +806,7 @@ internal class MobileUiHost(
             Behavior.CHECKBOX -> drawSelectionGlyph(canvas, radio = false)
             Behavior.RADIO -> drawSelectionGlyph(canvas, radio = true)
             Behavior.CALENDAR -> drawCalendar(canvas)
+            Behavior.INPUT_GROUP -> drawInputOutline(canvas)
             else -> Unit
         }
     }
@@ -759,6 +835,12 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.BOTTOM_SHEET) {
             applySheetLayout(animate = false)
+        }
+        if (behavior == Behavior.INPUT_GROUP) {
+            applyInputGroupState()
+        }
+        if (behavior == Behavior.FORM_CONTROL) {
+            applyFormControlSemantics()
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
@@ -807,6 +889,16 @@ internal class MobileUiHost(
         ) {
             return true
         }
+        if (behavior == Behavior.FORM_CONTROL && isEnabled) {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    formLabelTouchActive = formLabelBounds()
+                        ?.contains(event.x, event.y) == true
+                    if (formLabelTouchActive) return true
+                }
+                MotionEvent.ACTION_CANCEL -> formLabelTouchActive = false
+            }
+        }
 
         return super.onInterceptTouchEvent(event)
     }
@@ -839,6 +931,28 @@ internal class MobileUiHost(
                 }
                 MotionEvent.ACTION_CANCEL -> {
                     anchoredTriggerTouchActive = false
+                    true
+                }
+                else -> true
+            }
+        }
+        if (behavior == Behavior.FORM_CONTROL && formLabelTouchActive) {
+            return when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_MOVE,
+                -> true
+                MotionEvent.ACTION_UP -> {
+                    val activate = formLabelBounds()
+                        ?.contains(event.x, event.y) == true
+                    formLabelTouchActive = false
+                    if (activate) {
+                        requestInputFocus()
+                        performClick()
+                    }
+                    activate
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    formLabelTouchActive = false
                     true
                 }
                 else -> true
@@ -1093,6 +1207,22 @@ internal class MobileUiHost(
                 info.collectionItemInfo = item
             }
         }
+        if (behavior == Behavior.INPUT_SLOT) {
+            info.className = "android.widget.Button"
+            info.isEnabled = isEnabled
+            info.isClickable = isEnabled
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+        }
+        if (
+            behavior == Behavior.INPUT_GROUP
+            || behavior == Behavior.FORM_CONTROL
+        ) {
+            info.className = "android.view.ViewGroup"
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -1182,6 +1312,10 @@ internal class MobileUiHost(
                 "android.widget.CheckedTextView"
             }
             Behavior.OVERLAY_DISMISS -> "android.widget.Button"
+            Behavior.INPUT_GROUP,
+            Behavior.FORM_CONTROL,
+            -> "android.view.ViewGroup"
+            Behavior.INPUT_SLOT -> "android.widget.Button"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
             Behavior.MODAL,
             Behavior.ALERT_DIALOG,
@@ -1346,6 +1480,7 @@ internal class MobileUiHost(
                 Behavior.SHEET_ITEM,
                 Behavior.MENU_ITEM,
                 Behavior.OVERLAY_DISMISS,
+                Behavior.INPUT_SLOT,
             )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
@@ -1450,6 +1585,14 @@ internal class MobileUiHost(
         anchoredTriggerTouchActive = false
         menuTypeaheadPrefix = ""
         menuTypeaheadAtMillis = 0L
+        removeInputFocusObserver()
+        restoreManagedInput()
+        formLabelTouchActive = false
+        formInput = null
+        formSignature = null
+        formAppliedLabel = null
+        formAppliedHelper = null
+        inputSlotAppliedLabel = null
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -1465,6 +1608,12 @@ internal class MobileUiHost(
     }
 
     private fun installBehavior() {
+        if (behavior == Behavior.INPUT_GROUP) {
+            installInputFocusObserver()
+        } else {
+            removeInputFocusObserver()
+            restoreManagedInput()
+        }
         setLayerType(
             if (behavior == Behavior.SWITCH) LAYER_TYPE_SOFTWARE else LAYER_TYPE_NONE,
             null,
@@ -1531,6 +1680,14 @@ internal class MobileUiHost(
                     overlayAncestor()?.requestOverlayDismiss()
                 }
             }
+        } else if (behavior == Behavior.INPUT_GROUP) {
+            setOnClickListener {
+                if (isEnabled) requestInputFocus()
+            }
+        } else if (behavior == Behavior.INPUT_SLOT) {
+            setOnClickListener {
+                if (isEnabled) activateInputSlot()
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -1575,6 +1732,7 @@ internal class MobileUiHost(
             Behavior.SHEET_ITEM,
             Behavior.MENU_ITEM,
             Behavior.OVERLAY_DISMISS,
+            Behavior.INPUT_SLOT,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -1594,6 +1752,7 @@ internal class MobileUiHost(
                 Behavior.SHEET_ITEM,
                 Behavior.MENU_ITEM,
                 Behavior.OVERLAY_DISMISS,
+                Behavior.INPUT_SLOT,
             )
         ) {
             RippleDrawable(
@@ -1607,14 +1766,304 @@ internal class MobileUiHost(
             null
         }
         importantForAccessibility = when {
+            behavior == Behavior.INPUT_SLOT
+                && inputSlotAction == INPUT_SLOT_ACTION_FOCUS ->
+                IMPORTANT_FOR_ACCESSIBILITY_NO
             behavior in setOf(
                 Behavior.ACCORDION_GROUP,
                 Behavior.CHECKBOX_GROUP,
+                Behavior.FORM_CONTROL,
+                Behavior.INPUT_GROUP,
                 Behavior.RADIO_GROUP,
             ) -> IMPORTANT_FOR_ACCESSIBILITY_NO
             behavior.isOverlay() && !open -> IMPORTANT_FOR_ACCESSIBILITY_NO
             else -> IMPORTANT_FOR_ACCESSIBILITY_YES
         }
+    }
+
+    private fun installInputFocusObserver() {
+        if (inputFocusObserver != null) return
+        inputFocusObserver = ViewTreeObserver.OnGlobalFocusChangeListener { _, focused ->
+            val next = focused != null && containsView(this, focused)
+            if (next == inputFocused) return@OnGlobalFocusChangeListener
+            inputFocused = next
+            isActivated = next
+            invalidate()
+        }.also { listener ->
+            viewTreeObserver.addOnGlobalFocusChangeListener(listener)
+        }
+    }
+
+    private fun removeInputFocusObserver() {
+        val listener = inputFocusObserver ?: return
+        val observer = viewTreeObserver
+        if (observer.isAlive) {
+            observer.removeOnGlobalFocusChangeListener(listener)
+        }
+        inputFocusObserver = null
+        inputFocused = false
+        isActivated = false
+    }
+
+    private fun applyInputGroupState() {
+        if (behavior != Behavior.INPUT_GROUP) return
+        val input = findFirstEditText(this)
+        if (managedInput !== input) {
+            restoreManagedInput()
+            managedInput = input
+            managedInputKeyListener = input?.keyListener
+            managedInputTransformation = input?.transformationMethod
+        }
+        input ?: return
+
+        input.isEnabled = isEnabled
+        input.isFocusable = isEnabled
+        input.isFocusableInTouchMode = isEnabled
+        input.isCursorVisible = isEnabled && !readOnly
+        input.showSoftInputOnFocus = isEnabled && !readOnly
+        if (readOnly) {
+            if (input.keyListener != null) {
+                managedInputKeyListener = input.keyListener
+            }
+            input.keyListener = null
+        } else if (input.keyListener == null && managedInputKeyListener != null) {
+            input.keyListener = managedInputKeyListener
+        }
+        val nextFocused = input.hasFocus()
+        if (nextFocused != inputFocused) {
+            inputFocused = nextFocused
+            isActivated = nextFocused
+            invalidate()
+        }
+        updateInputSlotDescendants(this)
+    }
+
+    private fun restoreManagedInput() {
+        managedInput?.let { input ->
+            if (input.keyListener == null && managedInputKeyListener != null) {
+                input.keyListener = managedInputKeyListener
+            }
+            if (managedInputTransformation != null) {
+                input.transformationMethod = managedInputTransformation
+            }
+            input.showSoftInputOnFocus = true
+            input.isCursorVisible = true
+        }
+        managedInput = null
+        managedInputKeyListener = null
+        managedInputTransformation = null
+    }
+
+    private fun requestInputFocus(): Boolean {
+        if (!isEnabled) return false
+        val input = findFirstEditText(this) ?: return false
+        input.isFocusable = true
+        input.isFocusableInTouchMode = true
+        val focused = input.requestFocus()
+        if (focused && !readOnly) {
+            input.post {
+                input.setSelection(input.text.length)
+            }
+        }
+        return focused
+    }
+
+    private fun activateInputSlot() {
+        emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+        val group = inputGroupAncestor()
+        when (inputSlotAction) {
+            INPUT_SLOT_ACTION_CLEAR -> group?.clearInput()
+            INPUT_SLOT_ACTION_TOGGLE_PASSWORD -> group?.toggleInputPassword()
+            INPUT_SLOT_ACTION_FOCUS -> group?.requestInputFocus()
+        }
+        if (
+            inputSlotFocusOnPress
+            && inputSlotAction != INPUT_SLOT_ACTION_FOCUS
+            && inputSlotAction != INPUT_SLOT_ACTION_NONE
+        ) {
+            group?.requestInputFocus()
+        }
+        updateInputSlotAccessibility()
+    }
+
+    private fun clearInput() {
+        if (!isEnabled || readOnly) return
+        val input = findFirstEditText(this) ?: return
+        input.text?.clear()
+    }
+
+    private fun toggleInputPassword() {
+        if (!isEnabled) return
+        val input = findFirstEditText(this) ?: return
+        val cursor = input.selectionStart.coerceAtLeast(0)
+        input.transformationMethod = if (
+            input.transformationMethod is PasswordTransformationMethod
+        ) {
+            null
+        } else {
+            PasswordTransformationMethod.getInstance()
+        }
+        input.setSelection(cursor.coerceAtMost(input.text.length))
+    }
+
+    private fun updateInputSlotAccessibility() {
+        if (behavior != Behavior.INPUT_SLOT) return
+        val group = inputGroupAncestor()
+        val passwordHidden = group
+            ?.findFirstEditText(group)
+            ?.transformationMethod is PasswordTransformationMethod
+        val fallback = when (inputSlotAction) {
+            INPUT_SLOT_ACTION_CLEAR -> "Clear input"
+            INPUT_SLOT_ACTION_TOGGLE_PASSWORD -> if (passwordHidden) {
+                "Show password"
+            } else {
+                "Hide password"
+            }
+            else -> null
+        }
+        if (
+            fallback != null
+            && (
+                contentDescription.isNullOrEmpty()
+                    || contentDescription == inputSlotAppliedLabel
+            )
+        ) {
+            contentDescription = fallback
+            inputSlotAppliedLabel = fallback
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = if (
+                inputSlotAction == INPUT_SLOT_ACTION_TOGGLE_PASSWORD
+            ) {
+                if (passwordHidden) "Password hidden" else "Password visible"
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun inputGroupAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (current is MobileUiHost && current.behavior == Behavior.INPUT_GROUP) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun updateInputSlotDescendants(root: ViewGroup) {
+        repeat(root.childCount) { index ->
+            val child = root.getChildAt(index)
+            if (child is MobileUiHost && child.behavior == Behavior.INPUT_SLOT) {
+                child.updateInputSlotAccessibility()
+            } else if (
+                child is ViewGroup
+                && !(child is MobileUiHost && child.behavior == Behavior.INPUT_GROUP)
+            ) {
+                updateInputSlotDescendants(child)
+            }
+        }
+    }
+
+    private fun applyFormControlSemantics() {
+        if (behavior != Behavior.FORM_CONTROL) return
+        val input = findFirstEditText(this) ?: return
+        val label = findFirstText(findTaggedDescendant(this, FORM_LABEL_TAG))
+        val helper = findFirstText(findTaggedDescendant(this, FORM_HELPER_TAG))
+        val error = accessibilityErrorMessage
+            ?: findFirstText(findTaggedDescendant(this, FORM_ERROR_TAG))
+        val signature = listOf(
+            label,
+            helper,
+            error,
+            required.toString(),
+            invalid.toString(),
+            readOnly.toString(),
+            isEnabled.toString(),
+        ).joinToString("\u0000")
+        if (formInput === input && formSignature == signature) return
+        formInput = input
+        formSignature = signature
+
+        if (
+            !label.isNullOrEmpty()
+            && (
+                input.contentDescription.isNullOrEmpty()
+                    || input.contentDescription == formAppliedLabel
+            )
+        ) {
+            input.contentDescription = label
+            formAppliedLabel = label
+        } else if (
+            label.isNullOrEmpty()
+            && input.contentDescription == formAppliedLabel
+        ) {
+            input.contentDescription = null
+            formAppliedLabel = null
+        }
+        if (
+            !helper.isNullOrEmpty()
+            && (
+                input.tooltipText.isNullOrEmpty()
+                    || input.tooltipText == formAppliedHelper
+            )
+        ) {
+            input.tooltipText = helper
+            formAppliedHelper = helper
+        } else if (
+            helper.isNullOrEmpty()
+            && input.tooltipText == formAppliedHelper
+        ) {
+            input.tooltipText = null
+            formAppliedHelper = null
+        }
+        findTaggedDescendant(this, FORM_ERROR_TAG)?.accessibilityLiveRegion =
+            if (invalid) {
+                ACCESSIBILITY_LIVE_REGION_ASSERTIVE
+            } else {
+                ACCESSIBILITY_LIVE_REGION_NONE
+            }
+        input.accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(
+                host: View,
+                info: AccessibilityNodeInfo,
+            ) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = "android.widget.EditText"
+                info.isEnabled = this@MobileUiHost.isEnabled
+                info.isContentInvalid = this@MobileUiHost.invalid
+                if (this@MobileUiHost.invalid && !error.isNullOrEmpty()) {
+                    info.error = error
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    info.stateDescription = buildList {
+                        if (this@MobileUiHost.required) add("Required")
+                        if (this@MobileUiHost.readOnly) add("Read only")
+                        if (this@MobileUiHost.invalid) add("Invalid")
+                    }.joinToString(", ").ifEmpty { null }
+                }
+            }
+        }
+    }
+
+    private fun formLabelBounds(): RectF? =
+        findTaggedDescendant(this, FORM_LABEL_TAG)?.let(::boundsInHost)
+
+    private fun drawInputOutline(canvas: Canvas) {
+        if ((!inputFocused && !invalid) || width <= 0 || height <= 0) return
+        inputOutlinePaint.color = if (invalid) inputInvalidColor else inputFocusColor
+        inputOutlinePaint.strokeWidth = inputOutlineWidth * density
+        val halfStroke = inputOutlinePaint.strokeWidth / 2f
+        val bounds = RectF(
+            halfStroke,
+            halfStroke,
+            width - halfStroke,
+            height - halfStroke,
+        )
+        val radius = inputOutlineRadius * density
+        canvas.drawRoundRect(bounds, radius, radius, inputOutlinePaint)
     }
 
     private fun animateExpanded() {
@@ -3713,6 +4162,15 @@ internal class MobileUiHost(
         return null
     }
 
+    private fun findFirstEditText(root: View?): EditText? {
+        if (root is EditText) return root
+        if (root !is ViewGroup) return null
+        repeat(root.childCount) { index ->
+            findFirstEditText(root.getChildAt(index))?.let { return it }
+        }
+        return null
+    }
+
     private fun getChildAtOrNull(index: Int): View? =
         if (index in 0 until childCount) getChildAt(index) else null
 
@@ -4554,6 +5012,13 @@ internal class MobileUiHost(
         const val MENU_SELECTION_MULTIPLE = 2
         const val MENU_SELECTION_NONE = 3
         const val MENU_TYPEAHEAD_TIMEOUT_MILLIS = 700L
+        const val FORM_LABEL_TAG = "pam:form-label"
+        const val FORM_HELPER_TAG = "pam:form-helper"
+        const val FORM_ERROR_TAG = "pam:form-error"
+        const val INPUT_SLOT_ACTION_FOCUS = 1
+        const val INPUT_SLOT_ACTION_CLEAR = 2
+        const val INPUT_SLOT_ACTION_TOGGLE_PASSWORD = 3
+        const val INPUT_SLOT_ACTION_NONE = 4
         const val SHEET_DRAG_INDICATOR_TAG = "pam:sheet-drag-indicator"
         const val SHEET_DRAG_INDICATOR_WRAPPER_TAG =
             "pam:sheet-drag-indicator-wrapper"

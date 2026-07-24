@@ -68,6 +68,13 @@ each Menu activation must emit exactly one semantic event. Both use the same
 p99 below 4 ms gate and remain excluded from the reference table until measured
 on hardware.
 
+Compound inputs add two more pending hardware gates: 10,000 focus/invalid state
+updates with zero bridge events, and 10,000 native slot activations with exactly
+one semantic press each. Clear and password visibility mutate the mounted
+`EditText` directly; normal typing follows the selected native/debounced/blur/
+submit synchronization policy. These rows also remain excluded from the
+reference table until a physical run records them.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded
@@ -75,9 +82,9 @@ the complete PAM binary tree 2,000 times:
 
 | Metric | Result |
 | --- | ---: |
-| Total | 679.350 ms |
-| Throughput | 2,944 trees/s |
-| Encoded frame | 1,430 bytes |
+| Total | 775.143 ms |
+| Throughput | 2,580 trees/s |
+| Encoded frame | 1,884 bytes |
 | Peak PHP memory | 4 MiB |
 | PHP | 8.4.23 |
 

@@ -63,6 +63,45 @@ Applications are never forced into either form. Raw `Pam\Native\UI` elements,
 custom components, `.pam` tags, fluent classes, and native plugins can be mixed
 in the same tree.
 
+Inputs preserve the complete compound anatomy while Android owns transient
+editing state:
+
+```xml
+<FormControl required="true" invalid="{{ $passwordInvalid }}">
+    <FormControlLabel>
+        <FormControlLabelText>Password</FormControlLabelText>
+    </FormControlLabel>
+    <Input type="password" on:change="setPassword">
+        <InputField
+            value="{{ $password }}"
+            sync="native"
+        />
+        <InputSlot slotAction="clear"><CloseIcon /></InputSlot>
+        <InputSlot slotAction="toggle-password"><EyeIcon /></InputSlot>
+    </Input>
+    <FormControlHelper>
+        <FormControlHelperText>Use at least 12 characters.</FormControlHelperText>
+    </FormControlHelper>
+    <FormControlError>
+        <FormControlErrorText>Password is too short.</FormControlErrorText>
+    </FormControlError>
+</FormControl>
+```
+
+The callback may live on `Input` or `InputField`. `sync="native"` keeps every
+keystroke and cursor update inside `EditText` and sends the value on blur;
+`blur`, `submit`, `debounced` (48 ms by default) and `immediate` are also
+available. `InputSlot` defaults to focusing the field and supports the
+integer-backed `focus`, `clear`, `toggle-password` and `none` actions through
+`Pam\MobileUi\Enum\InputSlotAction`.
+
+Focus/invalid outlines, disabled/read-only editing policy, clear/password
+actions and selection remain on the Android UI thread. `FormControl` links its
+label, helper and error to the native field, injects the required asterisk,
+hides inactive feedback, makes the label focus the field and exposes required,
+read-only and invalid/error state to TalkBack. `Textarea` uses the same
+controller with a multiline native field.
+
 Compound selection uses one handler at the group root; item values and
 controlled checked/selected state are inherited through arbitrary layout
 wrappers:

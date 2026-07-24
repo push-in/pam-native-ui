@@ -1097,7 +1097,7 @@
             "name": "form-control",
             "category": 5,
             "maturity": 1,
-            "implementation": 1,
+            "implementation": 2,
             "exports": [
                 "FormControl",
                 "FormControlError",
@@ -1567,7 +1567,7 @@
             "name": "input",
             "category": 5,
             "maturity": 1,
-            "implementation": 1,
+            "implementation": 2,
             "exports": [
                 "Input",
                 "InputField",
@@ -2597,7 +2597,7 @@
             "name": "textarea",
             "category": 5,
             "maturity": 1,
-            "implementation": 1,
+            "implementation": 2,
             "exports": [
                 "Textarea",
                 "TextareaInput"

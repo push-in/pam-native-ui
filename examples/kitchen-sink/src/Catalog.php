@@ -19,6 +19,7 @@ final class Catalog extends Component
     private bool $popoverOpen = false;
     private bool $selectOpen = false;
     private string $framework = 'Laravel';
+    private string $email = '';
     private string $plan = 'starter';
     private string $selectedDate = '2026-07-23';
     private string $notice = 'All interactions use semantic native events.';
@@ -36,6 +37,11 @@ final class Catalog extends Component
     public function submit(): void
     {
         $this->notice = 'Profile saved through one compact native event.';
+    }
+
+    public function setEmail(string $email): void
+    {
+        $this->email = $email;
     }
 
     public function selectTab(string $payload): void
@@ -116,6 +122,7 @@ final class Catalog extends Component
      *     popoverOpen: bool,
      *     selectOpen: bool,
      *     framework: string,
+     *     email: string,
      *     plan: string,
      *     selectedDate: string,
      *     notice: string
@@ -133,6 +140,7 @@ final class Catalog extends Component
             'popoverOpen' => $this->popoverOpen,
             'selectOpen' => $this->selectOpen,
             'framework' => $this->framework,
+            'email' => $this->email,
             'plan' => $this->plan,
             'selectedDate' => $this->selectedDate,
             'notice' => $this->notice,

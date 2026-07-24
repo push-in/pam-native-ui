@@ -2,11 +2,13 @@ package dev.pam.mobileui
 
 import android.content.Intent
 import android.os.Looper
+import android.text.method.PasswordTransformationMethod
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.Gravity
 import android.widget.FrameLayout
+import android.widget.EditText
 import android.widget.TextView
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
@@ -1526,6 +1528,120 @@ class MobileUiHostInstrumentedTest {
             firstInfo.recycle()
             secondInfo.recycle()
             groupInfo.recycle()
+        }
+    }
+
+    @Test
+    fun inputAndFormControlKeepCompoundInteractionAndSemanticsOnTheUiThread() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val inputEvents = CopyOnWriteArrayList<NativeViewEventKind>()
+            val inputGroup = MobileUiHost(context) { _, _ -> }
+            inputGroup.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(32),
+                    "focusColor" to WireValue.Integer(0xff2563eb),
+                    "invalidColor" to WireValue.Integer(0xffdc2626),
+                ),
+            )
+            val input = EditText(context).apply {
+                setText("secret")
+                transformationMethod = PasswordTransformationMethod.getInstance()
+            }
+            val clear = MobileUiHost(context) { kind, _ -> inputEvents += kind }
+            clear.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(33),
+                    "slotAction" to WireValue.Integer(2),
+                ),
+            )
+            val password = MobileUiHost(context) { kind, _ -> inputEvents += kind }
+            password.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(33),
+                    "slotAction" to WireValue.Integer(3),
+                ),
+            )
+            inputGroup.addView(input)
+            inputGroup.addView(clear)
+            inputGroup.addView(password)
+            inputGroup.layout(0, 0, 600, 120)
+
+            assertTrue(inputGroup.performClick())
+            assertTrue(input.hasFocus())
+            assertTrue(clear.performClick())
+            assertEquals("", input.text.toString())
+            input.setText("secret")
+            assertTrue(password.performClick())
+            assertTrue(input.transformationMethod == null)
+            assertEquals("Hide password", password.contentDescription)
+            assertEquals(
+                listOf(NativeViewEventKind.PRESS, NativeViewEventKind.PRESS),
+                inputEvents,
+            )
+
+            inputGroup.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(32),
+                    "readOnly" to WireValue.Flag(true),
+                ),
+            )
+            inputGroup.layout(0, 0, 601, 120)
+            assertTrue(input.isEnabled)
+            assertTrue(input.keyListener == null)
+
+            val form = MobileUiHost(context) { _, _ -> }
+            form.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(34),
+                    "required" to WireValue.Flag(true),
+                    "invalid" to WireValue.Flag(true),
+                ),
+            )
+            val label = FrameLayout(context).apply {
+                tag = "pam:form-label"
+                addView(TextView(context).apply { text = "Email" })
+            }
+            val formInput = EditText(context)
+            val field = FrameLayout(context).apply { addView(formInput) }
+            val helper = FrameLayout(context).apply {
+                tag = "pam:form-helper"
+                addView(TextView(context).apply { text = "Use your work email." })
+            }
+            val error = FrameLayout(context).apply {
+                tag = "pam:form-error"
+                addView(TextView(context).apply { text = "Email is invalid." })
+            }
+            form.addView(label)
+            form.addView(field)
+            form.addView(helper)
+            form.addView(error)
+            form.layout(0, 0, 600, 360)
+            label.layout(0, 0, 600, 72)
+            field.layout(0, 72, 600, 180)
+            form.layout(0, 0, 601, 360)
+
+            val info = formInput.createAccessibilityNodeInfo()
+            assertEquals("Email", formInput.contentDescription)
+            assertEquals("Use your work email.", formInput.tooltipText)
+            assertTrue(info.isContentInvalid)
+            assertEquals("Email is invalid.", info.error)
+            assertEquals("Required, Invalid", info.stateDescription)
+            assertEquals(
+                View.ACCESSIBILITY_LIVE_REGION_ASSERTIVE,
+                error.accessibilityLiveRegion,
+            )
+
+            formInput.clearFocus()
+            form.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 20f, 20f))
+            form.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 20f, 20f))
+            assertTrue(formInput.hasFocus())
+
+            info.recycle()
+            clear.release()
+            password.release()
+            inputGroup.release()
+            form.release()
         }
     }
 

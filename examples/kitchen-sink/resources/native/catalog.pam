@@ -60,14 +60,18 @@
                         <FormControl required="true">
                             <FormControlLabel>
                                 <FormControlLabelText>Email</FormControlLabelText>
-                                <FormControlLabelAstrick>*</FormControlLabelAstrick>
                             </FormControlLabel>
-                            <Input variant="outline" size="lg">
+                            <Input variant="outline" size="lg" on:change="setEmail">
                                 <InputSlot><MailIcon /></InputSlot>
                                 <InputField
+                                    value="{{ $email }}"
                                     placeholder="you@example.com"
                                     keyboardType="email"
+                                    sync="native"
                                 />
+                                <InputSlot slotAction="clear" accessibilityLabel="Clear email">
+                                    <CloseIcon />
+                                </InputSlot>
                             </Input>
                             <FormControlHelper>
                                 <FormControlHelperText>We never share your email.</FormControlHelperText>

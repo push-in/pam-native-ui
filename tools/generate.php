@@ -106,7 +106,9 @@ $nativeModules = array_fill_keys([
     'checkbox',
     'date-time-picker',
     'drawer',
+    'form-control',
     'image-viewer',
+    'input',
     'liquid-glass',
     'menu',
     'modal',
@@ -118,6 +120,7 @@ $nativeModules = array_fill_keys([
     'skeleton',
     'slider',
     'tabs',
+    'textarea',
     'toast',
     'tooltip',
 ], true);

@@ -36,6 +36,16 @@ use Pam\MobileUi\Component\DateTimePicker;
 use Pam\MobileUi\Component\DateTimePickerInput;
 use Pam\MobileUi\Component\DateTimePickerTrigger;
 use Pam\MobileUi\Component\HStack;
+use Pam\MobileUi\Component\FormControl;
+use Pam\MobileUi\Component\FormControlError;
+use Pam\MobileUi\Component\FormControlErrorText;
+use Pam\MobileUi\Component\FormControlHelper;
+use Pam\MobileUi\Component\FormControlHelperText;
+use Pam\MobileUi\Component\FormControlLabel;
+use Pam\MobileUi\Component\FormControlLabelText;
+use Pam\MobileUi\Component\Input;
+use Pam\MobileUi\Component\InputField;
+use Pam\MobileUi\Component\InputSlot;
 use Pam\MobileUi\Component\Attachment;
 use Pam\MobileUi\Component\AttachmentPreview;
 use Pam\MobileUi\Component\Attachments;
@@ -90,6 +100,7 @@ use Pam\MobileUi\Enum\ComponentType;
 use Pam\MobileUi\Enum\ComponentVariant;
 use Pam\MobileUi\Enum\DrawerAnchor;
 use Pam\MobileUi\Enum\ImplementationKind;
+use Pam\MobileUi\Enum\InputSlotAction;
 use Pam\MobileUi\Enum\MessageRole;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Orientation;
@@ -835,6 +846,87 @@ $assert(
 $assert(
     PromptInputTextarea::make()->toElement()->kind() === NodeKind::Input,
     'PromptInputTextarea must use the optimized native input primitive.',
+);
+$inputChanges = [];
+$compoundInput = Input::make(
+    ['type' => 'password', 'readOnly' => true],
+    InputSlot::make(
+        ['slotAction' => InputSlotAction::Clear],
+        Text::make('Clear'),
+    ),
+    InputField::make(['value' => 'secret', 'sync' => 'native']),
+)->onChange(static function (string $value) use (&$inputChanges): void {
+    $inputChanges[] = $value;
+})->toElement();
+$compoundInputNativeValue = $compoundInput->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$compoundInputSlot = $compoundInput->children()[0] ?? null;
+$compoundInputField = $compoundInput->children()[1] ?? null;
+$compoundInputSlotNativeValue = $compoundInputSlot?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$compoundInputNativeValue instanceof BinaryValue
+    || !$compoundInputSlotNativeValue instanceof BinaryValue
+    || !$compoundInputField instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Compound Input must render its native group, slot and field.');
+}
+$compoundInputNative = Wire::decodeMap($compoundInputNativeValue->bytes);
+$compoundInputSlotNative = Wire::decodeMap($compoundInputSlotNativeValue->bytes);
+$assert(
+    $compoundInput->kind() === NodeKind::CustomView
+        && $compoundInputNative['behavior'] === NativeBehavior::InputGroup->value
+        && $compoundInputNative['readOnly'] === true
+        && $compoundInputSlotNative['behavior'] === NativeBehavior::InputSlot->value
+        && $compoundInputSlotNative['slotAction'] === InputSlotAction::Clear->value
+        && $compoundInputField->kind() === NodeKind::Input
+        && $compoundInputField->properties()[PropKey::Secure->value] === true
+        && $compoundInputField->properties()[PropKey::InputSyncMode->value] === 1
+        && isset($compoundInputField->events()[\Pam\Native\EventKind::Change->value]),
+    'Input must keep focus, password, clear and root change behavior in native compound anatomy.',
+);
+
+$form = FormControl::make(
+    ['required' => true, 'invalid' => false],
+    FormControlLabel::make(FormControlLabelText::make('Email')),
+    Input::make(InputField::make(['placeholder' => 'you@example.com'])),
+    FormControlHelper::make(
+        FormControlHelperText::make('We never share your email.'),
+    ),
+    FormControlError::make(FormControlErrorText::make('Email is invalid.')),
+)->toElement();
+$formNativeValue = $form->properties()[PropKey::HostProperties->value] ?? null;
+$formLabel = $form->children()[0] ?? null;
+$formInput = $form->children()[1] ?? null;
+$formError = $form->children()[3] ?? null;
+if (
+    !$formNativeValue instanceof BinaryValue
+    || !$formLabel instanceof \Pam\Native\Element
+    || !$formInput instanceof \Pam\Native\Element
+    || !$formError instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('FormControl must retain its complete authored anatomy.');
+}
+$formNative = Wire::decodeMap($formNativeValue->bytes);
+$formInputNativeValue = $formInput->properties()[PropKey::HostProperties->value] ?? null;
+if (!$formInputNativeValue instanceof BinaryValue) {
+    throw new RuntimeException('FormControl Input must inherit its native state.');
+}
+$formInputNative = Wire::decodeMap($formInputNativeValue->bytes);
+$assert(
+    $formNative['behavior'] === NativeBehavior::FormControl->value
+        && $formNative['required'] === true
+        && $formLabel->kind() === NodeKind::View
+        && $formLabel->properties()[PropKey::Value->value] === 'pam:form-label'
+        && count($formLabel->children()) === 2
+        && $formLabel->children()[1]->properties()[PropKey::Value->value]
+            === 'pam:form-required'
+        && $formInputNative['required'] === true
+        && $formError->properties()[PropKey::Value->value] === 'pam:form-error'
+        && $formError->properties()[PropKey::Visible->value] === false,
+    'FormControl must inject required anatomy, hide inactive feedback and link native field state.',
 );
 $modelSelector = ModelSelector::make(
     ['open' => false],
