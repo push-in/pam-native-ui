@@ -565,6 +565,38 @@ class MobileUiHostPerformanceInstrumentedTest {
                 inputSlotEvents,
             )
 
+            val feedbackEvents = ArrayList<NativeViewEventKind>()
+            val skeleton = MobileUiHost(context) { kind, _ -> feedbackEvents += kind }
+            val toast = MobileUiHost(context) { kind, _ -> feedbackEvents += kind }
+            val skeletonProperties = mapOf(
+                "behavior" to WireValue.Integer(8),
+                "pulseDuration" to WireValue.Integer(1_500),
+                "lines" to WireValue.Integer(3),
+            )
+            val toastProperties = mapOf(
+                "behavior" to WireValue.Integer(12),
+                "action" to WireValue.Integer(5),
+                "persistent" to WireValue.Flag(true),
+            )
+            skeleton.update(skeletonProperties)
+            toast.update(toastProperties)
+            repeat(WARMUP_ITERATIONS) {
+                skeleton.update(skeletonProperties)
+                toast.update(toastProperties)
+            }
+            val feedbackUpdate = measure(SAMPLE_ITERATIONS) {
+                skeleton.update(skeletonProperties)
+                toast.update(toastProperties)
+            }
+            assertTrue(
+                "Feedback steady update p99 ${feedbackUpdate.p99Micros}µs exceeded 4ms",
+                feedbackUpdate.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Skeleton pulse and persistent Toast updates must stay bridge-free",
+                feedbackEvents.isEmpty(),
+            )
+
             val tableEvents = ArrayList<NativeViewEventKind>()
             val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
             table.update(mapOf("behavior" to WireValue.Integer(35)))
@@ -634,6 +666,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"menuSelection\":${menuSelection.json()},")
                     append("\"inputState\":${inputState.json()},")
                     append("\"inputSlotPress\":${inputSlotPress.json()},")
+                    append("\"feedbackUpdate\":${feedbackUpdate.json()},")
                     append("\"tableLayout\":${tableLayout.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
@@ -652,6 +685,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"menuBridgeEvents\":$menuEvents,")
                     append("\"inputStateBridgeEvents\":${inputGroupEvents.size},")
                     append("\"inputSlotBridgeEvents\":$inputSlotEvents,")
+                    append("\"feedbackBridgeEvents\":${feedbackEvents.size},")
                     append("\"tableBridgeEvents\":${tableEvents.size}")
                     append('}')
                 },
@@ -680,6 +714,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             anchored.release()
             inputSlot.release()
             inputGroup.release()
+            skeleton.release()
+            toast.release()
             repeat(table.childCount) { index ->
                 (table.getChildAt(index) as? MobileUiHost)?.release()
             }

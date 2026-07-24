@@ -310,6 +310,27 @@ pair as `->onChange(...)` and `->onChangeEnd(...)`, both decoded as `float`.
 controlled or default state, custom off/on track colors, thumb colors,
 keyboard activation and native switch semantics.
 
+Feedback components preserve their upstream state behavior:
+
+```xml
+<Skeleton isLoaded="{{ $profileLoaded }}" speed="fast">
+    <ProfileCard />
+</Skeleton>
+
+<SkeletonText _lines="3" gap="2" speed="very-fast" />
+
+<Toast action="error" duration="5000" on:event="toastDismissed">
+    <ToastTitle>Upload failed</ToastTitle>
+    <ToastDescription>Check the connection and try again.</ToastDescription>
+</Toast>
+```
+
+Loaded skeletons return their authored content without leaving a wrapper.
+Loading text skeletons render the requested line count under one native pulse
+animator. Toast duration is scheduled once per identity rather than restarted
+by unrelated renders; transient hide/exit motion and TalkBack live-region
+announcement stay on Android, with one final dismiss event for PHP.
+
 Large scalar data sets use PAM's recycled Android list primitives directly:
 
 ```xml

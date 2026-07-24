@@ -69,6 +69,23 @@ final class ComponentRenderer
 
         $props = self::withDefaults($part, $props);
         $children = self::fallbackChildren($part, $props, $children);
+        if (
+            in_array($part, ['Skeleton', 'SkeletonText'], true)
+            && self::flag($props, 'isLoaded')
+        ) {
+            $loaded = self::oneChild($children);
+            if ($children === []) {
+                $loaded = $loaded->visible(false);
+            }
+            if ($elementKey !== null) {
+                $loaded = $loaded->key($elementKey);
+            }
+
+            return $loaded;
+        }
+        if (in_array($part, ['Skeleton', 'SkeletonText'], true)) {
+            $children = [];
+        }
         $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
@@ -134,13 +151,24 @@ final class ComponentRenderer
             $rootStyle = new Style();
             $styleAppliedToContent = true;
         }
-        $element = self::primitive(
-            $part,
-            $runtimeProps,
-            $children,
-            $nativeBackground,
-        )
-            ->style($rootStyle);
+        $element = $part === 'SkeletonText'
+            && self::integer(
+                $runtimeProps,
+                '_lines',
+                self::integer($runtimeProps, 'lines', 1),
+            ) > 1
+                ? self::skeletonText(
+                    $runtimeProps,
+                    $rootStyle,
+                    $styleOverride,
+                    $nativeBackground,
+                )
+                : self::primitive(
+                    $part,
+                    $runtimeProps,
+                    $children,
+                    $nativeBackground,
+                )->style($rootStyle);
 
         if (
             self::hasSemanticValue($part)
@@ -521,6 +549,17 @@ final class ComponentRenderer
                 ...$values,
                 ...self::inputNativeProperties($part, $behavior, $props),
             ];
+        }
+        if ($behavior === NativeBehavior::Skeleton) {
+            $values['pulseDuration'] = self::skeletonDurationMillis($part, $props);
+            $values['lines'] = max(
+                1,
+                self::integer(
+                    $props,
+                    '_lines',
+                    self::integer($props, 'lines', 1),
+                ),
+            );
         }
 
         return $values;
@@ -1760,6 +1799,72 @@ final class ComponentRenderer
             1 => $children[0],
             default => Column::make(...$children),
         };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function skeletonDurationMillis(string $part, array $props): int
+    {
+        $speed = self::integer($props, 'speed', 3);
+
+        return match ($speed) {
+            1 => 750,
+            2 => $part === 'SkeletonText' ? 1_000 : 100,
+            4 => 2_000,
+            default => 1_500,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    private static function skeletonText(
+        array $props,
+        Style $style,
+        ?Style $styleOverride,
+        ?int $nativeBackground,
+    ): Element {
+        $lines = min(
+            100,
+            max(
+                2,
+                self::integer(
+                    $props,
+                    '_lines',
+                    self::integer($props, 'lines', 2),
+                ),
+            ),
+        );
+        $color = $nativeBackground
+            ?? ThemeManager::current()->color(ColorToken::Muted);
+        $lineStyle = new Style(
+            minHeight: 16.0,
+            backgroundColor: $color,
+            borderRadius: 4.0,
+        );
+        $children = [];
+        for ($line = 0; $line < $lines; $line++) {
+            $children[] = View::make()
+                ->style($lineStyle)
+                ->property(PropKey::WidthPercent, $line === $lines - 1 ? 80.0 : 100.0);
+        }
+        $host = CustomView::make(
+            'pam.mobile_ui.host',
+            self::nativeProperties(
+                'SkeletonText',
+                NativeBehavior::Skeleton,
+                $props,
+                $children,
+                $nativeBackground,
+            ),
+            ...$children,
+        )
+            ->style($style)
+            ->property(
+                PropKey::Gap,
+                max(0.0, (float) self::integer($props, 'gap', 2) * 4.0),
+            );
+
+        return $styleOverride === null ? $host : $host->style($styleOverride);
     }
 
     /** @param array<string, mixed> $props */

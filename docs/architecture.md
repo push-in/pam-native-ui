@@ -54,6 +54,13 @@ Android collection row/column metadata. The metadata cache is invalidated only
 when rows or cells change, so steady layout performs no tree walk, allocation or
 bridge event.
 
+Skeleton pulse alpha is owned by one Android property animator even when
+`SkeletonText` contains multiple placeholder lines. `isLoaded=true` removes the
+placeholder host and returns its content directly. Toasts use an identity-based
+native timer: a stable rerender cannot postpone dismissal, persistent toasts do
+not allocate timers, and Android performs the exit motion and accessibility
+announcement before emitting one semantic dismissal.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native

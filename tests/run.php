@@ -86,6 +86,8 @@ use Pam\MobileUi\Component\Slider;
 use Pam\MobileUi\Component\SliderFilledTrack;
 use Pam\MobileUi\Component\SliderThumb;
 use Pam\MobileUi\Component\SliderTrack;
+use Pam\MobileUi\Component\Skeleton;
+use Pam\MobileUi\Component\SkeletonText;
 use Pam\MobileUi\Component\Tabs;
 use Pam\MobileUi\Component\TabsContent;
 use Pam\MobileUi\Component\TabsContentWrapper;
@@ -793,6 +795,46 @@ $assert(
         && $forcedProfileContent?->properties()[PropKey::Value->value]
             === 'pam:tabs-content-force:profile',
     'Tabs defaultValue and forceMount must preserve upstream uncontrolled behavior.',
+);
+
+$loadedSkeleton = Skeleton::make(
+    ['isLoaded' => true],
+    Text::make('Loaded content'),
+)->toElement();
+$loadingSkeleton = Skeleton::make(
+    ['isLoaded' => false, 'speed' => SkeletonSpeed::Fast],
+    Text::make('Hidden while loading'),
+)->toElement();
+$skeletonLines = SkeletonText::make([
+    '_lines' => 3,
+    'gap' => 3,
+    'speed' => SkeletonSpeed::VeryFast,
+])->toElement();
+$loadingSkeletonNative = $loadingSkeleton->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$skeletonLinesNative = $skeletonLines->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$loadingSkeletonNative instanceof BinaryValue
+    || !$skeletonLinesNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Skeletons must compile their native pulse state.');
+}
+$loadingSkeletonProperties = Wire::decodeMap($loadingSkeletonNative->bytes);
+$skeletonLinesProperties = Wire::decodeMap($skeletonLinesNative->bytes);
+$assert(
+    $loadedSkeleton->kind() === NodeKind::Text
+        && $loadedSkeleton->properties()[PropKey::Text->value] === 'Loaded content'
+        && $loadingSkeleton->children() === []
+        && $loadingSkeletonProperties['pulseDuration'] === 1_500
+        && count($skeletonLines->children()) === 3
+        && $skeletonLinesProperties['pulseDuration'] === 2_000
+        && $skeletonLinesProperties['lines'] === 3
+        && $skeletonLines->children()[2]
+            ->properties()[PropKey::WidthPercent->value] === 80.0,
+    'Skeleton loading, loaded content, line count, gap and speed must match upstream behavior.',
 );
 
 $toast = Toast::make(

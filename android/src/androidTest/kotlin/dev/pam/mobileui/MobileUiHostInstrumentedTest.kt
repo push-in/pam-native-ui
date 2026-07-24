@@ -1704,6 +1704,60 @@ class MobileUiHostInstrumentedTest {
         }
     }
 
+    @Test
+    fun skeletonAndToastKeepFeedbackAnimationAndAnnouncementsNative() {
+        lateinit var skeleton: MobileUiHost
+        lateinit var toast: MobileUiHost
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            skeleton = MobileUiHost(context) { _, _ -> }
+            skeleton.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(8),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.SKELETON_TEXT.toLong(),
+                    ),
+                    "pulseDuration" to WireValue.Integer(2_000),
+                    "lines" to WireValue.Integer(3),
+                ),
+            )
+            toast = MobileUiHost(context) { _, _ -> }
+            toast.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(12),
+                    "action" to WireValue.Integer(4),
+                    "persistent" to WireValue.Flag(true),
+                ),
+            )
+            toast.addView(TextView(context).apply { text = "Could not save" })
+            toast.addView(TextView(context).apply { text = "Try again" })
+        }
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        onMain {
+            val skeletonInfo = AccessibilityNodeInfo.obtain()
+            val toastInfo = AccessibilityNodeInfo.obtain()
+            skeleton.onInitializeAccessibilityNodeInfo(skeletonInfo)
+            toast.onInitializeAccessibilityNodeInfo(toastInfo)
+
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
+                skeleton.importantForAccessibility,
+            )
+            assertEquals("android.view.View", skeletonInfo.className)
+            assertEquals("android.widget.Toast", toastInfo.className)
+            assertEquals("Could not save. Try again", toast.contentDescription)
+            assertEquals(
+                View.ACCESSIBILITY_LIVE_REGION_ASSERTIVE,
+                toast.accessibilityLiveRegion,
+            )
+
+            skeletonInfo.recycle()
+            toastInfo.recycle()
+            skeleton.release()
+            toast.release()
+        }
+    }
+
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
 

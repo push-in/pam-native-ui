@@ -245,6 +245,10 @@ internal class MobileUiHost(
     private var formAppliedHelper: String? = null
     private var tableHeaderRow = false
     private var tableSemanticsDirty = true
+    private var skeletonPulseDurationMillis = 1_500L
+    private var toastAction = TOAST_ACTION_MUTED
+    private var toastScheduleSignature: String? = null
+    private var toastAnnouncementSignature: String? = null
     private var accessibilityErrorMessage: String? = null
     private val inputOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -407,6 +411,7 @@ internal class MobileUiHost(
         val previousComponentMode = componentMode
         val previousTabValue = tabValue
         val previousTableHeaderRow = tableHeaderRow
+        val previousToastAction = toastAction
         pendingAnchoredOpen?.let(::removeCallbacks)
         pendingAnchoredOpen = null
         pendingAnchoredClose?.let(::removeCallbacks)
@@ -646,6 +651,14 @@ internal class MobileUiHost(
         ) {
             tableAncestor()?.tableSemanticsDirty = true
         }
+        skeletonPulseDurationMillis = properties.integer(
+            "pulseDuration",
+            skeletonPulseDurationMillis,
+        ).coerceIn(100L, 10_000L)
+        toastAction = properties.integer(
+            "action",
+            TOAST_ACTION_MUTED.toLong(),
+        ).toInt().coerceIn(TOAST_ACTION_MUTED, TOAST_ACTION_ATTENTION)
         accessibilityErrorMessage = properties.text("accessibilityErrorMessage")
             ?: properties.text("errorMessage")
         switchTrackOffColor = properties.integer(
@@ -741,6 +754,17 @@ internal class MobileUiHost(
             updateSwitchAccessibility()
         }
         scheduleToast(properties)
+        if (behavior == Behavior.SKELETON) {
+            startSkeleton()
+        } else if (
+            behavior == Behavior.TOAST
+            && (
+                previousBehavior != behavior
+                || previousToastAction != toastAction
+            )
+        ) {
+            post(::applyToastSemantics)
+        }
         applyComponentDefaults()
         applySelectionVisualState()
         updateSelectionAccessibility()
@@ -819,6 +843,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.TABLE) {
             post(::applyTableSemantics)
+        }
+        if (behavior == Behavior.TOAST) {
+            post(::applyToastSemantics)
         }
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
@@ -1279,6 +1306,12 @@ internal class MobileUiHost(
                 info.isHeading = tableHeaderRow
             }
         }
+        if (behavior == Behavior.TOAST) {
+            info.className = "android.widget.Toast"
+        }
+        if (behavior == Behavior.SKELETON) {
+            info.className = "android.view.View"
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -1621,6 +1654,8 @@ internal class MobileUiHost(
         animator = null
         pendingDismiss?.let(::removeCallbacks)
         pendingDismiss = null
+        toastScheduleSignature = null
+        toastAnnouncementSignature = null
         pendingAnchoredOpen?.let(::removeCallbacks)
         pendingAnchoredOpen = null
         pendingAnchoredClose?.let(::removeCallbacks)
@@ -1828,6 +1863,8 @@ internal class MobileUiHost(
                 && inputSlotAction == INPUT_SLOT_ACTION_FOCUS ->
                 IMPORTANT_FOR_ACCESSIBILITY_NO
             behavior == Behavior.TABLE_ROW -> IMPORTANT_FOR_ACCESSIBILITY_NO
+            behavior == Behavior.SKELETON ->
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
             behavior in setOf(
                 Behavior.ACCORDION_GROUP,
                 Behavior.CHECKBOX_GROUP,
@@ -1837,6 +1874,20 @@ internal class MobileUiHost(
             ) -> IMPORTANT_FOR_ACCESSIBILITY_NO
             behavior.isOverlay() && !open -> IMPORTANT_FOR_ACCESSIBILITY_NO
             else -> IMPORTANT_FOR_ACCESSIBILITY_YES
+        }
+        if (behavior == Behavior.TOAST) {
+            isFocusable = false
+            accessibilityLiveRegion = if (
+                toastAction == TOAST_ACTION_WARNING
+                || toastAction == TOAST_ACTION_ERROR
+                || toastAction == TOAST_ACTION_ATTENTION
+            ) {
+                ACCESSIBILITY_LIVE_REGION_ASSERTIVE
+            } else {
+                ACCESSIBILITY_LIVE_REGION_POLITE
+            }
+        } else {
+            accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_NONE
         }
     }
 
@@ -2743,9 +2794,16 @@ internal class MobileUiHost(
     }
 
     private fun startSkeleton() {
-        if (animator != null || !animationsEnabled()) return
+        if (!animationsEnabled()) {
+            animator?.cancel()
+            animator = null
+            alpha = 1f
+            return
+        }
+        if (animator?.duration == skeletonPulseDurationMillis) return
+        animator?.cancel()
         animator = ObjectAnimator.ofFloat(this, View.ALPHA, 0.55f, 1f).apply {
-            duration = 1_500L
+            duration = skeletonPulseDurationMillis
             repeatMode = ValueAnimator.REVERSE
             repeatCount = ValueAnimator.INFINITE
             start()
@@ -4111,13 +4169,64 @@ internal class MobileUiHost(
     }
 
     private fun scheduleToast(properties: Map<String, WireValue>) {
+        if (behavior != Behavior.TOAST) {
+            pendingDismiss?.let(::removeCallbacks)
+            pendingDismiss = null
+            toastScheduleSignature = null
+            return
+        }
+        val persistent = properties.flag("persistent", false)
+        val duration = properties.integer("duration", 4_000L).coerceIn(500L, 60_000L)
+        val identity = properties.scalarText("toastId")
+            ?: properties.scalarText("id")
+            ?: ""
+        val signature = "$identity\u0000$duration\u0000$persistent\u0000$open"
+        if (signature == toastScheduleSignature) return
+        toastScheduleSignature = signature
         pendingDismiss?.let(::removeCallbacks)
         pendingDismiss = null
-        if (behavior != Behavior.TOAST || properties.flag("persistent", false)) return
-        val duration = properties.integer("duration", 4_000L).coerceIn(500L, 60_000L)
+        if (persistent || !open) return
+        visibility = VISIBLE
+        alpha = 1f
         pendingDismiss = Runnable {
+            pendingDismiss = null
+            if (!openControlled) {
+                open = false
+                if (animationsEnabled()) {
+                    animate()
+                        .alpha(0f)
+                        .translationY(-8f * density)
+                        .setDuration(TOAST_EXIT_ANIMATION_DURATION_MILLIS)
+                        .withEndAction {
+                            visibility = GONE
+                            alpha = 1f
+                            translationY = 0f
+                            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+                        }
+                        .start()
+                } else {
+                    visibility = GONE
+                    importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+                }
+            }
             emitDismiss()
         }.also { postDelayed(it, duration) }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applyToastSemantics() {
+        if (behavior != Behavior.TOAST) return
+        val announcement = descendantTexts(this)
+            .joinToString(". ")
+            .trim()
+        if (announcement.isEmpty()) return
+        contentDescription = announcement
+        val signature = "$toastAction\u0000$announcement"
+        if (signature == toastAnnouncementSignature) return
+        toastAnnouncementSignature = signature
+        if (isAttachedToWindow && visibility == VISIBLE) {
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_ANNOUNCEMENT)
+        }
     }
 
     private fun animationsEnabled(): Boolean = ValueAnimator.areAnimatorsEnabled()
@@ -4311,6 +4420,18 @@ internal class MobileUiHost(
         }
         return null
     }
+
+    private fun descendantTexts(root: ViewGroup): List<String> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (child is TextView && child.text.isNotEmpty()) {
+                    add(child.text.toString())
+                } else if (child is ViewGroup) {
+                    addAll(descendantTexts(child))
+                }
+            }
+        }
 
     private fun findFirstEditText(root: View?): EditText? {
         if (root is EditText) return root
@@ -5183,6 +5304,11 @@ internal class MobileUiHost(
         const val SWITCH_TRACK_HEIGHT_DP = 32f
         const val SWITCH_THUMB_INSET_DP = 2f
         const val SWITCH_ANIMATION_DURATION_MILLIS = 160L
+        const val TOAST_ACTION_MUTED = 1
+        const val TOAST_ACTION_WARNING = 3
+        const val TOAST_ACTION_ERROR = 4
+        const val TOAST_ACTION_ATTENTION = 6
+        const val TOAST_EXIT_ANIMATION_DURATION_MILLIS = 140L
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

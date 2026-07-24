@@ -82,6 +82,11 @@ and `SectionList` use PAM core's recycled Android adapters; an end-to-end scroll
 and memory profile remains part of the full-renderer benchmark rather than this
 plugin-host microbenchmark.
 
+The same suite performs 10,000 paired steady updates of a multi-line Skeleton
+and persistent Toast. The single pulse animator and identity-stable timer must
+keep p99 below 4 ms with zero bridge events; the result remains excluded from
+the reference table until measured on hardware.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

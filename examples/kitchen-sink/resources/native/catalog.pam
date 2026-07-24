@@ -168,8 +168,7 @@
                     <Spinner />
                     <Skeleton class="w-12 h-12 rounded-full" />
                     <VStack class="flex-1 gap-2">
-                        <SkeletonText />
-                        <SkeletonText />
+                        <SkeletonText _lines="2" gap="2" speed="fast" />
                     </VStack>
                 </HStack>
                 <Toast action="info" variant="outline">
