@@ -98,6 +98,14 @@ no context lookup or second bridge message is required. Controlled item state
 flows down the same context and becomes native `checked`, `selected` or
 `expanded` state.
 
+Calendar selection follows the same boundary. PHP sends scalar dates or
+newline-delimited bounded sets once during a changed render. Android maintains
+the visible month, grid geometry, disabled dates and pending range endpoint,
+redraws locally, and returns a single scalar/set/range result. The PHP renderer
+turns set and range payloads into ordinary arrays before invoking application
+code. Month navigation emits a small native lifecycle map only when an
+application explicitly subscribes to it.
+
 ## Threading
 
 - All view creation, updates, releases and Android view mutations run on the
@@ -117,6 +125,9 @@ flows down the same context and becomes native `checked`, `selected` or
 - Text follows system font scale and cannot encode meaning with color alone.
 - Roles, labels, hints, disabled, selected, checked and expanded state are
   exposed to TalkBack.
+- Calendar days are exposed as virtual collection-item buttons with native
+  bounds, selected/disabled state, localized dates and direct click actions;
+  this keeps the painted grid flat without sacrificing touch exploration.
 - Modal focus is trapped and restored; dismiss/back remains available.
 - Motion respects system animation scale and avoids required gesture-only paths.
 - Light and dark semantic pairs meet WCAG AA contrast.

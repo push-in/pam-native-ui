@@ -108,6 +108,14 @@ final class ValueNormalizer
             'multi-dot' => 8,
             'period' => 9,
         ],
+        'mode' => [
+            'single' => 1,
+            'multiple' => 2,
+            'range' => 3,
+            'date' => 4,
+            'time' => 5,
+            'datetime' => 6,
+        ],
         'action' => [
             'muted' => 1,
             'success' => 2,

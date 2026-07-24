@@ -246,10 +246,17 @@
                         <DateTimePickerInput value="{{ $selectedDate }}" />
                     </DateTimePickerTrigger>
                 </DateTimePicker>
-                <Calendar year="2026" month="7" on:change="selectDate">
+                <Calendar
+                    mode="single"
+                    value="{{ $selectedDate }}"
+                    year="2026"
+                    month="7"
+                    fixedWeeks="true"
+                    on:change="selectDate"
+                >
                     <CalendarHeader>
                         <CalendarHeaderPrevButton><ChevronLeftIcon /></CalendarHeaderPrevButton>
-                        <CalendarHeaderTitle>July 2026</CalendarHeaderTitle>
+                        <CalendarHeaderTitle />
                         <CalendarHeaderNextButton><ChevronRightIcon /></CalendarHeaderNextButton>
                     </CalendarHeader>
                     <CalendarWeekDaysHeader>

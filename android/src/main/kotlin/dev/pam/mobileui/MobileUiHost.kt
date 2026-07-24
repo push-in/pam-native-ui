@@ -10,6 +10,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.RectF
 import android.graphics.Shader
@@ -24,8 +25,11 @@ import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeProvider
 import android.widget.FrameLayout
+import android.widget.TextView
 import dev.pam.nativeapp.protocol.WireMap
 import dev.pam.nativeapp.protocol.WireValue
 import dev.pam.nativeapp.views.NativeViewEmitter
@@ -35,7 +39,11 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
+import java.time.format.DateTimeFormatter
+import java.util.LinkedHashSet
+import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.round
 
@@ -80,6 +88,21 @@ internal class MobileUiHost(
         SELECT(2),
         OPEN(3),
         ZOOM(4),
+        NAVIGATE(5),
+    }
+
+    private enum class ComponentMode(val value: Int) {
+        SINGLE(1),
+        MULTIPLE(2),
+        RANGE(3),
+        DATE(4),
+        TIME(5),
+        DATETIME(6);
+
+        companion object {
+            fun from(value: Int): ComponentMode =
+                entries.firstOrNull { it.value == value } ?: SINGLE
+        }
     }
 
     private val density = resources.displayMetrics.density
@@ -88,6 +111,11 @@ internal class MobileUiHost(
     }
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(23, 23, 23)
+    }
+    private val calendarTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(23, 23, 23)
+        textAlign = Paint.Align.CENTER
+        textSize = 14f * density
     }
     private var behavior = Behavior.CONTAINER
     private var component = 0
@@ -106,13 +134,98 @@ internal class MobileUiHost(
     private var offset = 8.0
     private var dismissible = true
     private var closeOnOverlayClick = true
-    private var dateTimeMode = "datetime"
+    private var componentMode = ComponentMode.DATETIME
     private var dateTimeValue: String? = null
     private var minimumDate: String? = null
     private var maximumDate: String? = null
+    private var minimumLocalDate: LocalDate? = null
+    private var maximumLocalDate: LocalDate? = null
     private var is24Hour = false
     private var calendarYear = LocalDate.now().year
     private var calendarMonth = LocalDate.now().monthValue
+    private var minimumCalendarYear: Int? = null
+    private var maximumCalendarYear: Int? = null
+    private var firstDayOfWeek = 0
+    private var showOutsideDays = true
+    private var fixedWeeks = false
+    private var readOnly = false
+    private var calendarLocale = Locale.getDefault()
+    private var calendarSelectedTextColor = Color.WHITE
+    private val selectedDates = LinkedHashSet<LocalDate>()
+    private val disabledCalendarDates = HashSet<LocalDate>()
+    private var rangeFrom: LocalDate? = null
+    private var rangeTo: LocalDate? = null
+    private var pressedCalendarTarget = CALENDAR_TARGET_NONE
+    private var accessibilityFocusedCalendarCell = CALENDAR_TARGET_NONE
+    private val accessibilityManager by lazy {
+        context.getSystemService(AccessibilityManager::class.java)
+    }
+    @Suppress("DEPRECATION")
+    private val calendarAccessibilityProvider = object : AccessibilityNodeProvider() {
+        override fun createAccessibilityNodeInfo(virtualViewId: Int): AccessibilityNodeInfo? {
+            if (behavior != Behavior.CALENDAR) return null
+            if (virtualViewId == HOST_VIEW_ID) {
+                return AccessibilityNodeInfo.obtain(this@MobileUiHost).also {
+                    this@MobileUiHost.onInitializeAccessibilityNodeInfo(it)
+                }
+            }
+
+            return calendarVirtualNode(virtualViewId)
+        }
+
+        override fun performAction(
+            virtualViewId: Int,
+            action: Int,
+            arguments: Bundle?,
+        ): Boolean {
+            if (behavior != Behavior.CALENDAR) return false
+            if (virtualViewId == HOST_VIEW_ID) {
+                return this@MobileUiHost.performAccessibilityAction(action, arguments)
+            }
+            if (virtualViewId !in calendarCellRange()) return false
+
+            return when (action) {
+                AccessibilityNodeInfo.ACTION_CLICK -> {
+                    val selected = selectCalendarDate(calendarDateAt(virtualViewId))
+                    if (selected) {
+                        sendCalendarVirtualEvent(
+                            virtualViewId,
+                            AccessibilityEvent.TYPE_VIEW_CLICKED,
+                        )
+                    }
+                    selected
+                }
+                AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS -> {
+                    if (accessibilityFocusedCalendarCell == virtualViewId) return true
+                    val previous = accessibilityFocusedCalendarCell
+                    accessibilityFocusedCalendarCell = virtualViewId
+                    if (previous >= 0) {
+                        sendCalendarVirtualEvent(
+                            previous,
+                            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
+                        )
+                    }
+                    sendCalendarVirtualEvent(
+                        virtualViewId,
+                        AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                    )
+                    invalidate()
+                    true
+                }
+                AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS -> {
+                    if (accessibilityFocusedCalendarCell != virtualViewId) return false
+                    accessibilityFocusedCalendarCell = CALENDAR_TARGET_NONE
+                    sendCalendarVirtualEvent(
+                        virtualViewId,
+                        AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
+                    )
+                    invalidate()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
     private var dragOrigin = 0f
     private var dragOriginSecondary = 0f
     private var dragging = false
@@ -174,6 +287,7 @@ internal class MobileUiHost(
         val previousExpanded = expanded
         val previousSelected = selected
         val previousOpen = open
+        val previousComponentMode = componentMode
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         component = properties.integer("component", component.toLong()).toInt()
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
@@ -197,13 +311,38 @@ internal class MobileUiHost(
             "closeOnOverlayClick",
             properties.flag("closeOnOverlay", closeOnOverlayClick),
         )
-        dateTimeMode = properties.text("mode") ?: dateTimeMode
+        componentMode = ComponentMode.from(
+            properties.integer(
+                "mode",
+                properties.integer(
+                    "type",
+                    if (behavior == Behavior.CALENDAR) {
+                        ComponentMode.SINGLE.value.toLong()
+                    } else {
+                        ComponentMode.DATETIME.value.toLong()
+                    },
+                ),
+            ).toInt(),
+        )
         dateTimeValue = properties.text("value") ?: dateTimeValue
-        minimumDate = properties.text("minimumDate") ?: minimumDate
-        maximumDate = properties.text("maximumDate") ?: maximumDate
+        minimumDate = properties.text("minDate") ?: properties.text("minimumDate")
+        maximumDate = properties.text("maxDate") ?: properties.text("maximumDate")
+        minimumLocalDate = minimumDate?.let(::parseDate)
+        maximumLocalDate = maximumDate?.let(::parseDate)
         is24Hour = properties.flag("is24Hour", is24Hour)
         calendarYear = properties.integer("year", calendarYear.toLong()).toInt()
         calendarMonth = properties.integer("month", calendarMonth.toLong()).toInt().coerceIn(1, 12)
+        minimumCalendarYear = properties.integerOrNull("minYear")
+        maximumCalendarYear = properties.integerOrNull("maxYear")
+        firstDayOfWeek = properties.integer("firstDayOfWeek", 0L).toInt().coerceIn(0, 6)
+        showOutsideDays = properties.flag("showOutsideDays", true)
+        fixedWeeks = properties.flag("fixedWeeks", false)
+        readOnly = properties.flag("readOnly", properties.flag("isReadOnly", false))
+        calendarLocale = properties.text("locale")
+            ?.let(Locale::forLanguageTag)
+            ?.takeUnless { it.language.isEmpty() }
+            ?: Locale.getDefault()
+        updateCalendarSelection(properties, previousComponentMode != componentMode)
         isEnabled = !properties.flag("disabled", false)
         isClickable = !behavior.isOverlay() || open
         isFocusable = !behavior.isOverlay() || open
@@ -213,6 +352,14 @@ internal class MobileUiHost(
         tooltipText = properties.text("accessibilityHint")
         trackPaint.color = properties.integer("trackColor", trackPaint.color.toLong()).toInt()
         fillPaint.color = properties.integer("fillColor", fillPaint.color.toLong()).toInt()
+        calendarTextPaint.color = properties.integer(
+            "foregroundColor",
+            calendarTextPaint.color.toLong(),
+        ).toInt()
+        calendarSelectedTextColor = properties.integer(
+            "selectedForegroundColor",
+            calendarSelectedTextColor.toLong(),
+        ).toInt()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             stateDescription = properties.text("stateDescription")
         }
@@ -245,6 +392,7 @@ internal class MobileUiHost(
         }
         scheduleToast(properties)
         applyComponentDefaults()
+        updateCalendarTitle()
         invalidate()
     }
 
@@ -258,6 +406,9 @@ internal class MobileUiHost(
             child.alpha = 0f
             child.scaleY = 0.98f
         }
+        if (behavior == Behavior.CALENDAR) {
+            post(::updateCalendarTitle)
+        }
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -267,6 +418,7 @@ internal class MobileUiHost(
             Behavior.PROGRESS -> drawProgress(canvas)
             Behavior.CHECKBOX -> drawCheckbox(canvas, radio = false)
             Behavior.RADIO -> drawCheckbox(canvas, radio = true)
+            Behavior.CALENDAR -> drawCalendar(canvas)
             else -> Unit
         }
     }
@@ -294,6 +446,47 @@ internal class MobileUiHost(
         }
     }
 
+    override fun getAccessibilityNodeProvider(): AccessibilityNodeProvider? =
+        if (behavior == Behavior.CALENDAR) {
+            calendarAccessibilityProvider
+        } else {
+            super.getAccessibilityNodeProvider()
+        }
+
+    override fun dispatchHoverEvent(event: MotionEvent): Boolean {
+        if (
+            behavior == Behavior.CALENDAR
+            && accessibilityManager?.isTouchExplorationEnabled == true
+        ) {
+            val target = calendarTargetAt(event.x, event.y)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_HOVER_ENTER,
+                MotionEvent.ACTION_HOVER_MOVE,
+                -> if (target >= 0) {
+                    calendarAccessibilityProvider.performAction(
+                        target,
+                        AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS,
+                        null,
+                    )
+                    return true
+                }
+                MotionEvent.ACTION_HOVER_EXIT -> {
+                    val focused = accessibilityFocusedCalendarCell
+                    if (focused >= 0) {
+                        calendarAccessibilityProvider.performAction(
+                            focused,
+                            AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS,
+                            null,
+                        )
+                        return true
+                    }
+                }
+            }
+        }
+
+        return super.dispatchHoverEvent(event)
+    }
+
     override fun focusSearch(focused: View?, direction: Int): View? {
         val candidate = super.focusSearch(focused, direction)
         if (!behavior.isOverlay() || candidate == null || contains(candidate)) {
@@ -319,7 +512,12 @@ internal class MobileUiHost(
         info.isSelected = selected
         info.isChecked = checked
         info.isCheckable = behavior == Behavior.CHECKBOX || behavior == Behavior.RADIO
-        info.isScrollable = behavior == Behavior.BOTTOM_SHEET || behavior == Behavior.IMAGE_VIEWER
+        info.isScrollable = behavior in setOf(
+            Behavior.BOTTOM_SHEET,
+            Behavior.CALENDAR,
+            Behavior.IMAGE_VIEWER,
+            Behavior.SLIDER,
+        )
         if (behavior == Behavior.ACCORDION) {
             info.className = "android.widget.Button"
             info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
@@ -337,10 +535,35 @@ internal class MobileUiHost(
             if (behavior == Behavior.SLIDER) {
                 info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
                 info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                if (orientation == 2) {
+                    info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP)
+                    info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN)
+                } else {
+                    info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT)
+                    info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT)
+                }
             }
         }
         if (behavior == Behavior.PROGRESS) {
             info.className = "android.widget.ProgressBar"
+        }
+        if (behavior == Behavior.CALENDAR) {
+            info.className = "android.widget.CalendarView"
+            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+            info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT)
+            info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT)
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                calendarRowCount(),
+                DAYS_PER_WEEK,
+                false,
+            )
+            calendarCellRange().forEach { index ->
+                val date = calendarDateAt(index)
+                if (showOutsideDays || date.monthValue == calendarMonth) {
+                    info.addChild(this, index)
+                }
+            }
         }
         if (behavior.isOverlay() && dismissible) {
             info.addAction(AccessibilityNodeInfo.ACTION_DISMISS)
@@ -359,18 +582,38 @@ internal class MobileUiHost(
     }
 
     override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
-        if (
-            behavior == Behavior.SLIDER
-            && action in setOf(
+        val sliderActions = setOf(
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
+            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id,
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.id,
+        )
+        if (behavior == Behavior.SLIDER && action in sliderActions) {
+            val positive = action in setOf(
                 AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
-                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id,
             )
-        ) {
-            val direction = if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) 1.0 else -1.0
+            val direction = if (positive) 1.0 else -1.0
             value = snapped(value + direction * step)
             emitValue()
             invalidate()
             return true
+        }
+        if (
+            behavior == Behavior.CALENDAR
+            && action in setOf(
+                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
+                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id,
+            )
+        ) {
+            val forward = action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                || action == AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+            return navigateCalendar(if (forward) 1 else -1)
         }
         if (
             action == AccessibilityNodeInfo.ACTION_DISMISS
@@ -425,6 +668,7 @@ internal class MobileUiHost(
         imageTranslationY = 0f
         applyImageTransform()
         restoreFocus()
+        accessibilityFocusedCalendarCell = CALENDAR_TARGET_NONE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             setRenderEffect(null)
         }
@@ -767,36 +1011,38 @@ internal class MobileUiHost(
 
     private fun calendarTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
-            if (!isEnabled) return@OnTouchListener false
-            val bounds = calendarGridBounds()
-            if (!bounds.contains(event.x, event.y)) return@OnTouchListener false
+            if (!isEnabled || readOnly) return@OnTouchListener false
+            val target = calendarTargetAt(event.x, event.y)
             when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> true
-                MotionEvent.ACTION_UP -> {
-                    val localX = event.x - bounds.left
-                    val localY = event.y - bounds.top
-                    val column = ((localX / bounds.width().coerceAtLeast(1f)) * 7)
-                        .toInt()
-                        .coerceIn(0, 6)
-                    val row = ((localY / bounds.height().coerceAtLeast(1f)) * 6)
-                        .toInt()
-                        .coerceIn(0, 5)
-                    val first = LocalDate.of(calendarYear, calendarMonth, 1)
-                    val firstColumn = first.dayOfWeek.value % 7
-                    val day = row * 7 + column - firstColumn + 1
-                    if (day in 1..first.lengthOfMonth()) {
-                        emitter.emit(
-                            NativeViewEventKind.CHANGE,
-                            LocalDate.of(calendarYear, calendarMonth, day)
-                                .toString()
-                                .encodeToByteArray(),
-                        )
-                        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    }
-                    performClick()
-                    true
+                MotionEvent.ACTION_DOWN -> {
+                    pressedCalendarTarget = target
+                    target != CALENDAR_TARGET_NONE
                 }
-                MotionEvent.ACTION_CANCEL -> true
+                MotionEvent.ACTION_UP -> {
+                    if (
+                        target == CALENDAR_TARGET_NONE
+                        || target != pressedCalendarTarget
+                    ) {
+                        pressedCalendarTarget = CALENDAR_TARGET_NONE
+                        return@OnTouchListener false
+                    }
+                    pressedCalendarTarget = CALENDAR_TARGET_NONE
+                    val handled = when (target) {
+                        CALENDAR_TARGET_PREVIOUS -> navigateCalendar(-1)
+                        CALENDAR_TARGET_NEXT -> navigateCalendar(1)
+                        else -> selectCalendarDate(calendarDateAt(target))
+                    }
+                    if (handled) {
+                        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        performClick()
+                    }
+                    handled
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    val claimed = pressedCalendarTarget != CALENDAR_TARGET_NONE
+                    pressedCalendarTarget = CALENDAR_TARGET_NONE
+                    claimed
+                }
                 else -> false
             }
         }
@@ -806,7 +1052,7 @@ internal class MobileUiHost(
         val activity = context as? Activity ?: return
         val initial = parsedDateTime()
 
-        if (dateTimeMode == "time") {
+        if (componentMode == ComponentMode.TIME) {
             showTimePicker(activity, initial.toLocalDate(), initial.toLocalTime())
             return
         }
@@ -815,7 +1061,7 @@ internal class MobileUiHost(
             activity,
             { _, year, zeroBasedMonth, day ->
                 val date = LocalDate.of(year, zeroBasedMonth + 1, day)
-                if (dateTimeMode == "datetime") {
+                if (componentMode == ComponentMode.DATETIME) {
                     showTimePicker(activity, date, initial.toLocalTime())
                 } else {
                     emitDateTime(LocalDateTime.of(date, LocalTime.MIDNIGHT))
@@ -825,8 +1071,8 @@ internal class MobileUiHost(
             initial.monthValue - 1,
             initial.dayOfMonth,
         ).apply {
-            minimumDate?.let(::parseDate)?.let { datePicker.minDate = it.toEpochMillis() }
-            maximumDate?.let(::parseDate)?.let { datePicker.maxDate = it.toEpochMillis() }
+            minimumLocalDate?.let { datePicker.minDate = it.toEpochMillis() }
+            maximumLocalDate?.let { datePicker.maxDate = it.toEpochMillis() }
             setOnCancelListener { emitDismiss() }
             show()
         }
@@ -852,9 +1098,9 @@ internal class MobileUiHost(
     }
 
     private fun emitDateTime(dateTime: LocalDateTime) {
-        dateTimeValue = when (dateTimeMode) {
-            "date" -> dateTime.toLocalDate().toString()
-            "time" -> dateTime.toLocalTime().toString()
+        dateTimeValue = when (componentMode) {
+            ComponentMode.DATE -> dateTime.toLocalDate().toString()
+            ComponentMode.TIME -> dateTime.toLocalTime().toString()
             else -> dateTime.toString()
         }
         emitter.emit(
@@ -881,6 +1127,312 @@ internal class MobileUiHost(
 
     private fun LocalDate.toEpochMillis(): Long =
         atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    private fun updateCalendarSelection(
+        properties: Map<String, WireValue>,
+        modeChanged: Boolean,
+    ) {
+        if (behavior != Behavior.CALENDAR) return
+
+        if (modeChanged) {
+            selectedDates.clear()
+            rangeFrom = null
+            rangeTo = null
+        }
+
+        disabledCalendarDates.clear()
+        properties.text("disabledDates")
+            .orEmpty()
+            .lineSequence()
+            .mapNotNull(::parseDate)
+            .forEach(disabledCalendarDates::add)
+
+        when (componentMode) {
+            ComponentMode.SINGLE -> {
+                val key = when {
+                    properties.containsKey("value") -> "value"
+                    properties.containsKey("defaultValue") -> "defaultValue"
+                    else -> null
+                }
+                if (key != null) {
+                    selectedDates.clear()
+                    properties.text(key)?.let(::parseDate)?.let(selectedDates::add)
+                }
+            }
+            ComponentMode.MULTIPLE -> {
+                if (properties.containsKey("selectedValues")) {
+                    selectedDates.clear()
+                    properties.text("selectedValues")
+                        .orEmpty()
+                        .lineSequence()
+                        .mapNotNull(::parseDate)
+                        .forEach(selectedDates::add)
+                }
+            }
+            ComponentMode.RANGE -> {
+                if (
+                    modeChanged
+                    || properties.containsKey("rangeFrom")
+                    || properties.containsKey("rangeTo")
+                ) {
+                    rangeFrom = properties.text("rangeFrom")?.let(::parseDate)
+                    rangeTo = properties.text("rangeTo")?.let(::parseDate)
+                }
+            }
+            else -> Unit
+        }
+    }
+
+    private fun calendarFirstDate(): LocalDate =
+        LocalDate.of(calendarYear, calendarMonth, 1)
+
+    private fun calendarStartOffset(): Int {
+        val firstDay = calendarFirstDate().dayOfWeek.value % DAYS_PER_WEEK
+        return (firstDay - firstDayOfWeek + DAYS_PER_WEEK) % DAYS_PER_WEEK
+    }
+
+    private fun calendarRowCount(): Int {
+        if (fixedWeeks) return MAX_CALENDAR_ROWS
+        val occupiedCells = calendarStartOffset() + calendarFirstDate().lengthOfMonth()
+
+        return ceil(occupiedCells / DAYS_PER_WEEK.toDouble())
+            .toInt()
+            .coerceIn(MIN_CALENDAR_ROWS, MAX_CALENDAR_ROWS)
+    }
+
+    private fun calendarDateAt(index: Int): LocalDate =
+        calendarFirstDate()
+            .minusDays(calendarStartOffset().toLong())
+            .plusDays(index.toLong())
+
+    private fun calendarCellRange(): IntRange =
+        0 until calendarRowCount() * DAYS_PER_WEEK
+
+    @Suppress("DEPRECATION")
+    private fun calendarVirtualNode(index: Int): AccessibilityNodeInfo? {
+        if (index !in calendarCellRange()) return null
+        val date = calendarDateAt(index)
+        if (!showOutsideDays && date.monthValue != calendarMonth) return null
+        val selectedDate = calendarDateSelected(date)
+        val cell = calendarCellBounds(index)
+        val screen = IntArray(2)
+        getLocationOnScreen(screen)
+        val screenBounds = Rect(cell).apply {
+            offset(screen[0], screen[1])
+        }
+
+        return AccessibilityNodeInfo.obtain().apply {
+            setSource(this@MobileUiHost, index)
+            setParent(this@MobileUiHost)
+            packageName = context.packageName
+            className = "android.widget.Button"
+            text = date.dayOfMonth.toString()
+            contentDescription = date.format(
+                DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", calendarLocale),
+            )
+            isEnabled = !calendarDateDisabled(date)
+            isClickable = isEnabled
+            isFocusable = true
+            isSelected = selectedDate
+            isVisibleToUser = isShown
+            isAccessibilityFocused = accessibilityFocusedCalendarCell == index
+            setBoundsInParent(cell)
+            setBoundsInScreen(screenBounds)
+            collectionItemInfo = AccessibilityNodeInfo.CollectionItemInfo.obtain(
+                index / DAYS_PER_WEEK,
+                1,
+                index % DAYS_PER_WEEK,
+                1,
+                false,
+                selectedDate,
+            )
+            if (isEnabled) {
+                addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            if (isAccessibilityFocused) {
+                addAction(AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS)
+            } else {
+                addAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            }
+        }
+    }
+
+    private fun calendarCellBounds(index: Int): Rect {
+        val bounds = calendarGridBounds()
+        val rows = calendarRowCount()
+        val cellWidth = bounds.width() / DAYS_PER_WEEK
+        val cellHeight = bounds.height() / rows
+        val column = index % DAYS_PER_WEEK
+        val row = index / DAYS_PER_WEEK
+
+        return Rect(
+            (bounds.left + column * cellWidth).toInt(),
+            (bounds.top + row * cellHeight).toInt(),
+            (bounds.left + (column + 1) * cellWidth).toInt(),
+            (bounds.top + (row + 1) * cellHeight).toInt(),
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun sendCalendarVirtualEvent(index: Int, kind: Int) {
+        val event = AccessibilityEvent.obtain(kind).apply {
+            packageName = context.packageName
+            className = "android.widget.Button"
+            setSource(this@MobileUiHost, index)
+            text.add(calendarDateAt(index).dayOfMonth.toString())
+        }
+        parent?.requestSendAccessibilityEvent(this, event)
+    }
+
+    private fun calendarTargetAt(x: Float, y: Float): Int {
+        if (expandedTaggedBounds("pam:calendar-prev").contains(x, y)) {
+            return CALENDAR_TARGET_PREVIOUS
+        }
+        if (expandedTaggedBounds("pam:calendar-next").contains(x, y)) {
+            return CALENDAR_TARGET_NEXT
+        }
+
+        val bounds = calendarGridBounds()
+        if (!bounds.contains(x, y) || bounds.width() <= 0f || bounds.height() <= 0f) {
+            return CALENDAR_TARGET_NONE
+        }
+        val column = (
+            (x - bounds.left) / (bounds.width() / DAYS_PER_WEEK)
+        ).toInt().coerceIn(0, DAYS_PER_WEEK - 1)
+        val rows = calendarRowCount()
+        val row = (
+            (y - bounds.top) / (bounds.height() / rows)
+        ).toInt().coerceIn(0, rows - 1)
+
+        return row * DAYS_PER_WEEK + column
+    }
+
+    private fun expandedTaggedBounds(tag: String): RectF {
+        val view = findTaggedDescendant(this, tag) ?: return RectF()
+        val expansion = 8f * density
+
+        return boundsInHost(view).apply {
+            inset(-expansion, -expansion)
+        }
+    }
+
+    private fun calendarDateDisabled(date: LocalDate): Boolean {
+        if (!isEnabled || readOnly || date in disabledCalendarDates) return true
+        if (!showOutsideDays && date.monthValue != calendarMonth) return true
+        if (minimumLocalDate?.let { date < it } == true) return true
+        if (maximumLocalDate?.let { date > it } == true) return true
+        if (minimumCalendarYear?.let { date.year < it } == true) return true
+        if (maximumCalendarYear?.let { date.year > it } == true) return true
+
+        return false
+    }
+
+    private fun calendarDateSelected(date: LocalDate): Boolean =
+        date in selectedDates || date == rangeFrom || date == rangeTo
+
+    private fun selectCalendarDate(date: LocalDate): Boolean {
+        if (calendarDateDisabled(date)) return false
+
+        val payload = when (componentMode) {
+            ComponentMode.MULTIPLE -> {
+                if (!selectedDates.add(date)) {
+                    selectedDates.remove(date)
+                }
+                buildString {
+                    append("M\n")
+                    append(selectedDates.sorted().joinToString("\n"))
+                }
+            }
+            ComponentMode.RANGE -> {
+                if (rangeFrom == null || rangeTo != null) {
+                    rangeFrom = date
+                    rangeTo = null
+                } else {
+                    val start = checkNotNull(rangeFrom)
+                    rangeFrom = minOf(start, date)
+                    rangeTo = maxOf(start, date)
+                }
+                "R\n${rangeFrom.orEmptyDate()}\n${rangeTo.orEmptyDate()}"
+            }
+            else -> {
+                selectedDates.clear()
+                selectedDates.add(date)
+                date.toString()
+            }
+        }
+
+        if (date.year != calendarYear || date.monthValue != calendarMonth) {
+            calendarYear = date.year
+            calendarMonth = date.monthValue
+            updateCalendarTitle()
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = when (componentMode) {
+                ComponentMode.MULTIPLE -> "${selectedDates.size} dates selected"
+                ComponentMode.RANGE -> if (rangeTo == null) {
+                    "Range starts ${rangeFrom.orEmptyDate()}"
+                } else {
+                    "${rangeFrom.orEmptyDate()} to ${rangeTo.orEmptyDate()}"
+                }
+                else -> date.toString()
+            }
+        }
+        emitter.emit(NativeViewEventKind.CHANGE, payload.encodeToByteArray())
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
+        invalidate()
+
+        return true
+    }
+
+    private fun navigateCalendar(monthDelta: Long): Boolean {
+        val requested = calendarFirstDate().plusMonths(monthDelta)
+        val firstAllowed = minimumLocalDate?.withDayOfMonth(1)
+        val lastAllowed = maximumLocalDate?.withDayOfMonth(1)
+        val allowed = when {
+            minimumCalendarYear?.let { requested.year < it } == true -> false
+            maximumCalendarYear?.let { requested.year > it } == true -> false
+            firstAllowed != null && requested < firstAllowed -> false
+            lastAllowed != null && requested > lastAllowed -> false
+            else -> true
+        }
+        if (!allowed) return false
+
+        calendarYear = requested.year
+        calendarMonth = requested.monthValue
+        updateCalendarTitle()
+        invalidate()
+        emitter.emit(
+            NativeViewEventKind.NATIVE,
+            WireMap.encode(
+                mapOf(
+                    "action" to WireValue.Integer(HostAction.NAVIGATE.value),
+                    "year" to WireValue.Integer(calendarYear.toLong()),
+                    "month" to WireValue.Integer(calendarMonth.toLong()),
+                ),
+            ),
+        )
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+
+        return true
+    }
+
+    private fun updateCalendarTitle() {
+        if (behavior != Behavior.CALENDAR) return
+        val title = findTaggedDescendant(this, "pam:calendar-title") as? TextView ?: return
+        val month = calendarFirstDate()
+            .format(DateTimeFormatter.ofPattern("MMMM yyyy", calendarLocale))
+            .replaceFirstChar { character ->
+                if (character.isLowerCase()) {
+                    character.titlecase(calendarLocale)
+                } else {
+                    character.toString()
+                }
+            }
+        title.text = month
+        title.contentDescription = month
+    }
+
+    private fun LocalDate?.orEmptyDate(): String = this?.toString().orEmpty()
 
     private fun imageViewerTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
@@ -1082,6 +1634,83 @@ internal class MobileUiHost(
         }
     }
 
+    private fun drawCalendar(canvas: Canvas) {
+        val grid = findTaggedDescendant(this, "pam:calendar-grid") ?: return
+        if (grid is ViewGroup && grid.childCount > 0) return
+        val bounds = boundsInHost(grid)
+        if (bounds.width() <= 0f || bounds.height() <= 0f) return
+
+        val rows = calendarRowCount()
+        val cellWidth = bounds.width() / DAYS_PER_WEEK
+        val cellHeight = bounds.height() / rows
+        val radius = minOf(cellWidth, cellHeight) * 0.38f
+        val today = LocalDate.now()
+        val firstVisibleDate = calendarFirstDate().minusDays(calendarStartOffset().toLong())
+        val originalFillAlpha = fillPaint.alpha
+        val originalTrackAlpha = trackPaint.alpha
+        val originalTrackStyle = trackPaint.style
+        val originalTrackWidth = trackPaint.strokeWidth
+        val originalTextAlpha = calendarTextPaint.alpha
+        val originalTextColor = calendarTextPaint.color
+
+        repeat(rows * DAYS_PER_WEEK) { index ->
+            val date = firstVisibleDate.plusDays(index.toLong())
+            val outside = date.monthValue != calendarMonth
+            val disabled = calendarDateDisabled(date)
+            val selectedDate = calendarDateSelected(date)
+            val insideRange = rangeFrom?.let { start ->
+                rangeTo?.let { end -> date > start && date < end }
+            } == true
+            val centerX = bounds.left + (index % DAYS_PER_WEEK + 0.5f) * cellWidth
+            val centerY = bounds.top + (index / DAYS_PER_WEEK + 0.5f) * cellHeight
+
+            if (insideRange) {
+                fillPaint.alpha = RANGE_BACKGROUND_ALPHA
+                canvas.drawRect(
+                    centerX - cellWidth / 2f,
+                    centerY - radius,
+                    centerX + cellWidth / 2f,
+                    centerY + radius,
+                    fillPaint,
+                )
+            }
+            if (selectedDate) {
+                fillPaint.alpha = if (disabled) DISABLED_ALPHA else OPAQUE_ALPHA
+                canvas.drawCircle(centerX, centerY, radius, fillPaint)
+            }
+            if (date == today && !selectedDate) {
+                trackPaint.alpha = if (disabled) DISABLED_ALPHA else OPAQUE_ALPHA
+                trackPaint.style = Paint.Style.STROKE
+                trackPaint.strokeWidth = density
+                canvas.drawCircle(centerX, centerY, radius, trackPaint)
+            }
+            if (!outside || showOutsideDays) {
+                calendarTextPaint.alpha = when {
+                    disabled -> DISABLED_ALPHA
+                    outside -> OUTSIDE_MONTH_ALPHA
+                    else -> OPAQUE_ALPHA
+                }
+                if (selectedDate) {
+                    calendarTextPaint.color = calendarSelectedTextColor
+                }
+                val baseline = centerY - (
+                    calendarTextPaint.ascent() + calendarTextPaint.descent()
+                ) / 2f
+                canvas.drawText(date.dayOfMonth.toString(), centerX, baseline, calendarTextPaint)
+                if (selectedDate) {
+                    calendarTextPaint.color = originalTextColor
+                }
+            }
+        }
+
+        fillPaint.alpha = originalFillAlpha
+        trackPaint.alpha = originalTrackAlpha
+        trackPaint.style = originalTrackStyle
+        trackPaint.strokeWidth = originalTrackWidth
+        calendarTextPaint.alpha = originalTextAlpha
+        calendarTextPaint.color = originalTextColor
+    }
+
     private fun children(): Sequence<View> =
         sequence {
             repeat(childCount) { index -> yield(getChildAt(index)) }
@@ -1275,6 +1904,9 @@ internal class MobileUiHost(
     private fun Map<String, WireValue>.integer(key: String, fallback: Long): Long =
         (this[key] as? WireValue.Integer)?.value ?: fallback
 
+    private fun Map<String, WireValue>.integerOrNull(key: String): Int? =
+        (this[key] as? WireValue.Integer)?.value?.toInt()
+
     private fun Map<String, WireValue>.decimal(key: String, fallback: Double): Double =
         when (val value = this[key]) {
             is WireValue.Decimal -> value.value
@@ -1301,4 +1933,17 @@ internal class MobileUiHost(
             is Boolean -> toEventPayload()
             else -> fallback.toString().encodeToByteArray()
         }
+
+    private companion object {
+        const val DAYS_PER_WEEK = 7
+        const val MIN_CALENDAR_ROWS = 4
+        const val MAX_CALENDAR_ROWS = 6
+        const val CALENDAR_TARGET_NONE = -1
+        const val CALENDAR_TARGET_PREVIOUS = -2
+        const val CALENDAR_TARGET_NEXT = -3
+        const val DISABLED_ALPHA = 76
+        const val OUTSIDE_MONTH_ALPHA = 112
+        const val RANGE_BACKGROUND_ALPHA = 42
+        const val OPAQUE_ALPHA = 255
+    }
 }

@@ -4,6 +4,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -328,6 +329,179 @@ class MobileUiHostInstrumentedTest {
 
             assertTrue(!host.isCalendarGridPoint(150f, 50f))
             assertTrue(host.isCalendarGridPoint(150f, 150f))
+            host.release()
+        }
+    }
+
+    @Test
+    fun calendarMultipleSelectionEmitsOneBoundedSemanticPayload() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(7),
+                    "mode" to WireValue.Integer(2),
+                    "year" to WireValue.Integer(2026),
+                    "month" to WireValue.Integer(7),
+                    "fixedWeeks" to WireValue.Flag(true),
+                    "selectedValues" to WireValue.Text("2026-07-23"),
+                ),
+            )
+            val grid = View(host.context).apply {
+                tag = "pam:calendar-grid"
+            }
+            host.addView(grid)
+            host.layout(0, 0, 700, 700)
+            grid.layout(0, 100, 700, 700)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 550f, 450f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 550f, 450f))
+
+            assertEquals(
+                "M\n2026-07-23\n2026-07-24",
+                payloads.single().decodeToString(),
+            )
+            host.release()
+        }
+    }
+
+    @Test
+    fun calendarExposesEveryVisibleDayAsATalkBackVirtualButton() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(7),
+                    "year" to WireValue.Integer(2026),
+                    "month" to WireValue.Integer(7),
+                    "fixedWeeks" to WireValue.Flag(true),
+                    "disabledDates" to WireValue.Text("2026-07-24"),
+                    "locale" to WireValue.Text("en-US"),
+                ),
+            )
+            val grid = View(host.context).apply {
+                tag = "pam:calendar-grid"
+            }
+            host.addView(grid)
+            host.layout(0, 0, 700, 700)
+            grid.layout(0, 100, 700, 700)
+
+            val provider = host.accessibilityNodeProvider
+            val july23 = provider?.createAccessibilityNodeInfo(25)
+            val july24 = provider?.createAccessibilityNodeInfo(26)
+            assertEquals("android.widget.Button", july23?.className)
+            assertEquals("23", july23?.text)
+            assertEquals("Thursday, July 23, 2026", july23?.contentDescription)
+            assertTrue(july23?.isEnabled == true)
+            assertTrue(july24?.isEnabled == false)
+            assertTrue(
+                provider?.performAction(
+                    25,
+                    AccessibilityNodeInfo.ACTION_CLICK,
+                    null,
+                ) == true,
+            )
+            assertEquals("2026-07-23", payloads.single().decodeToString())
+            july23?.recycle()
+            july24?.recycle()
+            host.release()
+        }
+    }
+
+    @Test
+    fun calendarRangeSelectionAndDisabledDatesStayInsideTheNativeHost() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(7),
+                    "mode" to WireValue.Integer(3),
+                    "year" to WireValue.Integer(2026),
+                    "month" to WireValue.Integer(7),
+                    "fixedWeeks" to WireValue.Flag(true),
+                    "disabledDates" to WireValue.Text("2026-07-23"),
+                ),
+            )
+            val grid = View(host.context).apply {
+                tag = "pam:calendar-grid"
+            }
+            host.addView(grid)
+            host.layout(0, 0, 700, 700)
+            grid.layout(0, 100, 700, 700)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 550f, 250f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 550f, 250f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 450f, 350f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 450f, 350f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 450f, 450f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 450f, 450f))
+
+            assertEquals(
+                listOf(
+                    "R\n2026-07-10\n",
+                    "R\n2026-07-10\n2026-07-16",
+                ),
+                payloads.map(ByteArray::decodeToString),
+            )
+            host.release()
+        }
+    }
+
+    @Test
+    fun calendarNavigationUpdatesTheTitleAndEmitsOnlyTheSemanticMonth() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(7),
+                    "year" to WireValue.Integer(2026),
+                    "month" to WireValue.Integer(7),
+                    "locale" to WireValue.Text("en-US"),
+                ),
+            )
+            val previous = View(host.context).apply {
+                tag = "pam:calendar-prev"
+            }
+            val title = TextView(host.context).apply {
+                tag = "pam:calendar-title"
+                text = "Placeholder"
+            }
+            val next = View(host.context).apply {
+                tag = "pam:calendar-next"
+            }
+            val grid = View(host.context).apply {
+                tag = "pam:calendar-grid"
+            }
+            host.addView(previous)
+            host.addView(title)
+            host.addView(next)
+            host.addView(grid)
+            host.layout(0, 0, 700, 700)
+            previous.layout(0, 0, 100, 100)
+            title.layout(100, 0, 600, 100)
+            next.layout(600, 0, 700, 100)
+            grid.layout(0, 100, 700, 700)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 50f, 50f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 50f, 50f))
+
+            val navigation = WireMap.decode(payloads.single())
+            assertEquals("June 2026", title.text.toString())
+            assertEquals(5L, (navigation["action"] as WireValue.Integer).value)
+            assertEquals(2026L, (navigation["year"] as WireValue.Integer).value)
+            assertEquals(6L, (navigation["month"] as WireValue.Integer).value)
             host.release()
         }
     }

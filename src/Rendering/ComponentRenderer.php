@@ -69,6 +69,7 @@ final class ComponentRenderer
             : [];
         $props = self::controlledItemState($part, $props, $parentProps);
         $runtimeProps = [...$parentProps, ...$props];
+        $events = self::componentEvents($part, $runtimeProps, $events);
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
         $element = self::primitive($part, $runtimeProps, $children)
             ->style($style);
@@ -80,7 +81,15 @@ final class ComponentRenderer
         ) {
             $element = $element->property(PropKey::Value, $props['value']);
         } elseif ($part === 'CalendarGrid') {
-            $element = $element->property(PropKey::Value, 'pam:calendar-grid');
+            $element = $element
+                ->property(PropKey::Value, 'pam:calendar-grid')
+                ->property(PropKey::MinHeight, 240.0);
+        } elseif ($part === 'CalendarHeaderPrevButton') {
+            $element = $element->property(PropKey::Value, 'pam:calendar-prev');
+        } elseif ($part === 'CalendarHeaderNextButton') {
+            $element = $element->property(PropKey::Value, 'pam:calendar-next');
+        } elseif ($part === 'CalendarHeaderTitle') {
+            $element = $element->property(PropKey::Value, 'pam:calendar-title');
         }
 
         if ($styleOverride !== null) {
@@ -274,6 +283,9 @@ final class ComponentRenderer
             'trackColor' => ThemeManager::current()->color(ColorToken::Muted),
             'fillColor' => ThemeManager::current()->color(ColorToken::Primary),
             'foregroundColor' => ThemeManager::current()->color(ColorToken::Foreground),
+            'selectedForegroundColor' => ThemeManager::current()->color(
+                ColorToken::PrimaryForeground,
+            ),
         ];
 
         foreach ($props as $name => $value) {
@@ -283,6 +295,9 @@ final class ComponentRenderer
             ) {
                 $values[$name] = $value;
             }
+        }
+        if ($behavior === NativeBehavior::Calendar) {
+            $values = [...$values, ...self::calendarNativeProperties($props)];
         }
 
         return $values;
@@ -721,6 +736,90 @@ final class ComponentRenderer
             false, 0, '0', 'false' => false,
             default => $fallback,
         };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return array<int, Closure>
+     */
+    private static function componentEvents(
+        string $part,
+        array $props,
+        array $events,
+    ): array {
+        if ($part !== 'Calendar') {
+            return $events;
+        }
+        $handler = $events[EventKind::Change->value] ?? null;
+        $mode = $props['mode'] ?? $props['type'] ?? 1;
+        if ($handler === null || !is_int($mode) || $mode === 1) {
+            return $events;
+        }
+
+        $events[EventKind::Change->value] = match ($mode) {
+            2 => static function (string $payload) use ($handler): void {
+                $values = str_starts_with($payload, "M\n")
+                    ? array_values(
+                        array_filter(
+                            explode("\n", substr($payload, 2)),
+                            static fn (string $value): bool => $value !== '',
+                        ),
+                    )
+                    : [];
+                $handler($values);
+            },
+            3 => static function (string $payload) use ($handler): void {
+                $values = str_starts_with($payload, "R\n")
+                    ? explode("\n", substr($payload, 2), 2)
+                    : [];
+                $handler([
+                    'from' => $values[0] ?? '',
+                    'to' => $values[1] ?? '',
+                ]);
+            },
+            default => $handler,
+        };
+
+        return $events;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array<string, string|int|float|bool>
+     */
+    private static function calendarNativeProperties(array $props): array
+    {
+        $values = [];
+        $selected = $props['value'] ?? $props['defaultValue'] ?? null;
+        if (is_array($selected)) {
+            if (array_is_list($selected)) {
+                $dates = array_map(
+                    static fn (mixed $date): string => is_scalar($date)
+                        ? (string) $date
+                        : '',
+                    $selected,
+                );
+                $values['selectedValues'] = implode("\n", array_filter($dates));
+            } else {
+                $from = $selected['from'] ?? null;
+                $to = $selected['to'] ?? null;
+                $values['rangeFrom'] = is_scalar($from) ? (string) $from : '';
+                $values['rangeTo'] = is_scalar($to) ? (string) $to : '';
+            }
+        }
+        $disabled = $props['disabledDates'] ?? null;
+        if (is_array($disabled)) {
+            $dates = array_map(
+                static fn (mixed $date): string => is_scalar($date)
+                    ? (string) $date
+                    : '',
+                $disabled,
+            );
+            $values['disabledDates'] = implode("\n", array_filter($dates));
+        }
+
+        return $values;
     }
 
     /**

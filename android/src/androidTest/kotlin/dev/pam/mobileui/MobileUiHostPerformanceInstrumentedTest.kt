@@ -1,8 +1,11 @@
 package dev.pam.mobileui
 
 import android.os.Build
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -59,6 +62,31 @@ class MobileUiHostPerformanceInstrumentedTest {
                 events,
             )
 
+            val calendarEvents = ArrayList<NativeViewEventKind>()
+            val calendar = MobileUiHost(context) { kind, _ -> calendarEvents += kind }
+            calendar.update(calendarProperties())
+            calendar.layout(0, 0, 1_080, 1_080)
+            calendar.addView(View(context).apply {
+                tag = "pam:calendar-grid"
+                layout(0, 120, 1_080, 1_080)
+            })
+            val calendarBitmap = Bitmap.createBitmap(1_080, 1_080, Bitmap.Config.ARGB_8888)
+            val calendarCanvas = Canvas(calendarBitmap)
+            repeat(CALENDAR_WARMUP_ITERATIONS) {
+                calendar.draw(calendarCanvas)
+            }
+            val calendarDraw = measure(CALENDAR_DRAW_ITERATIONS) {
+                calendar.draw(calendarCanvas)
+            }
+            assertTrue(
+                "Calendar draw p99 ${calendarDraw.p99Micros}µs exceeded 4ms",
+                calendarDraw.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Calendar frame drawing must never cross the PAM bridge",
+                calendarEvents.isEmpty(),
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -80,15 +108,19 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"build\":\"debug\",")
                     append("\"update\":${update.json()},")
                     append("\"sliderMove\":${gesture.json()},")
+                    append("\"calendarDraw\":${calendarDraw.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
-                    append("\"bridgeEvents\":${events.size}")
+                    append("\"bridgeEvents\":${events.size},")
+                    append("\"calendarBridgeEvents\":${calendarEvents.size}")
                     append('}')
                 },
             )
 
             host.release()
             slider.release()
+            calendar.release()
+            calendarBitmap.recycle()
         }
     }
 
@@ -107,6 +139,19 @@ class MobileUiHostPerformanceInstrumentedTest {
             "behavior" to WireValue.Integer(15),
             "component" to WireValue.Integer(GeneratedComponents.PROGRESS.toLong()),
             "value" to WireValue.Decimal((iteration % 101).toDouble()),
+        )
+
+    private fun calendarProperties(): Map<String, WireValue> =
+        mapOf(
+            "behavior" to WireValue.Integer(7),
+            "component" to WireValue.Integer(GeneratedComponents.CALENDAR.toLong()),
+            "mode" to WireValue.Integer(3),
+            "year" to WireValue.Integer(2026),
+            "month" to WireValue.Integer(7),
+            "fixedWeeks" to WireValue.Flag(true),
+            "rangeFrom" to WireValue.Text("2026-07-10"),
+            "rangeTo" to WireValue.Text("2026-07-23"),
+            "disabledDates" to WireValue.Text("2026-07-04\n2026-07-11"),
         )
 
     private fun measure(iterations: Int, block: (Int) -> Unit): Statistics {
@@ -157,6 +202,8 @@ class MobileUiHostPerformanceInstrumentedTest {
         const val WARMUP_ITERATIONS = 1_000
         const val SAMPLE_ITERATIONS = 10_000
         const val GESTURE_ITERATIONS = 10_000
+        const val CALENDAR_WARMUP_ITERATIONS = 200
+        const val CALENDAR_DRAW_ITERATIONS = 2_000
         const val LIFECYCLE_ITERATIONS = 2_000
         const val NANOS_PER_MICROSECOND = 1_000L
         const val FOUR_MILLISECONDS_NANOS = 4_000_000L

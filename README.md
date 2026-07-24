@@ -76,6 +76,34 @@ wrappers:
 </RadioGroup>
 ```
 
+Gesture-heavy components keep transient work on Android's UI thread. The
+calendar supports single, multiple and range selection, disabled/min/max dates,
+localized month navigation, first-day-of-week and fixed-week layouts:
+
+```xml
+<Calendar
+    mode="single"
+    value="{{ $selectedDate }}"
+    year="2026"
+    month="7"
+    firstDayOfWeek="1"
+    fixedWeeks="true"
+    on:change="selectDate"
+>
+    <CalendarHeader>
+        <CalendarHeaderPrevButton><ChevronLeftIcon /></CalendarHeaderPrevButton>
+        <CalendarHeaderTitle />
+        <CalendarHeaderNextButton><ChevronRightIcon /></CalendarHeaderNextButton>
+    </CalendarHeader>
+    <CalendarBody><CalendarGrid /></CalendarBody>
+</Calendar>
+```
+
+Month changes, day hit-testing, drawing, range highlighting and disabled-date
+checks happen natively. PHP receives one semantic event after selection; list
+and range modes are decoded into typed arrays before the application handler is
+called. `Pam\MobileUi\Enum\ComponentMode` provides the equivalent fluent API.
+
 Application utility classes use the same mobile compiler as the captured
 component recipes:
 

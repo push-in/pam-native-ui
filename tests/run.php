@@ -11,7 +11,12 @@ use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\Checkbox;
 use Pam\MobileUi\Component\CheckboxGroup;
 use Pam\MobileUi\Component\CheckIcon;
+use Pam\MobileUi\Component\Calendar;
 use Pam\MobileUi\Component\CalendarGrid;
+use Pam\MobileUi\Component\CalendarHeader;
+use Pam\MobileUi\Component\CalendarHeaderNextButton;
+use Pam\MobileUi\Component\CalendarHeaderPrevButton;
+use Pam\MobileUi\Component\CalendarHeaderTitle;
 use Pam\MobileUi\Component\Drawer;
 use Pam\MobileUi\Component\DrawerContent;
 use Pam\MobileUi\Component\HStack;
@@ -48,6 +53,7 @@ use Pam\MobileUi\Enum\ButtonVariant;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentCategory;
 use Pam\MobileUi\Enum\ComponentMaturity;
+use Pam\MobileUi\Enum\ComponentMode;
 use Pam\MobileUi\Enum\ComponentSize;
 use Pam\MobileUi\Enum\ComponentState;
 use Pam\MobileUi\Enum\ComponentType;
@@ -75,6 +81,8 @@ use Pam\Native\FontStyle;
 use Pam\Native\Align;
 use Pam\Native\Internal\TemplateCompiler;
 use Pam\Native\Internal\TemplateRenderer;
+use Pam\Native\Internal\BinaryValue;
+use Pam\Native\Internal\Wire;
 use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
@@ -122,6 +130,7 @@ $assert = static function (bool $condition, string $message): void {
 foreach ([
     ComponentCategory::cases(),
     ComponentMaturity::cases(),
+    ComponentMode::cases(),
     ImplementationKind::cases(),
     MessageRole::cases(),
     PrimitiveKind::cases(),
@@ -376,6 +385,80 @@ $assert(
     CalendarGrid::make()->toElement()->properties()[PropKey::Value->value]
         === 'pam:calendar-grid',
     'Calendar grid geometry must be discoverable without intercepting header controls.',
+);
+$calendarValues = [];
+$calendar = Calendar::make(
+    [
+        'mode' => ComponentMode::Multiple,
+        'value' => ['2026-07-23', '2026-07-24'],
+        'disabledDates' => ['2026-07-25'],
+        'firstDayOfWeek' => 1,
+        'fixedWeeks' => true,
+    ],
+    CalendarHeader::make(
+        CalendarHeaderPrevButton::make(),
+        CalendarHeaderTitle::make('July 2026'),
+        CalendarHeaderNextButton::make(),
+    ),
+    CalendarGrid::make(),
+)->onChange(static function (array $values) use (&$calendarValues): void {
+    $calendarValues = $values;
+})->toElement();
+$calendarProperties = $calendar->properties()[PropKey::HostProperties->value] ?? null;
+$calendarChange = $calendar->events()[\Pam\Native\EventKind::Change->value] ?? null;
+if (
+    !$calendarProperties instanceof BinaryValue
+    || !$calendarChange instanceof Closure
+) {
+    throw new RuntimeException('Calendar must compile native state and a typed change handler.');
+}
+$calendarNative = Wire::decodeMap($calendarProperties->bytes);
+$calendarHeader = $calendar->children()[0] ?? null;
+$calendarPrevious = $calendarHeader?->children()[0] ?? null;
+$calendarTitle = $calendarHeader?->children()[1] ?? null;
+$calendarNext = $calendarHeader?->children()[2] ?? null;
+$calendarChange("M\n2026-07-23\n2026-07-28");
+$assert(
+    $calendarNative['mode'] === ComponentMode::Multiple->value
+        && $calendarNative['selectedValues'] === "2026-07-23\n2026-07-24"
+        && $calendarNative['disabledDates'] === '2026-07-25'
+        && $calendarNative['firstDayOfWeek'] === 1
+        && $calendarNative['fixedWeeks'] === true
+        && $calendarValues === ['2026-07-23', '2026-07-28']
+        && $calendarPrevious?->properties()[PropKey::Value->value] === 'pam:calendar-prev'
+        && $calendarTitle?->properties()[PropKey::Value->value] === 'pam:calendar-title'
+        && $calendarNext?->properties()[PropKey::Value->value] === 'pam:calendar-next',
+    'Calendar must keep its complete selection and month chrome on the native UI thread.',
+);
+$calendarRange = [];
+$rangeCalendar = Calendar::make([
+    'mode' => ComponentMode::Range,
+    'value' => [
+        'from' => '2026-07-10',
+        'to' => '2026-07-16',
+    ],
+])->onChange(static function (array $range) use (&$calendarRange): void {
+    $calendarRange = $range;
+})->toElement();
+$rangeProperties = $rangeCalendar->properties()[PropKey::HostProperties->value] ?? null;
+$rangeChange = $rangeCalendar->events()[\Pam\Native\EventKind::Change->value] ?? null;
+if (
+    !$rangeProperties instanceof BinaryValue
+    || !$rangeChange instanceof Closure
+) {
+    throw new RuntimeException('Range Calendar must compile native state and events.');
+}
+$rangeNative = Wire::decodeMap($rangeProperties->bytes);
+$rangeChange("R\n2026-07-20\n2026-07-27");
+$assert(
+    $rangeNative['mode'] === ComponentMode::Range->value
+        && $rangeNative['rangeFrom'] === '2026-07-10'
+        && $rangeNative['rangeTo'] === '2026-07-16'
+        && $calendarRange === [
+            'from' => '2026-07-20',
+            'to' => '2026-07-27',
+        ],
+    'Calendar range payloads must cross the bridge once as a bounded native value.',
 );
 $assert(
     $firstTabContent->properties()[PropKey::Visible->value] === false
