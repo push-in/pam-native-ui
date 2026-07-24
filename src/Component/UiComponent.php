@@ -27,6 +27,9 @@ abstract class UiComponent implements Renderable
     /** @var array<int, Closure> */
     private array $events = [];
 
+    /** @var array<int, Closure> */
+    private array $parentEvents = [];
+
     private ?Style $styleOverride = null;
     private ?string $elementKey = null;
 
@@ -237,6 +240,8 @@ abstract class UiComponent implements Renderable
 
     final public function toElement(): Element
     {
+        $events = $this->events + $this->parentEvents;
+        $eventProxyPart = ComponentRenderer::eventProxyPart(static::COMPONENT);
         $context = [
             ...$this->parentVariants,
             ...array_filter(
@@ -245,9 +250,19 @@ abstract class UiComponent implements Renderable
             ),
         ];
         $children = array_map(
-            static function (Renderable $child) use ($context): Element {
+            static function (Renderable $child) use (
+                $context,
+                $eventProxyPart,
+                $events,
+            ): Element {
                 if ($child instanceof UiComponent) {
                     $child = $child->withParentVariants($context);
+                    if (
+                        $eventProxyPart !== null
+                        && $child->componentName() === $eventProxyPart
+                    ) {
+                        $child = $child->withParentEvents($events);
+                    }
                 }
 
                 return $child->toElement();
@@ -264,7 +279,7 @@ abstract class UiComponent implements Renderable
             static::COMPONENT,
             $props,
             $children,
-            $this->events,
+            $events,
             $this->styleOverride,
             $this->elementKey,
         );
@@ -279,5 +294,19 @@ abstract class UiComponent implements Renderable
         $copy->parentVariants = $variants;
 
         return $copy;
+    }
+
+    /** @param array<int, Closure> $events */
+    private function withParentEvents(array $events): static
+    {
+        $copy = clone $this;
+        $copy->parentEvents = $events;
+
+        return $copy;
+    }
+
+    private function componentName(): string
+    {
+        return static::COMPONENT;
     }
 }

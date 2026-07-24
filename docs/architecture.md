@@ -33,11 +33,20 @@ children into a `ViewGroup` returned by the plugin factory; this is required for
 compound controls whose content is still authored declaratively in PHP.
 
 Controlled compound overlays keep their trigger subtree mounted when
-`open=false`. Only portal/backdrop/content parts become `GONE`; the native
-controller disables its own click, focus, accessibility and gesture handling so
-touches continue to the trigger and surrounding app. Opening the same stable
-host enables UI-thread positioning, focus capture and entrance motion without
-recreating the trigger.
+`open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
+layout root plus a dedicated portal/content child backed by PAM's native
+`Modal` node. Only that child owns the Android `Dialog`/sheet window. Root event
+handlers are copied to the native child host at composition time, so dismiss,
+selection and drag-end events still target the application callback without a
+runtime lookup or an extra bridge hop.
+
+Closed portal/backdrop/content parts become `GONE`; their native controller
+also disables click, focus, accessibility and gesture handling. Touches
+therefore continue to the trigger and surrounding app. Opening the same keyed
+window enables UI-thread positioning, focus capture and entrance motion without
+recreating the trigger. Pure overlays such as `Modal`, `AlertDialog`,
+`Actionsheet`, `Drawer`, `ImageViewerContent` and `Portal` use the native window
+directly because they do not need to leave an inline trigger mounted.
 
 ## Utility class pipeline
 

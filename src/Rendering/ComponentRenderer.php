@@ -16,6 +16,7 @@ use Pam\Native\EventKind;
 use Pam\Native\InputSyncMode;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
+use Pam\Native\ModalPresentation;
 use Pam\Native\PropKey;
 use Pam\Native\Style;
 use Pam\Native\UI\ActivityIndicator;
@@ -27,6 +28,7 @@ use Pam\Native\UI\ImageBackground;
 use Pam\Native\UI\Input;
 use Pam\Native\UI\InputAccessoryView;
 use Pam\Native\UI\KeyboardAvoidingView;
+use Pam\Native\UI\Modal as NativeModal;
 use Pam\Native\UI\Pressable;
 use Pam\Native\UI\RefreshControl;
 use Pam\Native\UI\Row;
@@ -85,7 +87,7 @@ final class ComponentRenderer
         ) {
             $element = $element->enabled(false);
         }
-        if (
+        $shouldHide = (
             self::flag($props, 'hidden')
             || (
                 $part === 'TabsContent'
@@ -100,7 +102,8 @@ final class ComponentRenderer
                     || self::isOverlayContent($part)
                 )
             )
-        ) {
+        );
+        if ($shouldHide) {
             $element = $element->visible(false);
         }
         $label = $props['accessibilityLabel'] ?? $props['ariaLabel'] ?? null;
@@ -127,13 +130,20 @@ final class ComponentRenderer
         if (self::flag($props, 'loading', self::flag($props, 'isLoading'))) {
             $element = $element->property(PropKey::Loading, true);
         }
-        if ($elementKey !== null) {
-            $element = $element->key($elementKey);
-        }
-
         foreach ($events as $event => $handler) {
             $kind = EventKind::from($event);
             $element = $element->on($kind, $handler);
+        }
+
+        if (self::usesNativeWindow($part)) {
+            $element = NativeModal::make(
+                $element,
+                !$shouldHide,
+                self::modalPresentation($part, $runtimeProps),
+            );
+        }
+        if ($elementKey !== null) {
+            $element = $element->key($elementKey);
         }
 
         return $element;
@@ -269,7 +279,9 @@ final class ComponentRenderer
     {
         return match ($part) {
             'AccordionItem' => NativeBehavior::Accordion,
-            'Actionsheet', 'BottomSheet', 'Select' => NativeBehavior::BottomSheet,
+            'Actionsheet',
+            'BottomSheetPortal',
+            'SelectPortal' => NativeBehavior::BottomSheet,
             'Slider' => NativeBehavior::Slider,
             'Tabs' => NativeBehavior::Tabs,
             'Calendar' => NativeBehavior::Calendar,
@@ -282,14 +294,23 @@ final class ComponentRenderer
             'ImageViewerContent' => NativeBehavior::ImageViewer,
             'Progress' => NativeBehavior::Progress,
             'Drawer' => NativeBehavior::Drawer,
-            'Modal' => NativeBehavior::Modal,
-            'ModelSelector' => NativeBehavior::Modal,
+            'Modal', 'ModelSelectorContent' => NativeBehavior::Modal,
             'AlertDialog' => NativeBehavior::AlertDialog,
             'Popover' => NativeBehavior::Popover,
             'Menu' => NativeBehavior::Menu,
             'Tooltip' => NativeBehavior::Tooltip,
             'Portal' => NativeBehavior::Portal,
             default => NativeBehavior::Container,
+        };
+    }
+
+    public static function eventProxyPart(string $part): ?string
+    {
+        return match ($part) {
+            'BottomSheet' => 'BottomSheetPortal',
+            'ModelSelector' => 'ModelSelectorContent',
+            'Select' => 'SelectPortal',
+            default => null,
         };
     }
 
@@ -369,6 +390,45 @@ final class ComponentRenderer
             'SelectPortal',
             'TooltipContent',
         ], true);
+    }
+
+    private static function usesNativeWindow(string $part): bool
+    {
+        return in_array($part, [
+            'Actionsheet',
+            'AlertDialog',
+            'BottomSheetPortal',
+            'Drawer',
+            'ImageViewerContent',
+            'Modal',
+            'ModelSelectorContent',
+            'Portal',
+            'SelectPortal',
+        ], true);
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function modalPresentation(
+        string $part,
+        array $props,
+    ): ModalPresentation {
+        $requested = $props['presentation'] ?? null;
+        if ($requested === 1 || $requested === 'fullScreen') {
+            return ModalPresentation::FullScreen;
+        }
+        if ($requested === 3 || $requested === 'sheet') {
+            return ModalPresentation::Sheet;
+        }
+
+        return match ($part) {
+            'Actionsheet',
+            'BottomSheetPortal',
+            'SelectPortal' => ModalPresentation::Sheet,
+            'Drawer',
+            'ImageViewerContent',
+            'Portal' => ModalPresentation::FullScreen,
+            default => ModalPresentation::Dialog,
+        };
     }
 
     private static function isText(string $part): bool

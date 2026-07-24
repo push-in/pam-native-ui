@@ -85,6 +85,8 @@ See the installable catalog in
 - PHP resolves tokens, variants and static composition before encoding.
 - The PAM binary tree carries integers/scalars, not JSON or CSS strings.
 - Android owns focus, ripple, gestures, overlays, scrolling and local state.
+- Modal, drawer and sheet content mounts in native Android windows while
+  compound triggers remain in the main tree.
 - `create`, `update`, typed event dispatch and release execute on the UI thread.
 - Network, disk and expensive decoding stay away from the UI thread.
 - Animations use native properties and respect the system animator scale.

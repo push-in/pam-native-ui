@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Pam\MobileUi\Component\Button;
 use Pam\MobileUi\Component\ButtonText;
+use Pam\MobileUi\Component\BottomSheet;
+use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\CheckIcon;
 use Pam\MobileUi\Component\CalendarGrid;
 use Pam\MobileUi\Component\Drawer;
@@ -63,6 +65,7 @@ use Pam\Native\FontStyle;
 use Pam\Native\Align;
 use Pam\Native\Internal\TemplateCompiler;
 use Pam\Native\Internal\TemplateRenderer;
+use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
 use Pam\Native\PositionType;
@@ -293,14 +296,22 @@ $drawer = Drawer::make(
     ],
     DrawerContent::make(Text::make('Navigation')),
 )->toElement();
-$drawerContent = $drawer->children()[0] ?? null;
-if (!$drawerContent instanceof \Pam\Native\Element) {
+$drawerHost = $drawer->children()[0] ?? null;
+$drawerContent = $drawerHost?->children()[0] ?? null;
+if (
+    !$drawerHost instanceof \Pam\Native\Element
+    || !$drawerContent instanceof \Pam\Native\Element
+) {
     throw new RuntimeException('Drawer content must inherit size and anchor.');
 }
 $assert(
-    $drawerContent->properties()[PropKey::WidthPercent->value] === 50.0
+    $drawer->kind() === NodeKind::Modal
+        && $drawerHost->kind() === NodeKind::CustomView
+        && $drawer->properties()[PropKey::ModalPresentation->value]
+            === ModalPresentation::FullScreen->value
+        && $drawerContent->properties()[PropKey::WidthPercent->value] === 50.0
         && $drawerContent->properties()[PropKey::HeightPercent->value] === 100.0,
-    'Parent compound variants must preserve the upstream medium left drawer dimensions.',
+    'Drawer must use a native full-screen window and preserve its compound dimensions.',
 );
 
 $reversedSlider = Slider::make(
@@ -422,35 +433,80 @@ $assert(
 $modelSelector = ModelSelector::make(
     ['open' => false],
     ModelSelectorContent::make(),
-)->toElement();
+)->onNativeEvent(static function (): void {
+})->toElement();
 $modelSelectorContent = $modelSelector->children()[0] ?? null;
-if (!$modelSelectorContent instanceof \Pam\Native\Element) {
+$modelSelectorHost = $modelSelectorContent?->children()[0] ?? null;
+if (
+    !$modelSelectorContent instanceof \Pam\Native\Element
+    || !$modelSelectorHost instanceof \Pam\Native\Element
+) {
     throw new RuntimeException('ModelSelector must render its controlled content.');
 }
 $assert(
-    $modelSelector->kind() === NodeKind::CustomView
+    $modelSelector->kind() === NodeKind::View
         && !isset($modelSelector->properties()[PropKey::Visible->value])
         && $modelSelectorContent->properties()[PropKey::Visible->value] === false,
     'ModelSelector must keep its trigger host mounted while hiding controlled content.',
+);
+$assert(
+    $modelSelectorContent->kind() === NodeKind::Modal
+        && $modelSelectorHost->kind() === NodeKind::CustomView
+        && isset($modelSelectorHost->events()[\Pam\Native\EventKind::Native->value]),
+    'ModelSelector events must cross from its stable root into the native modal host.',
 );
 $closedSelect = Select::make(
     ['open' => false],
     SelectTrigger::make('Choose stack'),
     SelectPortal::make(),
-)->toElement();
+)->onNativeEvent(static function (): void {
+})->toElement();
 $closedSelectTrigger = $closedSelect->children()[0] ?? null;
 $closedSelectPortal = $closedSelect->children()[1] ?? null;
+$closedSelectHost = $closedSelectPortal?->children()[0] ?? null;
 if (
     !$closedSelectTrigger instanceof \Pam\Native\Element
     || !$closedSelectPortal instanceof \Pam\Native\Element
+    || !$closedSelectHost instanceof \Pam\Native\Element
 ) {
     throw new RuntimeException('Select must render both trigger and portal.');
 }
 $assert(
-    !isset($closedSelect->properties()[PropKey::Visible->value])
+    $closedSelect->kind() === NodeKind::View
+        && !isset($closedSelect->properties()[PropKey::Visible->value])
         && !isset($closedSelectTrigger->properties()[PropKey::Visible->value])
         && $closedSelectPortal->properties()[PropKey::Visible->value] === false,
     'A closed Select must keep its trigger mounted and hide only its portal.',
+);
+$assert(
+    $closedSelectPortal->kind() === NodeKind::Modal
+        && $closedSelectPortal->properties()[PropKey::ModalPresentation->value]
+            === ModalPresentation::Sheet->value
+        && $closedSelectHost->kind() === NodeKind::CustomView
+        && isset($closedSelectHost->events()[\Pam\Native\EventKind::Native->value]),
+    'Select must forward semantic events into its native sheet host.',
+);
+$bottomSheet = BottomSheet::make(
+    ['open' => true],
+    BottomSheetPortal::make(),
+)->onChange(static function (): void {
+})->toElement();
+$bottomSheetWindow = $bottomSheet->children()[0] ?? null;
+$bottomSheetHost = $bottomSheetWindow?->children()[0] ?? null;
+if (
+    !$bottomSheetWindow instanceof \Pam\Native\Element
+    || !$bottomSheetHost instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('BottomSheet must render its native portal window.');
+}
+$assert(
+    $bottomSheet->kind() === NodeKind::View
+        && $bottomSheetWindow->kind() === NodeKind::Modal
+        && $bottomSheetWindow->properties()[PropKey::ModalPresentation->value]
+            === ModalPresentation::Sheet->value
+        && $bottomSheetHost->kind() === NodeKind::CustomView
+        && isset($bottomSheetHost->events()[\Pam\Native\EventKind::Change->value]),
+    'BottomSheet must keep its root stable and forward changes into its native sheet host.',
 );
 $closedPopover = Popover::make(
     ['open' => false],
