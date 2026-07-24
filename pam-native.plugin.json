@@ -14,6 +14,9 @@
         "minSdk": 26,
         "sourceDirs": [
             "android/src/main/kotlin"
+        ],
+        "resourceDirs": [
+            "android/src/main/res"
         ]
     },
     "views": [
