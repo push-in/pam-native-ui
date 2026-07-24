@@ -221,6 +221,8 @@ use Pam\Native\Internal\TemplateCompiler;
 use Pam\Native\Internal\TemplateRenderer;
 use Pam\Native\Internal\BinaryValue;
 use Pam\Native\Internal\Wire;
+use Pam\Native\ModalAnimationType;
+use Pam\Native\ModalOrientation;
 use Pam\Native\ModalPresentation;
 use Pam\Native\ImageFit;
 use Pam\Native\ImageCachePolicy;
@@ -732,6 +734,73 @@ foreach ($defaultClosedOverlays as $defaultClosedOverlay) {
         'Standalone overlays must follow the upstream default-closed contract.',
     );
 }
+$modalRequestedClose = false;
+$modalShown = false;
+$modalDismissed = false;
+$modalOrientation = null;
+$configuredModal = Modal::make(
+    [
+        'open' => true,
+        'presentation' => 'fullScreen',
+        'animationType' => 'fade',
+        'backdropColor' => '#102030',
+        'transparent' => false,
+        'hardwareAccelerated' => true,
+        'navigationBarTranslucent' => true,
+        'statusBarTranslucent' => true,
+        'allowSwipeDismissal' => true,
+    ],
+    Text::make('Configured modal'),
+)
+    ->onRequestClose(static function () use (&$modalRequestedClose): void {
+        $modalRequestedClose = true;
+    })
+    ->onShow(static function () use (&$modalShown): void {
+        $modalShown = true;
+    })
+    ->onDismiss(static function () use (&$modalDismissed): void {
+        $modalDismissed = true;
+    })
+    ->onOrientationChange(
+        static function (ModalOrientation $orientation) use (
+            &$modalOrientation,
+        ): void {
+            $modalOrientation = $orientation;
+        },
+    )
+    ->toElement();
+$configuredModal->events()[EventKind::ModalRequestClose->value]('');
+$configuredModal->events()[EventKind::ModalShow->value]('');
+$configuredModal->events()[EventKind::ModalDismiss->value]('');
+$configuredModal->events()[EventKind::ModalOrientationChange->value](
+    (string) ModalOrientation::Landscape->value,
+);
+$assert(
+    $configuredModal->kind() === NodeKind::Modal
+        && $configuredModal->properties()[PropKey::Visible->value] === true
+        && $configuredModal->properties()[PropKey::ModalPresentation->value]
+            === ModalPresentation::FullScreen->value
+        && $configuredModal->properties()[PropKey::ModalAnimationType->value]
+            === ModalAnimationType::Fade->value
+        && $configuredModal->properties()[PropKey::ModalBackdropColor->value]
+            === 0xFF102030
+        && $configuredModal->properties()[PropKey::ModalTransparent->value]
+            === false
+        && $configuredModal
+            ->properties()[PropKey::ModalHardwareAccelerated->value] === true
+        && $configuredModal
+            ->properties()[PropKey::ModalNavigationBarTranslucent->value]
+            === true
+        && $configuredModal
+            ->properties()[PropKey::ModalStatusBarTranslucent->value] === true
+        && $configuredModal
+            ->properties()[PropKey::ModalAllowSwipeDismissal->value] === true
+        && $modalRequestedClose
+        && $modalShown
+        && $modalDismissed
+        && $modalOrientation === ModalOrientation::Landscape,
+    'Modal windows must forward current native configuration and lifecycle events.',
+);
 
 $reversedSlider = Slider::make(
     [

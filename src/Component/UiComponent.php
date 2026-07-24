@@ -432,6 +432,31 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::Native, $handler);
     }
 
+    final public function onClose(Closure $handler): static
+    {
+        return $this->on(EventKind::Native, $handler);
+    }
+
+    final public function onRequestClose(Closure $handler): static
+    {
+        return $this->on(EventKind::ModalRequestClose, $handler);
+    }
+
+    final public function onShow(Closure $handler): static
+    {
+        return $this->on(EventKind::ModalShow, $handler);
+    }
+
+    final public function onDismiss(Closure $handler): static
+    {
+        return $this->on(EventKind::ModalDismiss, $handler);
+    }
+
+    final public function onOrientationChange(Closure $handler): static
+    {
+        return $this->on(EventKind::ModalOrientationChange, $handler);
+    }
+
     final public function toElement(): Element
     {
         $componentProps = ComponentRenderer::withDefaults(

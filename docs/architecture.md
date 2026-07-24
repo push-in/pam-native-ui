@@ -227,6 +227,11 @@ Android Back is intercepted by PAM's window host and delivered through the same
 bounded native dismissal event as backdrop/drag dismissal. Controlled overlays
 remain visible until the application publishes `open=false`; after the window
 closes, Android restores the view that held focus before presentation.
+The wrapper also forwards React Native's current modal window contract:
+none/slide/fade animation, transparent or colored backdrop, hardware
+acceleration, status/navigation bar translucency, request-close, show, dismiss
+and typed portrait/landscape lifecycle events. The gluestack windows default to
+transparent so their authored backdrop remains the single visual backdrop.
 
 `BottomSheet`, `Actionsheet` and `Select` use the same anatomy-aware controller.
 PHP packs authored snap percentages into one bounded newline payload. Android

@@ -39,6 +39,8 @@ use Pam\Native\InputSubmitBehavior;
 use Pam\Native\InputTextAlignVertical;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
+use Pam\Native\ModalAnimationType;
+use Pam\Native\ModalOrientation;
 use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
@@ -493,10 +495,40 @@ final class ComponentRenderer
                 $element,
                 !$shouldHide,
                 self::modalPresentation($part, $runtimeProps),
-            );
-            $nativeHandler = $events[EventKind::Native->value] ?? null;
-            if ($nativeHandler !== null) {
-                $element = $element->on(EventKind::Native, $nativeHandler);
+            )
+                ->animationType(self::modalAnimationType($runtimeProps))
+                ->backdropColor(
+                    self::packedColor($runtimeProps['backdropColor'] ?? null)
+                        ?? 0xFFFFFFFF,
+                )
+                ->transparent(self::flag($runtimeProps, 'transparent', true))
+                ->hardwareAccelerated(self::flag(
+                    $runtimeProps,
+                    'hardwareAccelerated',
+                ))
+                ->navigationBarTranslucent(self::flag(
+                    $runtimeProps,
+                    'navigationBarTranslucent',
+                ))
+                ->statusBarTranslucent(self::flag(
+                    $runtimeProps,
+                    'statusBarTranslucent',
+                ))
+                ->allowSwipeDismissal(self::flag(
+                    $runtimeProps,
+                    'allowSwipeDismissal',
+                ));
+            foreach ([
+                EventKind::Native,
+                EventKind::ModalRequestClose,
+                EventKind::ModalShow,
+                EventKind::ModalDismiss,
+                EventKind::ModalOrientationChange,
+            ] as $kind) {
+                $handler = $events[$kind->value] ?? null;
+                if ($handler !== null) {
+                    $element = $element->on($kind, $handler);
+                }
             }
         }
         if ($elementKey !== null) {
@@ -2304,6 +2336,17 @@ final class ComponentRenderer
         };
     }
 
+    /** @param array<string, mixed> $props */
+    private static function modalAnimationType(
+        array $props,
+    ): ModalAnimationType {
+        return match ($props['animationType'] ?? null) {
+            2, 'slide' => ModalAnimationType::Slide,
+            3, 'fade' => ModalAnimationType::Fade,
+            default => ModalAnimationType::None,
+        };
+    }
+
     private static function isText(string $part): bool
     {
         if ($part === 'FormControlLabel') {
@@ -2810,6 +2853,35 @@ final class ComponentRenderer
                 $events[$kind->value] =
                     static function (string $payload) use ($handler): void {
                         $handler(PressEvent::fromPayload($payload));
+                    };
+            }
+        }
+        if (self::usesNativeWindow($part)) {
+            foreach ([
+                EventKind::ModalRequestClose,
+                EventKind::ModalShow,
+                EventKind::ModalDismiss,
+            ] as $kind) {
+                $handler = $events[$kind->value] ?? null;
+                if ($handler === null) {
+                    continue;
+                }
+                $events[$kind->value] =
+                    static function (string $_payload) use ($handler): void {
+                        $handler();
+                    };
+            }
+            $orientationHandler = $events[
+                EventKind::ModalOrientationChange->value
+            ] ?? null;
+            if ($orientationHandler !== null) {
+                $events[EventKind::ModalOrientationChange->value] =
+                    static function (string $payload) use (
+                        $orientationHandler,
+                    ): void {
+                        $orientationHandler(
+                            ModalOrientation::fromPayload($payload),
+                        );
                     };
             }
         }
