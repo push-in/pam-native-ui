@@ -26,6 +26,7 @@ use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
+use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
 use Pam\Native\UI\ActivityIndicator;
 use Pam\Native\UI\Column;
@@ -194,6 +195,16 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:calendar-next');
         } elseif ($part === 'CalendarHeaderTitle') {
             $element = $element->property(PropKey::Value, 'pam:calendar-title');
+        } elseif ($part === 'CalendarHeaderMonthSelect') {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:calendar-month-select',
+            );
+        } elseif ($part === 'CalendarHeaderYearSelect') {
+            $element = $element->property(
+                PropKey::Value,
+                'pam:calendar-year-select',
+            );
         } elseif ($part === 'AccordionTrigger') {
             $element = $element->property(PropKey::Value, 'pam:accordion-trigger');
         } elseif ($part === 'AccordionContent') {
@@ -430,8 +441,26 @@ final class ComponentRenderer
         array $children,
         ?int $nativeBackground,
     ): Element {
+        if ($part === 'SkeletonText') {
+            return CustomView::make(
+                'pam.mobile_ui.host',
+                self::nativeProperties(
+                    $part,
+                    NativeBehavior::Skeleton,
+                    $props,
+                    [],
+                    $nativeBackground,
+                ),
+            );
+        }
         if (self::isText($part)) {
-            return Text::make(self::text($props, 'text'));
+            return Text::make(
+                self::text(
+                    $props,
+                    'text',
+                    $part === 'MessageBranchPage' ? '1 of 1' : '',
+                ),
+            );
         }
         if (self::isInput($part)) {
             return self::input($part, $props);
@@ -443,13 +472,24 @@ final class ComponentRenderer
             );
         }
         if (self::isImage($part)) {
-            return Image::make(self::text($props, 'source', self::text($props, 'src')));
+            $image = Image::make(
+                self::text($props, 'source', self::text($props, 'src')),
+            )->fit(self::imageFit($props));
+            $tint = self::packedColor($props['tintColor'] ?? null);
+
+            return $tint === null ? $image : $image->tint($tint);
         }
         if ($part === 'ImageBackground') {
-            return ImageBackground::make(self::text($props, 'source'), ...$children);
+            return ImageBackground::make(
+                self::text($props, 'source', self::text($props, 'src')),
+                ...$children,
+            )->fit(self::imageFit($props));
         }
         if ($part === 'Spinner' || $part === 'ButtonSpinner') {
-            return ActivityIndicator::make(($props['visible'] ?? true) !== false);
+            $spinner = ActivityIndicator::make(($props['visible'] ?? true) !== false);
+            $color = self::packedColor($props['color'] ?? null);
+
+            return $color === null ? $spinner : $spinner->color($color);
         }
         if (in_array($part, [
             'FlatList',
@@ -498,7 +538,15 @@ final class ComponentRenderer
             'BottomSheetScrollView',
             'SelectScrollView',
         ], true)) {
-            return Scroll::make(self::oneChild($children));
+            return Scroll::make(self::oneChild($children))
+                ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
+                ->showsIndicator(
+                    self::flag(
+                        $props,
+                        'showsVerticalScrollIndicator',
+                        self::flag($props, 'showsScrollIndicator', true),
+                    ),
+                );
         }
         if ($part === 'RefreshControl') {
             return RefreshControl::make(
@@ -512,14 +560,20 @@ final class ComponentRenderer
         if ($part === 'KeyboardAvoidingView') {
             return KeyboardAvoidingView::make(
                 self::oneChild($children),
-                KeyboardAvoidingBehavior::Resize,
+                self::keyboardAvoidingBehavior($props),
             );
         }
         if ($part === 'InputAccessoryView') {
             return InputAccessoryView::make(...$children);
         }
         if ($part === 'StatusBar') {
-            return StatusBar::make();
+            return StatusBar::make(
+                self::packedColor(
+                    $props['backgroundColor'] ?? $props['color'] ?? null,
+                ),
+                self::statusBarAppearance($props),
+                self::flag($props, 'hidden'),
+            );
         }
 
         $behavior = self::nativeBehavior($part);
@@ -720,6 +774,14 @@ final class ComponentRenderer
         }
         if ($part === 'Conversation' && !array_key_exists('autoScroll', $props)) {
             $props['autoScroll'] = true;
+        } elseif ($part === 'SelectInput') {
+            if (!array_key_exists('editable', $props)) {
+                $props['editable'] = false;
+            }
+        } elseif ($part === 'ModelSelectorInput') {
+            if (!array_key_exists('placeholder', $props)) {
+                $props['placeholder'] = 'Search models...';
+            }
         } elseif ($part === 'MessageBranch') {
             if (
                 !array_key_exists('branch', $props)
@@ -1151,7 +1213,12 @@ final class ComponentRenderer
             || str_ends_with($part, 'Title')
             || str_ends_with($part, 'Description')
             || str_ends_with($part, 'Caption')
-            || in_array($part, ['TableHead', 'TableData'], true);
+            || in_array($part, [
+                'MessageBranchPage',
+                'ModelSelectorName',
+                'TableHead',
+                'TableData',
+            ], true);
     }
 
     private static function isInput(string $part): bool
@@ -1161,7 +1228,9 @@ final class ComponentRenderer
             'TextareaInput',
             'DateTimePickerInput',
             'BottomSheetTextInput',
+            'ModelSelectorInput',
             'PromptInputTextarea',
+            'SelectInput',
         ], true);
     }
 
@@ -1198,6 +1267,11 @@ final class ComponentRenderer
         return in_array($part, [
             'AttachmentRemove',
             'Button',
+            'CalendarDay',
+            'CalendarHeaderMonthSelect',
+            'CalendarHeaderNextButton',
+            'CalendarHeaderPrevButton',
+            'CalendarHeaderYearSelect',
             'ConversationDownload',
             'Fab',
             'Link',
@@ -1207,7 +1281,10 @@ final class ComponentRenderer
         ], true)
             || str_ends_with($part, 'Trigger')
             || str_ends_with($part, 'CloseButton')
-            || str_ends_with($part, 'Item');
+            || (
+                str_ends_with($part, 'Item')
+                && $part !== 'GridItem'
+            );
     }
 
     private static function hasSemanticValue(string $part): bool
@@ -1751,6 +1828,79 @@ final class ComponentRenderer
         return (hexdec($alpha) << 24) | hexdec($redGreenBlue);
     }
 
+    /** @param array<string, mixed> $props */
+    private static function imageFit(array $props): ImageFit
+    {
+        return match (
+            $props['resizeMode']
+                ?? $props['fit']
+                ?? $props['objectFit']
+                ?? null
+        ) {
+            ImageFit::Contain->value, 'contain' => ImageFit::Contain,
+            ImageFit::Fill->value, 'fill', 'stretch' => ImageFit::Fill,
+            ImageFit::Center->value, 'center', 'none' => ImageFit::Center,
+            default => ImageFit::Cover,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function keyboardAvoidingBehavior(
+        array $props,
+    ): KeyboardAvoidingBehavior {
+        return match ($props['behavior'] ?? null) {
+            KeyboardAvoidingBehavior::Pan->value,
+            'pan',
+            'position' => KeyboardAvoidingBehavior::Pan,
+            KeyboardAvoidingBehavior::Padding->value,
+            'padding' => KeyboardAvoidingBehavior::Padding,
+            default => KeyboardAvoidingBehavior::Resize,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function statusBarAppearance(
+        array $props,
+    ): StatusBarAppearance {
+        return match ($props['barStyle'] ?? $props['appearance'] ?? null) {
+            StatusBarAppearance::Light->value,
+            'light',
+            'light-content' => StatusBarAppearance::Light,
+            default => StatusBarAppearance::Dark,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function calendarSelectLabel(
+        string $part,
+        array $props,
+    ): string {
+        $parent = is_array($props['__parentVariants'] ?? null)
+            ? $props['__parentVariants']
+            : [];
+        if ($part === 'CalendarHeaderYearSelect') {
+            $year = $props['selectedValue']
+                ?? $props['year']
+                ?? $parent['year']
+                ?? null;
+
+            return is_numeric($year) ? (string) (int) $year : 'Year';
+        }
+        $month = $props['selectedValue']
+            ?? $props['month']
+            ?? $parent['month']
+            ?? null;
+        if (!is_numeric($month)) {
+            return 'Month';
+        }
+        $date = \DateTimeImmutable::createFromFormat(
+            '!m',
+            (string) max(1, min(12, (int) $month)),
+        );
+
+        return $date === false ? 'Month' : $date->format('F');
+    }
+
     /**
      * @param array<string, mixed> $props
      * @return array<string, string|int|float|bool>
@@ -1897,9 +2047,6 @@ final class ComponentRenderer
         if ($part === 'MessageBranchNext') {
             return [Text::make('›')];
         }
-        if ($part === 'MessageBranchPage') {
-            return [Text::make('1 of 1')];
-        }
         if ($part === 'PromptInputSubmit') {
             return [Text::make('↑')];
         }
@@ -1944,6 +2091,15 @@ final class ComponentRenderer
                 : substr($provider, 0, 2);
 
             return [Text::make(strtoupper($initials))];
+        }
+        if (in_array($part, ['CalendarWeekDay', 'CalendarWeekNumber'], true)) {
+            return [Text::make(self::text($props, 'text'))];
+        }
+        if (in_array($part, [
+            'CalendarHeaderMonthSelect',
+            'CalendarHeaderYearSelect',
+        ], true)) {
+            return [Text::make(self::calendarSelectLabel($part, $props))];
         }
         if ($part === 'ConversationEmptyState') {
             return [

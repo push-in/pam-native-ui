@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
@@ -42,6 +43,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeProvider
 import android.widget.FrameLayout
 import android.widget.EditText
+import android.widget.NumberPicker
 import android.widget.ScrollView
 import android.widget.TextView
 import dev.pam.nativeapp.protocol.WireMap
@@ -1140,6 +1142,15 @@ internal class MobileUiHost(
             return true
         }
         if (behavior == Behavior.DATE_TIME_PICKER && isEnabled) {
+            return true
+        }
+        if (
+            behavior == Behavior.CALENDAR
+            && isEnabled
+            && !readOnly
+            && event.actionMasked == MotionEvent.ACTION_DOWN
+            && calendarTargetAt(event.x, event.y) != CALENDAR_TARGET_NONE
+        ) {
             return true
         }
         if (
@@ -3975,6 +3986,12 @@ internal class MobileUiHost(
                     val handled = when (target) {
                         CALENDAR_TARGET_PREVIOUS -> navigateCalendar(-1)
                         CALENDAR_TARGET_NEXT -> navigateCalendar(1)
+                        CALENDAR_TARGET_MONTH -> showCalendarSelector(
+                            calendarMonthSelector = true,
+                        )
+                        CALENDAR_TARGET_YEAR -> showCalendarSelector(
+                            calendarMonthSelector = false,
+                        )
                         else -> selectCalendarDate(calendarDateAt(target))
                     }
                     if (handled) {
@@ -4031,6 +4048,106 @@ internal class MobileUiHost(
         }
         activePickerDialog = dialog
         dialog.show()
+    }
+
+    private fun showCalendarSelector(calendarMonthSelector: Boolean): Boolean {
+        if (!isEnabled || readOnly) return false
+        if (activePickerDialog?.isShowing == true) return false
+        val activity = context.findActivity() ?: return false
+        if (activity.isFinishing || activity.isDestroyed) return false
+        val picker = NumberPicker(activity).apply {
+            wrapSelectorWheel = calendarMonthSelector
+            if (calendarMonthSelector) {
+                minValue = 1
+                maxValue = MONTHS_PER_YEAR
+                displayedValues = (1..MONTHS_PER_YEAR)
+                    .map { month ->
+                        LocalDate.of(calendarYear, month, 1)
+                            .format(DateTimeFormatter.ofPattern("MMMM", calendarLocale))
+                    }
+                    .toTypedArray()
+                value = calendarMonth
+            } else {
+                minValue = (
+                    minimumLocalDate?.year
+                        ?: minimumCalendarYear
+                        ?: calendarYear - CALENDAR_YEAR_RANGE
+                )
+                maxValue = (
+                    maximumLocalDate?.year
+                        ?: maximumCalendarYear
+                        ?: calendarYear + CALENDAR_YEAR_RANGE
+                ).coerceAtLeast(minValue)
+                value = calendarYear.coerceIn(minValue, maxValue)
+            }
+        }
+        lateinit var dialog: AlertDialog
+        dialog = AlertDialog.Builder(activity)
+            .setTitle(
+                if (calendarMonthSelector) {
+                    context.getString(R.string.pam_calendar_select_month)
+                } else {
+                    context.getString(R.string.pam_calendar_select_year)
+                },
+            )
+            .setView(picker)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                setCalendarMonthOrYear(
+                    calendarMonthSelector,
+                    picker.value,
+                )
+            }
+            .create()
+            .apply {
+                setOnDismissListener {
+                    if (activePickerDialog === dialog) {
+                        activePickerDialog = null
+                    }
+                }
+            }
+        activePickerDialog = dialog
+        dialog.show()
+
+        return true
+    }
+
+    private fun setCalendarMonthOrYear(
+        calendarMonthSelector: Boolean,
+        selectedValue: Int,
+    ) {
+        val requested = if (calendarMonthSelector) {
+            LocalDate.of(
+                calendarYear,
+                selectedValue.coerceIn(1, MONTHS_PER_YEAR),
+                1,
+            )
+        } else {
+            LocalDate.of(selectedValue, calendarMonth, 1)
+        }
+        val firstAllowed = minimumLocalDate?.withDayOfMonth(1)
+        val lastAllowed = maximumLocalDate?.withDayOfMonth(1)
+        val clamped = requested
+            .let { value -> firstAllowed?.let { maxOf(value, it) } ?: value }
+            .let { value -> lastAllowed?.let { minOf(value, it) } ?: value }
+        calendarYear = clamped.year.coerceIn(
+            minimumCalendarYear ?: Int.MIN_VALUE,
+            maximumCalendarYear ?: Int.MAX_VALUE,
+        )
+        calendarMonth = clamped.monthValue
+        updateCalendarTitle()
+        invalidate()
+        emitter.emit(
+            NativeViewEventKind.NATIVE,
+            WireMap.encode(
+                mapOf(
+                    "action" to WireValue.Integer(HostAction.NAVIGATE.value),
+                    "year" to WireValue.Integer(calendarYear.toLong()),
+                    "month" to WireValue.Integer(calendarMonth.toLong()),
+                ),
+            ),
+        )
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
     }
 
     private fun showTimePicker(
@@ -4311,6 +4428,12 @@ internal class MobileUiHost(
         if (expandedTaggedBounds("pam:calendar-next").contains(x, y)) {
             return CALENDAR_TARGET_NEXT
         }
+        if (expandedTaggedBounds("pam:calendar-month-select").contains(x, y)) {
+            return CALENDAR_TARGET_MONTH
+        }
+        if (expandedTaggedBounds("pam:calendar-year-select").contains(x, y)) {
+            return CALENDAR_TARGET_YEAR
+        }
 
         val bounds = calendarGridBounds()
         if (!bounds.contains(x, y) || bounds.width() <= 0f || bounds.height() <= 0f) {
@@ -4438,7 +4561,6 @@ internal class MobileUiHost(
 
     private fun updateCalendarTitle() {
         if (behavior != Behavior.CALENDAR) return
-        val title = findTaggedDescendant(this, "pam:calendar-title") as? TextView ?: return
         val month = calendarFirstDate()
             .format(DateTimeFormatter.ofPattern("MMMM yyyy", calendarLocale))
             .replaceFirstChar { character ->
@@ -4448,8 +4570,40 @@ internal class MobileUiHost(
                     character.toString()
                 }
             }
-        title.text = month
-        title.contentDescription = month
+        (findTaggedDescendant(this, "pam:calendar-title") as? TextView)?.let { title ->
+            title.text = month
+            title.contentDescription = month
+        }
+        val monthSelect = findTaggedDescendant(
+            this,
+            "pam:calendar-month-select",
+        )
+        findFirstTextView(monthSelect)?.let { label ->
+            label.text = calendarFirstDate().format(
+                DateTimeFormatter.ofPattern("MMMM", calendarLocale),
+            )
+        }
+        monthSelect?.let { view ->
+            view.contentDescription = context.getString(
+                R.string.pam_calendar_selected_month,
+                calendarMonth,
+            )
+        }
+        val yearSelect = findTaggedDescendant(
+            this,
+            "pam:calendar-year-select",
+        )
+        findFirstTextView(yearSelect)?.text = String.format(
+            calendarLocale,
+            "%d",
+            calendarYear,
+        )
+        yearSelect?.let { view ->
+            view.contentDescription = context.getString(
+                R.string.pam_calendar_selected_year,
+                calendarYear,
+            )
+        }
     }
 
     private fun LocalDate?.orEmptyDate(): String = this?.toString().orEmpty()
@@ -5559,6 +5713,15 @@ internal class MobileUiHost(
         return null
     }
 
+    private fun findFirstTextView(root: View?): TextView? {
+        if (root is TextView && root !is EditText) return root
+        if (root !is ViewGroup) return null
+        repeat(root.childCount) { index ->
+            findFirstTextView(root.getChildAt(index))?.let { return it }
+        }
+        return null
+    }
+
     private fun descendantTexts(root: ViewGroup): List<String> =
         buildList {
             repeat(root.childCount) { index ->
@@ -6382,6 +6545,10 @@ internal class MobileUiHost(
         const val CALENDAR_TARGET_NONE = -1
         const val CALENDAR_TARGET_PREVIOUS = -2
         const val CALENDAR_TARGET_NEXT = -3
+        const val CALENDAR_TARGET_MONTH = -4
+        const val CALENDAR_TARGET_YEAR = -5
+        const val MONTHS_PER_YEAR = 12
+        const val CALENDAR_YEAR_RANGE = 100
         const val DISABLED_ALPHA = 76
         const val OUTSIDE_MONTH_ALPHA = 112
         const val RANGE_BACKGROUND_ALPHA = 42

@@ -1219,6 +1219,20 @@ class MobileUiHostInstrumentedTest {
                 tag = "pam:calendar-title"
                 text = "Placeholder"
             }
+            val monthLabel = TextView(host.context).apply {
+                text = "Month"
+            }
+            val monthSelect = FrameLayout(host.context).apply {
+                tag = "pam:calendar-month-select"
+                addView(monthLabel)
+            }
+            val yearLabel = TextView(host.context).apply {
+                text = "Year"
+            }
+            val yearSelect = FrameLayout(host.context).apply {
+                tag = "pam:calendar-year-select"
+                addView(yearLabel)
+            }
             val next = View(host.context).apply {
                 tag = "pam:calendar-next"
             }
@@ -1227,11 +1241,17 @@ class MobileUiHostInstrumentedTest {
             }
             host.addView(previous)
             host.addView(title)
+            host.addView(monthSelect)
+            host.addView(yearSelect)
             host.addView(next)
             host.addView(grid)
             host.layout(0, 0, 700, 700)
             previous.layout(0, 0, 100, 100)
             title.layout(100, 0, 600, 100)
+            monthSelect.layout(200, 0, 350, 100)
+            monthLabel.layout(0, 0, 150, 100)
+            yearSelect.layout(350, 0, 500, 100)
+            yearLabel.layout(0, 0, 150, 100)
             next.layout(600, 0, 700, 100)
             grid.layout(0, 100, 700, 700)
 
@@ -1240,6 +1260,10 @@ class MobileUiHostInstrumentedTest {
 
             val navigation = WireMap.decode(payloads.single())
             assertEquals("June 2026", title.text.toString())
+            assertEquals("June", monthLabel.text.toString())
+            assertEquals("2026", yearLabel.text.toString())
+            assertEquals("Selected month 6", monthSelect.contentDescription)
+            assertEquals("Selected year 2026", yearSelect.contentDescription)
             assertEquals(5L, (navigation["action"] as WireValue.Integer).value)
             assertEquals(2026L, (navigation["year"] as WireValue.Integer).value)
             assertEquals(6L, (navigation["month"] as WireValue.Integer).value)

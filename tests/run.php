@@ -30,16 +30,22 @@ use Pam\MobileUi\Component\CheckboxIndicator;
 use Pam\MobileUi\Component\CheckboxLabel;
 use Pam\MobileUi\Component\CheckIcon;
 use Pam\MobileUi\Component\Calendar;
+use Pam\MobileUi\Component\CalendarDay;
 use Pam\MobileUi\Component\CalendarGrid;
 use Pam\MobileUi\Component\CalendarHeader;
+use Pam\MobileUi\Component\CalendarHeaderMonthSelect;
 use Pam\MobileUi\Component\CalendarHeaderNextButton;
 use Pam\MobileUi\Component\CalendarHeaderPrevButton;
 use Pam\MobileUi\Component\CalendarHeaderTitle;
+use Pam\MobileUi\Component\CalendarHeaderYearSelect;
+use Pam\MobileUi\Component\CalendarWeekDay;
+use Pam\MobileUi\Component\CalendarWeekNumber;
 use Pam\MobileUi\Component\Drawer;
 use Pam\MobileUi\Component\DrawerContent;
 use Pam\MobileUi\Component\DateTimePicker;
 use Pam\MobileUi\Component\DateTimePickerInput;
 use Pam\MobileUi\Component\DateTimePickerTrigger;
+use Pam\MobileUi\Component\GridItem;
 use Pam\MobileUi\Component\HStack;
 use Pam\MobileUi\Component\FormControl;
 use Pam\MobileUi\Component\FormControlError;
@@ -52,12 +58,14 @@ use Pam\MobileUi\Component\Input;
 use Pam\MobileUi\Component\InputField;
 use Pam\MobileUi\Component\InputSlot;
 use Pam\MobileUi\Component\Image;
+use Pam\MobileUi\Component\ImageBackground;
 use Pam\MobileUi\Component\ImageViewer;
 use Pam\MobileUi\Component\ImageViewerCloseButton;
 use Pam\MobileUi\Component\ImageViewerContent;
 use Pam\MobileUi\Component\ImageViewerCounter;
 use Pam\MobileUi\Component\ImageViewerNavigation;
 use Pam\MobileUi\Component\ImageViewerTrigger;
+use Pam\MobileUi\Component\KeyboardAvoidingView;
 use Pam\MobileUi\Component\FlatList;
 use Pam\MobileUi\Component\SectionList;
 use Pam\MobileUi\Component\VirtualizedList;
@@ -94,7 +102,9 @@ use Pam\MobileUi\Component\Menu;
 use Pam\MobileUi\Component\MenuItem;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
+use Pam\MobileUi\Component\ModelSelectorInput;
 use Pam\MobileUi\Component\ModelSelectorLogo;
+use Pam\MobileUi\Component\ModelSelectorName;
 use Pam\MobileUi\Component\Popover;
 use Pam\MobileUi\Component\PopoverArrow;
 use Pam\MobileUi\Component\PopoverCloseButton;
@@ -116,6 +126,7 @@ use Pam\MobileUi\Component\RadioLabel;
 use Pam\MobileUi\Component\Select;
 use Pam\MobileUi\Component\SelectContent;
 use Pam\MobileUi\Component\SelectFlatList;
+use Pam\MobileUi\Component\SelectInput;
 use Pam\MobileUi\Component\SelectItem;
 use Pam\MobileUi\Component\SelectPortal;
 use Pam\MobileUi\Component\SelectSectionList;
@@ -127,6 +138,9 @@ use Pam\MobileUi\Component\SliderThumb;
 use Pam\MobileUi\Component\SliderTrack;
 use Pam\MobileUi\Component\Skeleton;
 use Pam\MobileUi\Component\SkeletonText;
+use Pam\MobileUi\Component\Spinner;
+use Pam\MobileUi\Component\StatusBar;
+use Pam\MobileUi\Component\ScrollView;
 use Pam\MobileUi\Component\Tabs;
 use Pam\MobileUi\Component\TabsContent;
 use Pam\MobileUi\Component\TabsContentWrapper;
@@ -180,10 +194,13 @@ use Pam\Native\Internal\TemplateRenderer;
 use Pam\Native\Internal\BinaryValue;
 use Pam\Native\Internal\Wire;
 use Pam\Native\ModalPresentation;
+use Pam\Native\ImageFit;
+use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
+use Pam\Native\StatusBarAppearance;
 use Pam\Native\TemplateRegistry;
 use Pam\Native\TextDecoration;
 use Pam\Native\TextTransform;
@@ -880,6 +897,96 @@ $assert(
         && $skeletonLines->children()[2]
             ->properties()[PropKey::WidthPercent->value] === 80.0,
     'Skeleton loading, loaded content, line count, gap and speed must match upstream behavior.',
+);
+
+$singleSkeletonLine = SkeletonText::make()->toElement();
+$singleSkeletonNative = $singleSkeletonLine->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (!$singleSkeletonNative instanceof BinaryValue) {
+    throw new RuntimeException('Single-line SkeletonText must keep its pulse host.');
+}
+$imagePrimitive = Image::make([
+    'source' => 'file:///cover.png',
+    'resizeMode' => 'contain',
+    'tintColor' => '#2563eb',
+])->toElement();
+$imageBackground = ImageBackground::make(
+    ['source' => 'file:///background.png', 'resizeMode' => 'center'],
+    Text::make('Overlay'),
+)->toElement();
+$spinnerPrimitive = Spinner::make(['color' => '#dc2626'])->toElement();
+$scrollPrimitive = ScrollView::make(
+    [
+        'scrollEnabled' => false,
+        'showsVerticalScrollIndicator' => false,
+    ],
+    Text::make('Scrollable'),
+)->toElement();
+$keyboardPrimitive = KeyboardAvoidingView::make(
+    ['behavior' => 'padding'],
+    Text::make('Form'),
+)->toElement();
+$statusPrimitive = StatusBar::make([
+    'backgroundColor' => '#171717',
+    'barStyle' => 'light-content',
+    'hidden' => true,
+])->toElement();
+$assert(
+    Wire::decodeMap($singleSkeletonNative->bytes)['behavior']
+        === NativeBehavior::Skeleton->value
+        && $imagePrimitive->properties()[PropKey::ImageFit->value]
+            === ImageFit::Contain->value
+        && $imagePrimitive->properties()[PropKey::TintColor->value]
+            === 0xff2563eb
+        && $imageBackground->properties()[PropKey::ImageFit->value]
+            === ImageFit::Center->value
+        && $spinnerPrimitive->properties()[PropKey::ProgressColor->value]
+            === 0xffdc2626
+        && $scrollPrimitive->properties()[PropKey::ScrollEnabled->value] === false
+        && $scrollPrimitive->properties()[PropKey::ShowsScrollIndicator->value] === false
+        && $keyboardPrimitive->properties()[PropKey::KeyboardBehavior->value]
+            === KeyboardAvoidingBehavior::Padding->value
+        && $statusPrimitive->properties()[PropKey::StatusBarColor->value]
+            === 0xff171717
+        && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]
+            === StatusBarAppearance::Light->value
+        && $statusPrimitive->properties()[PropKey::StatusBarHidden->value] === true,
+    'React Native core facades must forward native image, spinner, scroll, keyboard and status properties.',
+);
+
+$calendarAnatomy = Calendar::make(
+    ['year' => 2026, 'month' => 7],
+    CalendarHeader::make(
+        CalendarHeaderPrevButton::make(),
+        CalendarHeaderMonthSelect::make(),
+        CalendarHeaderYearSelect::make(),
+        CalendarHeaderNextButton::make(),
+    ),
+)->toElement();
+$calendarHeader = $calendarAnatomy->children()[0] ?? null;
+$calendarMonth = $calendarHeader?->children()[1] ?? null;
+$calendarYear = $calendarHeader?->children()[2] ?? null;
+$assert(
+    $calendarHeader?->children()[0]->kind() === NodeKind::Pressable
+        && $calendarHeader->children()[3]->kind() === NodeKind::Pressable
+        && CalendarDay::make()->toElement()->kind() === NodeKind::Pressable
+        && CalendarWeekDay::make('Mon')->toElement()->children()[0]
+            ->properties()[PropKey::Text->value] === 'Mon'
+        && CalendarWeekNumber::make(29)->toElement()->children()[0]
+            ->properties()[PropKey::Text->value] === '29'
+        && $calendarMonth?->children()[0]
+            ->properties()[PropKey::Text->value] === 'July'
+        && $calendarYear?->children()[0]
+            ->properties()[PropKey::Text->value] === '2026'
+        && MessageBranchPage::make()->toElement()->kind() === NodeKind::Text
+        && ModelSelectorInput::make()->toElement()->kind() === NodeKind::Input
+        && ModelSelectorName::make('PAM')->toElement()->kind() === NodeKind::Text
+        && SelectInput::make()->toElement()->kind() === NodeKind::Input
+        && SelectInput::make()->toElement()
+            ->properties()[PropKey::Enabled->value] === false
+        && GridItem::make()->toElement()->kind() === NodeKind::View,
+    'Compound anatomy must preserve upstream pressable, text, input and container primitive kinds.',
 );
 
 $toast = Toast::make(

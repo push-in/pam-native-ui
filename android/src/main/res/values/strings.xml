@@ -10,4 +10,8 @@
     <string name="pam_scroll_to_latest_message">Scroll to latest message</string>
     <string name="pam_file_tree_expanded">Expanded</string>
     <string name="pam_file_tree_collapsed">Collapsed</string>
+    <string name="pam_calendar_select_month">Select month</string>
+    <string name="pam_calendar_select_year">Select year</string>
+    <string name="pam_calendar_selected_month">Selected month %1$d</string>
+    <string name="pam_calendar_selected_year">Selected year %1$d</string>
 </resources>
