@@ -43,11 +43,11 @@
                     </HStack>
                 </Card>
 
-                <Grid class="gap-3">
-                    <GridItem class="w-1/2">
+                <Grid class="grid-cols-2 sm:grid-cols-3 gap-3">
+                    <GridItem class="col-span-1">
                         <Card><Heading size="lg">326</Heading><Text>Typed facades</Text></Card>
                     </GridItem>
-                    <GridItem class="w-1/2">
+                    <GridItem class="col-span-1 sm:col-span-2">
                         <Card><Heading size="lg">55</Heading><Text>Native icons</Text></Card>
                     </GridItem>
                 </Grid>

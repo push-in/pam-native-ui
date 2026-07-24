@@ -37,6 +37,15 @@ final class MobileUiPluginProvider implements PluginProvider
         TemplateRegistry::styleResolver(
             static function (string $class) use ($theme): ?array {
                 if (
+                    preg_match(
+                        '/^(?:(?:sm|md|lg|xl|2xl):)?'
+                            .'(?:grid-cols|col-span)-\d+$/',
+                        $class,
+                    ) === 1
+                ) {
+                    return [];
+                }
+                if (
                     TailwindStyleCompiler::unsupportedUtilities(
                         [$class],
                         [],

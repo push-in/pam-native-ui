@@ -117,6 +117,11 @@ registered scroll progress is coalesced to one scalar per display frame, while
 an unobserved scroll emits zero bridge events. Static compilation is not
 reported as physical runtime evidence.
 
+Grid adds a pending 10,000-layout gate using responsive columns, mixed spans,
+independent row/column gaps and two wrapped rows. Breakpoint selection,
+measurement, RTL mirroring and placement must remain below 4 ms p99 with zero
+bridge events; this row stays excluded until recorded on physical hardware.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

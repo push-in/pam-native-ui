@@ -116,6 +116,14 @@ scrolling, and emits horizontal progress at most once per display frame only
 when the application registers `on:scroll`. Grid/inline attachments use a Row;
 the upstream list variant uses a Column. No gesture sample crosses PHP.
 
+`Grid` is a dedicated `pam.mobile_ui.grid` ViewGroup rather than a simulated
+vertical stack. PHP extracts the bounded `grid-cols-*`, responsive
+`sm/md/lg/xl/2xl:grid-cols-*`, `col-span-*`, `gap-x-*` and `gap-y-*` rules once.
+Android selects the active breakpoint from `screenWidthDp`, measures and wraps
+items, handles row/row-reverse/column direction and RTL, and publishes
+collection row/column metadata to accessibility services. Rotation and
+responsive relayout do not require a PHP callback.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native

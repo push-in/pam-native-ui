@@ -32,6 +32,10 @@
         {
             "name": "pam.mobile_ui.horizontal_scroll",
             "class": "dev.pam.mobileui.MobileUiHorizontalScrollFactory"
+        },
+        {
+            "name": "pam.mobile_ui.grid",
+            "class": "dev.pam.mobileui.MobileUiGridFactory"
         }
     ]
 }

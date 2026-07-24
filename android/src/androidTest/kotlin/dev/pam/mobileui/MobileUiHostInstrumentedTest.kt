@@ -32,6 +32,63 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
     @Test
+    fun gridMeasuresSpansAndExposesCollectionSemantics() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val factory = MobileUiGridFactory(context)
+            val grid = factory.create(context) { _, _ -> Unit } as MobileUiGridView
+            factory.update(
+                grid,
+                mapOf(
+                    "columns" to WireValue.Text("4,4,4,4,4,4"),
+                    "columnGaps" to WireValue.Text("8,8,8,8,8,8"),
+                    "rowGaps" to WireValue.Text("12,12,12,12,12,12"),
+                    "direction" to WireValue.Integer(2),
+                ),
+            )
+            listOf(1, 2, 1, 3, 1).forEachIndexed { index, span ->
+                grid.addView(
+                    TextView(context).apply {
+                        text = "Item $index"
+                        tag = "pam:grid-item:$span"
+                    },
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        when (index) {
+                            1 -> dp(grid, 56f)
+                            3 -> dp(grid, 64f)
+                            else -> dp(grid, 48f)
+                        },
+                    ),
+                )
+            }
+            grid.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    dp(grid, 400f),
+                    View.MeasureSpec.EXACTLY,
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    dp(grid, 132f),
+                    View.MeasureSpec.EXACTLY,
+                ),
+            )
+            grid.layout(0, 0, dp(grid, 400f), dp(grid, 132f))
+
+            assertEquals(0, grid.getChildAt(0).left)
+            assertEquals(dp(grid, 102f), grid.getChildAt(1).left)
+            assertEquals(dp(grid, 306f), grid.getChildAt(2).left)
+            assertEquals(0, grid.getChildAt(3).left)
+            assertEquals(dp(grid, 306f), grid.getChildAt(4).left)
+            assertEquals(dp(grid, 68f), grid.getChildAt(3).top)
+            val info = AccessibilityNodeInfo.obtain()
+            grid.onInitializeAccessibilityNodeInfo(info)
+            assertEquals(2, info.collectionInfo.rowCount)
+            assertEquals(4, info.collectionInfo.columnCount)
+            info.recycle()
+        }
+    }
+
+    @Test
     fun horizontalScrollAppliesNativeInteractionAndViewportProperties() {
         onMain {
             val context = ApplicationProvider.getApplicationContext<android.content.Context>()

@@ -63,6 +63,24 @@ Applications are never forced into either form. Raw `Pam\Native\UI` elements,
 custom components, `.pam` tags, fluent classes, and native plugins can be mixed
 in the same tree.
 
+Responsive grids keep the same class vocabulary used by gluestack:
+
+```xml
+<Grid class="grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-4">
+    <GridItem class="col-span-1 sm:col-span-2">
+        <Card><Text>Primary metric</Text></Card>
+    </GridItem>
+    <GridItem class="col-span-1">
+        <Card><Text>Secondary metric</Text></Card>
+    </GridItem>
+</Grid>
+```
+
+`columns`/`numColumns`, `colSpan`, `gap`, `columnGap`, `rowGap` and
+`flexDirection` are available as explicit PHP props too. Six bounded responsive
+slots are encoded once; Android chooses the active breakpoint, wraps spans,
+mirrors RTL and exposes collection metadata without asking PHP to re-render.
+
 Inputs preserve the complete compound anatomy while Android owns transient
 editing state:
 

@@ -435,7 +435,7 @@ final class TailwindStyleCompiler
     private static function applySpacing(string $utility, array &$values): bool
     {
         if (
-            preg_match('/^(-?)(p|px|py|pl|pt|pr|pb|m|mx|my|ml|mt|mr|mb|gap)-(.+)$/D', $utility, $match)
+            preg_match('/^(-?)(p|px|py|pl|pt|pr|pb|m|mx|my|ml|mt|mr|mb|gap|gap-x|gap-y)-(.+)$/D', $utility, $match)
             !== 1
         ) {
             return false;
@@ -465,7 +465,7 @@ final class TailwindStyleCompiler
             'mt' => 'marginTop',
             'mr' => 'marginRight',
             'mb' => 'marginBottom',
-            'gap' => 'gap',
+            'gap', 'gap-x', 'gap-y' => 'gap',
         };
         $values[$key] = $value;
 

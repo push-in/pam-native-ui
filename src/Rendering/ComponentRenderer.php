@@ -316,6 +316,11 @@ final class ComponentRenderer
                 PropKey::Value,
                 'pam:prompt-attachment',
             );
+        } elseif ($part === 'GridItem') {
+            $element = $element->property(
+                PropKey::Value,
+                self::gridItemTag($props),
+            );
         }
 
         if ($styleOverride !== null && !$styleAppliedToContent) {
@@ -588,6 +593,9 @@ final class ComponentRenderer
                 self::statusBarAppearance($props),
                 self::flag($props, 'hidden'),
             );
+        }
+        if ($part === 'Grid') {
+            return self::grid($props, $children);
         }
 
         $behavior = self::nativeBehavior($part);
@@ -1930,6 +1938,312 @@ final class ComponentRenderer
             ],
             $content,
         );
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     */
+    private static function grid(array $props, array $children): Element
+    {
+        $columns = self::responsiveGridValues(
+            $props,
+            ['columns', 'numColumns', 'gridColumns'],
+            'grid-cols',
+            12,
+        );
+        $columnGaps = self::responsiveGridGaps($props, 'x');
+        $rowGaps = self::responsiveGridGaps($props, 'y');
+        $direction = max(
+            1,
+            min(4, self::integer($props, 'flexDirection', 2)),
+        );
+        $grid = CustomView::make(
+            'pam.mobile_ui.grid',
+            [
+                'columns' => implode(',', $columns),
+                'columnGaps' => implode(',', $columnGaps),
+                'rowGaps' => implode(',', $rowGaps),
+                'direction' => $direction,
+            ],
+            ...$children,
+        );
+        if ($children === []) {
+            return $grid->property(PropKey::Height, 0.0);
+        }
+
+        return $grid->property(
+            PropKey::MinHeight,
+            self::gridMinimumHeight(
+                $children,
+                $columns,
+                $rowGaps,
+                $direction,
+            ),
+        );
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function gridItemTag(array $props): string
+    {
+        return 'pam:grid-item:'.implode(
+            ',',
+            self::responsiveGridValues(
+                $props,
+                ['colSpan', 'span'],
+                'col-span',
+                1,
+            ),
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<string> $propertyNames
+     * @return list<int>
+     */
+    private static function responsiveGridValues(
+        array $props,
+        array $propertyNames,
+        string $classPrefix,
+        int $default,
+    ): array {
+        $breakpoints = ['default', 'sm', 'md', 'lg', 'xl', '2xl'];
+        /** @var array<string, int|null> $values */
+        $values = array_fill_keys($breakpoints, null);
+        $values['default'] = $default;
+        $part = $classPrefix === 'grid-cols' ? 'Grid' : 'GridItem';
+        $pattern = '/^(?:(sm|md|lg|xl|2xl):)?'
+            .preg_quote($classPrefix, '/')
+            .'-(\d+)$/';
+        foreach (StyleRecipeResolver::classes($part, $props) ?? [] as $group) {
+            foreach (preg_split('/\s+/', trim($group)) ?: [] as $token) {
+                if (preg_match($pattern, $token, $match) !== 1) {
+                    continue;
+                }
+                $breakpoint = ($match[1] ?? '') === ''
+                    ? 'default'
+                    : $match[1];
+                $values[$breakpoint] = max(
+                    1,
+                    min(64, (int) $match[2]),
+                );
+            }
+        }
+        foreach ($propertyNames as $propertyName) {
+            if (!array_key_exists($propertyName, $props)) {
+                continue;
+            }
+            self::applyResponsiveGridProperty(
+                $values,
+                $breakpoints,
+                $props[$propertyName],
+                static fn (mixed $value): ?int => is_numeric($value)
+                    ? max(1, min(64, (int) $value))
+                    : null,
+            );
+            break;
+        }
+
+        return self::cascadeResponsiveIntegers(
+            $values,
+            $breakpoints,
+            $default,
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return list<float>
+     */
+    private static function responsiveGridGaps(
+        array $props,
+        string $axis,
+    ): array {
+        $breakpoints = ['default', 'sm', 'md', 'lg', 'xl', '2xl'];
+        /** @var array<string, float|null> $values */
+        $values = array_fill_keys($breakpoints, null);
+        $values['default'] = 0.0;
+        $pattern = '/^(?:(sm|md|lg|xl|2xl):)?gap(?:-(x|y))?'
+            .'-(px|\d+(?:\.\d+)?)$/';
+        foreach (StyleRecipeResolver::classes('Grid', $props) ?? [] as $group) {
+            foreach (preg_split('/\s+/', trim($group)) ?: [] as $token) {
+                if (preg_match($pattern, $token, $match) !== 1) {
+                    continue;
+                }
+                $tokenAxis = $match[2];
+                if ($tokenAxis !== '' && $tokenAxis !== $axis) {
+                    continue;
+                }
+                $breakpoint = $match[1] === ''
+                    ? 'default'
+                    : $match[1];
+                $values[$breakpoint] = $match[3] === 'px'
+                    ? 1.0
+                    : max(0.0, (float) $match[3] * 4.0);
+            }
+        }
+        $specific = $axis === 'x' ? 'columnGap' : 'rowGap';
+        foreach (['gap', $specific] as $propertyName) {
+            if (!array_key_exists($propertyName, $props)) {
+                continue;
+            }
+            self::applyResponsiveGridProperty(
+                $values,
+                $breakpoints,
+                $props[$propertyName],
+                static fn (mixed $value): ?float => is_numeric($value)
+                    ? max(0.0, (float) $value)
+                    : null,
+            );
+        }
+        $resolved = [];
+        $current = 0.0;
+        foreach ($breakpoints as $breakpoint) {
+            $current = $values[$breakpoint] ?? $current;
+            $resolved[] = $current;
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @template TValue of int|float
+     * @param array<string, TValue|null> $target
+     * @param list<string> $breakpoints
+     * @param Closure(mixed): (TValue|null) $normalize
+     */
+    private static function applyResponsiveGridProperty(
+        array &$target,
+        array $breakpoints,
+        mixed $property,
+        Closure $normalize,
+    ): void {
+        if (!is_array($property)) {
+            $normalized = $normalize($property);
+            if ($normalized !== null) {
+                $target['default'] = $normalized;
+            }
+
+            return;
+        }
+        foreach ($breakpoints as $index => $breakpoint) {
+            $normalized = $normalize(
+                $property[$breakpoint] ?? $property[$index] ?? null,
+            );
+            if ($normalized !== null) {
+                $target[$breakpoint] = $normalized;
+            }
+        }
+    }
+
+    /**
+     * @param array<string, int|null> $values
+     * @param list<string> $breakpoints
+     * @return list<int>
+     */
+    private static function cascadeResponsiveIntegers(
+        array $values,
+        array $breakpoints,
+        int $default,
+    ): array {
+        $resolved = [];
+        $current = $default;
+        foreach ($breakpoints as $breakpoint) {
+            $current = $values[$breakpoint] ?? $current;
+            $resolved[] = $current;
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param list<Element> $children
+     * @param list<int> $columns
+     * @param list<float> $rowGaps
+     */
+    private static function gridMinimumHeight(
+        array $children,
+        array $columns,
+        array $rowGaps,
+        int $direction,
+    ): float {
+        if (in_array($direction, [1, 3], true)) {
+            return array_sum(
+                array_map(
+                    static fn (Element $child): float =>
+                        self::gridChildHeight($child),
+                    $children,
+                ),
+            ) + ($rowGaps[0] ?? 0.0) * max(0, count($children) - 1);
+        }
+        $maximum = 0.0;
+        foreach ($columns as $breakpoint => $columnCount) {
+            $rowSpan = 0;
+            $rowHeight = 0.0;
+            $height = 0.0;
+            $rows = 0;
+            foreach ($children as $child) {
+                $span = min(
+                    $columnCount,
+                    self::gridChildSpans($child)[$breakpoint] ?? 1,
+                );
+                if ($rowSpan > 0 && $rowSpan + $span > $columnCount) {
+                    $height += $rowHeight;
+                    $rows++;
+                    $rowSpan = 0;
+                    $rowHeight = 0.0;
+                }
+                $rowSpan += $span;
+                $rowHeight = max($rowHeight, self::gridChildHeight($child));
+                if ($rowSpan >= $columnCount) {
+                    $height += $rowHeight;
+                    $rows++;
+                    $rowSpan = 0;
+                    $rowHeight = 0.0;
+                }
+            }
+            if ($rowSpan > 0) {
+                $height += $rowHeight;
+                $rows++;
+            }
+            $height += ($rowGaps[$breakpoint] ?? 0.0) * max(0, $rows - 1);
+            $maximum = max($maximum, $height);
+        }
+
+        return max(0.0, $maximum);
+    }
+
+    /** @return list<int> */
+    private static function gridChildSpans(Element $child): array
+    {
+        $tag = $child->properties()[PropKey::Value->value] ?? null;
+        if (!is_string($tag) || !str_starts_with($tag, 'pam:grid-item:')) {
+            return [1, 1, 1, 1, 1, 1];
+        }
+        $values = array_map(
+            static fn (string $value): int =>
+                max(1, min(64, (int) $value)),
+            explode(',', substr($tag, strlen('pam:grid-item:'))),
+        );
+        $resolved = [];
+        $current = 1;
+        for ($index = 0; $index < 6; $index++) {
+            $current = $values[$index] ?? $current;
+            $resolved[] = $current;
+        }
+
+        return $resolved;
+    }
+
+    private static function gridChildHeight(Element $child): float
+    {
+        $properties = $child->properties();
+        $height = $properties[PropKey::Height->value]
+            ?? $properties[PropKey::MinHeight->value]
+            ?? 48.0;
+
+        return is_numeric($height) ? max(0.0, (float) $height) : 48.0;
     }
 
     /** @param array<string, mixed> $props */

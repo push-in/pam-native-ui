@@ -45,6 +45,7 @@ use Pam\MobileUi\Component\DrawerContent;
 use Pam\MobileUi\Component\DateTimePicker;
 use Pam\MobileUi\Component\DateTimePickerInput;
 use Pam\MobileUi\Component\DateTimePickerTrigger;
+use Pam\MobileUi\Component\Grid;
 use Pam\MobileUi\Component\GridItem;
 use Pam\MobileUi\Component\HStack;
 use Pam\MobileUi\Component\FormControl;
@@ -987,6 +988,42 @@ $assert(
             ->properties()[PropKey::Enabled->value] === false
         && GridItem::make()->toElement()->kind() === NodeKind::View,
     'Compound anatomy must preserve upstream pressable, text, input and container primitive kinds.',
+);
+
+$grid = Grid::make(
+    ['className' => 'grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3'],
+    GridItem::make(
+        ['className' => 'col-span-1 sm:col-span-2'],
+        Text::make('One'),
+    ),
+    GridItem::make(
+        ['colSpan' => 1],
+        Text::make('Two'),
+    ),
+    GridItem::make(
+        ['className' => 'col-span-2 sm:col-span-3'],
+        Text::make('Three'),
+    ),
+)->toElement();
+$gridNative = $grid->properties()[PropKey::HostProperties->value] ?? null;
+if (!$gridNative instanceof BinaryValue) {
+    throw new RuntimeException('Grid must pack responsive rules for Android.');
+}
+$gridProperties = Wire::decodeMap($gridNative->bytes);
+$assert(
+    $grid->kind() === NodeKind::CustomView
+        && $grid->properties()[PropKey::HostName->value]
+            === 'pam.mobile_ui.grid'
+        && $gridProperties['columns'] === '2,3,3,3,3,3'
+        && $gridProperties['columnGaps'] === '8,8,8,8,8,8'
+        && $gridProperties['rowGaps'] === '12,12,12,12,12,12'
+        && $gridProperties['direction'] === 2
+        && $grid->children()[0]->properties()[PropKey::Value->value]
+            === 'pam:grid-item:1,2,2,2,2,2'
+        && $grid->children()[2]->properties()[PropKey::Value->value]
+            === 'pam:grid-item:2,3,3,3,3,3'
+        && $grid->properties()[PropKey::MinHeight->value] === 108.0,
+    'Grid must preserve responsive columns, spans and independent native gaps.',
 );
 
 $toast = Toast::make(
