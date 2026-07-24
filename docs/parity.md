@@ -42,6 +42,11 @@ resize method/multiplier, progressive flag, cache policy, safe headers, tint,
 overlay, blur, accessibility alt and the five lifecycle callbacks. Android
 owns cancellation, redirects, measured-size decode, RAM/disk caching and
 crossfade; unobserved lifecycle work emits no PHP event.
+InputField, TextareaInput, BottomSheetTextInput, SelectInput,
+ModelSelectorInput, PromptInputTextarea and DateTimePickerInput share the full
+native input contract: keyboard/input mode, capitalization, correction,
+autofill, secure/read-only state, selection, cursor styling, multiline sizing,
+submit behavior and typed end/key/selection/content-size events.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

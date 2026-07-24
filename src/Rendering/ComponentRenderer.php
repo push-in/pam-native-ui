@@ -29,6 +29,14 @@ use Pam\Native\ImageFit;
 use Pam\Native\ImageLoadEvent;
 use Pam\Native\ImageProgressEvent;
 use Pam\Native\ImageResizeMethod;
+use Pam\Native\InputAutoCapitalize;
+use Pam\Native\InputAutofillImportance;
+use Pam\Native\InputContentSizeEvent;
+use Pam\Native\InputKeyEvent;
+use Pam\Native\InputMode;
+use Pam\Native\InputSelectionEvent;
+use Pam\Native\InputSubmitBehavior;
+use Pam\Native\InputTextAlignVertical;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalPresentation;
@@ -385,7 +393,7 @@ final class ComponentRenderer
             array_key_exists('editable', $props)
             && !self::flag($props, 'editable', true)
         );
-        $nativeReadOnly = in_array(
+        $nativeReadOnly = self::isInput($part) || in_array(
             $part,
             [
                 'Calendar',
@@ -2657,6 +2665,34 @@ final class ComponentRenderer
 
             return $events;
         }
+        if (self::isInput($part)) {
+            foreach ([
+                EventKind::InputSelectionChange,
+                EventKind::InputContentSizeChange,
+                EventKind::InputKeyPress,
+            ] as $kind) {
+                $handler = $events[$kind->value] ?? null;
+                if ($handler === null) {
+                    continue;
+                }
+                $events[$kind->value] = match ($kind) {
+                    EventKind::InputSelectionChange =>
+                        static function (string $payload) use ($handler): void {
+                            $handler(InputSelectionEvent::fromPayload($payload));
+                        },
+                    EventKind::InputContentSizeChange =>
+                        static function (string $payload) use ($handler): void {
+                            $handler(InputContentSizeEvent::fromPayload($payload));
+                        },
+                    EventKind::InputKeyPress =>
+                        static function (string $payload) use ($handler): void {
+                            $handler(InputKeyEvent::fromPayload($payload));
+                        },
+                };
+            }
+
+            return $events;
+        }
         if ($part === 'PromptInput') {
             $handler = $events[EventKind::Submit->value] ?? null;
             if ($handler === null) {
@@ -2765,6 +2801,10 @@ final class ComponentRenderer
                 EventKind::Focus,
                 EventKind::Blur,
                 EventKind::Submit,
+                EventKind::InputEndEditing,
+                EventKind::InputSelectionChange,
+                EventKind::InputContentSizeChange,
+                EventKind::InputKeyPress,
             ] as $kind) {
                 $handler = $events[$kind->value] ?? null;
                 if ($handler !== null) {
@@ -4616,7 +4656,163 @@ final class ComponentRenderer
             $input = $input->property(PropKey::AutoComplete, $autoComplete);
         }
 
+        $disabled = self::flag(
+            $props,
+            'disabled',
+            self::flag($props, 'isDisabled'),
+        );
+        $readOnly = self::flag(
+            $props,
+            'readOnly',
+            self::flag($props, 'isReadOnly'),
+        );
+        $input = $input
+            ->editable(
+                self::flag($props, 'editable', true)
+                    && !$disabled
+                    && !$readOnly,
+            )
+            ->autoCorrect(self::flag($props, 'autoCorrect', true))
+            ->autoCapitalize(match ($props['autoCapitalize'] ?? null) {
+                InputAutoCapitalize::None->value,
+                'none' => InputAutoCapitalize::None,
+                InputAutoCapitalize::Words->value,
+                'words' => InputAutoCapitalize::Words,
+                InputAutoCapitalize::Characters->value,
+                'characters' => InputAutoCapitalize::Characters,
+                default => InputAutoCapitalize::Sentences,
+            })
+            ->caretHidden(self::flag($props, 'caretHidden'))
+            ->contextMenuHidden(self::flag($props, 'contextMenuHidden'))
+            ->disableFullscreenUi(
+                self::flag($props, 'disableFullscreenUI'),
+            )
+            ->autofillImportance(
+                self::inputAutofillImportance($props),
+            )
+            ->selectTextOnFocus(
+                self::flag($props, 'selectTextOnFocus'),
+            )
+            ->showSoftInputOnFocus(
+                self::flag($props, 'showSoftInputOnFocus', true),
+            )
+            ->submitBehavior(self::inputSubmitBehavior($part, $props))
+            ->textAlignVertical(self::inputTextAlignVertical($props))
+            ->scrollEnabled(self::flag($props, 'scrollEnabled', true));
+
+        if (array_key_exists('inputMode', $props)) {
+            $input = $input->inputMode(self::inputMode($props));
+        }
+        $minimumLines = $props['rows'] ?? $props['minLines'] ?? null;
+        if (is_numeric($minimumLines)) {
+            $input = $input->minLines((int) $minimumLines);
+        }
+        $selection = $props['selection'] ?? null;
+        if (is_array($selection) && is_numeric($selection['start'] ?? null)) {
+            $input = $input->selection(
+                (int) $selection['start'],
+                is_numeric($selection['end'] ?? null)
+                    ? (int) $selection['end']
+                    : null,
+            );
+        }
+        $returnLabel = $props['returnKeyLabel'] ?? null;
+        if (is_scalar($returnLabel) && (string) $returnLabel !== '') {
+            $input = $input->returnKeyLabel((string) $returnLabel);
+        }
+        $cursorColor = self::packedColor($props['cursorColor'] ?? null);
+        if ($cursorColor !== null) {
+            $input = $input->cursorColor($cursorColor);
+        }
+        $underlineColor = self::packedColor(
+            $props['underlineColorAndroid'] ?? null,
+        );
+        if ($underlineColor !== null) {
+            $input = $input->underlineColor($underlineColor);
+        }
+
         return $input;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function inputAutofillImportance(
+        array $props,
+    ): InputAutofillImportance {
+        return match ($props['importantForAutofill'] ?? null) {
+            InputAutofillImportance::No->value,
+            'no' => InputAutofillImportance::No,
+            InputAutofillImportance::NoExcludeDescendants->value,
+            'noExcludeDescendants' =>
+                InputAutofillImportance::NoExcludeDescendants,
+            InputAutofillImportance::Yes->value,
+            'yes' => InputAutofillImportance::Yes,
+            InputAutofillImportance::YesExcludeDescendants->value,
+            'yesExcludeDescendants' =>
+                InputAutofillImportance::YesExcludeDescendants,
+            default => InputAutofillImportance::Auto,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function inputMode(array $props): InputMode
+    {
+        return match ($props['inputMode'] ?? null) {
+            InputMode::None->value, 'none' => InputMode::None,
+            InputMode::Decimal->value, 'decimal' => InputMode::Decimal,
+            InputMode::Numeric->value, 'numeric' => InputMode::Numeric,
+            InputMode::Tel->value, 'tel' => InputMode::Tel,
+            InputMode::Search->value, 'search' => InputMode::Search,
+            InputMode::Email->value, 'email' => InputMode::Email,
+            InputMode::Url->value, 'url' => InputMode::Url,
+            default => InputMode::Text,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function inputSubmitBehavior(
+        string $part,
+        array $props,
+    ): InputSubmitBehavior {
+        $value = $props['submitBehavior'] ?? null;
+        if ($value === InputSubmitBehavior::Submit->value || $value === 'submit') {
+            return InputSubmitBehavior::Submit;
+        }
+        if (
+            $value === InputSubmitBehavior::Newline->value
+            || $value === 'newline'
+        ) {
+            return InputSubmitBehavior::Newline;
+        }
+        if (
+            $value === InputSubmitBehavior::BlurAndSubmit->value
+            || $value === 'blurAndSubmit'
+        ) {
+            return InputSubmitBehavior::BlurAndSubmit;
+        }
+
+        return self::flag($props, 'multiline')
+            || in_array(
+                $part,
+                ['TextareaInput', 'BottomSheetTextInput'],
+                true,
+            )
+            ? InputSubmitBehavior::Newline
+            : InputSubmitBehavior::BlurAndSubmit;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function inputTextAlignVertical(
+        array $props,
+    ): InputTextAlignVertical {
+        return match ($props['textAlignVertical'] ?? null) {
+            InputTextAlignVertical::Top->value,
+            'top' => InputTextAlignVertical::Top,
+            InputTextAlignVertical::Center->value,
+            'center' => InputTextAlignVertical::Center,
+            InputTextAlignVertical::Bottom->value,
+            'bottom' => InputTextAlignVertical::Bottom,
+            default => InputTextAlignVertical::Auto,
+        };
     }
 
     /** @param array<string, mixed> $props */

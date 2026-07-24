@@ -165,6 +165,13 @@ available. `InputSlot` defaults to focusing the field and supports the
 integer-backed `focus`, `clear`, `toggle-password` and `none` actions through
 `Pam\MobileUi\Enum\InputSlotAction`.
 
+`InputField` and every textarea/input alias also forward `autoCapitalize`,
+`autoCorrect`, `autoComplete`, `inputMode`, `importantForAutofill`,
+`readOnly`/`editable`, controlled `selection`, cursor/underline colors,
+`rows`, `textAlignVertical`, `returnKeyLabel` and `submitBehavior`.
+`onSelectionChange`, `onContentSizeChange`, `onKeyPress` and `onEndEditing`
+receive typed PAM events while Android retains the hot editing path.
+
 Core layout wrappers forward their platform controls without adding a PHP
 interaction hop. For example, `SafeAreaView` accepts `edges="top,bottom"` and
 `mode="padding|margin"`, while `KeyboardAvoidingView` accepts

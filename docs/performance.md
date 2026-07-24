@@ -125,6 +125,12 @@ a 40 dp avatar must decode to the nearest bounded target bucket rather than its
 full dimensions. Progress may cross at most once per display frame when
 observed; images without lifecycle handlers emit zero bridge events.
 
+Inputs add a pending 10,000-keystroke and 1,000-field focus/selection gate.
+Native and blur/submit sync modes must preserve every character and cursor
+position with zero per-keystroke PHP callbacks; observed selection may emit at
+most once per display frame. The run records IME latency, dropped characters,
+main-thread p95/p99 and bridge event counts on physical hardware.
+
 Grid adds a pending 10,000-layout gate using responsive columns, mixed spans,
 independent row/column gaps and two wrapped rows. Breakpoint selection,
 measurement, RTL mirroring and placement must remain below 4 ms p99 with zero

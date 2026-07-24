@@ -215,6 +215,7 @@ use Pam\Native\AccessibilityCheckedState;
 use Pam\Native\AccessibilityImportance;
 use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\FontStyle;
+use Pam\Native\EventKind;
 use Pam\Native\Align;
 use Pam\Native\Internal\TemplateCompiler;
 use Pam\Native\Internal\TemplateRenderer;
@@ -227,6 +228,14 @@ use Pam\Native\ImageErrorEvent;
 use Pam\Native\ImageLoadEvent;
 use Pam\Native\ImageProgressEvent;
 use Pam\Native\ImageResizeMethod;
+use Pam\Native\InputAutoCapitalize;
+use Pam\Native\InputAutofillImportance;
+use Pam\Native\InputContentSizeEvent;
+use Pam\Native\InputKeyEvent;
+use Pam\Native\InputMode;
+use Pam\Native\InputSelectionEvent;
+use Pam\Native\InputSubmitBehavior;
+use Pam\Native\InputTextAlignVertical;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
@@ -1133,13 +1142,71 @@ $statusPrimitive = StatusBar::make([
     'animated' => true,
     'translucent' => true,
 ])->toElement();
+$inputSelection = null;
+$inputContentSize = null;
+$inputKey = null;
+$inputEndValue = null;
 $nativeInputProps = InputField::make([
     'placeholderTextColor' => 'rgba(255, 255, 255, 0.4)',
     'selectionColor' => '#11223344',
     'returnKeyType' => 'search',
     'pointerEvents' => 'box-none',
     'collapsable' => false,
-])->toElement();
+    'multiline' => true,
+    'readOnly' => true,
+    'autoCorrect' => false,
+    'autoCapitalize' => 'characters',
+    'caretHidden' => true,
+    'contextMenuHidden' => true,
+    'cursorColor' => '#2563eb',
+    'disableFullscreenUI' => true,
+    'importantForAutofill' => 'yes',
+    'inputMode' => 'email',
+    'rows' => 3,
+    'selectTextOnFocus' => true,
+    'selection' => ['start' => 1, 'end' => 4],
+    'showSoftInputOnFocus' => false,
+    'submitBehavior' => 'submit',
+    'textAlignVertical' => 'top',
+    'returnKeyLabel' => 'Publish',
+    'scrollEnabled' => false,
+    'underlineColorAndroid' => 'transparent',
+])
+    ->onEndEditing(
+        static function (string $value) use (&$inputEndValue): void {
+            $inputEndValue = $value;
+        },
+    )
+    ->onSelectionChange(
+        static function (InputSelectionEvent $event) use (&$inputSelection): void {
+            $inputSelection = $event;
+        },
+    )
+    ->onContentSizeChange(
+        static function (InputContentSizeEvent $event) use (
+            &$inputContentSize,
+        ): void {
+            $inputContentSize = $event;
+        },
+    )
+    ->onKeyPress(
+        static function (InputKeyEvent $event) use (&$inputKey): void {
+            $inputKey = $event;
+        },
+    )
+    ->toElement();
+$nativeInputProps->events()[EventKind::InputEndEditing->value]('finished');
+$nativeInputProps->events()[EventKind::InputSelectionChange->value](Wire::map([
+    'start' => 1,
+    'end' => 4,
+]));
+$nativeInputProps->events()[EventKind::InputContentSizeChange->value](Wire::map([
+    'width' => 240.0,
+    'height' => 96.0,
+]));
+$nativeInputProps->events()[EventKind::InputKeyPress->value](Wire::map([
+    'key' => 'Enter',
+]));
 $nativePressableProps = Pressable::make(
     [
         'android_ripple' => ['color' => '#01020380'],
@@ -1340,6 +1407,40 @@ $assert(
             === 0x44112233
         && $nativeInputProps->properties()[PropKey::ReturnKeyType->value]
             === ReturnKeyType::Search->value
+        && $nativeInputProps->properties()[PropKey::InputEditable->value]
+            === false
+        && $nativeInputProps->properties()[PropKey::InputAutoCorrect->value]
+            === false
+        && $nativeInputProps->properties()[PropKey::InputAutoCapitalize->value]
+            === InputAutoCapitalize::Characters->value
+        && $nativeInputProps
+            ->properties()[PropKey::InputAutofillImportance->value]
+            === InputAutofillImportance::Yes->value
+        && $nativeInputProps->properties()[PropKey::InputMode->value]
+            === InputMode::Email->value
+        && $nativeInputProps->properties()[PropKey::InputMinLines->value] === 3
+        && $nativeInputProps->properties()[PropKey::InputSelectionStart->value]
+            === 1
+        && $nativeInputProps->properties()[PropKey::InputSelectionEnd->value]
+            === 4
+        && $nativeInputProps->properties()[PropKey::InputSubmitBehavior->value]
+            === InputSubmitBehavior::Submit->value
+        && $nativeInputProps
+            ->properties()[PropKey::InputTextAlignVertical->value]
+            === InputTextAlignVertical::Top->value
+        && $nativeInputProps->properties()[PropKey::InputReturnKeyLabel->value]
+            === 'Publish'
+        && $nativeInputProps->properties()[PropKey::InputScrollEnabled->value]
+            === false
+        && $nativeInputProps->properties()[PropKey::InputUnderlineColor->value]
+            === 0x00000000
+        && $inputEndValue === 'finished'
+        && $inputSelection instanceof InputSelectionEvent
+        && $inputSelection->end === 4
+        && $inputContentSize instanceof InputContentSizeEvent
+        && $inputContentSize->height === 96.0
+        && $inputKey instanceof InputKeyEvent
+        && $inputKey->key === 'Enter'
         && $nativeInputProps->properties()[PropKey::PointerEvents->value]
             === PointerEvents::BoxNone->value
         && $nativeInputProps->properties()[PropKey::Collapsable->value] === false
@@ -1428,7 +1529,7 @@ $assert(
         && ModelSelectorName::make('PAM')->toElement()->kind() === NodeKind::Text
         && SelectInput::make()->toElement()->kind() === NodeKind::Input
         && SelectInput::make()->toElement()
-            ->properties()[PropKey::Enabled->value] === false
+            ->properties()[PropKey::InputEditable->value] === false
         && GridItem::make()->toElement()->kind() === NodeKind::View,
     'Compound anatomy must preserve upstream pressable, text, input and container primitive kinds.',
 );

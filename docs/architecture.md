@@ -266,6 +266,13 @@ inactive errors become `GONE`, and Android exposes the associated label,
 helper, required/read-only state and current error through the field's
 accessibility node.
 
+The core field is a dedicated `PamEditText`, not a generic bridge wrapper. IME
+configuration, autofill hints, capitalization/correction, secure rendering,
+controlled selection, return actions, content measurement and cursor state
+are applied on the UI thread. Soft-key input is observed through the native
+`InputConnection`; selection is VSYNC-coalesced and all optional callbacks are
+detached when no PHP handler exists.
+
 ## Utility class pipeline
 
 PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI

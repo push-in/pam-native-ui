@@ -357,6 +357,26 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::Submit, $handler);
     }
 
+    final public function onEndEditing(Closure $handler): static
+    {
+        return $this->on(EventKind::InputEndEditing, $handler);
+    }
+
+    final public function onSelectionChange(Closure $handler): static
+    {
+        return $this->on(EventKind::InputSelectionChange, $handler);
+    }
+
+    final public function onContentSizeChange(Closure $handler): static
+    {
+        return $this->on(EventKind::InputContentSizeChange, $handler);
+    }
+
+    final public function onKeyPress(Closure $handler): static
+    {
+        return $this->on(EventKind::InputKeyPress, $handler);
+    }
+
     final public function onScroll(Closure $handler): static
     {
         return $this->on(EventKind::Scroll, $handler);
