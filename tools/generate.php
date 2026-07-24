@@ -150,6 +150,7 @@ foreach ($catalog['modules'] as $index => $module) {
         isset($serviceModules[$name]) => 4,
         default => 1,
     };
+    $hasVariants = ($module['variants'] ?? []) !== [];
     $parityModules[] = [
         'id' => $index + 1,
         'name' => $name,
@@ -172,8 +173,8 @@ foreach ($catalog['modules'] as $index => $module) {
             2,
             2,
             $implementation === 4 ? 4 : 2,
-            1,
-            1,
+            $hasVariants ? 2 : 4,
+            $implementation === 4 ? 4 : 2,
             2,
             2,
             ($module['examples'] ?? 0) > 0 ? 2 : 1,

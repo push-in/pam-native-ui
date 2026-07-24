@@ -33,6 +33,13 @@ A module reaches status `3` (`verified`) only when all applicable gates pass:
 Alpha upstream components remain labeled `alpha` but are not excluded from PAM
 parity.
 
+`composer test:recipes` expands every generated facade through the light and
+dark themes, every captured variant option, every compound rule, and the
+active, checked, disabled, focused, hovered, invalid, selected and flip state
+paths. A selected recipe utility without a packed native implementation fails
+the build. Modules with no upstream variant axis use status `4`
+(`not-applicable`) for that gate.
+
 All coded fields use sequential integer IDs represented by PHP enums. Human
 names under `definitions` are documentation labels; component records store the
 IDs. `resources/parity.schema.json` fixes the module count at 61 and rejects

@@ -98,7 +98,7 @@ alone.
 ## Status
 
 The parity file is the release gate. PHP/tag generation, packed native hosts,
-themes, PHPStan level 9, Android compilation/lint, and the initial kitchen sink
-are implemented. Entries remain explicitly `planned`, `implemented`,
-`verified`, or `not-applicable` per gate; no unverified component is presented
-as finished.
+themes, recipe/state matrix expansion, PHPStan level 9, Android
+compilation/lint, and the initial kitchen sink are implemented. Entries remain
+explicitly `planned`, `implemented`, `verified`, or `not-applicable` per gate;
+no unverified component is presented as finished.
