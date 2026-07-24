@@ -235,9 +235,7 @@ internal object MarkdownParser {
     private const val MAX_INLINE_DEPTH = 16
 
     fun parse(markdown: String): MarkdownDocument {
-        val normalized = markdown
-            .replace("\r\n", "\n")
-            .replace('\r', '\n')
+        val normalized = normalizeMarkdownSource(markdown)
         val lines = normalized.split('\n')
         val output = StringBuilder(normalized.length)
         val spans = ArrayList<MarkdownSpan>()
@@ -345,6 +343,35 @@ internal object MarkdownParser {
         }
 
         return MarkdownDocument(output.toString(), spans)
+    }
+
+    private fun normalizeMarkdownSource(markdown: String): String {
+        val boundaryTrimmed = markdown
+            .replace("\r\n", "\n")
+            .replace('\r', '\n')
+            .trim()
+        val lines = boundaryTrimmed.lines()
+        if (lines.size < 2) return boundaryTrimmed
+
+        val firstIndent = lines.first().takeWhile(Char::isWhitespace).length
+        val continuationIndent = lines
+            .drop(1)
+            .filter(String::isNotBlank)
+            .minOfOrNull { line -> line.takeWhile(Char::isWhitespace).length }
+            ?: 0
+        if (firstIndent != 0 || continuationIndent == 0) {
+            return boundaryTrimmed.trimIndent()
+        }
+
+        return buildString(boundaryTrimmed.length) {
+            append(lines.first())
+            lines.drop(1).forEach { line ->
+                append('\n')
+                if (line.isNotBlank()) {
+                    append(line.drop(continuationIndent))
+                }
+            }
+        }
     }
 
     private fun appendInline(

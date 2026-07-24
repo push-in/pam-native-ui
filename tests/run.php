@@ -45,14 +45,16 @@ use Pam\MobileUi\Component\CalendarHeaderTitle;
 use Pam\MobileUi\Component\CalendarHeaderYearSelect;
 use Pam\MobileUi\Component\CalendarWeekDay;
 use Pam\MobileUi\Component\CalendarWeekNumber;
+use Pam\MobileUi\Component\Card;
 use Pam\MobileUi\Component\Drawer;
 use Pam\MobileUi\Component\DrawerContent;
 use Pam\MobileUi\Component\DateTimePicker;
 use Pam\MobileUi\Component\DateTimePickerInput;
 use Pam\MobileUi\Component\DateTimePickerTrigger;
+use Pam\MobileUi\Component\Divider;
 use Pam\MobileUi\Component\Grid;
 use Pam\MobileUi\Component\GridItem;
-use Pam\MobileUi\Component\GluestackUIProvider;
+use Pam\MobileUi\Component\PamUIProvider;
 use Pam\MobileUi\Component\HStack;
 use Pam\MobileUi\Component\Heading;
 use Pam\MobileUi\Component\FormControl;
@@ -114,6 +116,7 @@ use Pam\MobileUi\Component\MessageToolbar;
 use Pam\MobileUi\Component\Menu;
 use Pam\MobileUi\Component\MenuItem;
 use Pam\MobileUi\Component\Modal;
+use Pam\MobileUi\Component\ModalContent;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
 use Pam\MobileUi\Component\ModelSelectorGroup;
@@ -327,7 +330,7 @@ foreach ([
 }
 
 $upstream = json_decode(
-    (string) file_get_contents(dirname(__DIR__).'/resources/upstream-components.json'),
+    (string) file_get_contents(dirname(__DIR__).'/resources/pam-ui-components.json'),
     true,
     flags: JSON_THROW_ON_ERROR,
 );
@@ -456,22 +459,24 @@ $assert(
     'Radio verification evidence must survive deterministic regeneration.',
 );
 $assert(count(ComponentMap::TAGS) >= 300, 'The generated public component anatomy is incomplete.');
+$componentIds = array_values(ComponentMap::IDS);
+sort($componentIds, SORT_NUMERIC);
 $assert(
-    array_values(ComponentMap::IDS) === range(1, count(ComponentMap::IDS)),
+    $componentIds === range(1, count(ComponentMap::IDS)),
     'Generated component IDs must be sequential and deterministic.',
 );
 $assert(class_exists(SwitchControl::class), 'Reserved PHP names must receive a typed facade alias.');
 
 ThemeManager::mode(ThemeMode::Light);
 $assert(
-    Themes::light()->color(ColorToken::Background) === 0xffffffff,
+    Themes::light()->color(ColorToken::Background) === 0xfff8fafc,
     'The upstream light background token changed unexpectedly.',
 );
 $assert(
-    Themes::dark()->color(ColorToken::Background) === 0xff0a0a0a,
+    Themes::dark()->color(ColorToken::Background) === 0xff0f172a,
     'The upstream dark background token changed unexpectedly.',
 );
-$themedProvider = GluestackUIProvider::make(
+$themedProvider = PamUIProvider::make(
     ['mode' => 'dark'],
     Button::make('Scoped theme'),
 )->toElement();
@@ -513,15 +518,15 @@ $assert(
 );
 $assert(
     $button->properties()[PropKey::BorderWidth->value] === 1.0,
-    'The upstream outline variant must compile its border recipe.',
+    'The PamUI outline variant must compile its border recipe.',
 );
 $assert(
-    $button->properties()[PropKey::MinHeight->value] === 40.0,
-    'The upstream large button size must compile min-h-10 exactly.',
+    $button->properties()[PropKey::MinHeight->value] === 56.0,
+    'The PamUI large button must preserve a comfortable 56dp touch target.',
 );
 $assert(
     $button->properties()[PropKey::PaddingHorizontal->value] === 32.0,
-    'The upstream large button size must compile px-8 exactly.',
+    'The PamUI large button size must compile px-8 exactly.',
 );
 $composedButton = Button::make(
     [
@@ -734,6 +739,18 @@ foreach ($defaultClosedOverlays as $defaultClosedOverlay) {
         'Standalone overlays must follow the upstream default-closed contract.',
     );
 }
+$defaultModal = Modal::make(
+    ModalContent::make(Text::make('Sized modal')),
+)->toElement();
+$defaultModalContent = $defaultModal->children()[0]?->children()[0] ?? null;
+$assert(
+    $defaultModalContent instanceof \Pam\Native\Element
+        && $defaultModalContent->properties()[PropKey::WidthPercent->value]
+            === 80.0
+        && $defaultModalContent->properties()[PropKey::MaxWidth->value]
+            === 510.0,
+    'Modal must provide a production-safe centered default content width.',
+);
 $modalRequestedClose = false;
 $modalShown = false;
 $modalDismissed = false;
@@ -989,6 +1006,8 @@ $assert(
         && $dateTimeNative['maximumDate'] === '2026-07-31'
         && $dateTimeNative['timeZoneOffsetInMinutes'] === -180
         && $dateTimeNative['is24Hour'] === true
+        && $dateTimeInput->properties()[PropKey::FlexGrow->value] === 1.0
+        && $dateTimeInput->properties()[PropKey::MinWidth->value] === 0.0
         && $dateTimeInput->properties()[PropKey::Value->value] === '23/07/2026 14:35',
     'DateTimePicker must preserve its native limits, time zone and display format.',
 );
@@ -1015,6 +1034,9 @@ $defaultHomeContent = $defaultTabs->children()[1] ?? null;
 $forcedProfileContent = $defaultTabs->children()[2] ?? null;
 $assert(
     $defaultHomeTrigger?->properties()[PropKey::Selected->value] === true
+        && $defaultTabsList?->properties()[PropKey::FlexDirection->value]
+            === FlexDirection::Row->value
+        && $defaultHomeTrigger?->properties()[PropKey::FlexGrow->value] === 1.0
         && !isset($defaultHomeContent?->properties()[PropKey::Visible->value])
         && !isset($forcedProfileContent?->properties()[PropKey::Visible->value])
         && $forcedProfileContent?->properties()[PropKey::Value->value]
@@ -1698,8 +1720,43 @@ $assert(
             === 'pam:grid-item:1,2,2,2,2,2'
         && $grid->children()[2]->properties()[PropKey::Value->value]
             === 'pam:grid-item:2,3,3,3,3,3'
-        && $grid->properties()[PropKey::MinHeight->value] === 108.0,
+        && abs(
+            $grid->properties()[PropKey::MinHeight->value] - 51.2,
+        ) < 0.001,
     'Grid must preserve responsive columns, spans and independent native gaps.',
+);
+
+$contentGrid = Grid::make(
+    ['className' => 'grid-cols-2 gap-3'],
+    GridItem::make(
+        Card::make(
+            Heading::make(['size' => 'lg', 'text' => '326']),
+            \Pam\MobileUi\Component\Text::make('Typed facades'),
+        ),
+    ),
+    GridItem::make(
+        Card::make(
+            Heading::make(['size' => 'lg', 'text' => '55']),
+            \Pam\MobileUi\Component\Text::make('Native icons'),
+        ),
+    ),
+)->toElement();
+$assert(
+    abs(
+        $contentGrid->properties()[PropKey::MinHeight->value] - 103.6,
+    ) < 0.001,
+    'Grid must reserve the recursive intrinsic height of content-sized cards.',
+);
+
+$horizontalDivider = Divider::make()->toElement();
+$verticalDivider = Divider::make(['orientation' => Orientation::Vertical])
+    ->toElement();
+$assert(
+    $horizontalDivider->properties()[PropKey::Height->value] === 1.0
+        && $verticalDivider->properties()[PropKey::Width->value] === 1.0
+        && $verticalDivider->properties()[PropKey::HeightPercent->value]
+            === 100.0,
+    'Divider must default to a one-pixel horizontal rule and preserve vertical orientation.',
 );
 
 $toast = Toast::make(
@@ -1751,6 +1808,8 @@ $assert(
     $attachments->properties()[PropKey::FlexDirection->value] === FlexDirection::Column->value
         && $attachmentContent->kind() === NodeKind::Column
         && $attachment->properties()[PropKey::WidthPercent->value] === 100.0
+        && $attachment->properties()[PropKey::FlexDirection->value]
+            === FlexDirection::Row->value
         && $preview->properties()[PropKey::Width->value] === 48.0,
     'Attachment list variants must compile through inherited integer variant context.',
 );
@@ -1819,6 +1878,7 @@ if (!$messageContent instanceof \Pam\Native\Element) {
 $assert(
     $message->properties()[PropKey::MarginTop->value] === 16.0
         && $messageContent->properties()[PropKey::AlignSelf->value] === Align::End->value
+        && $messageContent->properties()[PropKey::WidthPercent->value] === 100.0
         && $messageContent->properties()[PropKey::MaxWidthPercent->value] === 90.0,
     'Chat role recipes must preserve the upstream user bubble layout.',
 );
@@ -1874,6 +1934,8 @@ $modelLogo = ModelSelectorLogo::make(['provider' => 'anthropic'])->toElement();
 $assert(
     $messageResponse->kind() === NodeKind::Column
         && $markdownChild->kind() === NodeKind::CustomView
+        && $markdownChild->properties()[PropKey::WidthPercent->value] === 100.0
+        && $markdownChild->properties()[PropKey::MinHeight->value] > 48.0
         && $markdownChild->properties()[PropKey::HostName->value]
             === 'pam.mobile_ui.markdown'
         && $markdownProperties['source']
@@ -1934,6 +1996,12 @@ $assert(
         && $messageBranchContent->children()[0]
             ->properties()[PropKey::Value->value]
             === 'pam:message-branch-page:0'
+        && $messageBranchContent->children()[0]
+            ->properties()[PropKey::Visible->value] === false
+        && !isset(
+            $messageBranchContent->children()[1]
+                ->properties()[PropKey::Visible->value],
+        )
         && $messageBranchSelector->properties()[PropKey::Value->value]
             === 'pam:message-branch-selector'
         && $messageBranchPreviousProperties['behavior']
@@ -1987,6 +2055,9 @@ $promptSubmitProperties = Wire::decodeMap($promptSubmitNative->bytes);
 $prompt->events()[\Pam\Native\EventKind::Submit->value]('Ship it');
 $assert(
     $prompt->kind() === NodeKind::CustomView
+        && $prompt->properties()[PropKey::PositionType->value]
+            === PositionType::Relative->value
+        && $prompt->properties()[PropKey::Bottom->value] === 0.0
         && $promptTextarea->kind() === NodeKind::Input
         && $promptProperties['behavior'] === NativeBehavior::PromptInput->value
         && $promptProperties['clearOnSubmit'] === true
@@ -2139,6 +2210,8 @@ $assert(
         && $fileTreeFolderProperties['behavior']
             === NativeBehavior::FileTreeFolder->value
         && $fileTreeFolderProperties['path'] === '/src'
+        && $fileTreeFolder->properties()[PropKey::FlexDirection->value]
+            === FlexDirection::Column->value
         && $fileTreeFileProperties['behavior']
             === NativeBehavior::FileTreeFile->value
         && $fileTreeHeader->properties()[PropKey::Value->value]
@@ -2265,7 +2338,10 @@ $tableNative = Wire::decodeMap($tableNativeValue->bytes);
 $tableHeaderRowNative = Wire::decodeMap($tableHeaderRowNativeValue->bytes);
 $assert(
     $tableNative['behavior'] === NativeBehavior::Table->value
+        && $table->properties()[PropKey::WidthPercent->value] === 100.0
         && $tableHeaderRowNative['behavior'] === NativeBehavior::TableRow->value
+        && $tableHeaderRow?->properties()[PropKey::FlexDirection->value]
+            === FlexDirection::Row->value
         && $tableHeaderRowNative['isHeaderRow'] === true
         && count($tableHeaderRow->children()) === 2,
     'Table must retain authored cells while packing header-row collection semantics.',
@@ -2422,6 +2498,7 @@ $assert(
         && $compoundInputNative['readOnly'] === true
         && $compoundInputSlotNative['behavior'] === NativeBehavior::InputSlot->value
         && $compoundInputSlotNative['slotAction'] === InputSlotAction::Clear->value
+        && $compoundInputSlot->properties()[PropKey::Width->value] === 40.0
         && $compoundInputField->kind() === NodeKind::Input
         && $compoundInputField->properties()[PropKey::Secure->value] === true
         && $compoundInputField->properties()[PropKey::InputSyncMode->value] === 1
@@ -2971,6 +3048,7 @@ $assert(
         && $semanticAccordionGroupProperties['type'] === ComponentMode::Multiple->value
         && $semanticAccordionProperties['behavior'] === NativeBehavior::Accordion->value
         && $semanticAccordionProperties['expanded'] === false
+        && $semanticAccordionContent->properties()[PropKey::Visible->value] === false
         && $semanticAccordionTrigger->properties()[PropKey::Value->value]
             === 'pam:accordion-trigger'
         && $semanticAccordionIcon->properties()[PropKey::Value->value]

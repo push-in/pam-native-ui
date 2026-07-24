@@ -91,11 +91,11 @@ Override only the semantic tokens owned by the application:
 
 ```php
 use Pam\MobileUi\Enum\ColorToken;
-use Pam\MobileUi\MobileUi;
+use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Theme\Color;
 use Pam\MobileUi\Theme\Themes;
 
-MobileUi::theme(
+PamUI::theme(
     Themes::light()->withColors([
         ColorToken::Primary->value => Color::rgb(37, 99, 235),
     ]),

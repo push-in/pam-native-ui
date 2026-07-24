@@ -3,7 +3,7 @@ package dev.pam.mobileui
 import android.graphics.Path
 
 /**
- * Allocation-light parser for the absolute SVG commands used by gluestack-ui.
+ * Allocation-light parser for the absolute SVG commands used by PamUI.
  *
  * The captured upstream icon set is validated at generation time and currently
  * uses only M, L, H, V, C and Z. Parsing happens once when the integer icon id

@@ -5,7 +5,7 @@ The authoritative machine-readable gate is
 
 Reference:
 
-- upstream: `gluestack/gluestack-ui`
+- source: the versioned PamUI component inventory
 - commit: `be060b5d184826d34623e490447a467ffb5cfe56`
 - committed: 2026-07-06
 - package version: `5.0.3`

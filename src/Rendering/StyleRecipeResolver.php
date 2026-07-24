@@ -8,6 +8,30 @@ use Pam\MobileUi\Generated\StyleRecipes;
 
 final class StyleRecipeResolver
 {
+    /**
+     * The source recipes are shared with web and occasionally rely on CSS
+     * defaults that do not exist in PAM's native flex layout. Keep the small
+     * native compatibility layer here so generated recipes stay reproducible
+     * and an application's className can still override these defaults.
+     *
+     * @var array<string, string>
+     */
+    private const array NATIVE_DEFAULTS = [
+        'Attachment' => 'flex-row',
+        'DateTimePickerInput' => 'flex-1 min-w-0',
+        'FileTreeFolder' => 'flex-col items-stretch',
+        'InputSlot' => 'w-10 h-full shrink-0',
+        'MessageContent' => 'w-full',
+        'PromptInput' => 'relative bottom-0',
+        'Popover' => 'w-auto h-auto items-stretch justify-start',
+        'SelectInput' => 'flex-1 min-w-0',
+        'Table' => 'w-full',
+        'TableRow' => 'flex-row',
+        'TabsList' => 'w-full flex-row',
+        'TabsTrigger' => 'flex-1',
+        'Tooltip' => 'w-auto h-auto items-stretch justify-start',
+    ];
+
     private function __construct()
     {
     }
@@ -66,6 +90,8 @@ final class StyleRecipeResolver
             [...$props, ...$parent],
             $defaults,
         );
+
+        self::append($classes, self::NATIVE_DEFAULTS[$part] ?? null);
 
         if (is_string($props['className'] ?? null)) {
             self::append($classes, $props['className']);

@@ -17,7 +17,9 @@
         ],
         "resourceDirs": [
             "android/src/main/res"
-        ]
+        ],
+        "manifest": "android/src/main/AndroidManifest.xml",
+        "consumerRules": "android/consumer-rules.pro"
     },
     "views": [
         {

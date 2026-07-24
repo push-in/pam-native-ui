@@ -166,7 +166,6 @@ final class ComponentMap
         'GlassContainer' => \Pam\MobileUi\Component\GlassContainer::class,
         'GlassView' => \Pam\MobileUi\Component\GlassView::class,
         'GlobeIcon' => \Pam\MobileUi\Component\GlobeIcon::class,
-        'GluestackUIProvider' => \Pam\MobileUi\Component\GluestackUIProvider::class,
         'Grid' => \Pam\MobileUi\Component\Grid::class,
         'GridItem' => \Pam\MobileUi\Component\GridItem::class,
         'GripVerticalIcon' => \Pam\MobileUi\Component\GripVerticalIcon::class,
@@ -233,6 +232,7 @@ final class ComponentMap
         'ModelSelectorShortcut' => \Pam\MobileUi\Component\ModelSelectorShortcut::class,
         'ModelSelectorTrigger' => \Pam\MobileUi\Component\ModelSelectorTrigger::class,
         'MoonIcon' => \Pam\MobileUi\Component\MoonIcon::class,
+        'PamUIProvider' => \Pam\MobileUi\Component\PamUIProvider::class,
         'PaperclipIcon' => \Pam\MobileUi\Component\PaperclipIcon::class,
         'PhoneIcon' => \Pam\MobileUi\Component\PhoneIcon::class,
         'PlayIcon' => \Pam\MobileUi\Component\PlayIcon::class,
@@ -496,7 +496,6 @@ final class ComponentMap
         'GlassContainer' => 157,
         'GlassView' => 158,
         'GlobeIcon' => 159,
-        'GluestackUIProvider' => 160,
         'Grid' => 161,
         'GridItem' => 162,
         'GripVerticalIcon' => 163,
@@ -563,6 +562,7 @@ final class ComponentMap
         'ModelSelectorShortcut' => 224,
         'ModelSelectorTrigger' => 225,
         'MoonIcon' => 226,
+        'PamUIProvider' => 160,
         'PaperclipIcon' => 227,
         'PhoneIcon' => 228,
         'PlayIcon' => 229,
@@ -871,9 +871,6 @@ final class ComponentMap
   7 => 'FormControlHelper',
   8 => 'FormControlHelperText',
 ),
-        'gluestack-ui-provider' => array (
-  0 => 'GluestackUIProvider',
-),
         'grid' => array (
   0 => 'Grid',
   1 => 'GridItem',
@@ -990,6 +987,9 @@ final class ComponentMap
   4 => 'ModalContent',
   5 => 'ModalFooter',
   6 => 'ModalHeader',
+),
+        'pam-ui-provider' => array (
+  0 => 'PamUIProvider',
 ),
         'popover' => array (
   0 => 'Popover',

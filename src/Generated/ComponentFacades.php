@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pam\MobileUi\Component;
 
 /**
- * Generated from resources/upstream-components.json.
+ * Generated from resources/pam-ui-components.json.
  *
  * @codeCoverageIgnore
  */
@@ -804,11 +804,6 @@ final class GlobeIcon extends UiComponent
     protected const string COMPONENT = 'GlobeIcon';
 }
 
-final class GluestackUIProvider extends UiComponent
-{
-    protected const string COMPONENT = 'GluestackUIProvider';
-}
-
 final class Grid extends UiComponent
 {
     protected const string COMPONENT = 'Grid';
@@ -1137,6 +1132,11 @@ final class ModelSelectorTrigger extends UiComponent
 final class MoonIcon extends UiComponent
 {
     protected const string COMPONENT = 'MoonIcon';
+}
+
+final class PamUIProvider extends UiComponent
+{
+    protected const string COMPONENT = 'PamUIProvider';
 }
 
 final class PaperclipIcon extends UiComponent

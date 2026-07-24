@@ -463,8 +463,13 @@ abstract class UiComponent implements Renderable
             static::COMPONENT,
             $this->props,
         );
+        $componentProps = ComponentRenderer::withParentState(
+            static::COMPONENT,
+            $componentProps,
+            $this->parentVariants,
+        );
         $previousThemeMode = null;
-        if (static::COMPONENT === 'GluestackUIProvider') {
+        if (static::COMPONENT === 'PamUIProvider') {
             $previousThemeMode = ThemeManager::configuredMode();
             ThemeManager::mode(self::providerThemeMode($componentProps['mode'] ?? null));
         }

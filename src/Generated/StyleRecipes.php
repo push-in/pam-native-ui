@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pam\MobileUi\Generated;
 
 /**
- * Build-time compiled from the MIT-licensed gluestack-ui tva recipes.
+ * Build-time compiled from the versioned PamUI style recipes.
  *
  * Recipe and component references use stable sequential integers so the hot
  * rendering path never parses upstream JavaScript or JSON.
@@ -1178,7 +1178,7 @@ final class StyleRecipes
   52 =>
   array (
     'source' => 'src/components/ui/button/index.tsx',
-    'base' => 'rounded-md flex-row items-center justify-center data-[focus-visible=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[disabled=true]:opacity-40 gap-2 h-fit',
+    'base' => 'rounded-xl flex-row items-center justify-center data-[focus-visible=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[disabled=true]:opacity-40 gap-2 h-fit',
     'variants' =>
     array (
       'variant' =>
@@ -1192,10 +1192,10 @@ final class StyleRecipes
       ),
       'size' =>
       array (
-        'default' => 'px-4 py-2',
-        'sm' => 'min-h-8 rounded-md px-3 text-xs',
-        'lg' => 'min-h-10 rounded-md px-8',
-        'icon' => 'min-h-9 min-w-9',
+        'default' => 'min-h-12 px-4 py-2',
+        'sm' => 'min-h-12 rounded-lg px-3 text-xs',
+        'lg' => 'min-h-14 rounded-xl px-8',
+        'icon' => 'min-h-12 min-w-12',
       ),
     ),
     'parentVariants' =>
@@ -1645,7 +1645,7 @@ final class StyleRecipes
   72 =>
   array (
     'source' => 'src/components/ui/card/styles.tsx',
-    'base' => 'flex-col bg-card border border-border rounded-xl shadow-sm',
+    'base' => 'flex-col bg-card border border-border rounded-2xl shadow-sm',
     'variants' =>
     array (
       'size' =>

@@ -63,7 +63,7 @@ final class StyleResolver
             return TailwindStyleCompiler::compile($recipe, $props, $theme);
         }
 
-        if ($part === 'GluestackUIProvider') {
+        if ($part === 'PamUIProvider') {
             return new Style(
                 widthPercent: 100.0,
                 heightPercent: 100.0,

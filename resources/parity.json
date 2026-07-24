@@ -1,7 +1,7 @@
 {
     "$schema": "./parity.schema.json",
     "reference": {
-        "repository": "https://github.com/gluestack/gluestack-ui",
+        "repository": "https://github.com/push-in/pam-mobile-ui",
         "commit": "be060b5d184826d34623e490447a467ffb5cfe56",
         "packageVersion": "5.0.3",
         "capturedAt": "2026-07-23",
@@ -1167,16 +1167,16 @@
         },
         {
             "id": 22,
-            "name": "gluestack-ui-provider",
+            "name": "pam-ui-provider",
             "category": 9,
             "maturity": 1,
             "implementation": 4,
             "exports": [
                 "useSafeLayoutEffect",
-                "GluestackUIProvider"
+                "PamUIProvider"
             ],
             "parts": [
-                "GluestackUIProvider"
+                "PamUIProvider"
             ],
             "variantAxes": [],
             "examples": 0,

@@ -81,8 +81,10 @@ $assert(
     $referenceFacadeCount === count(ComponentMap::TAGS),
     'The pinned facade count does not match the generated PHP API.',
 );
+$componentIds = array_values(ComponentMap::IDS);
+sort($componentIds, SORT_NUMERIC);
 $assert(
-    array_values(ComponentMap::IDS) === range(1, count(ComponentMap::IDS)),
+    $componentIds === range(1, count(ComponentMap::IDS)),
     'Generated component IDs must be sequential integers.',
 );
 

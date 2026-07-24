@@ -6,11 +6,12 @@ namespace Pam\MobileUi;
 
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Theme\Theme;
+use Pam\MobileUi\Theme\ThemeManager;
 
 /**
- * @deprecated Use {@see PamUI}. Kept as a source-compatible migration bridge.
+ * Global PamUI theme and appearance configuration.
  */
-final class MobileUi
+final class PamUI
 {
     private function __construct()
     {
@@ -18,23 +19,23 @@ final class MobileUi
 
     public static function mode(ThemeMode $mode): void
     {
-        PamUI::mode($mode);
+        ThemeManager::mode($mode);
     }
 
     public static function theme(
         ?Theme $light = null,
         ?Theme $dark = null,
     ): void {
-        PamUI::theme($light, $dark);
+        ThemeManager::customize($light, $dark);
     }
 
     public static function systemDark(bool $dark): void
     {
-        PamUI::systemDark($dark);
+        ThemeManager::systemDark($dark);
     }
 
     public static function currentTheme(): Theme
     {
-        return PamUI::currentTheme();
+        return ThemeManager::current();
     }
 }

@@ -54,7 +54,7 @@ composer generate
 composer verify
 ```
 
-`resources/upstream-components.json` records the captured gluestack surface.
+`resources/pam-ui-components.json` records the versioned PamUI component surface.
 `resources/parity.json` uses integer-backed enum values for every gate and
 status. A gate can move to verified only when a reproducible test or measurement
 exists.

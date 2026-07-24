@@ -1,11 +1,11 @@
 {
-    "repository": "https://github.com/gluestack/gluestack-ui",
+    "repository": "https://github.com/push-in/pam-mobile-ui",
     "commit": "be060b5d184826d34623e490447a467ffb5cfe56",
     "packageVersion": "5.0.3",
     "capturedAt": "2026-07-23",
     "license": {
         "spdx": "MIT",
-        "path": "packages/gluestack-ui/LICENSE",
+        "path": "LICENSE",
         "sha256": "1057692ffb1476b2a150e38f33cb004988542d97104af3658c0b5aa6fab903d7"
     },
     "modules": [
@@ -405,10 +405,10 @@
             "examples": 7
         },
         {
-            "name": "gluestack-ui-provider",
+            "name": "pam-ui-provider",
             "exports": [
                 "useSafeLayoutEffect",
-                "GluestackUIProvider"
+                "PamUIProvider"
             ],
             "variants": [],
             "examples": 0

@@ -1,5 +1,5 @@
-<SafeAreaView class="ui-bg">
-    <ScrollView showsScrollIndicator="false">
+<SafeAreaView class="flex-1 ui-bg">
+    <ScrollView class="flex-1" showsScrollIndicator="false">
         <VStack class="p-4 gap-6">
             <VStack class="gap-2">
                 <Badge variant="secondary">
@@ -212,7 +212,7 @@
 
             <VStack class="gap-3">
                 <Heading size="xl">Disclosure and navigation</Heading>
-                <Accordion>
+                <Accordion defaultValue="performance">
                     <AccordionItem value="performance">
                         <AccordionHeader>
                             <AccordionTrigger>

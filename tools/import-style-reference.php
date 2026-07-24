@@ -6,12 +6,12 @@ declare(strict_types=1);
  * Captures static className fragments that live outside tva() recipes.
  *
  * Usage:
- *   php tools/capture-inline-classes.php /path/to/gluestack-ui
+ *   php tools/import-style-reference.php /path/to/reference-ui
  */
 
 $checkout = $argv[1] ?? null;
 if (!is_string($checkout) || $checkout === '') {
-    fwrite(STDERR, "Pass the gluestack-ui checkout path.\n");
+    fwrite(STDERR, "Pass the reference UI checkout path.\n");
     exit(2);
 }
 

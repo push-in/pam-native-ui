@@ -4,7 +4,7 @@
 It gives PHP applications a declarative tag API, typed fluent components, and
 native Android behavior without adding a JavaScript runtime.
 
-The catalog tracks all 61 gluestack-ui technical modules, 404 upstream exports,
+The catalog tracks all 61 PamUI technical modules, 404 public exports,
 and 326 component/icon facades at the reference commit recorded in
 [`resources/parity.json`](resources/parity.json).
 Compatibility means equivalent component anatomy, variants, state transitions,
@@ -73,9 +73,9 @@ validation rules for community contributions are in
 The upstream provider API is available without a JavaScript context layer:
 
 ```xml
-<GluestackUIProvider mode="system">
+<PamUIProvider mode="system">
     <App />
-</GluestackUIProvider>
+</PamUIProvider>
 ```
 
 `light`, `dark` and `system` scope token resolution to the provider subtree and
@@ -92,7 +92,7 @@ multiplier, progressive downloads, request headers and the four cache policies
 flow to Android. Typed load-start/progress/load/error/load-end callbacks remain
 optional, and `ImageBackground`, `AvatarImage` and image-viewer content use the
 same cancelable RAM/disk pipeline. `AvatarFallback` is the uppercase text alias
-exposed by gluestack/shadcn. Scalar content passed through the fluent API also
+exposed by PamUI. Scalar content passed through the fluent API also
 becomes a native text child for items, triggers and action buttons, so
 `BottomSheetItem::make('Save')` and `PromptInputButton::make('Attach')` render
 the same content as their tag equivalents.
@@ -122,7 +122,7 @@ TalkBack nodes own checkable state, expand/collapse actions, live announcements
 and numeric ranges; state changes emit an Android accessibility-content event,
 not a PHP render callback.
 
-Responsive grids keep the same class vocabulary used by gluestack:
+Responsive grids use the standard PamUI class vocabulary:
 
 ```xml
 <Grid class="grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-4">
@@ -596,7 +596,7 @@ editing can stay entirely native with `sync="native"`.
 
 `MessageResponse` supports headings, ordered/unordered lists, quotes, bold,
 italic, strike-through, inline/fenced code and safe links in one intrinsic
-Android text view. It also accepts gluestack-style `message.parts`: text parts
+Android text view. It also accepts PamUI `message.parts`: text parts
 become native Markdown and file parts become PAM images. A safe link emits its
 URI through `on:event`, leaving navigation policy in the application.
 

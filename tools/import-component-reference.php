@@ -5,16 +5,17 @@ declare(strict_types=1);
 require __DIR__.'/JavaScriptObjectParser.php';
 
 /**
- * Capture the public gluestack-ui component surface into a deterministic file.
+ * Import a compatible component surface into the versioned PamUI inventory.
  *
  * Usage:
- *   php tools/capture-upstream.php /path/to/gluestack-ui
+ *   php tools/import-component-reference.php /path/to/reference-ui \
+ *       [repository-url] [license-path] [package-version]
  */
 
 $root = $argv[1] ?? null;
 
 if (!is_string($root) || $root === '') {
-    fwrite(STDERR, "Pass the gluestack-ui checkout path.\n");
+    fwrite(STDERR, "Pass the reference UI checkout path.\n");
     exit(2);
 }
 
@@ -112,15 +113,30 @@ foreach ($directories as $directory) {
     ];
 }
 
-$license = $root.'/packages/gluestack-ui/LICENSE';
+$repository = $argv[2] ?? 'https://github.com/push-in/pam-mobile-ui';
+$licensePath = $argv[3] ?? 'LICENSE';
+$packageVersion = $argv[4] ?? 'development';
+if (
+    !is_string($repository)
+    || filter_var($repository, FILTER_VALIDATE_URL) === false
+    || !is_string($licensePath)
+    || $licensePath === ''
+    || !is_string($packageVersion)
+    || $packageVersion === ''
+) {
+    fwrite(STDERR, "Repository URL, license path, or package version is invalid.\n");
+    exit(2);
+}
+
+$license = $root.'/'.$licensePath;
 $payload = [
-    'repository' => 'https://github.com/gluestack/gluestack-ui',
+    'repository' => $repository,
     'commit' => $commit,
-    'packageVersion' => '5.0.3',
-    'capturedAt' => '2026-07-23',
+    'packageVersion' => $packageVersion,
+    'capturedAt' => gmdate('Y-m-d'),
     'license' => [
         'spdx' => 'MIT',
-        'path' => 'packages/gluestack-ui/LICENSE',
+        'path' => $licensePath,
         'sha256' => is_file($license) ? hash_file('sha256', $license) : null,
     ],
     'modules' => $modules,
@@ -129,7 +145,7 @@ $encoded = json_encode(
     $payload,
     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
 )."\n";
-$target = dirname(__DIR__).'/resources/upstream-components.json';
+$target = dirname(__DIR__).'/resources/pam-ui-components.json';
 
 if (file_put_contents($target, $encoded, LOCK_EX) === false) {
     throw new RuntimeException("Cannot write {$target}.");

@@ -53,4 +53,38 @@ class MarkdownParserTest {
         assertFalse(document.spans.any { it.value.startsWith("javascript:") })
         assertTrue(document.text.contains("[unsafe](javascript:alert(1))"))
     }
+
+    @Test
+    fun removesTemplateIndentationBeforeLayingOutMarkdown() {
+        val document = MarkdownParser.parse(
+            """
+
+                    ## PAM Native
+
+                    **Markdown**, `inline code`, lists and
+                    [safe links](https://pam.dev)
+            """,
+        )
+
+        assertEquals(
+            "PAM Native\n\nMarkdown, inline code, lists and\nsafe links",
+            document.text,
+        )
+        assertFalse(document.text.lineSequence().any { it.startsWith(' ') })
+    }
+
+    @Test
+    fun removesContinuationIndentAddedByPamTemplates() {
+        val document = MarkdownParser.parse(
+            "## PAM Native\n\n" +
+                "                                    **Markdown**, `inline code`, lists and\n" +
+                "                                    [safe links](https://pam.dev)\n" +
+                "                                    render in one text view.",
+        )
+
+        assertEquals(
+            "PAM Native\n\nMarkdown, inline code, lists and\nsafe links\nrender in one text view.",
+            document.text,
+        )
+    }
 }

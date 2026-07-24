@@ -659,7 +659,7 @@ internal class MobileUiHost(
                 properties.flag("isOpen", open),
             )
         } else if (previousBehavior != behavior || wasOpenControlled) {
-            properties.flag("defaultIsOpen", open)
+            properties.flag("defaultIsOpen", behavior.isOpenByDefault())
         } else {
             open
         }
@@ -3816,8 +3816,12 @@ internal class MobileUiHost(
         val changed = requested != tabValue
         tabValue = requested
         applyTabsState(animate = changed)
-        trigger.requestKeyboardFocus()
-        trigger.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (trigger.isAttachedToWindow) {
+            trigger.requestKeyboardFocus()
+            if (changed) {
+                trigger.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            }
+        }
         if (changed) {
             sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
         }
@@ -6387,11 +6391,11 @@ internal class MobileUiHost(
         arrow.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         val edgeInset = 8f * density
         if (resolvedPlacement in 1..6) {
-            val desiredCenter = (
-                trigger.centerX() - contentScreenX
-            ).coerceIn(
-                edgeInset + arrow.width / 2f,
-                content.width - edgeInset - arrow.width / 2f,
+            val desiredCenter = clampedArrowCenter(
+                desired = trigger.centerX() - contentScreenX,
+                contentExtent = content.width.toFloat(),
+                arrowExtent = arrow.width.toFloat(),
+                edgeInset = edgeInset,
             )
             arrow.translationX = desiredCenter - arrow.left - arrow.width / 2f
             arrow.translationY = if (resolvedPlacement in 1..3) {
@@ -6401,11 +6405,11 @@ internal class MobileUiHost(
             }
             arrow.rotation = if (resolvedPlacement in 1..3) 180f else 0f
         } else {
-            val desiredCenter = (
-                trigger.centerY() - contentScreenY
-            ).coerceIn(
-                edgeInset + arrow.height / 2f,
-                content.height - edgeInset - arrow.height / 2f,
+            val desiredCenter = clampedArrowCenter(
+                desired = trigger.centerY() - contentScreenY,
+                contentExtent = content.height.toFloat(),
+                arrowExtent = arrow.height.toFloat(),
+                edgeInset = edgeInset,
             )
             arrow.translationY = desiredCenter - arrow.top - arrow.height / 2f
             arrow.translationX = if (resolvedPlacement in 7..9) {
@@ -6558,6 +6562,8 @@ internal class MobileUiHost(
 
     private fun Behavior.isAnchoredOverlay(): Boolean =
         this == Behavior.POPOVER || this == Behavior.MENU || this == Behavior.TOOLTIP
+
+    private fun Behavior.isOpenByDefault(): Boolean = !isAnchoredOverlay()
 
     private fun Map<String, WireValue>.integer(key: String, fallback: Long): Long =
         (this[key] as? WireValue.Integer)?.value ?: fallback
@@ -6713,5 +6719,33 @@ internal class MobileUiHost(
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60
+    }
+}
+
+internal fun clampedArrowCenter(
+    desired: Float,
+    contentExtent: Float,
+    arrowExtent: Float,
+    edgeInset: Float,
+): Float {
+    if (
+        !desired.isFinite() ||
+        !contentExtent.isFinite() ||
+        !arrowExtent.isFinite() ||
+        !edgeInset.isFinite()
+    ) {
+        return 0f
+    }
+
+    val safeContentExtent = contentExtent.coerceAtLeast(0f)
+    val safeArrowExtent = arrowExtent.coerceAtLeast(0f)
+    val safeEdgeInset = edgeInset.coerceAtLeast(0f)
+    val minimum = safeEdgeInset + safeArrowExtent / 2f
+    val maximum = safeContentExtent - safeEdgeInset - safeArrowExtent / 2f
+
+    return if (minimum <= maximum) {
+        desired.coerceIn(minimum, maximum)
+    } else {
+        safeContentExtent / 2f
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\AppTheme;
 use App\Catalog;
 use App\TypedCommunityCard;
-use Pam\MobileUi\MobileUi;
+use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\Native\App;
 
@@ -16,6 +16,6 @@ App::views(
     __DIR__.'/.pam-native/views',
 );
 AppTheme::install();
-MobileUi::mode(ThemeMode::System);
+PamUI::mode(ThemeMode::System);
 TypedCommunityCard::register();
 App::run(new Catalog());

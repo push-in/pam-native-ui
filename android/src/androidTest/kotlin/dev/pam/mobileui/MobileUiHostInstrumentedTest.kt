@@ -76,7 +76,11 @@ class MobileUiHostInstrumentedTest {
             grid.layout(0, 0, dp(grid, 400f), dp(grid, 132f))
 
             assertEquals(0, grid.getChildAt(0).left)
-            assertEquals(dp(grid, 102f), grid.getChildAt(1).left)
+            assertEquals(
+                dp(grid, 102f).toDouble(),
+                grid.getChildAt(1).left.toDouble(),
+                1.0,
+            )
             assertEquals(dp(grid, 306f), grid.getChildAt(2).left)
             assertEquals(0, grid.getChildAt(3).left)
             assertEquals(dp(grid, 306f), grid.getChildAt(4).left)

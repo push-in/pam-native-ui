@@ -1,6 +1,6 @@
 package dev.pam.mobileui
 
-/** Generated from resources/upstream-components.json. */
+/** Generated from resources/pam-ui-components.json. */
 internal object GeneratedComponents {
     const val ACCORDION: Int = 1
     const val ACCORDION_CONTENT: Int = 2
@@ -161,7 +161,6 @@ internal object GeneratedComponents {
     const val GLASS_CONTAINER: Int = 157
     const val GLASS_VIEW: Int = 158
     const val GLOBE_ICON: Int = 159
-    const val GLUESTACK_U_I_PROVIDER: Int = 160
     const val GRID: Int = 161
     const val GRID_ITEM: Int = 162
     const val GRIP_VERTICAL_ICON: Int = 163
@@ -228,6 +227,7 @@ internal object GeneratedComponents {
     const val MODEL_SELECTOR_SHORTCUT: Int = 224
     const val MODEL_SELECTOR_TRIGGER: Int = 225
     const val MOON_ICON: Int = 226
+    const val PAM_U_I_PROVIDER: Int = 160
     const val PAPERCLIP_ICON: Int = 227
     const val PHONE_ICON: Int = 228
     const val PLAY_ICON: Int = 229

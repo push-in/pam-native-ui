@@ -106,7 +106,7 @@ WebView, JavaScript runtime or nested text-view-per-token tree is created.
 application policy instead of opening an external activity implicitly. File
 parts remain ordinary PAM images, including base64 data URIs.
 
-`GluestackUIProvider` scopes light/dark/system token resolution while PHP
+`PamUIProvider` scopes light/dark/system token resolution while PHP
 composes its subtree, then restores the previous theme before an adjacent tree
 is rendered. Its one full-size View matches the upstream provider root.
 Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider` return
@@ -230,7 +230,7 @@ closes, Android restores the view that held focus before presentation.
 The wrapper also forwards React Native's current modal window contract:
 none/slide/fade animation, transparent or colored backdrop, hardware
 acceleration, status/navigation bar translucency, request-close, show, dismiss
-and typed portrait/landscape lifecycle events. The gluestack windows default to
+and typed portrait/landscape lifecycle events. PamUI windows default to
 transparent so their authored backdrop remains the single visual backdrop.
 
 `BottomSheet`, `Actionsheet` and `Select` use the same anatomy-aware controller.
@@ -378,6 +378,6 @@ application explicitly subscribes to it.
 ## Compatibility definition
 
 Parity is behavioral. Public anatomy and variant names remain recognizable to
-gluestack-ui users, but PAM uses integer-backed enums and Android conventions.
+cross-platform UI users, but PAM uses integer-backed enums and Android conventions.
 React-only implementation details, DOM-only props and CSS utility internals are
 not copied into the runtime.

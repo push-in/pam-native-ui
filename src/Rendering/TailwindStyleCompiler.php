@@ -23,7 +23,7 @@ use Pam\Native\TextDecoration;
 use Pam\Native\TextTransform;
 
 /**
- * Compiles the mobile subset of gluestack's Tailwind recipes to packed PAM
+ * Compiles PamUI's mobile Tailwind recipes to packed PAM
  * style properties. This executes in PHP only when a declarative tree changes;
  * Android receives numeric properties and performs frame work on the UI thread.
  */
@@ -413,7 +413,20 @@ final class TailwindStyleCompiler
 
         $value = self::dimension($raw);
         if ($value === null) {
-            return in_array($raw, ['auto', 'fit'], true);
+            if (!in_array($raw, ['auto', 'fit'], true)) {
+                return false;
+            }
+            if ($match[1] === 'w') {
+                unset($values['width'], $values['widthPercent']);
+            } elseif ($match[1] === 'h') {
+                unset($values['height'], $values['heightPercent']);
+            } elseif ($match[1] === 'max-w') {
+                unset($values['maxWidth'], $values['maxWidthPercent']);
+            } elseif ($match[1] === 'max-h') {
+                unset($values['maxHeight'], $values['maxHeightPercent']);
+            }
+
+            return true;
         }
 
         $key = match ($match[1]) {

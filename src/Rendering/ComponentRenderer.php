@@ -85,6 +85,22 @@ final class ComponentRenderer
     }
 
     /**
+     * Resolve controlled item state before descendants are rendered so layout
+     * children receive the same selected/expanded context as the Android host.
+     *
+     * @param array<string, mixed> $props
+     * @param array<string, mixed> $parentProps
+     * @return array<string, mixed>
+     */
+    public static function withParentState(
+        string $part,
+        array $props,
+        array $parentProps,
+    ): array {
+        return self::controlledItemState($part, $props, $parentProps);
+    }
+
+    /**
      * @param array<string, mixed> $props
      * @param list<Element> $children
      * @param array<int, Closure> $events
@@ -138,7 +154,7 @@ final class ComponentRenderer
             $children = [];
         }
         $children = self::imageViewerChildren($part, $props, $children);
-        $children = self::messageBranchChildren($part, $children);
+        $children = self::messageBranchChildren($part, $props, $children);
         $children = self::messageResponseChildren($part, $props, $children);
         $children = self::fileTreeFolderChildren($part, $props, $children);
         $children = self::anchoredOverlayChildren($part, $props, $children);
@@ -415,6 +431,11 @@ final class ComponentRenderer
         }
         $shouldHide = (
             self::flag($props, 'hidden')
+            || (
+                $part === 'AccordionContent'
+                && array_key_exists('expanded', $parentProps)
+                && !self::flag($parentProps, 'expanded')
+            )
             || (
                 $part === 'TabsContent'
                 && !self::flag($props, 'forceMount')
@@ -987,8 +1008,20 @@ final class ComponentRenderer
         } elseif ($part === 'TableFooter') {
             $props['isFooterRow'] = true;
         }
-        if ($part === 'GluestackUIProvider' && !array_key_exists('mode', $props)) {
+        if ($part === 'Divider' && !array_key_exists('orientation', $props)) {
+            $props['orientation'] = 1;
+        }
+        if ($part === 'PamUIProvider' && !array_key_exists('mode', $props)) {
             $props['mode'] = 'system';
+        }
+        if ($part === 'Modal' && !array_key_exists('size', $props)) {
+            $props['size'] = 3;
+        }
+        if (
+            in_array($part, ['DateTimePicker', 'Select'], true)
+            && !array_key_exists('size', $props)
+        ) {
+            $props['size'] = 3;
         }
         if ($part === 'ModelSelector') {
             if (
@@ -2546,7 +2579,7 @@ final class ComponentRenderer
     }
 
     /**
-     * Synthesizes the same fixed anatomy as gluestack's ModelSelectorContent
+     * Synthesizes the fixed PamUI anatomy for ModelSelectorContent
      * and ModelSelectorGroup while keeping authored list/items untouched.
      *
      * @param array<string, mixed> $props
@@ -4087,12 +4120,160 @@ final class ComponentRenderer
 
     private static function gridChildHeight(Element $child): float
     {
-        $properties = $child->properties();
-        $height = $properties[PropKey::Height->value]
-            ?? $properties[PropKey::MinHeight->value]
-            ?? 48.0;
+        return self::elementIntrinsicHeight($child);
+    }
 
-        return is_numeric($height) ? max(0.0, (float) $height) : 48.0;
+    /**
+     * Estimate the same vertical intrinsic size that the native layout engine
+     * will assign to a grid item. The grid host needs this value before Android
+     * measures its rows; using a generic 48 dp fallback clips content-sized
+     * cards and lets following siblings overlap them.
+     */
+    private static function elementIntrinsicHeight(Element $element): float
+    {
+        $properties = $element->properties();
+        if (($properties[PropKey::Visible->value] ?? true) === false) {
+            return 0.0;
+        }
+
+        $explicit = $properties[PropKey::Height->value] ?? null;
+        if (is_numeric($explicit)) {
+            return self::constrainElementHeight((float) $explicit, $properties);
+        }
+
+        if ($element->kind() === NodeKind::Text) {
+            $fontSize = is_numeric($properties[PropKey::FontSize->value] ?? null)
+                ? max(1.0, (float) $properties[PropKey::FontSize->value])
+                : 14.0;
+            $lineHeight = is_numeric($properties[PropKey::LineHeight->value] ?? null)
+                ? max(1.0, (float) $properties[PropKey::LineHeight->value])
+                : max(14.0, $fontSize * 1.4);
+            $text = (string) ($properties[PropKey::Text->value] ?? '');
+            $lines = max(1, substr_count($text, "\n") + 1);
+            $limit = $properties[PropKey::NumberOfLines->value] ?? null;
+            if (is_numeric($limit) && (int) $limit > 0) {
+                $lines = min($lines, (int) $limit);
+            }
+
+            return self::constrainElementHeight(
+                $lineHeight * $lines,
+                $properties,
+            );
+        }
+
+        $children = array_values(array_filter(
+            $element->children(),
+            static fn (Element $child): bool =>
+                ($child->properties()[PropKey::Visible->value] ?? true) !== false,
+        ));
+        $contentSized = in_array($element->kind(), [
+            NodeKind::Screen,
+            NodeKind::Column,
+            NodeKind::Row,
+            NodeKind::View,
+            NodeKind::Pressable,
+            NodeKind::ImageBackground,
+            NodeKind::KeyboardAvoidingView,
+            NodeKind::SafeAreaView,
+            NodeKind::InputAccessoryView,
+        ], true);
+        if ($children === [] || !$contentSized) {
+            $leafHeight = match ($element->kind()) {
+                NodeKind::Image, NodeKind::ImageBackground => 180.0,
+                NodeKind::List,
+                NodeKind::SectionList,
+                NodeKind::Scroll,
+                NodeKind::RefreshControl => 240.0,
+                NodeKind::Spacer => 8.0,
+                NodeKind::StatusBar => 0.0,
+                default => 48.0,
+            };
+
+            return self::constrainElementHeight($leafHeight, $properties);
+        }
+
+        $padding = self::numericProperty($properties, PropKey::Padding);
+        $paddingVertical = self::numericProperty(
+            $properties,
+            PropKey::PaddingVertical,
+            $padding,
+        );
+        $paddingTop = self::numericProperty(
+            $properties,
+            PropKey::PaddingTop,
+            $paddingVertical,
+        );
+        $paddingBottom = self::numericProperty(
+            $properties,
+            PropKey::PaddingBottom,
+            $paddingVertical,
+        );
+        $direction = (int) ($properties[PropKey::FlexDirection->value]
+            ?? ($element->kind() === NodeKind::Row ? 2 : 1));
+        $childHeights = array_map(
+            static function (Element $child): float {
+                $properties = $child->properties();
+                $margin = self::numericProperty($properties, PropKey::Margin);
+                $vertical = self::numericProperty(
+                    $properties,
+                    PropKey::MarginVertical,
+                    $margin,
+                );
+
+                return self::elementIntrinsicHeight($child)
+                    + self::numericProperty(
+                        $properties,
+                        PropKey::MarginTop,
+                        $vertical,
+                    )
+                    + self::numericProperty(
+                        $properties,
+                        PropKey::MarginBottom,
+                        $vertical,
+                    );
+            },
+            $children,
+        );
+        $contentHeight = in_array($direction, [2, 4], true)
+            ? max($childHeights)
+            : array_sum($childHeights)
+                + self::numericProperty($properties, PropKey::Gap)
+                    * max(0, count($childHeights) - 1);
+
+        return self::constrainElementHeight(
+            $paddingTop + $contentHeight + $paddingBottom,
+            $properties,
+        );
+    }
+
+    /** @param array<int, string|int|float|bool|\Pam\Native\Internal\BinaryValue> $properties */
+    private static function constrainElementHeight(
+        float $height,
+        array $properties,
+    ): float {
+        $minimum = $properties[PropKey::MinHeight->value] ?? null;
+        $maximum = $properties[PropKey::MaxHeight->value] ?? null;
+        if (is_numeric($minimum)) {
+            $height = max($height, (float) $minimum);
+        }
+        if (is_numeric($maximum)) {
+            $height = min($height, (float) $maximum);
+        }
+
+        return max(0.0, $height);
+    }
+
+    /**
+     * @param array<int, string|int|float|bool|\Pam\Native\Internal\BinaryValue> $properties
+     */
+    private static function numericProperty(
+        array $properties,
+        PropKey $key,
+        float $fallback = 0.0,
+    ): float {
+        $value = $properties[$key->value] ?? null;
+
+        return is_numeric($value) ? (float) $value : $fallback;
     }
 
     /** @param array<string, mixed> $props */
@@ -4414,18 +4595,31 @@ final class ComponentRenderer
      */
     private static function messageBranchChildren(
         string $part,
+        array $props,
         array $children,
     ): array {
         if ($part !== 'MessageBranchContent') {
             return $children;
         }
 
+        $parent = is_array($props['__parentVariants'] ?? null)
+            ? $props['__parentVariants']
+            : [];
+        $selected = self::integer(
+            $parent,
+            'currentBranch',
+            self::integer($parent, 'branch', self::integer($parent, 'defaultBranch', 0)),
+        );
+
         return array_map(
-            static fn (Element $child, int $index): Element =>
-                Column::make($child)->property(
+            static function (Element $child, int $index) use ($selected): Element {
+                $page = Column::make($child)->property(
                     PropKey::Value,
                     'pam:message-branch-page:'.$index,
-                ),
+                );
+
+                return $index === $selected ? $page : $page->visible(false);
+            },
             $children,
             array_keys($children),
         );
@@ -4540,7 +4734,46 @@ final class ComponentRenderer
                 'codeForegroundColor' => $theme->color(ColorToken::Foreground),
                 'selectable' => self::flag($props, 'selectable', true),
             ],
-        );
+        )
+            ->property(PropKey::WidthPercent, 100.0)
+            ->property(
+                PropKey::MinHeight,
+                self::markdownIntrinsicHeight($source),
+            );
+    }
+
+    private static function markdownIntrinsicHeight(string $source): float
+    {
+        $height = 0.0;
+        $lines = preg_split('/\R/u', trim($source)) ?: [''];
+
+        foreach ($lines as $line) {
+            $plain = (string) preg_replace(
+                '/\[([^\]]*)\]\([^)]*\)/u',
+                '$1',
+                $line,
+            );
+            $plain = trim((string) preg_replace(
+                '/[*_~`>#-]/u',
+                '',
+                $plain,
+            ));
+            if ($plain === '') {
+                $height += 8.0;
+                continue;
+            }
+
+            $characters = function_exists('mb_strlen')
+                ? mb_strlen($plain)
+                : strlen($plain);
+            $wrappedLines = max(1, (int) ceil($characters / 32));
+            $lineHeight = str_starts_with(ltrim($line), '#')
+                ? 38.0
+                : 28.0;
+            $height += $wrappedLines * $lineHeight;
+        }
+
+        return max(56.0, $height + 4.0);
     }
 
     /**
