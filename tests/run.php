@@ -452,8 +452,9 @@ $assert(
 $assert(
     $modelSelectorContent->kind() === NodeKind::Modal
         && $modelSelectorHost->kind() === NodeKind::CustomView
+        && isset($modelSelectorContent->events()[\Pam\Native\EventKind::Native->value])
         && isset($modelSelectorHost->events()[\Pam\Native\EventKind::Native->value]),
-    'ModelSelector events must cross from its stable root into the native modal host.',
+    'ModelSelector events must reach both native window dismissal and its semantic host.',
 );
 $closedSelect = Select::make(
     ['open' => false],
@@ -482,9 +483,10 @@ $assert(
     $closedSelectPortal->kind() === NodeKind::Modal
         && $closedSelectPortal->properties()[PropKey::ModalPresentation->value]
             === ModalPresentation::Sheet->value
+        && isset($closedSelectPortal->events()[\Pam\Native\EventKind::Native->value])
         && $closedSelectHost->kind() === NodeKind::CustomView
         && isset($closedSelectHost->events()[\Pam\Native\EventKind::Native->value]),
-    'Select must forward semantic events into its native sheet host.',
+    'Select must forward dismissals and semantic events into its native sheet.',
 );
 $bottomSheet = BottomSheet::make(
     ['open' => true],

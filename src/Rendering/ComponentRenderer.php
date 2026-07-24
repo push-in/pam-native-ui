@@ -141,6 +141,10 @@ final class ComponentRenderer
                 !$shouldHide,
                 self::modalPresentation($part, $runtimeProps),
             );
+            $nativeHandler = $events[EventKind::Native->value] ?? null;
+            if ($nativeHandler !== null) {
+                $element = $element->on(EventKind::Native, $nativeHandler);
+            }
         }
         if ($elementKey !== null) {
             $element = $element->key($elementKey);

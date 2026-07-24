@@ -48,6 +48,11 @@ recreating the trigger. Pure overlays such as `Modal`, `AlertDialog`,
 `Actionsheet`, `Drawer`, `ImageViewerContent` and `Portal` use the native window
 directly because they do not need to leave an inline trigger mounted.
 
+Android Back is intercepted by PAM's window host and delivered through the same
+bounded native dismissal event as backdrop/drag dismissal. Controlled overlays
+remain visible until the application publishes `open=false`; after the window
+closes, Android restores the view that held focus before presentation.
+
 ## Utility class pipeline
 
 PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI
