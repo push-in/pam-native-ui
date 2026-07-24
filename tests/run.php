@@ -1050,6 +1050,8 @@ $statusPrimitive = StatusBar::make([
     'backgroundColor' => '#171717',
     'barStyle' => 'light-content',
     'hidden' => true,
+    'animated' => true,
+    'translucent' => true,
 ])->toElement();
 $nativeInputProps = InputField::make([
     'placeholderTextColor' => 'rgba(255, 255, 255, 0.4)',
@@ -1191,6 +1193,8 @@ $assert(
         && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]
             === StatusBarAppearance::Light->value
         && $statusPrimitive->properties()[PropKey::StatusBarHidden->value] === true
+        && $statusPrimitive->properties()[PropKey::StatusBarAnimated->value] === true
+        && $statusPrimitive->properties()[PropKey::StatusBarTranslucent->value] === true
         && $nativeInputProps->properties()[PropKey::PlaceholderColor->value]
             === 0x66ffffff
         && $nativeInputProps->properties()[PropKey::SelectionColor->value]

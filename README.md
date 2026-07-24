@@ -178,6 +178,10 @@ Text facades forward `selectable`, `selectionColor`, `numberOfLines`,
 `android_hyphenationFrequency` and `dataDetectorType`. Selection, measurement,
 line breaking and detector spans remain inside Android `TextView`.
 
+`StatusBar` forwards `animated`, `backgroundColor`, `barStyle`, `hidden` and
+`translucent`. Mounted instances merge in order and restore the prior native
+window configuration; Android 15+ retains its mandatory edge-to-edge behavior.
+
 Focus/invalid outlines, disabled/read-only editing policy, clear/password
 actions and selection remain on the Android UI thread. `FormControl` links its
 label, helper and error to the native field, injects the required asterisk,

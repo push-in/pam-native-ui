@@ -675,7 +675,9 @@ final class ComponentRenderer
                 ),
                 self::statusBarAppearance($props),
                 self::flag($props, 'hidden'),
-            );
+            )
+                ->animated(self::flag($props, 'animated'))
+                ->translucent(self::flag($props, 'translucent'));
         }
         if ($part === 'Grid') {
             return self::grid($props, $children);

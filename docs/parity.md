@@ -23,6 +23,9 @@ and enabled state, with native vertical-gesture arbitration and indicator
 animation.
 Text passthroughs preserve Android selection, ellipsis, accessible font
 scaling/fitting, break/hyphenation strategy and local data detectors.
+Status bars merge by mount order and forward animated color, icon appearance,
+visibility and pre-Android-15 translucency while respecting mandatory modern
+edge-to-edge behavior.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 
