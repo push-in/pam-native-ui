@@ -124,6 +124,7 @@ use Pam\MobileUi\Component\Popover;
 use Pam\MobileUi\Component\PopoverArrow;
 use Pam\MobileUi\Component\PopoverCloseButton;
 use Pam\MobileUi\Component\PopoverContent;
+use Pam\MobileUi\Component\Pressable;
 use Pam\MobileUi\Component\PromptInput;
 use Pam\MobileUi\Component\PromptInputProvider;
 use Pam\MobileUi\Component\PromptInputActionMenu;
@@ -218,6 +219,7 @@ use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
+use Pam\Native\ReturnKeyType;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\TemplateRegistry;
 use Pam\Native\TextDecoration;
@@ -999,6 +1001,26 @@ $statusPrimitive = StatusBar::make([
     'barStyle' => 'light-content',
     'hidden' => true,
 ])->toElement();
+$nativeInputProps = InputField::make([
+    'placeholderTextColor' => 'rgba(255, 255, 255, 0.4)',
+    'selectionColor' => '#11223344',
+    'returnKeyType' => 'search',
+    'pointerEvents' => 'box-none',
+    'collapsable' => false,
+])->toElement();
+$nativePressableProps = Pressable::make(
+    [
+        'android_ripple' => ['color' => '#01020380'],
+        'pressedOpacity' => 0.5,
+        'hitSlop' => [
+            'top' => 4,
+            'right' => 8,
+            'bottom' => 12,
+            'left' => 6,
+        ],
+    ],
+    Text::make('Native pressable'),
+)->toElement();
 $assert(
     Wire::decodeMap($singleSkeletonNative->bytes)['behavior']
         === NativeBehavior::Skeleton->value
@@ -1031,7 +1053,20 @@ $assert(
             === 0xff171717
         && $statusPrimitive->properties()[PropKey::StatusBarStyle->value]
             === StatusBarAppearance::Light->value
-        && $statusPrimitive->properties()[PropKey::StatusBarHidden->value] === true,
+        && $statusPrimitive->properties()[PropKey::StatusBarHidden->value] === true
+        && $nativeInputProps->properties()[PropKey::PlaceholderColor->value]
+            === 0x66ffffff
+        && $nativeInputProps->properties()[PropKey::SelectionColor->value]
+            === 0x44112233
+        && $nativeInputProps->properties()[PropKey::ReturnKeyType->value]
+            === ReturnKeyType::Search->value
+        && $nativeInputProps->properties()[PropKey::PointerEvents->value]
+            === PointerEvents::BoxNone->value
+        && $nativeInputProps->properties()[PropKey::Collapsable->value] === false
+        && $nativePressableProps->properties()[PropKey::RippleColor->value]
+            === 0x80010203
+        && $nativePressableProps->properties()[PropKey::PressOpacity->value] === 0.5
+        && $nativePressableProps->properties()[PropKey::HitSlop->value] === 12,
     'Core facades and aliases must forward image, a11y, spinner, text action, scroll, keyboard and status properties.',
 );
 

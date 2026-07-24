@@ -86,6 +86,15 @@ becomes a native text child for items, triggers and action buttons, so
 `BottomSheetItem::make('Save')` and `PromptInputButton::make('Attach')` render
 the same content as their tag equivalents.
 
+React Native-compatible primitive props stay available on both APIs. Explicit
+`pointerEvents` and `collapsable` values are applied after recipes; pressables
+accept scalar or per-side `hitSlop`, `android_ripple.color`/`rippleColor` and
+`pressedOpacity`; inputs accept `placeholderTextColor`, `selectionColor` and
+`returnKeyType`. Colors support `#RGB[A]`, `#RRGGBB[AA]`, `rgb()`, `rgba()` and
+`transparent`. PAM normalizes these once in PHP into compact integer properties,
+then Android owns hit testing, ripple, selection and IME behavior on the UI
+thread.
+
 Responsive grids keep the same class vocabulary used by gluestack:
 
 ```xml

@@ -26,7 +26,9 @@ use Pam\Native\KeyboardType;
 use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
+use Pam\Native\PointerEvents;
 use Pam\Native\PropKey;
+use Pam\Native\ReturnKeyType;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
 use Pam\Native\UI\ActivityIndicator;
@@ -353,6 +355,7 @@ final class ComponentRenderer
         if ($styleOverride !== null && !$styleAppliedToContent) {
             $element = $element->style($styleOverride);
         }
+        $element = self::explicitNativeProperties($part, $props, $element);
         $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
         $readOnly = self::flag(
             $props,
@@ -666,13 +669,22 @@ final class ComponentRenderer
         }
         if (self::isPressable($part)) {
             $theme = ThemeManager::current();
+            $rippleColor = self::rippleColor($props)
+                ?? $theme->color(ColorToken::Accent);
+            $pressedOpacity = self::number(
+                $props,
+                array_key_exists('pressedOpacity', $props)
+                    ? 'pressedOpacity'
+                    : 'pressOpacity',
+                0.88,
+            );
 
             return Pressable::make(...$children)
-                ->ripple($theme->color(ColorToken::Accent))
-                ->pressedOpacity(0.88)
+                ->ripple($rippleColor)
+                ->pressedOpacity($pressedOpacity)
                 ->property(
                     PropKey::HitSlop,
-                    max(0, self::integer($props, 'hitSlop', 8)),
+                    self::hitSlop($props['hitSlop'] ?? 8),
                 )
                 ->accessibilityRole(AccessibilityRole::Button);
         }
@@ -1275,6 +1287,138 @@ final class ComponentRenderer
         }
 
         return AccessibilityRole::Generic;
+    }
+
+    /**
+     * Forward React Native primitive props after recipe and inline styles so
+     * explicit component props retain their native precedence.
+     *
+     * @param array<string, mixed> $props
+     */
+    private static function explicitNativeProperties(
+        string $part,
+        array $props,
+        Element $element,
+    ): Element {
+        if (array_key_exists('collapsable', $props)) {
+            $element = $element->collapsable(
+                self::flag($props, 'collapsable', true),
+            );
+        }
+
+        $pointerEvents = self::pointerEvents($props['pointerEvents'] ?? null);
+        if ($pointerEvents !== null) {
+            $element = $element->property(
+                PropKey::PointerEvents,
+                $pointerEvents->value,
+            );
+        }
+
+        if (!self::isInput($part)) {
+            return $element;
+        }
+
+        $placeholderColor = self::packedColor(
+            $props['placeholderTextColor']
+                ?? $props['placeholderColor']
+                ?? null,
+        );
+        if ($placeholderColor !== null) {
+            $element = $element->property(
+                PropKey::PlaceholderColor,
+                $placeholderColor,
+            );
+        }
+
+        $selectionColor = self::packedColor($props['selectionColor'] ?? null);
+        if ($selectionColor !== null) {
+            $element = $element->property(
+                PropKey::SelectionColor,
+                $selectionColor,
+            );
+        }
+
+        $returnKey = self::returnKeyType($props['returnKeyType'] ?? null);
+        if ($returnKey !== null) {
+            $element = $element->property(
+                PropKey::ReturnKeyType,
+                $returnKey->value,
+            );
+        }
+
+        return $element;
+    }
+
+    private static function pointerEvents(mixed $value): ?PointerEvents
+    {
+        if (is_int($value)) {
+            return PointerEvents::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'auto' => PointerEvents::Auto,
+            'none' => PointerEvents::None,
+            'box-none', 'boxnone' => PointerEvents::BoxNone,
+            'box-only', 'boxonly' => PointerEvents::BoxOnly,
+            default => null,
+        };
+    }
+
+    private static function returnKeyType(mixed $value): ?ReturnKeyType
+    {
+        if (is_int($value)) {
+            return ReturnKeyType::tryFrom($value);
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        return match (strtolower($value)) {
+            'default' => ReturnKeyType::Default,
+            'done' => ReturnKeyType::Done,
+            'go' => ReturnKeyType::Go,
+            'next' => ReturnKeyType::Next,
+            'search' => ReturnKeyType::Search,
+            'send' => ReturnKeyType::Send,
+            'none' => ReturnKeyType::None,
+            'previous' => ReturnKeyType::Previous,
+            default => null,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function rippleColor(array $props): ?int
+    {
+        $ripple = $props['android_ripple']
+            ?? $props['androidRipple']
+            ?? null;
+        $value = is_array($ripple)
+            ? ($ripple['color'] ?? null)
+            : ($props['rippleColor'] ?? $ripple);
+
+        return self::packedColor($value);
+    }
+
+    private static function hitSlop(mixed $value): int
+    {
+        if (is_numeric($value)) {
+            return max(0, (int) $value);
+        }
+        if (!is_array($value)) {
+            return 8;
+        }
+
+        $sides = [];
+        foreach (['top', 'right', 'bottom', 'left', 'horizontal', 'vertical'] as $side) {
+            if (is_numeric($value[$side] ?? null)) {
+                $sides[] = (int) $value[$side];
+            }
+        }
+
+        return $sides === [] ? 8 : max(0, max($sides));
     }
 
     /** @param array<string, mixed> $props */
@@ -2232,6 +2376,31 @@ final class ComponentRenderer
         }
         if (!is_string($value)) {
             return null;
+        }
+        if (strtolower($value) === 'transparent') {
+            return 0x00000000;
+        }
+        if (
+            preg_match(
+                '/^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)(?:\s*,\s*(\d+(?:\.\d+)?%?))?\s*\)$/Di',
+                $value,
+                $channels,
+            ) === 1
+        ) {
+            $red = min(255, max(0, (int) round((float) $channels[1])));
+            $green = min(255, max(0, (int) round((float) $channels[2])));
+            $blue = min(255, max(0, (int) round((float) $channels[3])));
+            $alphaValue = $channels[4] ?? '1';
+            $alpha = str_ends_with($alphaValue, '%')
+                ? (int) round(
+                    min(100.0, max(0.0, (float) substr($alphaValue, 0, -1)))
+                    * 2.55,
+                )
+                : (int) round(
+                    min(1.0, max(0.0, (float) $alphaValue)) * 255.0,
+                );
+
+            return ($alpha << 24) | ($red << 16) | ($green << 8) | $blue;
         }
         if (preg_match('/^#([0-9a-f]{3,8})$/Di', $value, $match) !== 1) {
             return null;

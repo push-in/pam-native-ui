@@ -181,6 +181,13 @@ recreating the trigger. Pure overlays such as `Modal`, `AlertDialog`,
 `Actionsheet`, `Drawer`, `ImageViewerContent` and `Portal` use the native window
 directly because they do not need to leave an inline trigger mounted.
 
+Primitive interop props do not create a generic property bag on Android.
+`pointerEvents`, `collapsable`, press feedback, hit slop, input colors and
+`returnKeyType` are normalized to fixed protocol keys. The renderer applies
+pointer routing, ripple/opacity state, text selection and `EditorInfo` actions
+locally, so a press or keyboard action does not cross PHP until an authored
+semantic callback actually fires.
+
 Android Back is intercepted by PAM's window host and delivered through the same
 bounded native dismissal event as backdrop/drag dismissal. Controlled overlays
 remain visible until the application publishes `open=false`; after the window
