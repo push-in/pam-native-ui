@@ -213,6 +213,22 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::Change, $handler);
     }
 
+    /**
+     * Registers the final value callback used by range controls.
+     *
+     * The native-event channel keeps this distinct from continuous CHANGE
+     * callbacks without extending PAM's shared event enum.
+     */
+    final public function onChangeEnd(Closure $handler): static
+    {
+        return $this->on(
+            EventKind::Native,
+            static function (string $payload) use ($handler): void {
+                $handler((float) $payload);
+            },
+        );
+    }
+
     final public function onToggle(Closure $handler): static
     {
         return $this->on(EventKind::Toggle, $handler);

@@ -156,6 +156,7 @@ it locally:
     maxValue="100"
     step="5"
     on:change="updateProgress"
+    on:event="finishProgress"
 >
     <SliderTrack class="h-2">
         <SliderFilledTrack class="bg-emerald-600" />
@@ -167,9 +168,13 @@ it locally:
 `SliderTrack`, `SliderFilledTrack`, `SliderThumb` and
 `ProgressFilledTrack` retain their utility classes and custom content.
 Dragging, snapping, reversal, horizontal/vertical positioning and filled-track
-scaling happen on the UI thread. `Switch` likewise uses the optimized PAM host
-with `sm`, `md` and `lg` sizes, controlled or default state, custom off/on
-track colors, thumb colors, keyboard activation and native switch semantics.
+scaling happen on the UI thread. `on:change` receives continuous values
+coalesced to at most one callback per display frame; `on:event` receives the
+final value once the gesture ends. The fluent component API exposes the same
+pair as `->onChange(...)` and `->onChangeEnd(...)`, both decoded as `float`.
+`Switch` likewise uses the optimized PAM host with `sm`, `md` and `lg` sizes,
+controlled or default state, custom off/on track colors, thumb colors,
+keyboard activation and native switch semantics.
 
 Application utility classes use the same mobile compiler as the captured
 component recipes:

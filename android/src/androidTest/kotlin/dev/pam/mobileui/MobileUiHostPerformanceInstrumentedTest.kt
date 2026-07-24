@@ -76,8 +76,11 @@ class MobileUiHostPerformanceInstrumentedTest {
                 gesture.p99Nanos < FOUR_MILLISECONDS_NANOS,
             )
             assertEquals(
-                "Per-frame slider movement must never cross the PAM bridge",
-                listOf(NativeViewEventKind.CHANGE),
+                "Slider moves must coalesce to one frame value and one final value",
+                listOf(
+                    NativeViewEventKind.CHANGE,
+                    NativeViewEventKind.NATIVE,
+                ),
                 events,
             )
 

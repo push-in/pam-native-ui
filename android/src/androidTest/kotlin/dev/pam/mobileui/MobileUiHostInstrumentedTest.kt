@@ -143,9 +143,11 @@ class MobileUiHostInstrumentedTest {
     @Test
     fun sliderAccessibilityAdjustmentSnapsLocallyAndEmitsOneSemanticValue() {
         onMain {
+            val events = CopyOnWriteArrayList<NativeViewEventKind>()
             val payloads = CopyOnWriteArrayList<ByteArray>()
             val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
-                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+                events += kind
+                payloads += payload
             }
             host.update(
                 mapOf(
@@ -163,7 +165,14 @@ class MobileUiHostInstrumentedTest {
                     null,
                 ),
             )
-            assertEquals("45", payloads.single().decodeToString())
+            assertEquals(
+                listOf(
+                    NativeViewEventKind.CHANGE,
+                    NativeViewEventKind.NATIVE,
+                ),
+                events,
+            )
+            assertEquals(listOf("45", "45"), payloads.map(ByteArray::decodeToString))
             host.release()
         }
     }

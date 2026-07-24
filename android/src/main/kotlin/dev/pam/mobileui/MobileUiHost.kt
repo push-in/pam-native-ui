@@ -273,6 +273,8 @@ internal class MobileUiHost(
     private var customStateDescription: String? = null
     private var switchAnimator: ValueAnimator? = null
     private var sliderTouchActive = false
+    private var pendingSliderValue: Double? = null
+    private var pendingSliderChange: Runnable? = null
     private val scaleDetector = ScaleGestureDetector(
         context,
         object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -327,6 +329,9 @@ internal class MobileUiHost(
         val previousOpen = open
         val previousComponentMode = componentMode
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
+        pendingSliderChange?.let(::removeCallbacks)
+        pendingSliderChange = null
+        pendingSliderValue = null
         component = properties.integer("component", component.toLong()).toInt()
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
         val defaultChecked = if (behavior == Behavior.SWITCH) {
@@ -860,9 +865,11 @@ internal class MobileUiHost(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id,
             )
             val direction = if (positive) 1.0 else -1.0
-            value = snapped(value + direction * step)
+            val requested = snapped(value + direction * step)
+            if (requested == value) return false
+            value = requested
             applyRangeVisualState()
-            emitValue()
+            emitSliderChangeAndEnd()
             invalidate()
             return true
         }
@@ -958,9 +965,11 @@ internal class MobileUiHost(
         ) {
             val positive = event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
                 || event.keyCode == KeyEvent.KEYCODE_DPAD_UP
-            value = snapped(value + if (positive) step else -step)
+            val requested = snapped(value + if (positive) step else -step)
+            if (requested == value) return false
+            value = requested
             applyRangeVisualState()
-            emitValue()
+            emitSliderChangeAndEnd()
             invalidate()
             return true
         }
@@ -977,6 +986,9 @@ internal class MobileUiHost(
         activePickerDialog = null
         accordionTouchActive = false
         sliderTouchActive = false
+        pendingSliderChange?.let(::removeCallbacks)
+        pendingSliderChange = null
+        pendingSliderValue = null
         switchAnimator?.cancel()
         switchAnimator = null
         animate().cancel()
@@ -1626,16 +1638,23 @@ internal class MobileUiHost(
                     }
                     progress = progress.coerceIn(0.0, 1.0)
                     if (reversed) progress = 1.0 - progress
-                    value = snapped(minimum + (maximum - minimum) * progress)
-                    applyRangeVisualState()
-                    invalidate()
+                    val requested = snapped(
+                        minimum + (maximum - minimum) * progress,
+                    )
+                    if (requested != value) {
+                        value = requested
+                        applyRangeVisualState()
+                        scheduleSliderChange()
+                        invalidate()
+                    }
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     if (!sliderTouchActive) return@OnTouchListener false
                     sliderTouchActive = false
                     performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                    emitValue()
+                    flushSliderChange()
+                    emitSliderChangeEnd()
                     performClick()
                     true
                 }
@@ -2763,13 +2782,46 @@ internal class MobileUiHost(
         return (minimum + steps * step).coerceIn(minimum, maximum)
     }
 
-    private fun emitValue() {
-        emitter.emit(
-            NativeViewEventKind.CHANGE,
-            formatRangeValue(value).encodeToByteArray(),
-        )
+    private fun scheduleSliderChange() {
+        pendingSliderValue = value
+        if (pendingSliderChange != null) return
+        pendingSliderChange = Runnable {
+            val pending = pendingSliderValue
+            pendingSliderValue = null
+            pendingSliderChange = null
+            if (pending != null) {
+                emitSliderValue(NativeViewEventKind.CHANGE, pending)
+                updateRangeAccessibility()
+            }
+        }.also(::postOnAnimation)
+    }
+
+    private fun flushSliderChange() {
+        pendingSliderChange?.let(::removeCallbacks)
+        pendingSliderChange = null
+        val pending = pendingSliderValue
+        pendingSliderValue = null
+        if (pending != null) {
+            emitSliderValue(NativeViewEventKind.CHANGE, pending)
+        }
+    }
+
+    private fun emitSliderChangeAndEnd() {
+        emitSliderValue(NativeViewEventKind.CHANGE, value)
+        emitSliderChangeEnd()
+    }
+
+    private fun emitSliderChangeEnd() {
+        emitSliderValue(NativeViewEventKind.NATIVE, value)
         updateRangeAccessibility()
         sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+    }
+
+    private fun emitSliderValue(kind: NativeViewEventKind, current: Double) {
+        emitter.emit(
+            kind,
+            formatRangeValue(current).encodeToByteArray(),
+        )
     }
 
     private fun emitDismiss() {

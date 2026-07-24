@@ -368,8 +368,12 @@ $assert(
     'Pressable components must expand their Android touch target without changing layout.',
 );
 
+$sliderEndValue = null;
 $slider = Slider::make(['value' => 40.0])
     ->onChange(static function (): void {
+    })
+    ->onChangeEnd(static function (float $value) use (&$sliderEndValue): void {
+        $sliderEndValue = $value;
     })
     ->toElement();
 $assert($slider->kind() === NodeKind::CustomView, 'Gesture-heavy controls must stay in a native host.');
@@ -380,6 +384,15 @@ $assert(
 $assert(
     isset($slider->events()[\Pam\Native\EventKind::Change->value]),
     'Typed native hosts must preserve semantic change events.',
+);
+$sliderEnd = $slider->events()[\Pam\Native\EventKind::Native->value] ?? null;
+if (!$sliderEnd instanceof Closure) {
+    throw new RuntimeException('Slider must preserve its final-value callback.');
+}
+$sliderEnd('42.5');
+$assert(
+    $sliderEndValue === 42.5,
+    'Slider onChangeEnd must decode the final native value as a float.',
 );
 $authoredSlider = Slider::make(
     [
