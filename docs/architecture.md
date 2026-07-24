@@ -121,7 +121,9 @@ Chat action anatomy that is interactive upstream (`AttachmentRemove`,
 `MessageAction`, `PromptInputButton`, `ConversationDownload`) compiles to PAM
 pressables. `AttachmentHoverCard` and `PromptInputActionMenu` reuse the same
 collision-aware native Tooltip/Menu controller rather than introducing a
-second overlay implementation.
+second overlay implementation. Their original interaction defaults are kept:
+the hover card opens above its trigger with 0 ms open and 100 ms close delays;
+the prompt action menu opens above its trigger with a 5 dp offset.
 
 `Attachments` and every `ScrollView horizontal="true"` compile to the
 `pam.mobile_ui.horizontal_scroll` Android primitive. It accepts one Row/Column
@@ -139,15 +141,14 @@ collection row/column metadata to accessibility services. Rotation and
 responsive relayout do not require a PHP callback.
 
 Controlled compound overlays keep their trigger subtree mounted when
-`open=false`. `Select` and `BottomSheet` render a stable layout root plus a
-dedicated portal child. `ModelSelector` uses a keyed, layout-only provider root
+`open=false`. `Select` renders a stable layout root plus a dedicated portal
+child. `BottomSheet` and `ModelSelector` use keyed, layout-only provider roots
 that Android flattens, matching React context/fragment semantics without
-allocating a container. Its content is still a dedicated PAM native `Modal`
-node and is ordered after every trigger. Only the portal/content child owns the
-Android `Dialog`/sheet window. Root event handlers are copied to the native
-child host at composition time, so dismiss, selection and drag-end events
-still target the application callback without a runtime lookup or an extra
-bridge hop.
+allocating containers. Window content is ordered after every trigger. Only the
+portal/content child owns the Android `Dialog`/sheet window. Root event handlers
+are copied to triggers and native child hosts at composition time, so open,
+dismiss, selection and drag-end events still target the application callback
+without a runtime lookup or an extra bridge hop.
 
 `ModelSelectorContent` composes its fixed upstream anatomy once: a modal header,
 1 dp screen-reader title, native dismiss control, a maximum-500 dp scroll
@@ -157,7 +158,10 @@ styles and events to the existing child instead of wrapping it. Group headings
 and controlled selected-item state are inherited during composition; opening,
 selection and dismissal each emit one bounded semantic event.
 
-Closed portal/backdrop/content parts become `GONE`; their native controller
+Modal, AlertDialog, Actionsheet, Drawer, Select, BottomSheet, ModelSelector and
+ImageViewer all begin closed when no open prop is supplied, matching their
+upstream contracts; ImageViewer also begins at index zero and BottomSheet at
+snap index zero. Closed portal/backdrop/content parts become `GONE`; their native controller
 also disables click, focus, accessibility and gesture handling. Touches
 therefore continue to the trigger and surrounding app. Opening the same keyed
 window enables UI-thread positioning, focus capture and entrance motion without

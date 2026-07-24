@@ -224,9 +224,13 @@ Bottom sheets, action sheets and select portals share one native controller:
     isOpen="{{ $filtersOpen }}"
     snapPoints="25,50,90"
     snapToIndex="1"
+    on:toggle="setFiltersOpen"
     on:change="rememberSheetPosition"
     on:event="closeFilters"
 >
+    <BottomSheetTrigger>
+        <Button><ButtonText>Open filters</ButtonText></Button>
+    </BottomSheetTrigger>
     <BottomSheetPortal>
         <BottomSheetBackdrop pressBehavior="collapse" />
         <BottomSheetContent>
@@ -246,7 +250,9 @@ selection stay on Android's UI thread. PHP receives one final snap index through
 bridge. `pressBehavior` supports `close`, `collapse` and `none` (or
 `Pam\MobileUi\Enum\BackdropPressBehavior`), while `closeOnPress` and
 `closeOnSelect` control item dismissal. Android Back, TalkBack scroll actions,
-focus trapping, reduced motion and a 48 dp drag target are supported.
+focus trapping, reduced motion and a 48 dp drag target are supported. With no
+open prop the sheet starts closed at snap index zero. A root `on:toggle`
+receives `true` from `BottomSheetTrigger` and `false` from native dismissal.
 
 Anchored overlays use the same compact tag convention. The first child is the
 trigger; Popover/Tooltip content or Menu items follow:
@@ -407,7 +413,8 @@ Android then owns active-image visibility, previous/next controls, looping,
 horizontal swipe, double-tap zoom, pan, counter updates and TalkBack collection
 actions. Gesture progress emits no PHP callback; `on:change` receives one
 zero-based index after a semantic selection and `on:toggle` receives the final
-open state.
+open state. Omitting `open`/`isOpen` keeps the gallery closed and
+`initialIndex` defaults to zero, as in the upstream component.
 
 Chat interfaces keep their high-frequency interaction state native while
 remaining ordinary compound tags:

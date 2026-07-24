@@ -12,9 +12,11 @@ use Pam\MobileUi\Component\AccordionIcon;
 use Pam\MobileUi\Component\AccordionItem;
 use Pam\MobileUi\Component\AccordionTitleText;
 use Pam\MobileUi\Component\AccordionTrigger;
+use Pam\MobileUi\Component\Actionsheet;
 use Pam\MobileUi\Component\ActionsheetFlatList;
 use Pam\MobileUi\Component\ActionsheetSectionList;
 use Pam\MobileUi\Component\ActionsheetVirtualizedList;
+use Pam\MobileUi\Component\AlertDialog;
 use Pam\MobileUi\Component\BottomSheet;
 use Pam\MobileUi\Component\BottomSheetBackdrop;
 use Pam\MobileUi\Component\BottomSheetContent;
@@ -23,6 +25,7 @@ use Pam\MobileUi\Component\BottomSheetFlatList;
 use Pam\MobileUi\Component\BottomSheetItem;
 use Pam\MobileUi\Component\BottomSheetPortal;
 use Pam\MobileUi\Component\BottomSheetSectionList;
+use Pam\MobileUi\Component\BottomSheetTrigger;
 use Pam\MobileUi\Component\BlankContext;
 use Pam\MobileUi\Component\BlankProvider;
 use Pam\MobileUi\Component\Checkbox;
@@ -106,6 +109,7 @@ use Pam\MobileUi\Component\MessageResponse;
 use Pam\MobileUi\Component\MessageToolbar;
 use Pam\MobileUi\Component\Menu;
 use Pam\MobileUi\Component\MenuItem;
+use Pam\MobileUi\Component\Modal;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
 use Pam\MobileUi\Component\ModelSelectorGroup;
@@ -670,6 +674,7 @@ if (
 }
 $assert(
     $drawer->kind() === NodeKind::Modal
+        && $drawer->properties()[PropKey::Visible->value] === false
         && $drawerHost->kind() === NodeKind::CustomView
         && $drawer->properties()[PropKey::ModalPresentation->value]
             === ModalPresentation::FullScreen->value
@@ -677,6 +682,19 @@ $assert(
         && $drawerContent->properties()[PropKey::HeightPercent->value] === 100.0,
     'Drawer must use a native full-screen window and preserve its compound dimensions.',
 );
+$defaultClosedOverlays = [
+    Actionsheet::make()->toElement(),
+    AlertDialog::make()->toElement(),
+    Modal::make()->toElement(),
+];
+foreach ($defaultClosedOverlays as $defaultClosedOverlay) {
+    $assert(
+        $defaultClosedOverlay->kind() === NodeKind::Modal
+            && $defaultClosedOverlay->properties()[PropKey::Visible->value]
+                === false,
+        'Standalone overlays must follow the upstream default-closed contract.',
+    );
+}
 
 $reversedSlider = Slider::make(
     [
@@ -1165,18 +1183,23 @@ if (
 ) {
     throw new RuntimeException('Chat overlay aliases must compile native hosts.');
 }
+$attachmentHoverProperties = Wire::decodeMap($attachmentHoverNative->bytes);
+$promptActionProperties = Wire::decodeMap($promptActionNative->bytes);
 $assert(
-    Wire::decodeMap($attachmentHoverNative->bytes)['behavior']
-        === NativeBehavior::Tooltip->value
+    $attachmentHoverProperties['behavior'] === NativeBehavior::Tooltip->value
+        && $attachmentHoverProperties['placement'] === Placement::Top->value
+        && $attachmentHoverProperties['openDelay'] === 0
+        && $attachmentHoverProperties['closeDelay'] === 100
         && $attachmentHover->children()[0]
             ->properties()[PropKey::Value->value] === 'pam:overlay-trigger'
         && $attachmentHover->children()[1]
             ->properties()[PropKey::Value->value] === 'pam:overlay-content'
-        && Wire::decodeMap($promptActionNative->bytes)['behavior']
-            === NativeBehavior::Menu->value
+        && $promptActionProperties['behavior'] === NativeBehavior::Menu->value
+        && $promptActionProperties['placement'] === Placement::Top->value
+        && $promptActionProperties['offset'] === 5
         && $promptActionMenu->children()[1]
             ->properties()[PropKey::Value->value] === 'pam:overlay-content',
-    'Chat hover cards and action menus must reuse collision-aware native overlays.',
+    'Chat hover cards and action menus must preserve their upstream native defaults.',
 );
 
 $message = Message::make(
@@ -1699,6 +1722,38 @@ $assert(
         && $imageViewerIndexes === [0],
     'ImageViewer must synthesize images, navigation, counter and semantic events.',
 );
+$defaultImageViewer = ImageViewer::make(
+    ['images' => ['file:///default.jpg']],
+    ImageViewerTrigger::make('Open gallery'),
+    ImageViewerContent::make(),
+)->toElement();
+$defaultImageViewerTrigger = $defaultImageViewer->children()[0] ?? null;
+$defaultImageViewerModal = $defaultImageViewer->children()[1] ?? null;
+$defaultImageViewerHost = $defaultImageViewerModal?->children()[0] ?? null;
+$defaultImageViewerProperties = $defaultImageViewerHost?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$defaultImageViewerTrigger instanceof \Pam\Native\Element
+    || !$defaultImageViewerModal instanceof \Pam\Native\Element
+    || !$defaultImageViewerProperties instanceof BinaryValue
+) {
+    throw new RuntimeException('Default ImageViewer must retain its trigger and gallery host.');
+}
+$defaultImageViewerNative = Wire::decodeMap(
+    $defaultImageViewerProperties->bytes,
+);
+$assert(
+    !isset($defaultImageViewer->properties()[PropKey::Visible->value])
+        && !isset(
+            $defaultImageViewerTrigger->properties()[PropKey::Visible->value],
+        )
+        && $defaultImageViewerModal->properties()[PropKey::Visible->value]
+            === false
+        && $defaultImageViewerNative['initialIndex'] === 0
+        && $defaultImageViewerNative['defaultOpen'] === false,
+    'ImageViewer must default closed at index zero without unmounting its trigger.',
+);
 
 $inputChanges = [];
 $compoundInput = Input::make(
@@ -1885,7 +1940,6 @@ $assert(
     'ModelSelector must preserve provider, modal anatomy, sizing, selection and controlled open events.',
 );
 $closedSelect = Select::make(
-    ['open' => false],
     SelectTrigger::make('Choose stack'),
     SelectPortal::make(),
 )->onNativeEvent(static function (): void {
@@ -1916,15 +1970,30 @@ $assert(
         && isset($closedSelectHost->events()[\Pam\Native\EventKind::Native->value]),
     'Select must forward dismissals and semantic events into its native sheet.',
 );
+$defaultSheetOpenChanges = [];
 $defaultClosedSheet = BottomSheet::make(
-    ['defaultIsOpen' => false],
-    BottomSheetPortal::make(['snapPoints' => '25%, 50; 90']),
+    BottomSheetPortal::make(
+        ['snapPoints' => '25%, 50; 90'],
+        BottomSheetBackdrop::make(),
+        BottomSheetContent::make(),
+    ),
+    BottomSheetTrigger::make('Open sheet'),
+)->onToggle(
+    static function (bool $open) use (&$defaultSheetOpenChanges): void {
+        $defaultSheetOpenChanges[] = $open;
+    },
 )->toElement();
-$defaultClosedSheetWindow = $defaultClosedSheet->children()[0] ?? null;
+$defaultClosedSheetTrigger = $defaultClosedSheet->children()[0] ?? null;
+$defaultClosedSheetWindow = $defaultClosedSheet->children()[1] ?? null;
 $defaultClosedSheetHost = $defaultClosedSheetWindow?->children()[0] ?? null;
+$defaultClosedSheetBackdrop = $defaultClosedSheetHost?->children()[0] ?? null;
+$defaultClosedSheetContent = $defaultClosedSheetHost?->children()[1] ?? null;
 if (
-    !$defaultClosedSheetWindow instanceof \Pam\Native\Element
+    !$defaultClosedSheetTrigger instanceof \Pam\Native\Element
+    || !$defaultClosedSheetWindow instanceof \Pam\Native\Element
     || !$defaultClosedSheetHost instanceof \Pam\Native\Element
+    || !$defaultClosedSheetBackdrop instanceof \Pam\Native\Element
+    || !$defaultClosedSheetContent instanceof \Pam\Native\Element
 ) {
     throw new RuntimeException('Default-closed BottomSheet must render its stable window.');
 }
@@ -1935,11 +2004,27 @@ if (!$defaultClosedSheetProperties instanceof BinaryValue) {
     throw new RuntimeException('Default-closed BottomSheet must carry native state.');
 }
 $defaultClosedSheetNative = Wire::decodeMap($defaultClosedSheetProperties->bytes);
+$defaultClosedSheetTrigger->events()[\Pam\Native\EventKind::Press->value]();
+$defaultClosedSheetHost->events()[\Pam\Native\EventKind::Native->value](
+    Wire::map(['action' => 1, 'dismissed' => true]),
+);
 $assert(
-    $defaultClosedSheetWindow->properties()[PropKey::Visible->value] === false
+    $defaultClosedSheet->properties()[PropKey::Collapsable->value] === true
+        && !isset($defaultClosedSheet->properties()[PropKey::Visible->value])
+        && $defaultClosedSheetWindow->properties()[PropKey::Visible->value]
+            === false
         && $defaultClosedSheetNative['defaultIsOpen'] === false
-        && $defaultClosedSheetNative['snapPoints'] === "25\n50\n90",
-    'BottomSheet must support defaultIsOpen and tag-friendly snap point strings.',
+        && $defaultClosedSheetNative['defaultSnapIndex'] === 0
+        && $defaultClosedSheetNative['snapToIndex'] === 0
+        && $defaultClosedSheetNative['enablePanDownToClose'] === true
+        && $defaultClosedSheetNative['enableDynamicSizing'] === false
+        && $defaultClosedSheetNative['snapPoints'] === "25\n50\n90"
+        && $defaultClosedSheetBackdrop->properties()[PropKey::Value->value]
+            === 'pam:overlay-backdrop'
+        && $defaultClosedSheetContent->properties()[PropKey::Value->value]
+            === 'pam:overlay-content'
+        && $defaultSheetOpenChanges === [true, false],
+    'BottomSheet must preserve provider semantics, upstream defaults and controlled trigger events.',
 );
 $bottomSheet = BottomSheet::make(
     ['open' => true],

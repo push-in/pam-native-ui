@@ -81,8 +81,8 @@ final class ComponentRenderer
 
             return $provider;
         }
-        if ($part === 'ModelSelector') {
-            $selector = View::make(...self::modelSelectorRootChildren($children))
+        if (in_array($part, ['BottomSheet', 'ModelSelector'], true)) {
+            $selector = View::make(...self::providerRootChildren($children))
                 ->collapsable();
             if ($elementKey !== null) {
                 $selector = $selector->key($elementKey);
@@ -865,6 +865,69 @@ final class ComponentRenderer
                 );
             }
         }
+        if (
+            in_array(
+                $part,
+                [
+                    'Actionsheet',
+                    'AlertDialog',
+                    'BottomSheet',
+                    'Drawer',
+                    'Modal',
+                    'Select',
+                ],
+                true,
+            )
+            && !array_key_exists('open', $props)
+            && !array_key_exists('isOpen', $props)
+            && !array_key_exists('defaultIsOpen', $props)
+        ) {
+            $props['defaultIsOpen'] = false;
+        }
+        if ($part === 'ImageViewer') {
+            if (
+                !array_key_exists('open', $props)
+                && !array_key_exists('isOpen', $props)
+                && !array_key_exists('defaultOpen', $props)
+                && !array_key_exists('defaultIsOpen', $props)
+            ) {
+                $props['defaultOpen'] = false;
+            }
+            if (!array_key_exists('initialIndex', $props)) {
+                $props['initialIndex'] = 0;
+            }
+        }
+        if (
+            $part === 'BottomSheet'
+            && !array_key_exists('defaultSnapIndex', $props)
+        ) {
+            $props['defaultSnapIndex'] = 0;
+        } elseif ($part === 'BottomSheetPortal') {
+            if (!array_key_exists('enablePanDownToClose', $props)) {
+                $props['enablePanDownToClose'] = true;
+            }
+            if (!array_key_exists('enableDynamicSizing', $props)) {
+                $props['enableDynamicSizing'] = false;
+            }
+        } elseif ($part === 'BottomSheetBackdrop') {
+            if (!array_key_exists('appearsOnIndex', $props)) {
+                $props['appearsOnIndex'] = 0;
+            }
+            if (!array_key_exists('disappearsOnIndex', $props)) {
+                $props['disappearsOnIndex'] = -1;
+            }
+        } elseif (
+            $part === 'BottomSheetContent'
+            && !array_key_exists('focusScope', $props)
+        ) {
+            $props['focusScope'] = true;
+        } elseif (
+            $part === 'BottomSheetItem'
+            && !array_key_exists('closeOnSelect', $props)
+            && !array_key_exists('closeOnPress', $props)
+        ) {
+            $props['closeOnSelect'] = true;
+        }
         if ($part === 'Conversation' && !array_key_exists('autoScroll', $props)) {
             $props['autoScroll'] = true;
         } elseif ($part === 'SelectInput') {
@@ -916,9 +979,24 @@ final class ComponentRenderer
         }
         if (!array_key_exists('placement', $props)) {
             $props['placement'] = match ($part) {
-                'Menu', 'PromptInputActionMenu' => Placement::BottomStart->value,
+                'PromptInputActionMenu',
+                'AttachmentHoverCard' => Placement::Top->value,
+                'Menu' => Placement::BottomStart->value,
                 default => Placement::Bottom->value,
             };
+        }
+        if ($part === 'AttachmentHoverCard') {
+            if (!array_key_exists('openDelay', $props)) {
+                $props['openDelay'] = 0;
+            }
+            if (!array_key_exists('closeDelay', $props)) {
+                $props['closeDelay'] = 100;
+            }
+        } elseif (
+            $part === 'PromptInputActionMenu'
+            && !array_key_exists('offset', $props)
+        ) {
+            $props['offset'] = 5;
         }
         if (
             in_array($part, ['Menu', 'PromptInputActionMenu'], true)
@@ -1043,10 +1121,45 @@ final class ComponentRenderer
                 return $inherited;
             }
         }
-        if (
-            ($source === 'BottomSheet' && $target === 'BottomSheetPortal')
-        ) {
-            return $events;
+        if ($source === 'BottomSheet') {
+            if ($target === 'BottomSheetTrigger') {
+                $toggle = $events[EventKind::Toggle->value] ?? null;
+
+                return $toggle === null
+                    ? []
+                    : [
+                        EventKind::Press->value =>
+                            static function () use ($toggle): void {
+                                $toggle(true);
+                            },
+                    ];
+            }
+            if ($target === 'BottomSheetPortal') {
+                $inherited = [];
+                $change = $events[EventKind::Change->value] ?? null;
+                $native = $events[EventKind::Native->value] ?? null;
+                $toggle = $events[EventKind::Toggle->value] ?? null;
+                if ($change !== null) {
+                    $inherited[EventKind::Change->value] = $change;
+                }
+                if ($native !== null || $toggle !== null) {
+                    $inherited[EventKind::Native->value] =
+                        static function (string $payload) use (
+                            $native,
+                            $toggle,
+                        ): void {
+                            $native?->__invoke($payload);
+                            if (
+                                $toggle !== null
+                                && self::nativeEventAction($payload) === 1
+                            ) {
+                                $toggle(false);
+                            }
+                        };
+                }
+
+                return $inherited;
+            }
         }
         if ($source === 'Select' && $target === 'SelectPortal') {
             $native = $events[EventKind::Native->value] ?? null;
@@ -1156,6 +1269,7 @@ final class ComponentRenderer
         if (
             !array_key_exists('open', $props)
             && !array_key_exists('isOpen', $props)
+            && !array_key_exists('defaultOpen', $props)
             && !array_key_exists('defaultIsOpen', $props)
         ) {
             return false;
@@ -1167,7 +1281,11 @@ final class ComponentRenderer
             self::flag(
                 $props,
                 'isOpen',
-                self::flag($props, 'defaultIsOpen'),
+                self::flag(
+                    $props,
+                    'defaultIsOpen',
+                    self::flag($props, 'defaultOpen'),
+                ),
             ),
         );
     }
@@ -1502,13 +1620,13 @@ final class ComponentRenderer
     }
 
     /**
-     * Upstream extracts modal content from the trigger fragment and mounts it
-     * last. Keeping the same order also restores focus to a mounted trigger.
+     * Context-only roots create no native layout. PAM keeps triggers before
+     * their window child so Android can flatten the carrier and restore focus.
      *
      * @param list<Element> $children
      * @return list<Element>
      */
-    private static function modelSelectorRootChildren(array $children): array
+    private static function providerRootChildren(array $children): array
     {
         $triggers = [];
         $content = [];
