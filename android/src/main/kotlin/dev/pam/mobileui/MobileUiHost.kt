@@ -2418,7 +2418,11 @@ internal class MobileUiHost(
         val input = findFirstEditText(this) ?: return false
         input.isFocusable = true
         input.isFocusableInTouchMode = true
-        val focused = input.requestFocus()
+        val focused = if (input.isInTouchMode) {
+            input.requestFocusFromTouch()
+        } else {
+            input.requestFocus()
+        }
         if (focused && !readOnly) {
             input.post {
                 input.setSelection(input.text.length)

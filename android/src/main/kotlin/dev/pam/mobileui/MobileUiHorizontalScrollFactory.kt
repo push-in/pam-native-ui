@@ -46,6 +46,11 @@ internal class MobileUiHorizontalScrollView(
     private var pendingScrollX = 0
     private var requestedContentOffset = 0f
     private var appliedContentOffset = Float.NaN
+    private var contentOffsetScheduled = false
+    private val applyRequestedContentOffset = Runnable {
+        contentOffsetScheduled = false
+        applyContentOffset()
+    }
     private val emitScroll = Choreographer.FrameCallback {
         scrollScheduled = false
         emitter.emit(
@@ -100,6 +105,7 @@ internal class MobileUiHorizontalScrollView(
         ) {
             applyContentOffset()
         }
+        scheduleContentOffsetReconciliation()
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean =
@@ -130,9 +136,12 @@ internal class MobileUiHorizontalScrollView(
         ) {
             applyContentOffset()
         }
+        scheduleContentOffsetReconciliation()
     }
 
     fun release() {
+        removeCallbacks(applyRequestedContentOffset)
+        contentOffsetScheduled = false
         if (scrollScheduled) {
             Choreographer.getInstance().removeFrameCallback(emitScroll)
             scrollScheduled = false
@@ -158,6 +167,19 @@ internal class MobileUiHorizontalScrollView(
         return (requestedContentOffset * density)
             .toInt()
             .coerceIn(0, maximumOffset)
+    }
+
+    private fun scheduleContentOffsetReconciliation() {
+        val rawRequestedOffset = (requestedContentOffset * density).toInt()
+        if (
+            !isAttachedToWindow
+            || contentOffsetScheduled
+            || scrollX == rawRequestedOffset
+        ) {
+            return
+        }
+        contentOffsetScheduled = true
+        postOnAnimation(applyRequestedContentOffset)
     }
 }
 
