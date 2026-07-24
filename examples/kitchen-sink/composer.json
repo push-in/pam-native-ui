@@ -1,0 +1,42 @@
+{
+    "name": "pushinbr/pam-mobile-ui-kitchen-sink",
+    "description": "PAM Mobile UI native component catalog.",
+    "type": "project",
+    "license": "BUSL-1.1",
+    "require": {
+        "php": "^8.4",
+        "pushinbr/pam-mobile-ui": "0.1.x-dev",
+        "pushinbr/pam-native": "0.1.x-dev"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../..",
+            "options": {
+                "symlink": false,
+                "versions": {
+                    "pushinbr/pam-mobile-ui": "0.1.x-dev"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../../../pam-native/packages/native",
+            "options": {
+                "symlink": false,
+                "versions": {
+                    "pushinbr/pam-native": "0.1.x-dev"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "config": {
+        "platform-check": true,
+        "sort-packages": true
+    }
+}

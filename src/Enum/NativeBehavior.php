@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\MobileUi\Enum;
+
+enum NativeBehavior: int
+{
+    case Container = 1;
+    case Accordion = 2;
+    case BottomSheet = 3;
+    case Overlay = 4;
+    case Slider = 5;
+    case Tabs = 6;
+    case Calendar = 7;
+    case Skeleton = 8;
+    case Glass = 9;
+    case Checkbox = 10;
+    case Radio = 11;
+    case Toast = 12;
+    case ImageViewer = 13;
+    case Chat = 14;
+    case Progress = 15;
+    case Drawer = 16;
+    case Modal = 17;
+    case AlertDialog = 18;
+    case Popover = 19;
+    case Menu = 20;
+    case Tooltip = 21;
+    case DateTimePicker = 22;
+    case Portal = 23;
+}

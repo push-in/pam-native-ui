@@ -1,0 +1,989 @@
+{
+    "repository": "https://github.com/gluestack/gluestack-ui",
+    "commit": "be060b5d184826d34623e490447a467ffb5cfe56",
+    "packageVersion": "5.0.3",
+    "capturedAt": "2026-07-23",
+    "license": {
+        "spdx": "MIT",
+        "path": "packages/gluestack-ui/LICENSE",
+        "sha256": "1057692ffb1476b2a150e38f33cb004988542d97104af3658c0b5aa6fab903d7"
+    },
+    "modules": [
+        {
+            "name": "accordion",
+            "exports": [
+                "Accordion",
+                "AccordionContent",
+                "AccordionContentText",
+                "AccordionHeader",
+                "AccordionIcon",
+                "AccordionItem",
+                "AccordionTitleText",
+                "AccordionTrigger",
+                "AnimatedHeight",
+                "AnimatedIcon"
+            ],
+            "variants": [],
+            "examples": 7
+        },
+        {
+            "name": "actionsheet",
+            "exports": [
+                "Actionsheet",
+                "ActionsheetBackdrop",
+                "ActionsheetContent",
+                "ActionsheetDragIndicator",
+                "ActionsheetDragIndicatorWrapper",
+                "ActionsheetFlatList",
+                "ActionsheetIcon",
+                "ActionsheetItem",
+                "ActionsheetItemText",
+                "ActionsheetScrollView",
+                "ActionsheetSectionHeaderText",
+                "ActionsheetSectionList",
+                "ActionsheetVirtualizedList",
+                "UIActionsheet"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 9
+        },
+        {
+            "name": "alert",
+            "exports": [
+                "Alert",
+                "AlertIcon",
+                "AlertText",
+                "UIAlert"
+            ],
+            "variants": [
+                "variant"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "alert-dialog",
+            "exports": [
+                "AlertDialog",
+                "AlertDialogBackdrop",
+                "AlertDialogBody",
+                "AlertDialogCloseButton",
+                "AlertDialogContent",
+                "AlertDialogFooter",
+                "AlertDialogHeader"
+            ],
+            "variants": [],
+            "examples": 4
+        },
+        {
+            "name": "all-components",
+            "exports": [],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "avatar",
+            "exports": [
+                "Avatar",
+                "AvatarBadge",
+                "AvatarFallback",
+                "AvatarFallbackText",
+                "AvatarGroup",
+                "AvatarImage"
+            ],
+            "variants": [],
+            "examples": 9
+        },
+        {
+            "name": "badge",
+            "exports": [
+                "Badge",
+                "BadgeIcon",
+                "BadgeText"
+            ],
+            "variants": [
+                "variant"
+            ],
+            "examples": 3
+        },
+        {
+            "name": "bottomsheet",
+            "exports": [
+                "BottomSheet",
+                "BottomSheetPortal",
+                "BottomSheetTrigger",
+                "BottomSheetBackdrop",
+                "BottomSheetDragIndicator",
+                "BottomSheetContent",
+                "BottomSheetFooter",
+                "BottomSheetItem",
+                "BottomSheetItemText",
+                "BottomSheetTextInput",
+                "BottomSheetScrollView",
+                "BottomSheetFlatList",
+                "BottomSheetSectionList"
+            ],
+            "variants": [],
+            "examples": 4
+        },
+        {
+            "name": "box",
+            "exports": [
+                "Box",
+                "boxStyle"
+            ],
+            "variants": [],
+            "examples": 1
+        },
+        {
+            "name": "button",
+            "exports": [
+                "Button",
+                "ButtonGroup",
+                "ButtonIcon",
+                "ButtonSpinner",
+                "ButtonText"
+            ],
+            "variants": [
+                "variant",
+                "size",
+                "space",
+                "isAttached",
+                "flexDirection"
+            ],
+            "examples": 6
+        },
+        {
+            "name": "calendar",
+            "exports": [
+                "Calendar",
+                "CalendarHeader",
+                "CalendarHeaderPrevButton",
+                "CalendarHeaderNextButton",
+                "CalendarHeaderTitle",
+                "CalendarHeaderMonthSelect",
+                "CalendarHeaderYearSelect",
+                "CalendarWeekDaysHeader",
+                "CalendarWeekDay",
+                "CalendarBody",
+                "CalendarGrid",
+                "CalendarWeek",
+                "CalendarDay",
+                "CalendarDayText",
+                "CalendarDayIndicator",
+                "CalendarWeekNumber",
+                "CalendarFooter",
+                "calendarStyle",
+                "calendarHeaderStyle",
+                "calendarHeaderButtonStyle",
+                "calendarHeaderTitleStyle",
+                "calendarWeekDaysHeaderStyle",
+                "calendarWeekDayStyle",
+                "calendarWeekDayTextStyle",
+                "calendarBodyStyle",
+                "calendarGridStyle",
+                "calendarWeekStyle",
+                "calendarDayStyle",
+                "calendarDayTextStyle",
+                "calendarDayIndicatorStyle",
+                "calendarDotStyle",
+                "calendarWeekNumberStyle",
+                "calendarWeekNumberTextStyle",
+                "calendarFooterStyle",
+                "calendarHeaderSelectStyle"
+            ],
+            "variants": [
+                "size",
+                "state",
+                "type"
+            ],
+            "examples": 7
+        },
+        {
+            "name": "card",
+            "exports": [
+                "Card",
+                "cardStyle"
+            ],
+            "variants": [
+                "size"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "center",
+            "exports": [
+                "Center",
+                "centerStyle"
+            ],
+            "variants": [],
+            "examples": 1
+        },
+        {
+            "name": "chat-ai",
+            "exports": [
+                "getMediaCategory",
+                "getAttachmentLabel",
+                "useAttachmentsContext",
+                "useAttachmentContext",
+                "Attachments",
+                "Attachment",
+                "AttachmentPreview",
+                "AttachmentRemove",
+                "AttachmentHoverCard",
+                "AttachmentHoverCardContent",
+                "AttachmentHoverCardText",
+                "AttachmentEmpty",
+                "BlankContext",
+                "BlankProvider",
+                "useBlankContext",
+                "Conversation",
+                "ConversationEmptyState",
+                "ConversationContent",
+                "ConversationScrollButton",
+                "ConversationDownload",
+                "FileTree",
+                "FileTreeFolder",
+                "FileTreeFile",
+                "FileTreeActions",
+                "Message",
+                "MessageContent",
+                "MessageResponse",
+                "MessageToolbar",
+                "MessageAction",
+                "MessageBranch",
+                "MessageBranchContent",
+                "MessageBranchSelector",
+                "MessageBranchPrevious",
+                "MessageBranchNext",
+                "MessageBranchPage",
+                "ModelSelector",
+                "ModelSelectorTrigger",
+                "ModelSelectorContent",
+                "ModelSelectorInput",
+                "ModelSelectorList",
+                "ModelSelectorEmpty",
+                "ModelSelectorGroup",
+                "ModelSelectorItem",
+                "ModelSelectorShortcut",
+                "ModelSelectorSeparator",
+                "ModelSelectorLogo",
+                "ModelSelectorLogoGroup",
+                "ModelSelectorName",
+                "usePromptInputAttachments",
+                "PromptInputProvider",
+                "PromptInput",
+                "PromptInputBody",
+                "PromptInputTextarea",
+                "PromptInputFooter",
+                "PromptInputTools",
+                "PromptInputButton",
+                "PromptInputSubmit",
+                "PromptInputActionMenu",
+                "PromptInputActionMenuTrigger",
+                "PromptInputActionMenuContent"
+            ],
+            "variants": [],
+            "examples": 3
+        },
+        {
+            "name": "checkbox",
+            "exports": [
+                "Checkbox",
+                "CheckboxGroup",
+                "CheckboxIcon",
+                "CheckboxIndicator",
+                "CheckboxLabel"
+            ],
+            "variants": [],
+            "examples": 9
+        },
+        {
+            "name": "date-time-picker",
+            "exports": [
+                "DateTimePicker",
+                "DateTimePickerIcon",
+                "DateTimePickerInput",
+                "DateTimePickerTrigger",
+                "dateTimePickerStyle",
+                "dateTimePickerTriggerStyle",
+                "dateTimePickerInputStyle",
+                "dateTimePickerIconStyle"
+            ],
+            "variants": [
+                "size",
+                "variant"
+            ],
+            "examples": 4
+        },
+        {
+            "name": "divider",
+            "exports": [
+                "Divider"
+            ],
+            "variants": [
+                "orientation"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "drawer",
+            "exports": [
+                "Drawer",
+                "DrawerBackdrop",
+                "DrawerBody",
+                "DrawerCloseButton",
+                "DrawerContent",
+                "DrawerFooter",
+                "DrawerHeader"
+            ],
+            "variants": [
+                "size",
+                "anchor"
+            ],
+            "examples": 3
+        },
+        {
+            "name": "fab",
+            "exports": [
+                "Fab",
+                "FabIcon",
+                "FabLabel"
+            ],
+            "variants": [
+                "size",
+                "placement",
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "flat-list",
+            "exports": [
+                "RNFlatList",
+                "FlatList"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "form-control",
+            "exports": [
+                "FormControl",
+                "FormControlError",
+                "FormControlErrorText",
+                "FormControlErrorIcon",
+                "FormControlLabel",
+                "FormControlLabelText",
+                "FormControlLabelAstrick",
+                "FormControlHelper",
+                "FormControlHelperText",
+                "UIFormControl"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 7
+        },
+        {
+            "name": "gluestack-ui-provider",
+            "exports": [
+                "useSafeLayoutEffect",
+                "GluestackUIProvider"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "grid",
+            "exports": [
+                "Grid",
+                "GridItem",
+                "gridStyle",
+                "gridItemStyle"
+            ],
+            "variants": [],
+            "examples": 5
+        },
+        {
+            "name": "heading",
+            "exports": [
+                "Heading",
+                "headingStyle"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "sub",
+                "italic",
+                "highlight",
+                "size"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "hstack",
+            "exports": [
+                "HStack",
+                "hstackStyle"
+            ],
+            "variants": [
+                "space",
+                "reversed"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "icon",
+            "exports": [
+                "Icon",
+                "createIcon",
+                "AddIcon",
+                "AlertCircleIcon",
+                "ArrowUpIcon",
+                "ArrowDownIcon",
+                "ArrowRightIcon",
+                "ArrowLeftIcon",
+                "AtSignIcon",
+                "BellIcon",
+                "CalendarDaysIcon",
+                "CheckIcon",
+                "CheckCircleIcon",
+                "ChevronUpIcon",
+                "ChevronDownIcon",
+                "ChevronLeftIcon",
+                "ChevronRightIcon",
+                "ChevronsLeftIcon",
+                "ChevronsRightIcon",
+                "ChevronsUpDownIcon",
+                "CircleIcon",
+                "ClockIcon",
+                "CloseIcon",
+                "CloseCircleIcon",
+                "CopyIcon",
+                "DownloadIcon",
+                "EditIcon",
+                "EyeIcon",
+                "EyeOffIcon",
+                "FavouriteIcon",
+                "GlobeIcon",
+                "GripVerticalIcon",
+                "HelpCircleIcon",
+                "InfoIcon",
+                "LinkIcon",
+                "ExternalLinkIcon",
+                "LoaderIcon",
+                "LockIcon",
+                "MailIcon",
+                "MenuIcon",
+                "MessageCircleIcon",
+                "MoonIcon",
+                "PaperclipIcon",
+                "PhoneIcon",
+                "PlayIcon",
+                "RemoveIcon",
+                "RepeatIcon",
+                "Repeat1Icon",
+                "SearchIcon",
+                "SettingsIcon",
+                "ShareIcon",
+                "SlashIcon",
+                "StarIcon",
+                "SunIcon",
+                "ThreeDotsIcon",
+                "TrashIcon",
+                "UnlockIcon",
+                "UIIcon"
+            ],
+            "variants": [
+                "size"
+            ],
+            "examples": 4
+        },
+        {
+            "name": "image",
+            "exports": [
+                "Image"
+            ],
+            "variants": [
+                "size"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "image-background",
+            "exports": [
+                "ImageBackground"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "image-viewer",
+            "exports": [
+                "ImageViewer",
+                "ImageViewerTrigger",
+                "ImageViewerContent",
+                "ImageViewerCloseButton",
+                "ImageViewerNavigation",
+                "ImageViewerCounter"
+            ],
+            "variants": [],
+            "examples": 3
+        },
+        {
+            "name": "input",
+            "exports": [
+                "Input",
+                "InputField",
+                "InputIcon",
+                "InputSlot"
+            ],
+            "variants": [],
+            "examples": 3
+        },
+        {
+            "name": "input-accessory-view",
+            "exports": [
+                "InputAccessoryView"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "keyboard-avoiding-view",
+            "exports": [
+                "KeyboardAvoidingView"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "link",
+            "exports": [
+                "Link",
+                "LinkText",
+                "UILink"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "size",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 3
+        },
+        {
+            "name": "liquid-glass",
+            "exports": [
+                "isGlassEffectAPIAvailable",
+                "isLiquidGlassAvailable",
+                "GlassView",
+                "GlassContainer"
+            ],
+            "variants": [],
+            "examples": 4
+        },
+        {
+            "name": "menu",
+            "exports": [
+                "Menu",
+                "MenuItem",
+                "MenuItemLabel",
+                "MenuSeparator",
+                "UIMenu"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 3
+        },
+        {
+            "name": "modal",
+            "exports": [
+                "Modal",
+                "ModalBackdrop",
+                "ModalBody",
+                "ModalCloseButton",
+                "ModalContent",
+                "ModalFooter",
+                "ModalHeader"
+            ],
+            "variants": [
+                "size"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "popover",
+            "exports": [
+                "Popover",
+                "PopoverArrow",
+                "PopoverBackdrop",
+                "PopoverBody",
+                "PopoverCloseButton",
+                "PopoverContent",
+                "PopoverFooter",
+                "PopoverHeader"
+            ],
+            "variants": [
+                "placement"
+            ],
+            "examples": 6
+        },
+        {
+            "name": "portal",
+            "exports": [
+                "Portal"
+            ],
+            "variants": [],
+            "examples": 1
+        },
+        {
+            "name": "pressable",
+            "exports": [
+                "Pressable"
+            ],
+            "variants": [],
+            "examples": 2
+        },
+        {
+            "name": "progress",
+            "exports": [
+                "Progress",
+                "ProgressFilledTrack",
+                "UIProgress"
+            ],
+            "variants": [
+                "orientation"
+            ],
+            "examples": 4
+        },
+        {
+            "name": "radio",
+            "exports": [
+                "Radio",
+                "RadioGroup",
+                "RadioIcon",
+                "RadioIndicator",
+                "RadioLabel"
+            ],
+            "variants": [
+                "size"
+            ],
+            "examples": 9
+        },
+        {
+            "name": "refresh-control",
+            "exports": [
+                "RefreshControl"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "safe-area-view",
+            "exports": [
+                "SafeAreaView"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "scroll-view",
+            "exports": [
+                "ScrollView"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "section-list",
+            "exports": [
+                "SectionList"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "select",
+            "exports": [
+                "Select",
+                "SelectTrigger",
+                "SelectInput",
+                "SelectIcon",
+                "SelectPortal",
+                "SelectBackdrop",
+                "SelectContent",
+                "SelectDragIndicator",
+                "SelectDragIndicatorWrapper",
+                "SelectItem",
+                "SelectScrollView",
+                "SelectVirtualizedList",
+                "SelectFlatList",
+                "SelectSectionList",
+                "SelectSectionHeaderText",
+                "Actionsheet",
+                "ActionsheetContent",
+                "ActionsheetItem",
+                "ActionsheetItemText",
+                "ActionsheetDragIndicator",
+                "ActionsheetDragIndicatorWrapper",
+                "ActionsheetBackdrop",
+                "ActionsheetScrollView",
+                "ActionsheetVirtualizedList",
+                "ActionsheetFlatList",
+                "ActionsheetSectionList",
+                "ActionsheetSectionHeaderText",
+                "ActionsheetIcon",
+                "UIActionsheet"
+            ],
+            "variants": [
+                "size",
+                "variant",
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "skeleton",
+            "exports": [
+                "Skeleton",
+                "SkeletonText",
+                "skeletonStyle",
+                "skeletonTextStyle"
+            ],
+            "variants": [
+                "variant",
+                "speed",
+                "gap"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "slider",
+            "exports": [
+                "Slider",
+                "SliderFilledTrack",
+                "SliderThumb",
+                "SliderTrack",
+                "UISlider"
+            ],
+            "variants": [
+                "orientation",
+                "isReversed"
+            ],
+            "examples": 1
+        },
+        {
+            "name": "spinner",
+            "exports": [
+                "Spinner"
+            ],
+            "variants": [],
+            "examples": 3
+        },
+        {
+            "name": "status-bar",
+            "exports": [
+                "StatusBar"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "switch",
+            "exports": [
+                "Switch"
+            ],
+            "variants": [
+                "size"
+            ],
+            "examples": 3
+        },
+        {
+            "name": "table",
+            "exports": [
+                "Table",
+                "TableHeader",
+                "TableBody",
+                "TableFooter",
+                "TableHead",
+                "TableRow",
+                "TableData",
+                "TableCaption",
+                "tableStyle",
+                "tableHeaderStyle",
+                "tableBodyStyle",
+                "tableFooterStyle",
+                "tableHeadStyle",
+                "tableRowStyleStyle",
+                "tableDataStyle",
+                "tableCaptionStyle"
+            ],
+            "variants": [
+                "isHeaderRow",
+                "isFooterRow"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "tabs",
+            "exports": [
+                "Tabs",
+                "TabsList",
+                "TabsTrigger",
+                "TabsContent",
+                "TabsContentWrapper",
+                "TabsTriggerText",
+                "TabsTriggerIcon",
+                "TabsIndicator",
+                "TabsAnimatedIndicator"
+            ],
+            "variants": [
+                "orientation"
+            ],
+            "examples": 7
+        },
+        {
+            "name": "text",
+            "exports": [
+                "Text",
+                "textStyle"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "size",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "textarea",
+            "exports": [
+                "Textarea",
+                "TextareaInput"
+            ],
+            "variants": [
+                "variant",
+                "size"
+            ],
+            "examples": 2
+        },
+        {
+            "name": "toast",
+            "exports": [
+                "Toast",
+                "ToastDescription",
+                "ToastTitle",
+                "useToast"
+            ],
+            "variants": [
+                "action",
+                "variant",
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "size"
+            ],
+            "examples": 5
+        },
+        {
+            "name": "tooltip",
+            "exports": [
+                "Tooltip",
+                "TooltipContent",
+                "TooltipText",
+                "UITooltip"
+            ],
+            "variants": [
+                "isTruncated",
+                "bold",
+                "underline",
+                "strikeThrough",
+                "size",
+                "sub",
+                "italic",
+                "highlight"
+            ],
+            "examples": 4
+        },
+        {
+            "name": "utils",
+            "exports": [],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "view",
+            "exports": [
+                "View"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "virtualized-list",
+            "exports": [
+                "VirtualizedList"
+            ],
+            "variants": [],
+            "examples": 0
+        },
+        {
+            "name": "vstack",
+            "exports": [
+                "VStack",
+                "vstackStyle"
+            ],
+            "variants": [
+                "space",
+                "reversed"
+            ],
+            "examples": 2
+        }
+    ]
+}

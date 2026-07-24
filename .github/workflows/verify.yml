@@ -1,0 +1,75 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP 8.4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PAM Mobile UI
+        uses: actions/checkout@v4
+
+      - name: Checkout PAM Native
+        uses: actions/checkout@v4
+        with:
+          repository: push-in/pam-native
+          path: pam-native
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Install isolated analysis tools
+        run: composer install --working-dir=tools/phpstan --no-interaction --no-progress
+
+      - name: Validate package
+        run: composer validate --strict --no-check-publish
+
+      - name: Verify generated API, styles and PHP
+        env:
+          PAM_NATIVE_ROOT: ${{ github.workspace }}/pam-native
+        run: composer run verify
+
+      - name: Run composition benchmark
+        env:
+          PAM_NATIVE_ROOT: ${{ github.workspace }}/pam-native
+        run: composer run benchmark
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PAM Mobile UI
+        uses: actions/checkout@v4
+
+      - name: Checkout PAM Native
+        uses: actions/checkout@v4
+        with:
+          repository: push-in/pam-native
+          path: pam-native
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Unit tests and lint
+        run: >-
+          pam-native/android/gradlew
+          -p android
+          -PpamNativeRoot=${{ github.workspace }}/pam-native
+          testDebugUnitTest
+          lintDebug

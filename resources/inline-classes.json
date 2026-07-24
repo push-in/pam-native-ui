@@ -1,0 +1,174 @@
+{
+    "referenceCommit": "be060b5d184826d34623e490447a467ffb5cfe56",
+    "sources": [
+        {
+            "module": "calendar",
+            "source": "src/components/ui/calendar/index.tsx",
+            "classes": [
+                "px-2 py-1 rounded-md flex-row items-center",
+                "text-sm font-medium text-foreground",
+                "text-primary font-semibold"
+            ]
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "classes": [
+                "text-muted-foreground",
+                "text-destructive",
+                "bg-muted",
+                "group relative",
+                "w-24 h-24 overflow-hidden rounded-lg",
+                "flex h-8 items-center gap-1.5 rounded-md border border-border px-1.5 text-sm font-medium",
+                "flex w-full items-center gap-3 rounded-lg border p-3",
+                "size-full object-cover",
+                "rounded",
+                "rounded-xl",
+                "flex shrink-0 items-center justify-center overflow-hidden",
+                "size-full",
+                "size-5 rounded bg-background",
+                "size-12 rounded bg-muted",
+                "absolute top-2 right-2 size-6 rounded-full bg-background/80 opacity-0 group-hover:opacity-100",
+                "absolute top-3 right-3 h-8 w-8 items-center flex justify-center rounded-full bg-muted",
+                "size-5 ml-auto",
+                "size-8 shrink-0 ml-auto",
+                "w-auto p-2",
+                "flex items-center justify-center text-muted-foreground text-sm"
+            ]
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/conversation.tsx",
+            "classes": [
+                "mt-4 text-3xl font-semibold text-foreground",
+                "flex-1",
+                "absolute bottom-6 left-1/2 -translate-x-1/2 bg-primary h-11 w-11 items-center justify-center rounded-full shadow-lg",
+                "text-primary-foreground",
+                "absolute top-4 right-4 bg-card p-3 rounded-2xl shadow-sm",
+                "text-muted-foreground",
+                "flex-1 bg-background px-4",
+                "flex-1 items-center justify-center"
+            ]
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/file-tree.tsx",
+            "classes": [
+                "p-2",
+                "p-1",
+                "text-muted-foreground",
+                "flex-row items-center flex-1 gap-2",
+                "text-primary",
+                "text-sm text-foreground flex-1",
+                "ml-6 pl-1 border-l border-border",
+                "w-6.5",
+                "flex-row items-center gap-2 flex-1",
+                "bg-background rounded-xl border border-border overflow-hidden",
+                "flex-row items-center py-1.5 px-2 rounded-md",
+                "bg-accent",
+                "ml-auto flex-row items-center gap-1.5"
+            ]
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "classes": [
+                "text-lg text-foreground",
+                "mb-2",
+                "flex-row items-start mb-1",
+                "text-foreground mr-2",
+                "flex-1",
+                "font-bold text-foreground",
+                "italic text-foreground",
+                "rounded-xl p-3 my-2 bg-muted",
+                "text-white font-mono text-sm",
+                "bg-slate-900 rounded-xl p-3 my-2",
+                "bg-slate-800 text-white px-1 py-0.5 rounded",
+                "text-muted-foreground",
+                "gap-2",
+                "w-40 h-40 rounded-xl mt-1.5",
+                "h-8 w-8 items-center justify-center",
+                "flex-row items-center gap-2",
+                "text-sm text-muted-foreground",
+                "group mt-4 flex w-full max-w-[95%] flex-col gap-2",
+                "group flex w-full max-w-[95%] flex-col gap-2",
+                "flex w-fit min-w-0 flex-col justify-center gap-2 overflow-hidden text-base py-3 rounded-3xl",
+                "-mt-4 ml-2 flex-row items-center gap-3",
+                "w-full gap-2",
+                "flex",
+                "hidden"
+            ]
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "classes": [
+                "sr-only",
+                "text-muted-foreground",
+                "max-h-[500px]",
+                "px-4 py-2 text-sm font-semibold text-muted-foreground",
+                "w-5 h-5 rounded-full bg-muted items-center justify-center",
+                "text-[10px] text-foreground font-medium text-foreground",
+                "w-[200px] h-[40px] bg-primary justify-between",
+                "h-12 px-4 border-b border-border text-base text-foreground placeholder:text-muted-foreground",
+                "flex-1",
+                "flex-1 items-center justify-center py-12",
+                "flex-row items-center h-4 w-4 px-4 py-3",
+                "bg-accent",
+                "active:bg-muted",
+                "ml-auto",
+                "h-px bg-border mx-4 my-1",
+                "flex-row -space-x-1",
+                "flex-1 text-left text-base ml-3 text-foreground"
+            ]
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "classes": [
+                "bg-muted border-border absolute bottom-4 w-full rounded-3xl px-3 py-2",
+                "flex-row pt-2 items-center gap-2",
+                "flex-1 text-xl px-4 items-center justify-center rounded-3xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:border-transparent",
+                "flex-row items-center justify-between mt-6",
+                "flex-row items-center gap-2",
+                "px-3 py-1 rounded-full bg-muted",
+                "text-primary-foreground",
+                "h-10 w-10 rounded-full items-center justify-center bg-primary/10",
+                "text-xl text-primary",
+                "h-10 w-10 rounded-full items-center justify-center mx-3 bg-primary",
+                "opacity-50"
+            ]
+        },
+        {
+            "module": "date-time-picker",
+            "source": "src/components/ui/date-time-picker/index.tsx",
+            "classes": [
+                "w-full",
+                "flex-1 justify-end",
+                "absolute inset-0 bg-black/50",
+                "bg-background rounded-t-lg p-4 relative",
+                "flex-row justify-between items-center mb-4 border-b border-border pb-2",
+                "text-primary font-semibold text-base",
+                "text-foreground font-semibold text-base"
+            ]
+        },
+        {
+            "module": "image-viewer",
+            "source": "src/components/ui/image-viewer/index.tsx",
+            "classes": [
+                "web:my-auto",
+                "text-white text-xl font-bold",
+                "text-white text-2xl font-bold",
+                "flex-1"
+            ]
+        },
+        {
+            "module": "skeleton",
+            "source": "src/components/ui/skeleton/index.tsx",
+            "classes": [
+                "animate-pulse",
+                "flex flex-col"
+            ]
+        }
+    ]
+}

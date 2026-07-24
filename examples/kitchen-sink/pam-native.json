@@ -1,0 +1,12 @@
+{
+    "version": 1,
+    "applicationId": "dev.pam.mobileui.catalog",
+    "name": "PAM Mobile UI",
+    "entry": "index.php",
+    "android": {
+        "minSdk": 26,
+        "targetSdk": 36
+    },
+    "modules": [],
+    "views": []
+}

@@ -1,0 +1,2874 @@
+{
+    "$schema": "./parity.schema.json",
+    "reference": {
+        "repository": "https://github.com/gluestack/gluestack-ui",
+        "commit": "be060b5d184826d34623e490447a467ffb5cfe56",
+        "packageVersion": "5.0.3",
+        "capturedAt": "2026-07-23",
+        "moduleCount": 61,
+        "exportCount": 404,
+        "facadeCount": 326
+    },
+    "definitions": {
+        "categories": [
+            {
+                "id": 1,
+                "name": "typography"
+            },
+            {
+                "id": 2,
+                "name": "layout"
+            },
+            {
+                "id": 3,
+                "name": "feedback"
+            },
+            {
+                "id": 4,
+                "name": "data-display"
+            },
+            {
+                "id": 5,
+                "name": "forms"
+            },
+            {
+                "id": 6,
+                "name": "overlay"
+            },
+            {
+                "id": 7,
+                "name": "disclosure"
+            },
+            {
+                "id": 8,
+                "name": "media"
+            },
+            {
+                "id": 9,
+                "name": "system"
+            },
+            {
+                "id": 10,
+                "name": "ai"
+            }
+        ],
+        "gates": [
+            {
+                "id": 1,
+                "name": "php"
+            },
+            {
+                "id": 2,
+                "name": "tags"
+            },
+            {
+                "id": 3,
+                "name": "android"
+            },
+            {
+                "id": 4,
+                "name": "variants"
+            },
+            {
+                "id": 5,
+                "name": "states"
+            },
+            {
+                "id": 6,
+                "name": "accessibility"
+            },
+            {
+                "id": 7,
+                "name": "themes"
+            },
+            {
+                "id": 8,
+                "name": "examples"
+            },
+            {
+                "id": 9,
+                "name": "tests"
+            },
+            {
+                "id": 10,
+                "name": "performance"
+            }
+        ],
+        "verificationStatuses": [
+            {
+                "id": 1,
+                "name": "planned"
+            },
+            {
+                "id": 2,
+                "name": "implemented"
+            },
+            {
+                "id": 3,
+                "name": "verified"
+            },
+            {
+                "id": 4,
+                "name": "not-applicable"
+            }
+        ]
+    },
+    "modules": [
+        {
+            "id": 1,
+            "name": "accordion",
+            "category": 7,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Accordion",
+                "AccordionContent",
+                "AccordionContentText",
+                "AccordionHeader",
+                "AccordionIcon",
+                "AccordionItem",
+                "AccordionTitleText",
+                "AccordionTrigger",
+                "AnimatedHeight",
+                "AnimatedIcon"
+            ],
+            "parts": [
+                "Accordion",
+                "AccordionContent",
+                "AccordionContentText",
+                "AccordionHeader",
+                "AccordionIcon",
+                "AccordionItem",
+                "AccordionTitleText",
+                "AccordionTrigger"
+            ],
+            "variantAxes": [],
+            "examples": 7,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 2,
+            "name": "actionsheet",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Actionsheet",
+                "ActionsheetBackdrop",
+                "ActionsheetContent",
+                "ActionsheetDragIndicator",
+                "ActionsheetDragIndicatorWrapper",
+                "ActionsheetFlatList",
+                "ActionsheetIcon",
+                "ActionsheetItem",
+                "ActionsheetItemText",
+                "ActionsheetScrollView",
+                "ActionsheetSectionHeaderText",
+                "ActionsheetSectionList",
+                "ActionsheetVirtualizedList",
+                "UIActionsheet"
+            ],
+            "parts": [
+                "Actionsheet",
+                "ActionsheetBackdrop",
+                "ActionsheetContent",
+                "ActionsheetDragIndicator",
+                "ActionsheetDragIndicatorWrapper",
+                "ActionsheetFlatList",
+                "ActionsheetIcon",
+                "ActionsheetItem",
+                "ActionsheetItemText",
+                "ActionsheetScrollView",
+                "ActionsheetSectionHeaderText",
+                "ActionsheetSectionList",
+                "ActionsheetVirtualizedList"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "sub"
+                },
+                {
+                    "id": 6,
+                    "name": "italic"
+                },
+                {
+                    "id": 7,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 9,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 3,
+            "name": "alert",
+            "category": 3,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Alert",
+                "AlertIcon",
+                "AlertText",
+                "UIAlert"
+            ],
+            "parts": [
+                "Alert",
+                "AlertIcon",
+                "AlertText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "variant"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 4,
+            "name": "alert-dialog",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "AlertDialog",
+                "AlertDialogBackdrop",
+                "AlertDialogBody",
+                "AlertDialogCloseButton",
+                "AlertDialogContent",
+                "AlertDialogFooter",
+                "AlertDialogHeader"
+            ],
+            "parts": [
+                "AlertDialog",
+                "AlertDialogBackdrop",
+                "AlertDialogBody",
+                "AlertDialogCloseButton",
+                "AlertDialogContent",
+                "AlertDialogFooter",
+                "AlertDialogHeader"
+            ],
+            "variantAxes": [],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 5,
+            "name": "all-components",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 4,
+            "exports": [],
+            "parts": [],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                4,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 6,
+            "name": "avatar",
+            "category": 8,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Avatar",
+                "AvatarBadge",
+                "AvatarFallback",
+                "AvatarFallbackText",
+                "AvatarGroup",
+                "AvatarImage"
+            ],
+            "parts": [
+                "Avatar",
+                "AvatarBadge",
+                "AvatarFallback",
+                "AvatarFallbackText",
+                "AvatarGroup",
+                "AvatarImage"
+            ],
+            "variantAxes": [],
+            "examples": 9,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 7,
+            "name": "badge",
+            "category": 4,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Badge",
+                "BadgeIcon",
+                "BadgeText"
+            ],
+            "parts": [
+                "Badge",
+                "BadgeIcon",
+                "BadgeText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "variant"
+                }
+            ],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 8,
+            "name": "bottomsheet",
+            "category": 6,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "BottomSheet",
+                "BottomSheetPortal",
+                "BottomSheetTrigger",
+                "BottomSheetBackdrop",
+                "BottomSheetDragIndicator",
+                "BottomSheetContent",
+                "BottomSheetFooter",
+                "BottomSheetItem",
+                "BottomSheetItemText",
+                "BottomSheetTextInput",
+                "BottomSheetScrollView",
+                "BottomSheetFlatList",
+                "BottomSheetSectionList"
+            ],
+            "parts": [
+                "BottomSheet",
+                "BottomSheetPortal",
+                "BottomSheetTrigger",
+                "BottomSheetBackdrop",
+                "BottomSheetDragIndicator",
+                "BottomSheetContent",
+                "BottomSheetFooter",
+                "BottomSheetItem",
+                "BottomSheetItemText",
+                "BottomSheetTextInput",
+                "BottomSheetScrollView",
+                "BottomSheetFlatList",
+                "BottomSheetSectionList"
+            ],
+            "variantAxes": [],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 9,
+            "name": "box",
+            "category": 2,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Box",
+                "boxStyle"
+            ],
+            "parts": [
+                "Box"
+            ],
+            "variantAxes": [],
+            "examples": 1,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 10,
+            "name": "button",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Button",
+                "ButtonGroup",
+                "ButtonIcon",
+                "ButtonSpinner",
+                "ButtonText"
+            ],
+            "parts": [
+                "Button",
+                "ButtonGroup",
+                "ButtonIcon",
+                "ButtonSpinner",
+                "ButtonText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "variant"
+                },
+                {
+                    "id": 2,
+                    "name": "size"
+                },
+                {
+                    "id": 3,
+                    "name": "space"
+                },
+                {
+                    "id": 4,
+                    "name": "isAttached"
+                },
+                {
+                    "id": 5,
+                    "name": "flexDirection"
+                }
+            ],
+            "examples": 6,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 11,
+            "name": "calendar",
+            "category": 5,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "Calendar",
+                "CalendarHeader",
+                "CalendarHeaderPrevButton",
+                "CalendarHeaderNextButton",
+                "CalendarHeaderTitle",
+                "CalendarHeaderMonthSelect",
+                "CalendarHeaderYearSelect",
+                "CalendarWeekDaysHeader",
+                "CalendarWeekDay",
+                "CalendarBody",
+                "CalendarGrid",
+                "CalendarWeek",
+                "CalendarDay",
+                "CalendarDayText",
+                "CalendarDayIndicator",
+                "CalendarWeekNumber",
+                "CalendarFooter",
+                "calendarStyle",
+                "calendarHeaderStyle",
+                "calendarHeaderButtonStyle",
+                "calendarHeaderTitleStyle",
+                "calendarWeekDaysHeaderStyle",
+                "calendarWeekDayStyle",
+                "calendarWeekDayTextStyle",
+                "calendarBodyStyle",
+                "calendarGridStyle",
+                "calendarWeekStyle",
+                "calendarDayStyle",
+                "calendarDayTextStyle",
+                "calendarDayIndicatorStyle",
+                "calendarDotStyle",
+                "calendarWeekNumberStyle",
+                "calendarWeekNumberTextStyle",
+                "calendarFooterStyle",
+                "calendarHeaderSelectStyle"
+            ],
+            "parts": [
+                "Calendar",
+                "CalendarHeader",
+                "CalendarHeaderPrevButton",
+                "CalendarHeaderNextButton",
+                "CalendarHeaderTitle",
+                "CalendarHeaderMonthSelect",
+                "CalendarHeaderYearSelect",
+                "CalendarWeekDaysHeader",
+                "CalendarWeekDay",
+                "CalendarBody",
+                "CalendarGrid",
+                "CalendarWeek",
+                "CalendarDay",
+                "CalendarDayText",
+                "CalendarDayIndicator",
+                "CalendarWeekNumber",
+                "CalendarFooter"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                },
+                {
+                    "id": 2,
+                    "name": "state"
+                },
+                {
+                    "id": 3,
+                    "name": "type"
+                }
+            ],
+            "examples": 7,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 12,
+            "name": "card",
+            "category": 4,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Card",
+                "cardStyle"
+            ],
+            "parts": [
+                "Card"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 13,
+            "name": "center",
+            "category": 2,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Center",
+                "centerStyle"
+            ],
+            "parts": [
+                "Center"
+            ],
+            "variantAxes": [],
+            "examples": 1,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 14,
+            "name": "chat-ai",
+            "category": 10,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "getMediaCategory",
+                "getAttachmentLabel",
+                "useAttachmentsContext",
+                "useAttachmentContext",
+                "Attachments",
+                "Attachment",
+                "AttachmentPreview",
+                "AttachmentRemove",
+                "AttachmentHoverCard",
+                "AttachmentHoverCardContent",
+                "AttachmentHoverCardText",
+                "AttachmentEmpty",
+                "BlankContext",
+                "BlankProvider",
+                "useBlankContext",
+                "Conversation",
+                "ConversationEmptyState",
+                "ConversationContent",
+                "ConversationScrollButton",
+                "ConversationDownload",
+                "FileTree",
+                "FileTreeFolder",
+                "FileTreeFile",
+                "FileTreeActions",
+                "Message",
+                "MessageContent",
+                "MessageResponse",
+                "MessageToolbar",
+                "MessageAction",
+                "MessageBranch",
+                "MessageBranchContent",
+                "MessageBranchSelector",
+                "MessageBranchPrevious",
+                "MessageBranchNext",
+                "MessageBranchPage",
+                "ModelSelector",
+                "ModelSelectorTrigger",
+                "ModelSelectorContent",
+                "ModelSelectorInput",
+                "ModelSelectorList",
+                "ModelSelectorEmpty",
+                "ModelSelectorGroup",
+                "ModelSelectorItem",
+                "ModelSelectorShortcut",
+                "ModelSelectorSeparator",
+                "ModelSelectorLogo",
+                "ModelSelectorLogoGroup",
+                "ModelSelectorName",
+                "usePromptInputAttachments",
+                "PromptInputProvider",
+                "PromptInput",
+                "PromptInputBody",
+                "PromptInputTextarea",
+                "PromptInputFooter",
+                "PromptInputTools",
+                "PromptInputButton",
+                "PromptInputSubmit",
+                "PromptInputActionMenu",
+                "PromptInputActionMenuTrigger",
+                "PromptInputActionMenuContent"
+            ],
+            "parts": [
+                "Attachments",
+                "Attachment",
+                "AttachmentPreview",
+                "AttachmentRemove",
+                "AttachmentHoverCard",
+                "AttachmentHoverCardContent",
+                "AttachmentHoverCardText",
+                "AttachmentEmpty",
+                "BlankContext",
+                "BlankProvider",
+                "Conversation",
+                "ConversationEmptyState",
+                "ConversationContent",
+                "ConversationScrollButton",
+                "ConversationDownload",
+                "FileTree",
+                "FileTreeFolder",
+                "FileTreeFile",
+                "FileTreeActions",
+                "Message",
+                "MessageContent",
+                "MessageResponse",
+                "MessageToolbar",
+                "MessageAction",
+                "MessageBranch",
+                "MessageBranchContent",
+                "MessageBranchSelector",
+                "MessageBranchPrevious",
+                "MessageBranchNext",
+                "MessageBranchPage",
+                "ModelSelector",
+                "ModelSelectorTrigger",
+                "ModelSelectorContent",
+                "ModelSelectorInput",
+                "ModelSelectorList",
+                "ModelSelectorEmpty",
+                "ModelSelectorGroup",
+                "ModelSelectorItem",
+                "ModelSelectorShortcut",
+                "ModelSelectorSeparator",
+                "ModelSelectorLogo",
+                "ModelSelectorLogoGroup",
+                "ModelSelectorName",
+                "PromptInputProvider",
+                "PromptInput",
+                "PromptInputBody",
+                "PromptInputTextarea",
+                "PromptInputFooter",
+                "PromptInputTools",
+                "PromptInputButton",
+                "PromptInputSubmit",
+                "PromptInputActionMenu",
+                "PromptInputActionMenuTrigger",
+                "PromptInputActionMenuContent"
+            ],
+            "variantAxes": [],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 15,
+            "name": "checkbox",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Checkbox",
+                "CheckboxGroup",
+                "CheckboxIcon",
+                "CheckboxIndicator",
+                "CheckboxLabel"
+            ],
+            "parts": [
+                "Checkbox",
+                "CheckboxGroup",
+                "CheckboxIcon",
+                "CheckboxIndicator",
+                "CheckboxLabel"
+            ],
+            "variantAxes": [],
+            "examples": 9,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 16,
+            "name": "date-time-picker",
+            "category": 5,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "DateTimePicker",
+                "DateTimePickerIcon",
+                "DateTimePickerInput",
+                "DateTimePickerTrigger",
+                "dateTimePickerStyle",
+                "dateTimePickerTriggerStyle",
+                "dateTimePickerInputStyle",
+                "dateTimePickerIconStyle"
+            ],
+            "parts": [
+                "DateTimePicker",
+                "DateTimePickerIcon",
+                "DateTimePickerInput",
+                "DateTimePickerTrigger"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                },
+                {
+                    "id": 2,
+                    "name": "variant"
+                }
+            ],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 17,
+            "name": "divider",
+            "category": 2,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Divider"
+            ],
+            "parts": [
+                "Divider"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "orientation"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 18,
+            "name": "drawer",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Drawer",
+                "DrawerBackdrop",
+                "DrawerBody",
+                "DrawerCloseButton",
+                "DrawerContent",
+                "DrawerFooter",
+                "DrawerHeader"
+            ],
+            "parts": [
+                "Drawer",
+                "DrawerBackdrop",
+                "DrawerBody",
+                "DrawerCloseButton",
+                "DrawerContent",
+                "DrawerFooter",
+                "DrawerHeader"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                },
+                {
+                    "id": 2,
+                    "name": "anchor"
+                }
+            ],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 19,
+            "name": "fab",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Fab",
+                "FabIcon",
+                "FabLabel"
+            ],
+            "parts": [
+                "Fab",
+                "FabIcon",
+                "FabLabel"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                },
+                {
+                    "id": 2,
+                    "name": "placement"
+                },
+                {
+                    "id": 3,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 4,
+                    "name": "bold"
+                },
+                {
+                    "id": 5,
+                    "name": "underline"
+                },
+                {
+                    "id": 6,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 7,
+                    "name": "sub"
+                },
+                {
+                    "id": 8,
+                    "name": "italic"
+                },
+                {
+                    "id": 9,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 20,
+            "name": "flat-list",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "RNFlatList",
+                "FlatList"
+            ],
+            "parts": [
+                "FlatList"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 21,
+            "name": "form-control",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "FormControl",
+                "FormControlError",
+                "FormControlErrorText",
+                "FormControlErrorIcon",
+                "FormControlLabel",
+                "FormControlLabelText",
+                "FormControlLabelAstrick",
+                "FormControlHelper",
+                "FormControlHelperText",
+                "UIFormControl"
+            ],
+            "parts": [
+                "FormControl",
+                "FormControlError",
+                "FormControlErrorText",
+                "FormControlErrorIcon",
+                "FormControlLabel",
+                "FormControlLabelText",
+                "FormControlLabelAstrick",
+                "FormControlHelper",
+                "FormControlHelperText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "sub"
+                },
+                {
+                    "id": 6,
+                    "name": "italic"
+                },
+                {
+                    "id": 7,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 7,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 22,
+            "name": "gluestack-ui-provider",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 4,
+            "exports": [
+                "useSafeLayoutEffect",
+                "GluestackUIProvider"
+            ],
+            "parts": [
+                "GluestackUIProvider"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                4,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 23,
+            "name": "grid",
+            "category": 2,
+            "maturity": 2,
+            "implementation": 1,
+            "exports": [
+                "Grid",
+                "GridItem",
+                "gridStyle",
+                "gridItemStyle"
+            ],
+            "parts": [
+                "Grid",
+                "GridItem"
+            ],
+            "variantAxes": [],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 24,
+            "name": "heading",
+            "category": 1,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Heading",
+                "headingStyle"
+            ],
+            "parts": [
+                "Heading"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "sub"
+                },
+                {
+                    "id": 6,
+                    "name": "italic"
+                },
+                {
+                    "id": 7,
+                    "name": "highlight"
+                },
+                {
+                    "id": 8,
+                    "name": "size"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 25,
+            "name": "hstack",
+            "category": 2,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "HStack",
+                "hstackStyle"
+            ],
+            "parts": [
+                "HStack"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "space"
+                },
+                {
+                    "id": 2,
+                    "name": "reversed"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 26,
+            "name": "icon",
+            "category": 8,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Icon",
+                "createIcon",
+                "AddIcon",
+                "AlertCircleIcon",
+                "ArrowUpIcon",
+                "ArrowDownIcon",
+                "ArrowRightIcon",
+                "ArrowLeftIcon",
+                "AtSignIcon",
+                "BellIcon",
+                "CalendarDaysIcon",
+                "CheckIcon",
+                "CheckCircleIcon",
+                "ChevronUpIcon",
+                "ChevronDownIcon",
+                "ChevronLeftIcon",
+                "ChevronRightIcon",
+                "ChevronsLeftIcon",
+                "ChevronsRightIcon",
+                "ChevronsUpDownIcon",
+                "CircleIcon",
+                "ClockIcon",
+                "CloseIcon",
+                "CloseCircleIcon",
+                "CopyIcon",
+                "DownloadIcon",
+                "EditIcon",
+                "EyeIcon",
+                "EyeOffIcon",
+                "FavouriteIcon",
+                "GlobeIcon",
+                "GripVerticalIcon",
+                "HelpCircleIcon",
+                "InfoIcon",
+                "LinkIcon",
+                "ExternalLinkIcon",
+                "LoaderIcon",
+                "LockIcon",
+                "MailIcon",
+                "MenuIcon",
+                "MessageCircleIcon",
+                "MoonIcon",
+                "PaperclipIcon",
+                "PhoneIcon",
+                "PlayIcon",
+                "RemoveIcon",
+                "RepeatIcon",
+                "Repeat1Icon",
+                "SearchIcon",
+                "SettingsIcon",
+                "ShareIcon",
+                "SlashIcon",
+                "StarIcon",
+                "SunIcon",
+                "ThreeDotsIcon",
+                "TrashIcon",
+                "UnlockIcon",
+                "UIIcon"
+            ],
+            "parts": [
+                "Icon",
+                "AddIcon",
+                "AlertCircleIcon",
+                "ArrowUpIcon",
+                "ArrowDownIcon",
+                "ArrowRightIcon",
+                "ArrowLeftIcon",
+                "AtSignIcon",
+                "BellIcon",
+                "CalendarDaysIcon",
+                "CheckIcon",
+                "CheckCircleIcon",
+                "ChevronUpIcon",
+                "ChevronDownIcon",
+                "ChevronLeftIcon",
+                "ChevronRightIcon",
+                "ChevronsLeftIcon",
+                "ChevronsRightIcon",
+                "ChevronsUpDownIcon",
+                "CircleIcon",
+                "ClockIcon",
+                "CloseIcon",
+                "CloseCircleIcon",
+                "CopyIcon",
+                "DownloadIcon",
+                "EditIcon",
+                "EyeIcon",
+                "EyeOffIcon",
+                "FavouriteIcon",
+                "GlobeIcon",
+                "GripVerticalIcon",
+                "HelpCircleIcon",
+                "InfoIcon",
+                "LinkIcon",
+                "ExternalLinkIcon",
+                "LoaderIcon",
+                "LockIcon",
+                "MailIcon",
+                "MenuIcon",
+                "MessageCircleIcon",
+                "MoonIcon",
+                "PaperclipIcon",
+                "PhoneIcon",
+                "PlayIcon",
+                "RemoveIcon",
+                "RepeatIcon",
+                "Repeat1Icon",
+                "SearchIcon",
+                "SettingsIcon",
+                "ShareIcon",
+                "SlashIcon",
+                "StarIcon",
+                "SunIcon",
+                "ThreeDotsIcon",
+                "TrashIcon",
+                "UnlockIcon"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                }
+            ],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 27,
+            "name": "image",
+            "category": 8,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "Image"
+            ],
+            "parts": [
+                "Image"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 28,
+            "name": "image-background",
+            "category": 8,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "ImageBackground"
+            ],
+            "parts": [
+                "ImageBackground"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 29,
+            "name": "image-viewer",
+            "category": 6,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "ImageViewer",
+                "ImageViewerTrigger",
+                "ImageViewerContent",
+                "ImageViewerCloseButton",
+                "ImageViewerNavigation",
+                "ImageViewerCounter"
+            ],
+            "parts": [
+                "ImageViewer",
+                "ImageViewerTrigger",
+                "ImageViewerContent",
+                "ImageViewerCloseButton",
+                "ImageViewerNavigation",
+                "ImageViewerCounter"
+            ],
+            "variantAxes": [],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 30,
+            "name": "input",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Input",
+                "InputField",
+                "InputIcon",
+                "InputSlot"
+            ],
+            "parts": [
+                "Input",
+                "InputField",
+                "InputIcon",
+                "InputSlot"
+            ],
+            "variantAxes": [],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 31,
+            "name": "input-accessory-view",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "InputAccessoryView"
+            ],
+            "parts": [
+                "InputAccessoryView"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 32,
+            "name": "keyboard-avoiding-view",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "KeyboardAvoidingView"
+            ],
+            "parts": [
+                "KeyboardAvoidingView"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 33,
+            "name": "link",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Link",
+                "LinkText",
+                "UILink"
+            ],
+            "parts": [
+                "Link",
+                "LinkText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "size"
+                },
+                {
+                    "id": 6,
+                    "name": "sub"
+                },
+                {
+                    "id": 7,
+                    "name": "italic"
+                },
+                {
+                    "id": 8,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 34,
+            "name": "liquid-glass",
+            "category": 6,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "isGlassEffectAPIAvailable",
+                "isLiquidGlassAvailable",
+                "GlassView",
+                "GlassContainer"
+            ],
+            "parts": [
+                "GlassView",
+                "GlassContainer"
+            ],
+            "variantAxes": [],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 35,
+            "name": "menu",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Menu",
+                "MenuItem",
+                "MenuItemLabel",
+                "MenuSeparator",
+                "UIMenu"
+            ],
+            "parts": [
+                "Menu",
+                "MenuItem",
+                "MenuItemLabel",
+                "MenuSeparator"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "sub"
+                },
+                {
+                    "id": 6,
+                    "name": "italic"
+                },
+                {
+                    "id": 7,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 36,
+            "name": "modal",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Modal",
+                "ModalBackdrop",
+                "ModalBody",
+                "ModalCloseButton",
+                "ModalContent",
+                "ModalFooter",
+                "ModalHeader"
+            ],
+            "parts": [
+                "Modal",
+                "ModalBackdrop",
+                "ModalBody",
+                "ModalCloseButton",
+                "ModalContent",
+                "ModalFooter",
+                "ModalHeader"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 37,
+            "name": "popover",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Popover",
+                "PopoverArrow",
+                "PopoverBackdrop",
+                "PopoverBody",
+                "PopoverCloseButton",
+                "PopoverContent",
+                "PopoverFooter",
+                "PopoverHeader"
+            ],
+            "parts": [
+                "Popover",
+                "PopoverArrow",
+                "PopoverBackdrop",
+                "PopoverBody",
+                "PopoverCloseButton",
+                "PopoverContent",
+                "PopoverFooter",
+                "PopoverHeader"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "placement"
+                }
+            ],
+            "examples": 6,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 38,
+            "name": "portal",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Portal"
+            ],
+            "parts": [
+                "Portal"
+            ],
+            "variantAxes": [],
+            "examples": 1,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 39,
+            "name": "pressable",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Pressable"
+            ],
+            "parts": [
+                "Pressable"
+            ],
+            "variantAxes": [],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 40,
+            "name": "progress",
+            "category": 3,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Progress",
+                "ProgressFilledTrack",
+                "UIProgress"
+            ],
+            "parts": [
+                "Progress",
+                "ProgressFilledTrack"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "orientation"
+                }
+            ],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 41,
+            "name": "radio",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Radio",
+                "RadioGroup",
+                "RadioIcon",
+                "RadioIndicator",
+                "RadioLabel"
+            ],
+            "parts": [
+                "Radio",
+                "RadioGroup",
+                "RadioIcon",
+                "RadioIndicator",
+                "RadioLabel"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                }
+            ],
+            "examples": 9,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 42,
+            "name": "refresh-control",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "RefreshControl"
+            ],
+            "parts": [
+                "RefreshControl"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 43,
+            "name": "safe-area-view",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "SafeAreaView"
+            ],
+            "parts": [
+                "SafeAreaView"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 44,
+            "name": "scroll-view",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "ScrollView"
+            ],
+            "parts": [
+                "ScrollView"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 45,
+            "name": "section-list",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "SectionList"
+            ],
+            "parts": [
+                "SectionList"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 46,
+            "name": "select",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Select",
+                "SelectTrigger",
+                "SelectInput",
+                "SelectIcon",
+                "SelectPortal",
+                "SelectBackdrop",
+                "SelectContent",
+                "SelectDragIndicator",
+                "SelectDragIndicatorWrapper",
+                "SelectItem",
+                "SelectScrollView",
+                "SelectVirtualizedList",
+                "SelectFlatList",
+                "SelectSectionList",
+                "SelectSectionHeaderText",
+                "Actionsheet",
+                "ActionsheetContent",
+                "ActionsheetItem",
+                "ActionsheetItemText",
+                "ActionsheetDragIndicator",
+                "ActionsheetDragIndicatorWrapper",
+                "ActionsheetBackdrop",
+                "ActionsheetScrollView",
+                "ActionsheetVirtualizedList",
+                "ActionsheetFlatList",
+                "ActionsheetSectionList",
+                "ActionsheetSectionHeaderText",
+                "ActionsheetIcon",
+                "UIActionsheet"
+            ],
+            "parts": [
+                "Select",
+                "SelectTrigger",
+                "SelectInput",
+                "SelectIcon",
+                "SelectPortal",
+                "SelectBackdrop",
+                "SelectContent",
+                "SelectDragIndicator",
+                "SelectDragIndicatorWrapper",
+                "SelectItem",
+                "SelectScrollView",
+                "SelectVirtualizedList",
+                "SelectFlatList",
+                "SelectSectionList",
+                "SelectSectionHeaderText",
+                "Actionsheet",
+                "ActionsheetContent",
+                "ActionsheetItem",
+                "ActionsheetItemText",
+                "ActionsheetDragIndicator",
+                "ActionsheetDragIndicatorWrapper",
+                "ActionsheetBackdrop",
+                "ActionsheetScrollView",
+                "ActionsheetVirtualizedList",
+                "ActionsheetFlatList",
+                "ActionsheetSectionList",
+                "ActionsheetSectionHeaderText",
+                "ActionsheetIcon"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                },
+                {
+                    "id": 2,
+                    "name": "variant"
+                },
+                {
+                    "id": 3,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 4,
+                    "name": "bold"
+                },
+                {
+                    "id": 5,
+                    "name": "underline"
+                },
+                {
+                    "id": 6,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 7,
+                    "name": "sub"
+                },
+                {
+                    "id": 8,
+                    "name": "italic"
+                },
+                {
+                    "id": 9,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 47,
+            "name": "skeleton",
+            "category": 3,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "Skeleton",
+                "SkeletonText",
+                "skeletonStyle",
+                "skeletonTextStyle"
+            ],
+            "parts": [
+                "Skeleton",
+                "SkeletonText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "variant"
+                },
+                {
+                    "id": 2,
+                    "name": "speed"
+                },
+                {
+                    "id": 3,
+                    "name": "gap"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 48,
+            "name": "slider",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Slider",
+                "SliderFilledTrack",
+                "SliderThumb",
+                "SliderTrack",
+                "UISlider"
+            ],
+            "parts": [
+                "Slider",
+                "SliderFilledTrack",
+                "SliderThumb",
+                "SliderTrack"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "orientation"
+                },
+                {
+                    "id": 2,
+                    "name": "isReversed"
+                }
+            ],
+            "examples": 1,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 49,
+            "name": "spinner",
+            "category": 3,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Spinner"
+            ],
+            "parts": [
+                "Spinner"
+            ],
+            "variantAxes": [],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 50,
+            "name": "status-bar",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "StatusBar"
+            ],
+            "parts": [
+                "StatusBar"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 51,
+            "name": "switch",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Switch"
+            ],
+            "parts": [
+                "Switch"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "size"
+                }
+            ],
+            "examples": 3,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 52,
+            "name": "table",
+            "category": 4,
+            "maturity": 2,
+            "implementation": 1,
+            "exports": [
+                "Table",
+                "TableHeader",
+                "TableBody",
+                "TableFooter",
+                "TableHead",
+                "TableRow",
+                "TableData",
+                "TableCaption",
+                "tableStyle",
+                "tableHeaderStyle",
+                "tableBodyStyle",
+                "tableFooterStyle",
+                "tableHeadStyle",
+                "tableRowStyleStyle",
+                "tableDataStyle",
+                "tableCaptionStyle"
+            ],
+            "parts": [
+                "Table",
+                "TableHeader",
+                "TableBody",
+                "TableFooter",
+                "TableHead",
+                "TableRow",
+                "TableData",
+                "TableCaption"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isHeaderRow"
+                },
+                {
+                    "id": 2,
+                    "name": "isFooterRow"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 53,
+            "name": "tabs",
+            "category": 4,
+            "maturity": 2,
+            "implementation": 2,
+            "exports": [
+                "Tabs",
+                "TabsList",
+                "TabsTrigger",
+                "TabsContent",
+                "TabsContentWrapper",
+                "TabsTriggerText",
+                "TabsTriggerIcon",
+                "TabsIndicator",
+                "TabsAnimatedIndicator"
+            ],
+            "parts": [
+                "Tabs",
+                "TabsList",
+                "TabsTrigger",
+                "TabsContent",
+                "TabsContentWrapper",
+                "TabsTriggerText",
+                "TabsTriggerIcon",
+                "TabsIndicator",
+                "TabsAnimatedIndicator"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "orientation"
+                }
+            ],
+            "examples": 7,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 54,
+            "name": "text",
+            "category": 1,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Text",
+                "textStyle"
+            ],
+            "parts": [
+                "Text"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "size"
+                },
+                {
+                    "id": 6,
+                    "name": "sub"
+                },
+                {
+                    "id": 7,
+                    "name": "italic"
+                },
+                {
+                    "id": 8,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 55,
+            "name": "textarea",
+            "category": 5,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "Textarea",
+                "TextareaInput"
+            ],
+            "parts": [
+                "Textarea",
+                "TextareaInput"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "variant"
+                },
+                {
+                    "id": 2,
+                    "name": "size"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 56,
+            "name": "toast",
+            "category": 3,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Toast",
+                "ToastDescription",
+                "ToastTitle",
+                "useToast"
+            ],
+            "parts": [
+                "Toast",
+                "ToastDescription",
+                "ToastTitle"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "action"
+                },
+                {
+                    "id": 2,
+                    "name": "variant"
+                },
+                {
+                    "id": 3,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 4,
+                    "name": "bold"
+                },
+                {
+                    "id": 5,
+                    "name": "underline"
+                },
+                {
+                    "id": 6,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 7,
+                    "name": "size"
+                }
+            ],
+            "examples": 5,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 57,
+            "name": "tooltip",
+            "category": 6,
+            "maturity": 1,
+            "implementation": 2,
+            "exports": [
+                "Tooltip",
+                "TooltipContent",
+                "TooltipText",
+                "UITooltip"
+            ],
+            "parts": [
+                "Tooltip",
+                "TooltipContent",
+                "TooltipText"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "isTruncated"
+                },
+                {
+                    "id": 2,
+                    "name": "bold"
+                },
+                {
+                    "id": 3,
+                    "name": "underline"
+                },
+                {
+                    "id": 4,
+                    "name": "strikeThrough"
+                },
+                {
+                    "id": 5,
+                    "name": "size"
+                },
+                {
+                    "id": 6,
+                    "name": "sub"
+                },
+                {
+                    "id": 7,
+                    "name": "italic"
+                },
+                {
+                    "id": 8,
+                    "name": "highlight"
+                }
+            ],
+            "examples": 4,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 58,
+            "name": "utils",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 4,
+            "exports": [],
+            "parts": [],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                4,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 59,
+            "name": "view",
+            "category": 2,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "View"
+            ],
+            "parts": [
+                "View"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 60,
+            "name": "virtualized-list",
+            "category": 9,
+            "maturity": 1,
+            "implementation": 3,
+            "exports": [
+                "VirtualizedList"
+            ],
+            "parts": [
+                "VirtualizedList"
+            ],
+            "variantAxes": [],
+            "examples": 0,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                1,
+                2,
+                1
+            ]
+        },
+        {
+            "id": 61,
+            "name": "vstack",
+            "category": 2,
+            "maturity": 1,
+            "implementation": 1,
+            "exports": [
+                "VStack",
+                "vstackStyle"
+            ],
+            "parts": [
+                "VStack"
+            ],
+            "variantAxes": [
+                {
+                    "id": 1,
+                    "name": "space"
+                },
+                {
+                    "id": 2,
+                    "name": "reversed"
+                }
+            ],
+            "examples": 2,
+            "verification": [
+                2,
+                2,
+                2,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                1
+            ]
+        }
+    ]
+}

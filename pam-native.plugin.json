@@ -1,0 +1,29 @@
+{
+    "$schema": "vendor/pushinbr/pam-native/resources/pam-native.plugin.schema.json",
+    "version": 1,
+    "protocol": 1,
+    "pamNative": {
+        "minimum": "0.1.0",
+        "maximumExclusive": "0.2.0"
+    },
+    "php": {
+        "provider": "Pam\\MobileUi\\MobileUiPluginProvider"
+    },
+    "android": {
+        "namespace": "dev.pam.mobileui",
+        "minSdk": 26,
+        "sourceDirs": [
+            "android/src/main/kotlin"
+        ]
+    },
+    "views": [
+        {
+            "name": "pam.mobile_ui.host",
+            "class": "dev.pam.mobileui.MobileUiHostFactory"
+        },
+        {
+            "name": "pam.mobile_ui.icon",
+            "class": "dev.pam.mobileui.MobileUiIconFactory"
+        }
+    ]
+}

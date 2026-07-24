@@ -1,0 +1,9 @@
+parameters:
+    level: 9
+    bootstrapFiles:
+        - tests/bootstrap.php
+    paths:
+        - benchmarks
+        - src
+        - tests
+    tmpDir: .build/phpstan

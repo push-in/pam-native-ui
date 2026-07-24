@@ -1,0 +1,177 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "reference",
+        "definitions",
+        "modules"
+    ],
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "reference": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "repository",
+                "commit",
+                "packageVersion",
+                "capturedAt",
+                "moduleCount",
+                "exportCount",
+                "facadeCount"
+            ],
+            "properties": {
+                "repository": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "commit": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$"
+                },
+                "packageVersion": {
+                    "type": "string"
+                },
+                "capturedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "moduleCount": {
+                    "const": 61
+                },
+                "exportCount": {
+                    "type": "integer",
+                    "minimum": 400
+                },
+                "facadeCount": {
+                    "type": "integer",
+                    "minimum": 300
+                }
+            }
+        },
+        "definitions": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "categories",
+                "gates",
+                "verificationStatuses"
+            ],
+            "properties": {
+                "categories": {
+                    "$ref": "#/$defs/sequentialDefinitions"
+                },
+                "gates": {
+                    "$ref": "#/$defs/sequentialDefinitions"
+                },
+                "verificationStatuses": {
+                    "$ref": "#/$defs/sequentialDefinitions"
+                }
+            }
+        },
+        "modules": {
+            "type": "array",
+            "minItems": 61,
+            "maxItems": 61,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "name",
+                    "category",
+                    "maturity",
+                    "implementation",
+                    "exports",
+                    "parts",
+                    "variantAxes",
+                    "examples",
+                    "verification"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 61
+                    },
+                    "name": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9-]+$"
+                    },
+                    "category": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10
+                    },
+                    "maturity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2
+                    },
+                    "implementation": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4
+                    },
+                    "exports": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "parts": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string",
+                            "pattern": "^[A-Z][A-Za-z0-9]+$"
+                        }
+                    },
+                    "variantAxes": {
+                        "$ref": "#/$defs/sequentialDefinitions"
+                    },
+                    "examples": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "verification": {
+                        "type": "array",
+                        "minItems": 10,
+                        "maxItems": 10,
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "sequentialDefinitions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

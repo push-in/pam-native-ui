@@ -1,0 +1,62 @@
+{
+    "name": "pushinbr/pam-mobile-ui",
+    "description": "Official accessible native UI component library for PAM Native.",
+    "type": "pam-native-plugin",
+    "license": "BUSL-1.1",
+    "keywords": [
+        "android",
+        "components",
+        "mobile",
+        "native",
+        "pam",
+        "php",
+        "ui"
+    ],
+    "homepage": "https://github.com/push-in/pam-mobile-ui",
+    "support": {
+        "issues": "https://github.com/push-in/pam-mobile-ui/issues",
+        "source": "https://github.com/push-in/pam-mobile-ui"
+    },
+    "require": {
+        "php": "^8.4",
+        "pushinbr/pam-native": "^0.1"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pam\\MobileUi\\": "src/"
+        },
+        "classmap": [
+            "src/Generated/ComponentFacades.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pam\\MobileUi\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "pam-native": {
+            "plugin": "pam-native.plugin.json"
+        }
+    },
+    "scripts": {
+        "generate": "php tools/generate.php",
+        "audit:styles": "php tools/audit-styles.php --strict",
+        "analyse": "tools/phpstan/vendor/bin/phpstan analyse --level=9 --no-progress --debug",
+        "benchmark": "php benchmarks/php.php",
+        "test": "php tests/run.php",
+        "verify": [
+            "@generate",
+            "@audit:styles",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "config": {
+        "platform-check": true,
+        "sort-packages": true
+    }
+}

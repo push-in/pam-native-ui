@@ -1,0 +1,79 @@
+<SafeAreaView class="ui-bg">
+    <ScrollView>
+        <VStack class="p-4 gap-4">
+            <Heading size="2xl">PAM Mobile UI</Heading>
+            <Text>Native components, PHP ergonomics, zero JavaScript runtime.</Text>
+
+            <Card>
+                <VStack space="sm">
+                    <Heading size="lg">Form</Heading>
+                    <FormControl>
+                        <FormControlLabel>
+                            <FormControlLabelText>Email</FormControlLabelText>
+                        </FormControlLabel>
+                        <Input>
+                            <InputField placeholder="you@example.com" />
+                        </Input>
+                        <FormControlHelper>
+                            <FormControlHelperText>We never share your email.</FormControlHelperText>
+                        </FormControlHelper>
+                    </FormControl>
+                    <Button variant="default" on:press="toggle">
+                        <ButtonText>Continue</ButtonText>
+                    </Button>
+                </VStack>
+            </Card>
+
+            <HStack space="sm">
+                <CheckIcon size="lg" accessibilityLabel="Native check icon" />
+                <Badge variant="secondary">
+                    <BadgeText>Native</BadgeText>
+                </Badge>
+                <Switch checked="{{ $checked }}" on:toggle="toggle" />
+                <Spinner />
+            </HStack>
+
+            <Progress value="{{ $progress }}">
+                <ProgressFilledTrack />
+            </Progress>
+            <Slider value="{{ $progress }}" min="0" max="100" on:change="updateProgress">
+                <SliderTrack>
+                    <SliderFilledTrack />
+                </SliderTrack>
+                <SliderThumb />
+            </Slider>
+
+            <Accordion>
+                <AccordionItem value="performance">
+                    <AccordionHeader>
+                        <AccordionTrigger>
+                            <AccordionTitleText>Why is it fast?</AccordionTitleText>
+                            <AccordionIcon />
+                        </AccordionTrigger>
+                    </AccordionHeader>
+                    <AccordionContent>
+                        <AccordionContentText>
+                            Gestures and animations remain on Android's UI thread.
+                        </AccordionContentText>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+
+            <Tabs value="{{ $tab }}" on:change="selectTab">
+                <TabsList>
+                    <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
+                    <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
+                    <TabsTrigger value="3"><TabsTriggerText>Billing</TabsTriggerText></TabsTrigger>
+                </TabsList>
+                <TabsContent value="1"><Text>Account content</Text></TabsContent>
+                <TabsContent value="2"><Text>Security content</Text></TabsContent>
+                <TabsContent value="3"><Text>Billing content</Text></TabsContent>
+            </Tabs>
+
+            <SkeletonText />
+            <Alert variant="default">
+                <AlertText>TalkBack, font scaling, dark mode and 48 dp targets are built in.</AlertText>
+            </Alert>
+        </VStack>
+    </ScrollView>
+</SafeAreaView>

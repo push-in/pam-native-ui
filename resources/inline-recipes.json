@@ -1,0 +1,528 @@
+{
+    "referenceCommit": "be060b5d184826d34623e490447a467ffb5cfe56",
+    "recipes": [
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentsStyle",
+            "base": "bg-muted h-20 overflow-hidden",
+            "variants": {
+                "variant": {
+                    "grid": "flex-row",
+                    "inline": "flex-row",
+                    "list": "flex-col"
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "variant": "grid"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentStyle",
+            "base": "group relative",
+            "variants": {},
+            "parentVariants": {
+                "variant": {
+                    "grid": "w-24 h-24 overflow-hidden rounded-lg",
+                    "inline": "flex h-8 items-center gap-1.5 rounded-md border border-border px-1.5 text-sm font-medium",
+                    "list": "flex w-full items-center gap-3 rounded-lg border p-3"
+                }
+            },
+            "defaultVariants": {
+                "variant": "grid"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentPreviewStyle",
+            "base": "flex shrink-0 items-center justify-center overflow-hidden",
+            "variants": {},
+            "parentVariants": {
+                "variant": {
+                    "grid": "size-full",
+                    "inline": "size-5 rounded bg-background",
+                    "list": "size-12 rounded bg-muted"
+                }
+            },
+            "defaultVariants": {
+                "variant": "grid"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentRemoveStyle",
+            "base": "",
+            "variants": {},
+            "parentVariants": {
+                "variant": {
+                    "grid": "opacity-100 absolute top-3 right-3 z-10 h-8 w-8 items-center flex justify-center rounded-full bg-muted",
+                    "inline": "size-5 ml-auto",
+                    "list": "size-8 shrink-0 ml-auto"
+                }
+            },
+            "defaultVariants": {
+                "variant": "grid"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentHoverCardContentStyle",
+            "base": "w-auto p-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentHoverCardTextStyle",
+            "base": "font-normal tracking-normal text-xs text-foreground/90",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/attatchments.tsx",
+            "name": "attachmentEmptyStyle",
+            "base": "flex items-center justify-center text-muted-foreground text-sm",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/conversation.tsx",
+            "name": "conversationStyle",
+            "base": "flex-1 bg-background px-4",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/conversation.tsx",
+            "name": "conversationEmptyStateStyle",
+            "base": "flex-1 items-center justify-center",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/conversation.tsx",
+            "name": "conversationContentStyle",
+            "base": "flex-1",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/conversation.tsx",
+            "name": "conversationScrollButtonStyle",
+            "base": "absolute bottom-6 left-1/2 -translate-x-1/2 bg-primary h-11 w-11 items-center justify-center rounded-full shadow-lg",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/conversation.tsx",
+            "name": "conversationDownloadStyle",
+            "base": "absolute top-4 right-4 bg-card p-3 rounded-2xl shadow-sm",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/file-tree.tsx",
+            "name": "fileTreeStyle",
+            "base": "bg-background rounded-xl border border-border overflow-hidden p-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/file-tree.tsx",
+            "name": "fileTreeFolderStyle",
+            "base": "flex-row items-center py-1.5 px-2 rounded-md",
+            "variants": {
+                "selected": {
+                    "true": "bg-accent",
+                    "false": ""
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "selected": false
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/file-tree.tsx",
+            "name": "fileTreeFileStyle",
+            "base": "flex-row items-center py-1.5 px-2 rounded-md",
+            "variants": {
+                "selected": {
+                    "true": "bg-accent",
+                    "false": ""
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "selected": false
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/file-tree.tsx",
+            "name": "fileTreeActionsStyle",
+            "base": "ml-auto flex-row items-center gap-1.5",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageStyle",
+            "base": "group flex w-full max-w-[95%] flex-col gap-2",
+            "variants": {
+                "role": {
+                    "user": "mt-4",
+                    "assistant": "",
+                    "system": ""
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "role": "assistant"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageContentStyle",
+            "base": "flex w-fit min-w-0 flex-col justify-center gap-2 overflow-hidden text-base py-3 rounded-3xl",
+            "variants": {},
+            "parentVariants": {
+                "role": {
+                    "user": "self-end bg-muted max-w-[90%] px-4",
+                    "assistant": "self-start",
+                    "system": "self-start"
+                }
+            },
+            "defaultVariants": {
+                "role": "assistant"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageResponseStyle",
+            "base": "text-lg text-foreground",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageToolbarStyle",
+            "base": "-mt-4 ml-2 flex-row items-center gap-3",
+            "variants": {},
+            "parentVariants": {
+                "role": {
+                    "user": "hidden self-end",
+                    "assistant": "self-start",
+                    "system": "self-start"
+                }
+            },
+            "defaultVariants": {
+                "role": "assistant"
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageActionStyle",
+            "base": "h-8 w-8 items-center justify-center",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageBranchStyle",
+            "base": "w-full gap-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageBranchContentStyle",
+            "base": "",
+            "variants": {
+                "active": {
+                    "true": "flex",
+                    "false": "hidden"
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "active": true
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageBranchSelectorStyle",
+            "base": "flex-row items-center gap-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageBranchPreviousStyle",
+            "base": "h-8 w-8 items-center justify-center",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageBranchNextStyle",
+            "base": "h-8 w-8 items-center justify-center",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/message.tsx",
+            "name": "messageBranchPageStyle",
+            "base": "text-sm text-muted-foreground",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorStyle",
+            "base": "w-full h-full justify-center items-center",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorTriggerStyle",
+            "base": "w-[200px] h-[40px] bg-primary justify-between",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorContentStyle",
+            "base": "bg-background rounded-md overflow-hidden border border-border/80 shadow-hard-2 p-6",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorInputStyle",
+            "base": "h-12 px-4 border-b border-border text-base text-foreground placeholder:text-muted-foreground",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorListStyle",
+            "base": "flex-1 w-full",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorEmptyStyle",
+            "base": "flex-1 items-center justify-center py-12",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorGroupStyle",
+            "base": "",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorItemStyle",
+            "base": "flex-row items-center h-4 w-4 px-4 py-3",
+            "variants": {
+                "selected": {
+                    "true": "bg-accent",
+                    "false": "active:bg-muted"
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "selected": false
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorShortcutStyle",
+            "base": "ml-auto",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorSeparatorStyle",
+            "base": "h-px bg-border mx-4 my-1",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorLogoStyle",
+            "base": "w-5 h-5 rounded-full bg-muted items-center justify-center",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorLogoGroupStyle",
+            "base": "flex-row -space-x-1",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/model-selector.tsx",
+            "name": "modelSelectorNameStyle",
+            "base": "flex-1 text-left text-base ml-3 text-foreground",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputStyle",
+            "base": "bg-muted border-border absolute bottom-4 w-full rounded-3xl px-3 py-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputBodyStyle",
+            "base": "flex-row pt-2 items-center gap-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputTextareaStyle",
+            "base": "flex-1 text-xl px-4 items-center justify-center rounded-3xl text-foreground placeholder:text-muted-foreground",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputFooterStyle",
+            "base": "flex-row items-center justify-between mt-6",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputToolsStyle",
+            "base": "flex-row items-center gap-2",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputButtonStyle",
+            "base": "px-3 py-1 rounded-full bg-muted",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputSubmitStyle",
+            "base": "h-10 w-10 rounded-full items-center justify-center mx-3 bg-primary",
+            "variants": {
+                "disabled": {
+                    "true": "opacity-50",
+                    "false": ""
+                }
+            },
+            "parentVariants": {},
+            "defaultVariants": {
+                "disabled": false
+            }
+        },
+        {
+            "module": "chat-ai",
+            "source": "src/components/ui/chat-ai/prompt-input.tsx",
+            "name": "promptInputActionMenuTriggerStyle",
+            "base": "h-10 w-10 rounded-full items-center justify-center bg-primary/10",
+            "variants": {},
+            "parentVariants": {},
+            "defaultVariants": {}
+        }
+    ]
+}
