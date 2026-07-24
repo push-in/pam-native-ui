@@ -23,6 +23,13 @@ final class Catalog extends Component
     private string $plan = 'starter';
     private string $selectedDate = '2026-07-23';
     private string $notice = 'All interactions use semantic native events.';
+    /** @var list<string> */
+    private array $nativePackages = [
+        'pushinbr/pam-native',
+        'pushinbr/pam-mobile-ui',
+        'pushinbr/pam-plugin-api',
+        'pushinbr/pam-cli',
+    ];
 
     public function render(): Renderable
     {
@@ -125,6 +132,7 @@ final class Catalog extends Component
      *     email: string,
      *     plan: string,
      *     selectedDate: string,
+     *     nativePackages: list<string>,
      *     notice: string
      * }
      */
@@ -143,8 +151,14 @@ final class Catalog extends Component
             'email' => $this->email,
             'plan' => $this->plan,
             'selectedDate' => $this->selectedDate,
+            'nativePackages' => $this->nativePackages,
             'notice' => $this->notice,
         ];
+    }
+
+    public function loadMorePackages(): void
+    {
+        $this->notice = 'The recycled native list reached its loading boundary.';
     }
 
     public function chooseFramework(string $framework): void

@@ -377,6 +377,21 @@
                 </Table>
             </VStack>
 
+            <VStack class="gap-3">
+                <Heading size="xl">Recycled native list</Heading>
+                <Text class="ui-text-muted">
+                    Scalar rows are packed once and recycled by Android without PHP render-item callbacks.
+                </Text>
+                <FlatList
+                    items="$nativePackages"
+                    height="192"
+                    rowHeight="48"
+                    showsVerticalScrollIndicator="false"
+                    onEndReachedThreshold="0.25"
+                    on:endReached="loadMorePackages"
+                />
+            </VStack>
+
             <Text class="ui-text-muted">
                 The full generated inventory lives in docs/catalog.md.
             </Text>

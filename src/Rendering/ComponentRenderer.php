@@ -381,10 +381,16 @@ final class ComponentRenderer
             return ActivityIndicator::make(($props['visible'] ?? true) !== false);
         }
         if (in_array($part, ['FlatList', 'VirtualizedList'], true)) {
-            return FlatList::make(self::stringList($props['items'] ?? []));
+            return self::configuredList(
+                FlatList::make(self::stringList($props['items'] ?? [])),
+                $props,
+            );
         }
         if ($part === 'SectionList') {
-            return SectionList::make(self::sections($props['sections'] ?? []));
+            return self::configuredList(
+                SectionList::make(self::sections($props['sections'] ?? [])),
+                $props,
+            );
         }
         if (in_array($part, [
             'ScrollView',
@@ -546,6 +552,8 @@ final class ComponentRenderer
             'Textarea' => NativeBehavior::InputGroup,
             'InputSlot' => NativeBehavior::InputSlot,
             'FormControl' => NativeBehavior::FormControl,
+            'Table' => NativeBehavior::Table,
+            'TableRow' => NativeBehavior::TableRow,
             'Calendar' => NativeBehavior::Calendar,
             'DateTimePicker' => NativeBehavior::DateTimePicker,
             'Skeleton', 'SkeletonText' => NativeBehavior::Skeleton,
@@ -572,6 +580,11 @@ final class ComponentRenderer
      */
     public static function withDefaults(string $part, array $props): array
     {
+        if ($part === 'TableHeader') {
+            $props['isHeaderRow'] = true;
+        } elseif ($part === 'TableFooter') {
+            $props['isFooterRow'] = true;
+        }
         if (!in_array($part, ['Menu', 'Popover', 'Tooltip'], true)) {
             return $props;
         }
@@ -1747,6 +1760,58 @@ final class ComponentRenderer
             1 => $children[0],
             default => Column::make(...$children),
         };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function configuredList(Element $list, array $props): Element
+    {
+        $rowHeight = $props['rowHeight']
+            ?? $props['itemHeight']
+            ?? $props['estimatedItemSize']
+            ?? null;
+        if (is_numeric($rowHeight)) {
+            $list = $list->property(
+                PropKey::ListRowHeight,
+                max(1.0, (float) $rowHeight),
+            );
+        }
+        if (
+            array_key_exists('scrollEnabled', $props)
+            || array_key_exists('isScrollEnabled', $props)
+        ) {
+            $list = $list->property(
+                PropKey::ScrollEnabled,
+                self::flag(
+                    $props,
+                    'scrollEnabled',
+                    self::flag($props, 'isScrollEnabled', true),
+                ),
+            );
+        }
+        if (
+            array_key_exists('showsVerticalScrollIndicator', $props)
+            || array_key_exists('showsScrollIndicator', $props)
+        ) {
+            $list = $list->property(
+                PropKey::ShowsScrollIndicator,
+                self::flag(
+                    $props,
+                    'showsVerticalScrollIndicator',
+                    self::flag($props, 'showsScrollIndicator', true),
+                ),
+            );
+        }
+        $threshold = $props['onEndReachedThreshold']
+            ?? $props['endReachedThreshold']
+            ?? null;
+        if (is_numeric($threshold)) {
+            $list = $list->property(
+                PropKey::EndReachedThreshold,
+                min(1.0, max(0.0, (float) $threshold)),
+            );
+        }
+
+        return $list;
     }
 
     /** @return list<string> */

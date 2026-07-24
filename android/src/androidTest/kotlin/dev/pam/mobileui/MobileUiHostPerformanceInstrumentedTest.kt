@@ -9,6 +9,7 @@ import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -564,6 +565,40 @@ class MobileUiHostPerformanceInstrumentedTest {
                 inputSlotEvents,
             )
 
+            val tableEvents = ArrayList<NativeViewEventKind>()
+            val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
+            table.update(mapOf("behavior" to WireValue.Integer(35)))
+            repeat(TABLE_ROWS) { rowIndex ->
+                val row = MobileUiHost(context) { kind, _ -> tableEvents += kind }
+                row.update(
+                    mapOf(
+                        "behavior" to WireValue.Integer(36),
+                        "isHeaderRow" to WireValue.Flag(rowIndex == 0),
+                    ),
+                )
+                repeat(TABLE_COLUMNS) { columnIndex ->
+                    row.addView(TextView(context).apply {
+                        text = "$rowIndex:$columnIndex"
+                    })
+                }
+                table.addView(row)
+            }
+            table.layout(0, 0, 1_080, 2_400)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                table.layout(0, 0, 1_080 + (iteration and 1), 2_400)
+            }
+            val tableLayout = measure(SAMPLE_ITERATIONS) { iteration ->
+                table.layout(0, 0, 1_080 + (iteration and 1), 2_400)
+            }
+            assertTrue(
+                "Table steady layout p99 ${tableLayout.p99Micros}µs exceeded 4ms",
+                tableLayout.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Table layout and accessibility coordinates must stay UI-thread local",
+                tableEvents.isEmpty(),
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -599,6 +634,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"menuSelection\":${menuSelection.json()},")
                     append("\"inputState\":${inputState.json()},")
                     append("\"inputSlotPress\":${inputSlotPress.json()},")
+                    append("\"tableLayout\":${tableLayout.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
@@ -615,7 +651,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"anchoredBridgeEvents\":${anchoredEvents.size},")
                     append("\"menuBridgeEvents\":$menuEvents,")
                     append("\"inputStateBridgeEvents\":${inputGroupEvents.size},")
-                    append("\"inputSlotBridgeEvents\":$inputSlotEvents")
+                    append("\"inputSlotBridgeEvents\":$inputSlotEvents,")
+                    append("\"tableBridgeEvents\":${tableEvents.size}")
                     append('}')
                 },
             )
@@ -643,6 +680,10 @@ class MobileUiHostPerformanceInstrumentedTest {
             anchored.release()
             inputSlot.release()
             inputGroup.release()
+            repeat(table.childCount) { index ->
+                (table.getChildAt(index) as? MobileUiHost)?.release()
+            }
+            table.release()
         }
     }
 
@@ -784,6 +825,8 @@ class MobileUiHostPerformanceInstrumentedTest {
         const val CALENDAR_WARMUP_ITERATIONS = 200
         const val CALENDAR_DRAW_ITERATIONS = 2_000
         const val LIFECYCLE_ITERATIONS = 2_000
+        const val TABLE_ROWS = 20
+        const val TABLE_COLUMNS = 4
         const val NANOS_PER_MICROSECOND = 1_000L
         const val FOUR_MILLISECONDS_NANOS = 4_000_000L
         const val EIGHT_MILLISECONDS_NANOS = 8_000_000L

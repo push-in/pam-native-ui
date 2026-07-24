@@ -469,7 +469,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: Data display
 - Maturity: Alpha
-- Runtime: PHP composition
+- Runtime: Android native host
 - Variants: `isHeaderRow`, `isFooterRow`
 - Upstream examples captured: 5
 - Tags: `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableData`, `TableCaption`

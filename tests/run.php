@@ -46,6 +46,15 @@ use Pam\MobileUi\Component\FormControlLabelText;
 use Pam\MobileUi\Component\Input;
 use Pam\MobileUi\Component\InputField;
 use Pam\MobileUi\Component\InputSlot;
+use Pam\MobileUi\Component\FlatList;
+use Pam\MobileUi\Component\SectionList;
+use Pam\MobileUi\Component\VirtualizedList;
+use Pam\MobileUi\Component\Table;
+use Pam\MobileUi\Component\TableBody;
+use Pam\MobileUi\Component\TableData;
+use Pam\MobileUi\Component\TableHead;
+use Pam\MobileUi\Component\TableHeader;
+use Pam\MobileUi\Component\TableRow;
 use Pam\MobileUi\Component\Attachment;
 use Pam\MobileUi\Component\AttachmentPreview;
 use Pam\MobileUi\Component\Attachments;
@@ -846,6 +855,74 @@ $assert(
 $assert(
     PromptInputTextarea::make()->toElement()->kind() === NodeKind::Input,
     'PromptInputTextarea must use the optimized native input primitive.',
+);
+$listEndReached = 0;
+$flatList = FlatList::make([
+    'items' => ['Laravel', 'PAM', 'Android'],
+    'rowHeight' => 64,
+    'showsVerticalScrollIndicator' => false,
+    'onEndReachedThreshold' => 0.25,
+])->onEndReached(static function () use (&$listEndReached): void {
+    $listEndReached++;
+})->toElement();
+$sectionList = SectionList::make([
+    'sections' => [
+        'Frameworks' => ['Laravel', 'PAM'],
+        'Platforms' => ['Android'],
+    ],
+    'itemHeight' => 56,
+])->toElement();
+$virtualizedList = VirtualizedList::make([
+    'items' => ['One', 'Two'],
+    'scrollEnabled' => false,
+])->toElement();
+$assert(
+    $flatList->kind() === NodeKind::List
+        && $flatList->properties()[PropKey::ListRowHeight->value] === 64.0
+        && $flatList->properties()[PropKey::ShowsScrollIndicator->value] === false
+        && $flatList->properties()[PropKey::EndReachedThreshold->value] === 0.25
+        && isset($flatList->events()[\Pam\Native\EventKind::EndReached->value])
+        && $sectionList->kind() === NodeKind::SectionList
+        && $sectionList->properties()[PropKey::ListRowHeight->value] === 56.0
+        && $virtualizedList->kind() === NodeKind::List
+        && $virtualizedList->properties()[PropKey::ScrollEnabled->value] === false,
+    'List facades must preserve recycled native rows, sizing, indicators and end events.',
+);
+
+$table = Table::make(
+    TableHeader::make(
+        TableRow::make(
+            TableHead::make('Package'),
+            TableHead::make('Runtime'),
+        ),
+    ),
+    TableBody::make(
+        TableRow::make(
+            TableData::make('pushinbr/pam-mobile-ui'),
+            TableData::make('Android'),
+        ),
+    ),
+)->toElement();
+$tableNativeValue = $table->properties()[PropKey::HostProperties->value] ?? null;
+$tableHeader = $table->children()[0] ?? null;
+$tableHeaderRow = $tableHeader?->children()[0] ?? null;
+$tableHeaderRowNativeValue = $tableHeaderRow?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$tableNativeValue instanceof BinaryValue
+    || !$tableHeaderRowNativeValue instanceof BinaryValue
+) {
+    throw new RuntimeException('Table and TableRow must render native semantic hosts.');
+}
+$tableNative = Wire::decodeMap($tableNativeValue->bytes);
+$tableHeaderRowNative = Wire::decodeMap($tableHeaderRowNativeValue->bytes);
+$assert(
+    $tableNative['behavior'] === NativeBehavior::Table->value
+        && $tableHeaderRowNative['behavior'] === NativeBehavior::TableRow->value
+        && $tableHeaderRowNative['isHeaderRow'] === true
+        && count($tableHeaderRow->children()) === 2,
+    'Table must retain authored cells while packing header-row collection semantics.',
 );
 $inputChanges = [];
 $compoundInput = Input::make(

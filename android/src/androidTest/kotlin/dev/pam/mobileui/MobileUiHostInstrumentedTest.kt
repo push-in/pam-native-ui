@@ -1645,6 +1645,65 @@ class MobileUiHostInstrumentedTest {
         }
     }
 
+    @Test
+    fun tableKeepsAuthoredCellsAndExposesNativeCollectionCoordinates() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val table = MobileUiHost(context) { _, _ -> }
+            table.update(mapOf("behavior" to WireValue.Integer(35)))
+            val headerWrapper = FrameLayout(context)
+            val header = MobileUiHost(context) { _, _ -> }
+            header.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(36),
+                    "isHeaderRow" to WireValue.Flag(true),
+                ),
+            )
+            val packageHead = TextView(context).apply { text = "Package" }
+            val runtimeHead = TextView(context).apply { text = "Runtime" }
+            header.addView(packageHead)
+            header.addView(runtimeHead)
+            headerWrapper.addView(header)
+
+            val bodyWrapper = FrameLayout(context)
+            val body = MobileUiHost(context) { _, _ -> }
+            body.update(mapOf("behavior" to WireValue.Integer(36)))
+            val packageCell = TextView(context).apply { text = "pushinbr/pam-mobile-ui" }
+            val runtimeCell = TextView(context).apply { text = "Android" }
+            body.addView(packageCell)
+            body.addView(runtimeCell)
+            bodyWrapper.addView(body)
+            table.addView(headerWrapper)
+            table.addView(bodyWrapper)
+            table.layout(0, 0, 800, 240)
+
+            val tableInfo = AccessibilityNodeInfo.obtain()
+            val rowInfo = AccessibilityNodeInfo.obtain()
+            table.onInitializeAccessibilityNodeInfo(tableInfo)
+            header.onInitializeAccessibilityNodeInfo(rowInfo)
+            val headerCellInfo = runtimeHead.createAccessibilityNodeInfo()
+            val bodyCellInfo = packageCell.createAccessibilityNodeInfo()
+
+            assertEquals("android.widget.TableLayout", tableInfo.className)
+            assertEquals(2, tableInfo.collectionInfo?.rowCount)
+            assertEquals(2, tableInfo.collectionInfo?.columnCount)
+            assertEquals("android.widget.TableRow", rowInfo.className)
+            assertEquals(0, rowInfo.collectionItemInfo?.rowIndex)
+            assertEquals(1, headerCellInfo.collectionItemInfo?.columnIndex)
+            assertTrue(headerCellInfo.isHeading)
+            assertEquals(1, bodyCellInfo.collectionItemInfo?.rowIndex)
+            assertEquals(0, bodyCellInfo.collectionItemInfo?.columnIndex)
+
+            tableInfo.recycle()
+            rowInfo.recycle()
+            headerCellInfo.recycle()
+            bodyCellInfo.recycle()
+            header.release()
+            body.release()
+            table.release()
+        }
+    }
+
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
 

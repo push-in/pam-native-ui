@@ -310,6 +310,51 @@ pair as `->onChange(...)` and `->onChangeEnd(...)`, both decoded as `float`.
 controlled or default state, custom off/on track colors, thumb colors,
 keyboard activation and native switch semantics.
 
+Large scalar data sets use PAM's recycled Android list primitives directly:
+
+```xml
+<FlatList
+    items="$packages"
+    rowHeight="48"
+    showsVerticalScrollIndicator="false"
+    onEndReachedThreshold="0.25"
+    on:endReached="loadMore"
+/>
+
+<SectionList
+    sections="$groupedPackages"
+    itemHeight="52"
+/>
+```
+
+`FlatList` and `VirtualizedList` pack scalar rows into a compact payload and
+reuse Android row views. `SectionList` does the same for titled groups.
+`rowHeight`, `itemHeight`, scrolling, indicators and the end-reached threshold
+map to the core native list instead of creating a PHP component per row.
+Arbitrary rich row trees remain possible through ordinary PAM composition or a
+specialized native plugin; the scalar fast path deliberately does not invoke a
+PHP `renderItem` callback while scrolling.
+
+Tables keep their full declarative anatomy while Android exposes native
+collection coordinates to TalkBack:
+
+```xml
+<Table>
+    <TableHeader>
+        <TableRow>
+            <TableHead>Package</TableHead>
+            <TableHead>Runtime</TableHead>
+        </TableRow>
+    </TableHeader>
+    <TableBody>
+        <TableRow>
+            <TableData>pushinbr/pam-mobile-ui</TableData>
+            <TableData>Android</TableData>
+        </TableRow>
+    </TableBody>
+</Table>
+```
+
 Application utility classes use the same mobile compiler as the captured
 component recipes:
 

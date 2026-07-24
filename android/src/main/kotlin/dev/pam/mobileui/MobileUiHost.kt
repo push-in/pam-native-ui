@@ -101,7 +101,9 @@ internal class MobileUiHost(
         OVERLAY_DISMISS(31),
         INPUT_GROUP(32),
         INPUT_SLOT(33),
-        FORM_CONTROL(34);
+        FORM_CONTROL(34),
+        TABLE(35),
+        TABLE_ROW(36);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -241,6 +243,8 @@ internal class MobileUiHost(
     private var formSignature: String? = null
     private var formAppliedLabel: String? = null
     private var formAppliedHelper: String? = null
+    private var tableHeaderRow = false
+    private var tableSemanticsDirty = true
     private var accessibilityErrorMessage: String? = null
     private val inputOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -402,6 +406,7 @@ internal class MobileUiHost(
         val previousOpen = open
         val previousComponentMode = componentMode
         val previousTabValue = tabValue
+        val previousTableHeaderRow = tableHeaderRow
         pendingAnchoredOpen?.let(::removeCallbacks)
         pendingAnchoredOpen = null
         pendingAnchoredClose?.let(::removeCallbacks)
@@ -632,6 +637,15 @@ internal class MobileUiHost(
             "focusOnPress",
             if (previousBehavior == behavior) inputSlotFocusOnPress else true,
         )
+        tableHeaderRow = properties.flag("isHeaderRow", false)
+        if (behavior == Behavior.TABLE && previousBehavior != behavior) {
+            tableSemanticsDirty = true
+        } else if (
+            behavior == Behavior.TABLE_ROW
+            && previousTableHeaderRow != tableHeaderRow
+        ) {
+            tableAncestor()?.tableSemanticsDirty = true
+        }
         accessibilityErrorMessage = properties.text("accessibilityErrorMessage")
             ?: properties.text("errorMessage")
         switchTrackOffColor = properties.integer(
@@ -754,6 +768,9 @@ internal class MobileUiHost(
         } else if (behavior == Behavior.FORM_CONTROL) {
             applyFormControlSemantics()
             if (isAttachedToWindow) post(::applyFormControlSemantics)
+        } else if (behavior == Behavior.TABLE) {
+            applyTableSemantics()
+            if (isAttachedToWindow) post(::applyTableSemantics)
         }
         if (behavior.isAnchoredOverlay() && previousOpen == open) {
             post { applyAnchoredOverlayState(animate = false) }
@@ -763,6 +780,11 @@ internal class MobileUiHost(
 
     override fun onViewAdded(child: View) {
         super.onViewAdded(child)
+        if (behavior == Behavior.TABLE) {
+            tableSemanticsDirty = true
+        } else if (behavior == Behavior.TABLE_ROW) {
+            tableAncestor()?.tableSemanticsDirty = true
+        }
         if (behavior == Behavior.INPUT_SLOT) {
             child.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         }
@@ -795,8 +817,20 @@ internal class MobileUiHost(
         if (behavior == Behavior.FORM_CONTROL) {
             post(::applyFormControlSemantics)
         }
+        if (behavior == Behavior.TABLE) {
+            post(::applyTableSemantics)
+        }
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
+        }
+    }
+
+    override fun onViewRemoved(child: View) {
+        super.onViewRemoved(child)
+        if (behavior == Behavior.TABLE) {
+            tableSemanticsDirty = true
+        } else if (behavior == Behavior.TABLE_ROW) {
+            tableAncestor()?.tableSemanticsDirty = true
         }
     }
 
@@ -841,6 +875,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.FORM_CONTROL) {
             applyFormControlSemantics()
+        }
+        if (behavior == Behavior.TABLE) {
+            applyTableSemantics()
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
@@ -1223,6 +1260,25 @@ internal class MobileUiHost(
         ) {
             info.className = "android.view.ViewGroup"
         }
+        if (behavior == Behavior.TABLE) {
+            val rows = tableRows()
+            val columns = rows.maxOfOrNull { row -> tableCells(row).size } ?: 0
+            info.className = "android.widget.TableLayout"
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                rows.size,
+                columns,
+                false,
+            )
+        }
+        if (behavior == Behavior.TABLE_ROW) {
+            info.className = "android.widget.TableRow"
+            tableAncestor()?.tableRowCollectionItemInfo(this)?.let { item ->
+                info.collectionItemInfo = item
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                info.isHeading = tableHeaderRow
+            }
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -1316,6 +1372,8 @@ internal class MobileUiHost(
             Behavior.FORM_CONTROL,
             -> "android.view.ViewGroup"
             Behavior.INPUT_SLOT -> "android.widget.Button"
+            Behavior.TABLE -> "android.widget.TableLayout"
+            Behavior.TABLE_ROW -> "android.widget.TableRow"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
             Behavior.MODAL,
             Behavior.ALERT_DIALOG,
@@ -1769,6 +1827,7 @@ internal class MobileUiHost(
             behavior == Behavior.INPUT_SLOT
                 && inputSlotAction == INPUT_SLOT_ACTION_FOCUS ->
                 IMPORTANT_FOR_ACCESSIBILITY_NO
+            behavior == Behavior.TABLE_ROW -> IMPORTANT_FOR_ACCESSIBILITY_NO
             behavior in setOf(
                 Behavior.ACCORDION_GROUP,
                 Behavior.CHECKBOX_GROUP,
@@ -2064,6 +2123,97 @@ internal class MobileUiHost(
         )
         val radius = inputOutlineRadius * density
         canvas.drawRoundRect(bounds, radius, radius, inputOutlinePaint)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applyTableSemantics() {
+        if (behavior != Behavior.TABLE || !tableSemanticsDirty) return
+        tableSemanticsDirty = false
+        tableRows().forEachIndexed { rowIndex, row ->
+            val heading = row.tableHeaderRow
+            tableCells(row).forEachIndexed { columnIndex, cell ->
+                cell.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                    override fun onInitializeAccessibilityNodeInfo(
+                        host: View,
+                        info: AccessibilityNodeInfo,
+                    ) {
+                        super.onInitializeAccessibilityNodeInfo(host, info)
+                        info.collectionItemInfo =
+                            AccessibilityNodeInfo.CollectionItemInfo.obtain(
+                                rowIndex,
+                                1,
+                                columnIndex,
+                                1,
+                                heading,
+                                false,
+                            )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            info.isHeading = heading
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun tableRows(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (child is MobileUiHost && child.behavior == Behavior.TABLE_ROW) {
+                    add(child)
+                } else if (
+                    child is MobileUiHost
+                    && child.behavior == Behavior.TABLE
+                ) {
+                    Unit
+                } else if (child is ViewGroup) {
+                    addAll(tableRows(child))
+                }
+            }
+        }
+
+    private fun tableCells(root: ViewGroup): List<TextView> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (child is TextView && child !is EditText) {
+                    add(child)
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.TABLE_ROW)
+                ) {
+                    addAll(tableCells(child))
+                }
+            }
+        }
+
+    private fun tableAncestor(): MobileUiHost? {
+        var current = parent
+        while (current is View) {
+            if (current is MobileUiHost && current.behavior == Behavior.TABLE) {
+                return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    @Suppress("DEPRECATION")
+    private fun tableRowCollectionItemInfo(
+        row: MobileUiHost,
+    ): AccessibilityNodeInfo.CollectionItemInfo? {
+        val rows = tableRows()
+        val rowIndex = rows.indexOf(row)
+        if (rowIndex < 0) return null
+        return AccessibilityNodeInfo.CollectionItemInfo.obtain(
+            rowIndex,
+            1,
+            0,
+            max(1, tableCells(row).size),
+            row.tableHeaderRow,
+            false,
+        )
     }
 
     private fun animateExpanded() {

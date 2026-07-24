@@ -32,6 +32,28 @@ Custom native hosts may contain normal PAM children. The renderer mounts these
 children into a `ViewGroup` returned by the plugin factory; this is required for
 compound controls whose content is still authored declaratively in PHP.
 
+## Native data views
+
+`FlatList` and `VirtualizedList` keep the PAM core packed-string adapter:
+Android recycles `TextView` rows, applies the fixed estimated row height and
+detects the end threshold without calling PHP for visible-item rendering.
+`SectionList` uses the equivalent packed section/header adapter. The mobile UI
+facades only normalize familiar prop names (`rowHeight`, `itemHeight`,
+`estimatedItemSize`, indicator and scrolling flags) onto those core
+properties, so the optimized path does not gain an extra host or bridge layer.
+
+This path intentionally accepts scalar rows. Rich heterogeneous rows use normal
+PAM keyed composition or a purpose-built plugin whose recycling contract
+matches that content; pretending a PHP `renderItem` closure can execute during
+Android scrolling would reintroduce the frame-boundary traffic this
+architecture removes.
+
+`Table` remains authored as compound PAM children. A lightweight table root and
+row host discover mounted text cells after structural changes and assign
+Android collection row/column metadata. The metadata cache is invalidated only
+when rows or cells change, so steady layout performs no tree walk, allocation or
+bridge event.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native

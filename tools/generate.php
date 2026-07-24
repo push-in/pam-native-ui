@@ -120,6 +120,7 @@ $nativeModules = array_fill_keys([
     'skeleton',
     'slider',
     'tabs',
+    'table',
     'textarea',
     'toast',
     'tooltip',

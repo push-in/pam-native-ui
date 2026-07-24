@@ -75,6 +75,13 @@ one semantic press each. Clear and password visibility mutate the mounted
 submit synchronization policy. These rows also remain excluded from the
 reference table until a physical run records them.
 
+The pending physical suite also lays out a 20-row by 4-column semantic table
+10,000 times. Its cached accessibility coordinates must keep steady-layout p99
+below 4 ms and emit zero bridge events. Scalar `FlatList`, `VirtualizedList`
+and `SectionList` use PAM core's recycled Android adapters; an end-to-end scroll
+and memory profile remains part of the full-renderer benchmark rather than this
+plugin-host microbenchmark.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded
@@ -82,8 +89,8 @@ the complete PAM binary tree 2,000 times:
 
 | Metric | Result |
 | --- | ---: |
-| Total | 775.143 ms |
-| Throughput | 2,580 trees/s |
+| Total | 788.420 ms |
+| Throughput | 2,536.7 trees/s |
 | Encoded frame | 1,884 bytes |
 | Peak PHP memory | 4 MiB |
 | PHP | 8.4.23 |

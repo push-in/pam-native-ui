@@ -40,4 +40,6 @@ enum NativeBehavior: int
     case InputGroup = 32;
     case InputSlot = 33;
     case FormControl = 34;
+    case Table = 35;
+    case TableRow = 36;
 }

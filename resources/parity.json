@@ -2430,7 +2430,7 @@
             "name": "table",
             "category": 4,
             "maturity": 2,
-            "implementation": 1,
+            "implementation": 2,
             "exports": [
                 "Table",
                 "TableHeader",
