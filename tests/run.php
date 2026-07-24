@@ -1021,7 +1021,8 @@ $attachments = Attachments::make(
         AttachmentRemove::make(),
     ),
 )->toElement();
-$attachment = $attachments->children()[0] ?? null;
+$attachmentContent = $attachments->children()[0] ?? null;
+$attachment = $attachmentContent?->children()[0] ?? null;
 if (!$attachment instanceof \Pam\Native\Element) {
     throw new RuntimeException('Attachment recipes must render their anatomy.');
 }
@@ -1035,6 +1036,7 @@ if (
 }
 $assert(
     $attachments->properties()[PropKey::FlexDirection->value] === FlexDirection::Column->value
+        && $attachmentContent->kind() === NodeKind::Column
         && $attachment->properties()[PropKey::WidthPercent->value] === 100.0
         && $preview->properties()[PropKey::Width->value] === 48.0,
     'Attachment list variants must compile through inherited integer variant context.',
@@ -1258,6 +1260,51 @@ $assert(
             === NativeBehavior::PromptInputSubmit->value
         && $submittedPrompts === ['Ship it'],
     'PromptInput must submit and clear through one Android-owned coordinator.',
+);
+
+$horizontalScroll = ScrollView::make(
+    [
+        'horizontal' => true,
+        'scrollEnabled' => false,
+        'showsHorizontalScrollIndicator' => true,
+        'fillViewport' => false,
+        'contentOffset' => 24,
+        'overScrollMode' => 'never',
+    ],
+    Text::make('One'),
+    Text::make('Two'),
+)->toElement();
+$horizontalScrollNative = $horizontalScroll->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$attachmentsGrid = Attachments::make(
+    ['variant' => 'grid'],
+    Attachment::make(Text::make('one.png')),
+    Attachment::make(Text::make('two.png')),
+)->toElement();
+$attachmentsList = Attachments::make(
+    ['variant' => 'list'],
+    Attachment::make(Text::make('architecture.md')),
+)->toElement();
+if (!$horizontalScrollNative instanceof BinaryValue) {
+    throw new RuntimeException('Horizontal ScrollView must pack native properties.');
+}
+$horizontalScrollProperties = Wire::decodeMap($horizontalScrollNative->bytes);
+$assert(
+    $horizontalScroll->kind() === NodeKind::CustomView
+        && $horizontalScroll->properties()[PropKey::HostName->value]
+            === 'pam.mobile_ui.horizontal_scroll'
+        && $horizontalScroll->children()[0]->kind() === NodeKind::Row
+        && $horizontalScrollProperties['scrollEnabled'] === false
+        && $horizontalScrollProperties['showsIndicator'] === true
+        && $horizontalScrollProperties['fillViewport'] === false
+        && $horizontalScrollProperties['contentOffset'] === 24.0
+        && $horizontalScrollProperties['overScrollMode'] === 'never'
+        && $attachmentsGrid->properties()[PropKey::HostName->value]
+            === 'pam.mobile_ui.horizontal_scroll'
+        && $attachmentsGrid->children()[0]->kind() === NodeKind::Row
+        && $attachmentsList->children()[0]->kind() === NodeKind::Column,
+    'Horizontal ScrollView and Attachments must use the Android scrolling primitive with one content container.',
 );
 
 $conversation = Conversation::make(

@@ -491,6 +491,20 @@ final class ComponentRenderer
 
             return $color === null ? $spinner : $spinner->color($color);
         }
+        if (
+            $part === 'Attachments'
+            || (
+                in_array($part, [
+                    'ScrollView',
+                    'ActionsheetScrollView',
+                    'BottomSheetScrollView',
+                    'SelectScrollView',
+                ], true)
+                && self::flag($props, 'horizontal')
+            )
+        ) {
+            return self::horizontalScroll($part, $props, $children);
+        }
         if (in_array($part, [
             'FlatList',
             'VirtualizedList',
@@ -1870,6 +1884,54 @@ final class ComponentRenderer
         };
     }
 
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     */
+    private static function horizontalScroll(
+        string $part,
+        array $props,
+        array $children,
+    ): Element {
+        $listAttachments = $part === 'Attachments'
+            && self::integer($props, 'variant', 15) === 17;
+        $content = $listAttachments
+            ? Column::make(...$children)
+            : Row::make(...$children);
+
+        return CustomView::make(
+            'pam.mobile_ui.horizontal_scroll',
+            [
+                'scrollEnabled' => self::flag($props, 'scrollEnabled', true),
+                'showsIndicator' => self::flag(
+                    $props,
+                    'showsHorizontalScrollIndicator',
+                    self::flag(
+                        $props,
+                        'showsScrollIndicator',
+                        $part !== 'Attachments',
+                    ),
+                ),
+                'fillViewport' => self::flag($props, 'fillViewport', true),
+                'nestedScrollEnabled' => self::flag(
+                    $props,
+                    'nestedScrollEnabled',
+                    true,
+                ),
+                'contentOffset' => max(
+                    0.0,
+                    self::number($props, 'contentOffset', 0.0),
+                ),
+                'overScrollMode' => self::text(
+                    $props,
+                    'overScrollMode',
+                    'auto',
+                ),
+            ],
+            $content,
+        );
+    }
+
     /** @param array<string, mixed> $props */
     private static function calendarSelectLabel(
         string $part,
@@ -2604,6 +2666,17 @@ final class ComponentRenderer
         $value = $props[$name] ?? $default;
 
         return is_int($value) ? $value : (is_numeric($value) ? (int) $value : $default);
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function number(
+        array $props,
+        string $name,
+        float $default,
+    ): float {
+        $value = $props[$name] ?? $default;
+
+        return is_numeric($value) ? (float) $value : $default;
     }
 
     /** @param array<string, mixed> $props */

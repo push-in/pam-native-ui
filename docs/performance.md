@@ -111,6 +111,12 @@ heading/emphasis/list/link/code document. Parsing and span application happen
 once per changed source on the Android UI thread and emit zero bridge events;
 only explicit safe-link activation emits one URI.
 
+Horizontal ScrollView/Attachments adds a pending native fling and 10,000
+property-update gate. Drag and momentum remain inside `HorizontalScrollView`;
+registered scroll progress is coalesced to one scalar per display frame, while
+an unobserved scroll emits zero bridge events. Static compilation is not
+reported as physical runtime evidence.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

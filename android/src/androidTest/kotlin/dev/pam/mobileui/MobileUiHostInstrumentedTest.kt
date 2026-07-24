@@ -10,8 +10,10 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.Gravity
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.TextView
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
@@ -29,6 +31,45 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
+    @Test
+    fun horizontalScrollAppliesNativeInteractionAndViewportProperties() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val factory = MobileUiHorizontalScrollFactory(context)
+            val view = factory.create(context) { _, _ -> Unit }
+            factory.update(
+                view,
+                mapOf(
+                    "scrollEnabled" to WireValue.Flag(false),
+                    "showsIndicator" to WireValue.Flag(true),
+                    "fillViewport" to WireValue.Flag(false),
+                    "nestedScrollEnabled" to WireValue.Flag(false),
+                    "contentOffset" to WireValue.Decimal(24.0),
+                    "overScrollMode" to WireValue.Text("never"),
+                ),
+            )
+
+            val scroll = view as HorizontalScrollView
+            scroll.addView(
+                FrameLayout(context),
+                ViewGroup.LayoutParams(800, 80),
+            )
+            scroll.measure(
+                View.MeasureSpec.makeMeasureSpec(320, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(80, View.MeasureSpec.EXACTLY),
+            )
+            scroll.layout(0, 0, 320, 80)
+
+            assertTrue(!scroll.isEnabled)
+            assertTrue(scroll.isHorizontalScrollBarEnabled)
+            assertTrue(!scroll.isFillViewport)
+            assertTrue(!scroll.isNestedScrollingEnabled)
+            assertEquals(View.OVER_SCROLL_NEVER, scroll.overScrollMode)
+            assertEquals(dp(scroll, 24f), scroll.scrollX)
+            factory.release(scroll)
+        }
+    }
+
     @Test
     fun markdownRendersIntrinsicSpansAndEmitsSafeLinksOnTheUiThread() {
         onMain {

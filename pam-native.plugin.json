@@ -28,6 +28,10 @@
         {
             "name": "pam.mobile_ui.markdown",
             "class": "dev.pam.mobileui.MobileUiMarkdownFactory"
+        },
+        {
+            "name": "pam.mobile_ui.horizontal_scroll",
+            "class": "dev.pam.mobileui.MobileUiHorizontalScrollFactory"
         }
     ]
 }

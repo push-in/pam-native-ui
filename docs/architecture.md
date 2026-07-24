@@ -109,6 +109,13 @@ pressables. `AttachmentHoverCard` and `PromptInputActionMenu` reuse the same
 collision-aware native Tooltip/Menu controller rather than introducing a
 second overlay implementation.
 
+`Attachments` and every `ScrollView horizontal="true"` compile to the
+`pam.mobile_ui.horizontal_scroll` Android primitive. It accepts one Row/Column
+content container, lets Android own drag, momentum, overscroll and nested
+scrolling, and emits horizontal progress at most once per display frame only
+when the application registers `on:scroll`. Grid/inline attachments use a Row;
+the upstream list variant uses a Column. No gesture sample crosses PHP.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native
