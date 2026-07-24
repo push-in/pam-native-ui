@@ -11,6 +11,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RenderEffect
+import android.graphics.RectF
 import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
@@ -112,6 +113,7 @@ internal class MobileUiHost(
     private var calendarMonth = LocalDate.now().monthValue
     private var dragOrigin = 0f
     private var dragOriginSecondary = 0f
+    private var dragging = false
     private var imageScale = 1f
     private var imageTranslationX = 0f
     private var imageTranslationY = 0f
@@ -578,11 +580,17 @@ internal class MobileUiHost(
             val coordinate = if (horizontal) event.rawX else event.rawY
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
+                    if (!isDrawerHandle(event.x, event.y)) {
+                        dragging = false
+                        return@OnTouchListener false
+                    }
+                    dragging = true
                     dragOrigin = coordinate
                     animate().cancel()
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    if (!dragging) return@OnTouchListener false
                     val delta = coordinate - dragOrigin
                     when (anchor) {
                         1 -> translationX = delta.coerceAtMost(0f)
@@ -595,6 +603,8 @@ internal class MobileUiHost(
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL,
                 -> {
+                    if (!dragging) return@OnTouchListener false
+                    dragging = false
                     if (event.actionMasked == MotionEvent.ACTION_UP) {
                         performClick()
                     }
@@ -651,6 +661,11 @@ internal class MobileUiHost(
             if (!isEnabled) return@OnTouchListener false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
+                    if (!isSheetHandle(event.x, event.y)) {
+                        dragging = false
+                        return@OnTouchListener false
+                    }
+                    dragging = true
                     dragOrigin = event.rawY
                     animate().cancel()
                     true
@@ -662,6 +677,8 @@ internal class MobileUiHost(
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL,
                 -> {
+                    if (!dragging) return@OnTouchListener false
+                    dragging = false
                     if (event.actionMasked == MotionEvent.ACTION_UP) {
                         performClick()
                     }
@@ -719,13 +736,17 @@ internal class MobileUiHost(
     private fun calendarTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
             if (!isEnabled) return@OnTouchListener false
+            val bounds = calendarGridBounds()
+            if (!bounds.contains(event.x, event.y)) return@OnTouchListener false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> true
                 MotionEvent.ACTION_UP -> {
-                    val column = ((event.x / width.coerceAtLeast(1)) * 7)
+                    val localX = event.x - bounds.left
+                    val localY = event.y - bounds.top
+                    val column = ((localX / bounds.width().coerceAtLeast(1f)) * 7)
                         .toInt()
                         .coerceIn(0, 6)
-                    val row = ((event.y / height.coerceAtLeast(1)) * 6)
+                    val row = ((localY / bounds.height().coerceAtLeast(1f)) * 6)
                         .toInt()
                         .coerceIn(0, 5)
                     val first = LocalDate.of(calendarYear, calendarMonth, 1)
@@ -1036,6 +1057,60 @@ internal class MobileUiHost(
 
     private fun accordionChildren(): Sequence<View> =
         children().filterIndexed { index, _ -> index > 0 }
+
+    internal fun isSheetHandle(x: Float, y: Float): Boolean {
+        val content = if (childCount > 0) getChildAt(childCount - 1) else null
+        if (content == null) return y <= 64f * density
+        val bounds = boundsInHost(content)
+        return x in bounds.left..bounds.right
+            && y in bounds.top..minOf(bounds.bottom, bounds.top + 64f * density)
+    }
+
+    internal fun isCalendarGridPoint(x: Float, y: Float): Boolean =
+        calendarGridBounds().contains(x, y)
+
+    private fun isDrawerHandle(x: Float, y: Float): Boolean {
+        val content = if (childCount > 0) getChildAt(childCount - 1) else null
+            ?: return true
+        val bounds = boundsInHost(content)
+        val edge = 32f * density
+        return when (anchor) {
+            1 -> x in maxOf(bounds.left, bounds.right - edge)..bounds.right
+                && y in bounds.top..bounds.bottom
+            2 -> x in bounds.left..minOf(bounds.right, bounds.left + edge)
+                && y in bounds.top..bounds.bottom
+            3 -> y in maxOf(bounds.top, bounds.bottom - edge)..bounds.bottom
+                && x in bounds.left..bounds.right
+            else -> y in bounds.top..minOf(bounds.bottom, bounds.top + edge)
+                && x in bounds.left..bounds.right
+        }
+    }
+
+    private fun findTaggedDescendant(root: View, tag: String): View? {
+        if (root.tag == tag) return root
+        if (root !is ViewGroup) return null
+        repeat(root.childCount) { index ->
+            findTaggedDescendant(root.getChildAt(index), tag)?.let { return it }
+        }
+        return null
+    }
+
+    private fun calendarGridBounds(): RectF =
+        boundsInHost(findTaggedDescendant(this, "pam:calendar-grid") ?: this)
+
+    private fun boundsInHost(view: View): RectF {
+        if (view === this) return RectF(0f, 0f, width.toFloat(), height.toFloat())
+        var current = view
+        var left = 0f
+        var top = 0f
+        while (current !== this) {
+            left += current.x
+            top += current.y
+            current = current.parent as? View
+                ?: return RectF(0f, 0f, view.width.toFloat(), view.height.toFloat())
+        }
+        return RectF(left, top, left + view.width, top + view.height)
+    }
 
     private fun positionAnchoredContent() {
         if (childCount < 2) return

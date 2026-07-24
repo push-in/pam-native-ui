@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Pam\MobileUi\Component\Button;
 use Pam\MobileUi\Component\ButtonText;
 use Pam\MobileUi\Component\CheckIcon;
+use Pam\MobileUi\Component\CalendarGrid;
 use Pam\MobileUi\Component\Drawer;
 use Pam\MobileUi\Component\DrawerContent;
 use Pam\MobileUi\Component\HStack;
@@ -65,8 +66,13 @@ use Pam\Native\TextDecoration;
 use Pam\Native\TextTransform;
 use Pam\Native\UI\Text;
 
+$pamNativeRoot = getenv('PAM_NATIVE_ROOT');
+if ($pamNativeRoot === false || $pamNativeRoot === '') {
+    $pamNativeRoot = dirname(__DIR__, 2).'/pam-native';
+}
+
 $roots = [
-    'Pam\\Native\\' => dirname(__DIR__, 2).'/pam-native/packages/native/src/',
+    'Pam\\Native\\' => $pamNativeRoot.'/packages/native/src/',
     'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',
 ];
 
@@ -334,6 +340,11 @@ if (!$firstTabsTrigger instanceof \Pam\Native\Element) {
 $assert(
     $firstTabsTrigger->properties()[PropKey::Value->value] === 'account',
     'Tab trigger values must reach Android as scalar semantic tags.',
+);
+$assert(
+    CalendarGrid::make()->toElement()->properties()[PropKey::Value->value]
+        === 'pam:calendar-grid',
+    'Calendar grid geometry must be discoverable without intercepting header controls.',
 );
 $assert(
     $firstTabContent->properties()[PropKey::Visible->value] === false

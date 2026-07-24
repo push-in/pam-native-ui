@@ -172,6 +172,46 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun sheetContentOutsideTheHandleIsNotClaimedByTheDragGesture() {
+        onMain {
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
+            host.update(mapOf("behavior" to WireValue.Integer(3)))
+            val backdrop = View(host.context)
+            val content = FrameLayout(host.context)
+            host.addView(backdrop)
+            host.addView(content)
+            host.layout(0, 0, 300, 1_000)
+            backdrop.layout(0, 0, 300, 1_000)
+            content.layout(0, 600, 300, 1_000)
+
+            assertTrue(host.isSheetHandle(150f, 650f))
+            assertTrue(!host.isSheetHandle(150f, 850f))
+            host.release()
+        }
+    }
+
+    @Test
+    fun calendarSelectionClaimsOnlyTheTaggedGridGeometry() {
+        onMain {
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
+            host.update(mapOf("behavior" to WireValue.Integer(7)))
+            val header = View(host.context)
+            val grid = View(host.context).apply {
+                tag = "pam:calendar-grid"
+            }
+            host.addView(header)
+            host.addView(grid)
+            host.layout(0, 0, 300, 600)
+            header.layout(0, 0, 300, 100)
+            grid.layout(0, 100, 300, 600)
+
+            assertTrue(!host.isCalendarGridPoint(150f, 50f))
+            assertTrue(host.isCalendarGridPoint(150f, 150f))
+            host.release()
+        }
+    }
+
+    @Test
     fun modalExposesDismissActionAndPublishesCompactNativeDismissal() {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()

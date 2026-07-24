@@ -70,12 +70,10 @@ final class ComponentRenderer
         $element = self::primitive($part, $runtimeProps, $children)
             ->style($style);
 
-        if (
-            $part === 'TabsTrigger'
-            && isset($props['value'])
-            && is_scalar($props['value'])
-        ) {
+        if ($part === 'TabsTrigger' && isset($props['value']) && is_scalar($props['value'])) {
             $element = $element->property(PropKey::Value, $props['value']);
+        } elseif ($part === 'CalendarGrid') {
+            $element = $element->property(PropKey::Value, 'pam:calendar-grid');
         }
 
         if ($styleOverride !== null) {
