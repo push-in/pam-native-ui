@@ -77,11 +77,15 @@ root. Context-only `BlankProvider`, `BlankContext` and `PromptInputProvider`
 return their single child directly; multiple children use a reconciler node
 that PAM's Android renderer flattens before native layout.
 
-Image facades accept both PAM URI strings and React Native-compatible
-`source="{{ ['uri' => $url] }}"` values (including source candidate lists).
-`alt` becomes the native accessibility label, `resizeMode` stays on the image
-primitive, and `AvatarFallback` is the same uppercase text alias exposed by
-gluestack/shadcn. Scalar content passed through the fluent class API also
+Image facades accept PAM URI strings and React Native-compatible `source`,
+`src` and `srcSet` values, including density/width candidate lists. `alt`
+marks the native view accessible; cover, contain, stretch, center and repeat
+stay on the image primitive. Default/loading sources, fade, resize method and
+multiplier, progressive downloads, request headers and the four cache policies
+flow to Android. Typed load-start/progress/load/error/load-end callbacks remain
+optional, and `ImageBackground`, `AvatarImage` and image-viewer content use the
+same cancelable RAM/disk pipeline. `AvatarFallback` is the uppercase text alias
+exposed by gluestack/shadcn. Scalar content passed through the fluent API also
 becomes a native text child for items, triggers and action buttons, so
 `BottomSheetItem::make('Save')` and `PromptInputButton::make('Attach')` render
 the same content as their tag equivalents.

@@ -367,6 +367,31 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::EndReached, $handler);
     }
 
+    final public function onLoadStart(Closure $handler): static
+    {
+        return $this->on(EventKind::ImageLoadStart, $handler);
+    }
+
+    final public function onProgress(Closure $handler): static
+    {
+        return $this->on(EventKind::ImageProgress, $handler);
+    }
+
+    final public function onLoad(Closure $handler): static
+    {
+        return $this->on(EventKind::ImageLoad, $handler);
+    }
+
+    final public function onError(Closure $handler): static
+    {
+        return $this->on(EventKind::ImageError, $handler);
+    }
+
+    final public function onLoadEnd(Closure $handler): static
+    {
+        return $this->on(EventKind::ImageLoadEnd, $handler);
+    }
+
     final public function onNativeEvent(Closure $handler): static
     {
         return $this->on(EventKind::Native, $handler);

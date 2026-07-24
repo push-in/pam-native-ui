@@ -117,6 +117,14 @@ core Android host; registered scroll progress is coalesced to one scalar per
 display frame, while an unobserved scroll emits zero bridge events. Static
 compilation is not reported as physical runtime evidence.
 
+The image pipeline adds pending cold/warm/cache-hit gates for 1,000 mixed
+avatar, card and background requests. The physical-device run must record
+deduplicated network count, disk-hit ratio, decoded allocation, cancellation
+correctness, main-thread mount time and frame p95/p99. A 4096 px source used in
+a 40 dp avatar must decode to the nearest bounded target bucket rather than its
+full dimensions. Progress may cross at most once per display frame when
+observed; images without lifecycle handlers emit zero bridge events.
+
 Grid adds a pending 10,000-layout gate using responsive columns, mixed spans,
 independent row/column gaps and two wrapped rows. Breakpoint selection,
 measurement, RTL mirroring and placement must remain below 4 ms p99 with zero

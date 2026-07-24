@@ -22,8 +22,13 @@ use Pam\Native\AccessibilityImportance;
 use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
+use Pam\Native\ImageCachePolicy;
+use Pam\Native\ImageErrorEvent;
 use Pam\Native\InputSyncMode;
 use Pam\Native\ImageFit;
+use Pam\Native\ImageLoadEvent;
+use Pam\Native\ImageProgressEvent;
+use Pam\Native\ImageResizeMethod;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalPresentation;
@@ -443,6 +448,12 @@ final class ComponentRenderer
             );
         if (is_string($label) && $label !== '') {
             $element = $element->accessibilityLabel($label);
+            if (
+                (self::isImage($part) || $part === 'ImageBackground')
+                && isset($props['alt'])
+            ) {
+                $element = $element->accessible();
+            }
         }
         $hint = $props['accessibilityHint'] ?? null;
         if (is_string($hint) && $hint !== '') {
@@ -530,15 +541,16 @@ final class ComponentRenderer
             $image = Image::make(
                 self::imageSource($props),
             )->fit(self::imageFit($props));
-            $tint = self::packedColor($props['tintColor'] ?? null);
 
-            return $tint === null ? $image : $image->tint($tint);
+            return self::configuredImage($image, $props);
         }
         if ($part === 'ImageBackground') {
-            return ImageBackground::make(
+            $image = ImageBackground::make(
                 self::imageSource($props),
                 ...$children,
             )->fit(self::imageFit($props));
+
+            return self::configuredImage($image, $props);
         }
         if ($part === 'Spinner' || $part === 'ButtonSpinner') {
             $spinner = ActivityIndicator::make(
@@ -2610,6 +2622,41 @@ final class ComponentRenderer
         array $props,
         array $events,
     ): array {
+        if (self::isImage($part) || $part === 'ImageBackground') {
+            foreach ([
+                EventKind::ImageLoadStart,
+                EventKind::ImageProgress,
+                EventKind::ImageLoad,
+                EventKind::ImageError,
+                EventKind::ImageLoadEnd,
+            ] as $kind) {
+                $handler = $events[$kind->value] ?? null;
+                if ($handler === null) {
+                    continue;
+                }
+                $events[$kind->value] = match ($kind) {
+                    EventKind::ImageLoadStart,
+                    EventKind::ImageLoadEnd =>
+                        static function (string $_payload) use ($handler): void {
+                            $handler();
+                        },
+                    EventKind::ImageProgress =>
+                        static function (string $payload) use ($handler): void {
+                            $handler(ImageProgressEvent::fromPayload($payload));
+                        },
+                    EventKind::ImageLoad =>
+                        static function (string $payload) use ($handler): void {
+                            $handler(ImageLoadEvent::fromPayload($payload));
+                        },
+                    EventKind::ImageError =>
+                        static function (string $payload) use ($handler): void {
+                            $handler(ImageErrorEvent::fromPayload($payload));
+                        },
+                };
+            }
+
+            return $events;
+        }
         if ($part === 'PromptInput') {
             $handler = $events[EventKind::Submit->value] ?? null;
             if ($handler === null) {
@@ -3020,6 +3067,7 @@ final class ComponentRenderer
             ImageFit::Contain->value, 'contain' => ImageFit::Contain,
             ImageFit::Fill->value, 'fill', 'stretch' => ImageFit::Fill,
             ImageFit::Center->value, 'center', 'none' => ImageFit::Center,
+            ImageFit::Repeat->value, 'repeat' => ImageFit::Repeat,
             default => ImageFit::Cover,
         };
     }
@@ -3027,7 +3075,12 @@ final class ComponentRenderer
     /** @param array<string, mixed> $props */
     private static function imageSource(array $props): string
     {
-        $source = $props['source'] ?? $props['src'] ?? '';
+        $source = $props['src'] ?? $props['source'] ?? '';
+        return self::imageSourceValue($source);
+    }
+
+    private static function imageSourceValue(mixed $source): string
+    {
         if (is_scalar($source)) {
             return (string) $source;
         }
@@ -3047,6 +3100,155 @@ final class ComponentRenderer
         }
 
         return '';
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function imageSourceSet(array $props): ?string
+    {
+        if (is_scalar($props['srcSet'] ?? null)) {
+            $value = trim((string) $props['srcSet']);
+
+            return $value === '' ? null : $value;
+        }
+        $source = $props['source'] ?? null;
+        if (!is_array($source) || array_key_exists('uri', $source)) {
+            return null;
+        }
+        $candidates = [];
+        foreach ($source as $candidate) {
+            if (!is_array($candidate)) {
+                continue;
+            }
+            $uri = self::imageSourceValue($candidate);
+            if ($uri === '' || str_contains($uri, ',')) {
+                continue;
+            }
+            if (is_numeric($candidate['scale'] ?? null)) {
+                $descriptor = max(0.1, (float) $candidate['scale']).'x';
+            } elseif (is_numeric($candidate['width'] ?? null)) {
+                $descriptor = max(1, (int) $candidate['width']).'w';
+            } else {
+                continue;
+            }
+            $candidates[] = $uri.' '.$descriptor;
+        }
+
+        return $candidates === [] ? null : implode(', ', $candidates);
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function imageCachePolicy(
+        array $props,
+    ): ImageCachePolicy {
+        $source = $props['source'] ?? null;
+        $value = $props['cachePolicy']
+            ?? $props['cache']
+            ?? (is_array($source) ? ($source['cache'] ?? null) : null);
+
+        return match ($value) {
+            ImageCachePolicy::Reload->value, 'reload' =>
+                ImageCachePolicy::Reload,
+            ImageCachePolicy::ForceCache->value, 'force-cache', 'forceCache' =>
+                ImageCachePolicy::ForceCache,
+            ImageCachePolicy::OnlyIfCached->value,
+            'only-if-cached',
+            'onlyIfCached' => ImageCachePolicy::OnlyIfCached,
+            default => ImageCachePolicy::Default,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function imageResizeMethod(
+        array $props,
+    ): ImageResizeMethod {
+        return match ($props['resizeMethod'] ?? null) {
+            ImageResizeMethod::Resize->value, 'resize' =>
+                ImageResizeMethod::Resize,
+            ImageResizeMethod::Scale->value, 'scale' =>
+                ImageResizeMethod::Scale,
+            ImageResizeMethod::None->value, 'none' =>
+                ImageResizeMethod::None,
+            default => ImageResizeMethod::Auto,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array<string, string>
+     */
+    private static function imageHeaders(array $props): array
+    {
+        $source = $props['source'] ?? null;
+        $headers = $props['headers']
+            ?? (is_array($source) ? ($source['headers'] ?? null) : null);
+        if (!is_array($headers)) {
+            return [];
+        }
+        $result = [];
+        foreach ($headers as $name => $value) {
+            if (is_string($name) && is_scalar($value)) {
+                $result[$name] = (string) $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Image|ImageBackground $image
+     * @param array<string, mixed> $props
+     * @return Image|ImageBackground
+     */
+    private static function configuredImage(
+        Image|ImageBackground $image,
+        array $props,
+    ): Image|ImageBackground {
+        $tint = self::packedColor($props['tintColor'] ?? null);
+        if ($tint !== null) {
+            $image = $image->tint($tint);
+        }
+        $defaultSource = self::imageSourceValue(
+            $props['defaultSource'] ?? '',
+        );
+        if ($defaultSource !== '') {
+            $image = $image->defaultSource($defaultSource);
+        }
+        $loadingSource = self::imageSourceValue(
+            $props['loadingIndicatorSource'] ?? '',
+        );
+        if ($loadingSource !== '') {
+            $image = $image->loadingIndicatorSource($loadingSource);
+        }
+        if (is_numeric($props['fadeDuration'] ?? null)) {
+            $image = $image->fadeDuration(
+                max(0, (int) $props['fadeDuration']),
+            );
+        }
+        $image = $image
+            ->resizeMethod(self::imageResizeMethod($props))
+            ->resizeMultiplier(
+                is_numeric($props['resizeMultiplier'] ?? null)
+                    ? (float) $props['resizeMultiplier']
+                    : 1.0,
+            )
+            ->progressiveRendering(
+                self::flag($props, 'progressiveRenderingEnabled'),
+            )
+            ->cache(self::imageCachePolicy($props));
+        $overlay = self::packedColor($props['overlayColor'] ?? null);
+        if ($overlay !== null) {
+            $image = $image->overlayColor($overlay);
+        }
+        $sourceSet = self::imageSourceSet($props);
+        if ($sourceSet !== null) {
+            $image = $image->sourceSet($sourceSet);
+        }
+        $headers = self::imageHeaders($props);
+        if ($headers !== []) {
+            $image = $image->headers($headers);
+        }
+
+        return $image;
     }
 
     /** @param array<string, mixed> $props */

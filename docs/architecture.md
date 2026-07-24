@@ -115,12 +115,17 @@ PAM's layout-only optimization flattens, so Android allocates no provider host.
 Prompt provider arrays are bounded declarative context; coded attachment types
 are sequential integers represented by `AttachmentType`.
 
-React Native image-source objects are normalized to one bounded URI during PHP
-composition; Android still receives only PAM's scalar `Source` property. The
-same path covers `Image`, `ImageBackground`, `AvatarImage` and image-viewer
-content, while `alt` is copied to native accessibility metadata. Generated
-style aliases preserve `AvatarFallback` as text rather than allocating a second
-avatar container.
+React Native image-source objects normalize their fallback URI, density/width
+candidates, cache policy and bounded request headers once during PHP
+composition. Android selects `srcSet` against density/measured width, coalesces
+equal work, keeps bounded original bytes on disk and caches decoded bitmaps by
+64 px target bucket. Downsampling happens off the UI thread before allocation;
+only the final drawable, crossfade and rounded clip mount on the UI thread.
+Source replacement/unmount invalidates its generation token, so a late network
+result cannot overwrite a recycled view. The same path covers `Image`,
+`ImageBackground`, `AvatarImage` and image-viewer content. `alt` marks the
+native host accessible, while generated style aliases preserve
+`AvatarFallback` as text rather than allocating a second avatar container.
 
 `FileTree` packs controlled/default expanded paths into one bounded newline
 payload. Folder and file hosts retain their authored nested PHP content while

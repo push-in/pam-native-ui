@@ -25,6 +25,9 @@ final class UiNode extends Component
     private ?Closure $toggleHandler = null;
     private ?Closure $nativeEventHandler = null;
 
+    /** @var array<int, Closure> */
+    private array $eventHandlers = [];
+
     private function __construct(
         private readonly string $tag,
         Renderable ...$children,
@@ -85,13 +88,21 @@ final class UiNode extends Component
         return $copy;
     }
 
+    public function on(EventKind $kind, Closure $handler): self
+    {
+        $copy = clone $this;
+        $copy->eventHandlers[$kind->value] = $handler;
+
+        return $copy;
+    }
+
     public function render(): Renderable
     {
         $children = array_map(
             static fn (Renderable $child): \Pam\Native\Element => $child->toElement(),
             $this->children,
         );
-        $events = [];
+        $events = $this->eventHandlers;
         if ($this->pressHandler !== null) {
             $events[EventKind::Press->value] = $this->pressHandler;
         }

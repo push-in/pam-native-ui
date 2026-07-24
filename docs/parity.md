@@ -36,6 +36,12 @@ viewport filling, nested scrolling, overscroll, fading edge, persistent
 scrollbar, paging/snap, deceleration and keyboard dismissal. Spinner forwards
 animation, stopped visibility, tint and small/large or numeric size; Switch
 retains its Android-owned state and disabled-aware track/thumb tinting.
+Image, ImageBackground, AvatarImage and image-viewer content forward source
+objects/candidates, `src`/`srcSet`, all five resize modes, placeholders, fade,
+resize method/multiplier, progressive flag, cache policy, safe headers, tint,
+overlay, blur, accessibility alt and the five lifecycle callbacks. Android
+owns cancellation, redirects, measured-size decode, RAM/disk caching and
+crossfade; unobserved lifecycle work emits no PHP event.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

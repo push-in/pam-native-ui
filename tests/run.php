@@ -222,6 +222,11 @@ use Pam\Native\Internal\BinaryValue;
 use Pam\Native\Internal\Wire;
 use Pam\Native\ModalPresentation;
 use Pam\Native\ImageFit;
+use Pam\Native\ImageCachePolicy;
+use Pam\Native\ImageErrorEvent;
+use Pam\Native\ImageLoadEvent;
+use Pam\Native\ImageProgressEvent;
+use Pam\Native\ImageResizeMethod;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
@@ -982,11 +987,72 @@ $singleSkeletonNative = $singleSkeletonLine->properties()[
 if (!$singleSkeletonNative instanceof BinaryValue) {
     throw new RuntimeException('Single-line SkeletonText must keep its pulse host.');
 }
+$imageProgress = null;
+$imageLoaded = null;
+$imageError = null;
+$imageStarted = false;
+$imageEnded = false;
 $imagePrimitive = Image::make([
-    'source' => 'file:///cover.png',
-    'resizeMode' => 'contain',
+    'source' => [
+        ['uri' => 'https://example.test/cover.png', 'scale' => 1],
+        ['uri' => 'https://example.test/cover@2x.png', 'scale' => 2],
+    ],
+    'src' => 'https://example.test/cover-fallback.png',
+    'resizeMode' => 'repeat',
     'tintColor' => '#2563eb',
-])->toElement();
+    'defaultSource' => ['uri' => 'asset://cover-placeholder.png'],
+    'loadingIndicatorSource' => 'asset://cover-loading.png',
+    'fadeDuration' => 180,
+    'resizeMethod' => 'resize',
+    'resizeMultiplier' => 2,
+    'progressiveRenderingEnabled' => true,
+    'cachePolicy' => 'force-cache',
+    'overlayColor' => '#0f172a',
+    'headers' => ['X-Image-Variant' => 'retina'],
+])
+    ->onLoadStart(static function () use (&$imageStarted): void {
+        $imageStarted = true;
+    })
+    ->onProgress(
+        static function (ImageProgressEvent $event) use (&$imageProgress): void {
+            $imageProgress = $event;
+        },
+    )
+    ->onLoad(
+        static function (ImageLoadEvent $event) use (&$imageLoaded): void {
+            $imageLoaded = $event;
+        },
+    )
+    ->onError(
+        static function (ImageErrorEvent $event) use (&$imageError): void {
+            $imageError = $event;
+        },
+    )
+    ->onLoadEnd(static function () use (&$imageEnded): void {
+        $imageEnded = true;
+    })
+    ->toElement();
+$imagePrimitive->events()[\Pam\Native\EventKind::ImageLoadStart->value]('');
+$imagePrimitive->events()[\Pam\Native\EventKind::ImageProgress->value](
+    Wire::map(['loaded' => 65_536, 'total' => 131_072]),
+);
+$imagePrimitive->events()[\Pam\Native\EventKind::ImageLoad->value](
+    Wire::map([
+        'uri' => 'https://example.test/cover@2x.png',
+        'width' => 800.0,
+        'height' => 600.0,
+    ]),
+);
+$imagePrimitive->events()[\Pam\Native\EventKind::ImageError->value](
+    Wire::map(['error' => 'offline']),
+);
+$imagePrimitive->events()[\Pam\Native\EventKind::ImageLoadEnd->value]('');
+$imageSourceSet = $imagePrimitive->properties()[
+    PropKey::ImageSourceSet->value
+] ?? null;
+if (!is_string($imageSourceSet)) {
+    throw new RuntimeException('Image source candidates must use a bounded native string.');
+}
 $imageBackground = ImageBackground::make(
     ['source' => 'file:///background.png', 'resizeMode' => 'center'],
     Text::make('Overlay'),
@@ -1133,9 +1199,43 @@ $assert(
     Wire::decodeMap($singleSkeletonNative->bytes)['behavior']
         === NativeBehavior::Skeleton->value
         && $imagePrimitive->properties()[PropKey::ImageFit->value]
-            === ImageFit::Contain->value
+            === ImageFit::Repeat->value
         && $imagePrimitive->properties()[PropKey::TintColor->value]
             === 0xff2563eb
+        && $imagePrimitive->properties()[PropKey::Source->value]
+            === 'https://example.test/cover-fallback.png'
+        && $imagePrimitive->properties()[PropKey::ImageDefaultSource->value]
+            === 'asset://cover-placeholder.png'
+        && $imagePrimitive
+            ->properties()[PropKey::ImageLoadingIndicatorSource->value]
+            === 'asset://cover-loading.png'
+        && $imagePrimitive->properties()[PropKey::ImageFadeDurationMs->value]
+            === 180
+        && $imagePrimitive->properties()[PropKey::ImageResizeMethod->value]
+            === ImageResizeMethod::Resize->value
+        && $imagePrimitive->properties()[PropKey::ImageResizeMultiplier->value]
+            === 2.0
+        && $imagePrimitive
+            ->properties()[PropKey::ImageProgressiveRenderingEnabled->value]
+            === true
+        && $imagePrimitive->properties()[PropKey::ImageCachePolicy->value]
+            === ImageCachePolicy::ForceCache->value
+        && $imagePrimitive->properties()[PropKey::ImageOverlayColor->value]
+            === 0xff0f172a
+        && str_contains(
+            $imageSourceSet,
+            'cover@2x.png 2x',
+        )
+        && $imagePrimitive->properties()[PropKey::ImageRequestHeaders->value]
+            === 'X-Image-Variant:retina'
+        && $imageStarted
+        && $imageProgress instanceof ImageProgressEvent
+        && $imageProgress->total === 131_072
+        && $imageLoaded instanceof ImageLoadEvent
+        && $imageLoaded->height === 600.0
+        && $imageError instanceof ImageErrorEvent
+        && $imageError->message === 'offline'
+        && $imageEnded
         && $imageBackground->properties()[PropKey::ImageFit->value]
             === ImageFit::Center->value
         && $reactNativeImage->kind() === NodeKind::Image
@@ -1143,6 +1243,7 @@ $assert(
             === 'https://example.test/david.png'
         && $reactNativeImage->properties()[PropKey::AccessibilityLabel->value]
             === 'David Balbino'
+        && $reactNativeImage->properties()[PropKey::Accessible->value] === true
         && $avatarFallback->kind() === NodeKind::Text
         && $avatarFallback->properties()[PropKey::Text->value] === 'db'
         && $avatarFallback->properties()[PropKey::TextTransform->value]
