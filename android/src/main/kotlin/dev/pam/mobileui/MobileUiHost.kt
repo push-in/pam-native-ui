@@ -1626,7 +1626,9 @@ internal class MobileUiHost(
             behavior == Behavior.FILE_TREE_FOLDER
             || behavior == Behavior.FILE_TREE_FILE
         ) {
+            updateFileTreeItemAccessibility()
             info.className = "android.widget.Button"
+            info.contentDescription = contentDescription
             info.isSelected = isSelected
             info.isClickable = isEnabled
             if (isEnabled) {
@@ -3671,8 +3673,9 @@ internal class MobileUiHost(
             else -> null
         }
         if (targetIndex != null) {
-            items[targetIndex].requestFocus()
-            items[targetIndex].sendAccessibilityEvent(
+            val target = items[targetIndex]
+            target.requestKeyboardFocus()
+            target.sendAccessibilityEvent(
                 AccessibilityEvent.TYPE_VIEW_FOCUSED,
             )
             return true
@@ -3696,9 +3699,16 @@ internal class MobileUiHost(
                 ?.lowercase(Locale.getDefault())
                 ?.startsWith(menuTypeaheadPrefix) == true
         } ?: return false
-        match.requestFocus()
+        match.requestKeyboardFocus()
         match.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
         return true
+    }
+
+    private fun View.requestKeyboardFocus(): Boolean {
+        isFocusable = true
+        isFocusableInTouchMode = true
+
+        return requestFocus()
     }
 
     private fun sheetItems(root: ViewGroup = this): List<MobileUiHost> =
@@ -3802,7 +3812,7 @@ internal class MobileUiHost(
         val changed = requested != tabValue
         tabValue = requested
         applyTabsState(animate = changed)
-        trigger.requestFocus()
+        trigger.requestKeyboardFocus()
         trigger.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         if (changed) {
             sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
@@ -3827,7 +3837,7 @@ internal class MobileUiHost(
             else -> (current + direction).mod(triggers.size)
         }
         val next = triggers[nextIndex]
-        next.requestFocus()
+        next.requestKeyboardFocus()
         if (tabsActivationMode == TABS_ACTIVATION_AUTOMATIC) {
             selectTab(next, emit = next.tabValue != tabValue)
         }

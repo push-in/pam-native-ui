@@ -91,7 +91,13 @@ internal class MobileUiHorizontalScrollView(
             "contentOffset",
             requestedContentOffset,
         ).coerceAtLeast(0f)
-        if (isLaidOut && requestedContentOffset != appliedContentOffset) {
+        if (
+            isLaidOut
+            && (
+                requestedContentOffset != appliedContentOffset
+                || scrollX != requestedScrollX()
+            )
+        ) {
             applyContentOffset()
         }
     }
@@ -118,7 +124,10 @@ internal class MobileUiHorizontalScrollView(
         bottom: Int,
     ) {
         super.onLayout(changed, left, top, right, bottom)
-        if (requestedContentOffset != appliedContentOffset) {
+        if (
+            requestedContentOffset != appliedContentOffset
+            || scrollX != requestedScrollX()
+        ) {
             applyContentOffset()
         }
     }
@@ -132,8 +141,23 @@ internal class MobileUiHorizontalScrollView(
     }
 
     private fun applyContentOffset() {
-        appliedContentOffset = requestedContentOffset
-        scrollTo((requestedContentOffset * density).toInt(), 0)
+        val target = requestedScrollX()
+        scrollTo(target, 0)
+        appliedContentOffset = if (scrollX == target) {
+            requestedContentOffset
+        } else {
+            Float.NaN
+        }
+    }
+
+    private fun requestedScrollX(): Int {
+        val viewportWidth = (width - paddingLeft - paddingRight).coerceAtLeast(0)
+        val contentWidth = getChildAt(0)?.width ?: 0
+        val maximumOffset = (contentWidth - viewportWidth).coerceAtLeast(0)
+
+        return (requestedContentOffset * density)
+            .toInt()
+            .coerceIn(0, maximumOffset)
     }
 }
 

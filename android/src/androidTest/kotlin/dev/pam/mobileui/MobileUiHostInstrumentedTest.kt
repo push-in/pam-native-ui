@@ -13,7 +13,6 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.EditText
-import android.widget.HorizontalScrollView
 import android.widget.TextView
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
@@ -90,8 +89,11 @@ class MobileUiHostInstrumentedTest {
 
     @Test
     fun horizontalScrollAppliesNativeInteractionAndViewportProperties() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        lateinit var scroll: MobileUiHorizontalScrollView
         onMain {
-            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val context = activity
             val factory = MobileUiHorizontalScrollFactory(context)
             val view = factory.create(context) { _, _ -> Unit }
             factory.update(
@@ -106,24 +108,28 @@ class MobileUiHostInstrumentedTest {
                 ),
             )
 
-            val scroll = view as HorizontalScrollView
+            scroll = view as MobileUiHorizontalScrollView
             scroll.addView(
                 FrameLayout(context),
                 ViewGroup.LayoutParams(800, 80),
             )
-            scroll.measure(
-                View.MeasureSpec.makeMeasureSpec(320, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(80, View.MeasureSpec.EXACTLY),
+            val root = FrameLayout(context)
+            root.addView(
+                scroll,
+                FrameLayout.LayoutParams(320, 80),
             )
-            scroll.layout(0, 0, 320, 80)
-
+            activity.setContentView(root)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
             assertTrue(!scroll.isEnabled)
             assertTrue(scroll.isHorizontalScrollBarEnabled)
             assertTrue(!scroll.isFillViewport)
             assertTrue(!scroll.isNestedScrollingEnabled)
             assertEquals(View.OVER_SCROLL_NEVER, scroll.overScrollMode)
             assertEquals(dp(scroll, 24f), scroll.scrollX)
-            factory.release(scroll)
+            scroll.release()
+            activity.finish()
         }
     }
 
@@ -1755,12 +1761,18 @@ class MobileUiHostInstrumentedTest {
 
     @Test
     fun inputAndFormControlKeepCompoundInteractionAndSemanticsOnTheUiThread() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = launchTestHostActivity()
+        val inputEvents = CopyOnWriteArrayList<NativeViewEventKind>()
+        lateinit var root: FrameLayout
+        lateinit var inputGroup: MobileUiHost
+        lateinit var input: EditText
+        lateinit var clear: MobileUiHost
+        lateinit var password: MobileUiHost
         onMain {
             val context = activity
-            val inputEvents = CopyOnWriteArrayList<NativeViewEventKind>()
-            val root = FrameLayout(context)
-            val inputGroup = MobileUiHost(context) { _, _ -> }
+            root = FrameLayout(context)
+            inputGroup = MobileUiHost(context) { _, _ -> }
             inputGroup.update(
                 mapOf(
                     "behavior" to WireValue.Integer(32),
@@ -1768,18 +1780,18 @@ class MobileUiHostInstrumentedTest {
                     "invalidColor" to WireValue.Integer(0xffdc2626),
                 ),
             )
-            val input = EditText(context).apply {
+            input = EditText(context).apply {
                 setText("secret")
                 transformationMethod = PasswordTransformationMethod.getInstance()
             }
-            val clear = MobileUiHost(context) { kind, _ -> inputEvents += kind }
+            clear = MobileUiHost(context) { kind, _ -> inputEvents += kind }
             clear.update(
                 mapOf(
                     "behavior" to WireValue.Integer(33),
                     "slotAction" to WireValue.Integer(2),
                 ),
             )
-            val password = MobileUiHost(context) { kind, _ -> inputEvents += kind }
+            password = MobileUiHost(context) { kind, _ -> inputEvents += kind }
             password.update(
                 mapOf(
                     "behavior" to WireValue.Integer(33),
@@ -1791,6 +1803,10 @@ class MobileUiHostInstrumentedTest {
             inputGroup.addView(password)
             root.addView(inputGroup)
             activity.setContentView(root)
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
+            val context = activity
             inputGroup.layout(0, 0, 600, 120)
 
             assertTrue(inputGroup.performClick())
