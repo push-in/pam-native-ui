@@ -43,6 +43,7 @@ use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
 use Pam\Native\PointerEvents;
+use Pam\Native\PressEvent;
 use Pam\Native\PropKey;
 use Pam\Native\RefreshIndicatorSize;
 use Pam\Native\ReturnKeyType;
@@ -732,7 +733,8 @@ final class ComponentRenderer
         }
         if (self::isPressable($part)) {
             $theme = ThemeManager::current();
-            $rippleColor = self::rippleColor($props)
+            $ripple = self::ripple($props);
+            $rippleColor = $ripple['color']
                 ?? $theme->color(ColorToken::Accent);
             $pressedOpacity = self::number(
                 $props,
@@ -741,14 +743,46 @@ final class ComponentRenderer
                     : 'pressOpacity',
                 0.88,
             );
+            $hitSlop = self::edgeInsets($props['hitSlop'] ?? 8, 8.0);
+            $retention = self::edgeInsets(
+                $props['pressRetentionOffset'] ?? null,
+                20.0,
+                30.0,
+            );
 
             return Pressable::make(...$children)
-                ->ripple($rippleColor)
-                ->pressedOpacity($pressedOpacity)
-                ->property(
-                    PropKey::HitSlop,
-                    self::hitSlop($props['hitSlop'] ?? 8),
+                ->ripple(
+                    $rippleColor,
+                    $ripple['borderless'],
+                    $ripple['radius'],
+                    $ripple['foreground'],
+                    $ripple['alpha'],
                 )
+                ->pressedOpacity($pressedOpacity)
+                ->hitSlopEdges(
+                    $hitSlop['left'],
+                    $hitSlop['top'],
+                    $hitSlop['right'],
+                    $hitSlop['bottom'],
+                )
+                ->pressRetentionEdges(
+                    $retention['left'],
+                    $retention['top'],
+                    $retention['right'],
+                    $retention['bottom'],
+                )
+                ->delayLongPress(self::pressDelay($props, 'delayLongPress', 500))
+                ->delayPressIn(self::pressDelay(
+                    $props,
+                    'delayPressIn',
+                    self::pressDelay($props, 'unstable_pressDelay', 0),
+                ))
+                ->delayPressOut(self::pressDelay($props, 'delayPressOut', 0))
+                ->androidDisableSound(self::flag(
+                    $props,
+                    'android_disableSound',
+                    self::flag($props, 'androidDisableSound'),
+                ))
                 ->accessibilityRole(AccessibilityRole::Button);
         }
 
@@ -1988,8 +2022,17 @@ final class ComponentRenderer
         };
     }
 
-    /** @param array<string, mixed> $props */
-    private static function rippleColor(array $props): ?int
+    /**
+     * @param array<string, mixed> $props
+     * @return array{
+     *     color: ?int,
+     *     borderless: bool,
+     *     radius: ?float,
+     *     foreground: bool,
+     *     alpha: float
+     * }
+     */
+    private static function ripple(array $props): array
     {
         $ripple = $props['android_ripple']
             ?? $props['androidRipple']
@@ -1997,27 +2040,88 @@ final class ComponentRenderer
         $value = is_array($ripple)
             ? ($ripple['color'] ?? null)
             : ($props['rippleColor'] ?? $ripple);
+        $radius = is_array($ripple) && is_numeric($ripple['radius'] ?? null)
+            ? max(0.0, (float) $ripple['radius'])
+            : null;
+        $alpha = is_array($ripple) && is_numeric($ripple['alpha'] ?? null)
+            ? min(1.0, max(0.0, (float) $ripple['alpha']))
+            : 1.0;
 
-        return self::packedColor($value);
+        return [
+            'color' => self::packedColor($value),
+            'borderless' => is_array($ripple)
+                && self::eventFlag($ripple['borderless'] ?? null, false),
+            'radius' => $radius,
+            'foreground' => is_array($ripple)
+                && self::eventFlag($ripple['foreground'] ?? null, false),
+            'alpha' => $alpha,
+        ];
     }
 
-    private static function hitSlop(mixed $value): int
-    {
+    /**
+     * @return array{left: float, top: float, right: float, bottom: float}
+     */
+    private static function edgeInsets(
+        mixed $value,
+        float $fallback,
+        ?float $bottomFallback = null,
+    ): array {
+        $bottomFallback ??= $fallback;
         if (is_numeric($value)) {
-            return max(0, (int) $value);
+            $all = max(0.0, (float) $value);
+
+            return [
+                'left' => $all,
+                'top' => $all,
+                'right' => $all,
+                'bottom' => $all,
+            ];
         }
         if (!is_array($value)) {
-            return 8;
+            return [
+                'left' => $fallback,
+                'top' => $fallback,
+                'right' => $fallback,
+                'bottom' => $bottomFallback,
+            ];
         }
 
-        $sides = [];
-        foreach (['top', 'right', 'bottom', 'left', 'horizontal', 'vertical'] as $side) {
-            if (is_numeric($value[$side] ?? null)) {
-                $sides[] = (int) $value[$side];
-            }
-        }
+        $horizontal = is_numeric($value['horizontal'] ?? null)
+            ? max(0.0, (float) $value['horizontal'])
+            : $fallback;
+        $vertical = is_numeric($value['vertical'] ?? null)
+            ? max(0.0, (float) $value['vertical'])
+            : $fallback;
 
-        return $sides === [] ? 8 : max(0, max($sides));
+        return [
+            'left' => is_numeric($value['left'] ?? null)
+                ? max(0.0, (float) $value['left'])
+                : $horizontal,
+            'top' => is_numeric($value['top'] ?? null)
+                ? max(0.0, (float) $value['top'])
+                : $vertical,
+            'right' => is_numeric($value['right'] ?? null)
+                ? max(0.0, (float) $value['right'])
+                : $horizontal,
+            'bottom' => is_numeric($value['bottom'] ?? null)
+                ? max(0.0, (float) $value['bottom'])
+                : (
+                    array_key_exists('vertical', $value)
+                        ? $vertical
+                        : $bottomFallback
+                ),
+        ];
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function pressDelay(
+        array $props,
+        string $name,
+        int $fallback,
+    ): int {
+        return is_numeric($props[$name] ?? null)
+            ? min(60_000, max(0, (int) $props[$name]))
+            : $fallback;
     }
 
     /** @param array<string, mixed> $props */
@@ -2692,6 +2796,22 @@ final class ComponentRenderer
             }
 
             return $events;
+        }
+        if (self::isPressable($part)) {
+            foreach ([
+                EventKind::PressIn,
+                EventKind::PressOut,
+                EventKind::PressMove,
+            ] as $kind) {
+                $handler = $events[$kind->value] ?? null;
+                if ($handler === null) {
+                    continue;
+                }
+                $events[$kind->value] =
+                    static function (string $payload) use ($handler): void {
+                        $handler(PressEvent::fromPayload($payload));
+                    };
+            }
         }
         if ($part === 'PromptInput') {
             $handler = $events[EventKind::Submit->value] ?? null;

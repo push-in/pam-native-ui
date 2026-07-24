@@ -342,6 +342,21 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::LongPress, $handler);
     }
 
+    final public function onPressIn(Closure $handler): static
+    {
+        return $this->on(EventKind::PressIn, $handler);
+    }
+
+    final public function onPressOut(Closure $handler): static
+    {
+        return $this->on(EventKind::PressOut, $handler);
+    }
+
+    final public function onPressMove(Closure $handler): static
+    {
+        return $this->on(EventKind::PressMove, $handler);
+    }
+
     final public function onFocus(Closure $handler): static
     {
         return $this->on(EventKind::Focus, $handler);

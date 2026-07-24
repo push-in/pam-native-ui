@@ -142,6 +142,14 @@ second overlay implementation. Their original interaction defaults are kept:
 the hover card opens above its trigger with 0 ms open and 100 ms close delays;
 the prompt action menu opens above its trigger with a 5 dp offset.
 
+Every pressable uses the dedicated PAM Android gesture host. Hit rectangles,
+press-retention rectangles, press-in/out delays, long-press recognition,
+pressed opacity, ripple and click sound are resolved on the UI thread. No move
+sample crosses the PHP boundary unless `onPressMove` is registered; when it is,
+only the latest pointer snapshot is emitted once per display frame. The event
+arrives as a typed `PressEvent` with local/page coordinates, timestamp and
+pointer ID.
+
 `Attachments` and every vertical or horizontal `ScrollView` compile to the same
 PAM core scroll host. The host switches its Android axis without changing the
 public node kind and accepts one Row/Column content container. Drag, fling,

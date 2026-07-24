@@ -240,6 +240,7 @@ use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\NodeKind;
 use Pam\Native\PointerEvents;
 use Pam\Native\PositionType;
+use Pam\Native\PressEvent;
 use Pam\Native\PropKey;
 use Pam\Native\RefreshIndicatorSize;
 use Pam\Native\ReturnKeyType;
@@ -537,7 +538,10 @@ $assert(
     'Parent variants must select the exact upstream child text color.',
 );
 $assert(
-    $composedButton->properties()[PropKey::HitSlop->value] === 8,
+    $composedButton->properties()[PropKey::HitSlopLeft->value] === 8.0
+        && $composedButton->properties()[PropKey::HitSlopTop->value] === 8.0
+        && $composedButton->properties()[PropKey::HitSlopRight->value] === 8.0
+        && $composedButton->properties()[PropKey::HitSlopBottom->value] === 8.0,
     'Pressable components must expand their Android touch target without changing layout.',
 );
 
@@ -1207,9 +1211,18 @@ $nativeInputProps->events()[EventKind::InputContentSizeChange->value](Wire::map(
 $nativeInputProps->events()[EventKind::InputKeyPress->value](Wire::map([
     'key' => 'Enter',
 ]));
+$pressIn = null;
+$pressOut = null;
+$pressMove = null;
 $nativePressableProps = Pressable::make(
     [
-        'android_ripple' => ['color' => '#01020380'],
+        'android_ripple' => [
+            'color' => '#01020380',
+            'borderless' => true,
+            'radius' => 22,
+            'foreground' => true,
+            'alpha' => 0.75,
+        ],
         'pressedOpacity' => 0.5,
         'hitSlop' => [
             'top' => 4,
@@ -1217,9 +1230,40 @@ $nativePressableProps = Pressable::make(
             'bottom' => 12,
             'left' => 6,
         ],
+        'pressRetentionOffset' => [
+            'top' => 14,
+            'right' => 16,
+            'bottom' => 18,
+            'left' => 12,
+        ],
+        'delayLongPress' => 420,
+        'unstable_pressDelay' => 25,
+        'delayPressOut' => 40,
+        'android_disableSound' => true,
     ],
     Text::make('Native pressable'),
-)->toElement();
+)
+    ->onPressIn(static function (PressEvent $event) use (&$pressIn): void {
+        $pressIn = $event;
+    })
+    ->onPressOut(static function (PressEvent $event) use (&$pressOut): void {
+        $pressOut = $event;
+    })
+    ->onPressMove(static function (PressEvent $event) use (&$pressMove): void {
+        $pressMove = $event;
+    })
+    ->toElement();
+$pressPayload = Wire::map([
+    'x' => 5.5,
+    'y' => 6.5,
+    'pageX' => 15.5,
+    'pageY' => 16.5,
+    'timestamp' => 1234,
+    'pointerId' => 3,
+]);
+$nativePressableProps->events()[EventKind::PressIn->value]($pressPayload);
+$nativePressableProps->events()[EventKind::PressOut->value]($pressPayload);
+$nativePressableProps->events()[EventKind::PressMove->value]($pressPayload);
 $headingSemantics = Heading::make('Account')->toElement();
 $linkSemantics = Link::make('Open documentation')->toElement();
 $checkboxSemantics = Checkbox::make(['value' => 'terms'])->toElement();
@@ -1447,7 +1491,26 @@ $assert(
         && $nativePressableProps->properties()[PropKey::RippleColor->value]
             === 0x80010203
         && $nativePressableProps->properties()[PropKey::PressOpacity->value] === 0.5
-        && $nativePressableProps->properties()[PropKey::HitSlop->value] === 12
+        && $nativePressableProps->properties()[PropKey::HitSlopTop->value] === 4.0
+        && $nativePressableProps->properties()[PropKey::HitSlopRight->value] === 8.0
+        && $nativePressableProps->properties()[PropKey::HitSlopBottom->value] === 12.0
+        && $nativePressableProps->properties()[PropKey::HitSlopLeft->value] === 6.0
+        && $nativePressableProps
+            ->properties()[PropKey::PressRetentionBottom->value] === 18.0
+        && $nativePressableProps->properties()[PropKey::PressDelayLongMs->value] === 420
+        && $nativePressableProps->properties()[PropKey::PressDelayInMs->value] === 25
+        && $nativePressableProps->properties()[PropKey::PressDelayOutMs->value] === 40
+        && $nativePressableProps
+            ->properties()[PropKey::PressAndroidDisableSound->value] === true
+        && $nativePressableProps->properties()[PropKey::RippleBorderless->value] === true
+        && $nativePressableProps->properties()[PropKey::RippleRadius->value] === 22.0
+        && $nativePressableProps->properties()[PropKey::RippleForeground->value] === true
+        && $nativePressableProps->properties()[PropKey::RippleAlpha->value] === 0.75
+        && $pressIn instanceof PressEvent
+        && $pressIn->x === 5.5
+        && $pressOut instanceof PressEvent
+        && $pressMove instanceof PressEvent
+        && $pressMove->pointerId === 3
         && $headingSemantics->properties()[PropKey::AccessibilityRole->value]
             === AccessibilityRole::Header->value
         && $linkSemantics->properties()[PropKey::AccessibilityRole->value]
