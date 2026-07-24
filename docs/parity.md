@@ -31,6 +31,11 @@ horizontal/grid/inverted layout, initial position, clipping policy, scrolling,
 indicators and end threshold to one AndroidX RecyclerView host. Packed rows are
 decoded only while binding visible/prefetched holders, and requested scroll
 events are limited to one per display frame.
+Scroll views use one PAM core host for both axes and forward content offsets,
+viewport filling, nested scrolling, overscroll, fading edge, persistent
+scrollbar, paging/snap, deceleration and keyboard dismissal. Spinner forwards
+animation, stopped visibility, tint and small/large or numeric size; Switch
+retains its Android-owned state and disabled-aware track/thumb tinting.
 
 A module reaches status `3` (`verified`) only when all applicable gates pass:
 

@@ -997,12 +997,26 @@ $reactNativeImage = AvatarImage::make([
 ])->toElement();
 $avatarFallback = AvatarFallback::make('db')->toElement();
 $spinnerPrimitive = Spinner::make(['color' => '#dc2626'])->toElement();
-$stoppedSpinner = Spinner::make(['animating' => false])->toElement();
+$stoppedSpinner = Spinner::make([
+    'animating' => false,
+    'hidesWhenStopped' => false,
+    'size' => 'large',
+])->toElement();
 $promptButton = PromptInputButton::make('Attach')->toElement();
 $scrollPrimitive = ScrollView::make(
     [
         'scrollEnabled' => false,
         'showsVerticalScrollIndicator' => false,
+        'contentOffset' => ['x' => 2, 'y' => 18],
+        'fillViewport' => false,
+        'nestedScrollEnabled' => true,
+        'overScrollMode' => 'never',
+        'fadingEdgeLength' => 12,
+        'persistentScrollbar' => true,
+        'pagingEnabled' => true,
+        'snapToInterval' => 80,
+        'decelerationRate' => 'fast',
+        'keyboardDismissMode' => 'on-drag',
     ],
     Text::make('Scrollable'),
 )->toElement();
@@ -1135,12 +1149,36 @@ $assert(
             === TextTransform::Uppercase->value
         && $spinnerPrimitive->properties()[PropKey::ProgressColor->value]
             === 0xffdc2626
-        && $stoppedSpinner->properties()[PropKey::Visible->value] === false
+        && $spinnerPrimitive->properties()[PropKey::AccessibilityRole->value]
+            === AccessibilityRole::ProgressBar->value
+        && $stoppedSpinner->properties()[PropKey::ActivityAnimating->value]
+            === false
+        && $stoppedSpinner
+            ->properties()[PropKey::ActivityHidesWhenStopped->value] === false
+        && $stoppedSpinner->properties()[PropKey::ActivitySize->value] === 36.0
         && $promptButton->kind() === NodeKind::Pressable
         && $promptButton->children()[0]->properties()[PropKey::Text->value]
             === 'Attach'
         && $scrollPrimitive->properties()[PropKey::ScrollEnabled->value] === false
         && $scrollPrimitive->properties()[PropKey::ShowsScrollIndicator->value] === false
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollContentOffsetX->value] === 2.0
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollContentOffsetY->value] === 18.0
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollFillViewport->value] === false
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollOverScrollMode->value] === 3
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollFadingEdgeLength->value] === 12.0
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollPagingEnabled->value] === true
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollSnapInterval->value] === 80.0
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollDecelerationRate->value] === 0.9
+        && $scrollPrimitive
+            ->properties()[PropKey::ScrollKeyboardDismissMode->value] === 2
         && $keyboardPrimitive->properties()[PropKey::KeyboardBehavior->value]
             === KeyboardAvoidingBehavior::Padding->value
         && $keyboardPrimitive
@@ -1644,9 +1682,6 @@ $horizontalScroll = ScrollView::make(
     Text::make('One'),
     Text::make('Two'),
 )->toElement();
-$horizontalScrollNative = $horizontalScroll->properties()[
-    PropKey::HostProperties->value
-] ?? null;
 $attachmentsGrid = Attachments::make(
     ['variant' => 'grid'],
     Attachment::make(Text::make('one.png')),
@@ -1656,25 +1691,20 @@ $attachmentsList = Attachments::make(
     ['variant' => 'list'],
     Attachment::make(Text::make('architecture.md')),
 )->toElement();
-if (!$horizontalScrollNative instanceof BinaryValue) {
-    throw new RuntimeException('Horizontal ScrollView must pack native properties.');
-}
-$horizontalScrollProperties = Wire::decodeMap($horizontalScrollNative->bytes);
+$horizontalScrollProperties = $horizontalScroll->properties();
 $assert(
-    $horizontalScroll->kind() === NodeKind::CustomView
-        && $horizontalScroll->properties()[PropKey::HostName->value]
-            === 'pam.mobile_ui.horizontal_scroll'
+    $horizontalScroll->kind() === NodeKind::Scroll
         && $horizontalScroll->children()[0]->kind() === NodeKind::Row
-        && $horizontalScrollProperties['scrollEnabled'] === false
-        && $horizontalScrollProperties['showsIndicator'] === true
-        && $horizontalScrollProperties['fillViewport'] === false
-        && $horizontalScrollProperties['contentOffset'] === 24.0
-        && $horizontalScrollProperties['overScrollMode'] === 'never'
-        && $attachmentsGrid->properties()[PropKey::HostName->value]
-            === 'pam.mobile_ui.horizontal_scroll'
+        && $horizontalScrollProperties[PropKey::ScrollHorizontal->value] === true
+        && $horizontalScrollProperties[PropKey::ScrollEnabled->value] === false
+        && $horizontalScrollProperties[PropKey::ShowsScrollIndicator->value] === true
+        && $horizontalScrollProperties[PropKey::ScrollFillViewport->value] === false
+        && $horizontalScrollProperties[PropKey::ScrollContentOffsetX->value] === 24.0
+        && $horizontalScrollProperties[PropKey::ScrollOverScrollMode->value] === 3
+        && $attachmentsGrid->kind() === NodeKind::Scroll
         && $attachmentsGrid->children()[0]->kind() === NodeKind::Row
         && $attachmentsList->children()[0]->kind() === NodeKind::Column,
-    'Horizontal ScrollView and Attachments must use the Android scrolling primitive with one content container.',
+    'Horizontal ScrollView and Attachments must use the unified core scrolling primitive.',
 );
 
 $conversation = Conversation::make(

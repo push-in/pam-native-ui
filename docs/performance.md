@@ -111,11 +111,11 @@ heading/emphasis/list/link/code document. Parsing and span application happen
 once per changed source on the Android UI thread and emit zero bridge events;
 only explicit safe-link activation emits one URI.
 
-Horizontal ScrollView/Attachments adds a pending native fling and 10,000
-property-update gate. Drag and momentum remain inside `HorizontalScrollView`;
-registered scroll progress is coalesced to one scalar per display frame, while
-an unobserved scroll emits zero bridge events. Static compilation is not
-reported as physical runtime evidence.
+The unified vertical/horizontal ScrollView adds a pending native fling and
+10,000 property-update gate. Drag, momentum, paging and snap remain inside the
+core Android host; registered scroll progress is coalesced to one scalar per
+display frame, while an unobserved scroll emits zero bridge events. Static
+compilation is not reported as physical runtime evidence.
 
 Grid adds a pending 10,000-layout gate using responsive columns, mixed spans,
 independent row/column gaps and two wrapped rows. Breakpoint selection,

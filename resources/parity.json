@@ -2344,7 +2344,7 @@
             "name": "spinner",
             "category": 3,
             "maturity": 1,
-            "implementation": 1,
+            "implementation": 3,
             "exports": [
                 "Spinner"
             ],
@@ -2398,7 +2398,7 @@
             "name": "switch",
             "category": 5,
             "maturity": 1,
-            "implementation": 1,
+            "implementation": 2,
             "exports": [
                 "Switch"
             ],

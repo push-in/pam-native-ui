@@ -137,12 +137,14 @@ second overlay implementation. Their original interaction defaults are kept:
 the hover card opens above its trigger with 0 ms open and 100 ms close delays;
 the prompt action menu opens above its trigger with a 5 dp offset.
 
-`Attachments` and every `ScrollView horizontal="true"` compile to the
-`pam.mobile_ui.horizontal_scroll` Android primitive. It accepts one Row/Column
-content container, lets Android own drag, momentum, overscroll and nested
-scrolling, and emits horizontal progress at most once per display frame only
-when the application registers `on:scroll`. Grid/inline attachments use a Row;
-the upstream list variant uses a Column. No gesture sample crosses PHP.
+`Attachments` and every vertical or horizontal `ScrollView` compile to the same
+PAM core scroll host. The host switches its Android axis without changing the
+public node kind and accepts one Row/Column content container. Drag, fling,
+snap/paging, deceleration, overscroll, nested scrolling, fading edges,
+persistent scrollbars and keyboard dismissal remain native. It emits the
+active-axis offset at most once per display frame and only when an `on:scroll`
+handler exists. Grid/inline attachments use a Row; the upstream list variant
+uses a Column. No gesture sample crosses PHP.
 
 `Grid` is a dedicated `pam.mobile_ui.grid` ViewGroup rather than a simulated
 vertical stack. PHP extracts the bounded `grid-cols-*`, responsive

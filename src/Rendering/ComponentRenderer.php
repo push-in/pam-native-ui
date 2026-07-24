@@ -34,6 +34,8 @@ use Pam\Native\PropKey;
 use Pam\Native\RefreshIndicatorSize;
 use Pam\Native\ReturnKeyType;
 use Pam\Native\SafeAreaMode;
+use Pam\Native\ScrollKeyboardDismissMode;
+use Pam\Native\ScrollOverScrollMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
 use Pam\Native\TextBreakStrategy;
@@ -545,7 +547,11 @@ final class ComponentRenderer
                     'animating',
                     self::flag($props, 'visible', true),
                 ),
-            );
+            )
+                ->hidesWhenStopped(
+                    self::flag($props, 'hidesWhenStopped', true),
+                )
+                ->size(self::activityIndicatorSize($props));
             $color = self::packedColor($props['color'] ?? null);
 
             return $color === null ? $spinner : $spinner->color($color);
@@ -595,15 +601,12 @@ final class ComponentRenderer
                 : Column::make(...$children);
         }
         if ($part === 'ConversationContent') {
-            return Scroll::make(self::oneChild($children))
-                ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
-                ->showsIndicator(
-                    self::flag(
-                        $props,
-                        'showsVerticalScrollIndicator',
-                        false,
-                    ),
-                );
+            return self::configuredScroll(
+                $part,
+                $props,
+                $children,
+                false,
+            );
         }
         if (in_array($part, [
             'ScrollView',
@@ -611,15 +614,12 @@ final class ComponentRenderer
             'BottomSheetScrollView',
             'SelectScrollView',
         ], true)) {
-            return Scroll::make(self::oneChild($children))
-                ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
-                ->showsIndicator(
-                    self::flag(
-                        $props,
-                        'showsVerticalScrollIndicator',
-                        self::flag($props, 'showsScrollIndicator', true),
-                    ),
-                );
+            return self::configuredScroll(
+                $part,
+                $props,
+                $children,
+                false,
+            );
         }
         if ($part === 'RefreshControl') {
             $control = RefreshControl::make(
@@ -1329,7 +1329,8 @@ final class ComponentRenderer
             'SelectTrigger', 'ModelSelectorTrigger' => AccessibilityRole::ComboBox,
             'Menu' => AccessibilityRole::Menu,
             'MenuItem' => AccessibilityRole::MenuItem,
-            'Progress' => AccessibilityRole::ProgressBar,
+            'Progress', 'Spinner', 'ButtonSpinner' =>
+                AccessibilityRole::ProgressBar,
             'Slider' => AccessibilityRole::Adjustable,
             'TabsList' => AccessibilityRole::TabList,
             'TabsTrigger' => AccessibilityRole::Tab,
@@ -3167,6 +3168,95 @@ final class ComponentRenderer
     }
 
     /** @param array<string, mixed> $props */
+    private static function activityIndicatorSize(array $props): float
+    {
+        $value = $props['size'] ?? 'small';
+
+        return match ($value) {
+            'large' => 36.0,
+            'small' => 20.0,
+            default => is_numeric($value)
+                ? max(1.0, (float) $value)
+                : 20.0,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array{float, float}
+     */
+    private static function scrollOffsets(
+        array $props,
+        bool $horizontal,
+    ): array {
+        $offset = $props['contentOffset'] ?? 0.0;
+        $x = 0.0;
+        $y = 0.0;
+        if (is_array($offset)) {
+            $x = is_numeric($offset['x'] ?? null)
+                ? max(0.0, (float) $offset['x'])
+                : 0.0;
+            $y = is_numeric($offset['y'] ?? null)
+                ? max(0.0, (float) $offset['y'])
+                : 0.0;
+        } elseif (is_numeric($offset)) {
+            if ($horizontal) {
+                $x = max(0.0, (float) $offset);
+            } else {
+                $y = max(0.0, (float) $offset);
+            }
+        }
+        if (is_numeric($props['contentOffsetX'] ?? null)) {
+            $x = max(0.0, (float) $props['contentOffsetX']);
+        }
+        if (is_numeric($props['contentOffsetY'] ?? null)) {
+            $y = max(0.0, (float) $props['contentOffsetY']);
+        }
+
+        return [$x, $y];
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function scrollOverScrollMode(
+        array $props,
+    ): ScrollOverScrollMode {
+        return match ($props['overScrollMode'] ?? null) {
+            'always', ScrollOverScrollMode::Always->value =>
+                ScrollOverScrollMode::Always,
+            'never', ScrollOverScrollMode::Never->value =>
+                ScrollOverScrollMode::Never,
+            default => ScrollOverScrollMode::Auto,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function scrollKeyboardDismissMode(
+        array $props,
+    ): ScrollKeyboardDismissMode {
+        return match ($props['keyboardDismissMode'] ?? null) {
+            'on-drag', ScrollKeyboardDismissMode::OnDrag->value =>
+                ScrollKeyboardDismissMode::OnDrag,
+            'interactive', ScrollKeyboardDismissMode::Interactive->value =>
+                ScrollKeyboardDismissMode::Interactive,
+            default => ScrollKeyboardDismissMode::None,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function scrollDecelerationRate(array $props): float
+    {
+        $value = $props['decelerationRate'] ?? 0.985;
+
+        return match ($value) {
+            'fast' => 0.9,
+            'normal' => 0.985,
+            default => is_numeric($value)
+                ? min(1.0, max(0.0, (float) $value))
+                : 0.985,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
     private static function statusBarAppearance(
         array $props,
     ): StatusBarAppearance {
@@ -3187,43 +3277,82 @@ final class ComponentRenderer
         array $props,
         array $children,
     ): Element {
+        return self::configuredScroll($part, $props, $children, true);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     */
+    private static function configuredScroll(
+        string $part,
+        array $props,
+        array $children,
+        bool $horizontal,
+    ): Scroll {
         $listAttachments = $part === 'Attachments'
             && self::integer($props, 'variant', 15) === 17;
-        $content = $listAttachments
-            ? Column::make(...$children)
-            : Row::make(...$children);
-
-        return CustomView::make(
-            'pam.mobile_ui.horizontal_scroll',
-            [
-                'scrollEnabled' => self::flag($props, 'scrollEnabled', true),
-                'showsIndicator' => self::flag(
-                    $props,
-                    'showsHorizontalScrollIndicator',
-                    self::flag(
-                        $props,
-                        'showsScrollIndicator',
-                        $part !== 'Attachments',
-                    ),
-                ),
-                'fillViewport' => self::flag($props, 'fillViewport', true),
-                'nestedScrollEnabled' => self::flag(
-                    $props,
-                    'nestedScrollEnabled',
-                    true,
-                ),
-                'contentOffset' => max(
-                    0.0,
-                    self::number($props, 'contentOffset', 0.0),
-                ),
-                'overScrollMode' => self::text(
-                    $props,
-                    'overScrollMode',
-                    'auto',
-                ),
-            ],
-            $content,
+        $content = $horizontal
+            ? (
+                $listAttachments
+                    ? Column::make(...$children)
+                    : Row::make(...$children)
+            )
+            : self::oneChild($children);
+        $defaultIndicator = !in_array(
+            $part,
+            ['Attachments', 'ConversationContent'],
+            true,
         );
+        $indicator = $horizontal
+            ? self::flag(
+                $props,
+                'showsHorizontalScrollIndicator',
+                self::flag(
+                    $props,
+                    'showsScrollIndicator',
+                    $defaultIndicator,
+                ),
+            )
+            : self::flag(
+                $props,
+                'showsVerticalScrollIndicator',
+                self::flag(
+                    $props,
+                    'showsScrollIndicator',
+                    $defaultIndicator,
+                ),
+            );
+        [$offsetX, $offsetY] = self::scrollOffsets($props, $horizontal);
+        $scroll = Scroll::make($content)
+            ->horizontal($horizontal)
+            ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
+            ->showsIndicator($indicator)
+            ->fillViewport(self::flag($props, 'fillViewport', true))
+            ->nestedScrollEnabled(
+                self::flag($props, 'nestedScrollEnabled', true),
+            )
+            ->overScrollMode(self::scrollOverScrollMode($props))
+            ->persistentScrollbar(
+                self::flag($props, 'persistentScrollbar'),
+            )
+            ->pagingEnabled(self::flag($props, 'pagingEnabled'))
+            ->decelerationRate(self::scrollDecelerationRate($props))
+            ->keyboardDismissMode(self::scrollKeyboardDismissMode($props))
+            ->contentOffset($offsetX, $offsetY);
+
+        if (is_numeric($props['fadingEdgeLength'] ?? null)) {
+            $scroll = $scroll->fadingEdgeLength(
+                max(0.0, (float) $props['fadingEdgeLength']),
+            );
+        }
+        if (is_numeric($props['snapToInterval'] ?? null)) {
+            $scroll = $scroll->snapToInterval(
+                max(0.0, (float) $props['snapToInterval']),
+            );
+        }
+
+        return $scroll;
     }
 
     /**

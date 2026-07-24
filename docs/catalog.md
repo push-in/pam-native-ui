@@ -442,7 +442,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: Feedback
 - Maturity: Stable
-- Runtime: PHP composition
+- Runtime: PAM core primitive
 - Variants: none
 - Upstream examples captured: 3
 - Tags: `Spinner`
@@ -460,7 +460,7 @@ facades under `Pam\MobileUi\Component`.
 
 - Category: Forms
 - Maturity: Stable
-- Runtime: PHP composition
+- Runtime: Android native host
 - Variants: `size`
 - Upstream examples captured: 3
 - Tags: `Switch`

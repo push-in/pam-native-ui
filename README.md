@@ -182,6 +182,31 @@ line breaking and detector spans remain inside Android `TextView`.
 `translucent`. Mounted instances merge in order and restore the prior native
 window configuration; Android 15+ retains its mandatory edge-to-edge behavior.
 
+Every `ScrollView`, including horizontal attachment rails, resolves to the
+same PAM core primitive:
+
+```xml
+<ScrollView
+    horizontal="true"
+    contentOffset="{{ ['x' => 120, 'y' => 0] }}"
+    pagingEnabled="true"
+    snapToInterval="320"
+    decelerationRate="fast"
+    nestedScrollEnabled="true"
+    overScrollMode="never"
+    keyboardDismissMode="on-drag"
+    on:scroll="rememberOffset"
+>
+    <HStack><Cards /></HStack>
+</ScrollView>
+```
+
+Drag, fling, snap, fading edges, persistent scrollbars and IME dismissal remain
+on Android. The bridge is silent without `on:scroll`; when observed, the
+active-axis offset is coalesced to one scalar per VSYNC. `Spinner` additionally
+forwards `animating`, `hidesWhenStopped`, `color` and small/large or numeric
+`size` to the core `ActivityIndicator`.
+
 Focus/invalid outlines, disabled/read-only editing policy, clear/password
 actions and selection remain on the Android UI thread. `FormControl` links its
 label, helper and error to the native field, injects the required asterisk,
