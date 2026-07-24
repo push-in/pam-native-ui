@@ -504,6 +504,7 @@ internal class MobileUiHost(
 
     private fun applyComponentDefaults() {
         val interactive = behavior in setOf(
+            Behavior.ACCORDION,
             Behavior.SLIDER,
             Behavior.CHECKBOX,
             Behavior.RADIO,

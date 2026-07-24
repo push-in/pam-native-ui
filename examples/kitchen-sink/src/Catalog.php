@@ -20,8 +20,6 @@ final class Catalog extends Component
     private bool $selectOpen = false;
     private string $framework = 'Laravel';
     private string $plan = 'starter';
-    private bool $starterPlan = true;
-    private bool $proPlan = false;
     private string $selectedDate = '2026-07-23';
     private string $notice = 'All interactions use semantic native events.';
 
@@ -95,31 +93,6 @@ final class Catalog extends Component
         $this->selectOpen = false;
     }
 
-    public function chooseLaravel(): void
-    {
-        $this->chooseFramework('Laravel');
-    }
-
-    public function chooseSymfony(): void
-    {
-        $this->chooseFramework('Symfony');
-    }
-
-    public function choosePhp(): void
-    {
-        $this->chooseFramework('Raw PHP');
-    }
-
-    public function chooseStarter(): void
-    {
-        $this->choosePlan('starter');
-    }
-
-    public function choosePro(): void
-    {
-        $this->choosePlan('pro');
-    }
-
     public function selectDate(string $payload): void
     {
         if ($payload !== '') {
@@ -139,8 +112,6 @@ final class Catalog extends Component
      *     selectOpen: bool,
      *     framework: string,
      *     plan: string,
-     *     starterPlan: bool,
-     *     proPlan: bool,
      *     selectedDate: string,
      *     notice: string
      * }
@@ -158,23 +129,19 @@ final class Catalog extends Component
             'selectOpen' => $this->selectOpen,
             'framework' => $this->framework,
             'plan' => $this->plan,
-            'starterPlan' => $this->starterPlan,
-            'proPlan' => $this->proPlan,
             'selectedDate' => $this->selectedDate,
             'notice' => $this->notice,
         ];
     }
 
-    private function chooseFramework(string $framework): void
+    public function chooseFramework(string $framework): void
     {
         $this->framework = $framework;
         $this->selectOpen = false;
     }
 
-    private function choosePlan(string $plan): void
+    public function choosePlan(string $plan): void
     {
         $this->plan = $plan;
-        $this->starterPlan = $plan === 'starter';
-        $this->proPlan = $plan === 'pro';
     }
 }

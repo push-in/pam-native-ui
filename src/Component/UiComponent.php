@@ -27,8 +27,13 @@ abstract class UiComponent implements Renderable
     /** @var array<int, Closure> */
     private array $events = [];
 
-    /** @var array<int, Closure> */
-    private array $parentEvents = [];
+    /**
+     * @var array<
+     *     string,
+     *     array{props: array<string, mixed>, events: array<int, Closure>}
+     * >
+     */
+    private array $eventContexts = [];
 
     private ?Style $styleOverride = null;
     private ?string $elementKey = null;
@@ -240,29 +245,45 @@ abstract class UiComponent implements Renderable
 
     final public function toElement(): Element
     {
-        $events = $this->events + $this->parentEvents;
-        $eventProxyPart = ComponentRenderer::eventProxyPart(static::COMPONENT);
+        $events = $this->events;
+        foreach ($this->eventContexts as $source => $context) {
+            $events = self::mergeEvents(
+                $events,
+                ComponentRenderer::inheritedEvents(
+                    $source,
+                    static::COMPONENT,
+                    $this->props,
+                    $context['props'],
+                    $context['events'],
+                ),
+            );
+        }
+        $eventContexts = $this->eventContexts;
+        if (
+            $this->events !== []
+            && ComponentRenderer::forwardsEventsToDescendants(static::COMPONENT)
+        ) {
+            $eventContexts[static::COMPONENT] = [
+                'props' => $this->props,
+                'events' => $this->events,
+            ];
+        }
         $context = [
             ...$this->parentVariants,
             ...array_filter(
                 $this->props,
-                static fn (mixed $value): bool => is_scalar($value),
+                self::isContextValue(...),
             ),
         ];
         $children = array_map(
             static function (Renderable $child) use (
                 $context,
-                $eventProxyPart,
-                $events,
+                $eventContexts,
             ): Element {
                 if ($child instanceof UiComponent) {
-                    $child = $child->withParentVariants($context);
-                    if (
-                        $eventProxyPart !== null
-                        && $child->componentName() === $eventProxyPart
-                    ) {
-                        $child = $child->withParentEvents($events);
-                    }
+                    $child = $child
+                        ->withParentVariants($context)
+                        ->withEventContexts($eventContexts);
                 }
 
                 return $child->toElement();
@@ -296,17 +317,62 @@ abstract class UiComponent implements Renderable
         return $copy;
     }
 
-    /** @param array<int, Closure> $events */
-    private function withParentEvents(array $events): static
+    /**
+     * @param array<
+     *     string,
+     *     array{props: array<string, mixed>, events: array<int, Closure>}
+     * > $contexts
+     */
+    private function withEventContexts(array $contexts): static
     {
         $copy = clone $this;
-        $copy->parentEvents = $events;
+        $copy->eventContexts = $contexts;
 
         return $copy;
     }
 
-    private function componentName(): string
+    /**
+     * @param array<int, Closure> $own
+     * @param array<int, Closure> $inherited
+     * @return array<int, Closure>
+     */
+    private static function mergeEvents(array $own, array $inherited): array
     {
-        return static::COMPONENT;
+        $merged = $own;
+
+        foreach ($inherited as $kind => $handler) {
+            $local = $merged[$kind] ?? null;
+            if ($local === null) {
+                $merged[$kind] = $handler;
+                continue;
+            }
+            $merged[$kind] = static function (mixed ...$arguments) use (
+                $local,
+                $handler,
+            ): void {
+                $local(...$arguments);
+                $handler(...$arguments);
+            };
+        }
+
+        return $merged;
+    }
+
+    private static function isContextValue(mixed $value): bool
+    {
+        if (is_scalar($value)) {
+            return true;
+        }
+        if (!is_array($value)) {
+            return false;
+        }
+
+        foreach ($value as $item) {
+            if (!is_scalar($item)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

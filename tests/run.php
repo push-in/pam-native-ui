@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 use Pam\MobileUi\Component\Button;
 use Pam\MobileUi\Component\ButtonText;
+use Pam\MobileUi\Component\Accordion;
+use Pam\MobileUi\Component\AccordionItem;
 use Pam\MobileUi\Component\BottomSheet;
 use Pam\MobileUi\Component\BottomSheetPortal;
+use Pam\MobileUi\Component\Checkbox;
+use Pam\MobileUi\Component\CheckboxGroup;
 use Pam\MobileUi\Component\CheckIcon;
 use Pam\MobileUi\Component\CalendarGrid;
 use Pam\MobileUi\Component\Drawer;
@@ -16,13 +20,19 @@ use Pam\MobileUi\Component\AttachmentPreview;
 use Pam\MobileUi\Component\Attachments;
 use Pam\MobileUi\Component\Message;
 use Pam\MobileUi\Component\MessageContent;
+use Pam\MobileUi\Component\Menu;
+use Pam\MobileUi\Component\MenuItem;
 use Pam\MobileUi\Component\ModelSelector;
 use Pam\MobileUi\Component\ModelSelectorContent;
 use Pam\MobileUi\Component\Popover;
 use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
 use Pam\MobileUi\Component\PromptInputTextarea;
+use Pam\MobileUi\Component\Radio;
+use Pam\MobileUi\Component\RadioGroup;
 use Pam\MobileUi\Component\Select;
+use Pam\MobileUi\Component\SelectContent;
+use Pam\MobileUi\Component\SelectItem;
 use Pam\MobileUi\Component\SelectPortal;
 use Pam\MobileUi\Component\SelectTrigger;
 use Pam\MobileUi\Component\Slider;
@@ -257,6 +267,10 @@ $assert(
     $buttonText->properties()[PropKey::TextColor->value]
         === Themes::light()->color(ColorToken::Foreground),
     'Parent variants must select the exact upstream child text color.',
+);
+$assert(
+    $composedButton->properties()[PropKey::HitSlop->value] === 8,
+    'Pressable components must expand their Android touch target without changing layout.',
 );
 
 $slider = Slider::make(['value' => 40.0])
@@ -510,6 +524,157 @@ $assert(
         && isset($bottomSheetHost->events()[\Pam\Native\EventKind::Change->value]),
     'BottomSheet must keep its root stable and forward changes into its native sheet host.',
 );
+
+$selectedFramework = null;
+$semanticSelect = Select::make(
+    [
+        'open' => true,
+        'selectedValue' => 'laravel',
+    ],
+    SelectPortal::make(
+        SelectContent::make(
+            SelectItem::make([
+                'label' => 'Laravel',
+                'value' => 'laravel',
+            ]),
+        ),
+    ),
+)->onChange(static function (string $value) use (&$selectedFramework): void {
+    $selectedFramework = $value;
+})->toElement();
+$semanticSelectPortal = $semanticSelect->children()[0] ?? null;
+$semanticSelectHost = $semanticSelectPortal?->children()[0] ?? null;
+$semanticSelectContent = $semanticSelectHost?->children()[0] ?? null;
+$semanticSelectItem = $semanticSelectContent?->children()[0] ?? null;
+$semanticSelectPress = $semanticSelectItem?->events()[
+    \Pam\Native\EventKind::Press->value
+] ?? null;
+if (
+    !$semanticSelectItem instanceof \Pam\Native\Element
+    || !$semanticSelectPress instanceof Closure
+) {
+    throw new RuntimeException('Select must bind its parent change event to semantic items.');
+}
+$semanticSelectPress();
+$assert(
+    $selectedFramework === 'laravel'
+        && $semanticSelectItem->properties()[PropKey::Value->value] === 'laravel'
+        && $semanticSelectItem->properties()[PropKey::Checked->value] === true,
+    'SelectItem must inherit controlled selection and deliver its value through the parent.',
+);
+
+$selectedPlan = null;
+$localRadioToggles = 0;
+$radioGroup = RadioGroup::make(
+    ['value' => 'pro'],
+    HStack::make(
+        Radio::make(['value' => 'pro'])->onToggle(
+            static function () use (&$localRadioToggles): void {
+                $localRadioToggles++;
+            },
+        ),
+    ),
+)->onChange(static function (string $value) use (&$selectedPlan): void {
+    $selectedPlan = $value;
+})->toElement();
+$radioRow = $radioGroup->children()[0] ?? null;
+$semanticRadio = $radioRow?->children()[0] ?? null;
+$semanticRadioToggle = $semanticRadio?->events()[
+    \Pam\Native\EventKind::Toggle->value
+] ?? null;
+if (
+    !$semanticRadio instanceof \Pam\Native\Element
+    || !$semanticRadioToggle instanceof Closure
+) {
+    throw new RuntimeException('RadioGroup must forward its handler through layout wrappers.');
+}
+$semanticRadioToggle('1');
+$assert(
+    $selectedPlan === 'pro'
+        && $localRadioToggles === 1
+        && $semanticRadio->properties()[PropKey::Value->value] === 'pro'
+        && $semanticRadio->properties()[PropKey::Checked->value] === true,
+    'RadioGroup must inherit controlled selection and preserve item and group callbacks.',
+);
+
+$selectedFeatures = [];
+$checkboxGroup = CheckboxGroup::make(
+    ['value' => ['camera']],
+    Checkbox::make(['value' => 'location']),
+)->onChange(
+    static function (array $values) use (&$selectedFeatures): void {
+        $selectedFeatures = $values;
+    },
+)->toElement();
+$semanticCheckbox = $checkboxGroup->children()[0] ?? null;
+$semanticCheckboxToggle = $semanticCheckbox?->events()[
+    \Pam\Native\EventKind::Toggle->value
+] ?? null;
+if (
+    !$semanticCheckbox instanceof \Pam\Native\Element
+    || !$semanticCheckboxToggle instanceof Closure
+) {
+    throw new RuntimeException('CheckboxGroup must bind its value set to each checkbox.');
+}
+$semanticCheckboxToggle('1');
+$assert(
+    $selectedFeatures === ['camera', 'location'],
+    'CheckboxGroup must publish the next selected value list without a second bridge event.',
+);
+
+$expandedItems = [];
+$accordion = Accordion::make(
+    [
+        'type' => 'multiple',
+        'value' => ['performance'],
+    ],
+    AccordionItem::make(['value' => 'freedom']),
+)->onChange(static function (array $values) use (&$expandedItems): void {
+    $expandedItems = $values;
+})->toElement();
+$semanticAccordionItem = $accordion->children()[0] ?? null;
+$semanticAccordionToggle = $semanticAccordionItem?->events()[
+    \Pam\Native\EventKind::Toggle->value
+] ?? null;
+if (
+    !$semanticAccordionItem instanceof \Pam\Native\Element
+    || !$semanticAccordionToggle instanceof Closure
+) {
+    throw new RuntimeException('Accordion must bind its controlled value list to every item.');
+}
+$semanticAccordionToggle('1');
+$assert(
+    $expandedItems === ['performance', 'freedom'],
+    'Accordion must publish its next controlled list from the item toggle event.',
+);
+
+$selectedMenuItem = null;
+$menu = Menu::make(
+    ['selectedKeys' => ['settings']],
+    MenuItem::make([
+        'key' => 'settings',
+        'textValue' => 'Settings',
+    ]),
+)->onChange(static function (string $value) use (&$selectedMenuItem): void {
+    $selectedMenuItem = $value;
+})->toElement();
+$semanticMenuItem = $menu->children()[0] ?? null;
+$semanticMenuPress = $semanticMenuItem?->events()[
+    \Pam\Native\EventKind::Press->value
+] ?? null;
+if (
+    !$semanticMenuItem instanceof \Pam\Native\Element
+    || !$semanticMenuPress instanceof Closure
+) {
+    throw new RuntimeException('Menu must bind its collection selection to each item.');
+}
+$semanticMenuPress();
+$assert(
+    $selectedMenuItem === 'settings'
+        && $semanticMenuItem->properties()[PropKey::Selected->value] === true,
+    'MenuItem must inherit selected keys and publish its key through the root handler.',
+);
+
 $closedPopover = Popover::make(
     ['open' => false],
     Button::make('Open'),

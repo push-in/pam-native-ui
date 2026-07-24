@@ -67,12 +67,17 @@ final class ComponentRenderer
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
             : [];
+        $props = self::controlledItemState($part, $props, $parentProps);
         $runtimeProps = [...$parentProps, ...$props];
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
         $element = self::primitive($part, $runtimeProps, $children)
             ->style($style);
 
-        if ($part === 'TabsTrigger' && isset($props['value']) && is_scalar($props['value'])) {
+        if (
+            self::hasSemanticValue($part)
+            && isset($props['value'])
+            && is_scalar($props['value'])
+        ) {
             $element = $element->property(PropKey::Value, $props['value']);
         } elseif ($part === 'CalendarGrid') {
             $element = $element->property(PropKey::Value, 'pam:calendar-grid');
@@ -242,6 +247,10 @@ final class ComponentRenderer
             return Pressable::make(...$children)
                 ->ripple($theme->color(ColorToken::Accent))
                 ->pressedOpacity(0.88)
+                ->property(
+                    PropKey::HitSlop,
+                    max(0, self::integer($props, 'hitSlop', 8)),
+                )
                 ->accessibilityRole(AccessibilityRole::Button);
         }
 
@@ -308,14 +317,94 @@ final class ComponentRenderer
         };
     }
 
-    public static function eventProxyPart(string $part): ?string
+    public static function forwardsEventsToDescendants(string $part): bool
     {
-        return match ($part) {
-            'BottomSheet' => 'BottomSheetPortal',
-            'ModelSelector' => 'ModelSelectorContent',
-            'Select' => 'SelectPortal',
-            default => null,
-        };
+        return in_array($part, [
+            'Accordion',
+            'BottomSheet',
+            'CheckboxGroup',
+            'Menu',
+            'ModelSelector',
+            'RadioGroup',
+            'Select',
+        ], true);
+    }
+
+    /**
+     * @param array<string, mixed> $targetProps
+     * @param array<string, mixed> $sourceProps
+     * @param array<int, Closure> $events
+     * @return array<int, Closure>
+     */
+    public static function inheritedEvents(
+        string $source,
+        string $target,
+        array $targetProps,
+        array $sourceProps,
+        array $events,
+    ): array {
+        if (
+            ($source === 'BottomSheet' && $target === 'BottomSheetPortal')
+            || ($source === 'ModelSelector' && $target === 'ModelSelectorContent')
+        ) {
+            return $events;
+        }
+        if ($source === 'Select' && $target === 'SelectPortal') {
+            $native = $events[EventKind::Native->value] ?? null;
+
+            return $native === null
+                ? []
+                : [EventKind::Native->value => $native];
+        }
+
+        $sourceKind = EventKind::Change->value;
+        $handler = $events[$sourceKind] ?? null;
+        $semanticValue = self::semanticValue($targetProps);
+        if ($handler === null || $semanticValue === null) {
+            return [];
+        }
+
+        if (
+            ($source === 'Select' && $target === 'SelectItem')
+            || ($source === 'Menu' && $target === 'MenuItem')
+        ) {
+            return [
+                EventKind::Press->value => self::scalarSelectionHandler(
+                    $handler,
+                    $semanticValue,
+                ),
+            ];
+        }
+        if ($source === 'RadioGroup' && $target === 'Radio') {
+            return [
+                EventKind::Toggle->value => self::scalarSelectionHandler(
+                    $handler,
+                    $semanticValue,
+                ),
+            ];
+        }
+        if ($source === 'CheckboxGroup' && $target === 'Checkbox') {
+            return [
+                EventKind::Toggle->value => self::listSelectionHandler(
+                    $handler,
+                    $semanticValue,
+                    self::selectedValues($sourceProps),
+                ),
+            ];
+        }
+        if ($source === 'Accordion' && $target === 'AccordionItem') {
+            return [
+                EventKind::Toggle->value => self::listSelectionHandler(
+                    $handler,
+                    $semanticValue,
+                    self::selectedValues($sourceProps),
+                    self::flag($sourceProps, 'isCollapsible', true),
+                    ($sourceProps['type'] ?? 1) === 2,
+                ),
+            ];
+        }
+
+        return [];
     }
 
     /** @param array<string, mixed> $props */
@@ -492,6 +581,146 @@ final class ComponentRenderer
             || str_ends_with($part, 'Trigger')
             || str_ends_with($part, 'CloseButton')
             || str_ends_with($part, 'Item');
+    }
+
+    private static function hasSemanticValue(string $part): bool
+    {
+        return $part === 'TabsTrigger'
+            || in_array($part, [
+                'AccordionItem',
+                'BottomSheetItem',
+                'Checkbox',
+                'MenuItem',
+                'ModelSelectorItem',
+                'Radio',
+                'SelectItem',
+            ], true);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<string, mixed> $parentProps
+     * @return array<string, mixed>
+     */
+    private static function controlledItemState(
+        string $part,
+        array $props,
+        array $parentProps,
+    ): array {
+        $itemValue = self::semanticValue($props);
+        if ($itemValue === null) {
+            return $props;
+        }
+
+        $parentValue = match ($part) {
+            'MenuItem' => $parentProps['selectedKeys'] ?? null,
+            'SelectItem' => $parentProps['selectedValue'] ?? $parentProps['value'] ?? null,
+            default => $parentProps['value'] ?? null,
+        };
+        $selected = is_array($parentValue)
+            ? in_array($itemValue, $parentValue, true)
+            : self::sameScalar($parentValue, $itemValue);
+
+        return match ($part) {
+            'AccordionItem' => [...$props, 'expanded' => $selected],
+            'Checkbox', 'Radio', 'SelectItem' => [...$props, 'checked' => $selected],
+            'MenuItem', 'TabsTrigger' => [...$props, 'selected' => $selected],
+            default => $props,
+        };
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function semanticValue(array $props): string|int|float|bool|null
+    {
+        foreach (['value', 'key', 'textValue', 'label'] as $name) {
+            $value = $props[$name] ?? null;
+            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param Closure $handler
+     * @return Closure(mixed...): void
+     */
+    private static function scalarSelectionHandler(
+        Closure $handler,
+        string|int|float|bool $value,
+    ): Closure {
+        return static function (mixed ...$arguments) use ($handler, $value): void {
+            $handler($value);
+        };
+    }
+
+    /**
+     * @param Closure $handler
+     * @param list<string|int|float|bool> $selected
+     * @return Closure(mixed...): void
+     */
+    private static function listSelectionHandler(
+        Closure $handler,
+        string|int|float|bool $value,
+        array $selected,
+        bool $collapsible = true,
+        bool $multiple = true,
+    ): Closure {
+        return static function (mixed ...$arguments) use (
+            $handler,
+            $value,
+            $selected,
+            $collapsible,
+            $multiple,
+        ): void {
+            $active = in_array($value, $selected, true);
+            $nextChecked = self::eventFlag($arguments[0] ?? null, !$active);
+            if (!$multiple) {
+                $next = $nextChecked
+                    ? [$value]
+                    : ($collapsible ? [] : $selected);
+            } elseif ($nextChecked && !$active) {
+                $next = [...$selected, $value];
+            } elseif (!$nextChecked && $active) {
+                $next = array_values(
+                    array_filter(
+                        $selected,
+                        static fn (string|int|float|bool $item): bool => $item !== $value,
+                    ),
+                );
+            } else {
+                $next = $selected;
+            }
+            $handler($next);
+        };
+    }
+
+    /** @param array<string, mixed> $props
+     *  @return list<string|int|float|bool>
+     */
+    private static function selectedValues(array $props): array
+    {
+        $value = $props['value'] ?? $props['defaultValue'] ?? [];
+        if (!is_array($value)) {
+            return is_scalar($value) ? [$value] : [];
+        }
+
+        return array_values(
+            array_filter(
+                $value,
+                static fn (mixed $item): bool => is_scalar($item),
+            ),
+        );
+    }
+
+    private static function eventFlag(mixed $value, bool $fallback): bool
+    {
+        return match ($value) {
+            true, 1, '1', 'true' => true,
+            false, 0, '0', 'false' => false,
+            default => $fallback,
+        };
     }
 
     /**

@@ -86,7 +86,12 @@
                             </Textarea>
                         </FormControl>
 
-                        <Select open="{{ $selectOpen }}" on:event="closeSelect">
+                        <Select
+                            open="{{ $selectOpen }}"
+                            selectedValue="{{ $framework }}"
+                            on:change="chooseFramework"
+                            on:event="closeSelect"
+                        >
                             <SelectTrigger on:press="toggleSelect">
                                 <SelectInput value="{{ $framework }}" placeholder="Choose a stack" />
                                 <SelectIcon><ChevronDownIcon /></SelectIcon>
@@ -97,9 +102,9 @@
                                     <SelectDragIndicatorWrapper>
                                         <SelectDragIndicator />
                                     </SelectDragIndicatorWrapper>
-                                    <SelectItem label="Laravel" value="Laravel" on:press="chooseLaravel" />
-                                    <SelectItem label="Symfony" value="Symfony" on:press="chooseSymfony" />
-                                    <SelectItem label="Raw PHP" value="Raw PHP" on:press="choosePhp" />
+                                    <SelectItem label="Laravel" value="Laravel" />
+                                    <SelectItem label="Symfony" value="Symfony" />
+                                    <SelectItem label="Raw PHP" value="Raw PHP" />
                                 </SelectContent>
                             </SelectPortal>
                         </Select>
@@ -109,13 +114,13 @@
                             <CheckboxLabel>Receive native build updates</CheckboxLabel>
                         </Checkbox>
 
-                        <RadioGroup value="{{ $plan }}">
+                        <RadioGroup value="{{ $plan }}" on:change="choosePlan">
                             <HStack space="md">
-                                <Radio value="starter" checked="{{ $starterPlan }}" on:press="chooseStarter">
+                                <Radio value="starter">
                                     <RadioIndicator><RadioIcon /></RadioIndicator>
                                     <RadioLabel>Starter</RadioLabel>
                                 </Radio>
-                                <Radio value="pro" checked="{{ $proPlan }}" on:press="choosePro">
+                                <Radio value="pro">
                                     <RadioIndicator><RadioIcon /></RadioIndicator>
                                     <RadioLabel>Pro</RadioLabel>
                                 </Radio>

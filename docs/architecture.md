@@ -89,6 +89,15 @@ simple while preserving structured detail for advanced native interactions.
 Tab trigger values are stored as scalar semantic tags on their Android views,
 so reordering or styling a tab never changes the value delivered to PHP.
 
+Compound events are routed while PHP composes the immutable tree. A single
+`on:change` on `Select`, `RadioGroup`, `CheckboxGroup`, `Accordion` or `Menu`
+is bound to the relevant descendant item, even through layout wrappers. The
+bound closure captures the authored scalar value (or computes the next
+controlled value list), so Android emits only the normal press/toggle event and
+no context lookup or second bridge message is required. Controlled item state
+flows down the same context and becomes native `checked`, `selected` or
+`expanded` state.
+
 ## Threading
 
 - All view creation, updates, releases and Android view mutations run on the
@@ -103,6 +112,8 @@ so reordering or styling a tab never changes the value delivered to PHP.
 ## Accessibility baseline
 
 - Interactive Android targets are at least 48 × 48 dp with 8 dp separation.
+- Small visual controls use PAM's shared native `TouchDelegate` groups, so
+  touch and TalkBack regions expand without changing component geometry.
 - Text follows system font scale and cannot encode meaning with color alone.
 - Roles, labels, hints, disabled, selected, checked and expanded state are
   exposed to TalkBack.

@@ -63,6 +63,19 @@ Applications are never forced into either form. Raw `Pam\Native\UI` elements,
 custom components, `.pam` tags, fluent classes, and native plugins can be mixed
 in the same tree.
 
+Compound selection uses one handler at the group root; item values and
+controlled checked/selected state are inherited through arbitrary layout
+wrappers:
+
+```xml
+<RadioGroup value="{{ $plan }}" on:change="choosePlan">
+    <HStack space="md">
+        <Radio value="starter"><RadioLabel>Starter</RadioLabel></Radio>
+        <Radio value="pro"><RadioLabel>Pro</RadioLabel></Radio>
+    </HStack>
+</RadioGroup>
+```
+
 Application utility classes use the same mobile compiler as the captured
 component recipes:
 
