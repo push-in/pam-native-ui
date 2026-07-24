@@ -101,6 +101,11 @@ state, submit, trim and clear below 4 ms p99 with exactly one `SUBMIT` event.
 Conversation scroll progress and button visibility remain entirely native; its
 large-history memory/frame profile belongs to the full-renderer benchmark.
 
+FileTree adds a pending 10,000-toggle gate below 4 ms p99. Each folder
+activation performs its selection and expansion updates locally and emits
+exactly two semantic results (selected path plus bounded expansion map);
+animation frames never cross the bridge.
+
 ## PHP composition and binary encoding
 
 The reference local run composed a realistic styled form subtree and encoded

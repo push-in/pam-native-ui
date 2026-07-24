@@ -1968,8 +1968,80 @@ class MobileUiHostInstrumentedTest {
             assertEquals("android.widget.ListView", conversationInfo.className)
             assertEquals("Scroll to latest message", scrollButton.contentDescription)
 
+            val treeEvents = CopyOnWriteArrayList<NativeViewEventKind>()
+            val treePayloads = CopyOnWriteArrayList<ByteArray>()
+            val tree = MobileUiHost(context) { kind, payload ->
+                treeEvents += kind
+                treePayloads += payload
+            }
+            tree.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(43),
+                    "expandedPaths" to WireValue.Text("/src"),
+                    "selectedPath" to WireValue.Text("/src/App.php"),
+                ),
+            )
+            val folder = MobileUiHost(context) { _, _ -> }
+            folder.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(44),
+                    "path" to WireValue.Text("/src"),
+                ),
+            )
+            val header = FrameLayout(context)
+            val name = TextView(context).apply {
+                tag = "pam:file-tree-name"
+                text = "src"
+            }
+            header.addView(name)
+            val content = FrameLayout(context).apply {
+                tag = "pam:file-tree-content"
+            }
+            val file = MobileUiHost(context) { _, _ -> }
+            file.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(45),
+                    "path" to WireValue.Text("/src/App.php"),
+                ),
+            )
+            content.addView(file)
+            folder.addView(header)
+            folder.addView(content)
+            tree.addView(folder)
+            tree.layout(0, 0, 1_080, 800)
+
+            assertEquals(View.VISIBLE, content.visibility)
+            assertTrue(file.isSelected)
+            assertTrue(folder.performClick())
+            assertEquals(View.GONE, content.visibility)
+            assertTrue(folder.isSelected)
+            assertEquals(NativeViewEventKind.CHANGE, treeEvents[0])
+            assertEquals("/src", treePayloads[0].decodeToString())
+            assertEquals(NativeViewEventKind.NATIVE, treeEvents[1])
+            val expandedEvent = WireMap.decode(treePayloads[1])
+            assertEquals(
+                1L,
+                (expandedEvent["action"] as WireValue.Integer).value,
+            )
+            assertEquals(
+                false,
+                (expandedEvent["expanded"] as WireValue.Flag).value,
+            )
+            assertEquals(
+                "/src",
+                (expandedEvent["path"] as WireValue.Text).value,
+            )
+            val folderInfo = AccessibilityNodeInfo.obtain()
+            folder.onInitializeAccessibilityNodeInfo(folderInfo)
+            assertEquals("android.widget.Button", folderInfo.className)
+            assertEquals("src", folderInfo.contentDescription)
+
+            folderInfo.recycle()
             conversationInfo.recycle()
             branchInfo.recycle()
+            file.release()
+            folder.release()
+            tree.release()
             scrollButton.release()
             conversation.release()
             submit.release()

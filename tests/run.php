@@ -63,12 +63,19 @@ use Pam\MobileUi\Component\TableHead;
 use Pam\MobileUi\Component\TableHeader;
 use Pam\MobileUi\Component\TableRow;
 use Pam\MobileUi\Component\Attachment;
+use Pam\MobileUi\Component\AttachmentHoverCard;
+use Pam\MobileUi\Component\AttachmentHoverCardContent;
 use Pam\MobileUi\Component\AttachmentPreview;
+use Pam\MobileUi\Component\AttachmentRemove;
 use Pam\MobileUi\Component\Attachments;
 use Pam\MobileUi\Component\Conversation;
 use Pam\MobileUi\Component\ConversationContent;
 use Pam\MobileUi\Component\ConversationScrollButton;
+use Pam\MobileUi\Component\FileTree;
+use Pam\MobileUi\Component\FileTreeFile;
+use Pam\MobileUi\Component\FileTreeFolder;
 use Pam\MobileUi\Component\Message;
+use Pam\MobileUi\Component\MessageAction;
 use Pam\MobileUi\Component\MessageBranch;
 use Pam\MobileUi\Component\MessageBranchContent;
 use Pam\MobileUi\Component\MessageBranchNext;
@@ -85,6 +92,9 @@ use Pam\MobileUi\Component\PopoverArrow;
 use Pam\MobileUi\Component\PopoverCloseButton;
 use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
+use Pam\MobileUi\Component\PromptInputActionMenu;
+use Pam\MobileUi\Component\PromptInputActionMenuContent;
+use Pam\MobileUi\Component\PromptInputActionMenuTrigger;
 use Pam\MobileUi\Component\PromptInputBody;
 use Pam\MobileUi\Component\PromptInputSubmit;
 use Pam\MobileUi\Component\PromptInputTextarea;
@@ -129,6 +139,7 @@ use Pam\MobileUi\Enum\ComponentState;
 use Pam\MobileUi\Enum\ComponentType;
 use Pam\MobileUi\Enum\ComponentVariant;
 use Pam\MobileUi\Enum\DrawerAnchor;
+use Pam\MobileUi\Enum\FileTreeAction;
 use Pam\MobileUi\Enum\ImplementationKind;
 use Pam\MobileUi\Enum\ImageViewerControlAction;
 use Pam\MobileUi\Enum\InputSlotAction;
@@ -216,6 +227,7 @@ foreach ([
     ComponentVariant::cases(),
     DrawerAnchor::cases(),
     BranchControlAction::cases(),
+    FileTreeAction::cases(),
     ImageViewerControlAction::cases(),
     ButtonVariant::cases(),
     Orientation::cases(),
@@ -879,7 +891,16 @@ $assert(
 $attachments = Attachments::make(
     ['variant' => ComponentVariant::List],
     Attachment::make(
+        [
+            'data' => [
+                'type' => 'file',
+                'filename' => 'architecture.png',
+                'mediaType' => 'image/png',
+                'url' => 'file:///architecture.png',
+            ],
+        ],
         AttachmentPreview::make(),
+        AttachmentRemove::make(),
     ),
 )->toElement();
 $attachment = $attachments->children()[0] ?? null;
@@ -887,7 +908,11 @@ if (!$attachment instanceof \Pam\Native\Element) {
     throw new RuntimeException('Attachment recipes must render their anatomy.');
 }
 $preview = $attachment->children()[0] ?? null;
-if (!$preview instanceof \Pam\Native\Element) {
+$attachmentRemove = $attachment->children()[1] ?? null;
+if (
+    !$preview instanceof \Pam\Native\Element
+    || !$attachmentRemove instanceof \Pam\Native\Element
+) {
     throw new RuntimeException('Attachment previews must inherit the parent display variant.');
 }
 $assert(
@@ -895,6 +920,48 @@ $assert(
         && $attachment->properties()[PropKey::WidthPercent->value] === 100.0
         && $preview->properties()[PropKey::Width->value] === 48.0,
     'Attachment list variants must compile through inherited integer variant context.',
+);
+$assert(
+    $preview->children()[0]->kind() === NodeKind::Image
+        && $attachmentRemove->kind() === NodeKind::Pressable
+        && MessageAction::make(Text::make('Copy'))->toElement()->kind()
+            === NodeKind::Pressable,
+    'Chat attachment previews and authored actions must keep their native interaction paths.',
+);
+$attachmentHover = AttachmentHoverCard::make(
+    ['open' => true],
+    Button::make(ButtonText::make('Preview')),
+    AttachmentHoverCardContent::make(Text::make('architecture.png')),
+)->toElement();
+$attachmentHoverNative = $attachmentHover->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$promptActionMenu = PromptInputActionMenu::make(
+    ['open' => true],
+    PromptInputActionMenuTrigger::make(Text::make('+')),
+    PromptInputActionMenuContent::make(Text::make('Select document')),
+)->toElement();
+$promptActionNative = $promptActionMenu->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$attachmentHoverNative instanceof BinaryValue
+    || !$promptActionNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Chat overlay aliases must compile native hosts.');
+}
+$assert(
+    Wire::decodeMap($attachmentHoverNative->bytes)['behavior']
+        === NativeBehavior::Tooltip->value
+        && $attachmentHover->children()[0]
+            ->properties()[PropKey::Value->value] === 'pam:overlay-trigger'
+        && $attachmentHover->children()[1]
+            ->properties()[PropKey::Value->value] === 'pam:overlay-content'
+        && Wire::decodeMap($promptActionNative->bytes)['behavior']
+            === NativeBehavior::Menu->value
+        && $promptActionMenu->children()[1]
+            ->properties()[PropKey::Value->value] === 'pam:overlay-content',
+    'Chat hover cards and action menus must reuse collision-aware native overlays.',
 );
 
 $message = Message::make(
@@ -1049,6 +1116,75 @@ $assert(
         && $conversationScrollProperties['behavior']
             === NativeBehavior::ConversationScrollButton->value,
     'Conversation must own scrolling and latest-message affordance natively.',
+);
+
+$fileTreeSelections = [];
+$fileTreeEvents = [];
+$fileTree = FileTree::make(
+    [
+        'defaultExpanded' => ['/src'],
+        'selectedPath' => '/src/App.php',
+    ],
+    FileTreeFolder::make(
+        ['path' => '/src', 'name' => 'src'],
+        FileTreeFile::make(['path' => '/src/App.php', 'name' => 'App.php']),
+    ),
+)->onChange(
+    static function (string $path) use (&$fileTreeSelections): void {
+        $fileTreeSelections[] = $path;
+    },
+)->onNativeEvent(
+    static function (string $payload) use (&$fileTreeEvents): void {
+        $fileTreeEvents[] = $payload;
+    },
+)->toElement();
+$fileTreeFolder = $fileTree->children()[0] ?? null;
+$fileTreeHeader = $fileTreeFolder?->children()[0] ?? null;
+$fileTreeContent = $fileTreeFolder?->children()[1] ?? null;
+$fileTreeFile = $fileTreeContent?->children()[0] ?? null;
+$fileTreeNative = $fileTree->properties()[PropKey::HostProperties->value] ?? null;
+$fileTreeFolderNative = $fileTreeFolder?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$fileTreeFileNative = $fileTreeFile?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$fileTreeFolder instanceof \Pam\Native\Element
+    || !$fileTreeHeader instanceof \Pam\Native\Element
+    || !$fileTreeContent instanceof \Pam\Native\Element
+    || !$fileTreeNative instanceof BinaryValue
+    || !$fileTreeFolderNative instanceof BinaryValue
+    || !$fileTreeFileNative instanceof BinaryValue
+) {
+    throw new RuntimeException('FileTree must compile its native hierarchy.');
+}
+$fileTreeProperties = Wire::decodeMap($fileTreeNative->bytes);
+$fileTreeFolderProperties = Wire::decodeMap($fileTreeFolderNative->bytes);
+$fileTreeFileProperties = Wire::decodeMap($fileTreeFileNative->bytes);
+$fileTree->events()[\Pam\Native\EventKind::Change->value]('/src/App.php');
+$fileTree->events()[\Pam\Native\EventKind::Native->value](
+    Wire::map([
+        'action' => FileTreeAction::Expanded->value,
+        'path' => '/src',
+        'expanded' => false,
+    ]),
+);
+$assert(
+    $fileTreeProperties['behavior'] === NativeBehavior::FileTree->value
+        && $fileTreeProperties['expandedPaths'] === '/src'
+        && $fileTreeFolderProperties['behavior']
+            === NativeBehavior::FileTreeFolder->value
+        && $fileTreeFolderProperties['path'] === '/src'
+        && $fileTreeFileProperties['behavior']
+            === NativeBehavior::FileTreeFile->value
+        && $fileTreeHeader->properties()[PropKey::Value->value]
+            === 'pam:file-tree-header'
+        && $fileTreeContent->properties()[PropKey::Value->value]
+            === 'pam:file-tree-content'
+        && $fileTreeSelections === ['/src/App.php']
+        && count($fileTreeEvents) === 1,
+    'FileTree must coordinate expansion and selection through bounded semantic events.',
 );
 
 $assert(

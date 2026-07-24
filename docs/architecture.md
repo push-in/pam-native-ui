@@ -86,6 +86,19 @@ locally when requested and emits one `SUBMIT` payload. Native input sync avoids
 per-keystroke PHP callbacks; attachment removal and actual message creation
 remain application state.
 
+`FileTree` packs controlled/default expanded paths into one bounded newline
+payload. Folder and file hosts retain their authored nested PHP content while
+the root coordinates selection, expansion, chevron/content animation and
+hierarchical accessibility locally. A file emits one scalar selected path. A
+folder emits that same selection plus one bounded native map whose sequential
+action ID (`expanded=1`) carries the path and final boolean state.
+
+Chat action anatomy that is interactive upstream (`AttachmentRemove`,
+`MessageAction`, `PromptInputButton`, `ConversationDownload`) compiles to PAM
+pressables. `AttachmentHoverCard` and `PromptInputActionMenu` reuse the same
+collision-aware native Tooltip/Menu controller rather than introducing a
+second overlay implementation.
+
 Controlled compound overlays keep their trigger subtree mounted when
 `open=false`. `Select`, `BottomSheet` and `ModelSelector` render a stable
 layout root plus a dedicated portal/content child backed by PAM's native

@@ -112,7 +112,10 @@ internal class MobileUiHost(
         MESSAGE_BRANCH_CONTROL(39),
         PROMPT_INPUT(40),
         PROMPT_INPUT_SUBMIT(41),
-        CONVERSATION_SCROLL_BUTTON(42);
+        CONVERSATION_SCROLL_BUTTON(42),
+        FILE_TREE(43),
+        FILE_TREE_FOLDER(44),
+        FILE_TREE_FILE(45);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -368,6 +371,11 @@ internal class MobileUiHost(
     private var conversationAutoScroll = true
     private var conversationMessageCount = 0
     private var conversationScrollView: ScrollView? = null
+    private val fileTreeExpandedPaths = LinkedHashSet<String>()
+    private var fileTreeSelectedPath: String? = null
+    private var fileTreePath = ""
+    private var fileTreeFolderExpanded = false
+    private var fileTreeFolderInitialized = false
     private var animator: ValueAnimator? = null
     private var activePickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
@@ -589,6 +597,25 @@ internal class MobileUiHost(
                 "autoScroll",
                 if (previousBehavior == behavior) conversationAutoScroll else true,
             )
+        }
+        if (behavior == Behavior.FILE_TREE) {
+            if (
+                properties.containsKey("expandedPaths")
+                || previousBehavior != behavior
+            ) {
+                fileTreeExpandedPaths.clear()
+                properties.text("expandedPaths")
+                    ?.lineSequence()
+                    ?.filter(String::isNotEmpty)
+                    ?.forEach(fileTreeExpandedPaths::add)
+            }
+            fileTreeSelectedPath = properties.scalarText("selectedPath")
+                ?: fileTreeSelectedPath
+        } else if (
+            behavior == Behavior.FILE_TREE_FOLDER
+            || behavior == Behavior.FILE_TREE_FILE
+        ) {
+            fileTreePath = properties.text("path").orEmpty()
         }
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
         val defaultChecked = if (behavior == Behavior.SWITCH) {
@@ -913,6 +940,13 @@ internal class MobileUiHost(
             post(::applyConversationState)
         } else if (behavior == Behavior.CONVERSATION_SCROLL_BUTTON) {
             updateConversationScrollButtonAccessibility()
+        } else if (behavior == Behavior.FILE_TREE) {
+            post { applyFileTreeState(announce = false) }
+        } else if (
+            behavior == Behavior.FILE_TREE_FOLDER
+            || behavior == Behavior.FILE_TREE_FILE
+        ) {
+            updateFileTreeItemAccessibility()
         }
         if (behavior.isAnchoredOverlay() && previousOpen == open) {
             post { applyAnchoredOverlayState(animate = false) }
@@ -977,6 +1011,9 @@ internal class MobileUiHost(
         if (behavior == Behavior.CHAT) {
             post(::applyConversationState)
         }
+        if (behavior == Behavior.FILE_TREE) {
+            post { applyFileTreeState(announce = false) }
+        }
         if (behavior.isAnchoredOverlay()) {
             post { applyAnchoredOverlayState(animate = false) }
         }
@@ -1000,6 +1037,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.CHAT) {
             post(::applyConversationState)
+        }
+        if (behavior == Behavior.FILE_TREE) {
+            post { applyFileTreeState(announce = false) }
         }
     }
 
@@ -1059,6 +1099,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.CHAT) {
             applyConversationState()
+        }
+        if (behavior == Behavior.FILE_TREE) {
+            applyFileTreeState(announce = false)
         }
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
@@ -1518,6 +1561,32 @@ internal class MobileUiHost(
                 info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
             }
         }
+        if (behavior == Behavior.FILE_TREE) {
+            val items = fileTreeItems().filter(::isFileTreeItemVisible)
+            info.className = "android.widget.ListView"
+            info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+                items.size,
+                1,
+                true,
+                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE,
+            )
+        }
+        if (
+            behavior == Behavior.FILE_TREE_FOLDER
+            || behavior == Behavior.FILE_TREE_FILE
+        ) {
+            info.className = "android.widget.Button"
+            info.isSelected = isSelected
+            info.isClickable = isEnabled
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+            fileTreeAncestor()?.fileTreeCollectionItemInfo(this)?.let { item ->
+                info.collectionItemInfo = item
+            }
+        }
         info.isScrollable = behavior in setOf(
             Behavior.BOTTOM_SHEET,
             Behavior.CALENDAR,
@@ -1621,6 +1690,10 @@ internal class MobileUiHost(
             Behavior.CONVERSATION_SCROLL_BUTTON,
             -> "android.widget.Button"
             Behavior.PROMPT_INPUT -> "android.view.ViewGroup"
+            Behavior.FILE_TREE -> "android.widget.ListView"
+            Behavior.FILE_TREE_FOLDER,
+            Behavior.FILE_TREE_FILE,
+            -> "android.widget.Button"
             Behavior.TABLE -> "android.widget.TableLayout"
             Behavior.TABLE_ROW -> "android.widget.TableRow"
             Behavior.DATE_TIME_PICKER -> "android.widget.DatePicker"
@@ -1824,6 +1897,8 @@ internal class MobileUiHost(
                 Behavior.MESSAGE_BRANCH_CONTROL,
                 Behavior.PROMPT_INPUT_SUBMIT,
                 Behavior.CONVERSATION_SCROLL_BUTTON,
+                Behavior.FILE_TREE_FOLDER,
+                Behavior.FILE_TREE_FILE,
             )
             && isEnabled
             && (behavior == Behavior.SWITCH || !readOnly)
@@ -1942,6 +2017,11 @@ internal class MobileUiHost(
         conversationScrollView?.setOnScrollChangeListener(null)
         conversationScrollView = null
         conversationMessageCount = 0
+        fileTreeExpandedPaths.clear()
+        fileTreeSelectedPath = null
+        fileTreePath = ""
+        fileTreeFolderExpanded = false
+        fileTreeFolderInitialized = false
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -2071,6 +2151,18 @@ internal class MobileUiHost(
                     conversationAncestor()?.scrollConversationToBottom()
                 }
             }
+        } else if (behavior == Behavior.FILE_TREE_FOLDER) {
+            setOnClickListener {
+                if (isEnabled) {
+                    fileTreeAncestor()?.toggleFileTreeFolder(this)
+                }
+            }
+        } else if (behavior == Behavior.FILE_TREE_FILE) {
+            setOnClickListener {
+                if (isEnabled) {
+                    fileTreeAncestor()?.selectFileTreeItem(this)
+                }
+            }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -2120,6 +2212,8 @@ internal class MobileUiHost(
             Behavior.MESSAGE_BRANCH_CONTROL,
             Behavior.PROMPT_INPUT_SUBMIT,
             Behavior.CONVERSATION_SCROLL_BUTTON,
+            Behavior.FILE_TREE_FOLDER,
+            Behavior.FILE_TREE_FILE,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -2144,6 +2238,8 @@ internal class MobileUiHost(
                 Behavior.MESSAGE_BRANCH_CONTROL,
                 Behavior.PROMPT_INPUT_SUBMIT,
                 Behavior.CONVERSATION_SCROLL_BUTTON,
+                Behavior.FILE_TREE_FOLDER,
+                Behavior.FILE_TREE_FILE,
             )
         ) {
             RippleDrawable(
@@ -4965,6 +5061,209 @@ internal class MobileUiHost(
         }
     }
 
+    private fun fileTreeItems(root: ViewGroup = this): List<MobileUiHost> =
+        buildList {
+            repeat(root.childCount) { index ->
+                val child = root.getChildAt(index)
+                if (
+                    child is MobileUiHost
+                    && child.behavior in setOf(
+                        Behavior.FILE_TREE_FOLDER,
+                        Behavior.FILE_TREE_FILE,
+                    )
+                ) {
+                    add(child)
+                    addAll(fileTreeItems(child))
+                } else if (
+                    child is ViewGroup
+                    && !(child is MobileUiHost && child.behavior == Behavior.FILE_TREE)
+                ) {
+                    addAll(fileTreeItems(child))
+                }
+            }
+        }
+
+    private fun applyFileTreeState(announce: Boolean) {
+        if (behavior != Behavior.FILE_TREE) return
+        fileTreeItems().forEach { item ->
+            val selected = item.fileTreePath != ""
+                && item.fileTreePath == fileTreeSelectedPath
+            if (item.behavior == Behavior.FILE_TREE_FOLDER) {
+                item.applyFileTreeFolderState(
+                    expanded = fileTreeExpandedPaths.contains(item.fileTreePath),
+                    selected = selected,
+                    animate = item.isAttachedToWindow,
+                )
+            } else {
+                item.isSelected = selected
+                item.updateFileTreeItemAccessibility()
+            }
+        }
+        if (announce) {
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+        }
+    }
+
+    private fun applyFileTreeFolderState(
+        expanded: Boolean,
+        selected: Boolean,
+        animate: Boolean,
+    ) {
+        if (behavior != Behavior.FILE_TREE_FOLDER) return
+        val changed = !fileTreeFolderInitialized
+            || fileTreeFolderExpanded != expanded
+        fileTreeFolderExpanded = expanded
+        fileTreeFolderInitialized = true
+        isSelected = selected
+        val content = findTaggedDescendant(this, FILE_TREE_CONTENT_TAG)
+        if (content != null && changed) {
+            content.animate().cancel()
+            content.importantForAccessibility = if (expanded) {
+                IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            } else {
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            }
+            if (expanded) {
+                content.visibility = VISIBLE
+                if (animate && animationsEnabled()) {
+                    content.alpha = 0f
+                    content.animate()
+                        .alpha(1f)
+                        .setDuration(FILE_TREE_ANIMATION_DURATION_MILLIS)
+                        .start()
+                } else {
+                    content.alpha = 1f
+                }
+            } else if (animate && animationsEnabled() && content.visibility == VISIBLE) {
+                content.animate()
+                    .alpha(0f)
+                    .setDuration(FILE_TREE_ANIMATION_DURATION_MILLIS)
+                    .withEndAction {
+                        if (!fileTreeFolderExpanded) {
+                            content.visibility = GONE
+                            content.alpha = 1f
+                        }
+                    }
+                    .start()
+            } else {
+                content.visibility = GONE
+                content.alpha = 1f
+            }
+        }
+        findTaggedDescendant(this, FILE_TREE_CHEVRON_TAG)?.let { chevron ->
+            chevron.animate().cancel()
+            val rotation = if (expanded) 90f else 0f
+            if (changed && animate && animationsEnabled()) {
+                chevron.animate()
+                    .rotation(rotation)
+                    .setDuration(FILE_TREE_ANIMATION_DURATION_MILLIS)
+                    .start()
+            } else {
+                chevron.rotation = rotation
+            }
+        }
+        updateFileTreeItemAccessibility()
+    }
+
+    private fun toggleFileTreeFolder(folder: MobileUiHost): Boolean {
+        if (behavior != Behavior.FILE_TREE || folder.fileTreePath == "") return false
+        val path = folder.fileTreePath
+        val expanded = if (fileTreeExpandedPaths.remove(path)) {
+            false
+        } else {
+            fileTreeExpandedPaths.add(path)
+            true
+        }
+        fileTreeSelectedPath = path
+        applyFileTreeState(announce = true)
+        emitter.emit(
+            NativeViewEventKind.CHANGE,
+            path.encodeToByteArray(),
+        )
+        emitter.emit(
+            NativeViewEventKind.NATIVE,
+            WireMap.encode(
+                mapOf(
+                    "action" to WireValue.Integer(FILE_TREE_ACTION_EXPANDED),
+                    "path" to WireValue.Text(path),
+                    "expanded" to WireValue.Flag(expanded),
+                ),
+            ),
+        )
+        return true
+    }
+
+    private fun selectFileTreeItem(item: MobileUiHost): Boolean {
+        if (behavior != Behavior.FILE_TREE || item.fileTreePath == "") return false
+        if (fileTreeSelectedPath == item.fileTreePath) return false
+        fileTreeSelectedPath = item.fileTreePath
+        applyFileTreeState(announce = true)
+        emitter.emit(
+            NativeViewEventKind.CHANGE,
+            item.fileTreePath.encodeToByteArray(),
+        )
+        return true
+    }
+
+    @Suppress("DEPRECATION")
+    private fun fileTreeCollectionItemInfo(
+        item: MobileUiHost,
+    ): AccessibilityNodeInfo.CollectionItemInfo? {
+        val visible = fileTreeItems().filter(::isFileTreeItemVisible)
+        val index = visible.indexOf(item)
+        if (index < 0) return null
+        return AccessibilityNodeInfo.CollectionItemInfo.obtain(
+            index,
+            1,
+            0,
+            1,
+            item.behavior == Behavior.FILE_TREE_FOLDER,
+            item.isSelected,
+        )
+    }
+
+    private fun isFileTreeItemVisible(item: MobileUiHost): Boolean {
+        var current: View? = item
+        while (current != null && current !== this) {
+            if (current.visibility != VISIBLE) return false
+            current = current.parent as? View
+        }
+        return current === this
+    }
+
+    private fun fileTreeAncestor(): MobileUiHost? =
+        ancestorWithBehavior(Behavior.FILE_TREE)
+
+    private fun updateFileTreeItemAccessibility() {
+        if (
+            behavior != Behavior.FILE_TREE_FOLDER
+            && behavior != Behavior.FILE_TREE_FILE
+        ) {
+            return
+        }
+        if (contentDescription.isNullOrEmpty()) {
+            contentDescription = (
+                findFirstText(
+                    findTaggedDescendant(this, FILE_TREE_NAME_TAG),
+                ) ?: fileTreePath.substringAfterLast('/')
+            ).ifEmpty {
+                if (behavior == Behavior.FILE_TREE_FOLDER) "Folder" else "File"
+            }
+        }
+        if (
+            behavior == Behavior.FILE_TREE_FOLDER
+            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
+            stateDescription = context.getString(
+                if (fileTreeFolderExpanded) {
+                    R.string.pam_file_tree_expanded
+                } else {
+                    R.string.pam_file_tree_collapsed
+                },
+            )
+        }
+    }
+
     private fun ancestorWithBehavior(expected: Behavior): MobileUiHost? {
         var current = parent
         while (current is View) {
@@ -6161,6 +6460,11 @@ internal class MobileUiHost(
         const val CONVERSATION_MESSAGE_TAG_PREFIX = "pam:message:"
         const val MESSAGE_ROLE_USER = 1
         const val DISABLED_CONTROL_ALPHA = 0.5f
+        const val FILE_TREE_ACTION_EXPANDED = 1L
+        const val FILE_TREE_CONTENT_TAG = "pam:file-tree-content"
+        const val FILE_TREE_CHEVRON_TAG = "pam:file-tree-chevron"
+        const val FILE_TREE_NAME_TAG = "pam:file-tree-name"
+        const val FILE_TREE_ANIMATION_DURATION_MILLIS = 180L
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

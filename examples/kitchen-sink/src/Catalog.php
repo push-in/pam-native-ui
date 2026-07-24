@@ -25,6 +25,7 @@ final class Catalog extends Component
     private string $email = '';
     private string $plan = 'starter';
     private string $selectedDate = '2026-07-23';
+    private string $selectedFile = '/src/App.php';
     private string $notice = 'All interactions use semantic native events.';
     /** @var list<string> */
     private array $nativePackages = [
@@ -48,6 +49,8 @@ final class Catalog extends Component
             'alt' => 'Sunlight crossing a forest',
         ],
     ];
+    /** @var list<string> */
+    private array $expandedFolders = ['/src'];
 
     public function render(): Renderable
     {
@@ -154,6 +157,12 @@ final class Catalog extends Component
             : "Submitted prompt: {$prompt}";
     }
 
+    public function selectFile(string $path): void
+    {
+        $this->selectedFile = $path;
+        $this->notice = "Selected file: {$path}";
+    }
+
     public function selectDate(string $payload): void
     {
         if ($payload !== '') {
@@ -179,6 +188,8 @@ final class Catalog extends Component
      *     email: string,
      *     plan: string,
      *     selectedDate: string,
+     *     selectedFile: string,
+     *     expandedFolders: list<string>,
      *     nativePackages: list<string>,
      *     notice: string
      * }
@@ -202,6 +213,8 @@ final class Catalog extends Component
             'email' => $this->email,
             'plan' => $this->plan,
             'selectedDate' => $this->selectedDate,
+            'selectedFile' => $this->selectedFile,
+            'expandedFolders' => $this->expandedFolders,
             'nativePackages' => $this->nativePackages,
             'notice' => $this->notice,
         ];

@@ -368,6 +368,24 @@
                     </MessageBranchSelector>
                 </MessageBranch>
 
+                <FileTree
+                    defaultExpanded="$expandedFolders"
+                    selectedPath="{{ $selectedFile }}"
+                    on:change="selectFile"
+                >
+                    <FileTreeFolder path="/src" name="src">
+                        <FileTreeFile path="/src/App.php" name="App.php" />
+                        <FileTreeFile path="/src/Theme.php" name="Theme.php" />
+                        <FileTreeFolder path="/src/Components" name="Components">
+                            <FileTreeFile
+                                path="/src/Components/ProfileCard.php"
+                                name="ProfileCard.php"
+                            />
+                        </FileTreeFolder>
+                    </FileTreeFolder>
+                    <FileTreeFile path="/composer.json" name="composer.json" />
+                </FileTree>
+
                 <Attachments variant="list">
                     <Attachment>
                         <AttachmentPreview><PaperclipIcon /></AttachmentPreview>

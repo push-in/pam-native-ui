@@ -48,4 +48,7 @@ enum NativeBehavior: int
     case PromptInput = 40;
     case PromptInputSubmit = 41;
     case ConversationScrollButton = 42;
+    case FileTree = 43;
+    case FileTreeFolder = 44;
+    case FileTreeFile = 45;
 }

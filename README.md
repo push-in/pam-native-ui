@@ -415,6 +415,30 @@ index. Prompt text enables/disables Submit locally; submit trims and optionally
 clears the field, then sends one semantic string to PHP. With `sync="native"`,
 typing itself does not cross the bridge.
 
+File trees use the same compound syntax with native expansion and selection:
+
+```xml
+<FileTree
+    defaultExpanded="$expandedFolders"
+    selectedPath="{{ $selectedFile }}"
+    on:change="selectFile"
+    on:event="folderExpansionChanged"
+>
+    <FileTreeFolder path="/src" name="src">
+        <FileTreeFile path="/src/App.php" name="App.php" />
+        <FileTreeFolder path="/src/Components" name="Components">
+            <FileTreeFile path="/src/Components/Card.php" name="Card.php" />
+        </FileTreeFolder>
+    </FileTreeFolder>
+</FileTree>
+```
+
+Folder content and chevron motion remain on Android. File/folder selection emits
+one path through `on:change`; a folder additionally emits one bounded
+`on:event` map with integer action `1`, `path` and `expanded`. The root supports
+controlled `expanded`/`expandedPaths` or local `defaultExpanded`, and exposes a
+hierarchical single-selection collection to TalkBack.
+
 Large scalar data sets use PAM's recycled Android list primitives directly:
 
 ```xml

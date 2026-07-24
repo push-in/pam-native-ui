@@ -8,4 +8,6 @@
     <string name="pam_next_response">Next response</string>
     <string name="pam_send_prompt">Send prompt</string>
     <string name="pam_scroll_to_latest_message">Scroll to latest message</string>
+    <string name="pam_file_tree_expanded">Expanded</string>
+    <string name="pam_file_tree_collapsed">Collapsed</string>
 </resources>

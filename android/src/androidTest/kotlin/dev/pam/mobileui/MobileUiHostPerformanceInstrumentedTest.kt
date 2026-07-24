@@ -708,6 +708,43 @@ class MobileUiHostPerformanceInstrumentedTest {
                 promptEvents.size,
             )
 
+            val fileTreeEvents = ArrayList<NativeViewEventKind>()
+            val fileTree = MobileUiHost(context) { kind, _ -> fileTreeEvents += kind }
+            fileTree.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(43),
+                    "expandedPaths" to WireValue.Text("/src"),
+                ),
+            )
+            val fileTreeFolder = MobileUiHost(context) { _, _ -> }
+            fileTreeFolder.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(44),
+                    "path" to WireValue.Text("/src"),
+                ),
+            )
+            fileTreeFolder.addView(View(context).apply {
+                tag = "pam:file-tree-content"
+            })
+            fileTree.addView(fileTreeFolder)
+            fileTree.layout(0, 0, 1_080, 800)
+            repeat(WARMUP_ITERATIONS) {
+                fileTreeFolder.performClick()
+            }
+            fileTreeEvents.clear()
+            val fileTreeToggle = measure(SAMPLE_ITERATIONS) {
+                fileTreeFolder.performClick()
+            }
+            assertTrue(
+                "File tree toggle p99 ${fileTreeToggle.p99Micros}µs exceeded 4ms",
+                fileTreeToggle.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "File tree folder must emit selection and expansion once",
+                SAMPLE_ITERATIONS * 2,
+                fileTreeEvents.size,
+            )
+
             val tableEvents = ArrayList<NativeViewEventKind>()
             val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
             table.update(mapOf("behavior" to WireValue.Integer(35)))
@@ -781,6 +818,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"imageNavigation\":${imageNavigation.json()},")
                     append("\"branchNavigation\":${branchNavigation.json()},")
                     append("\"promptSubmission\":${promptSubmission.json()},")
+                    append("\"fileTreeToggle\":${fileTreeToggle.json()},")
                     append("\"tableLayout\":${tableLayout.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
@@ -803,6 +841,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"imageBridgeEvents\":${imageEvents.size},")
                     append("\"branchBridgeEvents\":${branchEvents.size},")
                     append("\"promptBridgeEvents\":${promptEvents.size},")
+                    append("\"fileTreeBridgeEvents\":${fileTreeEvents.size},")
                     append("\"tableBridgeEvents\":${tableEvents.size}")
                     append('}')
                 },
@@ -839,6 +878,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             messageBranch.release()
             promptSubmit.release()
             prompt.release()
+            fileTreeFolder.release()
+            fileTree.release()
             repeat(table.childCount) { index ->
                 (table.getChildAt(index) as? MobileUiHost)?.release()
             }

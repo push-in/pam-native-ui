@@ -91,6 +91,7 @@ final class ComponentRenderer
         }
         $children = self::imageViewerChildren($part, $props, $children);
         $children = self::messageBranchChildren($part, $children);
+        $children = self::fileTreeFolderChildren($part, $props, $children);
         $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
             ? $props['__parentVariants']
@@ -219,8 +220,10 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, $backdropTag);
         } elseif (in_array($part, [
             'ActionsheetContent',
+            'AttachmentHoverCardContent',
             'BottomSheetContent',
             'PopoverContent',
+            'PromptInputActionMenuContent',
             'SelectContent',
             'TooltipContent',
         ], true)) {
@@ -609,6 +612,9 @@ final class ComponentRenderer
                 default => BranchControlAction::Previous->value,
             };
         }
+        if ($behavior === NativeBehavior::FileTree) {
+            $values = [...$values, ...self::fileTreeNativeProperties($props)];
+        }
 
         return $values;
     }
@@ -618,11 +624,16 @@ final class ComponentRenderer
         return match ($part) {
             'Conversation' => NativeBehavior::Chat,
             'ConversationScrollButton' => NativeBehavior::ConversationScrollButton,
+            'FileTree' => NativeBehavior::FileTree,
+            'FileTreeFolder' => NativeBehavior::FileTreeFolder,
+            'FileTreeFile' => NativeBehavior::FileTreeFile,
             'MessageBranch' => NativeBehavior::MessageBranch,
             'MessageBranchPrevious',
             'MessageBranchNext' => NativeBehavior::MessageBranchControl,
             'PromptInput' => NativeBehavior::PromptInput,
             'PromptInputSubmit' => NativeBehavior::PromptInputSubmit,
+            'AttachmentHoverCard' => NativeBehavior::Tooltip,
+            'PromptInputActionMenu' => NativeBehavior::Menu,
             'Accordion' => NativeBehavior::AccordionGroup,
             'AccordionItem' => NativeBehavior::Accordion,
             'CheckboxGroup' => NativeBehavior::CheckboxGroup,
@@ -701,7 +712,17 @@ final class ComponentRenderer
                 $props['trimOnSubmit'] = true;
             }
         }
-        if (!in_array($part, ['Menu', 'Popover', 'Tooltip'], true)) {
+        if (!in_array(
+            $part,
+            [
+                'AttachmentHoverCard',
+                'Menu',
+                'Popover',
+                'PromptInputActionMenu',
+                'Tooltip',
+            ],
+            true,
+        )) {
             return $props;
         }
         if (
@@ -713,16 +734,22 @@ final class ComponentRenderer
         }
         if (!array_key_exists('placement', $props)) {
             $props['placement'] = match ($part) {
-                'Menu' => Placement::BottomStart->value,
+                'Menu', 'PromptInputActionMenu' => Placement::BottomStart->value,
                 default => Placement::Bottom->value,
             };
         }
-        if ($part === 'Menu' && !array_key_exists('selectionMode', $props)) {
+        if (
+            in_array($part, ['Menu', 'PromptInputActionMenu'], true)
+            && !array_key_exists('selectionMode', $props)
+        ) {
             $props['selectionMode'] = array_key_exists('selectedKeys', $props)
                 ? SelectionMode::Single->value
                 : SelectionMode::None->value;
         }
-        if ($part === 'Tooltip' && !array_key_exists('trapFocus', $props)) {
+        if (
+            in_array($part, ['AttachmentHoverCard', 'Tooltip'], true)
+            && !array_key_exists('trapFocus', $props)
+        ) {
             $props['trapFocus'] = false;
         }
 
@@ -948,6 +975,7 @@ final class ComponentRenderer
             'ActionsheetContent',
             'AlertDialogBackdrop',
             'AlertDialogContent',
+            'AttachmentHoverCardContent',
             'BottomSheetBackdrop',
             'BottomSheetContent',
             'BottomSheetPortal',
@@ -960,6 +988,7 @@ final class ComponentRenderer
             'PopoverBackdrop',
             'PopoverContent',
             'Portal',
+            'PromptInputActionMenuContent',
             'SelectBackdrop',
             'SelectContent',
             'SelectPortal',
@@ -977,15 +1006,20 @@ final class ComponentRenderer
         array $props,
         array $children,
     ): array {
+        $overlayPart = match ($part) {
+            'AttachmentHoverCard' => 'Tooltip',
+            'PromptInputActionMenu' => 'Menu',
+            default => $part,
+        };
         if (
-            !in_array($part, ['Menu', 'Popover', 'Tooltip'], true)
+            !in_array($overlayPart, ['Menu', 'Popover', 'Tooltip'], true)
             || $children === []
         ) {
             return $children;
         }
 
         $closed = self::isClosed($props);
-        if ($part === 'Menu') {
+        if ($overlayPart === 'Menu') {
             $hasTrigger = self::flag(
                 $props,
                 'hasTrigger',
@@ -1134,7 +1168,16 @@ final class ComponentRenderer
 
     private static function isPressable(string $part): bool
     {
-        return in_array($part, ['Button', 'Fab', 'Link', 'Pressable'], true)
+        return in_array($part, [
+            'AttachmentRemove',
+            'Button',
+            'ConversationDownload',
+            'Fab',
+            'Link',
+            'MessageAction',
+            'Pressable',
+            'PromptInputButton',
+        ], true)
             || str_ends_with($part, 'Trigger')
             || str_ends_with($part, 'CloseButton')
             || str_ends_with($part, 'Item');
@@ -1759,6 +1802,37 @@ final class ComponentRenderer
 
     /**
      * @param array<string, mixed> $props
+     * @return array<string, string|int|float|bool>
+     */
+    private static function fileTreeNativeProperties(array $props): array
+    {
+        $expanded = $props['expanded']
+            ?? $props['expandedPaths']
+            ?? $props['defaultExpanded']
+            ?? [];
+        if (is_string($expanded)) {
+            $expanded = preg_split('/[\r\n,;|]+/', $expanded) ?: [];
+        }
+        if (!is_array($expanded)) {
+            return [];
+        }
+        $paths = array_values(
+            array_unique(
+                array_filter(
+                    $expanded,
+                    static fn (mixed $path): bool =>
+                        is_string($path)
+                        && $path !== ''
+                        && !str_contains($path, "\n"),
+                ),
+            ),
+        );
+
+        return ['expandedPaths' => implode("\n", $paths)];
+    }
+
+    /**
+     * @param array<string, mixed> $props
      * @param list<Element> $children
      * @return list<Element>
      */
@@ -1805,6 +1879,32 @@ final class ComponentRenderer
         if ($part === 'ConversationScrollButton') {
             return [Text::make('↓')];
         }
+        if ($part === 'FileTreeFile') {
+            return [Text::make(self::text($props, 'name', self::text($props, 'path')))];
+        }
+        if ($part === 'AttachmentPreview') {
+            return self::attachmentPreviewChildren($props);
+        }
+        if ($part === 'AttachmentEmpty') {
+            return [Text::make('No attachments')];
+        }
+        if ($part === 'ModelSelectorEmpty') {
+            return [Text::make('No models found.')];
+        }
+        if ($part === 'ConversationEmptyState') {
+            return [
+                Column::make(
+                    Text::make(self::text($props, 'title', 'Start a conversation')),
+                    Text::make(
+                        self::text(
+                            $props,
+                            'description',
+                            'Type a message below to begin chatting',
+                        ),
+                    ),
+                ),
+            ];
+        }
 
         return [];
     }
@@ -1830,6 +1930,91 @@ final class ComponentRenderer
             $children,
             array_keys($children),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function fileTreeFolderChildren(
+        string $part,
+        array $props,
+        array $children,
+    ): array {
+        if ($part !== 'FileTreeFolder') {
+            return $children;
+        }
+        $path = self::text($props, 'path');
+        $name = self::text(
+            $props,
+            'name',
+            $path === '' ? 'Folder' : basename($path),
+        );
+
+        return [
+            Row::make(
+                Text::make('›')->property(
+                    PropKey::Value,
+                    'pam:file-tree-chevron',
+                ),
+                Text::make($name)->property(
+                    PropKey::Value,
+                    'pam:file-tree-name',
+                ),
+            )->property(PropKey::Value, 'pam:file-tree-header'),
+            Column::make(...$children)->property(
+                PropKey::Value,
+                'pam:file-tree-content',
+            ),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return list<Element>
+     */
+    private static function attachmentPreviewChildren(array $props): array
+    {
+        $parent = is_array($props['__parentVariants'] ?? null)
+            ? $props['__parentVariants']
+            : [];
+        $data = $props['data'] ?? $parent['data'] ?? [];
+        if (!is_array($data)) {
+            $data = [];
+        }
+        $url = is_string($data['url'] ?? null) ? $data['url'] : '';
+        $mediaType = is_string($data['mediaType'] ?? null)
+            ? $data['mediaType']
+            : '';
+        $filename = is_string($data['filename'] ?? null)
+            ? $data['filename']
+            : 'Attachment';
+        if ($url !== '' && str_starts_with($mediaType, 'image/')) {
+            return [
+                Image::make($url)
+                    ->fit(ImageFit::Cover)
+                    ->accessibilityLabel($filename)
+                    ->accessibilityRole(AccessibilityRole::Image),
+            ];
+        }
+        $icon = match (true) {
+            ($data['type'] ?? null) === 'source-document' => 'GlobeIcon',
+            str_starts_with($mediaType, 'video/') => 'PlayIcon',
+            str_starts_with($mediaType, 'application/'),
+            str_starts_with($mediaType, 'text/') => 'PaperclipIcon',
+            default => 'PaperclipIcon',
+        };
+        if (!isset(ComponentMap::IDS[$icon])) {
+            $icon = 'PaperclipIcon';
+        }
+
+        return [
+            CustomView::make(
+                'pam.mobile_ui.icon',
+                self::iconProperties($icon, []),
+            )->accessibilityLabel($filename),
+        ];
     }
 
     /**
