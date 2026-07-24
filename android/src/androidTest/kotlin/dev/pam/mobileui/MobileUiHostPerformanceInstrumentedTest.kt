@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.FrameLayout
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -41,6 +42,23 @@ class MobileUiHostPerformanceInstrumentedTest {
             val events = ArrayList<NativeViewEventKind>()
             val slider = MobileUiHost(context) { kind, _ -> events += kind }
             slider.update(sliderProperties(0))
+            val sliderTrack = FrameLayout(context).apply {
+                tag = "pam:slider-track"
+                layoutParams = FrameLayout.LayoutParams(1_080, 18).apply {
+                    topMargin = 81
+                }
+            }
+            sliderTrack.addView(View(context).apply {
+                tag = "pam:slider-filled-track"
+                layoutParams = FrameLayout.LayoutParams(1_080, 18)
+            })
+            slider.addView(sliderTrack)
+            slider.addView(View(context).apply {
+                tag = "pam:slider-thumb"
+                layoutParams = FrameLayout.LayoutParams(48, 48).apply {
+                    topMargin = 66
+                }
+            })
             slider.layout(0, 0, 1_080, 180)
             slider.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 0f, 90f))
             val gesture = measure(GESTURE_ITERATIONS) { iteration ->
@@ -208,6 +226,57 @@ class MobileUiHostPerformanceInstrumentedTest {
                 radioEvents,
             )
 
+            val progressEvents = ArrayList<NativeViewEventKind>()
+            val progress = MobileUiHost(context) { kind, _ -> progressEvents += kind }
+            progress.addView(View(context).apply {
+                tag = "pam:progress-filled-track"
+                layoutParams = FrameLayout.LayoutParams(1_080, 24)
+            })
+            progress.layout(0, 0, 1_080, 24)
+            repeat(WARMUP_ITERATIONS) { iteration ->
+                progress.update(progressProperties(iteration))
+            }
+            val progressUpdate = measure(SAMPLE_ITERATIONS) { iteration ->
+                progress.update(progressProperties(iteration))
+            }
+            assertTrue(
+                "Progress update p99 ${progressUpdate.p99Micros}µs exceeded 4ms",
+                progressUpdate.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertTrue(
+                "Progress visual updates must never emit bridge events",
+                progressEvents.isEmpty(),
+            )
+
+            var switchEvents = 0
+            val switch = MobileUiHost(context) { kind, _ ->
+                if (kind == NativeViewEventKind.TOGGLE) switchEvents++
+            }
+            switch.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(27),
+                    "component" to WireValue.Integer(GeneratedComponents.SWITCH.toLong()),
+                    "checked" to WireValue.Flag(false),
+                ),
+            )
+            switch.layout(0, 0, 156, 144)
+            repeat(WARMUP_ITERATIONS) {
+                switch.performClick()
+            }
+            switchEvents = 0
+            val switchToggle = measure(SAMPLE_ITERATIONS) {
+                switch.performClick()
+            }
+            assertTrue(
+                "Switch toggle p99 ${switchToggle.p99Micros}µs exceeded 4ms",
+                switchToggle.p99Nanos < FOUR_MILLISECONDS_NANOS,
+            )
+            assertEquals(
+                "Switch must emit exactly one semantic event per completed toggle",
+                SAMPLE_ITERATIONS,
+                switchEvents,
+            )
+
             val lifecycle = measure(LIFECYCLE_ITERATIONS) { iteration ->
                 MobileUiHost(context) { _, _ -> }
                     .also {
@@ -234,6 +303,8 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"accordionToggle\":${accordionToggle.json()},")
                     append("\"checkboxToggle\":${checkboxToggle.json()},")
                     append("\"radioSelection\":${radioSelection.json()},")
+                    append("\"progressUpdate\":${progressUpdate.json()},")
+                    append("\"switchToggle\":${switchToggle.json()},")
                     append("\"lifecycle\":${lifecycle.json()},")
                     append("\"sliderMoves\":$GESTURE_ITERATIONS,")
                     append("\"bridgeEvents\":${events.size},")
@@ -241,7 +312,9 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"dateTimeBridgeEvents\":${dateTimeEvents.size},")
                     append("\"accordionBridgeEvents\":$accordionEvents,")
                     append("\"checkboxBridgeEvents\":$checkboxEvents,")
-                    append("\"radioBridgeEvents\":$radioEvents")
+                    append("\"radioBridgeEvents\":$radioEvents,")
+                    append("\"progressBridgeEvents\":${progressEvents.size},")
+                    append("\"switchBridgeEvents\":$switchEvents")
                     append('}')
                 },
             )
@@ -256,6 +329,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             firstRadio.release()
             secondRadio.release()
             radioGroup.release()
+            progress.release()
+            switch.release()
         }
     }
 

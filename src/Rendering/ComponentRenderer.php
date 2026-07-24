@@ -37,7 +37,6 @@ use Pam\Native\UI\Scroll;
 use Pam\Native\UI\SectionList;
 use Pam\Native\UI\StatusBar;
 use Pam\Native\UI\Text;
-use Pam\Native\UI\Toggle;
 use Pam\Native\UI\View;
 
 final class ComponentRenderer
@@ -75,11 +74,31 @@ final class ComponentRenderer
         ) {
             $props['checked'] = self::flag($props, 'defaultIsChecked');
         }
+        if (
+            $part === 'Switch'
+            && !array_key_exists('checked', $props)
+            && !array_key_exists('isChecked', $props)
+        ) {
+            if (array_key_exists('value', $props)) {
+                $props['checked'] = self::flag($props, 'value');
+            } elseif (array_key_exists('defaultValue', $props)) {
+                $props['checked'] = self::flag($props, 'defaultValue');
+            }
+        }
         $props = self::controlledItemState($part, $props, $parentProps);
         $runtimeProps = [...$parentProps, ...$props];
         $events = self::componentEvents($part, $runtimeProps, $events);
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
-        $element = self::primitive($part, $runtimeProps, $children)
+        $nativeBackground = $style->backgroundColor;
+        if ($styleOverride !== null && $styleOverride->backgroundColor !== null) {
+            $nativeBackground = $styleOverride->backgroundColor;
+        }
+        $element = self::primitive(
+            $part,
+            $runtimeProps,
+            $children,
+            $nativeBackground,
+        )
             ->style($style);
 
         if (
@@ -113,6 +132,14 @@ final class ComponentRenderer
                     ? 'pam:selection-icon-force'
                     : 'pam:selection-icon',
             );
+        } elseif ($part === 'SliderTrack') {
+            $element = $element->property(PropKey::Value, 'pam:slider-track');
+        } elseif ($part === 'SliderFilledTrack') {
+            $element = $element->property(PropKey::Value, 'pam:slider-filled-track');
+        } elseif ($part === 'SliderThumb') {
+            $element = $element->property(PropKey::Value, 'pam:slider-thumb');
+        } elseif ($part === 'ProgressFilledTrack') {
+            $element = $element->property(PropKey::Value, 'pam:progress-filled-track');
         }
 
         if ($styleOverride !== null) {
@@ -202,6 +229,7 @@ final class ComponentRenderer
         string $part,
         array $props,
         array $children,
+        ?int $nativeBackground,
     ): Element {
         if (self::isText($part)) {
             return Text::make(self::text($props, 'text'));
@@ -223,9 +251,6 @@ final class ComponentRenderer
         }
         if ($part === 'Spinner' || $part === 'ButtonSpinner') {
             return ActivityIndicator::make(($props['visible'] ?? true) !== false);
-        }
-        if ($part === 'Switch') {
-            return Toggle::make(self::flag($props, 'checked', self::flag($props, 'isChecked')));
         }
         if (in_array($part, ['FlatList', 'VirtualizedList'], true)) {
             return FlatList::make(self::stringList($props['items'] ?? []));
@@ -267,7 +292,13 @@ final class ComponentRenderer
         if ($behavior !== NativeBehavior::Container) {
             return CustomView::make(
                 'pam.mobile_ui.host',
-                self::nativeProperties($part, $behavior, $props),
+                self::nativeProperties(
+                    $part,
+                    $behavior,
+                    $props,
+                    $children,
+                    $nativeBackground,
+                ),
                 ...$children,
             );
         }
@@ -295,12 +326,15 @@ final class ComponentRenderer
 
     /**
      * @param array<string, mixed> $props
+     * @param list<Element> $children
      * @return array<string, string|int|float|bool>
      */
     private static function nativeProperties(
         string $part,
         NativeBehavior $behavior,
         array $props,
+        array $children,
+        ?int $nativeBackground,
     ): array {
         $values = [
             'part' => ComponentMap::IDS[$part],
@@ -326,6 +360,21 @@ final class ComponentRenderer
         if ($behavior === NativeBehavior::Calendar) {
             $values = [...$values, ...self::calendarNativeProperties($props)];
         }
+        if (
+            $behavior === NativeBehavior::Slider
+            || $behavior === NativeBehavior::Progress
+            || $behavior === NativeBehavior::SwitchControl
+        ) {
+            $values = [
+                ...$values,
+                ...self::rangeNativeProperties(
+                    $behavior,
+                    $props,
+                    $children,
+                    $nativeBackground,
+                ),
+            ];
+        }
 
         return $values;
     }
@@ -337,6 +386,7 @@ final class ComponentRenderer
             'AccordionItem' => NativeBehavior::Accordion,
             'CheckboxGroup' => NativeBehavior::CheckboxGroup,
             'RadioGroup' => NativeBehavior::RadioGroup,
+            'Switch' => NativeBehavior::SwitchControl,
             'Actionsheet',
             'BottomSheetPortal',
             'SelectPortal' => NativeBehavior::BottomSheet,
@@ -821,6 +871,190 @@ final class ComponentRenderer
         };
 
         return $events;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @return array<string, string|int|float|bool>
+     */
+    private static function rangeNativeProperties(
+        NativeBehavior $behavior,
+        array $props,
+        array $children,
+        ?int $nativeBackground,
+    ): array {
+        $values = [];
+
+        if ($behavior === NativeBehavior::SwitchControl) {
+            $trackColors = is_array($props['trackColor'] ?? null)
+                ? $props['trackColor']
+                : [];
+            $offColor = self::packedColor(
+                $trackColors['false']
+                    ?? $trackColors[0]
+                    ?? $props['ios_backgroundColor']
+                    ?? null,
+            );
+            $onColor = self::packedColor(
+                $trackColors['true']
+                    ?? $trackColors[1]
+                    ?? null,
+            );
+            $thumbColor = self::packedColor($props['thumbColor'] ?? null);
+            $activeThumbColor = self::packedColor(
+                $props['activeThumbColor'] ?? $props['thumbColor'] ?? null,
+            );
+            if ($offColor !== null) {
+                $values['trackOffColor'] = $offColor;
+            }
+            if ($onColor !== null) {
+                $values['trackOnColor'] = $onColor;
+            }
+            if ($thumbColor !== null) {
+                $values['thumbColor'] = $thumbColor;
+            }
+            if ($activeThumbColor !== null) {
+                $values['activeThumbColor'] = $activeThumbColor;
+            }
+
+            return $values;
+        }
+
+        if (
+            !array_key_exists('value', $props)
+            && is_numeric($props['defaultValue'] ?? null)
+        ) {
+            $values['value'] = (float) $props['defaultValue'];
+        }
+        if (is_numeric($props['minValue'] ?? null)) {
+            $values['min'] = (float) $props['minValue'];
+        }
+        if (is_numeric($props['maxValue'] ?? null)) {
+            $values['max'] = (float) $props['maxValue'];
+        }
+
+        if ($behavior === NativeBehavior::Progress) {
+            if ($nativeBackground !== null) {
+                $values['trackColor'] = $nativeBackground;
+            }
+            $filled = self::taggedElement($children, 'pam:progress-filled-track');
+            $fillColor = self::elementColor($filled);
+            if ($fillColor !== null) {
+                $values['fillColor'] = $fillColor;
+            }
+
+            return $values;
+        }
+
+        $track = self::taggedElement($children, 'pam:slider-track');
+        $filled = self::taggedElement($children, 'pam:slider-filled-track');
+        $thumb = self::taggedElement($children, 'pam:slider-thumb');
+        $trackColor = self::elementColor($track);
+        $fillColor = self::elementColor($filled);
+        $thumbColor = self::elementColor($thumb);
+        if ($trackColor !== null) {
+            $values['trackColor'] = $trackColor;
+        }
+        if ($fillColor !== null) {
+            $values['fillColor'] = $fillColor;
+        }
+        if ($thumbColor !== null) {
+            $values['thumbColor'] = $thumbColor;
+        }
+
+        $orientation = $props['orientation'] ?? 1;
+        $trackDimension = $orientation === 2
+            ? PropKey::Width
+            : PropKey::Height;
+        $thumbDimension = $orientation === 2
+            ? PropKey::Height
+            : PropKey::Width;
+        $trackThickness = is_numeric($props['sliderTrackHeight'] ?? null)
+            ? (float) $props['sliderTrackHeight']
+            : self::elementNumber($track, $trackDimension);
+        $thumbSize = is_numeric($props['thumbSize'] ?? null)
+            ? (float) $props['thumbSize']
+            : self::elementNumber($thumb, $thumbDimension);
+        if ($trackThickness !== null) {
+            $values['trackThickness'] = $trackThickness;
+        }
+        if ($thumbSize !== null) {
+            $values['thumbSize'] = $thumbSize;
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param list<Element> $children
+     */
+    private static function taggedElement(
+        array $children,
+        string $tag,
+    ): ?Element {
+        foreach ($children as $child) {
+            if (($child->properties()[PropKey::Value->value] ?? null) === $tag) {
+                return $child;
+            }
+            $match = self::taggedElement($child->children(), $tag);
+            if ($match !== null) {
+                return $match;
+            }
+        }
+
+        return null;
+    }
+
+    private static function elementColor(?Element $element): ?int
+    {
+        $color = $element?->properties()[PropKey::BackgroundColor->value] ?? null;
+
+        return is_int($color) ? $color : null;
+    }
+
+    private static function elementNumber(
+        ?Element $element,
+        PropKey $property,
+    ): ?float {
+        $value = $element?->properties()[$property->value] ?? null;
+
+        return is_int($value) || is_float($value) ? (float) $value : null;
+    }
+
+    private static function packedColor(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+        if (preg_match('/^#([0-9a-f]{3,8})$/Di', $value, $match) !== 1) {
+            return null;
+        }
+
+        $hex = strtolower($match[1]);
+        if (strlen($hex) === 3 || strlen($hex) === 4) {
+            $hex = implode(
+                '',
+                array_map(
+                    static fn (string $channel): string => $channel.$channel,
+                    str_split($hex),
+                ),
+            );
+        }
+        if (strlen($hex) === 6) {
+            return 0xff000000 | hexdec($hex);
+        }
+        if (strlen($hex) !== 8) {
+            return null;
+        }
+
+        $redGreenBlue = substr($hex, 0, 6);
+        $alpha = substr($hex, 6, 2);
+
+        return (hexdec($alpha) << 24) | hexdec($redGreenBlue);
     }
 
     /**

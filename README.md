@@ -143,6 +143,34 @@ two-step flow for `datetime`. It supports `minimumDate`, `maximumDate`,
 component. A child trigger can contain any PAM layout; the native host owns the
 tap so no PHP event is needed merely to open the picker.
 
+Range controls preserve their authored component anatomy while Android updates
+it locally:
+
+```xml
+<Progress value="{{ $progress }}">
+    <ProgressFilledTrack class="bg-emerald-600" />
+</Progress>
+<Slider
+    value="{{ $progress }}"
+    minValue="0"
+    maxValue="100"
+    step="5"
+    on:change="updateProgress"
+>
+    <SliderTrack class="h-2">
+        <SliderFilledTrack class="bg-emerald-600" />
+    </SliderTrack>
+    <SliderThumb class="h-5 w-5" />
+</Slider>
+```
+
+`SliderTrack`, `SliderFilledTrack`, `SliderThumb` and
+`ProgressFilledTrack` retain their utility classes and custom content.
+Dragging, snapping, reversal, horizontal/vertical positioning and filled-track
+scaling happen on the UI thread. `Switch` likewise uses the optimized PAM host
+with `sm`, `md` and `lg` sizes, controlled or default state, custom off/on
+track colors, thumb colors, keyboard activation and native switch semantics.
+
 Application utility classes use the same mobile compiler as the captured
 component recipes:
 

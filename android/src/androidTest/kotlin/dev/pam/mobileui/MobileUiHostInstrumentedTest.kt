@@ -163,8 +163,157 @@ class MobileUiHostInstrumentedTest {
                     null,
                 ),
             )
-            assertEquals("45.0", payloads.single().decodeToString())
+            assertEquals("45", payloads.single().decodeToString())
             host.release()
+        }
+    }
+
+    @Test
+    fun sliderAndProgressMoveAuthoredAnatomyWithoutPhpFrames() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val slider = MobileUiHost(context) { _, _ -> }
+            slider.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(5),
+                    "value" to WireValue.Decimal(25.0),
+                    "minValue" to WireValue.Decimal(0.0),
+                    "maxValue" to WireValue.Decimal(100.0),
+                    "isReversed" to WireValue.Flag(true),
+                    "trackThickness" to WireValue.Decimal(6.0),
+                    "thumbSize" to WireValue.Decimal(16.0),
+                ),
+            )
+            val trackHeight = dp(slider, 6f)
+            val thumbSize = dp(slider, 16f)
+            val track = FrameLayout(context).apply {
+                tag = "pam:slider-track"
+                layoutParams = FrameLayout.LayoutParams(400, trackHeight).apply {
+                    topMargin = 50 - trackHeight / 2
+                }
+            }
+            val filled = View(context).apply {
+                tag = "pam:slider-filled-track"
+                layoutParams = FrameLayout.LayoutParams(400, trackHeight)
+            }
+            track.addView(filled)
+            val thumb = View(context).apply {
+                tag = "pam:slider-thumb"
+                layoutParams = FrameLayout.LayoutParams(thumbSize, thumbSize).apply {
+                    topMargin = 50 - thumbSize / 2
+                }
+            }
+            slider.addView(track)
+            slider.addView(thumb)
+            slider.layout(0, 0, 400, 100)
+
+            assertEquals(0.25f, filled.scaleX, 0.001f)
+            assertEquals(400f, filled.pivotX, 0.001f)
+            assertTrue(thumb.translationX > 250f)
+
+            slider.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(5),
+                    "value" to WireValue.Decimal(75.0),
+                    "min" to WireValue.Decimal(0.0),
+                    "max" to WireValue.Decimal(100.0),
+                    "isReversed" to WireValue.Flag(true),
+                ),
+            )
+            assertEquals(0.75f, filled.scaleX, 0.001f)
+            assertTrue(thumb.translationX < 150f)
+
+            val progress = MobileUiHost(context) { _, _ -> }
+            progress.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(15),
+                    "value" to WireValue.Decimal(25.0),
+                    "min" to WireValue.Decimal(0.0),
+                    "max" to WireValue.Decimal(100.0),
+                    "orientation" to WireValue.Integer(2),
+                ),
+            )
+            val progressFill = View(context).apply {
+                tag = "pam:progress-filled-track"
+                layoutParams = FrameLayout.LayoutParams(24, 400)
+            }
+            progress.addView(progressFill)
+            progress.layout(0, 0, 24, 400)
+
+            val progressInfo = AccessibilityNodeInfo.obtain()
+            progress.onInitializeAccessibilityNodeInfo(progressInfo)
+            assertEquals(0.25f, progressFill.scaleY, 0.001f)
+            assertEquals(400f, progressFill.pivotY, 0.001f)
+            assertEquals("android.widget.ProgressBar", progressInfo.className)
+            assertEquals("25%", progress.stateDescription)
+
+            slider.release()
+            progress.release()
+            progressInfo.recycle()
+        }
+    }
+
+    @Test
+    fun switchUsesNativeUiThreadStateColorsKeyboardAndAccessibility() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.TOGGLE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(27),
+                    "defaultValue" to WireValue.Flag(true),
+                    "trackOffColor" to WireValue.Integer(0xffd4d4d4),
+                    "trackOnColor" to WireValue.Integer(0xff525252),
+                    "thumbColor" to WireValue.Integer(0xfffafafa),
+                ),
+            )
+            host.layout(0, 0, dp(host, 52f), dp(host, 48f))
+
+            val info = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("android.widget.Switch", info.className)
+            assertTrue(info.isCheckable)
+            assertTrue(info.isChecked)
+            assertEquals("On", host.stateDescription)
+
+            assertTrue(host.performClick())
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals(listOf("0"), payloads.map(ByteArray::decodeToString))
+            assertTrue(!info.isChecked)
+            assertEquals("Off", host.stateDescription)
+
+            assertTrue(
+                host.dispatchKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SPACE),
+                ),
+            )
+            assertEquals(listOf("0", "1"), payloads.map(ByteArray::decodeToString))
+
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(27),
+                    "checked" to WireValue.Flag(true),
+                    "isDisabled" to WireValue.Flag(true),
+                    "isInvalid" to WireValue.Flag(true),
+                    "errorMessage" to WireValue.Text("Required setting"),
+                ),
+            )
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertTrue(!info.isEnabled)
+            assertTrue(info.isContentInvalid)
+            assertEquals("Required setting", info.error)
+            assertTrue(
+                info.actionList.none {
+                    it.id == AccessibilityNodeInfo.ACTION_CLICK
+                },
+            )
+            assertTrue(host.performClick())
+            assertEquals(2, payloads.size)
+
+            host.release()
+            info.recycle()
         }
     }
 

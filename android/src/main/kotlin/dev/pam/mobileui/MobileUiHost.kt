@@ -51,6 +51,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.round
+import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 internal class MobileUiHost(
@@ -83,7 +84,8 @@ internal class MobileUiHost(
         PORTAL(23),
         ACCORDION_GROUP(24),
         CHECKBOX_GROUP(25),
-        RADIO_GROUP(26);
+        RADIO_GROUP(26),
+        SWITCH(27);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -131,6 +133,10 @@ internal class MobileUiHost(
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
+    private val switchTrackPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val switchThumbPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        setShadowLayer(1.5f * density, 0f, density, 0x55000000)
+    }
     private var behavior = Behavior.CONTAINER
     private var component = 0
     private var expanded = false
@@ -142,6 +148,8 @@ internal class MobileUiHost(
     private var minimum = 0.0
     private var maximum = 100.0
     private var step = 1.0
+    private var trackThickness = 6.0
+    private var sliderThumbSize = 16.0
     private var orientation = 1
     private var reversed = false
     private var anchor = 1
@@ -167,6 +175,11 @@ internal class MobileUiHost(
     private var readOnly = false
     private var invalid = false
     private var accessibilityErrorMessage: String? = null
+    private var switchTrackOffColor = Color.rgb(212, 212, 212)
+    private var switchTrackOnColor = Color.rgb(82, 82, 82)
+    private var switchThumbColor = Color.rgb(250, 250, 250)
+    private var switchActiveThumbColor = Color.rgb(250, 250, 250)
+    private var switchVisualProgress = 0f
     private var collapsible = true
     private var calendarLocale = Locale.getDefault()
     private var calendarSelectedTextColor = Color.WHITE
@@ -258,6 +271,8 @@ internal class MobileUiHost(
     private var pendingDismiss: Runnable? = null
     private var previousFocus: View? = null
     private var customStateDescription: String? = null
+    private var switchAnimator: ValueAnimator? = null
+    private var sliderTouchActive = false
     private val scaleDetector = ScaleGestureDetector(
         context,
         object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -307,17 +322,26 @@ internal class MobileUiHost(
         }
         val previousBehavior = behavior
         val previousExpanded = expanded
+        val previousChecked = checked
         val previousSelected = selected
         val previousOpen = open
         val previousComponentMode = componentMode
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         component = properties.integer("component", component.toLong()).toInt()
         expanded = properties.flag("expanded", properties.flag("isExpanded", expanded))
+        val defaultChecked = if (behavior == Behavior.SWITCH) {
+            properties.flag(
+                "value",
+                properties.flag("defaultValue", checked),
+            )
+        } else {
+            properties.flag("defaultIsChecked", checked)
+        }
         checked = properties.flag(
             "checked",
             properties.flag(
                 "isChecked",
-                properties.flag("defaultIsChecked", checked),
+                defaultChecked,
             ),
         )
         indeterminate = properties.flag(
@@ -326,10 +350,31 @@ internal class MobileUiHost(
         )
         selected = properties.flag("selected", properties.flag("isSelected", selected))
         open = properties.flag("open", properties.flag("isOpen", open))
-        value = properties.decimal("value", value)
-        minimum = properties.decimal("min", minimum)
-        maximum = max(minimum + 0.000_001, properties.decimal("max", maximum))
+        if (behavior != Behavior.SWITCH) {
+            value = properties.decimal(
+                "value",
+                properties.decimal("defaultValue", value),
+            )
+        }
+        minimum = properties.decimal(
+            "min",
+            properties.decimal("minValue", minimum),
+        )
+        maximum = max(
+            minimum + 0.000_001,
+            properties.decimal(
+                "max",
+                properties.decimal("maxValue", maximum),
+            ),
+        )
         step = properties.decimal("step", step).coerceAtLeast(0.000_001)
+        value = snapped(value)
+        trackThickness = properties.decimal(
+            "trackThickness",
+            properties.decimal("sliderTrackHeight", trackThickness),
+        ).coerceAtLeast(1.0)
+        sliderThumbSize = properties.decimal("thumbSize", sliderThumbSize)
+            .coerceAtLeast(1.0)
         orientation = properties.integer("orientation", orientation.toLong()).toInt()
         reversed = properties.flag("isReversed", properties.flag("reversed", reversed))
         anchor = properties.integer("anchor", anchor.toLong()).toInt()
@@ -377,6 +422,22 @@ internal class MobileUiHost(
         invalid = properties.flag("invalid", properties.flag("isInvalid", false))
         accessibilityErrorMessage = properties.text("accessibilityErrorMessage")
             ?: properties.text("errorMessage")
+        switchTrackOffColor = properties.integer(
+            "trackOffColor",
+            switchTrackOffColor.toLong(),
+        ).toInt()
+        switchTrackOnColor = properties.integer(
+            "trackOnColor",
+            switchTrackOnColor.toLong(),
+        ).toInt()
+        switchThumbColor = properties.integer(
+            "thumbColor",
+            switchThumbColor.toLong(),
+        ).toInt()
+        switchActiveThumbColor = properties.integer(
+            "activeThumbColor",
+            switchThumbColor.toLong(),
+        ).toInt()
         collapsible = properties.flag(
             "collapsible",
             properties.flag("isCollapsible", true),
@@ -386,7 +447,10 @@ internal class MobileUiHost(
             ?.takeUnless { it.language.isEmpty() }
             ?: Locale.getDefault()
         updateCalendarSelection(properties, previousComponentMode != componentMode)
-        isEnabled = !properties.flag("disabled", false)
+        isEnabled = !properties.flag(
+            "disabled",
+            properties.flag("isDisabled", false),
+        )
         if ((!isEnabled || behavior != Behavior.DATE_TIME_PICKER) && activePickerDialog != null) {
             activePickerDialog?.dismiss()
             activePickerDialog = null
@@ -436,6 +500,15 @@ internal class MobileUiHost(
         if (previousExpanded != expanded) {
             animateExpanded()
         }
+        if (behavior == Behavior.SWITCH) {
+            if (previousBehavior != behavior) {
+                switchAnimator?.cancel()
+                switchVisualProgress = if (checked) 1f else 0f
+            } else if (previousChecked != checked) {
+                animateSwitch()
+            }
+            updateSwitchAccessibility()
+        }
         if (previousSelected != selected && behavior == Behavior.TABS) {
             sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
         }
@@ -443,6 +516,8 @@ internal class MobileUiHost(
         applyComponentDefaults()
         applySelectionVisualState()
         updateSelectionAccessibility()
+        applyRangeVisualState()
+        updateRangeAccessibility()
         updateCalendarTitle()
         invalidate()
     }
@@ -457,6 +532,9 @@ internal class MobileUiHost(
             applySelectionVisualState()
             updateSelectionAccessibility()
         }
+        if (behavior == Behavior.SLIDER || behavior == Behavior.PROGRESS) {
+            post(::applyRangeVisualState)
+        }
         if (behavior == Behavior.CALENDAR) {
             post(::updateCalendarTitle)
         }
@@ -465,8 +543,6 @@ internal class MobileUiHost(
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
         when (behavior) {
-            Behavior.SLIDER -> drawSlider(canvas)
-            Behavior.PROGRESS -> drawProgress(canvas)
             Behavior.CHECKBOX -> drawSelectionGlyph(canvas, radio = false)
             Behavior.RADIO -> drawSelectionGlyph(canvas, radio = true)
             Behavior.CALENDAR -> drawCalendar(canvas)
@@ -479,6 +555,7 @@ internal class MobileUiHost(
         when (behavior) {
             Behavior.CHECKBOX -> drawSelectionIndicator(canvas, radio = false)
             Behavior.RADIO -> drawSelectionIndicator(canvas, radio = true)
+            Behavior.SWITCH -> drawSwitch(canvas)
             else -> Unit
         }
     }
@@ -491,12 +568,23 @@ internal class MobileUiHost(
         bottom: Int,
     ) {
         super.onLayout(changed, left, top, right, bottom)
+        applyRangeVisualState()
         if (behavior.isAnchoredOverlay()) {
             positionAnchoredContent()
         }
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        if (
+            behavior == Behavior.SLIDER
+            && isEnabled
+            && !readOnly
+            && event.actionMasked == MotionEvent.ACTION_DOWN
+            && sliderTrackBounds().contains(event.x, event.y)
+        ) {
+            sliderTouchActive = true
+            return true
+        }
         if (behavior == Behavior.DATE_TIME_PICKER && isEnabled) {
             return true
         }
@@ -617,7 +705,11 @@ internal class MobileUiHost(
         info.isEnabled = isEnabled
         info.isSelected = selected
         info.isChecked = checked
-        info.isCheckable = behavior == Behavior.CHECKBOX || behavior == Behavior.RADIO
+        info.isCheckable = behavior in setOf(
+            Behavior.CHECKBOX,
+            Behavior.RADIO,
+            Behavior.SWITCH,
+        )
         if (info.isCheckable) {
             info.isClickable = isEnabled && !readOnly
             info.isContentInvalid = invalid
@@ -672,7 +764,7 @@ internal class MobileUiHost(
                 maximum.toFloat(),
                 value.toFloat(),
             )
-            if (behavior == Behavior.SLIDER) {
+            if (behavior == Behavior.SLIDER && isEnabled && !readOnly) {
                 info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
                 info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
                 if (orientation == 2) {
@@ -712,6 +804,7 @@ internal class MobileUiHost(
             Behavior.SLIDER -> "android.widget.SeekBar"
             Behavior.CHECKBOX -> "android.widget.CheckBox"
             Behavior.RADIO -> "android.widget.RadioButton"
+            Behavior.SWITCH -> "android.widget.Switch"
             Behavior.CHECKBOX_GROUP -> "android.view.ViewGroup"
             Behavior.RADIO_GROUP -> "android.widget.RadioGroup"
             Behavior.TABS -> "android.widget.TabWidget"
@@ -735,6 +828,15 @@ internal class MobileUiHost(
                 stateDescription = dateTimeValue
             }
         }
+        if (behavior == Behavior.SWITCH) {
+            info.className = "android.widget.Switch"
+            info.isClickable = isEnabled
+            if (isEnabled) {
+                info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
+            }
+        }
     }
 
     override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
@@ -746,7 +848,12 @@ internal class MobileUiHost(
             AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id,
             AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.id,
         )
-        if (behavior == Behavior.SLIDER && action in sliderActions) {
+        if (
+            behavior == Behavior.SLIDER
+            && isEnabled
+            && !readOnly
+            && action in sliderActions
+        ) {
             val positive = action in setOf(
                 AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id,
@@ -754,6 +861,7 @@ internal class MobileUiHost(
             )
             val direction = if (positive) 1.0 else -1.0
             value = snapped(value + direction * step)
+            applyRangeVisualState()
             emitValue()
             invalidate()
             return true
@@ -804,6 +912,13 @@ internal class MobileUiHost(
             setAccordionExpanded(requested)
             return true
         }
+        if (
+            behavior == Behavior.SWITCH
+            && action == AccessibilityNodeInfo.ACTION_CLICK
+            && isEnabled
+        ) {
+            return performClick()
+        }
 
         return super.performAccessibilityAction(action, arguments)
     }
@@ -816,9 +931,9 @@ internal class MobileUiHost(
             }
         }
         if (
-            behavior in setOf(Behavior.CHECKBOX, Behavior.RADIO)
+            behavior in setOf(Behavior.CHECKBOX, Behavior.RADIO, Behavior.SWITCH)
             && isEnabled
-            && !readOnly
+            && (behavior == Behavior.SWITCH || !readOnly)
             && event.action == KeyEvent.ACTION_UP
             && event.keyCode in setOf(
                 KeyEvent.KEYCODE_SPACE,
@@ -831,6 +946,8 @@ internal class MobileUiHost(
         }
         if (
             behavior == Behavior.SLIDER
+            && isEnabled
+            && !readOnly
             && event.action == KeyEvent.ACTION_DOWN
             && event.keyCode in setOf(
                 KeyEvent.KEYCODE_DPAD_LEFT,
@@ -842,6 +959,7 @@ internal class MobileUiHost(
             val positive = event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
                 || event.keyCode == KeyEvent.KEYCODE_DPAD_UP
             value = snapped(value + if (positive) step else -step)
+            applyRangeVisualState()
             emitValue()
             invalidate()
             return true
@@ -858,6 +976,9 @@ internal class MobileUiHost(
         activePickerDialog?.dismiss()
         activePickerDialog = null
         accordionTouchActive = false
+        sliderTouchActive = false
+        switchAnimator?.cancel()
+        switchAnimator = null
         animate().cancel()
         setOnTouchListener(null)
         setOnClickListener(null)
@@ -873,6 +994,10 @@ internal class MobileUiHost(
     }
 
     private fun installBehavior() {
+        setLayerType(
+            if (behavior == Behavior.SWITCH) LAYER_TYPE_SOFTWARE else LAYER_TYPE_NONE,
+            null,
+        )
         setOnTouchListener(
             when (behavior) {
                 Behavior.SLIDER -> sliderTouchListener()
@@ -898,6 +1023,8 @@ internal class MobileUiHost(
             behavior == Behavior.RADIO
         ) {
             setOnClickListener { toggleSelection() }
+        } else if (behavior == Behavior.SWITCH) {
+            setOnClickListener { toggleSwitch() }
         } else if (behavior == Behavior.ACCORDION) {
             setOnClickListener {
                 if (isEnabled) {
@@ -936,6 +1063,7 @@ internal class MobileUiHost(
             Behavior.SLIDER,
             Behavior.CHECKBOX,
             Behavior.RADIO,
+            Behavior.SWITCH,
             Behavior.TABS,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
@@ -946,6 +1074,9 @@ internal class MobileUiHost(
         if (interactive) {
             minimumWidth = max(minimumWidth, (48f * density).toInt())
             minimumHeight = max(minimumHeight, (48f * density).toInt())
+        }
+        if (behavior == Behavior.SWITCH) {
+            minimumWidth = max(minimumWidth, (SWITCH_TRACK_WIDTH_DP * density).toInt())
         }
         importantForAccessibility = when {
             behavior in setOf(
@@ -1086,6 +1217,43 @@ internal class MobileUiHost(
         }
     }
 
+    private fun toggleSwitch() {
+        if (!isEnabled) return
+        checked = !checked
+        isActivated = checked
+        animateSwitch()
+        updateSwitchAccessibility()
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        emitter.emit(NativeViewEventKind.TOGGLE, checked.toEventPayload())
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED)
+    }
+
+    private fun animateSwitch() {
+        val target = if (checked) 1f else 0f
+        switchAnimator?.cancel()
+        if (!animationsEnabled()) {
+            switchVisualProgress = target
+            invalidate()
+            return
+        }
+        switchAnimator = ValueAnimator.ofFloat(switchVisualProgress, target).apply {
+            duration = SWITCH_ANIMATION_DURATION_MILLIS
+            addUpdateListener { animation ->
+                switchVisualProgress = animation.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    private fun updateSwitchAccessibility() {
+        if (behavior != Behavior.SWITCH) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            stateDescription = customStateDescription
+                ?: if (checked) "On" else "Off"
+        }
+    }
+
     private fun toggleSelection() {
         if (!isEnabled || readOnly) return
         if (behavior == Behavior.RADIO) {
@@ -1223,6 +1391,180 @@ internal class MobileUiHost(
         }
     }
 
+    private fun applyRangeVisualState() {
+        if (behavior != Behavior.SLIDER && behavior != Behavior.PROGRESS) return
+        val progress = rangeProgress()
+        val filledTag = if (behavior == Behavior.SLIDER) {
+            SLIDER_FILLED_TRACK_TAG
+        } else {
+            PROGRESS_FILLED_TRACK_TAG
+        }
+        val filled = findTaggedDescendant(this, filledTag)
+        val filledParent = filled?.parent as? ViewGroup
+        if (
+            filled != null
+            && filledParent != null
+            && filledParent.width > 0
+            && filledParent.height > 0
+        ) {
+            filled.translationX = 0f
+            filled.translationY = 0f
+            filled.layout(0, 0, filledParent.width, filledParent.height)
+            if (orientation == 2) {
+                filled.pivotX = 0f
+                filled.pivotY = if (
+                    behavior == Behavior.SLIDER && reversed
+                ) {
+                    0f
+                } else {
+                    filledParent.height.toFloat()
+                }
+                filled.scaleX = 1f
+                filled.scaleY = progress
+            } else {
+                filled.pivotX = if (
+                    behavior == Behavior.SLIDER && reversed
+                ) {
+                    filledParent.width.toFloat()
+                } else {
+                    0f
+                }
+                filled.pivotY = 0f
+                filled.scaleX = progress
+                filled.scaleY = 1f
+            }
+            filled.importantForAccessibility =
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        }
+
+        if (behavior != Behavior.SLIDER) return
+        val track = findTaggedDescendant(this, SLIDER_TRACK_TAG)
+        if (track != null) {
+            track.importantForAccessibility =
+                IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            if (orientation == 2 && track.width > 0) {
+                track.scaleX = (trackThickness * density / track.width).toFloat()
+                track.scaleY = 1f
+                track.pivotX = track.width / 2f
+            } else if (orientation != 2 && track.height > 0) {
+                track.scaleX = 1f
+                track.scaleY = (trackThickness * density / track.height).toFloat()
+                track.pivotY = track.height / 2f
+            }
+        }
+        val thumb = findTaggedDescendant(this, SLIDER_THUMB_TAG) ?: return
+        thumb.importantForAccessibility =
+            IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        thumb.translationX = 0f
+        thumb.translationY = 0f
+        if (thumb.width <= 0 || thumb.height <= 0) return
+        val authoredThumbSize = max(thumb.width, thumb.height).toFloat()
+        val thumbScale = (sliderThumbSize * density / authoredThumbSize).toFloat()
+        thumb.scaleX = thumbScale
+        thumb.scaleY = thumbScale
+        thumb.pivotX = thumb.width / 2f
+        thumb.pivotY = thumb.height / 2f
+        val trackBounds = sliderTrackBounds(includeHitSlop = false)
+        val thumbBounds = descendantBounds(thumb)
+        val position = if (reversed) 1f - progress else progress
+        if (orientation == 2) {
+            val targetY = trackBounds.bottom - trackBounds.height() * position
+            thumb.translationY = targetY - thumbBounds.centerY()
+        } else {
+            val targetX = trackBounds.left + trackBounds.width() * position
+            thumb.translationX = targetX - thumbBounds.centerX()
+        }
+    }
+
+    private fun rangeProgress(): Float =
+        ((value - minimum) / (maximum - minimum))
+            .coerceIn(0.0, 1.0)
+            .toFloat()
+
+    private fun updateRangeAccessibility() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        stateDescription = when (behavior) {
+            Behavior.PROGRESS -> "${(rangeProgress() * 100f).roundToInt()}%"
+            Behavior.SLIDER -> customStateDescription ?: formatRangeValue(value)
+            else -> stateDescription
+        }
+    }
+
+    private fun formatRangeValue(current: Double): String =
+        if (current == round(current)) {
+            current.toLong().toString()
+        } else {
+            current.toString()
+        }
+
+    private fun sliderTrackBounds(includeHitSlop: Boolean = true): RectF {
+        val track = findTaggedDescendant(this, SLIDER_TRACK_TAG)
+        val bounds = if (track == null || track.width <= 0 || track.height <= 0) {
+            RectF(0f, 0f, width.toFloat(), height.toFloat())
+        } else {
+            descendantBounds(track)
+        }
+        if (includeHitSlop) {
+            val minimumTarget = 48f * density
+            val horizontalInset = max(0f, (minimumTarget - bounds.width()) / 2f)
+            val verticalInset = max(0f, (minimumTarget - bounds.height()) / 2f)
+            bounds.inset(-horizontalInset, -verticalInset)
+        }
+
+        return bounds
+    }
+
+    private fun descendantBounds(descendant: View): RectF {
+        val bounds = Rect(0, 0, descendant.width, descendant.height)
+        offsetDescendantRectToMyCoords(descendant, bounds)
+        return RectF(bounds)
+    }
+
+    private fun drawSwitch(canvas: Canvas) {
+        val trackWidth = minOf(width.toFloat(), SWITCH_TRACK_WIDTH_DP * density)
+        val trackHeight = minOf(height.toFloat(), SWITCH_TRACK_HEIGHT_DP * density)
+        if (trackWidth <= 0f || trackHeight <= 0f) return
+        val left = (width - trackWidth) / 2f
+        val top = (height - trackHeight) / 2f
+        val track = RectF(left, top, left + trackWidth, top + trackHeight)
+        val radius = trackHeight / 2f
+        switchTrackPaint.color = blendColor(
+            switchTrackOffColor,
+            switchTrackOnColor,
+            switchVisualProgress,
+        )
+        canvas.drawRoundRect(track, radius, radius, switchTrackPaint)
+
+        val inset = SWITCH_THUMB_INSET_DP * density
+        val thumbRadius = max(0f, (trackHeight - inset * 2f) / 2f)
+        val startX = track.left + inset + thumbRadius
+        val endX = track.right - inset - thumbRadius
+        val centerX = startX + (endX - startX) * switchVisualProgress
+        switchThumbPaint.color = blendColor(
+            switchThumbColor,
+            switchActiveThumbColor,
+            switchVisualProgress,
+        )
+        canvas.drawCircle(centerX, track.centerY(), thumbRadius, switchThumbPaint)
+    }
+
+    private fun blendColor(from: Int, to: Int, progress: Float): Int {
+        val amount = progress.coerceIn(0f, 1f)
+        val alpha = Color.alpha(from) + (
+            (Color.alpha(to) - Color.alpha(from)) * amount
+        ).roundToInt()
+        val red = Color.red(from) + (
+            (Color.red(to) - Color.red(from)) * amount
+        ).roundToInt()
+        val green = Color.green(from) + (
+            (Color.green(to) - Color.green(from)) * amount
+        ).roundToInt()
+        val blue = Color.blue(from) + (
+            (Color.blue(to) - Color.blue(from)) * amount
+        ).roundToInt()
+        return Color.argb(alpha, red, green, blue)
+    }
+
     private fun animateEntrance() {
         if (!open) return
         if (!behavior.isOverlay() && behavior != Behavior.TOAST) return
@@ -1258,29 +1600,50 @@ internal class MobileUiHost(
 
     private fun sliderTouchListener(): OnTouchListener =
         OnTouchListener { _, event ->
-            if (!isEnabled || width <= 0 || height <= 0) return@OnTouchListener false
+            if (!isEnabled || readOnly || width <= 0 || height <= 0) {
+                return@OnTouchListener false
+            }
+            val hitBounds = sliderTrackBounds()
+            val trackBounds = sliderTrackBounds(includeHitSlop = false)
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_MOVE,
                 -> {
+                    if (
+                        event.actionMasked == MotionEvent.ACTION_DOWN
+                        && !hitBounds.contains(event.x, event.y)
+                    ) {
+                        sliderTouchActive = false
+                        return@OnTouchListener false
+                    }
+                    sliderTouchActive = true
                     var progress = if (orientation == 2) {
-                        1.0 - event.y / height.toDouble()
+                        1.0 - (event.y - trackBounds.top).toDouble() /
+                            trackBounds.height().coerceAtLeast(1f).toDouble()
                     } else {
-                        event.x / width.toDouble()
+                        (event.x - trackBounds.left).toDouble() /
+                            trackBounds.width().coerceAtLeast(1f).toDouble()
                     }
                     progress = progress.coerceIn(0.0, 1.0)
                     if (reversed) progress = 1.0 - progress
                     value = snapped(minimum + (maximum - minimum) * progress)
+                    applyRangeVisualState()
                     invalidate()
                     true
                 }
                 MotionEvent.ACTION_UP -> {
+                    if (!sliderTouchActive) return@OnTouchListener false
+                    sliderTouchActive = false
                     performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     emitValue()
                     performClick()
                     true
                 }
-                MotionEvent.ACTION_CANCEL -> true
+                MotionEvent.ACTION_CANCEL -> {
+                    val claimed = sliderTouchActive
+                    sliderTouchActive = false
+                    claimed
+                }
                 else -> false
             }
         }
@@ -2065,64 +2428,6 @@ internal class MobileUiHost(
 
     private fun animationsEnabled(): Boolean = ValueAnimator.areAnimatorsEnabled()
 
-    private fun drawSlider(canvas: Canvas) {
-        val radius = 2f * density
-        var progress = ((value - minimum) / (maximum - minimum)).coerceIn(0.0, 1.0).toFloat()
-        if (reversed) progress = 1f - progress
-        if (orientation == 2) {
-            val centerX = width / 2f
-            val end = height * (1f - progress)
-            canvas.drawRoundRect(
-                centerX - radius,
-                0f,
-                centerX + radius,
-                height.toFloat(),
-                radius,
-                radius,
-                trackPaint,
-            )
-            canvas.drawRoundRect(
-                centerX - radius,
-                end,
-                centerX + radius,
-                height.toFloat(),
-                radius,
-                radius,
-                fillPaint,
-            )
-            canvas.drawCircle(centerX, end, 10f * density, fillPaint)
-        } else {
-            val centerY = height / 2f
-            val end = width * progress
-            canvas.drawRoundRect(
-                0f,
-                centerY - radius,
-                width.toFloat(),
-                centerY + radius,
-                radius,
-                radius,
-                trackPaint,
-            )
-            canvas.drawRoundRect(
-                0f,
-                centerY - radius,
-                end,
-                centerY + radius,
-                radius,
-                radius,
-                fillPaint,
-            )
-            canvas.drawCircle(end, centerY, 10f * density, fillPaint)
-        }
-    }
-
-    private fun drawProgress(canvas: Canvas) {
-        val progress = ((value - minimum) / (maximum - minimum)).coerceIn(0.0, 1.0).toFloat()
-        val radius = height / 2f
-        canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), radius, radius, trackPaint)
-        canvas.drawRoundRect(0f, 0f, width * progress, height.toFloat(), radius, radius, fillPaint)
-    }
-
     private fun drawSelectionIndicator(canvas: Canvas, radio: Boolean) {
         val bounds = selectionIndicatorBounds()
         if (bounds.width() <= 0f || bounds.height() <= 0f) return
@@ -2461,11 +2766,10 @@ internal class MobileUiHost(
     private fun emitValue() {
         emitter.emit(
             NativeViewEventKind.CHANGE,
-            value.toString().encodeToByteArray(),
+            formatRangeValue(value).encodeToByteArray(),
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            stateDescription = value.toString()
-        }
+        updateRangeAccessibility()
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
     }
 
     private fun emitDismiss() {
@@ -2551,6 +2855,14 @@ internal class MobileUiHost(
         const val SELECTION_INDICATOR_TAG = "pam:selection-indicator"
         const val SELECTION_ICON_TAG = "pam:selection-icon"
         const val SELECTION_FORCE_ICON_TAG = "pam:selection-icon-force"
+        const val SLIDER_TRACK_TAG = "pam:slider-track"
+        const val SLIDER_FILLED_TRACK_TAG = "pam:slider-filled-track"
+        const val SLIDER_THUMB_TAG = "pam:slider-thumb"
+        const val PROGRESS_FILLED_TRACK_TAG = "pam:progress-filled-track"
+        const val SWITCH_TRACK_WIDTH_DP = 52f
+        const val SWITCH_TRACK_HEIGHT_DP = 32f
+        const val SWITCH_THUMB_INSET_DP = 2f
+        const val SWITCH_ANIMATION_DURATION_MILLIS = 160L
         const val MIN_TIME_ZONE_OFFSET_MINUTES = -18 * 60
         const val MAX_TIME_ZONE_OFFSET_MINUTES = 18 * 60
         const val SECONDS_PER_MINUTE = 60

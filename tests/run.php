@@ -45,6 +45,8 @@ use Pam\MobileUi\Component\Popover;
 use Pam\MobileUi\Component\PopoverContent;
 use Pam\MobileUi\Component\PromptInput;
 use Pam\MobileUi\Component\PromptInputTextarea;
+use Pam\MobileUi\Component\Progress;
+use Pam\MobileUi\Component\ProgressFilledTrack;
 use Pam\MobileUi\Component\Radio;
 use Pam\MobileUi\Component\RadioGroup;
 use Pam\MobileUi\Component\RadioIcon;
@@ -56,6 +58,8 @@ use Pam\MobileUi\Component\SelectItem;
 use Pam\MobileUi\Component\SelectPortal;
 use Pam\MobileUi\Component\SelectTrigger;
 use Pam\MobileUi\Component\Slider;
+use Pam\MobileUi\Component\SliderFilledTrack;
+use Pam\MobileUi\Component\SliderThumb;
 use Pam\MobileUi\Component\SliderTrack;
 use Pam\MobileUi\Component\Tabs;
 use Pam\MobileUi\Component\TabsContent;
@@ -376,6 +380,112 @@ $assert(
 $assert(
     isset($slider->events()[\Pam\Native\EventKind::Change->value]),
     'Typed native hosts must preserve semantic change events.',
+);
+$authoredSlider = Slider::make(
+    [
+        'defaultValue' => 30.0,
+        'minValue' => 10.0,
+        'maxValue' => 90.0,
+        'sliderTrackHeight' => 8.0,
+        'thumbSize' => 20.0,
+    ],
+    SliderTrack::make(SliderFilledTrack::make()),
+    SliderThumb::make(),
+)->toElement();
+$authoredSliderNative = $authoredSlider->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$authoredSliderTrack = $authoredSlider->children()[0] ?? null;
+$authoredSliderFill = $authoredSliderTrack?->children()[0] ?? null;
+$authoredSliderThumb = $authoredSlider->children()[1] ?? null;
+if (
+    !$authoredSliderNative instanceof BinaryValue
+    || !$authoredSliderTrack instanceof \Pam\Native\Element
+    || !$authoredSliderFill instanceof \Pam\Native\Element
+    || !$authoredSliderThumb instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Slider must preserve its authored native anatomy.');
+}
+$authoredSliderProperties = Wire::decodeMap($authoredSliderNative->bytes);
+$assert(
+    $authoredSliderProperties['value'] === 30.0
+        && $authoredSliderProperties['min'] === 10.0
+        && $authoredSliderProperties['max'] === 90.0
+        && $authoredSliderProperties['trackThickness'] === 8.0
+        && $authoredSliderProperties['thumbSize'] === 20.0
+        && $authoredSliderTrack->properties()[PropKey::Value->value]
+            === 'pam:slider-track'
+        && $authoredSliderFill->properties()[PropKey::Value->value]
+            === 'pam:slider-filled-track'
+        && $authoredSliderThumb->properties()[PropKey::Value->value]
+            === 'pam:slider-thumb',
+    'Slider aliases, geometry and authored anatomy must reach the native UI thread.',
+);
+
+$progress = Progress::make(
+    [
+        'value' => 35.0,
+        'min' => 10.0,
+        'max' => 60.0,
+        'orientation' => Orientation::Vertical,
+    ],
+    ProgressFilledTrack::make(),
+)->toElement();
+$progressNative = $progress->properties()[PropKey::HostProperties->value] ?? null;
+$progressFill = $progress->children()[0] ?? null;
+if (
+    !$progressNative instanceof BinaryValue
+    || !$progressFill instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('Progress must preserve its authored filled track.');
+}
+$progressProperties = Wire::decodeMap($progressNative->bytes);
+$assert(
+    $progressProperties['behavior'] === NativeBehavior::Progress->value
+        && $progressProperties['value'] === 35.0
+        && $progressProperties['min'] === 10.0
+        && $progressProperties['max'] === 60.0
+        && $progressProperties['orientation'] === Orientation::Vertical->value
+        && is_int($progressProperties['trackColor'])
+        && is_int($progressProperties['fillColor'])
+        && $progressFill->properties()[PropKey::Value->value]
+            === 'pam:progress-filled-track',
+    'Progress range, orientation and authored colors must stay packed and native.',
+);
+
+$switchToggles = [];
+$switch = SwitchControl::make([
+    'defaultValue' => true,
+    'size' => ComponentSize::Small,
+    'trackColor' => [
+        'false' => '#d4d4d4',
+        'true' => '#525252',
+    ],
+    'thumbColor' => '#fafafa',
+    'activeThumbColor' => '#ffffff',
+])->onToggle(static function (bool $checked) use (&$switchToggles): void {
+    $switchToggles[] = $checked;
+})->toElement();
+$switchNative = $switch->properties()[PropKey::HostProperties->value] ?? null;
+$switchToggle = $switch->events()[\Pam\Native\EventKind::Toggle->value] ?? null;
+if (!$switchNative instanceof BinaryValue || !$switchToggle instanceof Closure) {
+    throw new RuntimeException('Switch must provide packed native state and toggle semantics.');
+}
+$switchProperties = Wire::decodeMap($switchNative->bytes);
+$switchToggle(true);
+$assert(
+    $switch->kind() === NodeKind::CustomView
+        && $switch->properties()[PropKey::ScaleX->value] === 0.75
+        && $switch->properties()[PropKey::ScaleY->value] === 0.75
+        && $switch->properties()[PropKey::Checked->value] === true
+        && $switchProperties['behavior'] === NativeBehavior::SwitchControl->value
+        && $switchProperties['checked'] === true
+        && $switchProperties['trackOffColor'] === 0xffd4d4d4
+        && $switchProperties['trackOnColor'] === 0xff525252
+        && $switchProperties['thumbColor'] === 0xfffafafa
+        && $switchProperties['activeThumbColor'] === 0xffffffff
+        && $switchToggles === [true],
+    'Switch defaults, sizes, colors and semantic events must use its optimized host.',
 );
 
 $icon = CheckIcon::make()->toElement();
@@ -1153,6 +1263,65 @@ $assert(
     $templateButtonText->properties()[PropKey::TextColor->value]
         === Themes::light()->color(ColorToken::Foreground),
     'Tag syntax must propagate parent variants to styled anatomy children.',
+);
+$templateRange = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        <<<'PAM'
+<VStack>
+    <Slider defaultValue="30" minValue="10" maxValue="90" step="5">
+        <SliderTrack>
+            <SliderFilledTrack class="bg-emerald-600" />
+        </SliderTrack>
+        <SliderThumb />
+    </Slider>
+    <Progress value="40" orientation="vertical">
+        <ProgressFilledTrack />
+    </Progress>
+    <Switch
+        defaultValue="true"
+        trackOffColor="#d4d4d4"
+        trackOnColor="#525252"
+        thumbColor="#fafafa"
+    />
+</VStack>
+PAM,
+    ),
+    null,
+    [],
+);
+$templateSlider = $templateRange->children()[0] ?? null;
+$templateProgress = $templateRange->children()[1] ?? null;
+$templateSwitch = $templateRange->children()[2] ?? null;
+$templateSliderNative = $templateSlider?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$templateProgressNative = $templateProgress?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$templateSwitchNative = $templateSwitch?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+if (
+    !$templateSliderNative instanceof BinaryValue
+    || !$templateProgressNative instanceof BinaryValue
+    || !$templateSwitchNative instanceof BinaryValue
+) {
+    throw new RuntimeException('Range and switch tag syntax must render native hosts.');
+}
+$templateSliderProperties = Wire::decodeMap($templateSliderNative->bytes);
+$templateProgressProperties = Wire::decodeMap($templateProgressNative->bytes);
+$templateSwitchProperties = Wire::decodeMap($templateSwitchNative->bytes);
+$assert(
+    $templateSliderProperties['value'] === 30.0
+        && $templateSliderProperties['min'] === 10.0
+        && $templateSliderProperties['max'] === 90.0
+        && $templateSliderProperties['fillColor'] === 0xff059669
+        && $templateProgressProperties['orientation']
+            === Orientation::Vertical->value
+        && $templateSwitchProperties['checked'] === true
+        && $templateSwitchProperties['trackOffColor'] === 0xffd4d4d4
+        && $templateSwitchProperties['trackOnColor'] === 0xff525252,
+    'Tag users must receive the same packed native range and switch contract.',
 );
 $halfWidthClass = TemplateRegistry::classProperties('w-1/2');
 $assert(

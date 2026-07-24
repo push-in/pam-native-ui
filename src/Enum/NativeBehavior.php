@@ -32,4 +32,5 @@ enum NativeBehavior: int
     case AccordionGroup = 24;
     case CheckboxGroup = 25;
     case RadioGroup = 26;
+    case SwitchControl = 27;
 }
