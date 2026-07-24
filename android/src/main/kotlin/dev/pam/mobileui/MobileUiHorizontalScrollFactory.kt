@@ -122,6 +122,56 @@ internal class MobileUiHorizontalScrollView(
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
+    override fun measureChild(
+        child: View,
+        parentWidthMeasureSpec: Int,
+        parentHeightMeasureSpec: Int,
+    ) {
+        val parameters = child.layoutParams
+        child.measure(
+            horizontalChildMeasureSpec(
+                parentWidthMeasureSpec,
+                paddingLeft + paddingRight,
+                parameters.width,
+            ),
+            ViewGroup.getChildMeasureSpec(
+                parentHeightMeasureSpec,
+                paddingTop + paddingBottom,
+                parameters.height,
+            ),
+        )
+    }
+
+    override fun measureChildWithMargins(
+        child: View,
+        parentWidthMeasureSpec: Int,
+        widthUsed: Int,
+        parentHeightMeasureSpec: Int,
+        heightUsed: Int,
+    ) {
+        val parameters = child.layoutParams as ViewGroup.MarginLayoutParams
+        child.measure(
+            horizontalChildMeasureSpec(
+                parentWidthMeasureSpec,
+                paddingLeft
+                    + paddingRight
+                    + parameters.leftMargin
+                    + parameters.rightMargin
+                    + widthUsed,
+                parameters.width,
+            ),
+            ViewGroup.getChildMeasureSpec(
+                parentHeightMeasureSpec,
+                paddingTop
+                    + paddingBottom
+                    + parameters.topMargin
+                    + parameters.bottomMargin
+                    + heightUsed,
+                parameters.height,
+            ),
+        )
+    }
+
     override fun onLayout(
         changed: Boolean,
         left: Int,
@@ -180,6 +230,26 @@ internal class MobileUiHorizontalScrollView(
         }
         contentOffsetScheduled = true
         postOnAnimation(applyRequestedContentOffset)
+    }
+
+    private fun horizontalChildMeasureSpec(
+        parentWidthMeasureSpec: Int,
+        usedWidth: Int,
+        requestedWidth: Int,
+    ): Int {
+        if (requestedWidth >= 0) {
+            return View.MeasureSpec.makeMeasureSpec(
+                requestedWidth,
+                View.MeasureSpec.EXACTLY,
+            )
+        }
+
+        return View.MeasureSpec.makeMeasureSpec(
+            (
+                View.MeasureSpec.getSize(parentWidthMeasureSpec) - usedWidth
+            ).coerceAtLeast(0),
+            View.MeasureSpec.UNSPECIFIED,
+        )
     }
 }
 

@@ -1258,8 +1258,8 @@ internal class MobileUiHost(
                         ?.contains(event.x, event.y) == true
                     formLabelTouchActive = false
                     if (activate) {
-                        requestInputFocus()
                         performClick()
+                        requestInputFocus()
                     }
                     activate
                 }
