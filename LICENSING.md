@@ -17,9 +17,9 @@ On 2030-07-23, or on the fourth anniversary of the first public distribution of
 a specific version if earlier, that version becomes available under Apache
 License 2.0.
 
-The gluestack-ui reference material is MIT-licensed and remains governed by its
-own license. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and
-[`licenses/gluestack-ui-MIT.txt`](licenses/gluestack-ui-MIT.txt).
+Third-party reference material is MIT-licensed and remains governed by its own
+license. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and
+[`licenses/upstream-reference-MIT.txt`](licenses/upstream-reference-MIT.txt).
 
 This document is not legal advice. Pushin should have ownership, contributor
 agreements, the Additional Use Grant, and third-party attribution reviewed by
