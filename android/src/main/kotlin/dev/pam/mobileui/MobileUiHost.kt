@@ -443,7 +443,16 @@ internal class MobileUiHost(
     }
 
     override fun onDetachedFromWindow() {
-        removeAnchoredTouchDelegate()
+        // The catcher is a sibling in android.R.id.content. Removing that
+        // sibling while ViewGroup is iterating dispatchDetachedFromWindow()
+        // corrupts the platform child traversal on Android 16. Detach first,
+        // then remove it on the next main-loop turn.
+        val catcher = anchoredTouchCatcher
+        anchoredTouchCatcher = null
+        anchoredTouchInsideContent = false
+        catcher?.post {
+            (catcher.parent as? ViewGroup)?.removeView(catcher)
+        }
         super.onDetachedFromWindow()
     }
 
@@ -2219,6 +2228,7 @@ internal class MobileUiHost(
     }
 
     fun release() {
+        removeAnchoredTouchDelegate()
         animator?.cancel()
         animator = null
         pendingDismiss?.let(::removeCallbacks)

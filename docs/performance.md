@@ -30,6 +30,13 @@ Reference run:
 | RadioGroup exclusive selection | 9 µs | 13 µs | 17 µs | 103 µs |
 | Create, update and release host | 128 µs | 154 µs | 192 µs | 1,946 µs |
 
+The complete rerun on the same device passed on 2026-07-24. Its machine-readable
+result is checked in at
+[`benchmarks/android-sm-s918b-api36-2026-07-24.json`](../benchmarks/android-sm-s918b-api36-2026-07-24.json).
+All 24 measured operation families stayed below their enforced p99 budget;
+notable results include tabs at 42 µs, menu selection at 6 µs, sheet snapping
+at 504 µs, rich markdown updates at 127 µs, and table layout at 2 µs.
+
 The 10,000 slider moves emitted zero per-move bridge callbacks and one final
 semantic `CHANGE` event. This is a 10,000:1 reduction versus an implementation
 that sends every sampled movement across the language boundary; it is not a

@@ -1,0 +1,33 @@
+{
+    "device": "samsung SM-S918B",
+    "android": 36,
+    "build": "debug",
+    "samplesPerOperation": 10000,
+    "measurements": {
+        "hostUpdate": { "p50Us": 32, "p95Us": 58, "p99Us": 130, "maxUs": 223 },
+        "sliderMove": { "p50Us": 15, "p95Us": 26, "p99Us": 34, "maxUs": 95 },
+        "calendarDraw": { "p50Us": 1234, "p95Us": 1317, "p99Us": 1356, "maxUs": 2916 },
+        "dateTimeUpdate": { "p50Us": 33, "p95Us": 55, "p99Us": 81, "maxUs": 1546 },
+        "accordionToggle": { "p50Us": 9, "p95Us": 16, "p99Us": 26, "maxUs": 90 },
+        "checkboxToggle": { "p50Us": 6, "p95Us": 6, "p99Us": 7, "maxUs": 59 },
+        "radioSelection": { "p50Us": 7, "p95Us": 20, "p99Us": 22, "maxUs": 57 },
+        "progressUpdate": { "p50Us": 23, "p95Us": 36, "p99Us": 53, "maxUs": 1548 },
+        "switchToggle": { "p50Us": 52, "p95Us": 85, "p99Us": 96, "maxUs": 275 },
+        "tabsSelection": { "p50Us": 17, "p95Us": 36, "p99Us": 42, "maxUs": 140 },
+        "sheetSnap": { "p50Us": 361, "p95Us": 472, "p99Us": 504, "maxUs": 4906 },
+        "sheetItemPress": { "p50Us": 1, "p95Us": 1, "p99Us": 1, "maxUs": 48 },
+        "anchoredPosition": { "p50Us": 219, "p95Us": 265, "p99Us": 295, "maxUs": 10931 },
+        "menuSelection": { "p50Us": 4, "p95Us": 5, "p99Us": 6, "maxUs": 66 },
+        "inputState": { "p50Us": 19, "p95Us": 24, "p99Us": 38, "maxUs": 5236 },
+        "inputSlotPress": { "p50Us": 6, "p95Us": 6, "p99Us": 8, "maxUs": 75 },
+        "feedbackUpdate": { "p50Us": 37, "p95Us": 44, "p99Us": 66, "maxUs": 4122 },
+        "imageNavigation": { "p50Us": 26, "p95Us": 38, "p99Us": 59, "maxUs": 4115 },
+        "branchNavigation": { "p50Us": 20, "p95Us": 28, "p99Us": 41, "maxUs": 105 },
+        "promptSubmission": { "p50Us": 79, "p95Us": 119, "p99Us": 164, "maxUs": 10863 },
+        "fileTreeToggle": { "p50Us": 11, "p95Us": 19, "p99Us": 30, "maxUs": 820 },
+        "markdownUpdate": { "p50Us": 68, "p95Us": 105, "p99Us": 127, "maxUs": 1607 },
+        "tableLayout": { "p50Us": 2, "p95Us": 2, "p99Us": 2, "maxUs": 23 },
+        "hostLifecycle": { "p50Us": 152, "p95Us": 186, "p99Us": 219, "maxUs": 3597 }
+    },
+    "result": "passed"
+}
