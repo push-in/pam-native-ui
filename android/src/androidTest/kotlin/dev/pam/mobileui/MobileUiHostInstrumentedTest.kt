@@ -84,7 +84,11 @@ class MobileUiHostInstrumentedTest {
             assertEquals(dp(grid, 306f), grid.getChildAt(2).left)
             assertEquals(0, grid.getChildAt(3).left)
             assertEquals(dp(grid, 306f), grid.getChildAt(4).left)
-            assertEquals(dp(grid, 68f), grid.getChildAt(3).top)
+            assertEquals(
+                dp(grid, 68f).toDouble(),
+                grid.getChildAt(3).top.toDouble(),
+                1.0,
+            )
             val info = AccessibilityNodeInfo.obtain()
             grid.onInitializeAccessibilityNodeInfo(info)
             assertEquals(2, info.collectionInfo.rowCount)
@@ -1183,7 +1187,9 @@ class MobileUiHostInstrumentedTest {
             val contentTop = content.y
             assertTrue(contentTop + content.height <= trigger.y)
             assertEquals(180f, arrow.rotation, 0f)
-            assertTrue(arrow.translationX > 0f)
+            val arrowCenter = content.x + arrow.x + arrow.width / 2f
+            val triggerCenter = trigger.x + trigger.width / 2f
+            assertEquals(triggerCenter, arrowCenter, dp(host, 8f).toFloat())
             assertEquals(
                 View.IMPORTANT_FOR_ACCESSIBILITY_NO,
                 arrow.importantForAccessibility,

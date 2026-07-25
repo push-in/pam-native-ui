@@ -4166,17 +4166,34 @@ internal class MobileUiHost(
         animate: Boolean,
     ) {
         val indicator = findTaggedDescendant(this, TABS_INDICATOR_TAG) ?: return
-        // The authored indicator is a decorative sibling layered above the
-        // triggers. Android hit-testing can retain that translated sibling as
-        // the touch target after it has crossed every tab, which makes later
-        // taps appear to freeze. Selection is already represented by each
-        // trigger's activated/selected drawable and accessibility state.
-        indicator.visibility = GONE
+        if (trigger == null || trigger.width <= 0 || trigger.height <= 0) {
+            indicator.visibility = GONE
+            return
+        }
+        indicator.visibility = VISIBLE
         indicator.isClickable = false
         indicator.isLongClickable = false
         indicator.isFocusable = false
+        indicator.isEnabled = false
         indicator.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         tabsIndicatorAnimator?.cancel()
+        val params = indicator.layoutParams
+        params.width = trigger.width
+        params.height = trigger.height
+        indicator.layoutParams = params
+        val targetX = trigger.x - indicator.left
+        val targetY = trigger.y - indicator.top
+        if (animate && animationsEnabled()) {
+            indicator.animate()
+                .translationX(targetX)
+                .translationY(targetY)
+                .setDuration(TABS_INDICATOR_ANIMATION_DURATION_MILLIS)
+                .start()
+        } else {
+            indicator.animate().cancel()
+            indicator.translationX = targetX
+            indicator.translationY = targetY
+        }
     }
 
     private fun animateTabsContentHeight(content: View?, animate: Boolean) {

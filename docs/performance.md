@@ -37,6 +37,12 @@ All 24 measured operation families stayed below their enforced p99 budget;
 notable results include tabs at 42 µs, menu selection at 6 µs, sheet snapping
 at 504 µs, rich markdown updates at 127 µs, and table layout at 2 µs.
 
+A second run on Android 12/API 31 using a Samsung Galaxy S10 passed all 39
+functional instrumentation tests and all performance gates. This older-device
+evidence is stored separately in
+[`benchmarks/android-sm-g973f-api31-2026-07-24.json`](../benchmarks/android-sm-g973f-api31-2026-07-24.json);
+it is not mixed into the Galaxy S23 reference baseline.
+
 The 10,000 slider moves emitted zero per-move bridge callbacks and one final
 semantic `CHANGE` event. This is a 10,000:1 reduction versus an implementation
 that sends every sampled movement across the language boundary; it is not a
