@@ -1,6 +1,7 @@
 package dev.pam.mobileui
 
 import android.content.Intent
+import android.os.Build
 import android.os.Looper
 import android.text.Spanned
 import android.text.method.PasswordTransformationMethod
@@ -262,7 +263,7 @@ class MobileUiHostInstrumentedTest {
                     it.id == AccessibilityNodeInfo.ACTION_CLICK
                 },
             )
-            assertEquals("Read only", host.stateDescription)
+            assertStateDescription(host, "Read only")
             readOnlyInfo.recycle()
 
             host.update(
@@ -277,7 +278,7 @@ class MobileUiHostInstrumentedTest {
             host.onInitializeAccessibilityNodeInfo(info)
             assertEquals("android.widget.CheckBox", info.className)
             assertEquals("Receive updates", host.contentDescription)
-            assertEquals("Mixed", host.stateDescription)
+            assertStateDescription(host, "Mixed")
             assertTrue(info.isCheckable)
             assertTrue(!info.isChecked)
 
@@ -285,7 +286,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals(listOf(NativeViewEventKind.TOGGLE), events)
             host.onInitializeAccessibilityNodeInfo(info)
             assertTrue(info.isChecked)
-            assertTrue(host.stateDescription == null)
+            assertStateDescription(host, null)
             assertEquals("1", payloads.single().decodeToString())
             host.release()
             info.recycle()
@@ -429,7 +430,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals(0.25f, progressFill.scaleY, 0.001f)
             assertEquals(400f, progressFill.pivotY, 0.001f)
             assertEquals("android.widget.ProgressBar", progressInfo.className)
-            assertEquals("25%", progress.stateDescription)
+            assertStateDescription(progress, "25%")
 
             slider.release()
             progress.release()
@@ -460,13 +461,13 @@ class MobileUiHostInstrumentedTest {
             assertEquals("android.widget.Switch", info.className)
             assertTrue(info.isCheckable)
             assertTrue(info.isChecked)
-            assertEquals("On", host.stateDescription)
+            assertStateDescription(host, "On")
 
             assertTrue(host.performClick())
             host.onInitializeAccessibilityNodeInfo(info)
             assertEquals(listOf("0"), payloads.map(ByteArray::decodeToString))
             assertTrue(!info.isChecked)
-            assertEquals("Off", host.stateDescription)
+            assertStateDescription(host, "Off")
 
             assertTrue(
                 host.dispatchKeyEvent(
@@ -882,7 +883,7 @@ class MobileUiHostInstrumentedTest {
 
             val info = AccessibilityNodeInfo.obtain()
             host.onInitializeAccessibilityNodeInfo(info)
-            assertEquals("Snap 1 of 3", host.stateDescription)
+            assertStateDescription(host, "Snap 1 of 3")
             assertTrue(info.isScrollable)
             assertTrue(
                 info.actionList.any {
@@ -1009,12 +1010,12 @@ class MobileUiHostInstrumentedTest {
             assertEquals(1, triggerPresses)
             assertEquals(View.VISIBLE, content.visibility)
             assertTrue(host.acceptsOverlayInteraction())
-            assertEquals("Expanded", trigger.stateDescription)
+            assertStateDescription(trigger, "Expanded")
 
             assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 20f, 700f)))
             assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 20f, 700f)))
             assertTrue(!host.acceptsOverlayInteraction())
-            assertEquals("Collapsed", trigger.stateDescription)
+            assertStateDescription(trigger, "Collapsed")
             assertEquals(2, payloads.size)
             val opening = WireMap.decode(payloads[0])
             val dismissal = WireMap.decode(payloads[1])
@@ -1613,7 +1614,7 @@ class MobileUiHostInstrumentedTest {
                 View.IMPORTANT_FOR_ACCESSIBILITY_AUTO,
                 content.importantForAccessibility,
             )
-            assertEquals("Expanded", host.stateDescription)
+            assertStateDescription(host, "Expanded")
             assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
 
             assertTrue(!host.onTouchEvent(motion(MotionEvent.ACTION_DOWN, 200f, 200f)))
@@ -1676,7 +1677,7 @@ class MobileUiHostInstrumentedTest {
                 ),
             )
             assertTrue(payloads.isEmpty())
-            assertEquals("Expanded", first.stateDescription)
+            assertStateDescription(first, "Expanded")
 
             assertTrue(
                 second.performAccessibilityAction(
@@ -1685,8 +1686,8 @@ class MobileUiHostInstrumentedTest {
                 ),
             )
             assertEquals(listOf("1"), payloads.map(ByteArray::decodeToString))
-            assertEquals("Collapsed", first.stateDescription)
-            assertEquals("Expanded", second.stateDescription)
+            assertStateDescription(first, "Collapsed")
+            assertStateDescription(second, "Expanded")
 
             first.release()
             second.release()
@@ -1890,7 +1891,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals("Use your work email.", formInput.tooltipText)
             assertTrue(info.isContentInvalid)
             assertEquals("Email is invalid.", info.error)
-            assertEquals("Required, Invalid", info.stateDescription)
+            assertStateDescription(info, "Required, Invalid")
             assertEquals(
                 View.ACCESSIBILITY_LIVE_REGION_ASSERTIVE,
                 error.accessibilityLiveRegion,
@@ -1955,7 +1956,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals("android.widget.TableRow", rowInfo.className)
             assertEquals(0, rowInfo.collectionItemInfo?.rowIndex)
             assertEquals(1, headerCellInfo.collectionItemInfo?.columnIndex)
-            assertTrue(headerCellInfo.isHeading)
+            assertTrue(headerCellInfo.collectionItemInfo?.isHeading == true)
             assertEquals(1, bodyCellInfo.collectionItemInfo?.rowIndex)
             assertEquals(0, bodyCellInfo.collectionItemInfo?.columnIndex)
 
@@ -2377,5 +2378,20 @@ class MobileUiHostInstrumentedTest {
 
     private fun onMain(block: () -> Unit) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
+    }
+
+    private fun assertStateDescription(view: View, expected: CharSequence?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            assertEquals(expected, view.stateDescription)
+        }
+    }
+
+    private fun assertStateDescription(
+        info: AccessibilityNodeInfo,
+        expected: CharSequence?,
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            assertEquals(expected, info.stateDescription)
+        }
     }
 }
