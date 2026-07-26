@@ -1,9 +1,33 @@
-<AppScreen title="Native components" subtitle="103 modules · 163 p-* primitives">
+<AppScreen title="Components" subtitle="A complete native Material catalog">
     <template #actions>
         <p-icon-btn on:press="back" accessibilityLabel="Back to Studio">
             <p-icon icon="arrow-back" />
         </p-icon-btn>
     </template>
+
+    <p-card class="p-5 rounded-3xl bg-primary">
+        <p-card-item>
+            <p-col class="gap-2">
+                <p-chip variant="tonal"><p-text>Native design system</p-text></p-chip>
+                <p-text size="2xl">Build beautifully.</p-text>
+                <p-text size="md">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</p-text>
+            </p-col>
+        </p-card-item>
+        <p-card-actions>
+            <p-chip><p-icon icon="widgets" /><p-text>163 components</p-text></p-chip>
+            <p-chip><p-icon icon="palette" /><p-text>Semantic themes</p-text></p-chip>
+        </p-card-actions>
+    </p-card>
+
+    <p-slide-group>
+        <p-slide-group-item value="actions"><p-chip variant="tonal"><p-text>Actions</p-text></p-chip></p-slide-group-item>
+        <p-slide-group-item value="forms"><p-chip><p-text>Forms</p-text></p-chip></p-slide-group-item>
+        <p-slide-group-item value="navigation"><p-chip><p-text>Navigation</p-text></p-chip></p-slide-group-item>
+        <p-slide-group-item value="data"><p-chip><p-text>Data</p-text></p-chip></p-slide-group-item>
+        <p-slide-group-item value="feedback"><p-chip><p-text>Feedback</p-text></p-chip></p-slide-group-item>
+        <p-slide-group-item value="overlays"><p-chip><p-text>Overlays</p-text></p-chip></p-slide-group-item>
+        <p-slide-group-item value="layout"><p-chip><p-text>Layout</p-text></p-chip></p-slide-group-item>
+    </p-slide-group>
 
     <p-banner class="rounded-2xl">
         <p-banner-text>
@@ -15,6 +39,127 @@
             <p-chip action="info"><p-text>60 FPS</p-text></p-chip>
         </p-banner-actions>
     </p-banner>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Buttons</p-text>
+        <p-text class="ui-text-muted">Variants</p-text>
+        <p-card class="p-4 rounded-3xl">
+            <p-row class="gap-2">
+                <p-btn variant="elevated"><p-text>Elevated</p-text></p-btn>
+                <p-btn><p-text>Filled</p-text></p-btn>
+                <p-btn variant="tonal"><p-text>Tonal</p-text></p-btn>
+                <p-btn variant="outline"><p-text>Outlined</p-text></p-btn>
+                <p-btn variant="text"><p-text>Text</p-text></p-btn>
+                <p-btn variant="plain"><p-text>Plain</p-text></p-btn>
+            </p-row>
+        </p-card>
+        <p-text class="ui-text-muted">Colors</p-text>
+        <p-card class="p-4 rounded-3xl">
+            <p-row class="gap-2">
+                <p-btn color="primary"><p-text>Primary</p-text></p-btn>
+                <p-btn color="secondary"><p-text>Secondary</p-text></p-btn>
+                <p-btn action="success"><p-text>Success</p-text></p-btn>
+                <p-btn action="info"><p-text>Info</p-text></p-btn>
+                <p-btn action="warning"><p-text>Warning</p-text></p-btn>
+                <p-btn action="error"><p-text>Error</p-text></p-btn>
+            </p-row>
+        </p-card>
+        <p-text class="ui-text-muted">Sizes and states</p-text>
+        <p-card class="p-4 rounded-3xl">
+            <p-row class="items-center gap-2">
+                <p-btn size="xs"><p-text>XS</p-text></p-btn>
+                <p-btn size="sm"><p-text>Small</p-text></p-btn>
+                <p-btn size="md"><p-text>Default</p-text></p-btn>
+                <p-btn size="lg"><p-text>Large</p-text></p-btn>
+                <p-btn size="xl"><p-text>XL</p-text></p-btn>
+            </p-row>
+            <p-row class="items-center gap-2">
+                <p-btn disabled="true"><p-text>Disabled</p-text></p-btn>
+                <p-btn loading="true"><p-text>Loading</p-text></p-btn>
+                <p-icon-btn accessibilityLabel="Favorite"><p-icon icon="favorite" /></p-icon-btn>
+                <p-fab size="sm"><p-icon icon="add" /></p-fab>
+                <p-fab><p-icon icon="edit" /><p-text>Create</p-text></p-fab>
+            </p-row>
+        </p-card>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Surfaces</p-text>
+        <p-text class="ui-text-muted">Variants, borders and elevation</p-text>
+        <p-row class="gap-3">
+            <p-card variant="elevated" elevation="8" class="p-4 rounded-2xl flex-1">
+                <p-card-title>Elevated</p-card-title>
+                <p-card-subtitle>Elevation 8</p-card-subtitle>
+            </p-card>
+            <p-card variant="tonal" class="p-4 rounded-2xl flex-1">
+                <p-card-title>Tonal</p-card-title>
+                <p-card-subtitle>Soft emphasis</p-card-subtitle>
+            </p-card>
+        </p-row>
+        <p-row class="gap-3">
+            <p-card variant="outline" border="true" class="p-4 rounded-lg flex-1">
+                <p-card-title>Outlined</p-card-title>
+                <p-card-subtitle>Border</p-card-subtitle>
+            </p-card>
+            <p-card variant="flat" class="p-4 rounded-none flex-1">
+                <p-card-title>Flat</p-card-title>
+                <p-card-subtitle>Square</p-card-subtitle>
+            </p-card>
+        </p-row>
+        <p-row class="gap-2">
+            <p-sheet elevation="0" class="p-3 rounded-xl"><p-text>0</p-text></p-sheet>
+            <p-sheet elevation="1" class="p-3 rounded-xl"><p-text>1</p-text></p-sheet>
+            <p-sheet elevation="2" class="p-3 rounded-xl"><p-text>2</p-text></p-sheet>
+            <p-sheet elevation="4" class="p-3 rounded-xl"><p-text>4</p-text></p-sheet>
+            <p-sheet elevation="8" class="p-3 rounded-xl"><p-text>8</p-text></p-sheet>
+            <p-sheet elevation="12" class="p-3 rounded-xl"><p-text>12</p-text></p-sheet>
+            <p-sheet elevation="16" class="p-3 rounded-xl"><p-text>16</p-text></p-sheet>
+            <p-sheet elevation="24" class="p-3 rounded-xl"><p-text>24</p-text></p-sheet>
+        </p-row>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Chips and badges</p-text>
+        <p-text class="ui-text-muted">Variants, colors, sizes and selection</p-text>
+        <p-card class="p-4 rounded-3xl">
+            <p-chip-group value="filter">
+                <p-chip value="filled"><p-text>Filled</p-text></p-chip>
+                <p-chip value="tonal" variant="tonal"><p-text>Tonal</p-text></p-chip>
+                <p-chip value="outlined" variant="outline"><p-text>Outlined</p-text></p-chip>
+                <p-chip value="filter" selected="true"><p-icon icon="check" /><p-text>Selected</p-text></p-chip>
+                <p-chip closable="true"><p-text>Closable</p-text></p-chip>
+                <p-chip disabled="true"><p-text>Disabled</p-text></p-chip>
+            </p-chip-group>
+            <p-row class="items-center gap-3">
+                <p-chip size="xs"><p-text>XS</p-text></p-chip>
+                <p-chip size="sm" action="success"><p-text>Small</p-text></p-chip>
+                <p-chip size="md" action="info"><p-text>Default</p-text></p-chip>
+                <p-chip size="lg" action="warning"><p-text>Large</p-text></p-chip>
+                <p-badge action="error"><p-text>8</p-text></p-badge>
+                <p-avatar size="sm"><p-text>P</p-text></p-avatar>
+                <p-avatar size="lg"><p-icon icon="person" /></p-avatar>
+            </p-row>
+        </p-card>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Feedback</p-text>
+        <p-text class="ui-text-muted">Semantic colors and variants</p-text>
+        <p-alert action="success" variant="tonal"><p-alert-title>Success</p-alert-title><p-text>Everything is ready to ship.</p-text></p-alert>
+        <p-alert action="info" variant="outline"><p-alert-title>Information</p-alert-title><p-text>A useful contextual message.</p-text></p-alert>
+        <p-alert action="warning" variant="tonal"><p-alert-title>Warning</p-alert-title><p-text>Review this choice before continuing.</p-text></p-alert>
+        <p-alert action="error" variant="flat"><p-alert-title>Error</p-alert-title><p-text>Something needs your attention.</p-text></p-alert>
+        <p-row class="gap-3 items-center">
+            <p-progress-circular value="72" size="sm" />
+            <p-progress-circular value="72" size="lg" />
+            <p-progress-circular indeterminate="true" />
+            <p-col class="flex-1 gap-2">
+                <p-progress-linear value="34" />
+                <p-progress-linear value="68" color="secondary" />
+                <p-progress-linear indeterminate="true" />
+            </p-col>
+        </p-row>
+    </p-col>
 
     <p-col class="gap-3">
         <p-text size="lg">Foundations</p-text>
@@ -83,6 +228,12 @@
         <p-text size="lg">Forms</p-text>
         <p-form>
             <p-text-field label="Project name" value="PAM UI" helper="Visible label and helper text" />
+            <p-text-field label="Outlined" value="Native field" variant="outline" />
+            <p-text-field label="Filled" value="Native field" variant="filled" />
+            <p-text-field label="Compact" value="Dense control" density="compact" />
+            <p-text-field label="Error" value="Invalid value" error="true" helper="This field needs attention" />
+            <p-text-field label="Disabled" value="Unavailable" disabled="true" />
+            <p-text-field label="Read only" value="Stable value" readonly="true" />
             <p-textarea label="Description" value="Native rendering without JavaScript." />
             <p-row class="gap-2">
                 <p-number-input label="Instances" value="12" class="flex-1" />
@@ -100,6 +251,30 @@
             <p-messages><p-text class="ui-text-muted">Validation, drafts, server errors and autofill are native.</p-text></p-messages>
             <p-counter><p-text>24 / 120</p-text></p-counter>
         </p-form>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Selection controls</p-text>
+        <p-card class="p-4 rounded-3xl">
+            <p-selection-control-group>
+                <p-row class="gap-4 items-center">
+                    <p-checkbox checked="true"><p-label>Checked</p-label></p-checkbox>
+                    <p-checkbox checked="false"><p-label>Empty</p-label></p-checkbox>
+                    <p-checkbox indeterminate="true"><p-label>Mixed</p-label></p-checkbox>
+                    <p-checkbox disabled="true"><p-label>Disabled</p-label></p-checkbox>
+                </p-row>
+                <p-radio-group value="primary">
+                    <p-radio value="primary"><p-label>Selected</p-label></p-radio>
+                    <p-radio value="secondary"><p-label>Unselected</p-label></p-radio>
+                    <p-radio value="disabled" disabled="true"><p-label>Disabled</p-label></p-radio>
+                </p-radio-group>
+                <p-row class="gap-4 items-center">
+                    <p-switch checked="true"><p-label>On</p-label></p-switch>
+                    <p-switch checked="false"><p-label>Off</p-label></p-switch>
+                    <p-switch checked="true" disabled="true"><p-label>Disabled</p-label></p-switch>
+                </p-row>
+            </p-selection-control-group>
+        </p-card>
     </p-col>
 
     <p-col class="gap-3">
@@ -146,6 +321,20 @@
             </p-stepper-header>
         </p-stepper>
         <p-pagination value="2" length="5" />
+        <p-btn-group>
+            <p-btn variant="outline"><p-icon icon="format-align-left" /></p-btn>
+            <p-btn variant="outline"><p-icon icon="format-align-center" /></p-btn>
+            <p-btn variant="outline"><p-icon icon="format-align-right" /></p-btn>
+        </p-btn-group>
+        <p-window value="details">
+            <p-window-item value="details"><p-sheet class="p-4 rounded-2xl"><p-text>Window item: details</p-text></p-sheet></p-window-item>
+            <p-window-item value="activity"><p-sheet class="p-4 rounded-2xl"><p-text>Window item: activity</p-text></p-sheet></p-window-item>
+        </p-window>
+        <p-stepper-vertical value="2">
+            <p-stepper-vertical-item value="1"><p-text>Choose a theme</p-text></p-stepper-vertical-item>
+            <p-stepper-vertical-item value="2"><p-text>Customize components</p-text><p-stepper-vertical-actions /></p-stepper-vertical-item>
+            <p-stepper-vertical-item value="3"><p-text>Publish release</p-text></p-stepper-vertical-item>
+        </p-stepper-vertical>
     </p-col>
 
     <p-col class="gap-3">
@@ -187,6 +376,10 @@
             <p-treeview-item path="/src"><p-text>src</p-text></p-treeview-item>
             <p-treeview-item path="/tests"><p-text>tests</p-text></p-treeview-item>
         </p-treeview>
+        <p-item-group value="android">
+            <p-item value="android"><p-card variant="tonal" class="p-3 rounded-xl"><p-text>Android</p-text></p-card></p-item>
+            <p-item value="ios"><p-card variant="outline" class="p-3 rounded-xl"><p-text>iOS</p-text></p-card></p-item>
+        </p-item-group>
     </p-col>
 
     <p-col class="gap-3">
@@ -210,6 +403,16 @@
 
     <p-col class="gap-3">
         <p-text size="lg">Layout and motion</p-text>
+        <p-container>
+            <p-row class="gap-2">
+                <p-col class="flex-1"><p-sheet class="p-3 rounded-xl"><p-text>Column 1</p-text></p-sheet></p-col>
+                <p-spacer />
+                <p-col class="flex-1"><p-sheet class="p-3 rounded-xl"><p-text>Column 2</p-text></p-sheet></p-col>
+            </p-row>
+        </p-container>
+        <p-responsive aspectRatio="16/9">
+            <p-img source="https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1200" alt="Mountain landscape" />
+        </p-responsive>
         <p-responsive aspectRatio="16/9">
             <p-card class="p-4 rounded-2xl">
                 <p-text>Responsive surface</p-text>
@@ -229,6 +432,58 @@
         <p-transition name="fade">
             <p-sheet class="p-4 rounded-2xl"><p-text>Reduced-motion aware transition</p-text></p-sheet>
         </p-transition>
+        <p-lazy>
+            <p-hover>
+                <p-card class="p-4 rounded-2xl"><p-text>Lazy + hover surface</p-text></p-card>
+            </p-hover>
+        </p-lazy>
+        <p-hotkey keys="cmd+k"><p-kbd>⌘ K</p-kbd></p-hotkey>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Application shell</p-text>
+        <p-card variant="outline" class="rounded-3xl">
+            <p-system-bar><p-text>9:41</p-text></p-system-bar>
+            <p-app-bar>
+                <p-app-bar-nav-icon><p-icon icon="menu" /></p-app-bar-nav-icon>
+                <p-app-bar-title>Native workspace</p-app-bar-title>
+                <p-icon-btn><p-icon icon="more-vert" /></p-icon-btn>
+            </p-app-bar>
+            <p-layout>
+                <p-navigation-drawer>
+                    <p-list-item><p-list-item-title>Overview</p-list-item-title></p-list-item>
+                    <p-list-item><p-list-item-title>Components</p-list-item-title></p-list-item>
+                </p-navigation-drawer>
+                <p-layout-item>
+                    <p-main><p-sheet class="p-5"><p-text>Adaptive content area</p-text></p-sheet></p-main>
+                </p-layout-item>
+            </p-layout>
+            <p-bottom-navigation value="components">
+                <p-btn value="home"><p-icon icon="home" /><p-text>Home</p-text></p-btn>
+                <p-btn value="components"><p-icon icon="widgets" /><p-text>Components</p-text></p-btn>
+                <p-btn value="settings"><p-icon icon="settings" /><p-text>Settings</p-text></p-btn>
+            </p-bottom-navigation>
+            <p-footer><p-text class="ui-text-muted">PAM native design system</p-text></p-footer>
+        </p-card>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Providers and validation</p-text>
+        <p-theme-provider theme="light">
+            <p-defaults-provider density="comfortable">
+                <p-locale-provider locale="en-US">
+                    <p-card variant="tonal" class="p-4 rounded-2xl">
+                        <p-validation valid="true">
+                            <p-field>
+                                <p-field-label>Provider-scoped field</p-field-label>
+                                <p-input value="Theme, defaults and locale" />
+                                <p-messages><p-text>Valid and accessible</p-text></p-messages>
+                            </p-field>
+                        </p-validation>
+                    </p-card>
+                </p-locale-provider>
+            </p-defaults-provider>
+        </p-theme-provider>
     </p-col>
 
     <p-col class="gap-3">
@@ -260,7 +515,7 @@
 
     <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" on:event="closeSheet">
         <p-list-item><p-list-item-title>Inspect component</p-list-item-title></p-list-item>
-        <p-list-item><p-list-item-title>Copy p-* example</p-list-item-title></p-list-item>
+        <p-list-item><p-list-item-title>View accessibility</p-list-item-title></p-list-item>
         <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
     </p-bottom-sheet>
 </AppScreen>
