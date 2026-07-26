@@ -26,7 +26,7 @@
             <Card class="p-4 rounded-2xl">
                 <VStack class="gap-2">
                     <HStack class="items-center justify-between gap-3">
-                        <Heading size="md">#1048</Heading>
+                        <Heading size="md" class="w-24">#1048</Heading>
                         <Heading size="md">R$ 389.00</Heading>
                     </HStack>
                     <HStack class="items-center justify-between gap-3">
@@ -38,7 +38,7 @@
             <Card class="p-4 rounded-2xl">
                 <VStack class="gap-2">
                     <HStack class="items-center justify-between gap-3">
-                        <Heading size="md">#1047</Heading>
+                        <Heading size="md" class="w-24">#1047</Heading>
                         <Heading size="md">R$ 149.90</Heading>
                     </HStack>
                     <HStack class="items-center justify-between gap-3">
@@ -50,7 +50,7 @@
             <Card class="p-4 rounded-2xl">
                 <VStack class="gap-2">
                     <HStack class="items-center justify-between gap-3">
-                        <Heading size="md">#1046</Heading>
+                        <Heading size="md" class="w-24">#1046</Heading>
                         <Heading size="md">R$ 829.00</Heading>
                     </HStack>
                     <HStack class="items-center justify-between gap-3">

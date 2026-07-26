@@ -5,8 +5,9 @@
                 <Badge action="success"><CheckIcon /></Badge>
                 <VStack class="flex-1 gap-1">
                     <Heading size="sm">Payment confirmed</Heading>
-                    <Text>Order #1048 was paid by credit card.</Text>
-                    <Text class="ui-text-muted">2 minutes ago</Text>
+                    <Text class="ui-text-muted">
+                        2 min ago - Order #1048 was paid by credit card.
+                    </Text>
                 </VStack>
             </HStack>
         </Card>
@@ -15,8 +16,9 @@
                 <Badge action="info"><ShareIcon /></Badge>
                 <VStack class="flex-1 gap-1">
                     <Heading size="sm">Order shipped</Heading>
-                    <Text>Order #1046 is on its way to the customer.</Text>
-                    <Text class="ui-text-muted">48 minutes ago</Text>
+                    <Text class="ui-text-muted">
+                        48 min ago - Order #1046 is on its way.
+                    </Text>
                 </VStack>
             </HStack>
         </Card>
@@ -25,8 +27,9 @@
                 <Badge action="warning"><ClockIcon /></Badge>
                 <VStack class="flex-1 gap-1">
                     <Heading size="sm">Payment pending</Heading>
-                    <Text>Order #1047 is waiting for PIX confirmation.</Text>
-                    <Text class="ui-text-muted">1 hour ago</Text>
+                    <Text class="ui-text-muted">
+                        1 hour ago - Order #1047 awaits PIX confirmation.
+                    </Text>
                 </VStack>
             </HStack>
         </Card>
