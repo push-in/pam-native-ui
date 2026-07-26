@@ -1,6 +1,5 @@
 package dev.pam.mobileui
 
-import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.os.Build
 import android.os.Looper
@@ -1506,7 +1505,7 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
-    fun dateTimePickerOpensTheSystemDialogFromAWrappedActivityContext() {
+    fun dateTimePickerEmitsDismissalFromAWrappedActivityContext() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(
             Intent(
@@ -1539,17 +1538,15 @@ class MobileUiHostInstrumentedTest {
         }
 
         instrumentation.waitForIdleSync()
-        if (
-            !instrumentation.uiAutomation.performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK,
+        val cancelButton = instrumentation.uiAutomation.rootInActiveWindow
+            ?.findAccessibilityNodeInfosByText(
+                activity.getString(android.R.string.cancel),
             )
-        ) {
-            instrumentation.uiAutomation
-                .executeShellCommand("input keyevent KEYCODE_BACK")
-                .close()
-        }
+            ?.firstOrNull { it.isClickable }
+        assertTrue("date picker cancel action was not exposed", cancelButton != null)
+        assertTrue(cancelButton!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
         assertTrue(
-            "date picker did not emit dismissal after system back",
+            "date picker did not emit dismissal after cancel",
             dismissed.await(5, TimeUnit.SECONDS),
         )
 
