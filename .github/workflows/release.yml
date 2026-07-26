@@ -21,7 +21,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 7943c0270fe2bd409ee5d8c5b18f7768fa45291f
+  PAM_NATIVE_COMMIT: 795fcf3104deeb700d225f8f2c0a6d16f9742c84
 
 jobs:
   package:
