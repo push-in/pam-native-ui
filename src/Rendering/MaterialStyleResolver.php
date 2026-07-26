@@ -139,6 +139,8 @@ final class MaterialStyleResolver
                 backgroundColor: $variant === MaterialVariant::Outlined
                     ? $theme->color(ColorToken::Background)
                     : $theme->color(ColorToken::SurfaceSunken),
+                textColor: $theme->color(ColorToken::OnSurface),
+                placeholderColor: $theme->color(ColorToken::MutedForeground),
                 borderColor: $theme->color(ColorToken::Border),
                 borderWidth: 1.0,
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),

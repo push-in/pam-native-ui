@@ -1,6 +1,6 @@
 <AppScreen title="Components" subtitle="A complete native Material catalog">
     <template #actions>
-        <p-icon-btn on:press="back" accessibilityLabel="Back to Studio">
+        <p-icon-btn class="w-12 h-12 rounded-full" variant="text" on:press="back" accessibilityLabel="Back to Studio">
             <p-icon icon="arrow-back" />
         </p-icon-btn>
     </template>
@@ -13,9 +13,9 @@
                 <p-text size="md">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</p-text>
             </p-col>
         </p-card-item>
-        <p-card-actions>
+        <p-card-actions class="gap-2">
             <p-chip><p-icon icon="widgets" /><p-text>163 components</p-text></p-chip>
-            <p-chip><p-icon icon="palette" /><p-text>Semantic themes</p-text></p-chip>
+            <p-chip><p-icon icon="palette" /><p-text>Themes</p-text></p-chip>
         </p-card-actions>
     </p-card>
 
@@ -48,6 +48,8 @@
                 <p-btn variant="elevated"><p-text>Elevated</p-text></p-btn>
                 <p-btn><p-text>Filled</p-text></p-btn>
                 <p-btn variant="tonal"><p-text>Tonal</p-text></p-btn>
+            </p-row>
+            <p-row class="gap-2">
                 <p-btn variant="outline"><p-text>Outlined</p-text></p-btn>
                 <p-btn variant="text"><p-text>Text</p-text></p-btn>
                 <p-btn variant="plain"><p-text>Plain</p-text></p-btn>
@@ -59,6 +61,8 @@
                 <p-btn color="primary"><p-text>Primary</p-text></p-btn>
                 <p-btn color="secondary"><p-text>Secondary</p-text></p-btn>
                 <p-btn action="success"><p-text>Success</p-text></p-btn>
+            </p-row>
+            <p-row class="gap-2">
                 <p-btn action="info"><p-text>Info</p-text></p-btn>
                 <p-btn action="warning"><p-text>Warning</p-text></p-btn>
                 <p-btn action="error"><p-text>Error</p-text></p-btn>
@@ -70,6 +74,8 @@
                 <p-btn size="xs"><p-text>XS</p-text></p-btn>
                 <p-btn size="sm"><p-text>Small</p-text></p-btn>
                 <p-btn size="md"><p-text>Default</p-text></p-btn>
+            </p-row>
+            <p-row class="items-center gap-2">
                 <p-btn size="lg"><p-text>Large</p-text></p-btn>
                 <p-btn size="xl"><p-text>XL</p-text></p-btn>
             </p-row>
@@ -211,16 +217,18 @@
             <p-btn value="typed" on:press="selectTyped"><p-text>Typed</p-text></p-btn>
         </p-btn-toggle>
         <p-selection-control-group>
-            <p-checkbox checked="{{ $checked }}" on:change="toggle">
-                <p-label>Checkbox</p-label>
-            </p-checkbox>
-            <p-radio-group value="{{ $selection }}">
-                <p-radio value="native"><p-label>Android + iOS</p-label></p-radio>
-                <p-radio value="typed"><p-label>Typed protocol</p-label></p-radio>
-            </p-radio-group>
-            <p-switch checked="{{ $checked }}" on:change="toggle">
-                <p-label>Motion and haptics</p-label>
-            </p-switch>
+            <p-col class="gap-3">
+                <p-checkbox checked="{{ $checked }}" on:change="toggle">
+                    <p-label>Checkbox</p-label>
+                </p-checkbox>
+                <p-radio-group value="{{ $selection }}">
+                    <p-radio value="native"><p-label>Android and iOS</p-label></p-radio>
+                    <p-radio value="typed"><p-label>Typed protocol</p-label></p-radio>
+                </p-radio-group>
+                <p-switch checked="{{ $checked }}" on:change="toggle">
+                    <p-label>Motion and haptics</p-label>
+                </p-switch>
+            </p-col>
         </p-selection-control-group>
     </p-col>
 
