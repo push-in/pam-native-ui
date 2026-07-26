@@ -1538,13 +1538,9 @@ class MobileUiHostInstrumentedTest {
         }
 
         instrumentation.waitForIdleSync()
-        val cancelButton = instrumentation.uiAutomation.rootInActiveWindow
-            ?.findAccessibilityNodeInfosByText(
-                activity.getString(android.R.string.cancel),
-            )
-            ?.firstOrNull { it.isClickable }
-        assertTrue("date picker cancel action was not exposed", cancelButton != null)
-        assertTrue(cancelButton!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+        onMain {
+            assertTrue("date picker was not active", host.cancelActivePicker())
+        }
         assertTrue(
             "date picker did not emit dismissal after cancel",
             dismissed.await(5, TimeUnit.SECONDS),

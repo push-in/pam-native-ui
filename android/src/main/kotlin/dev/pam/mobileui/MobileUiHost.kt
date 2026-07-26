@@ -4468,6 +4468,12 @@ internal class MobileUiHost(
         dialog.show()
     }
 
+    internal fun cancelActivePicker(): Boolean {
+        val dialog = activePickerDialog ?: return false
+        dialog.cancel()
+        return true
+    }
+
     private fun dismissActivePickerSilently() {
         val dialog = activePickerDialog ?: return
         silentlyDismissedPickerDialog = dialog
