@@ -41,8 +41,8 @@ $assert(
     'The package must be named pushinbr/pam-mobile-ui.',
 );
 $assert(
-    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.2',
-    'The package must require pushinbr/pam-native:^0.2.',
+    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.3',
+    'The package must require pushinbr/pam-native:^0.3.',
 );
 $assert(
     ($composer['type'] ?? null) === 'pam-native-plugin',
@@ -54,9 +54,14 @@ $assert(
     'The plugin schema must resolve through the pushinbr/pam-native package.',
 );
 $assert(
-    isset($exampleComposer['require']['pushinbr/pam-mobile-ui'])
-        && isset($exampleComposer['require']['pushinbr/pam-native']),
-    'The kitchen sink must use the public pushinbr package names.',
+    ($plugin['pamNative']['minimum'] ?? null) === '0.3.0'
+        && ($plugin['pamNative']['maximumExclusive'] ?? null) === '0.4.0',
+    'The plugin must support PAM Native 0.3.x exclusively.',
+);
+$assert(
+    ($exampleComposer['require']['pushinbr/pam-mobile-ui'] ?? null) === '0.3.x-dev'
+        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.3.x-dev',
+    'The kitchen sink must exercise both public 0.3.x package lines.',
 );
 
 $reference = $parity['reference'] ?? null;
@@ -190,6 +195,7 @@ foreach ([
     $root.'/README.md',
     $root.'/CONTRIBUTING.md',
     $root.'/docs/authoring.md',
+    $root.'/docs/product-foundations.md',
     $root.'/docs/performance.md',
     $root.'/examples/kitchen-sink/composer.json',
     $root.'/examples/kitchen-sink/README.md',

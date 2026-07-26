@@ -24,4 +24,16 @@ enum ColorToken: int
     case Accent = 16;
     case AccentForeground = 17;
     case DestructiveForeground = 18;
+    case Surface = 19;
+    case SurfaceElevated = 20;
+    case SurfaceSunken = 21;
+    case Success = 22;
+    case SuccessForeground = 23;
+    case Warning = 24;
+    case WarningForeground = 25;
+    case Info = 26;
+    case InfoForeground = 27;
+    case Focus = 28;
+    case Overlay = 29;
+    case OnSurface = 30;
 }

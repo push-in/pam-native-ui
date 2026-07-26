@@ -3683,6 +3683,93 @@ $assert(
     'Unsupported application classes must remain explicit instead of silently disappearing.',
 );
 
+$productScreen = \Pam\MobileUi\Product\AppScreen::make(
+    'Dashboard',
+    \Pam\Native\UI\Text::make('Content'),
+)->subtitle('Today at a glance');
+$assert(
+    $productScreen->toElement()->kind() === NodeKind::SafeAreaView,
+    'AppScreen must provide safe-area and keyboard-safe product structure by default.',
+);
+$loadingButton = \Pam\MobileUi\Product\AsyncButton::make('Save')
+    ->status(\Pam\MobileUi\Enum\ActionStatus::Loading)
+    ->toElement();
+$assert(
+    $loadingButton->properties()[PropKey::Loading->value] === true
+        && $loadingButton->properties()[PropKey::Enabled->value] === false,
+    'AsyncButton must expose an inaccessible-to-double-submit loading state.',
+);
+$errorState = \Pam\MobileUi\Product\ContentState::make(
+    \Pam\Native\AsyncValue::error('Could not load orders.'),
+)->onRetry(static function (): void {
+})->toElement();
+$assert(
+    $errorState->properties()[PropKey::AccessibilityLiveRegion->value]
+        === \Pam\Native\AccessibilityLiveRegion::Polite->value,
+    'ContentState must announce recoverable product states accessibly.',
+);
+$nativeForm = new class extends \Pam\Native\Forms\NativeForm {
+    #[\Pam\Native\Forms\Attributes\Required]
+    #[\Pam\Native\Forms\Attributes\Email]
+    public string $email = '';
+};
+$nativeForm->validate();
+$formField = \Pam\MobileUi\Product\FormField::make(
+    $nativeForm,
+    'email',
+    'Email',
+)->helper('Used for account recovery.')->toElement();
+$formInput = $formField->children()[1] ?? null;
+$formError = $formField->children()[2] ?? null;
+$assert(
+    $formInput instanceof \Pam\Native\UI\Input
+        && $formInput->properties()[PropKey::BorderColor->value]
+            === ThemeManager::current()->color(ColorToken::Destructive)
+        && $formError?->properties()[PropKey::AccessibilityRole->value]
+            === \Pam\Native\AccessibilityRole::Alert->value,
+    'FormField must connect NativeForm errors to visual and screen-reader feedback.',
+);
+$templateProductScreen = TemplateRenderer::render(
+    TemplateCompiler::compile(
+        '<AppScreen title="Dashboard"><Text>Content</Text></AppScreen>',
+    ),
+    null,
+    [],
+);
+$assert(
+    $templateProductScreen->kind() === NodeKind::SafeAreaView,
+    'Product primitives must be available from declarative .pam templates.',
+);
+
+require dirname(__DIR__).'/examples/kitchen-sink/src/Overview.php';
+require dirname(__DIR__).'/examples/kitchen-sink/src/Orders.php';
+require dirname(__DIR__).'/examples/kitchen-sink/src/Activity.php';
+require dirname(__DIR__).'/examples/kitchen-sink/src/ProfileForm.php';
+require dirname(__DIR__).'/examples/kitchen-sink/src/Profile.php';
+$premiumScreens = [
+    'overview' => new \App\Overview(),
+    'orders' => new \App\Orders(),
+    'activity' => new \App\Activity(),
+    'profile' => new \App\Profile(),
+];
+foreach ($premiumScreens as $viewName => $screenScope) {
+    $source = file_get_contents(
+        dirname(__DIR__)."/examples/kitchen-sink/resources/native/{$viewName}.pam",
+    );
+    if ($source === false) {
+        throw new RuntimeException("Premium showcase view {$viewName} must be readable.");
+    }
+    $premiumScreen = TemplateRenderer::render(
+        TemplateCompiler::compile($source, "{$viewName}.pam"),
+        $screenScope,
+        [],
+    );
+    $assert(
+        $premiumScreen->kind() === NodeKind::SafeAreaView,
+        "Premium showcase view {$viewName} must compile to an AppScreen.",
+    );
+}
+
 require dirname(__DIR__).'/examples/kitchen-sink/src/Catalog.php';
 require dirname(__DIR__).'/examples/kitchen-sink/src/TypedCommunityCard.php';
 \App\TypedCommunityCard::register();

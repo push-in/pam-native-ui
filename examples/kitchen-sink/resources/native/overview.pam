@@ -1,0 +1,106 @@
+<AppScreen
+    title="Good morning, David"
+    subtitle="Your PAM workspace is healthy and moving fast."
+>
+    <template #actions>
+        <Button variant="outline" size="md" accessibilityLabel="Open notifications">
+            <BellIcon />
+        </Button>
+    </template>
+
+    <Card class="p-5 bg-blue-700 border-0 rounded-3xl">
+        <VStack class="gap-5">
+            <HStack class="items-center justify-between">
+                <VStack class="gap-1">
+                    <Text class="text-blue-100">Available balance</Text>
+                    <Heading size="3xl" class="text-white">R$ 128,450.90</Heading>
+                </VStack>
+                <Badge class="bg-white">
+                    <BadgeText class="text-blue-700">+12.8%</BadgeText>
+                </Badge>
+            </HStack>
+            <Progress value="72" class="bg-blue-900">
+                <ProgressFilledTrack class="bg-white" />
+            </Progress>
+            <Text class="text-blue-100">
+                72% of the monthly revenue target reached
+            </Text>
+        </VStack>
+    </Card>
+
+    <VStack class="gap-3">
+        <Card class="p-4 rounded-2xl">
+            <HStack class="items-center justify-between gap-3">
+                <VStack class="flex-1 gap-1">
+                    <Text class="ui-text-muted">Revenue</Text>
+                    <Heading size="xl">R$ 42.8k</Heading>
+                </VStack>
+                <Badge variant="secondary">
+                    <BadgeText>+8.4%</BadgeText>
+                </Badge>
+            </HStack>
+        </Card>
+        <Card class="p-4 rounded-2xl">
+            <HStack class="items-center justify-between gap-3">
+                <VStack class="flex-1 gap-1">
+                    <Text class="ui-text-muted">Conversion</Text>
+                    <Heading size="xl">18.6%</Heading>
+                </VStack>
+                <Badge variant="secondary">
+                    <BadgeText>+2.1 pts</BadgeText>
+                </Badge>
+            </HStack>
+        </Card>
+    </VStack>
+
+    <VStack class="gap-3">
+        <HStack class="items-center justify-between">
+            <Heading size="lg">Recent orders</Heading>
+            <Button variant="link" size="sm">
+                <ButtonText>View all</ButtonText>
+            </Button>
+        </HStack>
+
+        <Card class="rounded-2xl">
+            <VStack>
+                <HStack class="p-4 items-center gap-3">
+                    <Avatar size="md">
+                        <AvatarFallback><AvatarFallbackText>AM</AvatarFallbackText></AvatarFallback>
+                    </Avatar>
+                    <VStack class="flex-1 gap-1">
+                        <Heading size="sm">Ana Martins</Heading>
+                        <Text class="ui-text-muted">Order #1048 - 2 items</Text>
+                    </VStack>
+                    <VStack class="items-end gap-1">
+                        <Heading size="sm">R$ 389.00</Heading>
+                        <Badge action="success"><BadgeText>Paid</BadgeText></Badge>
+                    </VStack>
+                </HStack>
+                <Divider />
+                <HStack class="p-4 items-center gap-3">
+                    <Avatar size="md">
+                        <AvatarFallback><AvatarFallbackText>LC</AvatarFallbackText></AvatarFallback>
+                    </Avatar>
+                    <VStack class="flex-1 gap-1">
+                        <Heading size="sm">Lucas Costa</Heading>
+                        <Text class="ui-text-muted">Order #1047 - 1 item</Text>
+                    </VStack>
+                    <VStack class="items-end gap-1">
+                        <Heading size="sm">R$ 149.90</Heading>
+                        <Badge action="warning"><BadgeText>Pending</BadgeText></Badge>
+                    </VStack>
+                </HStack>
+            </VStack>
+        </Card>
+    </VStack>
+
+    <Alert action="info" variant="subtle" class="rounded-2xl">
+        <InfoIcon />
+        <VStack class="gap-1">
+            <AlertText>Runtime performance</AlertText>
+            <Text class="ui-text-muted">
+                Live native metrics are available in PAM DevTools.
+            </Text>
+        </VStack>
+    </Alert>
+</AppScreen>

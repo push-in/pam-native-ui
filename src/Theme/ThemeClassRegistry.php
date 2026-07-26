@@ -42,6 +42,34 @@ final class ThemeClassRegistry
                 PropKey::BorderWidth->value => 1.0,
                 PropKey::BorderRadius->value => 12.0,
             ],
+            'pam-surface' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::Surface),
+                PropKey::TextColor->value => $theme->color(ColorToken::OnSurface),
+            ],
+            'pam-surface-elevated' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::SurfaceElevated),
+                PropKey::TextColor->value => $theme->color(ColorToken::OnSurface),
+                PropKey::BorderColor->value => $theme->color(ColorToken::Border),
+                PropKey::BorderWidth->value => 1.0,
+                PropKey::BorderRadius->value => DesignTokens::RADIUS_LARGE,
+                PropKey::Elevation->value => 3.0,
+            ],
+            'pam-surface-sunken' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::SurfaceSunken),
+                PropKey::TextColor->value => $theme->color(ColorToken::OnSurface),
+            ],
+            'pam-success' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::Success),
+                PropKey::TextColor->value => $theme->color(ColorToken::SuccessForeground),
+            ],
+            'pam-warning' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::Warning),
+                PropKey::TextColor->value => $theme->color(ColorToken::WarningForeground),
+            ],
+            'pam-info' => [
+                PropKey::BackgroundColor->value => $theme->color(ColorToken::Info),
+                PropKey::TextColor->value => $theme->color(ColorToken::InfoForeground),
+            ],
             'ui-text' => [
                 PropKey::TextColor->value => $theme->color(ColorToken::Foreground),
             ],

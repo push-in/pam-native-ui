@@ -1,7 +1,8 @@
-# PAM Mobile UI kitchen sink
+# PAM Mobile UI premium showcase
 
-This executable example demonstrates the three supported authoring styles in
-one native tree:
+This executable example is both a polished five-destination product and PAM
+Studio. It demonstrates the three supported authoring styles in one native
+tree:
 
 - `resources/native/catalog.pam` builds the screen with concise declarative
   tags and utility classes;
@@ -9,6 +10,10 @@ one native tree:
   facades and `Style`;
 - PAM primitives, application components and third-party native plugin tags
   can be inserted beside either style without changing renderer or bridge.
+- Overview, Orders, Activity and Profile demonstrate product states,
+  persistent tab navigation, typed forms and branded light/dark themes.
+- Studio keeps the complete component laboratory and pairs with the live
+  `pam mobile devtools .` overlay.
 
 ## Run from this workspace
 
@@ -17,13 +22,14 @@ Keep `pam-mobile-ui` and `pam-native` as sibling directories, then run:
 ```bash
 cd pam-mobile-ui/examples/kitchen-sink
 composer update
-../../../pam-native/target/release/pam mobile run .
+PAM_NATIVE_HOME=../../../pam-native pam mobile run .
 ```
 
-During PAM development, build the CLI first if it is not already available:
+During PAM development, build the PAM CLI repository first if it is not already
+available. The SDK and CLI are separate repositories.
 
 ```bash
-cargo build --release --manifest-path ../../../pam-native/Cargo.toml
+cargo build --release --manifest-path ../../../../pam/Cargo.toml
 ```
 
 The example's path repositories intentionally point to the two local packages.

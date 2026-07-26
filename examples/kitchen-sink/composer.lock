@@ -4,19 +4,19 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2a55f222af29a10f129ca5b4267c8e48",
+    "content-hash": "beb84da95bd01c49873c259010505df6",
     "packages": [
         {
             "name": "pushinbr/pam-mobile-ui",
-            "version": "0.2.x-dev",
+            "version": "0.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "68f3bcca094b2aecd08797064a50384dfac0740c"
+                "reference": "3a61e0bf35eb9ad083658692fc09efc1154d9954"
             },
             "require": {
                 "php": "^8.4",
-                "pushinbr/pam-native": "^0.2"
+                "pushinbr/pam-native": "^0.3"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1"
@@ -96,11 +96,11 @@
         },
         {
             "name": "pushinbr/pam-native",
-            "version": "0.2.x-dev",
+            "version": "0.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../../pam-native/packages/native",
-                "reference": "cfab9a8c88ce6716e43f5c7b1ca63509595e7ca1"
+                "reference": "883819e7179f574c639289425abc72a8cb0f47d4"
             },
             "require": {
                 "php": "^8.4"

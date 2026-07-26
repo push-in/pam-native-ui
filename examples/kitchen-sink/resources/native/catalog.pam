@@ -3,12 +3,26 @@
         <VStack class="p-4 gap-6">
             <VStack class="gap-2">
                 <Badge variant="secondary">
-                    <BadgeText>pushinbr/pam-mobile-ui</BadgeText>
+                    <BadgeText>PAM Studio</BadgeText>
                 </Badge>
-                <Heading size="3xl">Build native. Write PHP.</Heading>
+                <Heading size="3xl">Design, inspect, ship.</Heading>
                 <Text class="ui-text-muted">
-                    Declarative tags, typed classes and Android behavior without a JavaScript runtime.
+                    The visual workbench for native PHP products, without a JavaScript runtime.
                 </Text>
+                <Card class="p-4 rounded-2xl">
+                    <VStack class="gap-3">
+                        <HStack class="items-center justify-between">
+                            <VStack class="gap-1">
+                                <Heading size="md">Runtime diagnostics</Heading>
+                                <Text class="ui-text-muted">FPS, mount, decode, nodes and native heap</Text>
+                            </VStack>
+                            <Badge action="success"><BadgeText>Ready</BadgeText></Badge>
+                        </HStack>
+                        <Alert action="info" variant="subtle" class="rounded-xl">
+                            <AlertText>Run: pam mobile devtools .</AlertText>
+                        </Alert>
+                    </VStack>
+                </Card>
                 <HStack space="sm">
                     <Button size="lg" on:press="toggleModal">
                         <ButtonText>Open modal</ButtonText>

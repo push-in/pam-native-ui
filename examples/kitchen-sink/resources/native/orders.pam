@@ -1,0 +1,67 @@
+<AppScreen title="Orders" subtitle="Track fulfillment and payment in one place.">
+    <template #actions>
+        <Button variant="outline" size="md" accessibilityLabel="Search orders">
+            <SearchIcon />
+        </Button>
+    </template>
+
+    <HStack class="gap-2">
+        <Button size="sm" variant="outline" on:press="showLoading">
+            <ButtonText>Loading</ButtonText>
+        </Button>
+        <Button size="sm" variant="outline" on:press="showEmpty">
+            <ButtonText>Empty</ButtonText>
+        </Button>
+        <Button size="sm" variant="outline" on:press="showError">
+            <ButtonText>Error</ButtonText>
+        </Button>
+    </HStack>
+
+    <ContentState
+        status="{{ $status }}"
+        message="Orders could not be synchronized."
+        @retry="retry"
+    >
+        <VStack class="gap-3">
+            <Card class="p-4 rounded-2xl">
+                <HStack class="items-center gap-3">
+                    <VStack class="flex-1 gap-1">
+                        <HStack class="items-center gap-2">
+                            <Heading size="md">#1048</Heading>
+                            <Badge action="success"><BadgeText>Paid</BadgeText></Badge>
+                        </HStack>
+                        <Text class="ui-text-muted">Ana Martins - Today, 10:42</Text>
+                    </VStack>
+                    <Heading size="md">R$ 389.00</Heading>
+                    <ChevronRightIcon />
+                </HStack>
+            </Card>
+            <Card class="p-4 rounded-2xl">
+                <HStack class="items-center gap-3">
+                    <VStack class="flex-1 gap-1">
+                        <HStack class="items-center gap-2">
+                            <Heading size="md">#1047</Heading>
+                            <Badge action="warning"><BadgeText>Pending</BadgeText></Badge>
+                        </HStack>
+                        <Text class="ui-text-muted">Lucas Costa - Today, 09:18</Text>
+                    </VStack>
+                    <Heading size="md">R$ 149.90</Heading>
+                    <ChevronRightIcon />
+                </HStack>
+            </Card>
+            <Card class="p-4 rounded-2xl">
+                <HStack class="items-center gap-3">
+                    <VStack class="flex-1 gap-1">
+                        <HStack class="items-center gap-2">
+                            <Heading size="md">#1046</Heading>
+                            <Badge variant="secondary"><BadgeText>Shipped</BadgeText></Badge>
+                        </HStack>
+                        <Text class="ui-text-muted">Marina Alves - Yesterday</Text>
+                    </VStack>
+                    <Heading size="md">R$ 829.00</Heading>
+                    <ChevronRightIcon />
+                </HStack>
+            </Card>
+        </VStack>
+    </ContentState>
+</AppScreen>

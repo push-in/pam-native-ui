@@ -12,6 +12,10 @@ use Pam\MobileUi\Rendering\TailwindStyleCompiler;
 use Pam\MobileUi\Theme\ThemeClassRegistry;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
+use Pam\MobileUi\Product\AppScreen;
+use Pam\MobileUi\Product\AsyncButton;
+use Pam\MobileUi\Product\ContentState;
+use Pam\MobileUi\Product\FormField;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
 use Pam\Native\Plugin\PluginProvider;
@@ -22,6 +26,27 @@ final class MobileUiPluginProvider implements PluginProvider
 {
     public function register(): void
     {
+        TemplateRegistry::component(
+            'AppScreen',
+            static fn (array $props, array $children, ?object $_scope): AppScreen =>
+                AppScreen::fromTemplate($props, $children),
+        );
+        TemplateRegistry::component(
+            'ContentState',
+            static fn (array $props, array $children, ?object $_scope): ContentState =>
+                ContentState::fromTemplate($props, $children),
+        );
+        TemplateRegistry::component(
+            'AsyncButton',
+            static fn (array $props, array $children, ?object $_scope): AsyncButton =>
+                AsyncButton::fromTemplate($props, $children),
+        );
+        TemplateRegistry::component(
+            'FormField',
+            static fn (array $props, array $children, ?object $_scope): FormField =>
+                FormField::fromTemplate($props, $children),
+        );
+
         foreach (ComponentMap::TAGS as $tag => $component) {
             TemplateRegistry::component(
                 $tag,

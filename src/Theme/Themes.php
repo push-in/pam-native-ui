@@ -36,6 +36,18 @@ final class Themes
             ColorToken::Accent->value => Color::rgb(220, 252, 231)->argb,
             ColorToken::AccentForeground->value => Color::rgb(22, 101, 52)->argb,
             ColorToken::DestructiveForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::Surface->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::SurfaceElevated->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::SurfaceSunken->value => Color::rgb(241, 245, 249)->argb,
+            ColorToken::Success->value => Color::rgb(21, 128, 61)->argb,
+            ColorToken::SuccessForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::Warning->value => Color::rgb(180, 83, 9)->argb,
+            ColorToken::WarningForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::Info->value => Color::rgb(3, 105, 161)->argb,
+            ColorToken::InfoForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::Focus->value => Color::rgb(22, 163, 74)->argb,
+            ColorToken::Overlay->value => Color::rgb(15, 23, 42, 153)->argb,
+            ColorToken::OnSurface->value => Color::rgb(15, 23, 42)->argb,
         ]);
     }
 
@@ -60,6 +72,18 @@ final class Themes
             ColorToken::Accent->value => Color::rgb(30, 64, 42)->argb,
             ColorToken::AccentForeground->value => Color::rgb(187, 247, 208)->argb,
             ColorToken::DestructiveForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::Surface->value => Color::rgb(23, 32, 51)->argb,
+            ColorToken::SurfaceElevated->value => Color::rgb(30, 41, 59)->argb,
+            ColorToken::SurfaceSunken->value => Color::rgb(9, 15, 28)->argb,
+            ColorToken::Success->value => Color::rgb(74, 222, 128)->argb,
+            ColorToken::SuccessForeground->value => Color::rgb(5, 46, 22)->argb,
+            ColorToken::Warning->value => Color::rgb(251, 191, 36)->argb,
+            ColorToken::WarningForeground->value => Color::rgb(69, 26, 3)->argb,
+            ColorToken::Info->value => Color::rgb(56, 189, 248)->argb,
+            ColorToken::InfoForeground->value => Color::rgb(8, 47, 73)->argb,
+            ColorToken::Focus->value => Color::rgb(74, 222, 128)->argb,
+            ColorToken::Overlay->value => Color::rgb(2, 6, 23, 184)->argb,
+            ColorToken::OnSurface->value => Color::rgb(248, 250, 252)->argb,
         ]);
     }
 }

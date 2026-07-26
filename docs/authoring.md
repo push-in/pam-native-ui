@@ -125,3 +125,7 @@ plugin guide for packaging Android sources, resources, AARs and JNI libraries.
 
 The runnable combination of all styles is in
 [`examples/kitchen-sink`](../examples/kitchen-sink).
+
+For product screens, typed forms, async states, motion, tabs, generators and
+DevTools, continue with
+[`product-foundations.md`](product-foundations.md).

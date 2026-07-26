@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0
+
+- Add PAM's expanded semantic design language, density, typography, radius and
+  motion tokens for professional light and dark products.
+- Add `AppScreen`, `ContentState`, `AsyncButton` and `FormField` product
+  primitives with accessible loading, empty, error, offline and stale states.
+- Ship the premium five-destination showcase and PAM Studio component
+  workbench.
+- Integrate typed PAM Native forms, adaptive tabs, semantic motion, haptics and
+  lazy destination mounting.
+- Document flow generation, DevTools, accessibility and production performance
+  gates.
+
 ## 0.2.1
 
 - Ship the complete PamUI component and icon facade catalog under PAM-owned
