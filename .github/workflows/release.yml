@@ -71,6 +71,7 @@ jobs:
             "dist/pam-mobile-ui-php-${version}.tar.gz" \
             >dist/SHA256SUMS
       - uses: actions/attest-build-provenance@v4
+        if: github.event.repository.visibility == 'public'
         with:
           subject-path: |
             dist/*.aar
