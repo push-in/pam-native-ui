@@ -1,5 +1,6 @@
 package dev.pam.mobileui
 
+import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.os.Build
 import android.os.Looper
@@ -1538,9 +1539,15 @@ class MobileUiHostInstrumentedTest {
         }
 
         instrumentation.waitForIdleSync()
-        instrumentation.uiAutomation
-            .executeShellCommand("input keyevent KEYCODE_BACK")
-            .close()
+        if (
+            !instrumentation.uiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_BACK,
+            )
+        ) {
+            instrumentation.uiAutomation
+                .executeShellCommand("input keyevent KEYCODE_BACK")
+                .close()
+        }
         assertTrue(
             "date picker did not emit dismissal after system back",
             dismissed.await(5, TimeUnit.SECONDS),
