@@ -78,10 +78,13 @@ jobs:
             --output="dist/pam-mobile-ui-php-${version}.tar" \
             HEAD
           gzip -n "dist/pam-mobile-ui-php-${version}.tar"
-          sha256sum \
-            "dist/pam-mobile-ui-android-${version}.aar" \
-            "dist/pam-mobile-ui-php-${version}.tar.gz" \
-            >dist/SHA256SUMS
+          (
+            cd dist
+            sha256sum \
+              "pam-mobile-ui-android-${version}.aar" \
+              "pam-mobile-ui-php-${version}.tar.gz" \
+              >SHA256SUMS
+          )
       - uses: actions/attest-build-provenance@v4
         if: github.event.repository.visibility == 'public'
         with:
@@ -108,3 +111,4 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
           files: dist/*
           generate_release_notes: true
+          overwrite_files: true
