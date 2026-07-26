@@ -1,6 +1,12 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing v* tag to publish
+        required: true
+        type: string
   push:
     tags:
       - "v*"
@@ -24,6 +30,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
       - uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
@@ -40,8 +48,10 @@ jobs:
           php-version: '8.4'
           tools: composer:v2
       - name: Validate release version and package
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         run: |
-          tools/distribution-package.sh validate-tag "${GITHUB_REF_NAME}"
+          tools/distribution-package.sh validate-tag "${RELEASE_TAG}"
           composer install \
             --working-dir=tools/phpstan \
             --no-interaction \
@@ -55,8 +65,10 @@ jobs:
           -PpamNativeRoot=${{ github.workspace }}/pam-native
           assembleRelease
       - name: Create reproducible release archives
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         run: |
-          version=${GITHUB_REF_NAME#v}
+          version=${RELEASE_TAG#v}
           mkdir -p dist
           cp android/build/outputs/aar/pam-mobile-ui-release.aar \
             "dist/pam-mobile-ui-android-${version}.aar"
@@ -93,5 +105,6 @@ jobs:
           path: dist
       - uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
           files: dist/*
           generate_release_notes: true
