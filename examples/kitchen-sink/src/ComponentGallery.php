@@ -63,6 +63,16 @@ final class ComponentGallery extends Component
         $this->selection = $value;
     }
 
+    public function selectNative(): void
+    {
+        $this->select('native');
+    }
+
+    public function selectTyped(): void
+    {
+        $this->select('typed');
+    }
+
     /**
      * @return array{
      *     checked: bool,

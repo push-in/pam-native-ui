@@ -207,8 +207,8 @@
             <p-rating value="4" maximum="5" />
         </p-row>
         <p-btn-toggle value="{{ $selection }}">
-            <p-btn value="native" on:press="select('native')"><p-text>Native</p-text></p-btn>
-            <p-btn value="typed" on:press="select('typed')"><p-text>Typed</p-text></p-btn>
+            <p-btn value="native" on:press="selectNative"><p-text>Native</p-text></p-btn>
+            <p-btn value="typed" on:press="selectTyped"><p-text>Typed</p-text></p-btn>
         </p-btn-toggle>
         <p-selection-control-group>
             <p-checkbox checked="{{ $checked }}" on:change="toggle">
@@ -442,6 +442,19 @@
 
     <p-col class="gap-3">
         <p-text size="xl">Application shell</p-text>
+        <p-app>
+            <p-card variant="outline" class="rounded-3xl">
+                <p-toolbar>
+                    <p-toolbar-title>Workspace</p-toolbar-title>
+                    <p-spacer />
+                    <p-toolbar-items>
+                        <p-icon-btn accessibilityLabel="Search"><p-icon icon="search" /></p-icon-btn>
+                        <p-icon-btn accessibilityLabel="More options"><p-icon icon="more-vert" /></p-icon-btn>
+                    </p-toolbar-items>
+                </p-toolbar>
+                <p-sheet class="p-4"><p-text>A complete native application surface</p-text></p-sheet>
+            </p-card>
+        </p-app>
         <p-card variant="outline" class="rounded-3xl">
             <p-system-bar><p-text>9:41</p-text></p-system-bar>
             <p-app-bar>
@@ -464,6 +477,105 @@
                 <p-btn value="settings"><p-icon icon="settings" /><p-text>Settings</p-text></p-btn>
             </p-bottom-navigation>
             <p-footer><p-text class="ui-text-muted">PAM native design system</p-text></p-footer>
+        </p-card>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="xl">Component anatomy</p-text>
+        <p-text class="ui-text-muted">Specialized views and composable building blocks</p-text>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Calendar anatomy</p-card-title>
+            <p-calendar value="2026-07-26">
+                <p-calendar-header><p-text>July 2026</p-text></p-calendar-header>
+                <p-calendar-interval><p-text>09:00</p-text></p-calendar-interval>
+                <p-calendar-day value="2026-07-26"><p-text>26</p-text></p-calendar-day>
+            </p-calendar>
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Date picker views</p-card-title>
+            <p-date-picker value="2026-07-26">
+                <p-date-picker-header><p-text>Sunday, July 26</p-text></p-date-picker-header>
+                <p-date-picker-controls />
+                <p-date-picker-month />
+                <p-date-picker-months />
+                <p-date-picker-years />
+            </p-date-picker>
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Color editing</p-card-title>
+            <p-color-picker value="#4C8DFF">
+                <p-color-picker-preview />
+                <p-color-picker-canvas />
+                <p-color-picker-edit />
+                <p-color-picker-swatches />
+            </p-color-picker>
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Picker and confirmation</p-card-title>
+            <p-picker>
+                <p-picker-title>Choose a release channel</p-picker-title>
+                <p-list>
+                    <p-list-group value="stable">
+                        <p-list-subheader>Recommended</p-list-subheader>
+                        <p-list-item><p-list-item-title>Stable</p-list-item-title></p-list-item>
+                        <p-list-item><p-list-item-title>Preview</p-list-item-title></p-list-item>
+                    </p-list-group>
+                </p-list>
+            </p-picker>
+            <p-confirm-edit value="Stable">
+                <p-text>Stable channel selected</p-text>
+            </p-confirm-edit>
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Selection primitives</p-card-title>
+            <p-row class="gap-3 items-center">
+                <p-checkbox-btn checked="true" accessibilityLabel="Selected checkbox button" />
+                <p-selection-control checked="true"><p-label>Custom selection control</p-label></p-selection-control>
+            </p-row>
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Data strategies</p-card-title>
+            <p-data-table-server items="Release,Status,Owner" />
+            <p-divider />
+            <p-data-table-virtual items="Android,iOS,Composer,GitHub" />
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Stepper window</p-card-title>
+            <p-stepper value="2">
+                <p-stepper-header>
+                    <p-stepper-item value="1"><p-text>Design</p-text></p-stepper-item>
+                    <p-stepper-item value="2"><p-text>Build</p-text></p-stepper-item>
+                    <p-stepper-item value="3"><p-text>Release</p-text></p-stepper-item>
+                </p-stepper-header>
+                <p-stepper-window value="2">
+                    <p-stepper-window-item value="1"><p-text>Theme and tokens</p-text></p-stepper-window-item>
+                    <p-stepper-window-item value="2"><p-text>Native implementation</p-text></p-stepper-window-item>
+                    <p-stepper-window-item value="3"><p-text>Distribution</p-text></p-stepper-window-item>
+                </p-stepper-window>
+                <p-stepper-actions />
+            </p-stepper>
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Queued feedback</p-card-title>
+            <p-snackbar-queue items="Build complete,Android artifact ready,iOS checks passed" />
+        </p-card>
+
+        <p-card class="p-4 rounded-3xl">
+            <p-card-title>Overlay surface</p-card-title>
+            <p-responsive aspectRatio="16/9">
+                <p-sheet class="p-4 rounded-2xl">
+                    <p-text>Content beneath the overlay</p-text>
+                    <p-overlay open="false"><p-progress-circular indeterminate="true" /></p-overlay>
+                </p-sheet>
+            </p-responsive>
         </p-card>
     </p-col>
 

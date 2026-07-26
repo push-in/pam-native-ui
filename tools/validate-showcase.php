@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Activity;
 use App\AppTheme;
 use App\Catalog;
+use App\ComponentGallery;
 use App\Orders;
 use App\Overview;
 use App\Profile;
@@ -40,6 +41,7 @@ PamUI::mode(ThemeMode::Dark);
 TypedCommunityCard::register();
 
 $allowedApplicationTags = ['AppScreen' => true, 'ContentState' => true];
+$renderedMaterialTags = [];
 foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $template) {
     $source = file_get_contents($template);
     if (!is_string($source)) {
@@ -47,6 +49,10 @@ foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $t
     }
     if (preg_match('/<\/?v-[a-z]/', $source) === 1) {
         throw new RuntimeException("Vuetify v-* tag found in {$template}.");
+    }
+    preg_match_all('/<(p-[a-z0-9-]+)(?=[\s\/>])/', $source, $materialMatches);
+    foreach ($materialMatches[1] ?? [] as $tag) {
+        $renderedMaterialTags[$tag] = true;
     }
     preg_match_all('/<\/?([A-Z][A-Za-z0-9]*)(?=[\s\/>])/', $source, $matches);
     foreach ($matches[1] ?? [] as $tag) {
@@ -58,12 +64,34 @@ foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $t
     }
 }
 
+/** @var list<array{components: list<string>}> $materialModules */
+$materialModules = require $root.'/resources/pam-material-components.php';
+$expectedMaterialTags = [];
+foreach ($materialModules as $module) {
+    foreach ($module['components'] as $component) {
+        $tag = strtolower(
+            preg_replace('/(?<!^)[A-Z]/', '-$0', $component) ?? $component,
+        );
+        $expectedMaterialTags[$tag] = true;
+    }
+}
+$missingMaterialTags = array_keys(
+    array_diff_key($expectedMaterialTags, $renderedMaterialTags),
+);
+sort($missingMaterialTags);
+if ($missingMaterialTags !== []) {
+    throw new RuntimeException(
+        'Showcase is missing p-* components: '.implode(', ', $missingMaterialTags),
+    );
+}
+
 $screens = [
     Overview::class,
     Orders::class,
     Activity::class,
     Profile::class,
     Catalog::class,
+    ComponentGallery::class,
 ];
 
 foreach ($screens as $screen) {
@@ -73,7 +101,9 @@ foreach ($screens as $screen) {
 fwrite(
     STDOUT,
     sprintf(
-        "Validated %d p-* showcase screens through the production template renderer.\n",
+        "Validated %d p-* showcase screens and %d/%d material components through the production template renderer.\n",
         count($screens),
+        count($expectedMaterialTags),
+        count($expectedMaterialTags),
     ),
 );
