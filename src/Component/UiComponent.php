@@ -8,6 +8,11 @@ use BackedEnum;
 use Closure;
 use Pam\MobileUi\Rendering\ComponentRenderer;
 use Pam\MobileUi\Rendering\ValueNormalizer;
+use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\MaterialDensity;
+use Pam\MobileUi\Enum\MaterialMotion;
+use Pam\MobileUi\Enum\MaterialShape;
+use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
@@ -162,6 +167,125 @@ abstract class UiComponent implements Renderable
     final public function size(BackedEnum $size): static
     {
         return $this->prop('size', $size);
+    }
+
+    /** @param array<string, mixed> $defaults */
+    final public function defaults(array $defaults): static
+    {
+        return $this->prop('defaults', $defaults);
+    }
+
+    final public function locale(string $locale): static
+    {
+        return $this->prop('locale', $locale);
+    }
+
+    final public function rtl(bool $rtl = true): static
+    {
+        return $this->prop('rtl', $rtl);
+    }
+
+    final public function theme(ThemeMode|string $theme): static
+    {
+        return $this->prop(
+            'theme',
+            $theme instanceof ThemeMode ? $theme->value : $theme,
+        );
+    }
+
+    final public function color(ColorToken|int $color): static
+    {
+        return $this->prop('color', $color);
+    }
+
+    final public function density(MaterialDensity $density): static
+    {
+        return $this->prop('density', $density);
+    }
+
+    final public function elevation(int $elevation): static
+    {
+        return $this->prop('elevation', max(0, min(5, $elevation)));
+    }
+
+    final public function rounded(MaterialShape|bool $shape = true): static
+    {
+        return $this->prop('rounded', $shape);
+    }
+
+    final public function motion(MaterialMotion $motion): static
+    {
+        return $this->prop('motion', $motion);
+    }
+
+    final public function placement(Placement $placement): static
+    {
+        return $this->prop('placement', $placement);
+    }
+
+    final public function modelValue(mixed $value): static
+    {
+        return $this->prop('modelValue', $value);
+    }
+
+    final public function width(float $width): static
+    {
+        return $this->prop('width', max(0.0, $width));
+    }
+
+    final public function height(float $height): static
+    {
+        return $this->prop('height', max(0.0, $height));
+    }
+
+    final public function block(bool $block = true): static
+    {
+        return $this->prop('block', $block);
+    }
+
+    final public function icon(string|int|bool $icon = true): static
+    {
+        return $this->prop('icon', $icon);
+    }
+
+    final public function prependIcon(string|int $icon): static
+    {
+        return $this->prop('prependIcon', $icon);
+    }
+
+    final public function appendIcon(string|int $icon): static
+    {
+        return $this->prop('appendIcon', $icon);
+    }
+
+    final public function active(bool $active = true): static
+    {
+        return $this->prop('active', $active);
+    }
+
+    final public function clearable(bool $clearable = true): static
+    {
+        return $this->prop('clearable', $clearable);
+    }
+
+    final public function closable(bool $closable = true): static
+    {
+        return $this->prop('closable', $closable);
+    }
+
+    final public function persistent(bool $persistent = true): static
+    {
+        return $this->prop('persistent', $persistent);
+    }
+
+    final public function multiple(bool $multiple = true): static
+    {
+        return $this->prop('multiple', $multiple);
+    }
+
+    final public function indeterminate(bool $indeterminate = true): static
+    {
+        return $this->prop('indeterminate', $indeterminate);
     }
 
     final public function disabled(bool $disabled = true): static
@@ -464,9 +588,15 @@ abstract class UiComponent implements Renderable
 
     final public function toElement(): Element
     {
+        $inheritedDefaults = $this->parentVariants['__pamDefaults'] ?? [];
+        $inheritedProps = self::providerProps($this->parentVariants);
         $componentProps = ComponentRenderer::withDefaults(
             static::COMPONENT,
-            $this->props,
+            self::applyProviderDefaults(
+                static::COMPONENT,
+                [...$inheritedProps, ...$this->props],
+                is_array($inheritedDefaults) ? $inheritedDefaults : [],
+            ),
         );
         $componentProps = ComponentRenderer::withParentState(
             static::COMPONENT,
@@ -474,9 +604,13 @@ abstract class UiComponent implements Renderable
             $this->parentVariants,
         );
         $previousThemeMode = null;
-        if (static::COMPONENT === 'PamUIProvider') {
+        if (in_array(static::COMPONENT, ['PamUIProvider', 'PThemeProvider'], true)) {
             $previousThemeMode = ThemeManager::configuredMode();
-            ThemeManager::mode(self::providerThemeMode($componentProps['mode'] ?? null));
+            ThemeManager::mode(self::providerThemeMode(
+                $componentProps['mode']
+                    ?? $componentProps['theme']
+                    ?? null,
+            ));
         }
 
         try {
@@ -513,6 +647,11 @@ abstract class UiComponent implements Renderable
                     ARRAY_FILTER_USE_BOTH,
                 ),
             ];
+            $context = self::providerContext(
+                static::COMPONENT,
+                $componentProps,
+                $context,
+            );
             $children = array_map(
                 static function (Renderable $child) use (
                     $context,
@@ -547,6 +686,109 @@ abstract class UiComponent implements Renderable
                 ThemeManager::mode($previousThemeMode);
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private static function providerProps(array $context): array
+    {
+        $props = [];
+        foreach (['locale', 'rtl'] as $name) {
+            $key = '__pam'.ucfirst($name);
+            if (array_key_exists($key, $context)) {
+                $props[$name] = $context[$key];
+            }
+        }
+
+        return $props;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<string, mixed> $defaults
+     * @return array<string, mixed>
+     */
+    private static function applyProviderDefaults(
+        string $component,
+        array $props,
+        array $defaults,
+    ): array {
+        $global = is_array($defaults['global'] ?? null)
+            ? $defaults['global']
+            : [];
+        $componentDefaults = is_array($defaults[$component] ?? null)
+            ? $defaults[$component]
+            : [];
+
+        return [...$global, ...$componentDefaults, ...$props];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private static function providerContext(
+        string $component,
+        array $props,
+        array $context,
+    ): array {
+        if ($component === 'PDefaultsProvider') {
+            $provided = $props['defaults'] ?? $props['value'] ?? [];
+            if (is_array($provided)) {
+                $providedDefaults = [];
+                foreach ($provided as $name => $values) {
+                    if (is_string($name)) {
+                        $providedDefaults[$name] = $values;
+                    }
+                }
+                $current = is_array($context['__pamDefaults'] ?? null)
+                    ? $context['__pamDefaults']
+                    : [];
+                $context['__pamDefaults'] = self::mergeProviderDefaults(
+                    $current,
+                    $providedDefaults,
+                );
+            }
+        }
+        if ($component === 'PLocaleProvider') {
+            if (isset($props['locale']) && is_string($props['locale'])) {
+                $context['__pamLocale'] = $props['locale'];
+            }
+            if (array_key_exists('rtl', $props)) {
+                $context['__pamRtl'] = (bool) $props['rtl'];
+            }
+        }
+
+        return $context;
+    }
+
+    /**
+     * @param array<string, mixed> $base
+     * @param array<string, mixed> $overrides
+     * @return array<string, mixed>
+     */
+    private static function mergeProviderDefaults(
+        array $base,
+        array $overrides,
+    ): array {
+        foreach ($overrides as $component => $values) {
+            if (
+                is_array($values)
+                && is_array($base[$component] ?? null)
+            ) {
+                $base[$component] = [
+                    ...$base[$component],
+                    ...$values,
+                ];
+                continue;
+            }
+            $base[$component] = $values;
+        }
+
+        return $base;
     }
 
     private static function providerThemeMode(mixed $mode): ThemeMode

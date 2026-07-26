@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\AppTheme;
 use App\Activity;
 use App\Catalog;
+use App\ComponentGallery;
 use App\Orders;
 use App\Overview;
 use App\Profile;
@@ -28,12 +29,22 @@ App::views(
 AppTheme::install();
 PamUI::mode(ThemeMode::Dark);
 TypedCommunityCard::register();
+$catalog = new Catalog();
+$gallery = new ComponentGallery();
+$studio = Router::stack('studio')
+    ->route('studio', fn () => $catalog)
+    ->route('components', fn () => $gallery)
+    ->persistence('pam-studio-stack')
+    ->build();
+$catalog->navigator = $studio;
+$gallery->navigator = $studio;
+
 $tabs = Router::tabs('overview')
     ->tab('overview', 'Overview', new Overview(), StarIcon::make())
     ->tab('orders', 'Orders', new Orders(), BellIcon::make())
     ->tab('activity', 'Activity', new Activity(), ClockIcon::make())
     ->tab('profile', 'Profile', new Profile(), MessageCircleIcon::make())
-    ->tab('lab', 'Studio', new Catalog(), SettingsIcon::make())
+    ->tab('lab', 'Studio', $studio, SettingsIcon::make())
     ->appearance(0xFF091526, 0xFF4C8DFF, 0xFF7F93B0, 0xFF253952)
     ->persistence('premium-showcase')
     ->build();

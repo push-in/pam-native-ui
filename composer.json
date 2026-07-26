@@ -53,6 +53,7 @@
         "audit:styles": "php tools/audit-styles.php --strict",
         "analyse": "tools/phpstan/vendor/bin/phpstan analyse --level=9 --no-progress --debug",
         "benchmark": "php benchmarks/php.php",
+        "benchmark:material": "php benchmarks/material.php",
         "release:check": "php tools/release-check.php",
         "test:recipes": "php tests/recipe-matrix.php",
         "test:material": "php tests/material-matrix.php",
@@ -64,6 +65,7 @@
             "@analyse",
             "@test:recipes",
             "@test:material",
+            "@benchmark:material",
             "@test",
             "@test:showcase",
             "@release:check"

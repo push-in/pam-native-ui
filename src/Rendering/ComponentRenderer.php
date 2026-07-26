@@ -118,6 +118,16 @@ final class ComponentRenderer
             throw new InvalidArgumentException("Unknown PAM Mobile UI component {$part}.");
         }
 
+        if ($part === 'PBottomSheet') {
+            return self::materialBottomSheet(
+                $props,
+                $children,
+                $events,
+                $styleOverride,
+                $elementKey,
+            );
+        }
+
         if (isset(MaterialComponentMap::IDS[$part])) {
             $props['__materialComponent'] = $part;
         }
@@ -196,6 +206,25 @@ final class ComponentRenderer
         $children = self::formControlChildren($part, $runtimeProps, $children);
         $children = self::inputEventChildren($part, $events, $children);
         $children = self::messageResponseEventChildren($part, $events, $children);
+        if (
+            ($props['__materialComponent'] ?? null) === 'PProgressLinear'
+            && $children === []
+        ) {
+            $rawProgress = $props['value'] ?? 0;
+            $progress = is_numeric($rawProgress)
+                ? max(0.0, min(100.0, (float) $rawProgress))
+                : 0.0;
+            $children = [
+                View::make()
+                    ->style(new Style(
+                        widthPercent: $progress,
+                        height: 4.0,
+                        backgroundColor: ThemeManager::current()->color(ColorToken::Primary),
+                        borderRadius: 999.0,
+                    ))
+                    ->property(PropKey::Value, 'pam:progress-filled-track'),
+            ];
+        }
         $style = StyleResolver::resolve(
             $part === 'ModelSelectorContent' ? 'ModalContent' : $part,
             $props,
@@ -238,6 +267,13 @@ final class ComponentRenderer
         }
         $styleAppliedToContent = false;
         $rootStyle = $style;
+        if (in_array($part, [
+            'Actionsheet',
+            'BottomSheetPortal',
+            'SelectPortal',
+        ], true)) {
+            $rootStyle = new Style();
+        }
         if (
             $part === 'Menu'
             && isset($children[1])
@@ -569,8 +605,17 @@ final class ComponentRenderer
             )
                 ->animationType(self::modalAnimationType($runtimeProps))
                 ->backdropColor(
-                    self::packedColor($runtimeProps['backdropColor'] ?? null)
-                        ?? 0xFFFFFFFF,
+                    in_array($part, [
+                        'Actionsheet',
+                        'BottomSheetPortal',
+                        'SelectPortal',
+                    ], true)
+                        ? 0x00000000
+                        : (
+                            self::packedColor(
+                                $runtimeProps['backdropColor'] ?? null,
+                            ) ?? 0x66000000
+                        ),
                 )
                 ->transparent(self::flag($runtimeProps, 'transparent', true))
                 ->hardwareAccelerated(self::flag(
@@ -920,6 +965,54 @@ final class ComponentRenderer
     }
 
     /**
+     * Material sheets expose one compact p-* component while retaining the
+     * native portal anatomy used by Android and UIKit. This keeps the sheet
+     * outside normal layout, gives it a real scrim and preserves native
+     * gestures, snap points, safe-area handling and dismiss events.
+     *
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @param array<int, Closure> $events
+     */
+    private static function materialBottomSheet(
+        array $props,
+        array $children,
+        array $events,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $props['__materialComponent'] = 'PBottomSheet';
+        $props = self::withDefaults('BottomSheet', $props);
+
+        $backdrop = self::render(
+            'BottomSheetBackdrop',
+            $props,
+            [],
+            [],
+            null,
+            null,
+        );
+        $content = self::render(
+            'BottomSheetContent',
+            $props,
+            $children,
+            [],
+            $styleOverride,
+            null,
+        );
+        $portal = self::render(
+            'BottomSheetPortal',
+            $props,
+            [$backdrop, $content],
+            $events,
+            null,
+            $elementKey,
+        );
+
+        return View::make($portal)->collapsable();
+    }
+
+    /**
      * @param array<string, mixed> $props
      * @param list<Element> $children
      * @return array<string, string|int|float|bool>
@@ -1023,6 +1116,11 @@ final class ComponentRenderer
             'FileTree' => NativeBehavior::FileTree,
             'FileTreeFolder' => NativeBehavior::FileTreeFolder,
             'FileTreeFile' => NativeBehavior::FileTreeFile,
+            'PTransition' => NativeBehavior::Transition,
+            'PParallax' => NativeBehavior::Parallax,
+            'PSparkline' => NativeBehavior::Sparkline,
+            'PHotkey' => NativeBehavior::Hotkey,
+            'PHover' => NativeBehavior::Hover,
             'MessageBranch' => NativeBehavior::MessageBranch,
             'MessageBranchPrevious',
             'MessageBranchNext' => NativeBehavior::MessageBranchControl,
@@ -1292,33 +1390,47 @@ final class ComponentRenderer
     {
         return match ($part) {
             'PApp', 'PMain', 'PLayout', 'PLayoutItem', 'PContainer',
-            'PCardItem', 'PCardActions', 'PBanner', 'PBannerActions',
-            'PExpansionPanels', 'PExpansionPanel', 'PExpansionPanelText',
-            'PFooter', 'PForm', 'PItemGroup', 'PItem', 'PList', 'PListItem',
-            'PListGroup', 'PWindow', 'PWindowItem', 'PThemeProvider',
+            'PCardItem', 'PBanner', 'PFooter', 'PForm', 'PList',
+            'PThemeProvider',
             'PDefaultsProvider', 'PLocaleProvider', 'PResponsive', 'PLazy',
             'PValidation' => 'VStack',
             'PRow', 'PToolbar', 'PToolbarItems', 'PAppBar',
-            'PBottomNavigation', 'PBreadcrumbs', 'PBtnGroup', 'PBtnToggle',
-            'PChipGroup', 'PSelectionControlGroup', 'PSlideGroup',
-            'PStepperHeader', 'PStepperActions', 'PStepperVerticalActions' => 'HStack',
+            'PBottomNavigation', 'PBreadcrumbs', 'PBtnGroup',
+            'PCardActions', 'PBannerActions' => 'HStack',
             'PCol' => 'VStack',
             'PSpacer' => 'Spacer',
             'PAlert' => 'Alert',
             'PAlertTitle', 'PAppBarTitle', 'PBannerText',
-            'PBreadcrumbsItem', 'PBreadcrumbsDivider', 'PFieldLabel',
+            'PBreadcrumbsDivider', 'PFieldLabel',
             'PListSubheader', 'PPickerTitle', 'PToolbarTitle' => 'Heading',
+            'PAppBarNavIcon', 'PBreadcrumbsItem' => 'Button',
             'PAvatar' => 'Avatar',
             'PBadge' => 'Badge',
             'PBottomSheet' => 'BottomSheet',
             'PBtn', 'PIconBtn' => 'Button',
+            'PBtnToggle', 'PChipGroup', 'PSelectionControlGroup',
+            'PItemGroup' => 'CheckboxGroup',
             'PCalendar' => 'Calendar',
-            'PCard', 'PSheet', 'PEmptyState', 'PExpansionPanelTitle',
-            'PPicker' => 'Card',
-            'PCheckbox', 'PCheckboxBtn' => 'Checkbox',
-            'PChip' => 'Badge',
+            'PCarousel', 'PStepper', 'PStepperVertical', 'PWindow' => 'Tabs',
+            'PCarouselItem', 'PStepperWindow', 'PStepperWindowItem',
+            'PWindowItem' => 'TabsContent',
+            'PCard', 'PSheet', 'PEmptyState', 'PPicker' => 'Card',
+            'PCheckbox', 'PCheckboxBtn', 'PItem' => 'Checkbox',
+            'PChip' => 'Button',
+            'PColorPicker', 'PColorPickerCanvas', 'PRating' => 'Slider',
+            'PColorPickerEdit', 'PConfirmEdit', 'PFileUpload' => 'FormControl',
+            'PColorPickerPreview', 'PColorPickerSwatches',
+            'PFileUploadItem' => 'InputSlot',
+            'PDatePicker', 'PDatePickerMonth', 'PDatePickerMonths',
+            'PDatePickerYears', 'PTimePicker', 'PTimePickerClock' => 'Calendar',
+            'PDatePickerControls', 'PTimePickerControls' => 'DateTimePicker',
+            'PDatePickerHeader' => 'Heading',
             'PDialog' => 'Modal',
             'PDivider' => 'Divider',
+            'PExpansionPanels' => 'Accordion',
+            'PExpansionPanel' => 'AccordionItem',
+            'PExpansionPanelTitle' => 'AccordionTrigger',
+            'PExpansionPanelText' => 'AccordionContent',
             'PFab' => 'Fab',
             'PForm' => 'FormControl',
             'PIcon' => 'Icon',
@@ -1327,15 +1439,24 @@ final class ComponentRenderer
             'PColorInput', 'PDateInput', 'PFileInput' => 'Input',
             'PMenu' => 'Menu',
             'PNavigationDrawer' => 'Drawer',
+            'PListGroup' => 'Accordion',
+            'PListItem' => 'MenuItem',
             'POverlay' => 'Portal',
             'PProgressCircular', 'PProgressLinear' => 'Progress',
             'PPullToRefresh' => 'RefreshControl',
+            'PPagination' => 'Tabs',
             'PRadio' => 'Radio',
             'PRadioGroup' => 'RadioGroup',
             'PSelect', 'PAutocomplete', 'PCombobox' => 'Select',
+            'PSelectionControl' => 'Checkbox',
+            'PSelectionControlGroup' => 'CheckboxGroup',
             'PSkeletonLoader' => 'Skeleton',
+            'PSlideGroup' => 'Tabs',
+            'PSlideGroupItem', 'PStepperItem', 'PStepperVerticalItem' => 'TabsTrigger',
             'PSlider', 'PRangeSlider' => 'Slider',
             'PSnackbar', 'PSnackbarQueue' => 'Toast',
+            'PSpeedDial' => 'Popover',
+            'PStepperHeader', 'PStepperActions', 'PStepperVerticalActions' => 'TabsList',
             'PSwitch' => 'Switch',
             'PTable', 'PDataTable', 'PDataTableServer', 'PDataTableVirtual' => 'Table',
             'PTabs' => 'Tabs',
@@ -1345,6 +1466,8 @@ final class ComponentRenderer
             'PCounter', 'PCode', 'PKbd' => 'Text',
             'PTextarea' => 'Textarea',
             'PTooltip' => 'Tooltip',
+            'PTreeview' => 'FileTree',
+            'PTreeviewItem' => 'FileTreeFolder',
             'PVirtualScroll', 'PInfiniteScroll' => 'VirtualizedList',
             default => $part,
         };

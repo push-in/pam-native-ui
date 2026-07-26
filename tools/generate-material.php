@@ -130,7 +130,7 @@ $materialParity = json_encode([
             'type' => $index + 1,
             'module' => $module,
             'components' => $modules[$module],
-            'verification' => [3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 3, 1],
+            'verification' => [3, 3, 3, 3, 2, 2, 2, 2, 3, 3, 3, 3],
         ],
         array_keys($modules),
         array_keys(array_keys($modules)),

@@ -51,4 +51,9 @@ enum NativeBehavior: int
     case FileTree = 43;
     case FileTreeFolder = 44;
     case FileTreeFile = 45;
+    case Transition = 46;
+    case Parallax = 47;
+    case Sparkline = 48;
+    case Hotkey = 49;
+    case Hover = 50;
 }

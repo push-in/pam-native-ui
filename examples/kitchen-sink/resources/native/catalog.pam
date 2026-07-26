@@ -9,20 +9,20 @@
                 <p-badge action="success"><p-text>LIVE</p-text></p-badge>
             </p-row>
             <p-divider />
-            <p-row class="grid-cols-3 gap-3">
-                <p-col class="col-span-1">
+            <p-row class="gap-3">
+                <p-col class="flex-1 min-w-0">
                     <p-col class="gap-1">
                         <p-text size="lg">60</p-text>
                         <p-text class="ui-text-muted">FPS</p-text>
                     </p-col>
                 </p-col>
-                <p-col class="col-span-1">
+                <p-col class="flex-1 min-w-0">
                     <p-col class="gap-1">
                         <p-text size="lg">29 ms</p-text>
                         <p-text class="ui-text-muted">Decode</p-text>
                     </p-col>
                 </p-col>
-                <p-col class="col-span-1">
+                <p-col class="flex-1 min-w-0">
                     <p-col class="gap-1">
                         <p-text size="lg">115 ms</p-text>
                         <p-text class="ui-text-muted">Mount</p-text>
@@ -61,8 +61,8 @@
 
     <p-col class="gap-3">
         <p-text size="lg">Product primitives</p-text>
-        <p-row class="grid-cols-2 gap-3">
-            <p-col class="col-span-1">
+        <p-col class="gap-3">
+            <p-col>
                 <p-card class="p-4 rounded-2xl">
                     <p-col class="gap-2">
                         <p-badge action="success"><p-icon icon="check" /></p-badge>
@@ -71,7 +71,7 @@
                     </p-col>
                 </p-card>
             </p-col>
-            <p-col class="col-span-1">
+            <p-col>
                 <p-card class="p-4 rounded-2xl">
                     <p-col class="gap-2">
                         <p-badge action="info"><p-icon icon="schedule" /></p-badge>
@@ -80,7 +80,7 @@
                     </p-col>
                 </p-card>
             </p-col>
-        </p-row>
+        </p-col>
     </p-col>
 
     <p-alert action="info" variant="subtle" class="rounded-2xl">
@@ -90,6 +90,11 @@
             <p-text class="ui-text-muted">pam mobile devtools .</p-text>
         </p-col>
     </p-alert>
+
+    <p-btn on:press="openComponents" class="w-full">
+        <p-icon icon="widgets" />
+        <p-text>Explore all native components</p-text>
+    </p-btn>
 
     <p-dialog open="{{ $modalOpen }}" on:event="closeModal">
 
@@ -113,12 +118,9 @@
         snapToIndex="1"
         on:event="closeSheet"
     >
-
-        <p-sheet>
-            <p-divider />
-            <p-list-item on:press="closeSheet"><p-list-item-title>Inspect tree</p-list-item-title></p-list-item>
-            <p-list-item on:press="closeSheet"><p-list-item-title>View metrics</p-list-item-title></p-list-item>
-            <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
-        </p-sheet>
+        <p-divider />
+        <p-list-item on:press="closeSheet"><p-list-item-title>Inspect tree</p-list-item-title></p-list-item>
+        <p-list-item on:press="closeSheet"><p-list-item-title>View metrics</p-list-item-title></p-list-item>
+        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
     </p-bottom-sheet>
 </AppScreen>

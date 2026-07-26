@@ -6,11 +6,13 @@ namespace App;
 
 use Pam\MobileUi\Enum\AttachmentType;
 use Pam\Native\Component;
+use Pam\Native\Navigation\Navigator;
 use Pam\Native\Renderable;
 use Pam\Native\View;
 
 final class Catalog extends Component
 {
+    public Navigator $navigator;
     private bool $checked = true;
     private float $progress = 64.0;
     private bool $modalOpen = false;
@@ -71,6 +73,11 @@ final class Catalog extends Component
     public function render(): Renderable
     {
         return View::make('catalog');
+    }
+
+    public function openComponents(): void
+    {
+        $this->navigator->push('components');
     }
 
     public function toggle(): void

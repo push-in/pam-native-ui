@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "a780e166290f8eb23b6e9dc40a75895379e1ae78"
+                "reference": "ebdbc8285577e5aae6c2c2191fea7d3cc17df086"
             },
             "require": {
                 "php": "^8.4",
@@ -61,11 +61,20 @@
                 "benchmark": [
                     "php benchmarks/php.php"
                 ],
+                "benchmark:material": [
+                    "php benchmarks/material.php"
+                ],
                 "release:check": [
                     "php tools/release-check.php"
                 ],
                 "test:recipes": [
                     "php tests/recipe-matrix.php"
+                ],
+                "test:material": [
+                    "php tests/material-matrix.php"
+                ],
+                "test:showcase": [
+                    "php tools/validate-showcase.php"
                 ],
                 "test": [
                     "php tests/run.php"
@@ -75,7 +84,10 @@
                     "@audit:styles",
                     "@analyse",
                     "@test:recipes",
+                    "@test:material",
+                    "@benchmark:material",
                     "@test",
+                    "@test:showcase",
                     "@release:check"
                 ]
             },

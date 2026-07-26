@@ -1,0 +1,266 @@
+<AppScreen title="Native components" subtitle="103 modules · 163 p-* primitives">
+    <template #actions>
+        <p-icon-btn on:press="back" accessibilityLabel="Back to Studio">
+            <p-icon icon="arrow-back" />
+        </p-icon-btn>
+    </template>
+
+    <p-banner class="rounded-2xl">
+        <p-banner-text>
+            <p-text size="sm">Manual UIKit and Android implementations</p-text>
+            <p-text class="ui-text-muted">No Vue runtime, metadata importer or v-* tags.</p-text>
+        </p-banner-text>
+        <p-banner-actions>
+            <p-chip action="success"><p-text>MD3</p-text></p-chip>
+            <p-chip action="info"><p-text>60 FPS</p-text></p-chip>
+        </p-banner-actions>
+    </p-banner>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Foundations</p-text>
+        <p-card class="p-4 rounded-2xl">
+            <p-card-item>
+                <p-row class="items-center gap-3">
+                    <p-avatar size="lg"><p-text>P</p-text></p-avatar>
+                    <p-col class="flex-1 gap-1">
+                        <p-card-title>PAM Material</p-card-title>
+                        <p-card-subtitle>Native surfaces and typography</p-card-subtitle>
+                    </p-col>
+                    <p-badge action="success"><p-text>Ready</p-text></p-badge>
+                </p-row>
+            </p-card-item>
+            <p-card-text>
+                <p-text>Cards, sheets, alerts, banners, dividers, labels, code and keyboard keys share semantic tokens.</p-text>
+                <p-row class="gap-2 items-center">
+                    <p-code>p-card</p-code>
+                    <p-kbd>⌘ K</p-kbd>
+                </p-row>
+            </p-card-text>
+        </p-card>
+        <p-alert action="info" variant="tonal">
+            <p-alert-title>Adaptive by default</p-alert-title>
+            <p-text>Safe areas, density, themes, locale and RTL flow through every primitive.</p-text>
+        </p-alert>
+        <p-empty-state>
+            <p-icon icon="inbox" />
+            <p-text size="md">Purposeful empty states</p-text>
+            <p-text class="ui-text-muted">With recovery actions and accessible descriptions.</p-text>
+        </p-empty-state>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Actions and selection</p-text>
+        <p-row class="gap-2">
+            <p-btn><p-text>Filled</p-text></p-btn>
+            <p-btn variant="tonal"><p-text>Tonal</p-text></p-btn>
+            <p-btn variant="outline"><p-text>Outlined</p-text></p-btn>
+        </p-row>
+        <p-row class="gap-3 items-center">
+            <p-fab accessibilityLabel="Create"><p-icon icon="add" /></p-fab>
+            <p-icon-btn accessibilityLabel="Favorite"><p-icon icon="star" /></p-icon-btn>
+            <p-chip closable="true"><p-text>Interactive chip</p-text></p-chip>
+            <p-rating value="4" maximum="5" />
+        </p-row>
+        <p-btn-toggle value="{{ $selection }}">
+            <p-btn value="native" on:press="select('native')"><p-text>Native</p-text></p-btn>
+            <p-btn value="typed" on:press="select('typed')"><p-text>Typed</p-text></p-btn>
+        </p-btn-toggle>
+        <p-selection-control-group>
+            <p-checkbox checked="{{ $checked }}" on:change="toggle">
+                <p-label>Checkbox</p-label>
+            </p-checkbox>
+            <p-radio-group value="{{ $selection }}">
+                <p-radio value="native"><p-label>Android + iOS</p-label></p-radio>
+                <p-radio value="typed"><p-label>Typed protocol</p-label></p-radio>
+            </p-radio-group>
+            <p-switch checked="{{ $checked }}" on:change="toggle">
+                <p-label>Motion and haptics</p-label>
+            </p-switch>
+        </p-selection-control-group>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Forms</p-text>
+        <p-form>
+            <p-text-field label="Project name" value="PAM UI" helper="Visible label and helper text" />
+            <p-textarea label="Description" value="Native rendering without JavaScript." />
+            <p-row class="gap-2">
+                <p-number-input label="Instances" value="12" class="flex-1" />
+                <p-otp-input label="Release code" value="4162" class="flex-1" />
+            </p-row>
+            <p-select label="Runtime" value="native" items="Native,Hybrid,Web" />
+            <p-autocomplete label="Component" value="p-btn" items="p-btn,p-card,p-dialog,p-table" />
+            <p-combobox label="Tags" value="material" items="material,native,typed" />
+            <p-date-input label="Release date" value="2026-07-26" />
+            <p-color-input label="Brand color" value="#4C8DFF" />
+            <p-file-input label="Artifacts" />
+            <p-file-upload>
+                <p-file-upload-item><p-text>pam-mobile-ui.zip</p-text></p-file-upload-item>
+            </p-file-upload>
+            <p-messages><p-text class="ui-text-muted">Validation, drafts, server errors and autofill are native.</p-text></p-messages>
+            <p-counter><p-text>24 / 120</p-text></p-counter>
+        </p-form>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Progress and loading</p-text>
+        <p-progress-linear value="{{ $range }}" />
+        <p-row class="items-center gap-4">
+            <p-progress-circular value="{{ $range }}" size="lg" />
+            <p-slider value="{{ $range }}" on:change="changeRange" class="flex-1" />
+        </p-row>
+        <p-range-slider value="28" maximumValue="{{ $range }}" />
+        <p-skeleton-loader class="h-24 rounded-2xl" />
+        <p-pull-to-refresh>
+            <p-text class="ui-text-muted">Pull-to-refresh uses the platform indicator.</p-text>
+        </p-pull-to-refresh>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Disclosure and navigation</p-text>
+        <p-breadcrumbs>
+            <p-breadcrumbs-item><p-text>Studio</p-text></p-breadcrumbs-item>
+            <p-breadcrumbs-divider><p-text>/</p-text></p-breadcrumbs-divider>
+            <p-breadcrumbs-item><p-text>Components</p-text></p-breadcrumbs-item>
+        </p-breadcrumbs>
+        <p-tabs value="controls">
+            <p-tab value="controls"><p-text>Controls</p-text></p-tab>
+            <p-tab value="data"><p-text>Data</p-text></p-tab>
+            <p-tab value="motion"><p-text>Motion</p-text></p-tab>
+        </p-tabs>
+        <p-expansion-panels>
+            <p-expansion-panel value="performance">
+                <p-expansion-panel-title><p-text>Native performance</p-text></p-expansion-panel-title>
+                <p-expansion-panel-text><p-text>Diffed frames and UI-thread interactions.</p-text></p-expansion-panel-text>
+            </p-expansion-panel>
+            <p-expansion-panel value="accessibility">
+                <p-expansion-panel-title><p-text>Accessibility</p-text></p-expansion-panel-title>
+                <p-expansion-panel-text><p-text>TalkBack, VoiceOver, keyboard and reduced motion.</p-text></p-expansion-panel-text>
+            </p-expansion-panel>
+        </p-expansion-panels>
+        <p-stepper value="2">
+            <p-stepper-header>
+                <p-stepper-item value="1"><p-text>Design</p-text></p-stepper-item>
+                <p-stepper-item value="2"><p-text>Build</p-text></p-stepper-item>
+                <p-stepper-item value="3"><p-text>Ship</p-text></p-stepper-item>
+            </p-stepper-header>
+        </p-stepper>
+        <p-pagination value="2" length="5" />
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Data display</p-text>
+        <p-list>
+            <p-list-subheader>Native packages</p-list-subheader>
+            <p-list-item>
+                <p-list-item-title>pushinbr/pam-mobile-ui</p-list-item-title>
+                <p-list-item-subtitle>Material components</p-list-item-subtitle>
+            </p-list-item>
+            <p-list-item>
+                <p-list-item-title>pushinbr/pam-native</p-list-item-title>
+                <p-list-item-subtitle>Android + UIKit renderer</p-list-item-subtitle>
+            </p-list-item>
+        </p-list>
+        <p-table>
+            <p-row>
+                <p-text class="flex-1">Gate</p-text>
+                <p-text class="flex-1">Status</p-text>
+            </p-row>
+            <p-divider />
+            <p-row>
+                <p-text class="flex-1">Inventory</p-text>
+                <p-chip action="success"><p-text>Verified</p-text></p-chip>
+            </p-row>
+        </p-table>
+        <p-data-table items="Android,iOS,Composer" />
+        <p-data-iterator items="Cards,Rows,Lists">
+            <p-chip><p-text>Template-driven items</p-text></p-chip>
+        </p-data-iterator>
+        <p-virtual-scroll items="One,Two,Three" />
+        <p-infinite-scroll items="A,B,C" />
+        <p-timeline>
+            <p-timeline-item><p-text>Authored spec</p-text></p-timeline-item>
+            <p-timeline-item><p-text>Native render</p-text></p-timeline-item>
+            <p-timeline-item><p-text>Release gates</p-text></p-timeline-item>
+        </p-timeline>
+        <p-treeview>
+            <p-treeview-item path="/src"><p-text>src</p-text></p-treeview-item>
+            <p-treeview-item path="/tests"><p-text>tests</p-text></p-treeview-item>
+        </p-treeview>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Date, color and visualization</p-text>
+        <p-calendar value="2026-07-26" />
+        <p-date-picker value="2026-07-26">
+            <p-date-picker-header><p-text>July 2026</p-text></p-date-picker-header>
+            <p-date-picker-month />
+        </p-date-picker>
+        <p-time-picker value="19:30">
+            <p-time-picker-clock />
+            <p-time-picker-controls />
+        </p-time-picker>
+        <p-color-picker value="#4C8DFF">
+            <p-color-picker-preview />
+            <p-color-picker-canvas />
+            <p-color-picker-swatches />
+        </p-color-picker>
+        <p-sparkline value="18,32,29,44,68,61,82" />
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Layout and motion</p-text>
+        <p-responsive aspectRatio="16/9">
+            <p-card class="p-4 rounded-2xl">
+                <p-text>Responsive surface</p-text>
+            </p-card>
+        </p-responsive>
+        <p-slide-group>
+            <p-slide-group-item value="one"><p-chip><p-text>One</p-text></p-chip></p-slide-group-item>
+            <p-slide-group-item value="two"><p-chip><p-text>Two</p-text></p-chip></p-slide-group-item>
+        </p-slide-group>
+        <p-carousel value="one" class="h-40">
+            <p-carousel-item value="one"><p-card class="p-5"><p-text>Native page one</p-text></p-card></p-carousel-item>
+            <p-carousel-item value="two"><p-card class="p-5"><p-text>Native page two</p-text></p-card></p-carousel-item>
+        </p-carousel>
+        <p-parallax>
+            <p-img source="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200" alt="Forest" />
+        </p-parallax>
+        <p-transition name="fade">
+            <p-sheet class="p-4 rounded-2xl"><p-text>Reduced-motion aware transition</p-text></p-sheet>
+        </p-transition>
+    </p-col>
+
+    <p-col class="gap-3">
+        <p-text size="lg">Overlays</p-text>
+        <p-row class="gap-2">
+            <p-btn on:press="openDialog"><p-text>Dialog</p-text></p-btn>
+            <p-btn variant="outline" on:press="openSheet"><p-text>Bottom sheet</p-text></p-btn>
+            <p-tooltip text="Native tooltip"><p-icon-btn><p-icon icon="info" /></p-icon-btn></p-tooltip>
+        </p-row>
+        <p-menu>
+            <p-btn><p-text>Menu</p-text></p-btn>
+            <p-list><p-list-item><p-list-item-title>Menu item</p-list-item-title></p-list-item></p-list>
+        </p-menu>
+        <p-speed-dial>
+            <p-fab><p-icon icon="add" /></p-fab>
+            <p-icon-btn><p-icon icon="edit" /></p-icon-btn>
+            <p-icon-btn><p-icon icon="share" /></p-icon-btn>
+        </p-speed-dial>
+        <p-snackbar open="true"><p-text>Native snackbar with live-region semantics.</p-text></p-snackbar>
+    </p-col>
+
+    <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
+        <p-card>
+            <p-card-title>Production dialog</p-card-title>
+            <p-card-text><p-text>Focus trapping, Back, scrim and motion are platform-owned.</p-text></p-card-text>
+            <p-card-actions><p-btn on:press="closeDialog"><p-text>Close</p-text></p-btn></p-card-actions>
+        </p-card>
+    </p-dialog>
+
+    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" on:event="closeSheet">
+        <p-list-item><p-list-item-title>Inspect component</p-list-item-title></p-list-item>
+        <p-list-item><p-list-item-title>Copy p-* example</p-list-item-title></p-list-item>
+        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+    </p-bottom-sheet>
+</AppScreen>

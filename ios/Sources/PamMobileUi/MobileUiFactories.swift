@@ -65,13 +65,22 @@ private func applyCommonProperties(_ view: UIView, _ properties: [String: WireVa
 
 final class MobileUiHostFactory: NativeViewFactory {
     func create(context: AnyObject?, emit: @escaping (Data) -> Void) -> UIView {
-        let view = UIView()
-        view.clipsToBounds = false
-        return view
+        PamMobileUiHost { _, payload in emit(payload) }
+    }
+
+    func create(context: AnyObject?, emitter: NativeViewEmitter) -> UIView {
+        PamMobileUiHost { kind, payload in
+            emitter.emit(kind: kind, payload: payload)
+        }
     }
 
     func update(view: UIView, properties: [String: WireValue]) {
         applyCommonProperties(view, properties)
+        (view as? PamMobileUiHost)?.update(properties)
+    }
+
+    func release(view: UIView) {
+        (view as? PamMobileUiHost)?.releaseCallbacks()
     }
 }
 

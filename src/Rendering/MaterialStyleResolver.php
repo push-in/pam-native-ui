@@ -74,11 +74,11 @@ final class MaterialStyleResolver
             } : $height;
 
             return new Style(
-                minWidth: $icon ? $height : 64.0,
+                minWidth: $icon ? $height : 88.0,
                 width: $icon ? $height : null,
                 minHeight: $height,
                 height: $icon ? $height : null,
-                paddingHorizontal: $icon ? 0.0 : 24.0,
+                paddingHorizontal: $icon ? 0.0 : 16.0,
                 gap: 8.0,
                 textColor: match ($variant) {
                     MaterialVariant::Tonal =>
@@ -216,7 +216,7 @@ final class MaterialStyleResolver
         }
 
         if ($part === 'PCol') {
-            return new Style(flexGrow: 1.0, flexShrink: 1.0);
+            return new Style();
         }
 
         if ($part === 'PSpacer') {
@@ -227,16 +227,24 @@ final class MaterialStyleResolver
             'PAlert', 'PBanner', 'PSnackbar', 'PFileUpload',
             'PConfirmEdit',
         ], true)) {
+            $semanticColor = self::semanticColor($props, $theme, false);
+            $surfaceSemantic = in_array($part, [
+                'PAlert', 'PBanner', 'PConfirmEdit',
+            ], true);
+
             return new Style(
                 widthPercent: 100.0,
                 minHeight: $part === 'PSnackbar' ? 48.0 : 64.0,
                 paddingHorizontal: 16.0,
                 paddingVertical: 12.0,
                 gap: 12.0,
-                backgroundColor: self::semanticColor($props, $theme, false)
-                    ?? $theme->color(ColorToken::SurfaceElevated),
-                borderColor: $theme->color(ColorToken::Border),
-                borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
+                backgroundColor: $surfaceSemantic
+                    ? $theme->color(ColorToken::SurfaceElevated)
+                    : ($semanticColor ?? $theme->color(ColorToken::SurfaceElevated)),
+                borderColor: $semanticColor ?? $theme->color(ColorToken::Border),
+                borderWidth: $part === 'PAlert' || $variant === MaterialVariant::Outlined
+                    ? 1.0
+                    : 0.0,
                 borderRadius: MaterialTokens::radius(MaterialShape::Medium),
                 elevation: $part === 'PSnackbar' ? 3.0 : 0.0,
                 opacity: $opacity,

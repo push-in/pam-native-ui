@@ -29,6 +29,7 @@ import android.text.method.PasswordTransformationMethod
 import android.text.method.TransformationMethod
 import android.text.method.KeyListener
 import android.view.GestureDetector
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -117,7 +118,12 @@ internal class MobileUiHost(
         CONVERSATION_SCROLL_BUTTON(42),
         FILE_TREE(43),
         FILE_TREE_FOLDER(44),
-        FILE_TREE_FILE(45);
+        FILE_TREE_FILE(45),
+        TRANSITION(46),
+        PARALLAX(47),
+        SPARKLINE(48),
+        HOTKEY(49),
+        HOVER(50);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -215,6 +221,7 @@ internal class MobileUiHost(
     private var sheetDragStartTranslation = 0f
     private var sheetBackdropPressed = false
     private var sheetBackdropBaseAlpha: Float? = null
+    private var sheetScrimOpacity = 0.5f
     private var sheetVelocityTracker: VelocityTracker? = null
     private var closeSheetItemOnPress = false
     private var closeMenuItemOnPress = true
@@ -382,6 +389,7 @@ internal class MobileUiHost(
     private var fileTreeFolderExpanded = false
     private var fileTreeFolderInitialized = false
     private var animator: ValueAnimator? = null
+    private var nativeProperties: Map<String, WireValue> = emptyMap()
     private var activePickerDialog: Dialog? = null
     private var silentlyDismissedPickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
@@ -470,6 +478,11 @@ internal class MobileUiHost(
         val previousTabValue = tabValue
         val previousTableHeaderRow = tableHeaderRow
         val previousToastAction = toastAction
+        nativeProperties = properties
+        sheetScrimOpacity = properties
+            .decimal("backdropOpacity", 0.5)
+            .toFloat()
+            .coerceIn(0f, 1f)
         pendingAnchoredOpen?.let(::removeCallbacks)
         pendingAnchoredOpen = null
         pendingAnchoredClose?.let(::removeCallbacks)
@@ -930,6 +943,7 @@ internal class MobileUiHost(
             applyToastSemantics()
         }
         applyComponentDefaults()
+        applyMaterialSpecialization(previousBehavior)
         applySelectionVisualState()
         updateSelectionAccessibility()
         applyRangeVisualState()
@@ -1125,8 +1139,28 @@ internal class MobileUiHost(
             Behavior.CHECKBOX -> drawSelectionIndicator(canvas, radio = false)
             Behavior.RADIO -> drawSelectionIndicator(canvas, radio = true)
             Behavior.SWITCH -> drawSwitch(canvas)
+            Behavior.SPARKLINE -> drawSparkline(canvas)
             else -> Unit
         }
+    }
+
+    override fun onHoverEvent(event: MotionEvent): Boolean {
+        if (behavior != Behavior.HOVER || !isEnabled) {
+            return super.onHoverEvent(event)
+        }
+        when (event.actionMasked) {
+            MotionEvent.ACTION_HOVER_ENTER -> {
+                isHovered = true
+                animate().alpha(0.92f).setDuration(90L).start()
+                emitter.emit(NativeViewEventKind.TOGGLE, "1".encodeToByteArray())
+            }
+            MotionEvent.ACTION_HOVER_EXIT -> {
+                isHovered = false
+                animate().alpha(1f).setDuration(140L).start()
+                emitter.emit(NativeViewEventKind.TOGGLE, "0".encodeToByteArray())
+            }
+        }
+        return true
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -1282,6 +1316,9 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.BOTTOM_SHEET) {
             applySheetLayout(animate = false)
+        }
+        if (behavior == Behavior.PARALLAX) {
+            applyParallax()
         }
         if (behavior == Behavior.INPUT_GROUP) {
             applyInputGroupState()
@@ -2124,6 +2161,18 @@ internal class MobileUiHost(
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (
+            behavior == Behavior.HOTKEY
+            && event.action == KeyEvent.ACTION_UP
+            && matchesHotkey(event)
+        ) {
+            emitter.emit(
+                NativeViewEventKind.PRESS,
+                event.keyCode.toString().encodeToByteArray(),
+            )
+            performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            return true
+        }
         if (event.action == KeyEvent.ACTION_UP && event.keyCode == KeyEvent.KEYCODE_BACK) {
             if (behavior.isOverlay() && dismissible && keyboardDismissable) {
                 if (behavior == Behavior.BOTTOM_SHEET) {
@@ -2536,6 +2585,102 @@ internal class MobileUiHost(
         } else {
             accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_NONE
         }
+    }
+
+    private fun applyMaterialSpecialization(previousBehavior: Behavior) {
+        when (behavior) {
+            Behavior.TRANSITION -> {
+                if (previousBehavior != behavior && visibility == VISIBLE) {
+                    animate().cancel()
+                    if (animationsEnabled()) {
+                        alpha = 0f
+                        scaleX = 0.96f
+                        scaleY = 0.96f
+                        animate()
+                            .alpha(1f)
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(220L)
+                            .start()
+                    } else {
+                        alpha = 1f
+                        scaleX = 1f
+                        scaleY = 1f
+                    }
+                }
+            }
+            Behavior.PARALLAX -> post(::applyParallax)
+            Behavior.HOTKEY -> {
+                isFocusable = true
+                isFocusableInTouchMode = true
+            }
+            Behavior.HOVER -> isClickable = true
+            else -> Unit
+        }
+    }
+
+    private fun applyParallax() {
+        if (behavior != Behavior.PARALLAX || height <= 0) return
+        val location = IntArray(2)
+        getLocationOnScreen(location)
+        val viewport = resources.displayMetrics.heightPixels.toFloat()
+        val centerOffset = location[1] + height / 2f - viewport / 2f
+        val speed = nativeProperties.decimal("speed", 0.28).toFloat().coerceIn(-1f, 1f)
+        val target = -centerOffset * speed
+        repeat(childCount) { index ->
+            getChildAt(index).translationY = target.coerceIn(-height / 3f, height / 3f)
+        }
+    }
+
+    private fun drawSparkline(canvas: Canvas) {
+        val points = (
+            nativeProperties.text("values")
+                ?: nativeProperties.text("value")
+                ?: return
+        ).split(',', '\n', ';', ' ')
+            .mapNotNull(String::toFloatOrNull)
+        if (points.size < 2 || width <= 0 || height <= 0) return
+        val low = points.minOrNull() ?: return
+        val high = points.maxOrNull() ?: return
+        val spread = (high - low).takeIf { it > 0f } ?: 1f
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fillPaint.color
+            style = Paint.Style.STROKE
+            strokeWidth = nativeProperties.decimal("lineWidth", 2.5).toFloat() * density
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        val horizontal = width.toFloat() / (points.size - 1)
+        val path = android.graphics.Path()
+        points.forEachIndexed { index, point ->
+            val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                width - index * horizontal
+            } else {
+                index * horizontal
+            }
+            val y = height - ((point - low) / spread * height)
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        canvas.drawPath(path, paint)
+    }
+
+    private fun matchesHotkey(event: KeyEvent): Boolean {
+        val requested = nativeProperties.text("keys")
+            ?: nativeProperties.text("hotkey")
+            ?: nativeProperties.text("value")
+            ?: return false
+        val normalized = requested.lowercase(Locale.ROOT)
+        val keyName = KeyEvent.keyCodeToString(event.keyCode)
+            .removePrefix("KEYCODE_")
+            .lowercase(Locale.ROOT)
+        val keyMatches = normalized.split('+', ' ', ',').any {
+            it == keyName || (it.length == 1 && it[0].code == event.unicodeChar)
+        }
+        return keyMatches
+            && (!normalized.contains("ctrl") || event.isCtrlPressed)
+            && (!normalized.contains("alt") || event.isAltPressed)
+            && (!normalized.contains("shift") || event.isShiftPressed)
+            && (!normalized.contains("meta") || event.isMetaPressed)
     }
 
     private fun installInputFocusObserver() {
@@ -6081,7 +6226,29 @@ internal class MobileUiHost(
         if (behavior != Behavior.BOTTOM_SHEET || dragging) return
         val content = sheetContent() ?: return
         val backdrop = sheetBackdrop()
+        val contentLayout = (content.layoutParams as? FrameLayout.LayoutParams)
+            ?: FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                content.layoutParams?.height ?: ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        contentLayout.width = ViewGroup.LayoutParams.MATCH_PARENT
+        contentLayout.gravity = Gravity.BOTTOM
+        content.layoutParams = contentLayout
+        if (content is ViewGroup) {
+            repeat(content.childCount) { index ->
+                val child = content.getChildAt(index)
+                val childLayout = child.layoutParams ?: return@repeat
+                if (childLayout.width != ViewGroup.LayoutParams.MATCH_PARENT) {
+                    childLayout.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    child.layoutParams = childLayout
+                }
+            }
+        }
         if (backdrop != null) {
+            backdrop.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
             (backdrop.tag as? String)
                 ?.substringAfter("$OVERLAY_BACKDROP_TAG:", "")
                 ?.toIntOrNull()
@@ -6091,9 +6258,10 @@ internal class MobileUiHost(
                         BACKDROP_PRESS_NONE,
                     )
                 }
-            if (sheetBackdropBaseAlpha == null && backdrop.alpha > 0f) {
-                sheetBackdropBaseAlpha = backdrop.alpha
+            if (sheetBackdropBaseAlpha == null) {
+                sheetBackdropBaseAlpha = sheetScrimOpacity
             }
+            backdrop.alpha = sheetBackdropBaseAlpha ?: sheetScrimOpacity
             backdrop.importantForAccessibility =
                 IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         }
@@ -6105,8 +6273,12 @@ internal class MobileUiHost(
             && height > 0
             && !sheetEnableDynamicSizing
         ) {
+            val viewportHeight = minOf(
+                height,
+                resources.displayMetrics.heightPixels,
+            )
             val maximumHeight = (
-                height * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
+                viewportHeight * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
             ).roundToInt().coerceAtLeast(1)
             val layout = content.layoutParams
             if (layout.height != maximumHeight) {
@@ -6143,8 +6315,10 @@ internal class MobileUiHost(
     private fun sheetSnapTranslation(index: Int, content: View): Float {
         if (sheetSnapPoints.isEmpty() || height <= 0) return 0f
         val safeIndex = index.coerceIn(0, sheetSnapPoints.lastIndex)
-        val maximumHeight = height * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
-        val selectedHeight = height * sheetSnapPoints[safeIndex] / 100f
+        val viewportHeight = minOf(height, resources.displayMetrics.heightPixels)
+        val maximumHeight =
+            viewportHeight * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
+        val selectedHeight = viewportHeight * sheetSnapPoints[safeIndex] / 100f
         return (maximumHeight - selectedHeight)
             .coerceIn(0f, sheetDismissTranslation(content))
     }
