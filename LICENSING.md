@@ -1,6 +1,6 @@
 # PAM Mobile UI licensing
 
-PAM Mobile UI 0.1.0 is source-available under the Business Source License 1.1
+PAM Mobile UI 0.2.1 is source-available under the Business Source License 1.1
 (`BUSL-1.1`). The complete terms are in [`LICENSE`](LICENSE); this summary does
 not replace them.
 

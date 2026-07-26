@@ -5,8 +5,8 @@
     "license": "BUSL-1.1",
     "require": {
         "php": "^8.4",
-        "pushinbr/pam-mobile-ui": "0.1.x-dev",
-        "pushinbr/pam-native": "0.1.x-dev"
+        "pushinbr/pam-mobile-ui": "0.2.x-dev",
+        "pushinbr/pam-native": "0.2.x-dev"
     },
     "repositories": [
         {
@@ -15,7 +15,7 @@
             "options": {
                 "symlink": false,
                 "versions": {
-                    "pushinbr/pam-mobile-ui": "0.1.x-dev"
+                    "pushinbr/pam-mobile-ui": "0.2.x-dev"
                 }
             }
         },
@@ -25,7 +25,7 @@
             "options": {
                 "symlink": false,
                 "versions": {
-                    "pushinbr/pam-native": "0.1.x-dev"
+                    "pushinbr/pam-native": "0.2.x-dev"
                 }
             }
         }

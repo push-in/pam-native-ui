@@ -1,0 +1,133 @@
+name: Composer distribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing PAM Mobile UI tag to publish
+        required: true
+        type: string
+      publish:
+        description: Publish the validated distribution
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: composer-distribution-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  publish:
+    name: Publish Composer distribution
+    if: >-
+      github.repository == 'push-in/pam-mobile-ui' &&
+      (github.event_name == 'push' || inputs.publish)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event_name == 'push' && github.ref || inputs.release_tag }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+      - name: Resolve and validate release
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_TAG: ${{ github.ref_name }}
+          DISPATCH_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            release_tag=${PUSH_TAG}
+          else
+            release_tag=${DISPATCH_TAG}
+          fi
+          distribution_sha=$(
+            tools/distribution-package.sh create "${release_tag}" "${release_tag}"
+          )
+          tools/distribution-package.sh verify "${distribution_sha}"
+          printf 'tag=%s\n' "${release_tag}" >>"${GITHUB_OUTPUT}"
+          printf 'distribution=%s\n' "${distribution_sha}" >>"${GITHUB_OUTPUT}"
+      - name: Configure scoped mirror deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.PAM_MOBILE_UI_COMPOSER_DEPLOY_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -n "${DEPLOY_KEY}"
+          install -d -m 0700 "${RUNNER_TEMP}/pam-ssh"
+          install -m 0600 /dev/null "${RUNNER_TEMP}/pam-ssh/deploy-key"
+          printf '%s\n' "${DEPLOY_KEY}" >"${RUNNER_TEMP}/pam-ssh/deploy-key"
+          gh api meta --jq '.ssh_keys[] | "github.com " + .' \
+            >"${RUNNER_TEMP}/pam-ssh/known-hosts"
+      - name: Publish immutable branch and tag
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          DISTRIBUTION_SHA: ${{ steps.release.outputs.distribution }}
+          GIT_SSH_COMMAND: >-
+            ssh -i ${{ runner.temp }}/pam-ssh/deploy-key
+            -o IdentitiesOnly=yes
+            -o UserKnownHostsFile=${{ runner.temp }}/pam-ssh/known-hosts
+            -o StrictHostKeyChecking=yes
+        run: |
+          remote=git@github.com:push-in/pam-mobile-ui-php.git
+          remote_main=$(
+            git ls-remote "${remote}" refs/heads/main |
+              awk 'NR == 1 { print $1 }'
+          )
+          main_lease="--force-with-lease=refs/heads/main:${remote_main}"
+          remote_tag=$(
+            git ls-remote "${remote}" "refs/tags/${RELEASE_TAG}*" |
+              awk '
+                $2 ~ /\^\{\}$/ { peeled = $1 }
+                $2 !~ /\^\{\}$/ { direct = $1 }
+                END { print peeled != "" ? peeled : direct }
+              '
+          )
+          if [[ -n ${remote_tag} ]]; then
+            remote_tag_ref=refs/pam-remote-tags/${RELEASE_TAG}
+            git fetch --no-tags "${remote}" \
+              "refs/tags/${RELEASE_TAG}:${remote_tag_ref}"
+            [[ $(git rev-parse "${remote_tag_ref}^{tree}") == \
+              $(git rev-parse "${DISTRIBUTION_SHA}^{tree}") ]]
+            git push "${main_lease}" "${remote}" \
+              "${DISTRIBUTION_SHA}:refs/heads/main"
+          else
+            git push --atomic "${main_lease}" "${remote}" \
+              "${DISTRIBUTION_SHA}:refs/heads/main" \
+              "${DISTRIBUTION_SHA}:refs/tags/${RELEASE_TAG}"
+          fi
+      - name: Refresh Packagist metadata
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          test -n "${PACKAGIST_USERNAME}"
+          test -n "${PACKAGIST_TOKEN}"
+          payload='{"repository":{"url":"https://github.com/push-in/pam-mobile-ui-php"}}'
+          if ! curl --proto '=https' --tlsv1.2 \
+            --fail --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data "${payload}" \
+            "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}"; then
+            curl --proto '=https' --tlsv1.2 \
+              --fail --silent --show-error \
+              --request POST \
+              --header 'Content-Type: application/json' \
+              --data "${payload}" \
+              "https://packagist.org/api/create-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}"
+          fi

@@ -14,7 +14,7 @@ than a byte-for-byte port of React code.
 ## Install
 
 ```bash
-composer require pushinbr/pam-mobile-ui:^0.1
+composer require pushinbr/pam-mobile-ui:^0.2
 pam mobile codegen
 ```
 

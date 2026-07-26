@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+env:
+  PAM_NATIVE_COMMIT: 30c1442f22b7dcc0163203513f5e6748530c30be
+
+jobs:
+  package:
+    name: Build release artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: ${{ env.PAM_NATIVE_COMMIT }}
+          path: pam-native
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+      - name: Validate release version and package
+        run: |
+          tools/distribution-package.sh validate-tag "${GITHUB_REF_NAME}"
+          composer install \
+            --working-dir=tools/phpstan \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist
+          PAM_NATIVE_ROOT="${GITHUB_WORKSPACE}/pam-native" composer run verify
+      - name: Build Android release AAR
+        run: >-
+          pam-native/android/gradlew
+          -p android
+          -PpamNativeRoot=${{ github.workspace }}/pam-native
+          assembleRelease
+      - name: Create reproducible release archives
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          mkdir -p dist
+          cp android/build/outputs/aar/pam-mobile-ui-release.aar \
+            "dist/pam-mobile-ui-android-${version}.aar"
+          git archive \
+            --format=tar \
+            --prefix="pam-mobile-ui-${version}/" \
+            --output="dist/pam-mobile-ui-php-${version}.tar" \
+            HEAD
+          gzip -n "dist/pam-mobile-ui-php-${version}.tar"
+          sha256sum \
+            "dist/pam-mobile-ui-android-${version}.aar" \
+            "dist/pam-mobile-ui-php-${version}.tar.gz" \
+            >dist/SHA256SUMS
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/*.aar
+            dist/*.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pam-mobile-ui-release
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: pam-mobile-ui-release
+          path: dist
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
+          generate_release_notes: true

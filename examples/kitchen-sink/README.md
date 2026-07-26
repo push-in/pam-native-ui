@@ -31,7 +31,7 @@ For a normal application, remove the `repositories` section and install the
 published packages instead:
 
 ```bash
-composer require pushinbr/pam-native:^0.1 pushinbr/pam-mobile-ui:^0.1
+composer require pushinbr/pam-native:^0.2 pushinbr/pam-mobile-ui:^0.2
 pam mobile codegen
 pam mobile run .
 ```

@@ -342,7 +342,7 @@
                                     ## PAM Native
 
                                     **Markdown**, `inline code`, lists and
-                                    [safe links](https://github.com/push-in/pam-mobile-ui)
+                                    [safe links](https://github.com/push-in/pam-mobile-ui-php)
                                     render in one intrinsic Android text view.
                                 </MessageResponse>
                             </MessageContent>
