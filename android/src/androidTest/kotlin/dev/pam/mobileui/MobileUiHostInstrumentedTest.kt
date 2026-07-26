@@ -19,6 +19,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import dev.pam.nativeapp.protocol.WireValue
 import dev.pam.nativeapp.protocol.WireMap
 import dev.pam.nativeapp.views.NativeViewEventKind
@@ -1538,7 +1539,7 @@ class MobileUiHostInstrumentedTest {
         }
 
         instrumentation.waitForIdleSync()
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        assertTrue(UiDevice.getInstance(instrumentation).pressBack())
         assertTrue(
             "date picker did not emit dismissal after system back",
             dismissed.await(5, TimeUnit.SECONDS),
