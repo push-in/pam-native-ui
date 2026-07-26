@@ -1515,10 +1515,14 @@ class MobileUiHostInstrumentedTest {
         ) as TestHostActivity
         instrumentation.waitForIdleSync()
         val payloads = CopyOnWriteArrayList<ByteArray>()
+        val dismissed = CountDownLatch(1)
         lateinit var host: MobileUiHost
         onMain {
             host = MobileUiHost(activity) { kind, payload ->
-                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+                if (kind == NativeViewEventKind.NATIVE) {
+                    payloads += payload
+                    dismissed.countDown()
+                }
             }
             host.update(
                 mapOf(
@@ -1535,7 +1539,10 @@ class MobileUiHostInstrumentedTest {
 
         instrumentation.waitForIdleSync()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        instrumentation.waitForIdleSync()
+        assertTrue(
+            "date picker did not emit dismissal after system back",
+            dismissed.await(5, TimeUnit.SECONDS),
+        )
 
         val dismissal = WireMap.decode(payloads.single())
         assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
