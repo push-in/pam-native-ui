@@ -29,7 +29,8 @@
             "Pam\\MobileUi\\": "src/"
         },
         "classmap": [
-            "src/Generated/ComponentFacades.php"
+            "src/Generated/ComponentFacades.php",
+            "src/Generated/MaterialComponentFacades.php"
         ]
     },
     "autoload-dev": {
@@ -43,19 +44,28 @@
         }
     },
     "scripts": {
-        "generate": "php tools/generate.php",
+        "generate:legacy": "php tools/generate.php",
+        "generate:material": "php tools/generate-material.php",
+        "generate": [
+            "@generate:legacy",
+            "@generate:material"
+        ],
         "audit:styles": "php tools/audit-styles.php --strict",
         "analyse": "tools/phpstan/vendor/bin/phpstan analyse --level=9 --no-progress --debug",
         "benchmark": "php benchmarks/php.php",
         "release:check": "php tools/release-check.php",
         "test:recipes": "php tests/recipe-matrix.php",
+        "test:material": "php tests/material-matrix.php",
+        "test:showcase": "php tools/validate-showcase.php",
         "test": "php tests/run.php",
         "verify": [
             "@generate",
             "@audit:styles",
             "@analyse",
             "@test:recipes",
+            "@test:material",
             "@test",
+            "@test:showcase",
             "@release:check"
         ]
     },

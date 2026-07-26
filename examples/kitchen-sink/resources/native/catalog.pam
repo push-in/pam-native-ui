@@ -1,533 +1,124 @@
-<SafeAreaView class="flex-1 ui-bg">
-    <ScrollView class="flex-1" showsScrollIndicator="false">
-        <VStack class="p-4 gap-6">
-            <VStack class="gap-2">
-                <Badge variant="secondary">
-                    <BadgeText>PAM Studio</BadgeText>
-                </Badge>
-                <Heading size="3xl">Design, inspect, ship.</Heading>
-                <Text class="ui-text-muted">
-                    The visual workbench for native PHP products, without a JavaScript runtime.
-                </Text>
-                <Card class="p-4 rounded-2xl">
-                    <VStack class="gap-3">
-                        <HStack class="items-center justify-between">
-                            <Heading size="md">Runtime diagnostics</Heading>
-                            <Badge action="success"><BadgeText>Ready</BadgeText></Badge>
-                        </HStack>
-                        <Text class="ui-text-muted">
-                            FPS, mount, decode, nodes and native heap
-                        </Text>
-                        <Alert action="info" variant="subtle" class="rounded-xl">
-                            <AlertText>Run: pam mobile devtools .</AlertText>
-                        </Alert>
-                    </VStack>
-                </Card>
-                <HStack space="sm">
-                    <Button size="lg" on:press="toggleModal">
-                        <ButtonText>Open modal</ButtonText>
-                    </Button>
-                    <Button variant="outline" size="lg" on:press="toggleSheet">
-                        <ButtonText>Open sheet</ButtonText>
-                    </Button>
-                </HStack>
-            </VStack>
+<AppScreen title="PAM Studio" subtitle="Inspect, tune and ship native products">
+    <p-card class="p-5 rounded-3xl">
+        <p-col class="gap-4">
+            <p-row class="items-center justify-between">
+                <p-col class="gap-1">
+                    <p-text class="ui-text-muted">Runtime health</p-text>
+                    <p-text size="xl">Production ready</p-text>
+                </p-col>
+                <p-badge action="success"><p-text>LIVE</p-text></p-badge>
+            </p-row>
+            <p-divider />
+            <p-row class="grid-cols-3 gap-3">
+                <p-col class="col-span-1">
+                    <p-col class="gap-1">
+                        <p-text size="lg">60</p-text>
+                        <p-text class="ui-text-muted">FPS</p-text>
+                    </p-col>
+                </p-col>
+                <p-col class="col-span-1">
+                    <p-col class="gap-1">
+                        <p-text size="lg">29 ms</p-text>
+                        <p-text class="ui-text-muted">Decode</p-text>
+                    </p-col>
+                </p-col>
+                <p-col class="col-span-1">
+                    <p-col class="gap-1">
+                        <p-text size="lg">115 ms</p-text>
+                        <p-text class="ui-text-muted">Mount</p-text>
+                    </p-col>
+                </p-col>
+            </p-row>
+        </p-col>
+    </p-card>
 
-            <Divider />
+    <p-col class="gap-3">
+        <p-col class="gap-1">
+            <p-text size="lg">Native playground</p-text>
+            <p-text class="ui-text-muted">Real controls, rendered without a JavaScript runtime.</p-text>
+        </p-col>
+        <p-card class="p-4 rounded-2xl">
+            <p-col class="gap-4">
+                <p-row class="items-center justify-between">
+                    <p-col class="gap-1">
+                        <p-text size="sm">Motion and haptics</p-text>
+                        <p-text class="ui-text-muted">Platform-aware feedback</p-text>
+                    </p-col>
+                    <p-switch checked="{{ $checked }}" on:change="toggle" />
+                </p-row>
+                <p-progress-linear value="{{ $progress }}" />
+                <p-row class="gap-2">
+                    <p-btn class="flex-1" on:press="toggleModal">
+                        <p-text>Open modal</p-text>
+                    </p-btn>
+                    <p-btn class="flex-1" variant="outline" on:press="toggleSheet">
+                        <p-text>Open sheet</p-text>
+                    </p-btn>
+                </p-row>
+            </p-col>
+        </p-card>
+    </p-col>
 
-            <VStack class="gap-3">
-                <Heading size="xl">Identity and data</Heading>
-                <Card>
-                    <HStack class="items-center gap-3">
-                        <Avatar size="lg">
-                            <AvatarFallback>
-                                <AvatarFallbackText>DB</AvatarFallbackText>
-                            </AvatarFallback>
-                            <AvatarBadge />
-                        </Avatar>
-                        <VStack class="gap-1">
-                            <Heading size="md">David Balbino</Heading>
-                            <Text class="ui-text-muted">PAM Native builder</Text>
-                            <HStack space="xs">
-                                <Badge><BadgeText>PHP</BadgeText></Badge>
-                                <Badge variant="outline"><BadgeText>Android</BadgeText></Badge>
-                                <Badge variant="secondary"><BadgeText>Native</BadgeText></Badge>
-                            </HStack>
-                        </VStack>
-                    </HStack>
-                </Card>
+    <p-col class="gap-3">
+        <p-text size="lg">Product primitives</p-text>
+        <p-row class="grid-cols-2 gap-3">
+            <p-col class="col-span-1">
+                <p-card class="p-4 rounded-2xl">
+                    <p-col class="gap-2">
+                        <p-badge action="success"><p-icon icon="check" /></p-badge>
+                        <p-text size="sm">Typed forms</p-text>
+                        <p-text class="ui-text-muted">Rules, drafts and server errors.</p-text>
+                    </p-col>
+                </p-card>
+            </p-col>
+            <p-col class="col-span-1">
+                <p-card class="p-4 rounded-2xl">
+                    <p-col class="gap-2">
+                        <p-badge action="info"><p-icon icon="schedule" /></p-badge>
+                        <p-text size="sm">Async states</p-text>
+                        <p-text class="ui-text-muted">Loading through recovery.</p-text>
+                    </p-col>
+                </p-card>
+            </p-col>
+        </p-row>
+    </p-col>
 
-                <Grid class="grid-cols-2 sm:grid-cols-3 gap-3">
-                    <GridItem class="col-span-1">
-                        <Card><Heading size="lg">326</Heading><Text>Typed facades</Text></Card>
-                    </GridItem>
-                    <GridItem class="col-span-1 sm:col-span-2">
-                        <Card><Heading size="lg">55</Heading><Text>Native icons</Text></Card>
-                    </GridItem>
-                </Grid>
+    <p-alert action="info" variant="subtle" class="rounded-2xl">
+        <p-icon icon="info" />
+        <p-col class="gap-1">
+            <p-text>DevTools are one command away</p-text>
+            <p-text class="ui-text-muted">pam mobile devtools .</p-text>
+        </p-col>
+    </p-alert>
 
-                <TypedCommunityCard
-                    title="Classes and tags together"
-                    description="This tag renders a reusable component authored entirely with typed PHP facades."
-                />
-            </VStack>
+    <p-dialog open="{{ $modalOpen }}" on:event="closeModal">
 
-            <VStack class="gap-3">
-                <Heading size="xl">Native gallery</Heading>
-                <Text class="ui-text-muted">
-                    Swipe, zoom, navigation and image visibility stay on the Android UI thread.
-                </Text>
-                <ImageViewer
-                    images="$gallery"
-                    open="{{ $galleryOpen }}"
-                    initialIndex="{{ $galleryIndex }}"
-                    loop="true"
-                    on:toggle="setGalleryOpen"
-                    on:change="selectGalleryImage"
-                >
-                    <ImageViewerTrigger>
-                        <Button size="lg" variant="outline">
-                            <ButtonText>Open image gallery</ButtonText>
-                        </Button>
-                    </ImageViewerTrigger>
-                    <ImageViewerContent>
-                        <ImageViewerNavigation />
-                        <ImageViewerCounter />
-                        <ImageViewerCloseButton accessibilityLabel="Close gallery">
-                            <CloseIcon />
-                        </ImageViewerCloseButton>
-                    </ImageViewerContent>
-                </ImageViewer>
-            </VStack>
+        <p-card>
+            <p-card-title>
+                <p-text size="lg">Native by default</p-text>
+                <p-icon-btn on:press="closeModal"><p-icon icon="close" /></p-icon-btn>
+            </p-card-title>
+            <p-card-text>
+                <p-text>Focus, Back and accessibility remain owned by the platform.</p-text>
+            </p-card-text>
+            <p-card-actions>
+                <p-btn on:press="closeModal"><p-text>Got it</p-text></p-btn>
+            </p-card-actions>
+        </p-card>
+    </p-dialog>
 
-            <VStack class="gap-3">
-                <Heading size="xl">Forms</Heading>
-                <Card>
-                    <VStack space="md">
-                        <FormControl required="true">
-                            <FormControlLabel>
-                                <FormControlLabelText>Email</FormControlLabelText>
-                            </FormControlLabel>
-                            <Input variant="outline" size="lg" on:change="setEmail">
-                                <InputSlot><MailIcon /></InputSlot>
-                                <InputField
-                                    value="{{ $email }}"
-                                    placeholder="you@example.com"
-                                    keyboardType="email"
-                                    sync="native"
-                                />
-                                <InputSlot slotAction="clear" accessibilityLabel="Clear email">
-                                    <CloseIcon />
-                                </InputSlot>
-                            </Input>
-                            <FormControlHelper>
-                                <FormControlHelperText>We never share your email.</FormControlHelperText>
-                            </FormControlHelper>
-                        </FormControl>
-
-                        <FormControl>
-                            <FormControlLabel>
-                                <FormControlLabelText>About you</FormControlLabelText>
-                            </FormControlLabel>
-                            <Textarea>
-                                <TextareaInput
-                                    multiline="true"
-                                    placeholder="Tell the community what you are building"
-                                />
-                            </Textarea>
-                        </FormControl>
-
-                        <Select
-                            open="{{ $selectOpen }}"
-                            snapPoints="35,60"
-                            selectedValue="{{ $framework }}"
-                            on:change="chooseFramework"
-                            on:event="closeSelect"
-                        >
-                            <SelectTrigger on:press="toggleSelect">
-                                <SelectInput value="{{ $framework }}" placeholder="Choose a stack" />
-                                <SelectIcon><ChevronDownIcon /></SelectIcon>
-                            </SelectTrigger>
-                            <SelectPortal snapToIndex="1">
-                                <SelectBackdrop on:press="closeSelect" />
-                                <SelectContent>
-                                    <SelectDragIndicatorWrapper>
-                                        <SelectDragIndicator />
-                                    </SelectDragIndicatorWrapper>
-                                    <SelectItem label="Laravel" value="Laravel" />
-                                    <SelectItem label="Symfony" value="Symfony" />
-                                    <SelectItem label="Raw PHP" value="Raw PHP" />
-                                </SelectContent>
-                            </SelectPortal>
-                        </Select>
-
-                        <Checkbox checked="{{ $checked }}" on:toggle="toggle">
-                            <CheckboxIndicator><CheckboxIcon /></CheckboxIndicator>
-                            <CheckboxLabel>Receive native build updates</CheckboxLabel>
-                        </Checkbox>
-
-                        <RadioGroup value="{{ $plan }}" on:change="choosePlan">
-                            <HStack space="md">
-                                <Radio value="starter">
-                                    <RadioIndicator><RadioIcon /></RadioIndicator>
-                                    <RadioLabel>Starter</RadioLabel>
-                                </Radio>
-                                <Radio value="pro">
-                                    <RadioIndicator><RadioIcon /></RadioIndicator>
-                                    <RadioLabel>Pro</RadioLabel>
-                                </Radio>
-                            </HStack>
-                        </RadioGroup>
-
-                        <HStack class="items-center justify-between">
-                            <Text>System theme</Text>
-                            <Switch checked="{{ $checked }}" on:toggle="toggle" />
-                        </HStack>
-
-                        <Button size="lg" on:press="submit">
-                            <ButtonText>Save profile</ButtonText>
-                        </Button>
-                    </VStack>
-                </Card>
-            </VStack>
-
-            <VStack class="gap-3">
-                <Heading size="xl">Feedback and progress</Heading>
-                <Alert action="success" variant="subtle">
-                    <CheckCircleIcon />
-                    <AlertText>{{ $notice }}</AlertText>
-                </Alert>
-                <Progress value="{{ $progress }}">
-                    <ProgressFilledTrack />
-                </Progress>
-                <Slider
-                    value="{{ $progress }}"
-                    min="0"
-                    max="100"
-                    step="5"
-                    accessibilityLabel="Build progress"
-                    on:change="updateProgress"
-                >
-                    <SliderTrack><SliderFilledTrack /></SliderTrack>
-                    <SliderThumb />
-                </Slider>
-                <HStack class="items-center gap-3">
-                    <Spinner />
-                    <Skeleton class="w-12 h-12 rounded-full" />
-                    <VStack class="flex-1 gap-2">
-                        <SkeletonText _lines="2" gap="2" speed="fast" />
-                    </VStack>
-                </HStack>
-                <Toast action="info" variant="outline" persistent="true">
-                    <ToastTitle>Native notification</ToastTitle>
-                    <ToastDescription>Mounted and announced on Android.</ToastDescription>
-                </Toast>
-            </VStack>
-
-            <VStack class="gap-3">
-                <Heading size="xl">Disclosure and navigation</Heading>
-                <Accordion type="multiple" defaultValue="$expandedAccordions">
-                    <AccordionItem value="performance">
-                        <AccordionHeader>
-                            <AccordionTrigger>
-                                <AccordionTitleText>Why is it fast?</AccordionTitleText>
-                                <AccordionIcon />
-                            </AccordionTrigger>
-                        </AccordionHeader>
-                        <AccordionContent>
-                            <AccordionContentText>
-                                Gestures, overlays and animations stay on Android's UI thread.
-                            </AccordionContentText>
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="freedom">
-                        <AccordionHeader>
-                            <AccordionTrigger>
-                                <AccordionTitleText>Can I mix APIs?</AccordionTitleText>
-                                <AccordionIcon />
-                            </AccordionTrigger>
-                        </AccordionHeader>
-                        <AccordionContent>
-                            <AccordionContentText>
-                                Tags, typed PHP, raw PAM elements and native plugins can share one tree.
-                            </AccordionContentText>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-
-                <Tabs defaultValue="1" variant="filled">
-                    <TabsList>
-                        <TabsTrigger value="1"><TabsTriggerText>Account</TabsTriggerText></TabsTrigger>
-                        <TabsTrigger value="2"><TabsTriggerText>Security</TabsTriggerText></TabsTrigger>
-                        <TabsTrigger value="3"><TabsTriggerText>Billing</TabsTriggerText></TabsTrigger>
-                        <TabsIndicator />
-                    </TabsList>
-                    <TabsContentWrapper>
-                        <TabsContent value="1"><Card><Text>Account content</Text></Card></TabsContent>
-                        <TabsContent value="2"><Card><Text>Security content</Text></Card></TabsContent>
-                        <TabsContent value="3"><Card><Text>Billing content</Text></Card></TabsContent>
-                    </TabsContentWrapper>
-                </Tabs>
-
-                <VStack class="gap-3">
-                    <Button class="w-full" variant="outline" on:press="toggleDrawer">
-                        <MenuIcon />
-                        <ButtonText>Drawer</ButtonText>
-                    </Button>
-                    <Popover class="w-full" placement="bottom-start">
-                        <Button class="w-full" variant="outline">
-                            <InfoIcon />
-                            <ButtonText>Popover</ButtonText>
-                        </Button>
-                        <PopoverContent>
-                            <PopoverArrow />
-                            <PopoverHeader><Heading size="sm">Local overlay</Heading></PopoverHeader>
-                            <PopoverBody><Text>No PHP roundtrip while positioning.</Text></PopoverBody>
-                        </PopoverContent>
-                    </Popover>
-                    <Menu class="w-full" placement="bottom-end" on:change="chooseMenu">
-                        <Button class="w-full" variant="outline">
-                            <MenuIcon />
-                            <ButtonText>Menu</ButtonText>
-                        </Button>
-                        <MenuItem key="share"><MenuItemLabel>Share</MenuItemLabel></MenuItem>
-                        <MenuItem key="archive"><MenuItemLabel>Archive</MenuItemLabel></MenuItem>
-                    </Menu>
-                    <Tooltip class="w-full" openDelay="400" closeDelay="100" placement="top">
-                        <Button class="w-full" variant="outline" accessibilityLabel="Performance details">
-                            <InfoIcon />
-                            <ButtonText>Details</ButtonText>
-                        </Button>
-                        <TooltipContent>
-                            <TooltipText>Positioned entirely on Android.</TooltipText>
-                        </TooltipContent>
-                    </Tooltip>
-                </VStack>
-            </VStack>
-
-            <VStack class="gap-3">
-                <Heading size="xl">Dates</Heading>
-                <DateTimePicker
-                    mode="date"
-                    value="{{ $selectedDate }}"
-                    minimumDate="2026-01-01"
-                    maximumDate="2026-12-31"
-                    format="DD/MM/YYYY"
-                    on:change="selectDate"
-                >
-                    <DateTimePickerTrigger class="items-center">
-                        <DateTimePickerIcon><CalendarDaysIcon /></DateTimePickerIcon>
-                        <DateTimePickerInput class="text-center" value="{{ $selectedDate }}" />
-                    </DateTimePickerTrigger>
-                </DateTimePicker>
-                <Calendar
-                    mode="single"
-                    value="{{ $selectedDate }}"
-                    year="2026"
-                    month="7"
-                    fixedWeeks="true"
-                    on:change="selectDate"
-                >
-                    <CalendarHeader>
-                        <CalendarHeaderPrevButton><ChevronLeftIcon /></CalendarHeaderPrevButton>
-                        <CalendarHeaderTitle />
-                        <CalendarHeaderNextButton><ChevronRightIcon /></CalendarHeaderNextButton>
-                    </CalendarHeader>
-                    <CalendarWeekDaysHeader>
-                        <CalendarWeekDay>Sun</CalendarWeekDay>
-                        <CalendarWeekDay>Mon</CalendarWeekDay>
-                        <CalendarWeekDay>Tue</CalendarWeekDay>
-                        <CalendarWeekDay>Wed</CalendarWeekDay>
-                        <CalendarWeekDay>Thu</CalendarWeekDay>
-                        <CalendarWeekDay>Fri</CalendarWeekDay>
-                        <CalendarWeekDay>Sat</CalendarWeekDay>
-                    </CalendarWeekDaysHeader>
-                    <CalendarBody><CalendarGrid /></CalendarBody>
-                </Calendar>
-            </VStack>
-
-            <VStack class="gap-3">
-                <Heading size="xl">AI and attachments</Heading>
-                <Conversation>
-                    <ConversationContent>
-                        <Message role="assistant">
-                            <MessageContent>
-                                <MessageResponse on:event="openMessageLink">
-                                    ## PAM Native
-
-                                    **Markdown**, `inline code`, lists and
-                                    [safe links](https://github.com/push-in/pam-mobile-ui-php)
-                                    render in one intrinsic Android text view.
-                                </MessageResponse>
-                            </MessageContent>
-                        </Message>
-                        <Message role="user">
-                            <MessageContent><Text>Show me the Android architecture.</Text></MessageContent>
-                        </Message>
-                    </ConversationContent>
-                    <ConversationScrollButton accessibilityLabel="Latest message">
-                        <ArrowDownIcon />
-                    </ConversationScrollButton>
-                </Conversation>
-
-                <MessageBranch
-                    currentBranch="{{ $responseBranch }}"
-                    loop="true"
-                    on:change="selectResponseBranch"
-                >
-                    <MessageBranchContent>
-                        <MessageContent>
-                            <Text>Fast path: authored compound components.</Text>
-                        </MessageContent>
-                        <MessageContent>
-                            <Text>Escape hatch: raw PAM or a native plugin.</Text>
-                        </MessageContent>
-                    </MessageBranchContent>
-                    <MessageBranchSelector>
-                        <MessageBranchPrevious />
-                        <MessageBranchPage />
-                        <MessageBranchNext />
-                    </MessageBranchSelector>
-                </MessageBranch>
-
-                <FileTree defaultExpanded="$expandedFolders">
-                    <FileTreeFolder path="/src" name="src">
-                        <FileTreeFile path="/src/App.php" name="App.php" />
-                        <FileTreeFile path="/src/Theme.php" name="Theme.php" />
-                        <FileTreeFolder path="/src/Components" name="Components">
-                            <FileTreeFile
-                                path="/src/Components/ProfileCard.php"
-                                name="ProfileCard.php"
-                            />
-                        </FileTreeFolder>
-                    </FileTreeFolder>
-                    <FileTreeFile path="/composer.json" name="composer.json" />
-                </FileTree>
-
-                <PromptInputProvider files="$promptFiles">
-                    <VStack class="gap-3">
-                        <If condition="$promptFiles">
-                            <Attachments variant="list">
-                                <Each items="$promptFiles" as="file">
-                                    <Attachment data="$file" key="{{ $file.id }}">
-                                        <AttachmentPreview />
-                                        <VStack class="flex-1">
-                                            <Text>{{ $file.filename }}</Text>
-                                            <Text class="ui-text-muted">{{ $file.mediaType }}</Text>
-                                        </VStack>
-                                    </Attachment>
-                                </Each>
-                            </Attachments>
-                        </If>
-
-                        <PromptInput on:submit="sendPrompt">
-                            <PromptInputBody>
-                                <PromptInputTextarea
-                                    placeholder="Ask PAM anything"
-                                    sync="native"
-                                />
-                            </PromptInputBody>
-                            <PromptInputFooter>
-                                <PromptInputTools>
-                                    <PromptInputButton><PaperclipIcon /></PromptInputButton>
-                                    <PromptInputButton><GlobeIcon /></PromptInputButton>
-                                </PromptInputTools>
-                                <PromptInputSubmit accessibilityLabel="Send prompt">
-                                    <ArrowUpIcon />
-                                </PromptInputSubmit>
-                            </PromptInputFooter>
-                        </PromptInput>
-                    </VStack>
-                </PromptInputProvider>
-            </VStack>
-
-            <VStack class="gap-3">
-                <Heading size="xl">Runtime architecture</Heading>
-                <Text class="ui-text-muted">Clear ownership across the native stack.</Text>
-                <Grid class="grid-cols-1 md:grid-cols-3 gap-3">
-                    <GridItem><Card>
-                        <Heading size="md">PHP</Heading>
-                        <Text class="ui-text-muted">State and business logic</Text>
-                    </Card></GridItem>
-                    <GridItem><Card>
-                        <Heading size="md">Rust</Heading>
-                        <Text class="ui-text-muted">Layout and binary protocol</Text>
-                    </Card></GridItem>
-                    <GridItem><Card>
-                        <Heading size="md">Android</Heading>
-                        <Text class="ui-text-muted">Rendering, gestures and motion</Text>
-                    </Card></GridItem>
-                </Grid>
-            </VStack>
-
-            <VStack class="gap-3">
-                <Heading size="xl">Recycled native list</Heading>
-                <Text class="ui-text-muted">
-                    Scalar rows are packed once and recycled by Android without PHP render-item callbacks.
-                </Text>
-                <FlatList
-                    items="$nativePackages"
-                    height="192"
-                    rowHeight="48"
-                    scrollEnabled="false"
-                    showsVerticalScrollIndicator="false"
-                    onEndReachedThreshold="0.25"
-                    on:endReached="loadMorePackages"
-                />
-            </VStack>
-
-            <Text class="ui-text-muted">
-                The full generated inventory lives in docs/catalog.md.
-            </Text>
-        </VStack>
-    </ScrollView>
-
-    <Modal open="{{ $modalOpen }}" on:event="closeModal">
-        <ModalBackdrop on:press="closeModal" />
-        <ModalContent>
-            <ModalHeader>
-                <Heading size="lg">Native modal</Heading>
-                <ModalCloseButton on:press="closeModal"><CloseIcon /></ModalCloseButton>
-            </ModalHeader>
-            <ModalBody>
-                <Text>Focus is trapped, Back dismisses, and prior focus is restored.</Text>
-            </ModalBody>
-            <ModalFooter>
-                <Button variant="outline" on:press="closeModal"><ButtonText>Cancel</ButtonText></Button>
-                <Button on:press="closeModal"><ButtonText>Confirm</ButtonText></Button>
-            </ModalFooter>
-        </ModalContent>
-    </Modal>
-
-    <Actionsheet
+    <p-bottom-sheet
         open="{{ $sheetOpen }}"
-        snapPoints="30,55,85"
+        snapPoints="30,55"
         snapToIndex="1"
         on:event="closeSheet"
     >
-        <ActionsheetBackdrop pressBehavior="collapse" />
-        <ActionsheetContent>
-            <ActionsheetDragIndicatorWrapper><ActionsheetDragIndicator /></ActionsheetDragIndicatorWrapper>
-            <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Take photo</ActionsheetItemText></ActionsheetItem>
-            <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Choose file</ActionsheetItemText></ActionsheetItem>
-            <ActionsheetItem on:press="closeSheet"><ActionsheetItemText>Cancel</ActionsheetItemText></ActionsheetItem>
-        </ActionsheetContent>
-    </Actionsheet>
 
-    <Drawer open="{{ $drawerOpen }}" anchor="left" on:event="closeDrawer">
-        <DrawerBackdrop on:press="closeDrawer" />
-        <DrawerContent size="md">
-            <DrawerHeader class="pr-4">
-                <Heading size="lg">PamUI</Heading>
-                <DrawerCloseButton accessibilityLabel="Close drawer" on:press="closeDrawer"><CloseIcon /></DrawerCloseButton>
-            </DrawerHeader>
-            <DrawerBody>
-                <VStack class="gap-2">
-                    <Button variant="ghost"><ButtonText>Components</ButtonText></Button>
-                    <Button variant="ghost"><ButtonText>Themes</ButtonText></Button>
-                    <Button variant="ghost"><ButtonText>Performance</ButtonText></Button>
-                </VStack>
-            </DrawerBody>
-        </DrawerContent>
-    </Drawer>
-</SafeAreaView>
+        <p-sheet>
+            <p-divider />
+            <p-list-item on:press="closeSheet"><p-list-item-title>Inspect tree</p-list-item-title></p-list-item>
+            <p-list-item on:press="closeSheet"><p-list-item-title>View metrics</p-list-item-title></p-list-item>
+            <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+        </p-sheet>
+    </p-bottom-sheet>
+</AppScreen>

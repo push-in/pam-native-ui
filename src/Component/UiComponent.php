@@ -24,6 +24,11 @@ abstract class UiComponent implements Renderable
 {
     protected const string COMPONENT = '';
 
+    final public static function componentName(): string
+    {
+        return static::COMPONENT;
+    }
+
     /** @var array<string, mixed> */
     private array $props;
 
@@ -500,6 +505,7 @@ abstract class UiComponent implements Renderable
             }
             $context = [
                 ...$this->parentVariants,
+                '__pamParentComponent' => static::COMPONENT,
                 ...array_filter(
                     $componentProps,
                     static fn (mixed $value, string $name): bool =>

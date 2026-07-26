@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Pam\MobileUi\Generated\ComponentMap;
+use Pam\MobileUi\Generated\MaterialComponentMap;
 
 require dirname(__DIR__).'/tests/bootstrap.php';
 
@@ -35,6 +36,7 @@ $composer = $json($root.'/composer.json');
 $plugin = $json($root.'/pam-native.plugin.json');
 $exampleComposer = $json($root.'/examples/kitchen-sink/composer.json');
 $parity = $json($root.'/resources/parity.json');
+$materialParity = $json($root.'/resources/material-parity.json');
 
 $assert(
     ($composer['name'] ?? null) === 'pushinbr/pam-mobile-ui',
@@ -86,6 +88,67 @@ $assert(
     $referenceFacadeCount === count(ComponentMap::TAGS),
     'The pinned facade count does not match the generated PHP API.',
 );
+$materialReference = $materialParity['reference'] ?? [];
+$materialModules = $materialParity['modules'] ?? [];
+$assert(
+    is_array($materialReference)
+        && ($materialReference['metadataImport'] ?? null) === false
+        && ($materialReference['namespace'] ?? null) === 'p-*',
+    'Material parity must be authored manually and expose only p-* tags.',
+);
+$assert(
+    is_array($materialModules)
+        && ($materialReference['moduleCount'] ?? null) === count($materialModules)
+        && count($materialModules) === count(MaterialComponentMap::MODULES),
+    'Material parity module count must match the generated component map.',
+);
+$materialTags = [];
+foreach (is_array($materialModules) ? $materialModules : [] as $module) {
+    if (!is_array($module)) {
+        $assert(false, 'Every Material parity module must be an object.');
+        continue;
+    }
+    foreach (is_array($module['components'] ?? null) ? $module['components'] : [] as $tag) {
+        if (is_string($tag)) {
+            $materialTags[$tag] = true;
+        }
+    }
+}
+$assert(
+    ($materialReference['componentCount'] ?? null) === count($materialTags)
+        && array_keys($materialTags) === array_keys(MaterialComponentMap::TAGS),
+    'Material parity components must exactly match the generated p-* API.',
+);
+$materialGateNames = [];
+foreach ($materialParity['gateDefinitions'] ?? [] as $gate) {
+    if (
+        is_array($gate)
+        && is_int($gate['id'] ?? null)
+        && is_string($gate['name'] ?? null)
+    ) {
+        $materialGateNames[$gate['id']] = $gate['name'];
+    }
+}
+$materialPendingByGate = [];
+foreach (is_array($materialModules) ? $materialModules : [] as $module) {
+    if (!is_array($module)) {
+        $assert(false, 'Every Material parity module must be an object.');
+        continue;
+    }
+    $verification = $module['verification'] ?? null;
+    $assert(
+        is_array($verification)
+            && count($verification) === count($materialGateNames),
+        'Every Material module must cover every verification gate.',
+    );
+    foreach (is_array($verification) ? $verification : [] as $index => $status) {
+        if ($status === 1 || $status === 2) {
+            $gateName = $materialGateNames[$index + 1] ?? 'unknown';
+            $materialPendingByGate[$gateName] =
+                ($materialPendingByGate[$gateName] ?? 0) + 1;
+        }
+    }
+}
 $componentIds = array_values(ComponentMap::IDS);
 sort($componentIds, SORT_NUMERIC);
 $assert(
@@ -173,19 +236,17 @@ $assert(is_string($readme), 'Package README is missing.');
 $assert(is_string($exampleReadme), 'Kitchen-sink README is missing.');
 
 if (is_string($catalog)) {
-    foreach ($moduleNames as $moduleName) {
+    foreach (MaterialComponentMap::MODULES as $moduleName => $moduleTags) {
         $assert(
-            str_contains($catalog, "\n## {$moduleName}\n"),
-            "Catalog documentation is missing module {$moduleName}.",
+            str_contains($catalog, "\n## `{$moduleName}`\n"),
+            "Material catalog is missing module {$moduleName}.",
         );
-    }
-    foreach (ComponentMap::TAGS as $tag => $class) {
-        $className = substr($class, strrpos($class, '\\') + 1);
-        $assert(
-            str_contains($catalog, "`{$tag}`")
-                && str_contains($catalog, "{$className}::make()"),
-            "Catalog documentation is missing tag/class construction for {$tag}.",
-        );
+        foreach ($moduleTags as $tag) {
+            $assert(
+                str_contains($catalog, "`<{$tag} />`"),
+                "Material catalog is missing tag {$tag}.",
+            );
+        }
     }
 }
 
@@ -221,6 +282,7 @@ if ($failures !== []) {
 }
 
 ksort($pendingByGate, SORT_STRING);
+ksort($materialPendingByGate, SORT_STRING);
 
 echo json_encode(
     [
@@ -230,6 +292,15 @@ echo json_encode(
             : null,
         'modules' => count($moduleList),
         'facades' => count(ComponentMap::TAGS),
+        'material' => [
+            'modules' => count($materialModules),
+            'components' => count(MaterialComponentMap::TAGS),
+            'namespace' => $materialReference['namespace'] ?? null,
+            'metadataImport' => $materialReference['metadataImport'] ?? null,
+            'targets' => $materialReference['targets'] ?? [],
+            'pendingByGate' => $materialPendingByGate,
+            'releaseReady' => $materialPendingByGate === [],
+        ],
         'verification' => [
             'planned' => $statusCounts[1],
             'implemented' => $statusCounts[2],

@@ -26,7 +26,7 @@ App::views(
     __DIR__.'/.pam-native/views',
 );
 AppTheme::install();
-PamUI::mode(ThemeMode::System);
+PamUI::mode(ThemeMode::Dark);
 TypedCommunityCard::register();
 $tabs = Router::tabs('overview')
     ->tab('overview', 'Overview', new Overview(), StarIcon::make())
@@ -34,7 +34,7 @@ $tabs = Router::tabs('overview')
     ->tab('activity', 'Activity', new Activity(), ClockIcon::make())
     ->tab('profile', 'Profile', new Profile(), MessageCircleIcon::make())
     ->tab('lab', 'Studio', new Catalog(), SettingsIcon::make())
-    ->appearance(0xFF0F172A, 0xFF60A5FA, 0xFF94A3B8, 0xFF1E293B)
+    ->appearance(0xFF091526, 0xFF4C8DFF, 0xFF7F93B0, 0xFF253952)
     ->persistence('premium-showcase')
     ->build();
 App::run($tabs);

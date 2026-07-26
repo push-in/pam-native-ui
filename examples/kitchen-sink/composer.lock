@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "3a61e0bf35eb9ad083658692fc09efc1154d9954"
+                "reference": "a780e166290f8eb23b6e9dc40a75895379e1ae78"
             },
             "require": {
                 "php": "^8.4",
@@ -32,7 +32,8 @@
                     "Pam\\MobileUi\\": "src/"
                 },
                 "classmap": [
-                    "src/Generated/ComponentFacades.php"
+                    "src/Generated/ComponentFacades.php",
+                    "src/Generated/MaterialComponentFacades.php"
                 ]
             },
             "autoload-dev": {
@@ -41,8 +42,15 @@
                 }
             },
             "scripts": {
-                "generate": [
+                "generate:legacy": [
                     "php tools/generate.php"
+                ],
+                "generate:material": [
+                    "php tools/generate-material.php"
+                ],
+                "generate": [
+                    "@generate:legacy",
+                    "@generate:material"
                 ],
                 "audit:styles": [
                     "php tools/audit-styles.php --strict"

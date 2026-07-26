@@ -132,13 +132,18 @@ final readonly class AppScreen implements Renderable
         ));
         $content = Column::make(...$this->content)->style(new Style(
             flexGrow: 1.0,
-            paddingHorizontal: 24.0,
-            paddingTop: 12.0,
-            paddingBottom: $this->bottom === [] ? 32.0 : 16.0,
+            paddingHorizontal: 20.0,
+            paddingTop: 8.0,
+            paddingBottom: $this->bottom === [] ? 112.0 : 96.0,
             gap: DesignTokens::spacing(\Pam\MobileUi\Enum\InterfaceDensity::Comfortable),
+            backgroundColor: $theme->color(ColorToken::Background),
         ));
         $body = ($this->scrollable ? ScrollView::make($content) : $content)
-            ->style(new Style(flexGrow: 1.0, flexShrink: 1.0));
+            ->style(new Style(
+                flexGrow: 1.0,
+                flexShrink: 1.0,
+                backgroundColor: $theme->color(ColorToken::Background),
+            ));
         $body = $this->keyboardSafe
             ? KeyboardAvoidingView::make($body, KeyboardAvoidingBehavior::Resize)
                 ->style(new Style(flexGrow: 1.0, flexShrink: 1.0))
@@ -150,10 +155,17 @@ final readonly class AppScreen implements Renderable
                 $body,
                 ...$this->bottom,
             )->style(new Style(
+                widthPercent: 100.0,
+                heightPercent: 100.0,
                 flexGrow: 1.0,
                 backgroundColor: $theme->color(ColorToken::Background),
             )),
-        )->edges();
+        )->edges()->style(new Style(
+            widthPercent: 100.0,
+            heightPercent: 100.0,
+            flexGrow: 1.0,
+            backgroundColor: $theme->color(ColorToken::Background),
+        ));
     }
 
     /** @return list<Renderable> */

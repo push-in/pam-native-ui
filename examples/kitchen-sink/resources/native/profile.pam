@@ -1,28 +1,32 @@
-<AppScreen title="Profile" subtitle="Typed form state with native editing behavior.">
-    <Card class="p-5 rounded-2xl">
-        <VStack class="gap-4 items-center">
-            <Avatar size="xl">
-                <AvatarFallback>
-                    <AvatarFallbackText>DB</AvatarFallbackText>
-                </AvatarFallback>
-                <AvatarBadge />
-            </Avatar>
-            <VStack class="items-center gap-1">
-                <Heading size="lg">David Balbino</Heading>
-                <Text class="ui-text-muted">PAM Native builder</Text>
-            </VStack>
-        </VStack>
-    </Card>
+<AppScreen title="Profile" subtitle="Your identity across PAM products">
+    <p-card class="p-4 rounded-2xl">
+        <p-row class="gap-4 items-center">
+            <p-avatar size="xl">
+                <p-col>
+                    <p-text>DB</p-text>
+                </p-col>
+                <p-badge />
+            </p-avatar>
+            <p-col class="flex-1 gap-1">
+                <p-row class="items-center gap-2">
+                    <p-text size="md">David Balbino</p-text>
+                    <p-badge action="success"><p-text>Active</p-text></p-badge>
+                </p-row>
+                <p-text class="ui-text-muted">Product builder · Pushin</p-text>
+            </p-col>
+        </p-row>
+    </p-card>
 
-    <VStack class="gap-4">
-        <FormField
+    <p-col class="gap-3">
+        <p-text size="md">Account details</p-text>
+        <p-text-field
             :form="$form"
             field="name"
             label="Name"
             placeholder="Your full name"
             autoComplete="name"
         />
-        <FormField
+        <p-text-field
             :form="$form"
             field="email"
             label="Email"
@@ -30,24 +34,21 @@
             keyboard="2"
             autoComplete="email"
         />
-        <FormField
+        <p-text-field
             :form="$form"
             field="company"
             label="Company"
             placeholder="Your organization"
             returnKey="3"
         />
-        <AsyncButton
+        <p-btn
             label="Save profile"
             status="{{ $actionStatus }}"
             on:press="save"
         />
-    </VStack>
+    </p-col>
 
-    <Alert action="info" variant="subtle" class="rounded-2xl">
-        <InfoIcon />
-        <AlertText>
-            Validation runs on blur. Drafts survive process restarts.
-        </AlertText>
-    </Alert>
+    <p-text class="ui-text-muted">
+        Changes are validated as you type and saved securely on this device.
+    </p-text>
 </AppScreen>

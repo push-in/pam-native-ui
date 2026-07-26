@@ -21,26 +21,37 @@
         "manifest": "android/src/main/AndroidManifest.xml",
         "consumerRules": "android/consumer-rules.pro"
     },
+    "ios": {
+        "minimumVersion": "15.0",
+        "sourceDirs": [
+            "ios/Sources/PamMobileUi"
+        ]
+    },
     "views": [
         {
             "name": "pam.mobile_ui.host",
-            "class": "dev.pam.mobileui.MobileUiHostFactory"
+            "class": "dev.pam.mobileui.MobileUiHostFactory",
+            "iosClass": "MobileUiHostFactory"
         },
         {
             "name": "pam.mobile_ui.icon",
-            "class": "dev.pam.mobileui.MobileUiIconFactory"
+            "class": "dev.pam.mobileui.MobileUiIconFactory",
+            "iosClass": "MobileUiIconFactory"
         },
         {
             "name": "pam.mobile_ui.markdown",
-            "class": "dev.pam.mobileui.MobileUiMarkdownFactory"
+            "class": "dev.pam.mobileui.MobileUiMarkdownFactory",
+            "iosClass": "MobileUiMarkdownFactory"
         },
         {
             "name": "pam.mobile_ui.horizontal_scroll",
-            "class": "dev.pam.mobileui.MobileUiHorizontalScrollFactory"
+            "class": "dev.pam.mobileui.MobileUiHorizontalScrollFactory",
+            "iosClass": "MobileUiHorizontalScrollFactory"
         },
         {
             "name": "pam.mobile_ui.grid",
-            "class": "dev.pam.mobileui.MobileUiGridFactory"
+            "class": "dev.pam.mobileui.MobileUiGridFactory",
+            "iosClass": "MobileUiGridFactory"
         }
     ]
 }

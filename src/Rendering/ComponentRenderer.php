@@ -15,6 +15,7 @@ use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\SelectionMode;
 use Pam\MobileUi\Generated\ComponentMap;
+use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\AccessibilityCheckedState;
@@ -113,10 +114,14 @@ final class ComponentRenderer
         ?Style $styleOverride,
         ?string $elementKey,
     ): Element {
-        if (!isset(ComponentMap::IDS[$part])) {
+        if (!isset(ComponentMap::IDS[$part]) && !isset(MaterialComponentMap::IDS[$part])) {
             throw new InvalidArgumentException("Unknown PAM Mobile UI component {$part}.");
         }
 
+        if (isset(MaterialComponentMap::IDS[$part])) {
+            $props['__materialComponent'] = $part;
+        }
+        $part = self::legacyMaterialPart($part);
         $props = self::withDefaults($part, $props);
         $children = self::fallbackChildren($part, $props, $children);
         if (self::isTransparentProvider($part)) {
@@ -196,6 +201,20 @@ final class ComponentRenderer
             $props,
             ThemeManager::current(),
         );
+        if (in_array($props['__materialComponent'] ?? null, ['PBadge', 'PChip'], true)) {
+            $semanticForeground = MaterialStyleResolver::semanticForeground(
+                $props,
+                ThemeManager::current(),
+            );
+            if ($semanticForeground !== null) {
+                $children = array_map(
+                    static fn (Element $child): Element => $child->style(
+                        new Style(textColor: $semanticForeground),
+                    ),
+                    $children,
+                );
+            }
+        }
         $nativeBackground = $style->backgroundColor;
         if ($styleOverride !== null && $styleOverride->backgroundColor !== null) {
             $nativeBackground = $styleOverride->backgroundColor;
@@ -913,8 +932,8 @@ final class ComponentRenderer
         ?int $nativeBackground,
     ): array {
         $values = [
-            'part' => ComponentMap::IDS[$part],
-            'component' => ComponentMap::IDS[$part],
+            'part' => self::componentId($part),
+            'component' => self::componentId($part),
             'behavior' => $behavior->value,
             'theme' => ThemeManager::resolvedMode()->value,
             'trackColor' => ThemeManager::current()->color(ColorToken::Muted),
@@ -996,6 +1015,8 @@ final class ComponentRenderer
 
     public static function nativeBehavior(string $part): NativeBehavior
     {
+        $part = self::legacyMaterialPart($part);
+
         return match ($part) {
             'Conversation' => NativeBehavior::Chat,
             'ConversationScrollButton' => NativeBehavior::ConversationScrollButton,
@@ -1061,6 +1082,8 @@ final class ComponentRenderer
      */
     public static function withDefaults(string $part, array $props): array
     {
+        $part = self::legacyMaterialPart($part);
+
         if (self::isIcon($part) && !array_key_exists('size', $props)) {
             $props['size'] = 'sm';
         }
@@ -1263,6 +1286,73 @@ final class ComponentRenderer
         }
 
         return $props;
+    }
+
+    private static function legacyMaterialPart(string $part): string
+    {
+        return match ($part) {
+            'PApp', 'PMain', 'PLayout', 'PLayoutItem', 'PContainer',
+            'PCardItem', 'PCardActions', 'PBanner', 'PBannerActions',
+            'PExpansionPanels', 'PExpansionPanel', 'PExpansionPanelText',
+            'PFooter', 'PForm', 'PItemGroup', 'PItem', 'PList', 'PListItem',
+            'PListGroup', 'PWindow', 'PWindowItem', 'PThemeProvider',
+            'PDefaultsProvider', 'PLocaleProvider', 'PResponsive', 'PLazy',
+            'PValidation' => 'VStack',
+            'PRow', 'PToolbar', 'PToolbarItems', 'PAppBar',
+            'PBottomNavigation', 'PBreadcrumbs', 'PBtnGroup', 'PBtnToggle',
+            'PChipGroup', 'PSelectionControlGroup', 'PSlideGroup',
+            'PStepperHeader', 'PStepperActions', 'PStepperVerticalActions' => 'HStack',
+            'PCol' => 'VStack',
+            'PSpacer' => 'Spacer',
+            'PAlert' => 'Alert',
+            'PAlertTitle', 'PAppBarTitle', 'PBannerText',
+            'PBreadcrumbsItem', 'PBreadcrumbsDivider', 'PFieldLabel',
+            'PListSubheader', 'PPickerTitle', 'PToolbarTitle' => 'Heading',
+            'PAvatar' => 'Avatar',
+            'PBadge' => 'Badge',
+            'PBottomSheet' => 'BottomSheet',
+            'PBtn', 'PIconBtn' => 'Button',
+            'PCalendar' => 'Calendar',
+            'PCard', 'PSheet', 'PEmptyState', 'PExpansionPanelTitle',
+            'PPicker' => 'Card',
+            'PCheckbox', 'PCheckboxBtn' => 'Checkbox',
+            'PChip' => 'Badge',
+            'PDialog' => 'Modal',
+            'PDivider' => 'Divider',
+            'PFab' => 'Fab',
+            'PForm' => 'FormControl',
+            'PIcon' => 'Icon',
+            'PImg' => 'Image',
+            'PInput', 'PTextField', 'PNumberInput', 'POtpInput',
+            'PColorInput', 'PDateInput', 'PFileInput' => 'Input',
+            'PMenu' => 'Menu',
+            'PNavigationDrawer' => 'Drawer',
+            'POverlay' => 'Portal',
+            'PProgressCircular', 'PProgressLinear' => 'Progress',
+            'PPullToRefresh' => 'RefreshControl',
+            'PRadio' => 'Radio',
+            'PRadioGroup' => 'RadioGroup',
+            'PSelect', 'PAutocomplete', 'PCombobox' => 'Select',
+            'PSkeletonLoader' => 'Skeleton',
+            'PSlider', 'PRangeSlider' => 'Slider',
+            'PSnackbar', 'PSnackbarQueue' => 'Toast',
+            'PSwitch' => 'Switch',
+            'PTable', 'PDataTable', 'PDataTableServer', 'PDataTableVirtual' => 'Table',
+            'PTabs' => 'Tabs',
+            'PTab' => 'TabsTrigger',
+            'PText', 'PCardTitle', 'PCardSubtitle', 'PCardText',
+            'PListItemTitle', 'PListItemSubtitle', 'PLabel', 'PMessages',
+            'PCounter', 'PCode', 'PKbd' => 'Text',
+            'PTextarea' => 'Textarea',
+            'PTooltip' => 'Tooltip',
+            'PVirtualScroll', 'PInfiniteScroll' => 'VirtualizedList',
+            default => $part,
+        };
+    }
+
+    private static function componentId(string $part): int
+    {
+        return ComponentMap::IDS[$part] ?? MaterialComponentMap::IDS[$part];
     }
 
     public static function forwardsEventsToDescendants(string $part): bool
@@ -2499,9 +2589,10 @@ final class ComponentRenderer
     private static function iconProperties(string $part, array $props): array
     {
         $requested = $props['name'] ?? $props['icon'] ?? $part;
-        $icon = is_string($requested) && isset(ComponentMap::IDS[$requested])
-            ? ComponentMap::IDS[$requested]
-            : ComponentMap::IDS[$part];
+        $materialIds = \Pam\MobileUi\Generated\MaterialComponentMap::IDS;
+        $icon = is_string($requested)
+            ? ($materialIds[$requested] ?? ComponentMap::IDS[$requested] ?? $materialIds[$part] ?? ComponentMap::IDS[$part] ?? 0)
+            : ($materialIds[$part] ?? ComponentMap::IDS[$part] ?? 0);
         $color = $props['color'] ?? ThemeManager::current()->color(ColorToken::Foreground);
 
         return [
@@ -3191,6 +3282,8 @@ final class ComponentRenderer
         $values = [];
 
         if ($behavior === NativeBehavior::SwitchControl) {
+            $material = is_string($props['__materialComponent'] ?? null);
+            $theme = ThemeManager::current();
             $trackColors = is_array($props['trackColor'] ?? null)
                 ? $props['trackColor']
                 : [];
@@ -3198,16 +3291,21 @@ final class ComponentRenderer
                 $trackColors['false']
                     ?? $trackColors[0]
                     ?? $props['ios_backgroundColor']
-                    ?? null,
+                    ?? ($material ? $theme->color(ColorToken::Border) : null),
             );
             $onColor = self::packedColor(
                 $trackColors['true']
                     ?? $trackColors[1]
-                    ?? null,
+                    ?? ($material ? $theme->color(ColorToken::Primary) : null),
             );
-            $thumbColor = self::packedColor($props['thumbColor'] ?? null);
+            $thumbColor = self::packedColor(
+                $props['thumbColor']
+                    ?? ($material ? $theme->color(ColorToken::Surface) : null),
+            );
             $activeThumbColor = self::packedColor(
-                $props['activeThumbColor'] ?? $props['thumbColor'] ?? null,
+                $props['activeThumbColor']
+                    ?? $props['thumbColor']
+                    ?? ($material ? $theme->color(ColorToken::PrimaryForeground) : null),
             );
             if ($offColor !== null) {
                 $values['trackOffColor'] = $offColor;
@@ -3280,6 +3378,10 @@ final class ComponentRenderer
         $thumbSize = is_numeric($props['thumbSize'] ?? null)
             ? (float) $props['thumbSize']
             : self::elementNumber($thumb, $thumbDimension);
+        if (is_string($props['__materialComponent'] ?? null)) {
+            $trackThickness ??= 4.0;
+            $thumbSize ??= 20.0;
+        }
         if ($trackThickness !== null) {
             $values['trackThickness'] = $trackThickness;
         }

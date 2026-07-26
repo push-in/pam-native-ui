@@ -287,6 +287,7 @@ spl_autoload_register(static function (string $class) use ($roots): void {
 });
 
 require dirname(__DIR__).'/src/Generated/ComponentFacades.php';
+require dirname(__DIR__).'/src/Generated/MaterialComponentFacades.php';
 
 $assert = static function (bool $condition, string $message): void {
     if (!$condition) {
@@ -3785,9 +3786,26 @@ $catalog = TemplateRenderer::render(
     [],
 );
 $assert(
-    $catalog->kind() === NodeKind::SafeAreaView
-        && count($catalog->children()) === 4,
+    $catalog->kind() === NodeKind::SafeAreaView,
     'The kitchen sink must compile every showcase section and its native overlay hosts.',
+);
+
+$materialSource = <<<'PAM'
+<p-card>
+    <p-card-title>PAM Material</p-card-title>
+    <p-card-text>Native p-* component contract</p-card-text>
+    <p-btn><p-text>Continue</p-text></p-btn>
+</p-card>
+PAM;
+$material = TemplateRenderer::render(
+    TemplateCompiler::compile($materialSource, 'material-components.pam'),
+    null,
+    [],
+);
+$assert(
+    $material->kind() === NodeKind::View
+        && count($material->children()) === 3,
+    'The p-* component contract must compile into native PAM primitives.',
 );
 
 echo "PAM Mobile UI PHP tests passed.\n";
