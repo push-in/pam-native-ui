@@ -14,7 +14,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: d11260459b0196a4ecea9c1911b13f1a0d8fb0da
+  PAM_NATIVE_COMMIT: 7943c0270fe2bd409ee5d8c5b18f7768fa45291f
 
 jobs:
   php:
