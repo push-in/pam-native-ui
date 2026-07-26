@@ -1,6 +1,6 @@
 <AppScreen title="Activity" subtitle="Everything important, ordered by time.">
-    <Card class="p-4 rounded-2xl">
-        <VStack class="gap-4">
+    <VStack class="gap-3">
+        <Card class="p-4 rounded-2xl">
             <HStack class="gap-3 items-start">
                 <Badge action="success"><CheckIcon /></Badge>
                 <VStack class="flex-1 gap-1">
@@ -9,7 +9,8 @@
                     <Text class="ui-text-muted">2 minutes ago</Text>
                 </VStack>
             </HStack>
-            <Divider />
+        </Card>
+        <Card class="p-4 rounded-2xl">
             <HStack class="gap-3 items-start">
                 <Badge action="info"><ShareIcon /></Badge>
                 <VStack class="flex-1 gap-1">
@@ -18,7 +19,8 @@
                     <Text class="ui-text-muted">48 minutes ago</Text>
                 </VStack>
             </HStack>
-            <Divider />
+        </Card>
+        <Card class="p-4 rounded-2xl">
             <HStack class="gap-3 items-start">
                 <Badge action="warning"><ClockIcon /></Badge>
                 <VStack class="flex-1 gap-1">
@@ -27,8 +29,8 @@
                     <Text class="ui-text-muted">1 hour ago</Text>
                 </VStack>
             </HStack>
-        </VStack>
-    </Card>
+        </Card>
+    </VStack>
 
     <Card class="p-5 rounded-2xl">
         <VStack class="gap-3 items-center">

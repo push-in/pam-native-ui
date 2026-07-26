@@ -12,12 +12,12 @@
                 <Card class="p-4 rounded-2xl">
                     <VStack class="gap-3">
                         <HStack class="items-center justify-between">
-                            <VStack class="gap-1">
-                                <Heading size="md">Runtime diagnostics</Heading>
-                                <Text class="ui-text-muted">FPS, mount, decode, nodes and native heap</Text>
-                            </VStack>
+                            <Heading size="md">Runtime diagnostics</Heading>
                             <Badge action="success"><BadgeText>Ready</BadgeText></Badge>
                         </HStack>
+                        <Text class="ui-text-muted">
+                            FPS, mount, decode, nodes and native heap
+                        </Text>
                         <Alert action="info" variant="subtle" class="rounded-xl">
                             <AlertText>Run: pam mobile devtools .</AlertText>
                         </Alert>
