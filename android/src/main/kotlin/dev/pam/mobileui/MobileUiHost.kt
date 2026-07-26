@@ -383,6 +383,7 @@ internal class MobileUiHost(
     private var fileTreeFolderInitialized = false
     private var animator: ValueAnimator? = null
     private var activePickerDialog: Dialog? = null
+    private var silentlyDismissedPickerDialog: Dialog? = null
     private var pendingDismiss: Runnable? = null
     private var previousFocus: View? = null
     private var customStateDescription: String? = null
@@ -854,8 +855,7 @@ internal class MobileUiHost(
             properties.flag("isDisabled", false),
         )
         if ((!isEnabled || behavior != Behavior.DATE_TIME_PICKER) && activePickerDialog != null) {
-            activePickerDialog?.dismiss()
-            activePickerDialog = null
+            dismissActivePickerSilently()
         }
         isClickable = !behavior.isOverlay() || open
         isFocusable = !behavior.isOverlay() || open
@@ -2239,8 +2239,7 @@ internal class MobileUiHost(
         pendingAnchoredOpen = null
         pendingAnchoredClose?.let(::removeCallbacks)
         pendingAnchoredClose = null
-        activePickerDialog?.dismiss()
-        activePickerDialog = null
+        dismissActivePickerSilently()
         accordionTouchActive = false
         sliderTouchActive = false
         pendingSliderChange?.let(::removeCallbacks)
@@ -4287,10 +4286,12 @@ internal class MobileUiHost(
         }
 
         val initialDate = clampedDate(initial.toLocalDate())
+        var resolved = false
         lateinit var dialog: DatePickerDialog
         dialog = DatePickerDialog(
             activity,
             { _, year, zeroBasedMonth, day ->
+                resolved = true
                 val date = LocalDate.of(year, zeroBasedMonth + 1, day)
                 if (componentMode == ComponentMode.DATETIME) {
                     showTimePicker(activity, date, initial.toLocalTime())
@@ -4304,8 +4305,20 @@ internal class MobileUiHost(
         ).apply {
             minimumLocalDate?.let { datePicker.minDate = it.toEpochMillis() }
             maximumLocalDate?.let { datePicker.maxDate = it.toEpochMillis() }
-            setOnCancelListener { emitDismiss() }
+            setOnCancelListener {
+                if (!resolved && silentlyDismissedPickerDialog !== dialog) {
+                    resolved = true
+                    emitDismiss()
+                }
+            }
             setOnDismissListener {
+                if (!resolved && silentlyDismissedPickerDialog !== dialog) {
+                    resolved = true
+                    emitDismiss()
+                }
+                if (silentlyDismissedPickerDialog === dialog) {
+                    silentlyDismissedPickerDialog = null
+                }
                 if (activePickerDialog === dialog) {
                     activePickerDialog = null
                 }
@@ -4420,18 +4433,32 @@ internal class MobileUiHost(
         date: LocalDate,
         time: LocalTime,
     ) {
+        var resolved = false
         lateinit var dialog: TimePickerDialog
         dialog = TimePickerDialog(
             activity,
             { _, hour, minute ->
+                resolved = true
                 emitDateTime(LocalDateTime.of(date, LocalTime.of(hour, minute)))
             },
             time.hour,
             time.minute,
             is24Hour,
         ).apply {
-            setOnCancelListener { emitDismiss() }
+            setOnCancelListener {
+                if (!resolved && silentlyDismissedPickerDialog !== dialog) {
+                    resolved = true
+                    emitDismiss()
+                }
+            }
             setOnDismissListener {
+                if (!resolved && silentlyDismissedPickerDialog !== dialog) {
+                    resolved = true
+                    emitDismiss()
+                }
+                if (silentlyDismissedPickerDialog === dialog) {
+                    silentlyDismissedPickerDialog = null
+                }
                 if (activePickerDialog === dialog) {
                     activePickerDialog = null
                 }
@@ -4439,6 +4466,13 @@ internal class MobileUiHost(
         }
         activePickerDialog = dialog
         dialog.show()
+    }
+
+    private fun dismissActivePickerSilently() {
+        val dialog = activePickerDialog ?: return
+        silentlyDismissedPickerDialog = dialog
+        activePickerDialog = null
+        dialog.dismiss()
     }
 
     private fun emitDateTime(dateTime: LocalDateTime) {

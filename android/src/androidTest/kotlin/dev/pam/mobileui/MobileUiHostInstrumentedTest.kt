@@ -1554,6 +1554,32 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun dateTimePickerReleaseDismissesTheSystemDialogSilently() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        val payloads = CopyOnWriteArrayList<ByteArray>()
+        onMain {
+            val host = MobileUiHost(activity) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(22),
+                    "mode" to WireValue.Integer(4),
+                    "value" to WireValue.Text("2026-07-23"),
+                ),
+            )
+            activity.setContentView(host)
+            assertTrue(host.performClick())
+            host.release()
+        }
+
+        instrumentation.waitForIdleSync()
+        assertTrue(payloads.isEmpty())
+        onMain { activity.finish() }
+    }
+
+    @Test
     fun accordionOwnsHeaderTouchesAndRemovesCollapsedContentFromTalkBack() {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()
