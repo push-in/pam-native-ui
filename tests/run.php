@@ -380,8 +380,9 @@ if (!is_array($icons) || !is_array($icons['icons'] ?? null)) {
     throw new RuntimeException('The upstream icon catalog is missing.');
 }
 $assert(
-    count($icons['icons']) === 55,
-    'Every upstream vector icon path must be captured.',
+    count($icons['icons']) === 56
+        && isset($icons['icons']['AddIcon']),
+    'Every native vector icon path, including AddIcon, must be captured.',
 );
 $parity = json_decode(
     (string) file_get_contents(dirname(__DIR__).'/resources/parity.json'),
