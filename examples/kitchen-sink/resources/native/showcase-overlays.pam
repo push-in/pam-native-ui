@@ -1,4 +1,4 @@
-<AppScreen title="Overlays" subtitle="Dialogs, sheets and contextual UI">
+<AppScreen title="Overlays" subtitle="Dialogs, sheets and menus">
     <template #actions>
         <p-btn variant="text" on:press="openDrawer" accessibilityLabel="Open component menu">
             <p-text>Menu</p-text>
@@ -36,10 +36,10 @@
                     </p-list>
                 </p-menu>
                 <p-tooltip text="Long press for native tooltip">
-                    <p-btn variant="outline"><p-text>Tooltip</p-text></p-btn>
+                    <p-btn class="flex-1" variant="outline"><p-text>Tooltip</p-text></p-btn>
                 </p-tooltip>
-                <p-btn variant="tonal" on:press="showSnackbar"><p-text>Snackbar</p-text></p-btn>
             </p-row>
+            <p-btn variant="tonal" on:press="showSnackbar"><p-text>Snackbar</p-text></p-btn>
             <p-speed-dial class="w-16 h-16">
                 <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
                 <p-icon-btn accessibilityLabel="Edit"><p-icon icon="edit" /></p-icon-btn>

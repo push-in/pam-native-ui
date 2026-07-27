@@ -1,7 +1,7 @@
 <AppScreen title="Components" subtitle="A complete native Material catalog">
     <template #actions>
-        <p-icon-btn class="w-12 h-12 rounded-full" variant="text" on:press="back" accessibilityLabel="Open component navigation">
-            <p-icon icon="menu" />
+        <p-icon-btn class="w-12 h-12 rounded-full text-primary" color="primary" variant="text" on:press="back" accessibilityLabel="Open component navigation">
+            <p-icon icon="menu" color="primary" />
         </p-icon-btn>
     </template>
 
