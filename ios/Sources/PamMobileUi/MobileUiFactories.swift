@@ -279,9 +279,10 @@ private final class PamMarkdownView: UITextView, UITextViewDelegate {
         let next = properties["source"]?.textValue ?? source
         let foreground = properties["foregroundColor"]?.integerValue
             .map(UIColor.init(pamARGB:)) ?? UIColor.label
+        let linkColor = properties["linkColor"]?.integerValue
+            .map(UIColor.init(pamARGB:)) ?? tintColor ?? UIColor.link
         linkTextAttributes = [
-            .foregroundColor: properties["linkColor"]?.integerValue
-                .map(UIColor.init(pamARGB:)) ?? tintColor as Any,
+            .foregroundColor: linkColor,
             .underlineStyle: NSUnderlineStyle.single.rawValue,
         ]
         isSelectable = properties["selectable"]?.flagValue ?? true
@@ -348,7 +349,7 @@ private final class PamHorizontalScrollView: UIScrollView, UIScrollViewDelegate 
         alwaysBounceHorizontal = false
         alwaysBounceVertical = false
         showsVerticalScrollIndicator = false
-        directionalLockEnabled = true
+        isDirectionalLockEnabled = true
     }
 
     @available(*, unavailable)
@@ -466,7 +467,7 @@ private final class PamGridView: UIView {
 
     private func breakpointIndex() -> Int {
         let width = window?.screen.bounds.width ?? UIScreen.main.bounds.width
-        return [600.0, 840.0, 1145.0, 1545.0, 2138.0].map(CGFloat.init)
+        return [600.0, 840.0, 1145.0, 1545.0, 2138.0].map { CGFloat($0) }
             .reduce(0) { width >= $1 ? $0 + 1 : $0 }
     }
 
@@ -487,7 +488,9 @@ private final class PamGridView: UIView {
     }
 
     private static func decimals(_ source: String?, fallback: [CGFloat]) -> [CGFloat] {
-        let parsed = source?.split(separator: ",").compactMap { Double($0).map(CGFloat.init) } ?? []
+        let parsed = source?.split(separator: ",").compactMap {
+            Double($0).map { CGFloat($0) }
+        } ?? []
         var result = Array(repeating: CGFloat.zero, count: 6)
         var current = max(0, fallback.first ?? 0)
         for index in result.indices {
