@@ -36,7 +36,6 @@
         </p-banner-text>
         <p-banner-actions>
             <p-chip action="success"><p-text>MD3</p-text></p-chip>
-            <p-chip action="info"><p-text>60 FPS</p-text></p-chip>
         </p-banner-actions>
     </p-banner>
 
