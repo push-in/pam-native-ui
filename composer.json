@@ -57,6 +57,7 @@
         "release:check": "php tools/release-check.php",
         "test:recipes": "php tests/recipe-matrix.php",
         "test:material": "php tests/material-matrix.php",
+        "test:native-gates": "php tests/native-gate-matrix.php",
         "test:showcase": "php tools/validate-showcase.php",
         "test": "php tests/run.php",
         "verify": [
@@ -65,6 +66,7 @@
             "@analyse",
             "@test:recipes",
             "@test:material",
+            "@test:native-gates",
             "@benchmark:material",
             "@test",
             "@test:showcase",

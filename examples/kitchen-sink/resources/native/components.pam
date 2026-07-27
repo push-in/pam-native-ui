@@ -1,7 +1,7 @@
 <AppScreen title="Components" subtitle="A complete native Material catalog">
     <template #actions>
-        <p-icon-btn class="w-12 h-12 rounded-full" variant="text" on:press="back" accessibilityLabel="Back to Studio">
-            <p-icon icon="arrow-back" />
+        <p-icon-btn class="w-12 h-12 rounded-full" variant="text" on:press="back" accessibilityLabel="Open component navigation">
+            <p-icon icon="menu" />
         </p-icon-btn>
     </template>
 
@@ -14,7 +14,7 @@
             </p-col>
         </p-card-item>
         <p-card-actions class="gap-2">
-            <p-chip><p-icon icon="widgets" /><p-text>163 components</p-text></p-chip>
+            <p-chip><p-icon icon="widgets" /><p-text>Curated mobile component system</p-text></p-chip>
             <p-chip><p-icon icon="palette" /><p-text>Themes</p-text></p-chip>
         </p-card-actions>
     </p-card>
@@ -181,11 +181,7 @@
                 </p-row>
             </p-card-item>
             <p-card-text>
-                <p-text>Cards, sheets, alerts, banners, dividers, labels, code and keyboard keys share semantic tokens.</p-text>
-                <p-row class="gap-2 items-center">
-                    <p-code>p-card</p-code>
-                    <p-kbd>⌘ K</p-kbd>
-                </p-row>
+                <p-text>Cards, sheets, alerts, banners, dividers and labels share semantic tokens.</p-text>
             </p-card-text>
         </p-card>
         <p-alert action="info" variant="tonal">
@@ -294,9 +290,9 @@
         </p-row>
         <p-range-slider value="28" maximumValue="{{ $range }}" />
         <p-skeleton-loader class="h-24 rounded-2xl" />
-        <p-pull-to-refresh>
+        <p-col>
             <p-text class="ui-text-muted">Pull-to-refresh uses the platform indicator.</p-text>
-        </p-pull-to-refresh>
+        </p-col>
     </p-col>
 
     <p-col class="gap-3">
@@ -358,7 +354,7 @@
                 <p-list-item-subtitle>Android + UIKit renderer</p-list-item-subtitle>
             </p-list-item>
         </p-list>
-        <p-table>
+        <p-col>
             <p-row>
                 <p-text class="flex-1">Gate</p-text>
                 <p-text class="flex-1">Status</p-text>
@@ -368,12 +364,12 @@
                 <p-text class="flex-1">Inventory</p-text>
                 <p-chip action="success"><p-text>Verified</p-text></p-chip>
             </p-row>
-        </p-table>
+        </p-col>
         <p-data-table items="Android,iOS,Composer" />
         <p-data-iterator items="Cards,Rows,Lists">
             <p-chip><p-text>Template-driven items</p-text></p-chip>
         </p-data-iterator>
-        <p-virtual-scroll items="One,Two,Three" />
+        <p-infinite-scroll items="One,Two,Three" />
         <p-infinite-scroll items="A,B,C" />
         <p-timeline>
             <p-timeline-item><p-text>Authored spec</p-text></p-timeline-item>
@@ -411,21 +407,21 @@
 
     <p-col class="gap-3">
         <p-text size="lg">Layout and motion</p-text>
-        <p-container>
+        <p-col>
             <p-row class="gap-2">
                 <p-col class="flex-1"><p-sheet class="p-3 rounded-xl"><p-text>Column 1</p-text></p-sheet></p-col>
                 <p-spacer />
                 <p-col class="flex-1"><p-sheet class="p-3 rounded-xl"><p-text>Column 2</p-text></p-sheet></p-col>
             </p-row>
-        </p-container>
-        <p-responsive aspectRatio="16/9">
+        </p-col>
+        <p-col aspectRatio="16/9">
             <p-img source="https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1200" alt="Mountain landscape" />
-        </p-responsive>
-        <p-responsive aspectRatio="16/9">
+        </p-col>
+        <p-col aspectRatio="16/9">
             <p-card class="p-4 rounded-2xl">
                 <p-text>Responsive surface</p-text>
             </p-card>
-        </p-responsive>
+        </p-col>
         <p-slide-group>
             <p-slide-group-item value="one"><p-chip><p-text>One</p-text></p-chip></p-slide-group-item>
             <p-slide-group-item value="two"><p-chip><p-text>Two</p-text></p-chip></p-slide-group-item>
@@ -441,16 +437,15 @@
             <p-sheet class="p-4 rounded-2xl"><p-text>Reduced-motion aware transition</p-text></p-sheet>
         </p-transition>
         <p-lazy>
-            <p-hover>
+            <p-col>
                 <p-card class="p-4 rounded-2xl"><p-text>Lazy + hover surface</p-text></p-card>
-            </p-hover>
+            </p-col>
         </p-lazy>
-        <p-hotkey keys="cmd+k"><p-kbd>⌘ K</p-kbd></p-hotkey>
     </p-col>
 
     <p-col class="gap-3">
         <p-text size="xl">Application shell</p-text>
-        <p-app>
+        <p-col>
             <p-card variant="outline" class="rounded-3xl">
                 <p-toolbar>
                     <p-toolbar-title>Workspace</p-toolbar-title>
@@ -462,29 +457,28 @@
                 </p-toolbar>
                 <p-sheet class="p-4"><p-text>A complete native application surface</p-text></p-sheet>
             </p-card>
-        </p-app>
+        </p-col>
         <p-card variant="outline" class="rounded-3xl">
-            <p-system-bar><p-text>9:41</p-text></p-system-bar>
             <p-app-bar>
                 <p-app-bar-nav-icon><p-icon icon="menu" /></p-app-bar-nav-icon>
                 <p-app-bar-title>Native workspace</p-app-bar-title>
                 <p-icon-btn><p-icon icon="more-vert" /></p-icon-btn>
             </p-app-bar>
-            <p-layout>
-                <p-navigation-drawer>
+            <p-col>
+                <p-col>
                     <p-list-item><p-list-item-title>Overview</p-list-item-title></p-list-item>
                     <p-list-item><p-list-item-title>Components</p-list-item-title></p-list-item>
-                </p-navigation-drawer>
-                <p-layout-item>
-                    <p-main><p-sheet class="p-5"><p-text>Adaptive content area</p-text></p-sheet></p-main>
-                </p-layout-item>
-            </p-layout>
-            <p-bottom-navigation value="components">
+                </p-col>
+                <p-col>
+                    <p-col><p-sheet class="p-5"><p-text>Adaptive content area</p-text></p-sheet></p-col>
+                </p-col>
+            </p-col>
+            <p-row value="components">
                 <p-btn value="home"><p-icon icon="home" /><p-text>Home</p-text></p-btn>
                 <p-btn value="components"><p-icon icon="widgets" /><p-text>Components</p-text></p-btn>
                 <p-btn value="settings"><p-icon icon="settings" /><p-text>Settings</p-text></p-btn>
-            </p-bottom-navigation>
-            <p-footer><p-text class="ui-text-muted">PAM native design system</p-text></p-footer>
+            </p-row>
+            <p-col><p-text class="ui-text-muted">PAM native design system</p-text></p-col>
         </p-card>
     </p-col>
 
@@ -578,12 +572,12 @@
 
         <p-card class="p-4 rounded-3xl">
             <p-card-title>Overlay surface</p-card-title>
-            <p-responsive aspectRatio="16/9">
+            <p-col aspectRatio="16/9">
                 <p-sheet class="p-4 rounded-2xl">
                     <p-text>Content beneath the overlay</p-text>
                     <p-overlay open="false"><p-progress-circular indeterminate="true" /></p-overlay>
                 </p-sheet>
-            </p-responsive>
+            </p-col>
         </p-card>
     </p-col>
 

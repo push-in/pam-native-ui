@@ -56,4 +56,8 @@ enum NativeBehavior: int
     case Sparkline = 48;
     case Hotkey = 49;
     case Hover = 50;
+    case ChipGroup = 51;
+    case ListItem = 52;
+    case Timeline = 53;
+    case TimelineItem = 54;
 }

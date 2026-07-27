@@ -190,8 +190,8 @@ foreach ($moduleList as $module) {
         );
     }
     $assert(
-        is_array($verification) && count($verification) === 10,
-        "Parity module {$moduleLabel} must contain ten verification statuses.",
+        is_array($verification) && count($verification) === count($gateNames),
+        "Parity module {$moduleLabel} must contain one status for every release gate.",
     );
     if (!is_array($verification)) {
         continue;
@@ -205,7 +205,7 @@ foreach ($moduleList as $module) {
             continue;
         }
         $statusCounts[$status]++;
-        if ($status === 1) {
+        if ($status === 1 || $status === 2) {
             $gate = $gateNames[$index + 1] ?? 'gate-'.($index + 1);
             $pendingByGate[$gate] = ($pendingByGate[$gate] ?? 0) + 1;
         }
@@ -223,8 +223,9 @@ $assert(
 
 foreach (array_keys($pendingByGate) as $pendingGate) {
     $assert(
-        $pendingGate === 'performance',
-        "A non-performance release gate is still planned: {$pendingGate}.",
+        false,
+        "Release gate {$pendingGate} is not verified for "
+            .$pendingByGate[$pendingGate].' material modules.',
     );
 }
 

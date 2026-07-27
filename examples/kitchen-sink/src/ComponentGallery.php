@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App;
 
 use Pam\Native\Component;
-use Pam\Native\Navigation\Navigator;
+use Pam\Native\Navigation\DrawerNavigator;
 use Pam\Native\Renderable;
 use Pam\Native\View;
 
 final class ComponentGallery extends Component
 {
-    public Navigator $navigator;
+    public DrawerNavigator $drawer;
     private bool $checked = true;
     private bool $dialogOpen = false;
     private bool $sheetOpen = false;
@@ -25,7 +25,7 @@ final class ComponentGallery extends Component
 
     public function back(): void
     {
-        $this->navigator->pop();
+        $this->drawer->openDrawer();
     }
 
     public function toggle(): void

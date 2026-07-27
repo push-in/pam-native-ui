@@ -1,0 +1,101 @@
+<AppScreen title="Overlays" subtitle="Dialogs, sheets and contextual UI">
+    <template #actions>
+        <p-btn variant="text" on:press="openDrawer" accessibilityLabel="Open component menu">
+            <p-text>Menu</p-text>
+        </p-btn>
+    </template>
+
+    <p-alert action="info" variant="tonal">
+        <p-col class="gap-1">
+            <p-alert-title class="text-white">Native interaction lab</p-alert-title>
+            <p-text class="text-white">{{ $feedback }}</p-text>
+        </p-col>
+    </p-alert>
+
+    <p-text size="xl">Modal surfaces</p-text>
+    <p-card>
+        <p-col class="p-4 gap-3">
+            <p-text class="ui-text-muted">Focus trapping, Back, scrim, safe areas and entrance motion stay platform-owned.</p-text>
+            <p-row class="gap-2">
+                <p-btn class="flex-1" on:press="openDialog"><p-text>Dialog</p-text></p-btn>
+                <p-btn class="flex-1" variant="outline" on:press="openSheet"><p-text>Bottom sheet</p-text></p-btn>
+            </p-row>
+            <p-btn variant="tonal" on:press="showLoadingOverlay"><p-text>Loading overlay</p-text></p-btn>
+        </p-col>
+    </p-card>
+
+    <p-text size="xl">Contextual surfaces</p-text>
+    <p-card>
+        <p-col class="p-4 gap-3">
+            <p-row class="gap-2 items-center">
+                <p-menu>
+                    <p-btn><p-text>Menu</p-text></p-btn>
+                    <p-list>
+                        <p-list-item on:press="inspectMenuItem"><p-list-item-title>Inspect</p-list-item-title></p-list-item>
+                        <p-list-item on:press="shareMenuItem"><p-list-item-title>Share</p-list-item-title></p-list-item>
+                    </p-list>
+                </p-menu>
+                <p-tooltip text="Long press for native tooltip">
+                    <p-btn variant="outline"><p-text>Tooltip</p-text></p-btn>
+                </p-tooltip>
+                <p-btn variant="tonal" on:press="showSnackbar"><p-text>Snackbar</p-text></p-btn>
+            </p-row>
+            <p-speed-dial class="w-16 h-16">
+                <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
+                <p-icon-btn accessibilityLabel="Edit"><p-icon icon="edit" /></p-icon-btn>
+                <p-icon-btn accessibilityLabel="Share"><p-icon icon="share" /></p-icon-btn>
+            </p-speed-dial>
+        </p-col>
+    </p-card>
+
+    <p-text size="xl">Progress and loading</p-text>
+    <p-card>
+        <p-col class="p-4 gap-4">
+            <p-row class="gap-4 items-center">
+                <p-progress-circular value="68" size="sm" />
+                <p-progress-circular value="68" size="lg" />
+                <p-progress-circular indeterminate="true" />
+            </p-row>
+            <p-progress-linear value="34" />
+            <p-progress-linear indeterminate="true" />
+            <p-skeleton-loader class="h-24 rounded-2xl" />
+        </p-col>
+    </p-card>
+
+    <p-btn variant="text" on:press="goAll"><p-text>Browse every component route</p-text></p-btn>
+
+    <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
+        <p-card>
+            <p-card-title>Discard draft?</p-card-title>
+            <p-card-text>The dialog traps focus and restores it to the activator when dismissed.</p-card-text>
+            <p-card-actions>
+                <p-btn variant="text" on:press="closeDialog"><p-text>Cancel</p-text></p-btn>
+                <p-btn on:press="closeDialog"><p-text>Confirm</p-text></p-btn>
+            </p-card-actions>
+        </p-card>
+    </p-dialog>
+
+    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" on:event="closeSheet">
+        <p-list-subheader>Component actions</p-list-subheader>
+        <p-list-item on:press="closeSheet">
+            <p-list-item-title>Inspect accessibility tree</p-list-item-title>
+        </p-list-item>
+        <p-list-item on:press="closeSheet">
+            <p-list-item-title>View performance metrics</p-list-item-title>
+        </p-list-item>
+        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+    </p-bottom-sheet>
+
+    <p-snackbar open="{{ $snackbarOpen }}" timeout="4000" on:event="closeSnackbar">
+        <p-text>Component state saved</p-text>
+        <p-btn variant="text" on:press="closeSnackbar"><p-text>Dismiss</p-text></p-btn>
+    </p-snackbar>
+
+    <p-overlay open="{{ $loadingOverlayOpen }}" on:event="closeLoadingOverlay">
+        <p-col class="items-center gap-3">
+            <p-progress-circular indeterminate="true" size="lg" />
+            <p-text>Preparing native preview</p-text>
+            <p-btn variant="tonal" on:press="closeLoadingOverlay"><p-text>Complete</p-text></p-btn>
+        </p-col>
+    </p-overlay>
+</AppScreen>

@@ -9,8 +9,10 @@ use InvalidArgumentException;
 use Pam\MobileUi\Enum\AttachmentType;
 use Pam\MobileUi\Enum\BranchControlAction;
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\ComponentSize;
 use Pam\MobileUi\Enum\ImageViewerControlAction;
 use Pam\MobileUi\Enum\InputSlotAction;
+use Pam\MobileUi\Enum\MaterialDensity;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\SelectionMode;
@@ -18,6 +20,7 @@ use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
+use Pam\Native\Align;
 use Pam\Native\AccessibilityCheckedState;
 use Pam\Native\AccessibilityImportance;
 use Pam\Native\AccessibilityLiveRegion;
@@ -29,6 +32,7 @@ use Pam\Native\InputSyncMode;
 use Pam\Native\ImageFit;
 use Pam\Native\ImageLoadEvent;
 use Pam\Native\ImageProgressEvent;
+use Pam\Native\Internal\Wire;
 use Pam\Native\ImageResizeMethod;
 use Pam\Native\InputAutoCapitalize;
 use Pam\Native\InputAutofillImportance;
@@ -38,6 +42,7 @@ use Pam\Native\InputMode;
 use Pam\Native\InputSelectionEvent;
 use Pam\Native\InputSubmitBehavior;
 use Pam\Native\InputTextAlignVertical;
+use Pam\Native\Justify;
 use Pam\Native\KeyboardAvoidingBehavior;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalAnimationType;
@@ -55,6 +60,7 @@ use Pam\Native\ScrollKeyboardDismissMode;
 use Pam\Native\ScrollOverScrollMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
+use Pam\Native\TextAlignment;
 use Pam\Native\TextBreakStrategy;
 use Pam\Native\TextDataDetectorType;
 use Pam\Native\TextEllipsizeMode;
@@ -118,6 +124,22 @@ final class ComponentRenderer
             throw new InvalidArgumentException("Unknown PAM Mobile UI component {$part}.");
         }
 
+        if (
+            in_array($part, [
+                'PTable',
+                'PDataTable',
+                'PDataTableServer',
+                'PDataTableVirtual',
+            ], true)
+            && !array_key_exists('rowHeight', $props)
+        ) {
+            $props['rowHeight'] = match ($props['density'] ?? 'default') {
+                MaterialDensity::Comfortable->value, 'comfortable' => 44.0,
+                MaterialDensity::Compact->value, 'compact' => 36.0,
+                default => 52.0,
+            };
+        }
+
         if ($part === 'PBottomSheet') {
             return self::materialBottomSheet(
                 $props,
@@ -133,14 +155,104 @@ final class ComponentRenderer
         }
         $part = self::legacyMaterialPart($part);
         $props = self::withDefaults($part, $props);
-        $children = self::fallbackChildren($part, $props, $children);
+        if (
+            $part === 'FileTree'
+            && ($props['__materialComponent'] ?? null) === 'PTreeview'
+        ) {
+            $opened = $props['opened'] ?? $props['expanded'] ?? [];
+            if (is_array($opened)) {
+                $props['expandedPaths'] ??= implode(
+                    "\n",
+                    array_map(
+                        static fn (mixed $value): string =>
+                            is_scalar($value) ? (string) $value : '',
+                        $opened,
+                    ),
+                );
+            }
+            $selected = $props['modelValue']
+                ?? $props['selected']
+                ?? $props['value']
+                ?? null;
+            if (is_array($selected)) {
+                $selected = reset($selected);
+            }
+            if (is_scalar($selected)) {
+                $props['selectedPath'] ??= (string) $selected;
+            }
+        }
+        $children = self::fallbackChildren($part, $props, $children, $events);
+        if (
+            in_array(
+                $props['__materialComponent'] ?? null,
+                ['PIconBtn', 'PAppBarNavIcon'],
+                true,
+            )
+            && (
+                is_string($props['icon'] ?? null)
+                || is_string($props['name'] ?? null)
+            )
+        ) {
+            $children = [
+                CustomView::make(
+                    'pam.mobile_ui.icon',
+                    self::iconProperties($part, $props),
+                )
+                    ->style(new Style(width: 24.0, height: 24.0))
+                    ->accessible(false)
+                    ->accessibilityImportance(
+                        AccessibilityImportance::NoHideDescendants,
+                    ),
+            ];
+        }
+        if (
+            ($props['__materialComponent'] ?? null) === 'PTabs'
+            && self::taggedElement($children, 'pam:tabs-indicator') === null
+        ) {
+            $children[] = View::make()
+                ->style(new Style(
+                    positionType: PositionType::Absolute,
+                    left: 0.0,
+                    bottom: 0.0,
+                    width: 1.0,
+                    height: 2.0,
+                    backgroundColor: ThemeManager::current()->color(
+                        ColorToken::Primary,
+                    ),
+                    borderRadius: 1.0,
+                ))
+                ->property(PropKey::Value, 'pam:tabs-indicator')
+                ->property(PropKey::PointerEvents, PointerEvents::None->value);
+        }
+        if (
+            ($props['__materialComponent'] ?? null) === 'PDataTableVirtual'
+            && $part === 'Table'
+        ) {
+            $virtualRows = \Pam\Native\UI\VirtualizedList::make(...$children)
+                ->rowHeight(self::number($props, 'rowHeight', 52.0))
+                ->prefetch(self::integer($props, 'prefetch', 8))
+                ->removeClippedSubviews(
+                    self::flag($props, 'removeClippedSubviews', true),
+                )
+                ->showsIndicator(
+                    self::flag($props, 'showsScrollIndicator', true),
+                );
+            $endReached = $events[EventKind::EndReached->value] ?? null;
+            if ($endReached !== null) {
+                $virtualRows = $virtualRows->onEndReached(
+                    $endReached,
+                    self::number($props, 'endReachedThreshold', 0.5),
+                );
+            }
+            $children = [$virtualRows];
+        }
         if (self::isTransparentProvider($part)) {
             $provider = self::transparentChildren($children);
             if ($elementKey !== null) {
                 $provider = $provider->key($elementKey);
             }
 
-            return $provider;
+            return self::providerSemantics($part, $props, $provider);
         }
         if (in_array($part, ['BottomSheet', 'ModelSelector'], true)) {
             $selector = View::make(...self::providerRootChildren($children))
@@ -149,7 +261,7 @@ final class ComponentRenderer
                 $selector = $selector->key($elementKey);
             }
 
-            return $selector;
+            return self::providerSemantics($part, $props, $selector);
         }
         if (
             in_array($part, ['Skeleton', 'SkeletonText'], true)
@@ -163,7 +275,7 @@ final class ComponentRenderer
                 $loaded = $loaded->key($elementKey);
             }
 
-            return $loaded;
+            return self::providerSemantics($part, $props, $loaded);
         }
         if (in_array($part, ['Skeleton', 'SkeletonText'], true)) {
             $children = [];
@@ -196,6 +308,13 @@ final class ComponentRenderer
             }
         }
         $props = self::controlledItemState($part, $props, $parentProps);
+        if (
+            isset($props['__materialComponent'])
+            && array_key_exists('modelValue', $props)
+            && !array_key_exists('value', $props)
+        ) {
+            $props['value'] = $props['modelValue'];
+        }
         $runtimeProps = [...$parentProps, ...$props];
         $events = self::componentEvents($part, $runtimeProps, $events);
         $children = self::modelSelectorChildren(
@@ -210,7 +329,7 @@ final class ComponentRenderer
             ($props['__materialComponent'] ?? null) === 'PProgressLinear'
             && $children === []
         ) {
-            $rawProgress = $props['value'] ?? 0;
+            $rawProgress = $props['modelValue'] ?? $props['value'] ?? 0;
             $progress = is_numeric($rawProgress)
                 ? max(0.0, min(100.0, (float) $rawProgress))
                 : 0.0;
@@ -219,20 +338,53 @@ final class ComponentRenderer
                     ->style(new Style(
                         widthPercent: $progress,
                         height: 4.0,
-                        backgroundColor: ThemeManager::current()->color(ColorToken::Primary),
+                        backgroundColor: self::materialSemanticColor($props),
                         borderRadius: 999.0,
                     ))
                     ->property(PropKey::Value, 'pam:progress-filled-track'),
             ];
+        }
+        if (in_array($part, ['AlertDialog', 'Modal'], true)) {
+            $children = array_map(
+                static fn (Element $child): Element => $child->style(
+                    new Style(marginHorizontal: 24.0),
+                ),
+                $children,
+            );
         }
         $style = StyleResolver::resolve(
             $part === 'ModelSelectorContent' ? 'ModalContent' : $part,
             $props,
             ThemeManager::current(),
         );
-        if (in_array($props['__materialComponent'] ?? null, ['PBadge', 'PChip'], true)) {
+        if (
+            in_array($part, ['Input', 'Textarea'], true)
+            && (
+                $style->textColor !== null
+                || $style->placeholderColor !== null
+            )
+        ) {
+            $inputStyle = new Style(
+                textColor: $style->textColor,
+                placeholderColor: $style->placeholderColor,
+            );
+            $children = array_map(
+                static fn (Element $child): Element =>
+                    $child->kind() === NodeKind::Input
+                        ? $child->style($inputStyle)
+                        : $child,
+                $children,
+            );
+        }
+        if (
+            isset($props['__materialComponent'])
+            && in_array($props['__materialComponent'], ['PBadge', 'PChip'], true)
+        ) {
+            $foregroundProps = $props['__materialComponent'] === 'PBadge'
+                ? $props + ['color' => 'error']
+                : $props;
             $semanticForeground = MaterialStyleResolver::semanticForeground(
-                $props,
+                $foregroundProps,
                 ThemeManager::current(),
             );
             if ($semanticForeground !== null) {
@@ -269,7 +421,10 @@ final class ComponentRenderer
         $rootStyle = $style;
         if (in_array($part, [
             'Actionsheet',
+            'AlertDialog',
             'BottomSheetPortal',
+            'Modal',
+            'Portal',
             'SelectPortal',
         ], true)) {
             $rootStyle = new Style();
@@ -285,6 +440,308 @@ final class ComponentRenderer
                 $children[1] = $children[1]->style($styleOverride);
             }
             $rootStyle = new Style();
+            $styleAppliedToContent = true;
+        }
+        $materialField = in_array(
+            $props['__materialComponent'] ?? null,
+            [
+                'PInput', 'PTextField', 'PTextarea', 'PNumberInput',
+                'POtpInput', 'PColorInput', 'PDateInput', 'PFileInput',
+                'PSelect', 'PAutocomplete', 'PCombobox',
+            ],
+            true,
+        );
+        if ($materialField) {
+            $theme = ThemeManager::current();
+            $fieldDisabled = self::flag(
+                $props,
+                'disabled',
+                self::flag($props, 'isDisabled'),
+            );
+            $fieldChildren = [];
+            $label = self::text($props, 'label');
+            $materialComponent = $props['__materialComponent'];
+            if ($label !== '' && $materialComponent !== 'POtpInput') {
+                $fieldChildren[] = Text::make($label)->style(new Style(
+                    textColor: $theme->color(ColorToken::MutedForeground),
+                    fontSize: 12.0,
+                    lineHeight: 16.0,
+                    fontWeight: 400,
+                    widthPercent: 100.0,
+                ));
+            }
+            $hasNativeInput = false;
+            foreach ($children as $child) {
+                if (
+                    $child->kind() === NodeKind::Input
+                    && in_array($materialComponent, ['PNumberInput', 'POtpInput'], true)
+                ) {
+                    continue;
+                }
+                $hasNativeInput = $hasNativeInput || $child->kind() === NodeKind::Input;
+                $fieldChildren[] = $child->kind() === NodeKind::Input
+                    ? $child->style(new Style(
+                        widthPercent: 100.0,
+                        flexGrow: 1.0,
+                        minHeight: $part === 'Textarea' ? 72.0 : 24.0,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                        placeholderColor: $theme->color(ColorToken::MutedForeground),
+                        fontSize: 16.0,
+                        lineHeight: 24.0,
+                    ))
+                    : $child;
+            }
+            if (
+                !$hasNativeInput
+                && in_array($materialComponent, [
+                    'PInput',
+                    'PTextField',
+                    'PTextarea',
+                    'PNumberInput',
+                    'POtpInput',
+                    'PAutocomplete',
+                    'PCombobox',
+                ], true)
+            ) {
+                $inputProps = $props;
+                if ($materialComponent === 'PNumberInput') {
+                    $inputProps['keyboardType'] ??= 'decimal-pad';
+                } elseif ($materialComponent === 'POtpInput') {
+                    $inputProps['keyboardType'] ??= 'number-pad';
+                    $inputProps['maxLength'] ??= max(
+                        1,
+                        self::integer($props, 'length', 6),
+                    );
+                    $inputProps['autoComplete'] ??= 'one-time-code';
+                }
+                $nativeInput = self::input(
+                    $materialComponent === 'PTextarea'
+                        ? 'TextareaInput'
+                        : 'InputField',
+                    $inputProps,
+                );
+                foreach ([
+                    EventKind::Change,
+                    EventKind::Focus,
+                    EventKind::Blur,
+                    EventKind::Submit,
+                    EventKind::InputEndEditing,
+                    EventKind::InputSelectionChange,
+                    EventKind::InputContentSizeChange,
+                    EventKind::InputKeyPress,
+                ] as $inputEvent) {
+                    $handler = $events[$inputEvent->value] ?? null;
+                    if ($handler !== null) {
+                        $nativeInput = $nativeInput->on($inputEvent, $handler);
+                    }
+                }
+                if ($materialComponent === 'PNumberInput') {
+                    $minimum = self::number($props, 'min', -PHP_FLOAT_MAX);
+                    $maximum = self::number($props, 'max', PHP_FLOAT_MAX);
+                    $step = max(0.000001, self::number($props, 'step', 1.0));
+                    $modelValue = $props['modelValue'] ?? $props['value'] ?? null;
+                    $current = is_numeric($modelValue)
+                        ? (float) $modelValue
+                        : max(0.0, $minimum);
+                    $change = $events[EventKind::Change->value] ?? null;
+                    $control = static function (
+                        string $glyph,
+                        string $accessibilityLabel,
+                        float $next,
+                    ) use ($change, $fieldDisabled): Element {
+                        $button = Pressable::make(
+                            Text::make($glyph)->style(new Style(
+                                fontSize: 20.0,
+                                lineHeight: 24.0,
+                                textAlign: TextAlignment::Center,
+                            )),
+                        )
+                            ->style(new Style(
+                                width: 40.0,
+                                height: 40.0,
+                                borderRadius: 20.0,
+                                alignItems: Align::Center,
+                                justifyContent: Justify::Center,
+                            ))
+                            ->enabled(!$fieldDisabled)
+                            ->accessibilityLabel($accessibilityLabel)
+                            ->accessibilityRole(AccessibilityRole::Button);
+                        return $change === null
+                            ? $button
+                            : $button->on(
+                                EventKind::Press,
+                                static fn () => $change((string) $next),
+                            );
+                    };
+                    $fieldChildren[] = Row::make(
+                        $control(
+                            '−',
+                            'Decrease value',
+                            max($minimum, $current - $step),
+                        ),
+                        $nativeInput->style(new Style(
+                            flexGrow: 1.0,
+                            minWidth: 64.0,
+                            height: 40.0,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                            placeholderColor: $theme->color(ColorToken::MutedForeground),
+                            fontSize: 16.0,
+                            lineHeight: 24.0,
+                            textAlign: TextAlignment::Center,
+                        )),
+                        $control(
+                            '+',
+                            'Increase value',
+                            min($maximum, $current + $step),
+                        ),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        gap: 4.0,
+                        alignItems: Align::Center,
+                    ));
+                } elseif ($materialComponent === 'POtpInput') {
+                    $length = max(1, self::integer($props, 'length', 6));
+                    $otpValue = self::text(
+                        $props,
+                        'modelValue',
+                        self::text($props, 'value'),
+                    );
+                    $characters = [];
+                    for ($index = 0; $index < $length; $index++) {
+                        $character = function_exists('mb_substr')
+                            ? mb_substr($otpValue, $index, 1)
+                            : substr($otpValue, $index, 1);
+                        $active = $index === min(strlen($otpValue), $length - 1);
+                        $characters[] = View::make(
+                            Text::make($character)->style(new Style(
+                                textColor: $theme->color(ColorToken::OnSurface),
+                                fontSize: 20.0,
+                                lineHeight: 24.0,
+                                fontWeight: 500,
+                                textAlign: TextAlignment::Center,
+                            )),
+                        )->style(new Style(
+                            width: 40.0,
+                            height: 48.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                            backgroundColor: $theme->color(ColorToken::Surface),
+                            borderColor: $theme->color(
+                                $active ? ColorToken::Primary : ColorToken::Border,
+                            ),
+                            borderWidth: $active ? 2.0 : 1.0,
+                            borderRadius: 4.0,
+                        ));
+                    }
+                    if (self::flag($props, 'loading')) {
+                        $characters[] = ActivityIndicator::make()
+                            ->color($theme->color(ColorToken::Primary));
+                    }
+                    $fieldChildren[] = Row::make(...$characters)->style(new Style(
+                        widthPercent: 100.0,
+                        gap: 6.0,
+                        justifyContent: Justify::Center,
+                    ));
+                    $nativeInput = $nativeInput->accessibilityLabel(
+                        $label !== '' ? $label : 'One-time password',
+                    );
+                    $fieldChildren[] = $nativeInput->style(new Style(
+                        positionType: PositionType::Absolute,
+                        left: 0.0,
+                        top: 0.0,
+                        widthPercent: 100.0,
+                        height: 48.0,
+                        opacity: 0.0,
+                        zIndex: 1,
+                    ));
+                } else {
+                    $fieldChildren[] = $nativeInput->style(new Style(
+                        widthPercent: 100.0,
+                        flexGrow: 1.0,
+                        minHeight: $materialComponent === 'PTextarea' ? 72.0 : 24.0,
+                        paddingRight: in_array(
+                            $materialComponent,
+                            ['PAutocomplete', 'PCombobox'],
+                            true,
+                        ) ? 32.0 : null,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                        placeholderColor: $theme->color(ColorToken::MutedForeground),
+                        fontSize: 16.0,
+                        lineHeight: 24.0,
+                    ));
+                    if (in_array(
+                        $materialComponent,
+                        ['PAutocomplete', 'PCombobox'],
+                        true,
+                    )) {
+                        $fieldChildren[] = Text::make('⌄')->style(new Style(
+                            positionType: PositionType::Absolute,
+                            right: 0.0,
+                            bottom: 4.0,
+                            width: 24.0,
+                            height: 24.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                            fontSize: 20.0,
+                            lineHeight: 24.0,
+                            textAlign: TextAlignment::Center,
+                        ));
+                    }
+                }
+                $hasNativeInput = true;
+            }
+            if (!$hasNativeInput && $materialComponent !== 'PSelect') {
+                $displayValue = self::text(
+                    $props,
+                    'value',
+                    self::text($props, 'placeholder'),
+                );
+                if ($displayValue !== '') {
+                    $fieldChildren[] = Text::make($displayValue)->style(new Style(
+                        textColor: $theme->color(ColorToken::OnSurface),
+                        fontSize: 16.0,
+                        lineHeight: 24.0,
+                        widthPercent: 100.0,
+                    ));
+                }
+            }
+            $field = View::make(...$fieldChildren)->style($style);
+            if ($styleOverride !== null) {
+                $field = $field->style($styleOverride);
+            }
+            $children = [$field];
+            $errorMessage = self::text(
+                $props,
+                'errorMessage',
+                self::text($props, 'messages'),
+            );
+            $invalid = self::flag($props, 'error') || $errorMessage !== '';
+            $helper = $errorMessage !== '' ? $errorMessage : self::text(
+                $props,
+                'helper',
+                self::text($props, 'hint'),
+            );
+            if ($invalid) {
+                $children[0] = $children[0]->style(new Style(
+                    borderColor: $theme->color(ColorToken::Destructive),
+                    borderWidth: 1.0,
+                ));
+            }
+            if ($helper !== '') {
+                $children[] = Text::make($helper)->style(new Style(
+                    textColor: $invalid
+                        ? $theme->color(ColorToken::Destructive)
+                        : $theme->color(ColorToken::MutedForeground),
+                    fontSize: 12.0,
+                    lineHeight: 16.0,
+                    paddingHorizontal: 16.0,
+                    widthPercent: 100.0,
+                ));
+            }
+            $rootStyle = new Style(
+                widthPercent: 100.0,
+                gap: 4.0,
+            );
+            $nativeBackground = null;
             $styleAppliedToContent = true;
         }
         $element = $part === 'SkeletonText'
@@ -472,7 +929,40 @@ final class ComponentRenderer
         if ($styleOverride !== null && !$styleAppliedToContent) {
             $element = $element->style($styleOverride);
         }
+        if (array_key_exists('rtl', $props)) {
+            $element = $element->property(
+                PropKey::LayoutDirection,
+                self::flag($props, 'rtl') ? 2 : 1,
+            );
+        }
         $element = self::explicitNativeProperties($part, $props, $element);
+        if (($props['__materialComponent'] ?? null) === 'PProgressCircular') {
+            $rawProgressSize = $props['size'] ?? 'md';
+            $componentSize = is_int($rawProgressSize)
+                ? ComponentSize::tryFrom($rawProgressSize)
+                : null;
+            $progressSize = $componentSize !== null
+                ? match ($componentSize) {
+                    ComponentSize::TwoExtraSmall => 12.0,
+                    ComponentSize::ExtraSmall => 16.0,
+                    ComponentSize::Small => 24.0,
+                    ComponentSize::Large => 48.0,
+                    ComponentSize::ExtraLarge => 64.0,
+                    default => 32.0,
+                }
+                : (is_numeric($rawProgressSize)
+                    ? max(8.0, (float) $rawProgressSize)
+                    : match ($rawProgressSize) {
+                    'xs', 'x-small' => 16.0,
+                    'sm', 'small' => 24.0,
+                    'lg', 'large' => 48.0,
+                    'xl', 'x-large' => 64.0,
+                    default => 32.0,
+                });
+            $element = $element
+                ->property(PropKey::Width, $progressSize)
+                ->property(PropKey::Height, $progressSize);
+        }
         $disabled = self::flag(
             $props,
             'disabled',
@@ -603,7 +1093,7 @@ final class ComponentRenderer
                 !$shouldHide,
                 self::modalPresentation($part, $runtimeProps),
             )
-                ->animationType(self::modalAnimationType($runtimeProps))
+                ->animationType(self::modalAnimationType($part, $runtimeProps))
                 ->backdropColor(
                     in_array($part, [
                         'Actionsheet',
@@ -646,6 +1136,7 @@ final class ComponentRenderer
                     $element = $element->on($kind, $handler);
                 }
             }
+            $element = self::providerSemantics($part, $runtimeProps, $element);
         }
         if ($elementKey !== null) {
             $element = $element->key($elementKey);
@@ -677,13 +1168,25 @@ final class ComponentRenderer
             );
         }
         if (self::isText($part)) {
-            return Text::make(
-                self::text(
-                    $props,
-                    'text',
-                    $part === 'MessageBranchPage' ? '1 of 1' : '',
-                ),
-            )->property(
+            $text = self::text(
+                $props,
+                'text',
+                $part === 'MessageBranchPage' ? '1 of 1' : '',
+            );
+            if ($text === '') {
+                foreach ($children as $child) {
+                    if ($child->kind() !== NodeKind::Text) {
+                        continue;
+                    }
+                    $childText = $child->properties()[PropKey::Text->value] ?? null;
+                    if (is_string($childText)) {
+                        $text = $childText;
+                        break;
+                    }
+                }
+            }
+
+            return Text::make($text)->property(
                 PropKey::TextColor,
                 ThemeManager::current()->color(ColorToken::Foreground),
             );
@@ -741,6 +1244,21 @@ final class ComponentRenderer
             )
         ) {
             return self::horizontalScroll($part, $props, $children);
+        }
+        if ($part === 'VirtualizedList' && $children !== []) {
+            return \Pam\Native\UI\VirtualizedList::make(...$children)
+                ->rowHeight(self::number($props, 'rowHeight', 52.0))
+                ->prefetch(self::integer($props, 'prefetch', 8))
+                ->horizontal(self::flag($props, 'horizontal'))
+                ->columns(self::integer($props, 'numColumns', 1))
+                ->inverted(self::flag($props, 'inverted'))
+                ->removeClippedSubviews(
+                    self::flag($props, 'removeClippedSubviews', true),
+                )
+                ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
+                ->showsIndicator(
+                    self::flag($props, 'showsScrollIndicator', true),
+                );
         }
         if (in_array($part, [
             'FlatList',
@@ -877,9 +1395,11 @@ final class ComponentRenderer
         ) {
             return $children[0];
         }
-        $behavior = self::nativeBehavior($part);
+        $behavior = self::flag($props, '__pamButtonToggleItem')
+            ? NativeBehavior::TabsTrigger
+            : self::nativeBehavior($part);
         if ($behavior !== NativeBehavior::Container) {
-            return CustomView::make(
+            $host = CustomView::make(
                 'pam.mobile_ui.host',
                 self::nativeProperties(
                     $part,
@@ -890,6 +1410,19 @@ final class ComponentRenderer
                 ),
                 ...$children,
             );
+            if ($behavior === NativeBehavior::ChipGroup) {
+                $host = $host->style(new Style(
+                    height: max(40.0, (float) ceil(count($children) / 2) * 40.0),
+                ));
+            } elseif ($behavior === NativeBehavior::ListItem) {
+                $host = $host->style(new Style(height: count($children) > 1 ? 72.0 : 56.0));
+            } elseif ($behavior === NativeBehavior::Timeline) {
+                $host = $host->style(new Style(height: max(64.0, count($children) * 64.0)));
+            } elseif ($behavior === NativeBehavior::TimelineItem) {
+                $host = $host->style(new Style(height: 64.0));
+            }
+
+            return $host;
         }
         if ($part === 'HStack' || $part === 'ButtonGroup' || $part === 'AvatarGroup') {
             return Row::make(...$children);
@@ -916,7 +1449,7 @@ final class ComponentRenderer
                 array_key_exists('pressedOpacity', $props)
                     ? 'pressedOpacity'
                     : 'pressOpacity',
-                0.88,
+                1.0,
             );
             $hitSlop = self::edgeInsets($props['hitSlop'] ?? 8, 8.0);
             $retention = self::edgeInsets(
@@ -1009,7 +1542,11 @@ final class ComponentRenderer
             $elementKey,
         );
 
-        return View::make($portal)->collapsable();
+        return self::providerSemantics(
+            'PBottomSheet',
+            $props,
+            View::make($portal)->collapsable(),
+        );
     }
 
     /**
@@ -1030,7 +1567,7 @@ final class ComponentRenderer
             'behavior' => $behavior->value,
             'theme' => ThemeManager::resolvedMode()->value,
             'trackColor' => ThemeManager::current()->color(ColorToken::Muted),
-            'fillColor' => ThemeManager::current()->color(ColorToken::Primary),
+            'fillColor' => self::materialSemanticColor($props),
             'foregroundColor' => ThemeManager::current()->color(ColorToken::Foreground),
             'selectedForegroundColor' => ThemeManager::current()->color(
                 ColorToken::PrimaryForeground,
@@ -1044,6 +1581,27 @@ final class ComponentRenderer
             ) {
                 $values[$name] = $value;
             }
+        }
+        if (self::flag($props, '__pamButtonToggleItem')) {
+            $values['buttonToggleItem'] = true;
+        }
+        if (array_key_exists('defaultIsOpen', $props)) {
+            $values['initiallyOpen'] = self::flag($props, 'defaultIsOpen');
+        }
+        if ($behavior === NativeBehavior::Toast) {
+            foreach (['open', 'isOpen', 'persistent'] as $flag) {
+                if (array_key_exists($flag, $props)) {
+                    $values[$flag] = self::flag($props, $flag);
+                }
+            }
+            $duration = $props['duration'] ?? $props['timeout'] ?? 4_000;
+            $values['duration'] = is_numeric($duration)
+                ? min(60_000, max(500, (int) $duration))
+                : 4_000;
+        }
+        if ($behavior === NativeBehavior::Progress) {
+            $values['circular'] = ($props['__materialComponent'] ?? null)
+                === 'PProgressCircular';
         }
         if ($behavior === NativeBehavior::Calendar) {
             $values = [...$values, ...self::calendarNativeProperties($props)];
@@ -1106,6 +1664,22 @@ final class ComponentRenderer
         return $values;
     }
 
+    /** @param array<string, mixed> $props */
+    private static function materialSemanticColor(array $props): int
+    {
+        $semantic = $props['action'] ?? $props['color'] ?? 'primary';
+        $token = match ($semantic) {
+            'secondary' => ColorToken::Secondary,
+            'success' => ColorToken::Success,
+            'info', 'information' => ColorToken::Info,
+            'warning' => ColorToken::Warning,
+            'error', 'destructive' => ColorToken::Destructive,
+            default => ColorToken::Primary,
+        };
+
+        return ThemeManager::current()->color($token);
+    }
+
     public static function nativeBehavior(string $part): NativeBehavior
     {
         $part = self::legacyMaterialPart($part);
@@ -1121,6 +1695,10 @@ final class ComponentRenderer
             'PSparkline' => NativeBehavior::Sparkline,
             'PHotkey' => NativeBehavior::Hotkey,
             'PHover' => NativeBehavior::Hover,
+            'ChipGroup' => NativeBehavior::ChipGroup,
+            'ListItem' => NativeBehavior::ListItem,
+            'Timeline' => NativeBehavior::Timeline,
+            'TimelineItem' => NativeBehavior::TimelineItem,
             'MessageBranch' => NativeBehavior::MessageBranch,
             'MessageBranchPrevious',
             'MessageBranchNext' => NativeBehavior::MessageBranchControl,
@@ -1408,8 +1986,9 @@ final class ComponentRenderer
             'PBadge' => 'Badge',
             'PBottomSheet' => 'BottomSheet',
             'PBtn', 'PIconBtn' => 'Button',
-            'PBtnToggle', 'PChipGroup', 'PSelectionControlGroup',
-            'PItemGroup' => 'CheckboxGroup',
+            'PBtnToggle' => 'Tabs',
+            'PSelectionControlGroup', 'PItemGroup' => 'CheckboxGroup',
+            'PChipGroup' => 'ChipGroup',
             'PCalendar' => 'Calendar',
             'PCarousel', 'PStepper', 'PStepperVertical', 'PWindow' => 'Tabs',
             'PCarouselItem', 'PStepperWindow', 'PStepperWindowItem',
@@ -1440,7 +2019,7 @@ final class ComponentRenderer
             'PMenu' => 'Menu',
             'PNavigationDrawer' => 'Drawer',
             'PListGroup' => 'Accordion',
-            'PListItem' => 'MenuItem',
+            'PListItem' => 'ListItem',
             'POverlay' => 'Portal',
             'PProgressCircular', 'PProgressLinear' => 'Progress',
             'PPullToRefresh' => 'RefreshControl',
@@ -1466,6 +2045,8 @@ final class ComponentRenderer
             'PCounter', 'PCode', 'PKbd' => 'Text',
             'PTextarea' => 'Textarea',
             'PTooltip' => 'Tooltip',
+            'PTimeline' => 'Timeline',
+            'PTimelineItem' => 'TimelineItem',
             'PTreeview' => 'FileTree',
             'PTreeviewItem' => 'FileTreeFolder',
             'PVirtualScroll', 'PInfiniteScroll' => 'VirtualizedList',
@@ -1475,7 +2056,17 @@ final class ComponentRenderer
 
     private static function componentId(string $part): int
     {
-        return ComponentMap::IDS[$part] ?? MaterialComponentMap::IDS[$part];
+        return ComponentMap::IDS[$part]
+            ?? MaterialComponentMap::IDS[$part]
+            ?? match ($part) {
+                'ChipGroup' => MaterialComponentMap::IDS['PChipGroup'],
+                'ListItem' => MaterialComponentMap::IDS['PListItem'],
+                'Timeline' => MaterialComponentMap::IDS['PTimeline'],
+                'TimelineItem' => MaterialComponentMap::IDS['PTimelineItem'],
+                default => throw new InvalidArgumentException(
+                    "Unknown component part {$part}.",
+                ),
+            };
     }
 
     public static function forwardsEventsToDescendants(string $part): bool
@@ -1714,18 +2305,36 @@ final class ComponentRenderer
 
         $semanticRole = match ($part) {
             'Heading' => AccessibilityRole::Header,
+            'PText' => AccessibilityRole::Text,
             'Link' => AccessibilityRole::Link,
-            'Alert', 'AlertDialog' => AccessibilityRole::Alert,
+            'Alert',
+            'AlertDialog',
+            'PBanner',
+            'PSnackbar',
+            'PSnackbarQueue' => AccessibilityRole::Alert,
             'Checkbox' => AccessibilityRole::Checkbox,
             'Radio' => AccessibilityRole::Radio,
             'RadioGroup' => AccessibilityRole::RadioGroup,
-            'SelectTrigger', 'ModelSelectorTrigger' => AccessibilityRole::ComboBox,
+            'SelectTrigger',
+            'ModelSelectorTrigger',
+            'PAutocomplete',
+            'PCombobox',
+            'PSelect' => AccessibilityRole::ComboBox,
+            'PNumberInput' => AccessibilityRole::SpinButton,
+            'PColorInput',
+            'PDateInput',
+            'PField',
+            'PFileInput',
+            'PInput',
+            'POtpInput',
+            'PTextField',
+            'PTextarea' => AccessibilityRole::Input,
             'Menu' => AccessibilityRole::Menu,
             'MenuItem' => AccessibilityRole::MenuItem,
             'Progress', 'Spinner', 'ButtonSpinner' =>
                 AccessibilityRole::ProgressBar,
             'Slider' => AccessibilityRole::Adjustable,
-            'TabsList' => AccessibilityRole::TabList,
+            'TabsList', 'PStepperHeader' => AccessibilityRole::TabList,
             'TabsTrigger' => AccessibilityRole::Tab,
             'Grid', 'Table' => AccessibilityRole::Grid,
             'FlatList',
@@ -1738,7 +2347,22 @@ final class ComponentRenderer
             'BottomSheetSectionList',
             'SelectFlatList',
             'SelectVirtualizedList',
-            'SelectSectionList' => AccessibilityRole::List,
+            'SelectSectionList',
+            'PBreadcrumbs',
+            'PList',
+            'PPagination',
+            'PStepper',
+            'PTimeline',
+            'PTreeview' => AccessibilityRole::List,
+            'PListItem',
+            'PTimelineItem',
+            'PTreeviewItem' => AccessibilityRole::ListItem,
+            'PAppBar', 'PToolbar' => AccessibilityRole::Toolbar,
+            'PCalendarDay',
+            'PFileUpload',
+            'PSpeedDial' => AccessibilityRole::Button,
+            'PEmptyState' => AccessibilityRole::Summary,
+            'PTooltip' => AccessibilityRole::Presentation,
             'AccordionTrigger' => AccessibilityRole::ToggleButton,
             default => null,
         };
@@ -1832,6 +2456,39 @@ final class ComponentRenderer
     }
 
     /**
+     * Applies the same accessibility contract used by regular rendered roots
+     * to provider roots that intentionally return before primitive rendering.
+     *
+     * @param array<string, mixed> $props
+     */
+    private static function providerSemantics(
+        string $part,
+        array $props,
+        Element $element,
+    ): Element {
+        $label = $props['accessibilityLabel'] ?? $props['ariaLabel'] ?? null;
+        if (is_string($label) && $label !== '') {
+            $element = $element->accessibilityLabel($label);
+        }
+        $hint = $props['accessibilityHint'] ?? null;
+        if (is_string($hint) && $hint !== '') {
+            $element = $element->accessibilityHint($hint);
+        }
+        $role = self::accessibilityRole($part, $props);
+        if (
+            $role !== AccessibilityRole::Generic
+            || self::hasAccessibilityMetadata($props)
+        ) {
+            $element = $element->accessibilityRole($role);
+        }
+        if (isset($props['testId']) && is_string($props['testId'])) {
+            $element = $element->testId($props['testId']);
+        }
+
+        return self::accessibilityProperties($part, $props, $element);
+    }
+
+    /**
      * @param array<string, mixed> $props
      */
     private static function accessibilityProperties(
@@ -1851,6 +2508,14 @@ final class ComponentRenderer
                 ?? $props['accessibilityLiveRegion']
                 ?? null,
         );
+        $liveRegion ??= match ($part) {
+            'PAlert' => AccessibilityLiveRegion::Assertive,
+            'PBanner',
+            'PMessages',
+            'PSnackbar',
+            'PSnackbarQueue' => AccessibilityLiveRegion::Polite,
+            default => null,
+        };
         if ($liveRegion !== null) {
             $element = $element->accessibilityLiveRegion($liveRegion);
         }
@@ -2567,12 +3232,60 @@ final class ComponentRenderer
                 'pam:overlay-trigger',
             );
             $content = Column::make(...array_slice($children, 1))
+                ->collapsable(false)
+                ->style(new Style(
+                    paddingVertical: 8.0,
+                    gap: 8.0,
+                ))
                 ->property(PropKey::Value, 'pam:overlay-content')
                 ->property(
                     PropKey::PositionType,
                     PositionType::Absolute->value,
                 )
                 ->property(PropKey::MinHeight, 88.0);
+            return [$trigger, $content];
+        }
+        if ($overlayPart === 'Tooltip' && count($children) > 1) {
+            $trigger = $children[0]->property(
+                PropKey::Value,
+                'pam:overlay-trigger',
+            );
+            $content = Column::make(...array_slice($children, 1))
+                ->collapsable(false)
+                ->style(new Style(
+                    maxWidth: 320.0,
+                    minHeight: 24.0,
+                    paddingHorizontal: 8.0,
+                    paddingVertical: 4.0,
+                    backgroundColor: 0xFF1B2A3C,
+                    borderRadius: 4.0,
+                ))
+                ->property(PropKey::Value, 'pam:overlay-content')
+                ->property(
+                    PropKey::PositionType,
+                    PositionType::Absolute->value,
+                );
+
+            return [$trigger, $content];
+        }
+        if (($props['__materialComponent'] ?? null) === 'PSpeedDial') {
+            $trigger = $children[0]->property(
+                PropKey::Value,
+                'pam:overlay-trigger',
+            );
+            $content = Column::make(...array_slice($children, 1))
+                ->collapsable(false)
+                ->style(new Style(
+                    paddingVertical: 8.0,
+                    gap: 8.0,
+                ))
+                ->property(PropKey::Value, 'pam:overlay-content')
+                ->property(
+                    PropKey::PositionType,
+                    PositionType::Absolute->value,
+                )
+                ->property(PropKey::MinHeight, 144.0);
+
             return [$trigger, $content];
         }
 
@@ -2642,12 +3355,15 @@ final class ComponentRenderer
 
     /** @param array<string, mixed> $props */
     private static function modalAnimationType(
+        string $part,
         array $props,
     ): ModalAnimationType {
         return match ($props['animationType'] ?? null) {
             2, 'slide' => ModalAnimationType::Slide,
             3, 'fade' => ModalAnimationType::Fade,
-            default => ModalAnimationType::None,
+            default => in_array($part, ['AlertDialog', 'Modal'], true)
+                ? ModalAnimationType::Fade
+                : ModalAnimationType::None,
         };
     }
 
@@ -2716,11 +3432,28 @@ final class ComponentRenderer
         $icon = is_string($requested)
             ? ($materialIds[$requested] ?? ComponentMap::IDS[$requested] ?? $materialIds[$part] ?? ComponentMap::IDS[$part] ?? 0)
             : ($materialIds[$part] ?? ComponentMap::IDS[$part] ?? 0);
-        $color = $props['color'] ?? ThemeManager::current()->color(ColorToken::Foreground);
+        $requestedColor = $props['color'] ?? $props['action'] ?? null;
+        $theme = ThemeManager::current();
+        $semanticColor = is_string($requestedColor)
+            ? match (strtolower($requestedColor)) {
+                'primary' => ColorToken::Primary,
+                'secondary' => ColorToken::SecondaryForeground,
+                'success' => ColorToken::Success,
+                'info', 'information' => ColorToken::Info,
+                'warning' => ColorToken::Warning,
+                'error', 'destructive' => ColorToken::Destructive,
+                default => null,
+            }
+            : null;
+        $color = self::packedColor($requestedColor)
+            ?? ($semanticColor === null
+                ? null
+                : $theme->color($semanticColor))
+            ?? $theme->color(ColorToken::Foreground);
 
         return [
             'icon' => $icon,
-            'color' => is_int($color) ? $color : ThemeManager::current()->color(ColorToken::Foreground),
+            'color' => $color,
         ];
     }
 
@@ -2773,6 +3506,11 @@ final class ComponentRenderer
         array $props,
         array $parentProps,
     ): array {
+        $buttonToggleItem = $part === 'PBtn'
+            && ($parentProps['__pamParentComponent'] ?? null) === 'PBtnToggle';
+        if ($buttonToggleItem) {
+            $props['__pamButtonToggleItem'] = true;
+        }
         $itemValue = self::semanticValue($props);
         if ($itemValue === null) {
             return $props;
@@ -2809,6 +3547,9 @@ final class ComponentRenderer
             'MenuItem',
             'ModelSelectorItem',
             'TabsTrigger' => [...$props, 'selected' => $selected],
+            'PBtn' => $buttonToggleItem
+                ? [...$props, 'selected' => $selected]
+                : $props,
             default => $props,
         };
     }
@@ -3170,6 +3911,28 @@ final class ComponentRenderer
             }
         }
         if (self::usesNativeWindow($part)) {
+            $dismissHandler = $events[EventKind::ModalDismiss->value] ?? null;
+            if ($dismissHandler !== null) {
+                $nativeHandler = $events[EventKind::Native->value] ?? null;
+                $events[EventKind::Native->value] =
+                    static function (string $payload) use (
+                        $dismissHandler,
+                        $nativeHandler,
+                    ): void {
+                        $nativeHandler?->__invoke($payload);
+                        try {
+                            $event = Wire::decodeMap($payload);
+                        } catch (\Throwable) {
+                            return;
+                        }
+                        if (
+                            ($event['dismissed'] ?? false) === true
+                            || ($event['action'] ?? null) === 1
+                        ) {
+                            $dismissHandler();
+                        }
+                    };
+            }
             foreach ([
                 EventKind::ModalRequestClose,
                 EventKind::ModalShow,
@@ -4613,7 +5376,10 @@ final class ComponentRenderer
     private static function calendarNativeProperties(array $props): array
     {
         $values = [];
-        $selected = $props['value'] ?? $props['defaultValue'] ?? null;
+        $selected = $props['modelValue']
+            ?? $props['value']
+            ?? $props['defaultValue']
+            ?? null;
         if (is_array($selected)) {
             if (array_is_list($selected)) {
                 $dates = array_map(
@@ -4639,6 +5405,24 @@ final class ComponentRenderer
                 $disabled,
             );
             $values['disabledDates'] = implode("\n", array_filter($dates));
+        }
+        $visible = $props['visibleDate'] ?? $selected;
+        if (is_array($visible)) {
+            $visible = reset($visible);
+        }
+        if (is_scalar($visible)) {
+            $date = \DateTimeImmutable::createFromFormat(
+                '!Y-m-d',
+                substr((string) $visible, 0, 10),
+            );
+            if ($date !== false) {
+                $values['year'] = (int) $date->format('Y');
+                $values['month'] = (int) $date->format('n');
+                $values['visibleDate'] = $date->format('Y-m-d');
+                if (!is_array($selected) && is_scalar($selected)) {
+                    $values['selectedValues'] = substr((string) $selected, 0, 10);
+                }
+            }
         }
 
         return $values;
@@ -4777,12 +5561,14 @@ final class ComponentRenderer
     /**
      * @param array<string, mixed> $props
      * @param list<Element> $children
+     * @param array<int, Closure> $events
      * @return list<Element>
      */
     private static function fallbackChildren(
         string $part,
         array $props,
         array $children,
+        array $events,
     ): array {
         if ($children !== []) {
             return $children;
@@ -4800,6 +5586,48 @@ final class ComponentRenderer
 
         if (in_array($part, ['Input', 'Textarea'], true)) {
             return [self::input($part === 'Textarea' ? 'TextareaInput' : 'InputField', $props)];
+        }
+        if (
+            $part === 'FileTree'
+            && ($props['__materialComponent'] ?? null) === 'PTreeview'
+        ) {
+            return self::materialTreeviewChildren($props, $events);
+        }
+        if (
+            $part === 'Calendar'
+            && in_array(
+                $props['__materialComponent'] ?? null,
+                [
+                    'PCalendar',
+                    'PDatePicker',
+                    'PDatePickerMonth',
+                    'PDatePickerMonths',
+                    'PDatePickerYears',
+                ],
+                true,
+            )
+        ) {
+            return self::materialCalendarChildren($props);
+        }
+        if (
+            $part === 'Table'
+            && in_array(
+                $props['__materialComponent'] ?? null,
+                ['PDataTable', 'PDataTableServer', 'PDataTableVirtual'],
+                true,
+            )
+        ) {
+            return self::materialDataTableChildren($props);
+        }
+        if (
+            $part === 'Select'
+            && in_array(
+                $props['__materialComponent'] ?? null,
+                ['PSelect', 'PAutocomplete', 'PCombobox'],
+                true,
+            )
+        ) {
+            return self::materialSelectChildren($props, $events);
         }
         if ($part === 'ImageViewerNavigation') {
             return self::imageViewerNavigationChildren();
@@ -4892,6 +5720,583 @@ final class ComponentRenderer
         }
 
         return [];
+    }
+
+    /**
+     * Builds the complete native select anatomy for the compact material
+     * facades. The portal remains mounted so Android and iOS can preserve
+     * focus, sheet position and accessibility state between presentations.
+     *
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialSelectChildren(
+        array $props,
+        array $events,
+    ): array {
+        $theme = ThemeManager::current();
+        $componentValue = $props['__materialComponent'] ?? 'PSelect';
+        $component = is_string($componentValue) ? $componentValue : 'PSelect';
+        $compoundProps = $props;
+        unset($compoundProps['__materialComponent']);
+        $selectedValue = $props['modelValue']
+            ?? $props['selectedValue']
+            ?? $props['value']
+            ?? null;
+        if (is_array($selectedValue)) {
+            $selectedValue = reset($selectedValue);
+        }
+
+        $items = is_array($props['items'] ?? null) ? $props['items'] : [];
+        $normalized = [];
+        foreach ($items as $index => $item) {
+            if (is_array($item)) {
+                $value = $item['value']
+                    ?? $item['id']
+                    ?? $item['key']
+                    ?? $item['title']
+                    ?? $item['label']
+                    ?? $index;
+                $label = $item['title']
+                    ?? $item['label']
+                    ?? $item['name']
+                    ?? $value;
+                $disabled = (bool) ($item['disabled'] ?? false);
+            } else {
+                $value = $item;
+                $label = $item;
+                $disabled = false;
+            }
+            if (!is_scalar($value) || !is_scalar($label)) {
+                continue;
+            }
+            $normalized[] = [
+                'value' => $value,
+                'label' => (string) $label,
+                'disabled' => $disabled,
+            ];
+        }
+
+        $display = '';
+        foreach ($normalized as $item) {
+            if (self::sameScalar($item['value'], $selectedValue)) {
+                $display = $item['label'];
+                break;
+            }
+        }
+        if ($display === '' && is_scalar($selectedValue)) {
+            $display = (string) $selectedValue;
+        }
+        if ($display === '') {
+            $display = self::text(
+                $props,
+                'placeholder',
+                self::text($props, 'label', 'Select an option'),
+            );
+        }
+
+        $contentChildren = [];
+        $change = $events[EventKind::Change->value] ?? null;
+        foreach ($normalized as $item) {
+            $selected = self::sameScalar($item['value'], $selectedValue);
+            $itemProps = [
+                ...$compoundProps,
+                'label' => $item['label'],
+                'value' => $item['value'],
+                'checked' => $selected,
+                'selected' => $selected,
+                'disabled' => $item['disabled'],
+                'closeOnSelect' => !self::flag($props, 'multiple'),
+                'accessibilityLabel' => $item['label'],
+            ];
+            $itemEvents = [];
+            if ($change !== null && !$item['disabled']) {
+                $itemEvents[EventKind::Press->value] =
+                    self::scalarSelectionHandler($change, $item['value']);
+            }
+            $contentChildren[] = self::render(
+                'SelectItem',
+                $itemProps,
+                [self::themedText($item['label'])],
+                $itemEvents,
+                null,
+                'select-item-'.(string) $item['value'],
+            );
+        }
+        if ($contentChildren === []) {
+            $contentChildren[] = self::themedText(
+                self::text($props, 'noDataText', 'No options available'),
+            )->style(new Style(
+                widthPercent: 100.0,
+                minHeight: 48.0,
+                paddingHorizontal: 16.0,
+                paddingVertical: 12.0,
+                textColor: $theme->color(ColorToken::MutedForeground),
+                fontSize: 14.0,
+                lineHeight: 20.0,
+            ));
+        }
+        $initiallyOpen = self::flag($props, 'open');
+        $sheetProps = [
+            ...$compoundProps,
+            'selectedValue' => $selectedValue,
+            'open' => true,
+            'presentation' => 'sheet',
+            'snapPoints' => $props['snapPoints'] ?? '32%',
+            'closeOnSelect' => !self::flag($props, 'multiple'),
+            'searchable' => $component !== 'PSelect',
+            'allowCustomValue' => $component === 'PCombobox',
+            'searchPlaceholder' => self::text(
+                $props,
+                'searchPlaceholder',
+                'Search options',
+            ),
+            'searchBackgroundColor' => $theme->color(ColorToken::Surface),
+            'searchTextColor' => $theme->color(ColorToken::OnSurface),
+            'searchHintColor' => $theme->color(ColorToken::MutedForeground),
+        ];
+        $localModalKey = substr(hash(
+            'sha256',
+            (string) $component
+                ."\0"
+                .self::text($props, 'label')
+                ."\0"
+                .json_encode($normalized, JSON_UNESCAPED_SLASHES),
+        ), 0, 16);
+        $content = self::render(
+            'SelectContent',
+            $sheetProps,
+            [
+                Column::make(...$contentChildren)->style(new Style(
+                    widthPercent: 100.0,
+                    paddingTop: 16.0,
+                    paddingBottom: 16.0,
+                    gap: 0.0,
+                )),
+            ],
+            [],
+            new Style(
+                widthPercent: 100.0,
+                minHeight: 96.0,
+                paddingTop: 8.0,
+                paddingBottom: 16.0,
+                backgroundColor: $theme->color(ColorToken::Surface),
+                borderTopLeftRadius: 28.0,
+                borderTopRightRadius: 28.0,
+            ),
+            null,
+        );
+        $backdrop = self::render(
+            'SelectBackdrop',
+            $sheetProps,
+            [],
+            [],
+            null,
+            null,
+        );
+        $portalEvents = [];
+        if ($change !== null && $component === 'PCombobox') {
+            $portalEvents[EventKind::Change->value] = $change;
+        }
+        if (isset($events[EventKind::Native->value])) {
+            $portalEvents[EventKind::Native->value] =
+                $events[EventKind::Native->value];
+        }
+        $portal = self::render(
+            'SelectPortal',
+            $sheetProps,
+            [$backdrop, $content],
+            $portalEvents,
+            null,
+            'select-portal',
+        )
+            ->property(PropKey::Value, 'pam:local-modal:'.$localModalKey)
+            ->property(PropKey::Visible, $initiallyOpen);
+
+        if ($component !== 'PSelect') {
+            return [$portal];
+        }
+
+        $triggerEvents = [];
+        $toggle = $events[EventKind::Toggle->value] ?? null;
+        if ($toggle !== null) {
+            $triggerEvents[EventKind::Press->value] =
+                static fn () => $toggle(true);
+        } elseif (isset($events[EventKind::Press->value])) {
+            $triggerEvents[EventKind::Press->value] =
+                $events[EventKind::Press->value];
+        }
+        $disabled = self::flag($props, 'disabled');
+        $trigger = self::render(
+            'SelectTrigger',
+            [
+                ...$compoundProps,
+                'text' => null,
+                'disabled' => $disabled,
+                'accessibilityLabel' => self::text($props, 'label', $display),
+                'accessibilityHint' => 'Opens available options',
+                'expanded' => self::flag($props, 'open'),
+            ],
+            [
+                Row::make(
+                    self::themedText($display)->style(new Style(
+                        flexGrow: 1.0,
+                        textColor: $theme->color(
+                            $display === self::text($props, 'placeholder')
+                                ? ColorToken::MutedForeground
+                                : ColorToken::OnSurface,
+                        ),
+                        fontSize: 16.0,
+                        lineHeight: 24.0,
+                    )),
+                    self::themedText('⌄')->style(new Style(
+                        width: 24.0,
+                        textColor: $theme->color(ColorToken::MutedForeground),
+                        fontSize: 20.0,
+                        lineHeight: 24.0,
+                        textAlign: \Pam\Native\TextAlignment::Center,
+                    )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: 32.0,
+                    alignItems: \Pam\Native\Align::Center,
+                    gap: 8.0,
+                )),
+            ],
+            $triggerEvents,
+            new Style(
+                widthPercent: 100.0,
+                minHeight: 40.0,
+                alignItems: \Pam\Native\Align::Center,
+                justifyContent: \Pam\Native\Justify::Center,
+            ),
+            'select-trigger',
+        )->property(
+            PropKey::Value,
+            'pam:local-modal-trigger:'.$localModalKey,
+        );
+
+        return [$trigger, $portal];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return list<Element>
+     */
+    private static function materialCalendarChildren(array $props): array
+    {
+        $visible = $props['visibleDate']
+            ?? $props['modelValue']
+            ?? $props['value']
+            ?? date('Y-m-d');
+        if (is_array($visible)) {
+            $visible = reset($visible);
+        }
+        $date = is_scalar($visible)
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d', substr((string) $visible, 0, 10))
+            : false;
+        $date = $date ?: new \DateTimeImmutable('first day of this month');
+
+        $previous = \Pam\Native\UI\Pressable::make(
+            self::themedText('‹'),
+        )
+            ->property(PropKey::Value, 'pam:calendar-prev')
+            ->style(new Style(
+                width: 40.0,
+                height: 40.0,
+                minWidth: 40.0,
+                minHeight: 40.0,
+                borderRadius: 20.0,
+                alignItems: \Pam\Native\Align::Center,
+                justifyContent: \Pam\Native\Justify::Center,
+            ));
+        $title = self::themedText($date->format('F Y'))
+            ->property(PropKey::Value, 'pam:calendar-title')
+            ->style(new Style(
+                flexGrow: 1.0,
+                textAlign: \Pam\Native\TextAlignment::Center,
+                fontSize: 16.0,
+                lineHeight: 24.0,
+                fontWeight: 600,
+            ));
+        $next = \Pam\Native\UI\Pressable::make(
+            self::themedText('›'),
+        )
+            ->property(PropKey::Value, 'pam:calendar-next')
+            ->style(new Style(
+                width: 40.0,
+                height: 40.0,
+                minWidth: 40.0,
+                minHeight: 40.0,
+                borderRadius: 20.0,
+                alignItems: \Pam\Native\Align::Center,
+                justifyContent: \Pam\Native\Justify::Center,
+            ));
+        $header = \Pam\Native\UI\Row::make($previous, $title, $next)
+            ->style(new Style(
+                widthPercent: 100.0,
+                minHeight: 56.0,
+                paddingHorizontal: 8.0,
+                gap: 4.0,
+                alignItems: \Pam\Native\Align::Center,
+            ));
+        $grid = \Pam\Native\UI\View::make()
+            ->property(PropKey::Value, 'pam:calendar-grid')
+            ->style(new Style(
+                widthPercent: 100.0,
+                height: 288.0,
+                minHeight: 288.0,
+            ));
+
+        return [$header, $grid];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialTreeviewChildren(
+        array $props,
+        array $events,
+    ): array {
+        $items = $props['items'] ?? [];
+        if (!is_array($items)) {
+            return [];
+        }
+        $opened = $props['opened'] ?? $props['expanded'] ?? [];
+        $opened = is_array($opened)
+            ? array_map(
+                static fn (mixed $value): string =>
+                    is_scalar($value) ? (string) $value : '',
+                $opened,
+            )
+            : [];
+        $selected = $props['modelValue']
+            ?? $props['selected']
+            ?? $props['value']
+            ?? null;
+        $selectedValues = is_array($selected)
+            ? array_map(
+                static fn (mixed $value): string =>
+                    is_scalar($value) ? (string) $value : '',
+                $selected,
+            )
+            : (is_scalar($selected) ? [(string) $selected] : []);
+        $change = $events[EventKind::Change->value] ?? null;
+
+        $renderItems = function (
+            array $source,
+            string $parentPath = '',
+        ) use (
+            &$renderItems,
+            $opened,
+            $selectedValues,
+            $change,
+        ): array {
+            $rendered = [];
+            foreach (array_values($source) as $index => $item) {
+                $item = is_array($item) ? $item : ['title' => $item];
+                $title = (string) (
+                    $item['title']
+                    ?? $item['name']
+                    ?? $item['label']
+                    ?? $item['value']
+                    ?? 'Item '.($index + 1)
+                );
+                $path = (string) (
+                    $item['value']
+                    ?? $item['path']
+                    ?? $item['key']
+                    ?? ($parentPath === ''
+                        ? $title
+                        : $parentPath.'/'.$title)
+                );
+                $nestedSource = $item['children'] ?? [];
+                $nested = is_array($nestedSource)
+                    ? $renderItems($nestedSource, $path)
+                    : [];
+                $itemEvents = [];
+                if ($change !== null) {
+                    $itemEvents[EventKind::Press->value] =
+                        static fn () => $change($path);
+                }
+                $rendered[] = self::render(
+                    $nested === [] ? 'FileTreeFile' : 'FileTreeFolder',
+                    [
+                        'path' => $path,
+                        'name' => $title,
+                        'expanded' => in_array($path, $opened, true),
+                        'selected' => in_array($path, $selectedValues, true),
+                    ],
+                    $nested,
+                    $itemEvents,
+                    null,
+                    'pam-tree-'.substr(sha1($path), 0, 16),
+                );
+            }
+
+            return $rendered;
+        };
+
+        return $renderItems($items);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return list<Element>
+     */
+    private static function materialDataTableChildren(array $props): array
+    {
+        $source = $props['items'] ?? [];
+        if (is_string($source)) {
+            $source = array_values(array_filter(
+                array_map('trim', explode(',', $source)),
+                static fn (string $item): bool => $item !== '',
+            ));
+        }
+        if (!is_array($source)) {
+            return [];
+        }
+
+        $density = $props['density'] ?? 'default';
+        $rowHeight = match ($density) {
+            'compact', 3 => 44.0,
+            'comfortable', 2 => 48.0,
+            default => 52.0,
+        };
+        $headers = [];
+        $headerSource = $props['headers'] ?? [];
+        if (is_array($headerSource)) {
+            foreach ($headerSource as $header) {
+                if (is_array($header)) {
+                    $key = $header['key'] ?? $header['value'] ?? null;
+                    $title = $header['title'] ?? $header['text'] ?? $key;
+                    if (is_scalar($key) && is_scalar($title)) {
+                        $headers[] = [
+                            'key' => (string) $key,
+                            'title' => (string) $title,
+                        ];
+                    }
+                } elseif (is_scalar($header)) {
+                    $headers[] = [
+                        'key' => (string) $header,
+                        'title' => ucfirst((string) $header),
+                    ];
+                }
+            }
+        }
+        if ($headers === [] && isset($source[0]) && is_array($source[0])) {
+            foreach (array_keys($source[0]) as $key) {
+                $headers[] = [
+                    'key' => (string) $key,
+                    'title' => ucfirst(str_replace('_', ' ', (string) $key)),
+                ];
+            }
+        }
+
+        $rows = [];
+        if ($headers !== []) {
+            $headerCells = array_map(
+                static fn (array $header): Element => self::materialDataTableCell(
+                    $header['title'],
+                    $rowHeight,
+                    true,
+                ),
+                $headers,
+            );
+            $rows[] = self::render(
+                'TableRow',
+                [
+                    'columns' => count($headerCells),
+                    'header' => true,
+                    'accessibilityLabel' => 'Table header',
+                ],
+                $headerCells,
+                [],
+                new Style(
+                    widthPercent: 100.0,
+                    minHeight: $rowHeight,
+                    backgroundColor: ThemeManager::current()->color(
+                        ColorToken::SurfaceSunken,
+                    ),
+                    borderBottomWidth: 1.0,
+                    borderColor: ThemeManager::current()->color(
+                        ColorToken::Border,
+                    ),
+                ),
+                null,
+            );
+        }
+        $items = array_values($source);
+        if (($props['__materialComponent'] ?? null) !== 'PDataTableVirtual') {
+            $items = array_slice($items, 0, 256);
+        }
+        foreach ($items as $item) {
+            $cells = $headers !== [] && is_array($item)
+                ? array_map(
+                    static fn (array $header): mixed => $item[$header['key']] ?? null,
+                    $headers,
+                )
+                : (is_array($item) ? array_values($item) : [$item]);
+            $children = [];
+            foreach (array_slice($cells, 0, 16) as $cell) {
+                if (!is_scalar($cell) && $cell !== null) {
+                    continue;
+                }
+                $children[] = self::materialDataTableCell(
+                    (string) ($cell ?? ''),
+                    $rowHeight,
+                    false,
+                );
+            }
+            if ($children === []) {
+                continue;
+            }
+            $rows[] = self::render(
+                'TableRow',
+                ['columns' => count($children)],
+                $children,
+                [],
+                new Style(
+                    widthPercent: 100.0,
+                    minHeight: $rowHeight,
+                    backgroundColor: ThemeManager::current()->color(
+                        ColorToken::Surface,
+                    ),
+                    borderBottomWidth: 1.0,
+                    borderColor: ThemeManager::current()->color(
+                        ColorToken::Border,
+                    ),
+                ),
+                null,
+            );
+        }
+
+        return $rows;
+    }
+
+    private static function materialDataTableCell(
+        string $value,
+        float $height,
+        bool $header,
+    ): Element {
+        return \Pam\Native\UI\Column::make(
+            self::themedText($value)->style(new Style(
+                widthPercent: 100.0,
+                fontSize: 14.0,
+                lineHeight: 20.0,
+                fontWeight: $header ? 600 : 400,
+                numberOfLines: 1,
+            )),
+        )->style(new Style(
+            height: $height,
+            minHeight: $height,
+            paddingHorizontal: 16.0,
+            justifyContent: \Pam\Native\Justify::Center,
+            flexGrow: 1.0,
+        ));
     }
 
     /**
@@ -5165,19 +6570,37 @@ final class ComponentRenderer
 
         return [
             Row::make(
-                self::themedText('›')->property(
-                    PropKey::Value,
-                    'pam:file-tree-chevron',
-                ),
-                self::themedText($name)->property(
-                    PropKey::Value,
-                    'pam:file-tree-name',
-                ),
-            )->property(PropKey::Value, 'pam:file-tree-header'),
-            Column::make(...$children)->property(
-                PropKey::Value,
-                'pam:file-tree-content',
-            ),
+                self::themedText('›')
+                    ->style(new Style(
+                        width: 24.0,
+                        height: 24.0,
+                        fontSize: 20.0,
+                        lineHeight: 24.0,
+                        textAlign: TextAlignment::Center,
+                        textColor: ThemeManager::current()->color(
+                            ColorToken::MutedForeground,
+                        ),
+                    ))
+                    ->property(PropKey::Value, 'pam:file-tree-chevron'),
+                self::themedText($name)
+                    ->style(new Style(
+                        flexGrow: 1.0,
+                        fontSize: 15.0,
+                        lineHeight: 20.0,
+                        fontWeight: 500,
+                    ))
+                    ->property(PropKey::Value, 'pam:file-tree-name'),
+            )
+                ->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: 48.0,
+                    gap: 8.0,
+                    alignItems: Align::Center,
+                ))
+                ->property(PropKey::Value, 'pam:file-tree-header'),
+            Column::make(...$children)
+                ->style(new Style(widthPercent: 100.0))
+                ->property(PropKey::Value, 'pam:file-tree-content'),
         ];
     }
 
@@ -5344,7 +6767,11 @@ final class ComponentRenderer
         };
         $value = $part === 'DateTimePickerInput'
             ? self::dateTimeDisplayValue($props)
-            : self::text($props, 'value');
+            : self::text(
+                $props,
+                'modelValue',
+                self::text($props, 'value'),
+            );
         $input = Input::make($value)
             ->placeholder(self::text($props, 'placeholder'))
             ->nativeState(

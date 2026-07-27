@@ -2,11 +2,7 @@
 
 This catalog is generated from the manually authored `resources/pam-material-components.php` specification. It contains no imported Vuetify metadata and exposes only native `p-*` tags.
 
-**103 modules · 163 component parts · Android and iOS**
-
-## `app`
-
-- `<p-app />`
+**88 modules · 147 component parts · Android and iOS**
 
 ## `app-bar`
 
@@ -36,10 +32,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-banner />`
 - `<p-banner-text />`
 - `<p-banner-actions />`
-
-## `bottom-navigation`
-
-- `<p-bottom-navigation />`
 
 ## `bottom-sheet`
 
@@ -96,10 +88,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `chip-group`
 
 - `<p-chip-group />`
-
-## `code`
-
-- `<p-code />`
 
 ## `color-input`
 
@@ -189,10 +177,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-file-upload />`
 - `<p-file-upload-item />`
 
-## `footer`
-
-- `<p-footer />`
-
 ## `form`
 
 - `<p-form />`
@@ -203,14 +187,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-row />`
 - `<p-col />`
 - `<p-spacer />`
-
-## `hotkey`
-
-- `<p-hotkey />`
-
-## `hover`
-
-- `<p-hover />`
 
 ## `icon`
 
@@ -237,18 +213,9 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-item-group />`
 - `<p-item />`
 
-## `keyboard-key`
-
-- `<p-kbd />`
-
 ## `label`
 
 - `<p-label />`
-
-## `layout`
-
-- `<p-layout />`
-- `<p-layout-item />`
 
 ## `lazy`
 
@@ -267,10 +234,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-locale-provider />`
 
-## `main`
-
-- `<p-main />`
-
 ## `menu`
 
 - `<p-menu />`
@@ -278,10 +241,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `messages`
 
 - `<p-messages />`
-
-## `navigation-drawer`
-
-- `<p-navigation-drawer />`
 
 ## `number-input`
 
@@ -316,10 +275,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-progress-linear />`
 
-## `pull-to-refresh`
-
-- `<p-pull-to-refresh />`
-
 ## `radio`
 
 - `<p-radio />`
@@ -335,10 +290,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `rating`
 
 - `<p-rating />`
-
-## `responsive`
-
-- `<p-responsive />`
 
 ## `select`
 
@@ -404,14 +355,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-switch />`
 
-## `system-bar`
-
-- `<p-system-bar />`
-
-## `table`
-
-- `<p-table />`
-
 ## `tabs`
 
 - `<p-tabs />`
@@ -462,10 +405,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `validation`
 
 - `<p-validation />`
-
-## `virtual-scroll`
-
-- `<p-virtual-scroll />`
 
 ## `window`
 

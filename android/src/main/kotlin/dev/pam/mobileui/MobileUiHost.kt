@@ -1,5 +1,7 @@
 package dev.pam.mobileui
 
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -123,7 +125,11 @@ internal class MobileUiHost(
         PARALLAX(47),
         SPARKLINE(48),
         HOTKEY(49),
-        HOVER(50);
+        HOVER(50),
+        CHIP_GROUP(51),
+        LIST_ITEM(52),
+        TIMELINE(53),
+        TIMELINE_ITEM(54);
 
         companion object {
             fun from(value: Int): Behavior =
@@ -186,9 +192,15 @@ internal class MobileUiHost(
     private var expanded = false
     private var checked = false
     private var indeterminate = false
+    private var circularProgress = false
+    private var progressRotation = 0f
+    private var progressAnimator: ValueAnimator? = null
     private var selected = false
+    private var buttonToggleItem = false
+    private var buttonToggleBackground: Drawable? = null
     private var open = true
     private var openControlled = false
+    private var openDefaultInitialized = false
     private var value = 0.0
     private var minimum = 0.0
     private var maximum = 100.0
@@ -209,7 +221,11 @@ internal class MobileUiHost(
     private var closeOnClick = true
     private var pendingAnchoredOpen: Runnable? = null
     private var pendingAnchoredClose: Runnable? = null
-    private var anchoredTouchCatcher: View? = null
+    private var anchoredTouchCatcher: FrameLayout? = null
+    private var anchoredPortalContent: View? = null
+    private var anchoredPortalParent: ViewGroup? = null
+    private var anchoredPortalIndex = -1
+    private var anchoredPortalLayoutParams: ViewGroup.LayoutParams? = null
     private var anchoredTouchInsideContent = false
     private var dismissible = true
     private var closeOnOverlayClick = true
@@ -456,13 +472,21 @@ internal class MobileUiHost(
         // sibling while ViewGroup is iterating dispatchDetachedFromWindow()
         // corrupts the platform child traversal on Android 16. Detach first,
         // then remove it on the next main-loop turn.
+        restoreAnchoredPortalContent()
         val catcher = anchoredTouchCatcher
         anchoredTouchCatcher = null
         anchoredTouchInsideContent = false
         catcher?.post {
             (catcher.parent as? ViewGroup)?.removeView(catcher)
         }
+        progressAnimator?.cancel()
+        progressAnimator = null
         super.onDetachedFromWindow()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        updateProgressAnimation()
     }
 
     fun update(properties: Map<String, WireValue>) {
@@ -489,6 +513,7 @@ internal class MobileUiHost(
         pendingAnchoredClose = null
         behavior = Behavior.from(properties.integer("behavior", behavior.value.toLong()).toInt())
         if (previousBehavior != behavior) {
+            openDefaultInitialized = false
             sheetBackdropBaseAlpha = null
             if (previousBehavior == Behavior.PROMPT_INPUT) {
                 removePromptInputObserver()
@@ -511,6 +536,10 @@ internal class MobileUiHost(
                 ?.distinct()
                 ?.toList()
                 ?: emptyList()
+            sheetSearchable = properties.flag("searchable", false)
+            sheetAllowCustomValue = properties.flag("allowCustomValue", false)
+            sheetSearchPlaceholder = properties.text("searchPlaceholder")
+                ?: "Search options"
         }
         sheetSnapIndex = properties.integer(
             "snapToIndex",
@@ -685,7 +714,9 @@ internal class MobileUiHost(
             "indeterminate",
             properties.flag("isIndeterminate", false),
         )
+        circularProgress = properties.flag("circular", false)
         selected = properties.flag("selected", properties.flag("isSelected", selected))
+        buttonToggleItem = properties.flag("buttonToggleItem", false)
         val wasOpenControlled = openControlled
         openControlled = properties.containsKey("open")
             || properties.containsKey("isOpen")
@@ -694,8 +725,23 @@ internal class MobileUiHost(
                 "open",
                 properties.flag("isOpen", open),
             )
-        } else if (previousBehavior != behavior || wasOpenControlled) {
-            properties.flag("defaultIsOpen", behavior.isOpenByDefault())
+        } else if (
+            wasOpenControlled
+            || (
+                !openDefaultInitialized
+                && (
+                    properties.containsKey("initiallyOpen")
+                    || properties.containsKey("defaultIsOpen")
+                )
+            )
+        ) {
+            openDefaultInitialized = true
+            properties.flag(
+                "initiallyOpen",
+                properties.flag("defaultIsOpen", behavior.isOpenByDefault()),
+            )
+        } else if (previousBehavior != behavior) {
+            behavior.isOpenByDefault()
         } else {
             open
         }
@@ -931,6 +977,7 @@ internal class MobileUiHost(
             updateSwitchAccessibility()
         }
         scheduleToast(properties)
+        updateProgressAnimation()
         if (behavior == Behavior.SKELETON) {
             startSkeleton()
         } else if (
@@ -1139,9 +1186,33 @@ internal class MobileUiHost(
             Behavior.CHECKBOX -> drawSelectionIndicator(canvas, radio = false)
             Behavior.RADIO -> drawSelectionIndicator(canvas, radio = true)
             Behavior.SWITCH -> drawSwitch(canvas)
+            Behavior.PROGRESS -> if (circularProgress) drawCircularProgress(canvas)
             Behavior.SPARKLINE -> drawSparkline(canvas)
+            Behavior.TIMELINE -> drawTimeline(canvas)
             else -> Unit
         }
+    }
+
+    private fun drawTimeline(canvas: Canvas) {
+        if (childCount == 0) return
+        val axis = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+            width - 20f * density
+        } else {
+            20f * density
+        }
+        val first = 32f * density
+        val last = first + (childCount - 1) * 64f * density
+        val previousStyle = trackPaint.style
+        val previousWidth = trackPaint.strokeWidth
+        trackPaint.style = Paint.Style.STROKE
+        trackPaint.strokeWidth = 2f * density
+        canvas.drawLine(axis, first, axis, last, trackPaint)
+        fillPaint.style = Paint.Style.FILL
+        repeat(childCount) { index ->
+            canvas.drawCircle(axis, first + index * 64f * density, 6f * density, fillPaint)
+        }
+        trackPaint.style = previousStyle
+        trackPaint.strokeWidth = previousWidth
     }
 
     override fun onHoverEvent(event: MotionEvent): Boolean {
@@ -1151,12 +1222,10 @@ internal class MobileUiHost(
         when (event.actionMasked) {
             MotionEvent.ACTION_HOVER_ENTER -> {
                 isHovered = true
-                animate().alpha(0.92f).setDuration(90L).start()
                 emitter.emit(NativeViewEventKind.TOGGLE, "1".encodeToByteArray())
             }
             MotionEvent.ACTION_HOVER_EXIT -> {
                 isHovered = false
-                animate().alpha(1f).setDuration(140L).start()
                 emitter.emit(NativeViewEventKind.TOGGLE, "0".encodeToByteArray())
             }
         }
@@ -1166,6 +1235,51 @@ internal class MobileUiHost(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (behavior.isAnchoredOverlay() && childCount > 0) {
             measureAnchoredOverlay(widthMeasureSpec, heightMeasureSpec)
+            return
+        }
+        if (behavior == Behavior.CHIP_GROUP && childCount > 0) {
+            val width = MeasureSpec.getSize(widthMeasureSpec)
+            val availableWidth = (width - paddingLeft - paddingRight).coerceAtLeast(0)
+            repeat(childCount) { index ->
+                getChildAt(index).measure(
+                    MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST),
+                    MeasureSpec.makeMeasureSpec((40f * density).roundToInt(), MeasureSpec.AT_MOST),
+                )
+            }
+            val gap = (8f * density).roundToInt()
+            var rows = 1
+            var used = 0
+            repeat(childCount) { index ->
+                val childWidth = getChildAt(index).measuredWidth
+                if (used > 0 && used + gap + childWidth > availableWidth) {
+                    rows += 1
+                    used = childWidth
+                } else {
+                    used += (if (used == 0) 0 else gap) + childWidth
+                }
+            }
+            setMeasuredDimension(
+                resolveSize(width, widthMeasureSpec),
+                resolveSize((rows * 40f * density).roundToInt(), heightMeasureSpec),
+            )
+            return
+        }
+        if (behavior == Behavior.LIST_ITEM && childCount > 0) {
+            val width = MeasureSpec.getSize(widthMeasureSpec)
+            val availableWidth = (width - paddingLeft - paddingRight - 32f * density)
+                .roundToInt()
+                .coerceAtLeast(0)
+            repeat(childCount) { index ->
+                getChildAt(index).measure(
+                    MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST),
+                    MeasureSpec.makeMeasureSpec((48f * density).roundToInt(), MeasureSpec.AT_MOST),
+                )
+            }
+            val desiredHeight = ((if (childCount > 1) 72f else 56f) * density).roundToInt()
+            setMeasuredDimension(
+                resolveSize(width, widthMeasureSpec),
+                resolveSize(desiredHeight, heightMeasureSpec),
+            )
             return
         }
         if (behavior != Behavior.TABLE_ROW || childCount == 0) {
@@ -1196,7 +1310,7 @@ internal class MobileUiHost(
         widthMeasureSpec: Int,
         heightMeasureSpec: Int,
     ) {
-        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+        val content = anchoredOverlayContent()
         val contentBranch = content?.let(::directChildContaining)
         val backdrop = findTaggedDescendant(this, OVERLAY_BACKDROP_TAG)
             ?: findTaggedDescendantWithPrefix(this, "$OVERLAY_BACKDROP_TAG:")
@@ -1258,6 +1372,16 @@ internal class MobileUiHost(
                 MeasureSpec.makeMeasureSpec(overlayWidth, MeasureSpec.AT_MOST),
                 MeasureSpec.makeMeasureSpec(overlayHeight, MeasureSpec.AT_MOST),
             )
+            desiredWidth = max(
+                desiredWidth,
+                paddingLeft + paddingRight + child.measuredWidth,
+            )
+            desiredHeight = max(
+                desiredHeight,
+                paddingTop + paddingBottom + desiredHeight
+                    + (offset * density).roundToInt()
+                    + child.measuredHeight,
+            )
             childState = combineMeasuredStates(childState, child.measuredState)
         }
         backdropBranch
@@ -1297,6 +1421,27 @@ internal class MobileUiHost(
         bottom: Int,
     ) {
         super.onLayout(changed, left, top, right, bottom)
+        if (
+            behavior == Behavior.MODAL
+            || behavior == Behavior.ALERT_DIALOG
+            || behavior == Behavior.PORTAL
+        ) {
+            repeat(childCount) { index ->
+                val child = getChildAt(index)
+                if (child.visibility != GONE) {
+                    val childWidth = child.measuredWidth.coerceAtMost(width)
+                    val childHeight = child.measuredHeight.coerceAtMost(height)
+                    val childLeft = (width - childWidth) / 2
+                    val childTop = (height - childHeight) / 2
+                    child.layout(
+                        childLeft,
+                        childTop,
+                        childLeft + childWidth,
+                        childTop + childHeight,
+                    )
+                }
+            }
+        }
         if (behavior == Behavior.TABLE_ROW && childCount > 0) {
             val contentWidth = (width - paddingLeft - paddingRight).coerceAtLeast(0)
             repeat(childCount) { index ->
@@ -1308,6 +1453,70 @@ internal class MobileUiHost(
                     childRight,
                     height - paddingBottom,
                 )
+            }
+        }
+        if (behavior == Behavior.LIST_ITEM && childCount > 0) {
+            val visible = (0 until childCount)
+                .map(::getChildAt)
+                .filter { it.visibility != GONE }
+            val start = paddingLeft + (16f * density).roundToInt()
+            val contentHeight = visible.sumOf { it.measuredHeight }
+            var y = ((height - contentHeight) / 2).coerceAtLeast(paddingTop)
+            visible.forEach { child ->
+                val childWidth = child.measuredWidth.coerceAtMost(
+                    width - start - paddingRight - (16f * density).roundToInt(),
+                )
+                val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    width - start - childWidth
+                } else {
+                    start
+                }
+                child.layout(x, y, x + childWidth, y + child.measuredHeight)
+                y += child.measuredHeight
+            }
+        }
+        if (behavior == Behavior.CHIP_GROUP && childCount > 0) {
+            val gap = (8f * density).roundToInt()
+            val rowHeight = (40f * density).roundToInt()
+            var logicalX = paddingLeft
+            var y = paddingTop
+            repeat(childCount) { index ->
+                val child = getChildAt(index)
+                if (
+                    logicalX > paddingLeft
+                    && logicalX + child.measuredWidth > width - paddingRight
+                ) {
+                    logicalX = paddingLeft
+                    y += rowHeight
+                }
+                val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    width - logicalX - child.measuredWidth
+                } else {
+                    logicalX
+                }
+                child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
+                logicalX += child.measuredWidth + gap
+            }
+        }
+        if (behavior == Behavior.TIMELINE && childCount > 0) {
+            val itemHeight = (64f * density).roundToInt()
+            repeat(childCount) { index ->
+                val child = getChildAt(index)
+                val y = paddingTop + index * itemHeight
+                child.layout(paddingLeft, y, width - paddingRight, minOf(height, y + itemHeight))
+            }
+        }
+        if (behavior == Behavior.TIMELINE_ITEM && childCount > 0) {
+            val inset = (40f * density).roundToInt()
+            repeat(childCount) { index ->
+                val child = getChildAt(index)
+                val childHeight = child.measuredHeight.coerceAtMost(height)
+                val y = (height - childHeight) / 2
+                if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    child.layout(0, y, width - inset, y + childHeight)
+                } else {
+                    child.layout(inset, y, width, y + childHeight)
+                }
             }
         }
         applyRangeVisualState()
@@ -2393,7 +2602,10 @@ internal class MobileUiHost(
                         byteArrayOf(),
                     )
                     if (closeSheetItemOnPress) {
-                        sheetAncestor()?.dismissSheetFromItem()
+                        sheetAncestor()?.let { sheet ->
+                            sheet.clearSheetSearch()
+                            sheet.dismissSheetFromItem()
+                        }
                     }
                 }
             }
@@ -2525,6 +2737,11 @@ internal class MobileUiHost(
         if (interactive) {
             minimumWidth = max(minimumWidth, (48f * density).toInt())
             minimumHeight = max(minimumHeight, (48f * density).toInt())
+        } else {
+            // Hosts are pooled across reconciliations. Do not retain the
+            // previous interactive component's minimum touch target.
+            minimumWidth = 0
+            minimumHeight = 0
         }
         if (behavior == Behavior.SWITCH) {
             minimumWidth = max(minimumWidth, (SWITCH_TRACK_WIDTH_DP * density).toInt())
@@ -2571,7 +2788,12 @@ internal class MobileUiHost(
             behavior.isOverlay() && !open -> IMPORTANT_FOR_ACCESSIBILITY_NO
             else -> IMPORTANT_FOR_ACCESSIBILITY_YES
         }
-        if (behavior == Behavior.TOAST) {
+        if (behavior == Behavior.SKELETON) {
+            isClickable = false
+            isFocusable = false
+            contentDescription = null
+            accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_NONE
+        } else if (behavior == Behavior.TOAST) {
             isFocusable = false
             accessibilityLiveRegion = if (
                 toastAction == TOAST_ACTION_WARNING
@@ -3466,6 +3688,69 @@ internal class MobileUiHost(
             .coerceIn(0.0, 1.0)
             .toFloat()
 
+    private fun updateProgressAnimation() {
+        if (
+            behavior != Behavior.PROGRESS
+            || !circularProgress
+            || !indeterminate
+            || !animationsEnabled()
+        ) {
+            progressAnimator?.cancel()
+            progressAnimator = null
+            progressRotation = 0f
+            return
+        }
+        if (progressAnimator?.isRunning == true) return
+        progressAnimator = ValueAnimator.ofFloat(0f, 360f).apply {
+            duration = 1_333L
+            interpolator = android.view.animation.LinearInterpolator()
+            repeatCount = ValueAnimator.INFINITE
+            addUpdateListener {
+                progressRotation = it.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    private fun drawCircularProgress(canvas: Canvas) {
+        val stroke = (trackThickness * density).toFloat()
+            .coerceAtMost(minOf(width, height) / 2f)
+        if (stroke <= 0f) return
+        val inset = stroke / 2f
+        val bounds = RectF(
+            inset,
+            inset,
+            width.toFloat() - inset,
+            height.toFloat() - inset,
+        )
+        if (bounds.width() <= 0f || bounds.height() <= 0f) return
+
+        val previousTrackStyle = trackPaint.style
+        val previousTrackWidth = trackPaint.strokeWidth
+        val previousFillStyle = fillPaint.style
+        val previousFillWidth = fillPaint.strokeWidth
+        val previousFillCap = fillPaint.strokeCap
+        trackPaint.style = Paint.Style.STROKE
+        trackPaint.strokeWidth = stroke
+        fillPaint.style = Paint.Style.STROKE
+        fillPaint.strokeWidth = stroke
+        fillPaint.strokeCap = Paint.Cap.ROUND
+        canvas.drawOval(bounds, trackPaint)
+        canvas.drawArc(
+            bounds,
+            if (indeterminate) progressRotation - 90f else -90f,
+            if (indeterminate) 270f else 360f * rangeProgress(),
+            false,
+            fillPaint,
+        )
+        trackPaint.style = previousTrackStyle
+        trackPaint.strokeWidth = previousTrackWidth
+        fillPaint.style = previousFillStyle
+        fillPaint.strokeWidth = previousFillWidth
+        fillPaint.strokeCap = previousFillCap
+    }
+
     private fun updateRangeAccessibility() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
         stateDescription = when (behavior) {
@@ -4249,6 +4534,7 @@ internal class MobileUiHost(
             } else {
                 trigger.updateTabTriggerAccessibility()
             }
+            trigger.applyButtonToggleVisualState()
         }
 
         val contents = tabContents()
@@ -4294,6 +4580,31 @@ internal class MobileUiHost(
             }
         }
 
+    private fun applyButtonToggleVisualState() {
+        if (!buttonToggleItem || behavior != Behavior.TAB_TRIGGER) return
+        if (buttonToggleBackground == null) {
+            buttonToggleBackground = background?.constantState?.newDrawable()?.mutate()
+        }
+        backgroundTintList = null
+        background = if (selected) {
+            GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 8f * density
+                setColor(fillPaint.color)
+            }
+        } else {
+            buttonToggleBackground?.constantState?.newDrawable()?.mutate()
+        }
+        descendantViews(this)
+            .filterIsInstance<TextView>()
+            .forEach { text ->
+                text.setTextColor(
+                    if (selected) calendarSelectedTextColor else calendarTextPaint.color,
+                )
+            }
+        invalidate()
+    }
+
     private fun descendantViews(root: ViewGroup): Sequence<View> =
         sequence {
             repeat(root.childCount) { index ->
@@ -4323,10 +4634,10 @@ internal class MobileUiHost(
         tabsIndicatorAnimator?.cancel()
         val params = indicator.layoutParams
         params.width = trigger.width
-        params.height = trigger.height
+        params.height = (2f * density).roundToInt().coerceAtLeast(1)
         indicator.layoutParams = params
         val targetX = trigger.x - indicator.left
-        val targetY = trigger.y - indicator.top
+        val targetY = trigger.y + trigger.height - params.height - indicator.top
         if (animate && animationsEnabled()) {
             indicator.animate()
                 .translationX(targetX)
@@ -5934,9 +6245,19 @@ internal class MobileUiHost(
         toastScheduleSignature = signature
         pendingDismiss?.let(::removeCallbacks)
         pendingDismiss = null
-        if (persistent || !open) return
+        if (!open) {
+            animate().cancel()
+            visibility = GONE
+            alpha = 1f
+            translationY = 0f
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+            return
+        }
         visibility = VISIBLE
         alpha = 1f
+        translationY = 0f
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+        if (persistent) return
         pendingDismiss = Runnable {
             pendingDismiss = null
             if (!openControlled) {
@@ -6235,6 +6556,7 @@ internal class MobileUiHost(
         contentLayout.gravity = Gravity.BOTTOM
         content.layoutParams = contentLayout
         if (content is ViewGroup) {
+            ensureSheetSearchInput(content)
             repeat(content.childCount) { index ->
                 val child = content.getChildAt(index)
                 val childLayout = child.layoutParams ?: return@repeat
@@ -6310,7 +6632,278 @@ internal class MobileUiHost(
                 "Snap ${sheetSnapIndex + 1} of ${sheetSnapPoints.size}"
             }
         }
+    
+        (content as? ViewGroup)?.let(::layoutNativeSheetItems)
     }
+
+    /**
+     * Bottom-sheet contents are laid out outside the protocol/Yoga pass. Keep native
+     * selection rows in a deterministic mobile list instead of stretching every row
+     * over the complete sheet viewport.
+     */
+    private var sheetSearchable = false
+    private var sheetAllowCustomValue = false
+    private var sheetSearchPlaceholder = "Search options"
+    private var sheetSearchInput: android.widget.EditText? = null
+    private var sheetCustomAction: android.widget.TextView? = null
+    private var sheetEmptyState: android.widget.TextView? = null
+    private val sheetSearchBindings =
+        java.util.WeakHashMap<android.widget.EditText, android.text.TextWatcher>()
+
+    private fun ensureSheetSearchInput(content: ViewGroup) {
+        if (!sheetSearchable) {
+            sheetSearchInput?.let { input ->
+                (input.parent as? ViewGroup)?.removeView(input)
+            }
+            sheetSearchInput = null
+            sheetCustomAction?.let { (it.parent as? ViewGroup)?.removeView(it) }
+            sheetEmptyState?.let { (it.parent as? ViewGroup)?.removeView(it) }
+            sheetCustomAction = null
+            sheetEmptyState = null
+            return
+        }
+        val input = sheetSearchInput ?: android.widget.EditText(context).also { search ->
+            search.isSingleLine = true
+            search.textSize = 16f
+            search.setPadding(
+                (16f * resources.displayMetrics.density).roundToInt(),
+                0,
+                (16f * resources.displayMetrics.density).roundToInt(),
+                0,
+            )
+            search.background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                cornerRadius = 16f * resources.displayMetrics.density
+                setColor(
+                    nativeProperties.integer(
+                        "searchBackgroundColor",
+                        android.graphics.Color.WHITE.toLong(),
+                    ).toInt(),
+                )
+            }
+            search.setTextColor(
+                nativeProperties.integer(
+                    "searchTextColor",
+                    android.graphics.Color.BLACK.toLong(),
+                ).toInt(),
+            )
+            search.setHintTextColor(
+                nativeProperties.integer(
+                    "searchHintColor",
+                    android.graphics.Color.GRAY.toLong(),
+                ).toInt(),
+            )
+            search.contentDescription = sheetSearchPlaceholder
+            sheetSearchInput = search
+        }
+        input.hint = sheetSearchPlaceholder
+        if (input.parent !== content) {
+            (input.parent as? ViewGroup)?.removeView(input)
+            content.addView(input)
+        }
+        val customAction = sheetCustomAction ?: android.widget.TextView(context).also { action ->
+            action.gravity = android.view.Gravity.CENTER_VERTICAL
+            action.textSize = 16f
+            action.setPadding(
+                (16f * resources.displayMetrics.density).roundToInt(),
+                0,
+                (16f * resources.displayMetrics.density).roundToInt(),
+                0,
+            )
+            action.setTextColor(
+                nativeProperties.integer(
+                    "searchTextColor",
+                    android.graphics.Color.BLACK.toLong(),
+                ).toInt(),
+            )
+            action.isClickable = true
+            action.isFocusable = true
+            action.setOnClickListener {
+                val value = input.text?.toString()?.trim().orEmpty()
+                if (value.isEmpty()) return@setOnClickListener
+                emitter.emit(NativeViewEventKind.CHANGE, value.encodeToByteArray())
+                clearSheetSearch()
+                emitter.emit(NativeViewEventKind.NATIVE, byteArrayOf())
+            }
+            sheetCustomAction = action
+        }
+        if (customAction.parent !== content) {
+            (customAction.parent as? ViewGroup)?.removeView(customAction)
+            content.addView(customAction)
+        }
+        val emptyState = sheetEmptyState ?: android.widget.TextView(context).also { empty ->
+            empty.gravity = android.view.Gravity.CENTER_VERTICAL
+            empty.text = nativeProperties.text("noDataText") ?: "No options available"
+            empty.textSize = 14f
+            empty.setPadding(
+                (16f * resources.displayMetrics.density).roundToInt(),
+                0,
+                (16f * resources.displayMetrics.density).roundToInt(),
+                0,
+            )
+            empty.setTextColor(
+                nativeProperties.integer(
+                    "searchHintColor",
+                    android.graphics.Color.GRAY.toLong(),
+                ).toInt(),
+            )
+            empty.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            sheetEmptyState = empty
+        }
+        if (emptyState.parent !== content) {
+            (emptyState.parent as? ViewGroup)?.removeView(emptyState)
+            content.addView(emptyState)
+        }
+    }
+
+    private fun clearSheetSearch() {
+        sheetSearchInput?.text?.clear()
+    }
+
+    private fun layoutNativeSheetItems(root: ViewGroup) {
+        val items = ArrayList<MobileUiHost>()
+        val inputs = ArrayList<android.widget.EditText>()
+
+        fun collect(group: ViewGroup) {
+            for (index in 0 until group.childCount) {
+                val child = group.getChildAt(index)
+                if (child is MobileUiHost && child.behavior == Behavior.SHEET_ITEM) {
+                    items += child
+                } else if (child is android.widget.EditText) {
+                    inputs += child
+                } else if (child is ViewGroup) {
+                    collect(child)
+                }
+            }
+        }
+
+        collect(root)
+        if (items.isEmpty()) return
+        val query = inputs.firstOrNull()?.text?.toString()?.trim().orEmpty()
+        items.forEach { item ->
+            item.visibility = if (
+                query.isEmpty() ||
+                item.contentDescription?.toString()?.contains(query, ignoreCase = true) == true
+            ) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        }
+        val visibleItems = items.filter { it.visibility == View.VISIBLE }
+        val hasExactMatch = visibleItems.any { item ->
+            item.contentDescription?.toString()?.equals(query, ignoreCase = true) == true
+        }
+        val showCustomAction = sheetAllowCustomValue && query.isNotEmpty() && !hasExactMatch
+        sheetCustomAction?.apply {
+            visibility = if (showCustomAction) View.VISIBLE else View.GONE
+            text = "Use \"$query\""
+            contentDescription = text
+        }
+        val showEmptyState = query.isNotEmpty() && visibleItems.isEmpty() && !showCustomAction
+        sheetEmptyState?.visibility = if (showEmptyState) View.VISIBLE else View.GONE
+
+        val density = resources.displayMetrics.density
+        val rowHeight = (56f * density).roundToInt()
+        val topInset = (8f * density).roundToInt()
+        val horizontalInset = (8f * density).roundToInt()
+        val availableWidth = (root.width - horizontalInset * 2).coerceAtLeast(0)
+        val inputOffset = if (inputs.isEmpty()) 0 else rowHeight + topInset
+        val supplementaryOffset = if (showCustomAction || showEmptyState) rowHeight else 0
+
+        inputs.firstOrNull()?.let { input ->
+            if (!sheetSearchBindings.containsKey(input)) {
+                val watcher = object : android.text.TextWatcher {
+                    override fun beforeTextChanged(
+                        text: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int,
+                    ) = Unit
+
+                    override fun onTextChanged(
+                        text: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int,
+                    ) {
+                        root.requestLayout()
+                    }
+
+                    override fun afterTextChanged(text: android.text.Editable?) = Unit
+                }
+                input.addTextChangedListener(watcher)
+                sheetSearchBindings[input] = watcher
+            }
+            input.measure(
+                MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
+            )
+            input.layout(
+                horizontalInset,
+                topInset,
+                horizontalInset + availableWidth,
+                topInset + rowHeight,
+            )
+            if (!input.hasFocus()) {
+                input.post {
+                    if (!input.isAttachedToWindow) return@post
+                    input.requestFocus()
+                    val keyboard = input.context.getSystemService(
+                        android.content.Context.INPUT_METHOD_SERVICE,
+                    ) as? android.view.inputmethod.InputMethodManager
+                    keyboard?.showSoftInput(
+                        input,
+                        android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT,
+                    )
+                }
+            }
+        }
+        sheetCustomAction?.takeIf { it.visibility == View.VISIBLE }?.let { action ->
+            val top = topInset + inputOffset
+            action.measure(
+                MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
+            )
+            action.layout(
+                horizontalInset,
+                top,
+                horizontalInset + availableWidth,
+                top + rowHeight,
+            )
+        }
+        sheetEmptyState?.takeIf { it.visibility == View.VISIBLE }?.let { empty ->
+            val top = topInset + inputOffset
+            empty.measure(
+                MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
+            )
+            empty.layout(
+                horizontalInset,
+                top,
+                horizontalInset + availableWidth,
+                top + rowHeight,
+            )
+        }
+
+        visibleItems.forEachIndexed { index, item ->
+            val top = topInset + inputOffset + supplementaryOffset + index * rowHeight
+            val parent = item.parent as? ViewGroup ?: return@forEachIndexed
+            val parentLeft = if (parent === root) horizontalInset else 0
+            val width = if (parent === root) availableWidth else parent.width
+
+            item.layoutParams = item.layoutParams.apply {
+                this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = rowHeight
+            }
+            item.measure(
+                MeasureSpec.makeMeasureSpec(width.coerceAtLeast(0), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
+            )
+            item.layout(parentLeft, top, parentLeft + width, top + rowHeight)
+        }
+    }
+
 
     private fun sheetSnapTranslation(index: Int, content: View): Float {
         if (sheetSnapPoints.isEmpty() || height <= 0) return 0f
@@ -6471,7 +7064,7 @@ internal class MobileUiHost(
 
     private fun applyAnchoredOverlayState(animate: Boolean) {
         if (!behavior.isAnchoredOverlay()) return
-        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG) ?: return
+        val content = anchoredOverlayContent() ?: return
         val backdrop = findTaggedDescendant(this, OVERLAY_BACKDROP_TAG)
             ?: findTaggedDescendantWithPrefix(this, "$OVERLAY_BACKDROP_TAG:")
         val trigger = anchoredTrigger()
@@ -6562,6 +7155,7 @@ internal class MobileUiHost(
             return
         }
         open = requested
+        requestLayout()
         if (requested) {
             applyAnchoredOverlayState(animate = true)
             captureAndMoveFocus()
@@ -6646,7 +7240,7 @@ internal class MobileUiHost(
     private fun positionAnchoredContent() {
         if (!behavior.isAnchoredOverlay() || !open) return
         val trigger = anchoredTrigger() ?: return
-        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG) ?: return
+        val content = anchoredOverlayContent() ?: return
         if (
             trigger === content
             || trigger.width <= 0
@@ -6737,7 +7331,12 @@ internal class MobileUiHost(
         val root = context.findActivity()
             ?.findViewById<ViewGroup>(android.R.id.content)
             ?: return
-        anchoredTouchCatcher = View(context).apply {
+        val content = anchoredOverlayContent() ?: return
+        val contentLocation = IntArray(2)
+        val rootLocation = IntArray(2)
+        content.getLocationOnScreen(contentLocation)
+        root.getLocationOnScreen(rootLocation)
+        anchoredTouchCatcher = FrameLayout(context).apply {
             isClickable = true
             importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
             setBackgroundColor(Color.TRANSPARENT)
@@ -6756,10 +7355,29 @@ internal class MobileUiHost(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                 ),
             )
+            val parent = content.parent as? ViewGroup ?: return@also
+            anchoredPortalContent = content
+            anchoredPortalParent = parent
+            anchoredPortalIndex = parent.indexOfChild(content)
+            anchoredPortalLayoutParams = content.layoutParams
+            parent.removeView(content)
+            content.translationX = 0f
+            content.translationY = 0f
+            catcher.addView(
+                content,
+                FrameLayout.LayoutParams(
+                    content.measuredWidth,
+                    content.measuredHeight,
+                ).apply {
+                    leftMargin = contentLocation[0] - rootLocation[0]
+                    topMargin = contentLocation[1] - rootLocation[1]
+                },
+            )
         }
     }
 
     private fun removeAnchoredTouchDelegate() {
+        restoreAnchoredPortalContent()
         anchoredTouchCatcher?.let { catcher ->
             (catcher.parent as? ViewGroup)?.removeView(catcher)
         }
@@ -6767,11 +7385,33 @@ internal class MobileUiHost(
         anchoredTouchInsideContent = false
     }
 
+    private fun anchoredOverlayContent(): View? =
+        anchoredPortalContent ?: findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+
+    private fun restoreAnchoredPortalContent() {
+        val content = anchoredPortalContent ?: return
+        val parent = anchoredPortalParent
+        (content.parent as? ViewGroup)?.removeView(content)
+        content.translationX = 0f
+        content.translationY = 0f
+        if (parent != null) {
+            parent.addView(
+                content,
+                anchoredPortalIndex.coerceIn(0, parent.childCount),
+                anchoredPortalLayoutParams,
+            )
+        }
+        anchoredPortalContent = null
+        anchoredPortalParent = null
+        anchoredPortalIndex = -1
+        anchoredPortalLayoutParams = null
+    }
+
     private fun forwardAnchoredOverlayTouch(
         catcher: View,
         event: MotionEvent,
     ): Boolean {
-        val content = findTaggedDescendant(this, OVERLAY_CONTENT_TAG)
+        val content = anchoredOverlayContent()
             ?: return true
         val catcherLocation = IntArray(2)
         val contentLocation = IntArray(2)

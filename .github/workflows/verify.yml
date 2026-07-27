@@ -14,7 +14,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 795fcf3104deeb700d225f8f2c0a6d16f9742c84
+  PAM_NATIVE_COMMIT: 82add31a5e20802f75bb3baccd8ed62288d47376
 
 jobs:
   php:
@@ -102,6 +102,48 @@ jobs:
             android/build/reports/lint-results-debug.html
             android/build/test-results/testDebugUnitTest/
           if-no-files-found: error
+
+  ios:
+    name: iOS UIKit package and tests
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout PAM Mobile UI
+        uses: actions/checkout@v7
+
+      - name: Checkout the certified PAM Native revision
+        uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: ${{ env.PAM_NATIVE_COMMIT }}
+          path: pam-native
+
+      - name: Test PAM Mobile UI on an iOS Simulator
+        working-directory: ios
+        env:
+          PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
+        run: |
+          udid=$(
+            xcrun simctl list devices available |
+              awk -F '[()]' '/iPhone/ { print $2; exit }'
+          )
+          test -n "${udid}"
+          xcodebuild \
+            -scheme PamMobileUi \
+            -destination "platform=iOS Simulator,id=${udid}" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Build PAM Mobile UI for the iOS Simulator
+        working-directory: ios
+        env:
+          PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
+        run: >-
+          xcodebuild
+          -scheme PamMobileUi
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
 
   instrumented:
     name: Android API ${{ matrix.api-level }} behavior

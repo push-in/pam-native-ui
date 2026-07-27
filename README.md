@@ -1,7 +1,7 @@
 # PAM Mobile UI
 
 PAM Mobile UI is a retained native Material Design 3 component library for
-PAM Native. It exposes 163 `p-*` component parts across 103 manually authored
+PAM Native. It exposes 143 mobile `p-*` component parts across 87 manually authored
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
 
@@ -107,7 +107,7 @@ composer release:check
 It is generated from the manual specification and requires:
 
 - 103 sequential modules;
-- 163 unique `p-*` components;
+- 143 mobile `p-*` components with 163 stable historical component IDs;
 - Android and iOS targets;
 - `metadataImport=false`;
 - exact equality with `MaterialComponentMap`.

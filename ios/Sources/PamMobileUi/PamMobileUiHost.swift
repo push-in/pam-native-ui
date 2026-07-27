@@ -1,4 +1,5 @@
 import Foundation
+import PamNative
 import UIKit
 
 private extension WireValue {
@@ -77,6 +78,10 @@ private enum PamMobileBehavior: Int {
     case sparkline = 48
     case hotkey = 49
     case hover = 50
+    case chipGroup = 51
+    case listItem = 52
+    case timeline = 53
+    case timelineItem = 54
 
     var isOverlay: Bool {
         switch self {
@@ -105,8 +110,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var properties: [String: WireValue] = [:]
     private var isOpen = true
     private var isControlled = false
+    private var openDefaultInitialized = false
     private var isChecked = false
     private var isSelectedState = false
+    private var buttonToggleItem = false
     private var isExpanded = false
     private var minimum: CGFloat = 0
     private var maximum: CGFloat = 100
@@ -116,13 +123,31 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var snapIndex = 0
     private var dragOrigin: CGFloat = 0
     private var activeSheetHeight: CGFloat = 0
+    private var sheetSearchable = false
+    private var sheetAllowCustomValue = false
+    private var sheetSearchPlaceholder = "Search options"
+    private weak var sheetSearchField: UITextField?
+    private weak var sheetCustomAction: UIButton?
+    private weak var sheetEmptyState: UILabel?
     private var stateLayerColor = UIColor.label
     private var fillColor = UIColor.tintColor
     private var trackColor = UIColor.secondarySystemFill
+    private var selectedForegroundColor = UIColor.white
     private var pressAnimator: UIViewPropertyAnimator?
     private var imageScale: CGFloat = 1
     private var imageTranslation = CGPoint.zero
     private var shimmerLayer: CAGradientLayer?
+    private var progressTrackLayer: CAShapeLayer?
+    private var progressFillLayer: CAShapeLayer?
+    private var hoverActive = false
+    private var toastDismissWorkItem: DispatchWorkItem?
+    private var toastScheduleSignature: String?
+    private var toastAnnouncementSignature: String?
+    private weak var anchoredPortalParent: UIView?
+    private weak var anchoredPortalContent: UIView?
+    private weak var anchoredPortalCatcher: UIControl?
+    private var anchoredPortalIndex = 0
+    private var anchoredPortalFrame = CGRect.zero
 
     init(emit: @escaping EventEmitter) {
         self.emit = emit
@@ -155,6 +180,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         doubleTap.delegate = self
         addGestureRecognizer(doubleTap)
         tap.require(toFail: doubleTap)
+
+        if #available(iOS 13.0, *) {
+            let hover = UIHoverGestureRecognizer(
+                target: self,
+                action: #selector(onHover(_:))
+            )
+            hover.delegate = self
+            addGestureRecognizer(hover)
+        }
     }
 
     @available(*, unavailable)
@@ -163,15 +197,28 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     func update(_ next: [String: WireValue]) {
+        let previousBehavior = behavior
+        let wasControlled = isControlled
         properties = next
         behavior = PamMobileBehavior(
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
+        if previousBehavior != behavior {
+            openDefaultInitialized = false
+        }
         isControlled = next["open"] != nil || next["isOpen"] != nil
-        isOpen = next["open"]?.pamFlag
-            ?? next["isOpen"]?.pamFlag
-            ?? next["modelValue"]?.pamFlag
-            ?? (behavior == .popover || behavior == .menu || behavior == .tooltip ? false : isOpen)
+        if isControlled {
+            isOpen = next["open"]?.pamFlag ?? next["isOpen"]?.pamFlag ?? isOpen
+        } else if wasControlled
+            || (!openDefaultInitialized
+                && (next["initiallyOpen"] != nil || next["defaultIsOpen"] != nil)) {
+            openDefaultInitialized = true
+            isOpen = next["initiallyOpen"]?.pamFlag
+                ?? next["defaultIsOpen"]?.pamFlag
+                ?? false
+        } else if previousBehavior != behavior {
+            isOpen = !(behavior == .popover || behavior == .menu || behavior == .tooltip)
+        }
         isChecked = next["checked"]?.pamFlag
             ?? next["isChecked"]?.pamFlag
             ?? next["modelValue"]?.pamFlag
@@ -179,6 +226,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         isSelectedState = next["selected"]?.pamFlag
             ?? next["isSelected"]?.pamFlag
             ?? isSelectedState
+        buttonToggleItem = next["buttonToggleItem"]?.pamFlag ?? false
         isExpanded = next["expanded"]?.pamFlag
             ?? next["isExpanded"]?.pamFlag
             ?? isExpanded
@@ -193,26 +241,40 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 ?? snapIndex),
             max(0, snapPoints.count - 1)
         )
+        sheetSearchable = next["searchable"]?.pamFlag ?? false
+        sheetAllowCustomValue = next["allowCustomValue"]?.pamFlag ?? false
+        sheetSearchPlaceholder = next["searchPlaceholder"]?.pamText
+            ?? "Search options"
         fillColor = color(next["fillColor"]?.pamInteger, fallback: fillColor)
         trackColor = color(next["trackColor"]?.pamInteger, fallback: trackColor)
         stateLayerColor = color(
             next["foregroundColor"]?.pamInteger,
             fallback: stateLayerColor
         )
+        selectedForegroundColor = color(
+            next["selectedForegroundColor"]?.pamInteger,
+            fallback: selectedForegroundColor
+        )
 
         applySemantics()
         applyVisibility()
         applyBehaviorState()
+        applyButtonToggleVisualState()
+        applyProgressState()
         setNeedsLayout()
         setNeedsDisplay()
     }
 
     func releaseCallbacks() {
+        restoreAnchoredPortalContent()
         pressAnimator?.stopAnimation(true)
         pressAnimator = nil
         shimmerLayer?.removeAllAnimations()
         shimmerLayer?.removeFromSuperlayer()
         shimmerLayer = nil
+        toastDismissWorkItem?.cancel()
+        toastDismissWorkItem = nil
+        removeProgressLayers()
         emit = nil
         gestureRecognizers?.forEach(removeGestureRecognizer)
     }
@@ -221,10 +283,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         super.didAddSubview(subview)
         setNeedsLayout()
         applySemantics()
+        applyButtonToggleVisualState()
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        layoutProgressLayers()
         switch behavior {
         case .bottomSheet:
             layoutBottomSheet()
@@ -236,6 +300,14 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutTabs()
         case .tableRow:
             layoutTableRow()
+        case .chipGroup:
+            layoutChipGroup()
+        case .listItem:
+            layoutListItem()
+        case .timeline:
+            layoutTimeline()
+        case .timelineItem:
+            layoutTimelineItem()
         case .messageBranch:
             layoutMessageBranch()
         case .fileTree:
@@ -266,6 +338,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             drawCalendar(context)
         case .sparkline:
             drawSparkline(context)
+        case .timeline:
+            drawTimeline(context)
         default:
             break
         }
@@ -316,12 +390,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             isExpanded.toggle()
             applyAccordion()
             emit?(.toggle, Data((isExpanded ? "1" : "0").utf8))
-        case .tabTrigger, .sheetItem, .menuItem, .inputSlot,
+        case .tabTrigger:
+            tabsAncestor()?.selectTab(self)
+            emit?(.press, Data())
+        case .sheetItem, .menuItem, .inputSlot,
              .imageViewerControl, .messageBranchControl, .promptInputSubmit,
              .conversationScrollButton, .fileTreeFolder, .fileTreeFile:
             emit?(.press, Data())
             if behavior == .sheetItem,
                properties["closeOnPress"]?.pamFlag ?? true {
+                sheetAncestor()?.clearSheetSearch()
                 sheetAncestor()?.requestDismiss()
             }
         case .popover, .menu, .tooltip:
@@ -345,6 +423,62 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             animateStateLayer(to: 1, duration: 0.18)
         default:
             break
+        }
+    }
+
+    private func tabsAncestor() -> PamMobileUiHost? {
+        var ancestor = superview
+        while let view = ancestor {
+            if let host = view as? PamMobileUiHost, host.behavior == .tabs {
+                return host
+            }
+            ancestor = view.superview
+        }
+        return nil
+    }
+
+    private func selectTab(_ trigger: PamMobileUiHost) {
+        let target = trigger.properties["value"]?.pamText
+        tabTriggers(in: self).forEach { item in
+            item.isSelectedState = item.properties["value"]?.pamText == target
+            item.applyButtonToggleVisualState()
+            item.applySemantics()
+        }
+        setNeedsLayout()
+        UIView.animate(
+            withDuration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.2,
+            delay: 0,
+            options: [.beginFromCurrentState, .curveEaseInOut, .allowUserInteraction]
+        ) {
+            self.layoutTabs()
+        }
+    }
+
+    private func tabTriggers(in root: UIView) -> [PamMobileUiHost] {
+        root.subviews.flatMap { child -> [PamMobileUiHost] in
+            var matches: [PamMobileUiHost] = []
+            if let host = child as? PamMobileUiHost, host.behavior == .tabTrigger {
+                matches.append(host)
+            }
+            matches.append(contentsOf: tabTriggers(in: child))
+            return matches
+        }
+    }
+
+    private func applyButtonToggleVisualState() {
+        guard buttonToggleItem, behavior == .tabTrigger else { return }
+        backgroundColor = isSelectedState ? fillColor : .clear
+        setTextColor(
+            in: self,
+            color: isSelectedState ? selectedForegroundColor : stateLayerColor
+        )
+    }
+
+    private func setTextColor(in root: UIView, color: UIColor) {
+        root.subviews.forEach { child in
+            (child as? UILabel)?.textColor = color
+            (child as? UIButton)?.setTitleColor(color, for: .normal)
+            setTextColor(in: child, color: color)
         }
     }
 
@@ -442,6 +576,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         if behavior.isOverlay {
             isHidden = !isOpen
             accessibilityViewIsModal = isOpen
+            if !isOpen {
+                restoreAnchoredPortalContent()
+            }
         }
         if behavior == .accordion {
             applyAccordion()
@@ -511,7 +648,189 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             translationX: 0,
             y: activeSheetHeight - selectedHeight
         )
+        let search = ensureSheetSearchField(in: content)
+        let rowHeight: CGFloat = 56
+        let inset: CGFloat = 8
+        if let search {
+            search.frame = CGRect(
+                x: inset,
+                y: inset,
+                width: max(0, content.bounds.width - inset * 2),
+                height: rowHeight
+            )
+            if !search.isFirstResponder, window != nil {
+                DispatchQueue.main.async { [weak search] in
+                    search?.becomeFirstResponder()
+                }
+            }
+        }
+        let itemOffset = search == nil ? inset : rowHeight + inset * 2
+        let items = sheetItems(in: content).filter { !$0.isHidden }
+        let supplementary = sheetCustomAction?.isHidden == false
+            ? sheetCustomAction
+            : (sheetEmptyState?.isHidden == false ? sheetEmptyState : nil)
+        if let supplementary {
+            supplementary.frame = CGRect(
+                x: inset,
+                y: itemOffset,
+                width: max(0, content.bounds.width - inset * 2),
+                height: rowHeight
+            )
+        }
+        let supplementaryOffset: CGFloat = supplementary == nil ? 0 : rowHeight
+        for (index, item) in items.enumerated() {
+            let parentWidth = item.superview?.bounds.width ?? content.bounds.width
+            item.frame = CGRect(
+                x: item.superview === content ? inset : 0,
+                y: itemOffset + supplementaryOffset + CGFloat(index) * rowHeight,
+                width: max(0, parentWidth - (item.superview === content ? inset * 2 : 0)),
+                height: rowHeight
+            )
+        }
         accessibilityValue = "Position \(snapIndex + 1) of \(points.count)"
+    }
+
+    private func ensureSheetSearchField(in content: UIView) -> UITextField? {
+        guard sheetSearchable else {
+            sheetSearchField?.removeFromSuperview()
+            sheetCustomAction?.removeFromSuperview()
+            sheetEmptyState?.removeFromSuperview()
+            sheetSearchField = nil
+            sheetCustomAction = nil
+            sheetEmptyState = nil
+            return nil
+        }
+        let field = sheetSearchField ?? {
+            let input = UITextField(frame: .zero)
+            input.borderStyle = .none
+            input.clearButtonMode = .whileEditing
+            input.returnKeyType = .done
+            input.autocorrectionType = .no
+            input.font = .preferredFont(forTextStyle: .body)
+            input.adjustsFontForContentSizeCategory = true
+            input.layer.cornerRadius = 16
+            input.layer.cornerCurve = .continuous
+            input.backgroundColor = color(
+                properties["searchBackgroundColor"]?.pamInteger,
+                fallback: .secondarySystemBackground
+            )
+            input.textColor = color(
+                properties["searchTextColor"]?.pamInteger,
+                fallback: .label
+            )
+            input.addTarget(
+                self,
+                action: #selector(filterSheetItems(_:)),
+                for: .editingChanged
+            )
+            let padding = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
+            input.leftView = padding
+            input.leftViewMode = .always
+            sheetSearchField = input
+            return input
+        }()
+        field.placeholder = sheetSearchPlaceholder
+        field.accessibilityLabel = sheetSearchPlaceholder
+        if field.superview !== content {
+            field.removeFromSuperview()
+            content.addSubview(field)
+        }
+        let customAction = sheetCustomAction ?? {
+            let button = UIButton(type: .system)
+            button.contentHorizontalAlignment = .leading
+            button.titleLabel?.font = .preferredFont(forTextStyle: .body)
+            button.titleLabel?.adjustsFontForContentSizeCategory = true
+            button.addTarget(
+                self,
+                action: #selector(acceptCustomSheetValue),
+                for: .touchUpInside
+            )
+            sheetCustomAction = button
+            return button
+        }()
+        if customAction.superview !== content {
+            customAction.removeFromSuperview()
+            content.addSubview(customAction)
+        }
+        let emptyState = sheetEmptyState ?? {
+            let label = UILabel(frame: .zero)
+            label.font = .preferredFont(forTextStyle: .subheadline)
+            label.adjustsFontForContentSizeCategory = true
+            label.textColor = .secondaryLabel
+            label.text = properties["noDataText"]?.pamText ?? "No options available"
+            label.accessibilityTraits = [.staticText]
+            sheetEmptyState = label
+            return label
+        }()
+        if emptyState.superview !== content {
+            emptyState.removeFromSuperview()
+            content.addSubview(emptyState)
+        }
+        updateSheetSupplementary(query: field.text ?? "", content: content)
+        return field
+    }
+
+    @objc
+    private func filterSheetItems(_ field: UITextField) {
+        guard let content = overlayContent() else { return }
+        let query = field.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        for item in sheetItems(in: content) {
+            let label = item.accessibilityLabel ?? findFirstText(in: item) ?? ""
+            item.isHidden = !query.isEmpty
+                && label.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) == nil
+        }
+        updateSheetSupplementary(query: query, content: content)
+        setNeedsLayout()
+    }
+
+    private func updateSheetSupplementary(query: String, content: UIView) {
+        let visibleItems = sheetItems(in: content).filter { !$0.isHidden }
+        let exact = visibleItems.contains { item in
+            let label = item.accessibilityLabel ?? findFirstText(in: item) ?? ""
+            return label.compare(
+                query,
+                options: [.caseInsensitive, .diacriticInsensitive]
+            ) == .orderedSame
+        }
+        let showCustom = sheetAllowCustomValue && !query.isEmpty && !exact
+        sheetCustomAction?.isHidden = !showCustom
+        sheetCustomAction?.setTitle("Use \"\(query)\"", for: .normal)
+        sheetEmptyState?.isHidden = query.isEmpty || !visibleItems.isEmpty || showCustom
+    }
+
+    @objc
+    private func acceptCustomSheetValue() {
+        guard let value = sheetSearchField?.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !value.isEmpty else { return }
+        emit?(.change, Data(value.utf8))
+        clearSheetSearch()
+        emit?(.native, Data())
+    }
+
+    private func clearSheetSearch() {
+        sheetSearchField?.text = ""
+        if let content = overlayContent() {
+            for item in sheetItems(in: content) {
+                item.isHidden = false
+            }
+            updateSheetSupplementary(query: "", content: content)
+        }
+    }
+
+    private func sheetItems(in root: UIView) -> [PamMobileUiHost] {
+        var items: [PamMobileUiHost] = []
+        func collect(_ view: UIView) {
+            for child in view.subviews {
+                if let host = child as? PamMobileUiHost, host.behavior == .sheetItem {
+                    items.append(host)
+                } else {
+                    collect(child)
+                }
+            }
+        }
+        collect(root)
+        return items
     }
 
     private func layoutOverlay() {
@@ -544,27 +863,46 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func layoutAnchoredOverlay() {
-        overlayBackdrop()?.frame = bounds
-        guard isOpen, let content = overlayContent() else { return }
-        let margin: CGFloat = 8
-        var frame = content.frame
-        frame.origin.x = min(max(margin, frame.origin.x), max(margin, bounds.width - frame.width - margin))
-        frame.origin.y = min(max(margin, frame.origin.y), max(margin, bounds.height - frame.height - margin))
-        if effectiveUserInterfaceLayoutDirection == .rightToLeft {
-            frame.origin.x = bounds.width - frame.maxX
+        guard isOpen else {
+            restoreAnchoredPortalContent()
+            return
         }
-        content.frame = frame
+        presentAnchoredPortalContent()
     }
 
     private func layoutTabs() {
-        let selected = properties["value"]?.pamText
+        let triggers = tabTriggers(in: self)
+        let controlled = properties["value"]?.pamText
             ?? properties["modelValue"]?.pamText
+        let selectedTrigger = triggers.first(where: { $0.isSelectedState })
+            ?? triggers.first(where: {
+                $0.properties["value"]?.pamText == controlled
+            })
+            ?? triggers.first
+        let selected = selectedTrigger?.properties["value"]?.pamText
+            ?? controlled
         descendants(prefix: "pam:tabs-content").forEach { child in
             let value = child.accessibilityIdentifier?.split(separator: ":").last.map(String.init)
             let visible = selected == nil || value == selected
             child.isHidden = !visible
             child.accessibilityElementsHidden = !visible
         }
+        guard
+            let trigger = selectedTrigger,
+            let indicator = descendant(tag: "pam:tabs-indicator")
+        else {
+            return
+        }
+        let triggerFrame = trigger.convert(trigger.bounds, to: self)
+        indicator.isHidden = false
+        indicator.isUserInteractionEnabled = false
+        indicator.accessibilityElementsHidden = true
+        indicator.frame = CGRect(
+            x: triggerFrame.minX,
+            y: triggerFrame.maxY - 2,
+            width: triggerFrame.width,
+            height: 2
+        )
     }
 
     private func layoutTableRow() {
@@ -577,6 +915,80 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 ? bounds.width - logical - width
                 : logical
             child.frame = CGRect(x: x, y: 0, width: width, height: bounds.height)
+        }
+    }
+
+    private func layoutListItem() {
+        let visible = subviews.filter { !$0.isHidden }
+        guard !visible.isEmpty else { return }
+        let totalHeight = visible.reduce(CGFloat.zero) { $0 + $1.bounds.height }
+        var y = max(0, (bounds.height - totalHeight) / 2)
+        let inset: CGFloat = 16
+        for child in visible {
+            let width = min(child.bounds.width, bounds.width - inset * 2)
+            let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                ? bounds.width - inset - width : inset
+            child.frame = CGRect(x: x, y: y, width: width, height: child.bounds.height)
+            y += child.bounds.height
+        }
+    }
+
+    private func layoutChipGroup() {
+        let gap: CGFloat = 8
+        let rowHeight: CGFloat = 40
+        var logicalX: CGFloat = 0
+        var y: CGFloat = 0
+        for child in subviews where !child.isHidden {
+            if logicalX > 0, logicalX + child.bounds.width > bounds.width {
+                logicalX = 0
+                y += rowHeight
+            }
+            let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                ? bounds.width - logicalX - child.bounds.width : logicalX
+            child.frame = CGRect(x: x, y: y, width: child.bounds.width, height: child.bounds.height)
+            logicalX += child.bounds.width + gap
+        }
+    }
+
+    private func layoutTimeline() {
+        let visible = subviews.filter { !$0.isHidden }
+        for (index, child) in visible.enumerated() {
+            child.frame = CGRect(x: 0, y: CGFloat(index) * 64, width: bounds.width, height: 64)
+        }
+    }
+
+    private func layoutTimelineItem() {
+        let inset: CGFloat = 40
+        for child in subviews where !child.isHidden {
+            let height = min(child.bounds.height, bounds.height)
+            let y = (bounds.height - height) / 2
+            child.frame = CGRect(
+                x: effectiveUserInterfaceLayoutDirection == .rightToLeft ? 0 : inset,
+                y: y,
+                width: max(0, bounds.width - inset),
+                height: height
+            )
+        }
+    }
+
+    private func drawTimeline(_ context: CGContext) {
+        let visible = subviews.filter { !$0.isHidden }
+        guard !visible.isEmpty else { return }
+        let axis: CGFloat = effectiveUserInterfaceLayoutDirection == .rightToLeft
+            ? bounds.width - 20 : 20
+        context.setStrokeColor(trackColor.cgColor)
+        context.setLineWidth(2)
+        context.move(to: CGPoint(x: axis, y: 32))
+        context.addLine(to: CGPoint(x: axis, y: 32 + CGFloat(visible.count - 1) * 64))
+        context.strokePath()
+        context.setFillColor(fillColor.cgColor)
+        for index in visible.indices {
+            context.fillEllipse(in: CGRect(
+                x: axis - 6,
+                y: 26 + CGFloat(index) * 64,
+                width: 12,
+                height: 12
+            ))
         }
     }
 
@@ -669,12 +1081,60 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         accessibilityViewIsModal = false
         isAccessibilityElement = true
         accessibilityTraits = [.staticText]
-        if isOpen {
+        let persistent = properties["persistent"]?.pamFlag ?? false
+        let duration = max(
+            500,
+            min(
+                60_000,
+                properties["duration"]?.pamInteger
+                    ?? properties["timeout"]?.pamInteger
+                    ?? 4_000
+            )
+        )
+        let identity = properties["toastId"]?.pamText
+            ?? properties["id"]?.pamText
+            ?? ""
+        let signature = "\(identity)\u{0}\(duration)\u{0}\(persistent)\u{0}\(isOpen)"
+
+        isHidden = !isOpen
+        accessibilityElementsHidden = !isOpen
+        toastDismissWorkItem?.cancel()
+        toastDismissWorkItem = nil
+
+        guard isOpen else {
+            toastScheduleSignature = signature
+            return
+        }
+
+        let announcement = accessibilityLabel ?? findFirstText(in: self) ?? "Notification"
+        let announcementSignature = "\(identity)\u{0}\(announcement)"
+        if announcementSignature != toastAnnouncementSignature {
+            toastAnnouncementSignature = announcementSignature
             UIAccessibility.post(
                 notification: .announcement,
-                argument: accessibilityLabel ?? findFirstText(in: self) ?? "Notification"
+                argument: announcement
             )
         }
+
+        guard !persistent, signature != toastScheduleSignature else { return }
+        toastScheduleSignature = signature
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self, self.isOpen else { return }
+            if !self.isControlled {
+                self.isOpen = false
+                self.isHidden = true
+                self.accessibilityElementsHidden = true
+            }
+            self.emitMap([
+                "action": .integer(PamHostAction.dismiss.rawValue),
+                "dismissed": .flag(true),
+            ])
+        }
+        toastDismissWorkItem = workItem
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + .milliseconds(Int(duration)),
+            execute: workItem
+        )
     }
 
     private func applyShimmer() {
@@ -855,18 +1315,105 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func drawProgress(_ context: CGContext) {
+        if behavior == .progress, properties["circular"]?.pamFlag == true {
+            return
+        }
         let fraction = maximum > minimum ? (value - minimum) / (maximum - minimum) : 0
         let height = max(4, min(bounds.height, properties["thickness"]?.pamDecimal ?? 4))
         let track = CGRect(x: 0, y: (bounds.height - height) / 2, width: bounds.width, height: height)
         context.setFillColor(trackColor.cgColor)
-        context.fillEllipse(in: track)
+        context.fillPath()
+        context.addPath(UIBezierPath(roundedRect: track, cornerRadius: height / 2).cgPath)
+        context.fillPath()
         context.setFillColor(fillColor.cgColor)
         var fill = track
         fill.size.width *= min(1, max(0, fraction))
         if effectiveUserInterfaceLayoutDirection == .rightToLeft {
             fill.origin.x = bounds.width - fill.width
         }
-        context.fill(fill)
+        context.addPath(UIBezierPath(roundedRect: fill, cornerRadius: height / 2).cgPath)
+        context.fillPath()
+    }
+
+    private func applyProgressState() {
+        guard behavior == .progress, properties["circular"]?.pamFlag == true else {
+            removeProgressLayers()
+            return
+        }
+
+        let track = progressTrackLayer ?? CAShapeLayer()
+        let fill = progressFillLayer ?? CAShapeLayer()
+        if progressTrackLayer == nil {
+            track.fillColor = UIColor.clear.cgColor
+            track.lineCap = .round
+            layer.addSublayer(track)
+            progressTrackLayer = track
+        }
+        if progressFillLayer == nil {
+            fill.fillColor = UIColor.clear.cgColor
+            fill.lineCap = .round
+            layer.addSublayer(fill)
+            progressFillLayer = fill
+        }
+
+        track.strokeColor = trackColor.cgColor
+        fill.strokeColor = fillColor.cgColor
+        let fraction = maximum > minimum
+            ? max(0, min(1, (value - minimum) / (maximum - minimum)))
+            : 0
+        let indeterminate = properties["indeterminate"]?.pamFlag == true
+        fill.strokeStart = 0
+        fill.strokeEnd = indeterminate ? 0.72 : fraction
+
+        if indeterminate && !UIAccessibility.isReduceMotionEnabled {
+            if fill.animation(forKey: "pam.progress.rotation") == nil {
+                let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
+                rotation.fromValue = 0
+                rotation.toValue = CGFloat.pi * 2
+                rotation.duration = 1.333
+                rotation.repeatCount = .infinity
+                rotation.timingFunction = CAMediaTimingFunction(name: .linear)
+                rotation.isRemovedOnCompletion = false
+                fill.add(rotation, forKey: "pam.progress.rotation")
+            }
+        } else {
+            fill.removeAnimation(forKey: "pam.progress.rotation")
+        }
+        layoutProgressLayers()
+    }
+
+    private func layoutProgressLayers() {
+        guard let track = progressTrackLayer, let fill = progressFillLayer else {
+            return
+        }
+        let thickness = max(1, min(bounds.width, properties["thickness"]?.pamDecimal ?? 4))
+        let side = min(bounds.width, bounds.height)
+        let radius = max(0, (side - thickness) / 2)
+        let path = UIBezierPath(
+            arcCenter: CGPoint(x: bounds.midX, y: bounds.midY),
+            radius: radius,
+            startAngle: -.pi / 2,
+            endAngle: .pi * 1.5,
+            clockwise: true
+        ).cgPath
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        track.frame = bounds
+        fill.frame = bounds
+        track.lineWidth = thickness
+        fill.lineWidth = thickness
+        track.path = path
+        fill.path = path
+        CATransaction.commit()
+    }
+
+    private func removeProgressLayers() {
+        progressTrackLayer?.removeAllAnimations()
+        progressFillLayer?.removeAllAnimations()
+        progressTrackLayer?.removeFromSuperlayer()
+        progressFillLayer?.removeFromSuperlayer()
+        progressTrackLayer = nil
+        progressFillLayer = nil
     }
 
     private func drawSlider(_ context: CGContext) {
@@ -1060,7 +1607,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         if behavior == .hover {
-            animateStateLayer(to: 0.92, duration: 0.09)
             emit?(.toggle, Data("1".utf8))
         }
         super.pressesBegan(presses, with: event)
@@ -1068,10 +1614,18 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         if behavior == .hover {
-            animateStateLayer(to: 1, duration: 0.14)
             emit?(.toggle, Data("0".utf8))
         }
         super.pressesEnded(presses, with: event)
+    }
+
+    @available(iOS 13.0, *)
+    @objc private func onHover(_ gesture: UIHoverGestureRecognizer) {
+        guard behavior == .hover else { return }
+        let active = gesture.state == .began || gesture.state == .changed
+        guard hoverActive != active else { return }
+        hoverActive = active
+        emit?(.toggle, Data(active ? "1".utf8 : "0".utf8))
     }
 
     private func animateStateLayer(to alpha: CGFloat, duration: TimeInterval) {
@@ -1090,7 +1644,85 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func overlayContent() -> UIView? {
-        descendant(tag: "pam:overlay-content")
+        anchoredPortalContent ?? descendant(tag: "pam:overlay-content")
+    }
+
+    private func presentAnchoredPortalContent() {
+        if anchoredPortalContent != nil { return }
+        guard let window,
+              let content = descendant(tag: "pam:overlay-content"),
+              let trigger = descendant(tag: "pam:overlay-trigger"),
+              let parent = content.superview else {
+            return
+        }
+        let triggerFrame = trigger.convert(trigger.bounds, to: window)
+        let sourceFrame = content.convert(content.bounds, to: window)
+        var size = sourceFrame.size
+        if size.width <= 0 || size.height <= 0 {
+            size = content.sizeThatFits(CGSize(
+                width: max(1, window.bounds.width - 16),
+                height: max(1, window.bounds.height - 16)
+            ))
+        }
+        size.width = min(max(1, size.width), max(1, window.bounds.width - 16))
+        size.height = min(max(1, size.height), max(1, window.bounds.height - 16))
+
+        anchoredPortalParent = parent
+        anchoredPortalContent = content
+        anchoredPortalIndex = parent.subviews.firstIndex(of: content) ?? parent.subviews.count
+        anchoredPortalFrame = content.frame
+
+        let catcher = UIControl(frame: window.bounds)
+        catcher.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        catcher.backgroundColor = .clear
+        catcher.isAccessibilityElement = false
+        catcher.accessibilityElementsHidden = true
+        catcher.addTarget(
+            self,
+            action: #selector(onAnchoredPortalBackdrop),
+            for: .touchUpInside
+        )
+        window.addSubview(catcher)
+        anchoredPortalCatcher = catcher
+
+        content.removeFromSuperview()
+        window.addSubview(content)
+        let safeFrame = window.safeAreaLayoutGuide.layoutFrame.insetBy(dx: 8, dy: 8)
+        var x = effectiveUserInterfaceLayoutDirection == .rightToLeft
+            ? triggerFrame.maxX - size.width
+            : triggerFrame.minX
+        var y = triggerFrame.maxY + 8
+        x = min(max(safeFrame.minX, x), max(safeFrame.minX, safeFrame.maxX - size.width))
+        y = min(max(safeFrame.minY, y), max(safeFrame.minY, safeFrame.maxY - size.height))
+        content.frame = CGRect(origin: CGPoint(x: x, y: y), size: size)
+        content.layer.zPosition = 1
+    }
+
+    @objc
+    private func onAnchoredPortalBackdrop() {
+        requestDismiss()
+    }
+
+    private func restoreAnchoredPortalContent() {
+        anchoredPortalCatcher?.removeFromSuperview()
+        guard let content = anchoredPortalContent else {
+            anchoredPortalCatcher = nil
+            return
+        }
+        content.removeFromSuperview()
+        content.layer.zPosition = 0
+        if let parent = anchoredPortalParent {
+            parent.insertSubview(
+                content,
+                at: min(max(0, anchoredPortalIndex), parent.subviews.count)
+            )
+            content.frame = anchoredPortalFrame
+        }
+        anchoredPortalContent = nil
+        anchoredPortalParent = nil
+        anchoredPortalCatcher = nil
+        anchoredPortalIndex = 0
+        anchoredPortalFrame = .zero
     }
 
     private func overlayBackdrop() -> UIView? {

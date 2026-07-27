@@ -8,7 +8,6 @@ final class MaterialComponentMap
 {
     /** @var array<string, class-string<\Pam\MobileUi\Component\UiComponent>> */
     public const array TAGS = array (
-  'p-app' => 'Pam\\MobileUi\\Material\\PApp',
   'p-app-bar' => 'Pam\\MobileUi\\Material\\PAppBar',
   'p-app-bar-nav-icon' => 'Pam\\MobileUi\\Material\\PAppBarNavIcon',
   'p-app-bar-title' => 'Pam\\MobileUi\\Material\\PAppBarTitle',
@@ -20,7 +19,6 @@ final class MaterialComponentMap
   'p-banner' => 'Pam\\MobileUi\\Material\\PBanner',
   'p-banner-text' => 'Pam\\MobileUi\\Material\\PBannerText',
   'p-banner-actions' => 'Pam\\MobileUi\\Material\\PBannerActions',
-  'p-bottom-navigation' => 'Pam\\MobileUi\\Material\\PBottomNavigation',
   'p-bottom-sheet' => 'Pam\\MobileUi\\Material\\PBottomSheet',
   'p-breadcrumbs' => 'Pam\\MobileUi\\Material\\PBreadcrumbs',
   'p-breadcrumbs-item' => 'Pam\\MobileUi\\Material\\PBreadcrumbsItem',
@@ -44,7 +42,6 @@ final class MaterialComponentMap
   'p-checkbox-btn' => 'Pam\\MobileUi\\Material\\PCheckboxBtn',
   'p-chip' => 'Pam\\MobileUi\\Material\\PChip',
   'p-chip-group' => 'Pam\\MobileUi\\Material\\PChipGroup',
-  'p-code' => 'Pam\\MobileUi\\Material\\PCode',
   'p-color-input' => 'Pam\\MobileUi\\Material\\PColorInput',
   'p-color-picker' => 'Pam\\MobileUi\\Material\\PColorPicker',
   'p-color-picker-canvas' => 'Pam\\MobileUi\\Material\\PColorPickerCanvas',
@@ -79,14 +76,11 @@ final class MaterialComponentMap
   'p-file-input' => 'Pam\\MobileUi\\Material\\PFileInput',
   'p-file-upload' => 'Pam\\MobileUi\\Material\\PFileUpload',
   'p-file-upload-item' => 'Pam\\MobileUi\\Material\\PFileUploadItem',
-  'p-footer' => 'Pam\\MobileUi\\Material\\PFooter',
   'p-form' => 'Pam\\MobileUi\\Material\\PForm',
   'p-container' => 'Pam\\MobileUi\\Material\\PContainer',
   'p-row' => 'Pam\\MobileUi\\Material\\PRow',
   'p-col' => 'Pam\\MobileUi\\Material\\PCol',
   'p-spacer' => 'Pam\\MobileUi\\Material\\PSpacer',
-  'p-hotkey' => 'Pam\\MobileUi\\Material\\PHotkey',
-  'p-hover' => 'Pam\\MobileUi\\Material\\PHover',
   'p-icon' => 'Pam\\MobileUi\\Material\\PIcon',
   'p-icon-btn' => 'Pam\\MobileUi\\Material\\PIconBtn',
   'p-img' => 'Pam\\MobileUi\\Material\\PImg',
@@ -94,10 +88,7 @@ final class MaterialComponentMap
   'p-input' => 'Pam\\MobileUi\\Material\\PInput',
   'p-item-group' => 'Pam\\MobileUi\\Material\\PItemGroup',
   'p-item' => 'Pam\\MobileUi\\Material\\PItem',
-  'p-kbd' => 'Pam\\MobileUi\\Material\\PKbd',
   'p-label' => 'Pam\\MobileUi\\Material\\PLabel',
-  'p-layout' => 'Pam\\MobileUi\\Material\\PLayout',
-  'p-layout-item' => 'Pam\\MobileUi\\Material\\PLayoutItem',
   'p-lazy' => 'Pam\\MobileUi\\Material\\PLazy',
   'p-list' => 'Pam\\MobileUi\\Material\\PList',
   'p-list-item' => 'Pam\\MobileUi\\Material\\PListItem',
@@ -106,10 +97,8 @@ final class MaterialComponentMap
   'p-list-group' => 'Pam\\MobileUi\\Material\\PListGroup',
   'p-list-subheader' => 'Pam\\MobileUi\\Material\\PListSubheader',
   'p-locale-provider' => 'Pam\\MobileUi\\Material\\PLocaleProvider',
-  'p-main' => 'Pam\\MobileUi\\Material\\PMain',
   'p-menu' => 'Pam\\MobileUi\\Material\\PMenu',
   'p-messages' => 'Pam\\MobileUi\\Material\\PMessages',
-  'p-navigation-drawer' => 'Pam\\MobileUi\\Material\\PNavigationDrawer',
   'p-number-input' => 'Pam\\MobileUi\\Material\\PNumberInput',
   'p-otp-input' => 'Pam\\MobileUi\\Material\\POtpInput',
   'p-overlay' => 'Pam\\MobileUi\\Material\\POverlay',
@@ -119,12 +108,10 @@ final class MaterialComponentMap
   'p-picker-title' => 'Pam\\MobileUi\\Material\\PPickerTitle',
   'p-progress-circular' => 'Pam\\MobileUi\\Material\\PProgressCircular',
   'p-progress-linear' => 'Pam\\MobileUi\\Material\\PProgressLinear',
-  'p-pull-to-refresh' => 'Pam\\MobileUi\\Material\\PPullToRefresh',
   'p-radio' => 'Pam\\MobileUi\\Material\\PRadio',
   'p-radio-group' => 'Pam\\MobileUi\\Material\\PRadioGroup',
   'p-range-slider' => 'Pam\\MobileUi\\Material\\PRangeSlider',
   'p-rating' => 'Pam\\MobileUi\\Material\\PRating',
-  'p-responsive' => 'Pam\\MobileUi\\Material\\PResponsive',
   'p-select' => 'Pam\\MobileUi\\Material\\PSelect',
   'p-selection-control' => 'Pam\\MobileUi\\Material\\PSelectionControl',
   'p-selection-control-group' => 'Pam\\MobileUi\\Material\\PSelectionControlGroup',
@@ -147,8 +134,6 @@ final class MaterialComponentMap
   'p-stepper-vertical-item' => 'Pam\\MobileUi\\Material\\PStepperVerticalItem',
   'p-stepper-vertical-actions' => 'Pam\\MobileUi\\Material\\PStepperVerticalActions',
   'p-switch' => 'Pam\\MobileUi\\Material\\PSwitch',
-  'p-system-bar' => 'Pam\\MobileUi\\Material\\PSystemBar',
-  'p-table' => 'Pam\\MobileUi\\Material\\PTable',
   'p-tabs' => 'Pam\\MobileUi\\Material\\PTabs',
   'p-tab' => 'Pam\\MobileUi\\Material\\PTab',
   'p-text' => 'Pam\\MobileUi\\Material\\PText',
@@ -167,7 +152,6 @@ final class MaterialComponentMap
   'p-treeview' => 'Pam\\MobileUi\\Material\\PTreeview',
   'p-treeview-item' => 'Pam\\MobileUi\\Material\\PTreeviewItem',
   'p-validation' => 'Pam\\MobileUi\\Material\\PValidation',
-  'p-virtual-scroll' => 'Pam\\MobileUi\\Material\\PVirtualScroll',
   'p-window' => 'Pam\\MobileUi\\Material\\PWindow',
   'p-window-item' => 'Pam\\MobileUi\\Material\\PWindowItem',
   'p-transition' => 'Pam\\MobileUi\\Material\\PTransition',
@@ -342,10 +326,6 @@ final class MaterialComponentMap
 
     /** @var array<string, list<string>> */
     public const array MODULES = array (
-  'app' => 
-  array (
-    0 => 'p-app',
-  ),
   'app-bar' => 
   array (
     0 => 'p-app-bar',
@@ -374,10 +354,6 @@ final class MaterialComponentMap
     0 => 'p-banner',
     1 => 'p-banner-text',
     2 => 'p-banner-actions',
-  ),
-  'bottom-navigation' => 
-  array (
-    0 => 'p-bottom-navigation',
   ),
   'bottom-sheet' => 
   array (
@@ -434,10 +410,6 @@ final class MaterialComponentMap
   'chip-group' => 
   array (
     0 => 'p-chip-group',
-  ),
-  'code' => 
-  array (
-    0 => 'p-code',
   ),
   'color-input' => 
   array (
@@ -527,10 +499,6 @@ final class MaterialComponentMap
     0 => 'p-file-upload',
     1 => 'p-file-upload-item',
   ),
-  'footer' => 
-  array (
-    0 => 'p-footer',
-  ),
   'form' => 
   array (
     0 => 'p-form',
@@ -541,14 +509,6 @@ final class MaterialComponentMap
     1 => 'p-row',
     2 => 'p-col',
     3 => 'p-spacer',
-  ),
-  'hotkey' => 
-  array (
-    0 => 'p-hotkey',
-  ),
-  'hover' => 
-  array (
-    0 => 'p-hover',
   ),
   'icon' => 
   array (
@@ -575,18 +535,9 @@ final class MaterialComponentMap
     0 => 'p-item-group',
     1 => 'p-item',
   ),
-  'keyboard-key' => 
-  array (
-    0 => 'p-kbd',
-  ),
   'label' => 
   array (
     0 => 'p-label',
-  ),
-  'layout' => 
-  array (
-    0 => 'p-layout',
-    1 => 'p-layout-item',
   ),
   'lazy' => 
   array (
@@ -605,10 +556,6 @@ final class MaterialComponentMap
   array (
     0 => 'p-locale-provider',
   ),
-  'main' => 
-  array (
-    0 => 'p-main',
-  ),
   'menu' => 
   array (
     0 => 'p-menu',
@@ -616,10 +563,6 @@ final class MaterialComponentMap
   'messages' => 
   array (
     0 => 'p-messages',
-  ),
-  'navigation-drawer' => 
-  array (
-    0 => 'p-navigation-drawer',
   ),
   'number-input' => 
   array (
@@ -654,10 +597,6 @@ final class MaterialComponentMap
   array (
     0 => 'p-progress-linear',
   ),
-  'pull-to-refresh' => 
-  array (
-    0 => 'p-pull-to-refresh',
-  ),
   'radio' => 
   array (
     0 => 'p-radio',
@@ -673,10 +612,6 @@ final class MaterialComponentMap
   'rating' => 
   array (
     0 => 'p-rating',
-  ),
-  'responsive' => 
-  array (
-    0 => 'p-responsive',
   ),
   'select' => 
   array (
@@ -742,14 +677,6 @@ final class MaterialComponentMap
   array (
     0 => 'p-switch',
   ),
-  'system-bar' => 
-  array (
-    0 => 'p-system-bar',
-  ),
-  'table' => 
-  array (
-    0 => 'p-table',
-  ),
   'tabs' => 
   array (
     0 => 'p-tabs',
@@ -800,10 +727,6 @@ final class MaterialComponentMap
   'validation' => 
   array (
     0 => 'p-validation',
-  ),
-  'virtual-scroll' => 
-  array (
-    0 => 'p-virtual-scroll',
   ),
   'window' => 
   array (

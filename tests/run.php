@@ -2390,6 +2390,32 @@ $assert(
     'Table must retain authored cells while packing header-row collection semantics.',
 );
 
+$materialInput = \Pam\MobileUi\Material\PTextField::make([
+    'value' => 'Visible in dark mode',
+    'placeholder' => 'Semantic placeholder',
+])->toElement();
+$materialInputField = $materialInput->children()[0] ?? null;
+$materialInputNode = $materialInputField?->children()[0] ?? null;
+$materialTable = \Pam\MobileUi\Material\PDataTableServer::make([
+    'items' => 'Android,iOS,Composer',
+])->toElement();
+$assert(
+    $materialInputNode instanceof \Pam\Native\Element
+        && $materialInputNode->kind() === NodeKind::Input
+        && is_int($materialInputNode->properties()[PropKey::TextColor->value] ?? null)
+        && is_int($materialInputNode->properties()[PropKey::PlaceholderColor->value] ?? null)
+        && count($materialTable->children()) === 3
+        && array_reduce(
+            $materialTable->children(),
+            static fn (bool $valid, \Pam\Native\Element $row): bool =>
+                $valid
+                && ($row->properties()[PropKey::Value->value] ?? null)
+                    === 'pam:table-row',
+            true,
+        ),
+    'Material inputs must theme their native field and data tables must materialize item rows.',
+);
+
 $imageViewerOpenChanges = [];
 $imageViewerIndexes = [];
 $imageViewer = ImageViewer::make(

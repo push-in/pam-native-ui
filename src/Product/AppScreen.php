@@ -132,13 +132,15 @@ final readonly class AppScreen implements Renderable
         ));
         $content = Column::make(...$this->content)->style(new Style(
             flexGrow: 1.0,
-            paddingHorizontal: 20.0,
+            paddingHorizontal: 16.0,
             paddingTop: 8.0,
-            paddingBottom: $this->bottom === [] ? 112.0 : 96.0,
+            paddingBottom: $this->bottom === [] ? 24.0 : 16.0,
             gap: DesignTokens::spacing(\Pam\MobileUi\Enum\InterfaceDensity::Comfortable),
             backgroundColor: $theme->color(ColorToken::Background),
         ));
-        $body = ($this->scrollable ? ScrollView::make($content) : $content)
+        $body = ($this->scrollable
+            ? ScrollView::make($content)->key('app-screen-scroll:'.$this->title)
+            : $content)
             ->style(new Style(
                 flexGrow: 1.0,
                 flexShrink: 1.0,

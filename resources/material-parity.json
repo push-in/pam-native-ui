@@ -4,8 +4,8 @@
         "source": "resources/pam-material-components.php",
         "namespace": "p-*",
         "metadataImport": false,
-        "moduleCount": 103,
-        "componentCount": 163,
+        "moduleCount": 88,
+        "componentCount": 147,
         "targets": [
             1,
             2
@@ -92,27 +92,6 @@
     "modules": [
         {
             "type": 1,
-            "module": "app",
-            "components": [
-                "p-app"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 2,
             "module": "app-bar",
             "components": [
                 "p-app-bar",
@@ -123,11 +102,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -135,7 +114,7 @@
             ]
         },
         {
-            "type": 3,
+            "type": 2,
             "module": "alert",
             "components": [
                 "p-alert",
@@ -145,11 +124,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -157,7 +136,7 @@
             ]
         },
         {
-            "type": 4,
+            "type": 3,
             "module": "autocomplete",
             "components": [
                 "p-autocomplete"
@@ -166,11 +145,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -178,7 +157,7 @@
             ]
         },
         {
-            "type": 5,
+            "type": 4,
             "module": "avatar",
             "components": [
                 "p-avatar"
@@ -187,11 +166,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -199,7 +178,7 @@
             ]
         },
         {
-            "type": 6,
+            "type": 5,
             "module": "badge",
             "components": [
                 "p-badge"
@@ -208,11 +187,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -220,7 +199,7 @@
             ]
         },
         {
-            "type": 7,
+            "type": 6,
             "module": "banner",
             "components": [
                 "p-banner",
@@ -231,11 +210,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -243,28 +222,7 @@
             ]
         },
         {
-            "type": 8,
-            "module": "bottom-navigation",
-            "components": [
-                "p-bottom-navigation"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 9,
+            "type": 7,
             "module": "bottom-sheet",
             "components": [
                 "p-bottom-sheet"
@@ -273,11 +231,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -285,7 +243,7 @@
             ]
         },
         {
-            "type": 10,
+            "type": 8,
             "module": "breadcrumbs",
             "components": [
                 "p-breadcrumbs",
@@ -296,11 +254,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -308,7 +266,7 @@
             ]
         },
         {
-            "type": 11,
+            "type": 9,
             "module": "button",
             "components": [
                 "p-btn"
@@ -317,11 +275,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -329,7 +287,7 @@
             ]
         },
         {
-            "type": 12,
+            "type": 10,
             "module": "button-group",
             "components": [
                 "p-btn-group"
@@ -338,11 +296,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -350,7 +308,7 @@
             ]
         },
         {
-            "type": 13,
+            "type": 11,
             "module": "button-toggle",
             "components": [
                 "p-btn-toggle"
@@ -359,11 +317,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -371,7 +329,7 @@
             ]
         },
         {
-            "type": 14,
+            "type": 12,
             "module": "calendar",
             "components": [
                 "p-calendar",
@@ -383,11 +341,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -395,7 +353,7 @@
             ]
         },
         {
-            "type": 15,
+            "type": 13,
             "module": "card",
             "components": [
                 "p-card",
@@ -409,11 +367,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -421,7 +379,7 @@
             ]
         },
         {
-            "type": 16,
+            "type": 14,
             "module": "carousel",
             "components": [
                 "p-carousel",
@@ -431,11 +389,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -443,7 +401,7 @@
             ]
         },
         {
-            "type": 17,
+            "type": 15,
             "module": "checkbox",
             "components": [
                 "p-checkbox",
@@ -453,11 +411,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -465,7 +423,7 @@
             ]
         },
         {
-            "type": 18,
+            "type": 16,
             "module": "chip",
             "components": [
                 "p-chip"
@@ -474,11 +432,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -486,7 +444,7 @@
             ]
         },
         {
-            "type": 19,
+            "type": 17,
             "module": "chip-group",
             "components": [
                 "p-chip-group"
@@ -495,11 +453,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -507,28 +465,7 @@
             ]
         },
         {
-            "type": 20,
-            "module": "code",
-            "components": [
-                "p-code"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 21,
+            "type": 18,
             "module": "color-input",
             "components": [
                 "p-color-input"
@@ -537,11 +474,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -549,7 +486,7 @@
             ]
         },
         {
-            "type": 22,
+            "type": 19,
             "module": "color-picker",
             "components": [
                 "p-color-picker",
@@ -562,11 +499,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -574,7 +511,7 @@
             ]
         },
         {
-            "type": 23,
+            "type": 20,
             "module": "combobox",
             "components": [
                 "p-combobox"
@@ -583,11 +520,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -595,7 +532,7 @@
             ]
         },
         {
-            "type": 24,
+            "type": 21,
             "module": "confirm-edit",
             "components": [
                 "p-confirm-edit"
@@ -604,11 +541,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -616,7 +553,7 @@
             ]
         },
         {
-            "type": 25,
+            "type": 22,
             "module": "counter",
             "components": [
                 "p-counter"
@@ -625,11 +562,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -637,7 +574,7 @@
             ]
         },
         {
-            "type": 26,
+            "type": 23,
             "module": "data-iterator",
             "components": [
                 "p-data-iterator"
@@ -646,11 +583,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -658,7 +595,7 @@
             ]
         },
         {
-            "type": 27,
+            "type": 24,
             "module": "data-table",
             "components": [
                 "p-data-table",
@@ -669,11 +606,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -681,7 +618,7 @@
             ]
         },
         {
-            "type": 28,
+            "type": 25,
             "module": "date-input",
             "components": [
                 "p-date-input"
@@ -690,11 +627,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -702,7 +639,7 @@
             ]
         },
         {
-            "type": 29,
+            "type": 26,
             "module": "date-picker",
             "components": [
                 "p-date-picker",
@@ -716,11 +653,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -728,7 +665,7 @@
             ]
         },
         {
-            "type": 30,
+            "type": 27,
             "module": "defaults-provider",
             "components": [
                 "p-defaults-provider"
@@ -737,11 +674,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -749,7 +686,7 @@
             ]
         },
         {
-            "type": 31,
+            "type": 28,
             "module": "dialog",
             "components": [
                 "p-dialog"
@@ -758,11 +695,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -770,7 +707,7 @@
             ]
         },
         {
-            "type": 32,
+            "type": 29,
             "module": "divider",
             "components": [
                 "p-divider"
@@ -779,11 +716,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -791,7 +728,7 @@
             ]
         },
         {
-            "type": 33,
+            "type": 30,
             "module": "empty-state",
             "components": [
                 "p-empty-state"
@@ -800,11 +737,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -812,7 +749,7 @@
             ]
         },
         {
-            "type": 34,
+            "type": 31,
             "module": "expansion-panels",
             "components": [
                 "p-expansion-panels",
@@ -824,11 +761,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -836,7 +773,7 @@
             ]
         },
         {
-            "type": 35,
+            "type": 32,
             "module": "fab",
             "components": [
                 "p-fab"
@@ -845,11 +782,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -857,7 +794,7 @@
             ]
         },
         {
-            "type": 36,
+            "type": 33,
             "module": "field",
             "components": [
                 "p-field",
@@ -867,11 +804,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -879,7 +816,7 @@
             ]
         },
         {
-            "type": 37,
+            "type": 34,
             "module": "file-input",
             "components": [
                 "p-file-input"
@@ -888,11 +825,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -900,7 +837,7 @@
             ]
         },
         {
-            "type": 38,
+            "type": 35,
             "module": "file-upload",
             "components": [
                 "p-file-upload",
@@ -910,11 +847,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -922,28 +859,7 @@
             ]
         },
         {
-            "type": 39,
-            "module": "footer",
-            "components": [
-                "p-footer"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 40,
+            "type": 36,
             "module": "form",
             "components": [
                 "p-form"
@@ -952,11 +868,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -964,7 +880,7 @@
             ]
         },
         {
-            "type": 41,
+            "type": 37,
             "module": "grid",
             "components": [
                 "p-container",
@@ -976,11 +892,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -988,49 +904,7 @@
             ]
         },
         {
-            "type": 42,
-            "module": "hotkey",
-            "components": [
-                "p-hotkey"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 43,
-            "module": "hover",
-            "components": [
-                "p-hover"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 44,
+            "type": 38,
             "module": "icon",
             "components": [
                 "p-icon"
@@ -1039,11 +913,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1051,7 +925,7 @@
             ]
         },
         {
-            "type": 45,
+            "type": 39,
             "module": "icon-button",
             "components": [
                 "p-icon-btn"
@@ -1060,11 +934,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1072,7 +946,7 @@
             ]
         },
         {
-            "type": 46,
+            "type": 40,
             "module": "image",
             "components": [
                 "p-img"
@@ -1081,11 +955,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1093,7 +967,7 @@
             ]
         },
         {
-            "type": 47,
+            "type": 41,
             "module": "infinite-scroll",
             "components": [
                 "p-infinite-scroll"
@@ -1102,11 +976,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1114,7 +988,7 @@
             ]
         },
         {
-            "type": 48,
+            "type": 42,
             "module": "input",
             "components": [
                 "p-input"
@@ -1123,11 +997,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1135,7 +1009,7 @@
             ]
         },
         {
-            "type": 49,
+            "type": 43,
             "module": "item-group",
             "components": [
                 "p-item-group",
@@ -1145,11 +1019,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1157,28 +1031,7 @@
             ]
         },
         {
-            "type": 50,
-            "module": "keyboard-key",
-            "components": [
-                "p-kbd"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 51,
+            "type": 44,
             "module": "label",
             "components": [
                 "p-label"
@@ -1187,11 +1040,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1199,29 +1052,7 @@
             ]
         },
         {
-            "type": 52,
-            "module": "layout",
-            "components": [
-                "p-layout",
-                "p-layout-item"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 53,
+            "type": 45,
             "module": "lazy",
             "components": [
                 "p-lazy"
@@ -1230,11 +1061,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1242,7 +1073,7 @@
             ]
         },
         {
-            "type": 54,
+            "type": 46,
             "module": "list",
             "components": [
                 "p-list",
@@ -1256,11 +1087,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1268,7 +1099,7 @@
             ]
         },
         {
-            "type": 55,
+            "type": 47,
             "module": "locale-provider",
             "components": [
                 "p-locale-provider"
@@ -1277,11 +1108,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1289,28 +1120,7 @@
             ]
         },
         {
-            "type": 56,
-            "module": "main",
-            "components": [
-                "p-main"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 57,
+            "type": 48,
             "module": "menu",
             "components": [
                 "p-menu"
@@ -1319,11 +1129,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1331,7 +1141,7 @@
             ]
         },
         {
-            "type": 58,
+            "type": 49,
             "module": "messages",
             "components": [
                 "p-messages"
@@ -1340,11 +1150,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1352,28 +1162,7 @@
             ]
         },
         {
-            "type": 59,
-            "module": "navigation-drawer",
-            "components": [
-                "p-navigation-drawer"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 60,
+            "type": 50,
             "module": "number-input",
             "components": [
                 "p-number-input"
@@ -1382,11 +1171,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1394,7 +1183,7 @@
             ]
         },
         {
-            "type": 61,
+            "type": 51,
             "module": "otp-input",
             "components": [
                 "p-otp-input"
@@ -1403,11 +1192,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1415,7 +1204,7 @@
             ]
         },
         {
-            "type": 62,
+            "type": 52,
             "module": "overlay",
             "components": [
                 "p-overlay"
@@ -1424,11 +1213,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1436,7 +1225,7 @@
             ]
         },
         {
-            "type": 63,
+            "type": 53,
             "module": "pagination",
             "components": [
                 "p-pagination"
@@ -1445,11 +1234,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1457,7 +1246,7 @@
             ]
         },
         {
-            "type": 64,
+            "type": 54,
             "module": "parallax",
             "components": [
                 "p-parallax"
@@ -1466,11 +1255,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1478,7 +1267,7 @@
             ]
         },
         {
-            "type": 65,
+            "type": 55,
             "module": "picker",
             "components": [
                 "p-picker",
@@ -1488,11 +1277,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1500,7 +1289,7 @@
             ]
         },
         {
-            "type": 66,
+            "type": 56,
             "module": "progress-circular",
             "components": [
                 "p-progress-circular"
@@ -1509,11 +1298,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1521,7 +1310,7 @@
             ]
         },
         {
-            "type": 67,
+            "type": 57,
             "module": "progress-linear",
             "components": [
                 "p-progress-linear"
@@ -1530,11 +1319,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1542,28 +1331,7 @@
             ]
         },
         {
-            "type": 68,
-            "module": "pull-to-refresh",
-            "components": [
-                "p-pull-to-refresh"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 69,
+            "type": 58,
             "module": "radio",
             "components": [
                 "p-radio"
@@ -1572,11 +1340,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1584,7 +1352,7 @@
             ]
         },
         {
-            "type": 70,
+            "type": 59,
             "module": "radio-group",
             "components": [
                 "p-radio-group"
@@ -1593,11 +1361,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1605,7 +1373,7 @@
             ]
         },
         {
-            "type": 71,
+            "type": 60,
             "module": "range-slider",
             "components": [
                 "p-range-slider"
@@ -1614,11 +1382,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1626,7 +1394,7 @@
             ]
         },
         {
-            "type": 72,
+            "type": 61,
             "module": "rating",
             "components": [
                 "p-rating"
@@ -1635,11 +1403,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1647,28 +1415,7 @@
             ]
         },
         {
-            "type": 73,
-            "module": "responsive",
-            "components": [
-                "p-responsive"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 74,
+            "type": 62,
             "module": "select",
             "components": [
                 "p-select"
@@ -1677,11 +1424,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1689,7 +1436,7 @@
             ]
         },
         {
-            "type": 75,
+            "type": 63,
             "module": "selection-control",
             "components": [
                 "p-selection-control"
@@ -1698,11 +1445,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1710,7 +1457,7 @@
             ]
         },
         {
-            "type": 76,
+            "type": 64,
             "module": "selection-control-group",
             "components": [
                 "p-selection-control-group"
@@ -1719,11 +1466,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1731,7 +1478,7 @@
             ]
         },
         {
-            "type": 77,
+            "type": 65,
             "module": "sheet",
             "components": [
                 "p-sheet"
@@ -1740,11 +1487,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1752,7 +1499,7 @@
             ]
         },
         {
-            "type": 78,
+            "type": 66,
             "module": "skeleton-loader",
             "components": [
                 "p-skeleton-loader"
@@ -1761,11 +1508,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1773,7 +1520,7 @@
             ]
         },
         {
-            "type": 79,
+            "type": 67,
             "module": "slide-group",
             "components": [
                 "p-slide-group",
@@ -1783,11 +1530,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1795,7 +1542,7 @@
             ]
         },
         {
-            "type": 80,
+            "type": 68,
             "module": "slider",
             "components": [
                 "p-slider"
@@ -1804,11 +1551,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1816,7 +1563,7 @@
             ]
         },
         {
-            "type": 81,
+            "type": 69,
             "module": "snackbar",
             "components": [
                 "p-snackbar"
@@ -1825,11 +1572,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1837,7 +1584,7 @@
             ]
         },
         {
-            "type": 82,
+            "type": 70,
             "module": "snackbar-queue",
             "components": [
                 "p-snackbar-queue"
@@ -1846,11 +1593,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1858,7 +1605,7 @@
             ]
         },
         {
-            "type": 83,
+            "type": 71,
             "module": "sparkline",
             "components": [
                 "p-sparkline"
@@ -1867,11 +1614,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1879,7 +1626,7 @@
             ]
         },
         {
-            "type": 84,
+            "type": 72,
             "module": "speed-dial",
             "components": [
                 "p-speed-dial"
@@ -1888,11 +1635,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1900,7 +1647,7 @@
             ]
         },
         {
-            "type": 85,
+            "type": 73,
             "module": "stepper",
             "components": [
                 "p-stepper",
@@ -1914,11 +1661,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1926,7 +1673,7 @@
             ]
         },
         {
-            "type": 86,
+            "type": 74,
             "module": "stepper-vertical",
             "components": [
                 "p-stepper-vertical",
@@ -1937,11 +1684,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1949,7 +1696,7 @@
             ]
         },
         {
-            "type": 87,
+            "type": 75,
             "module": "switch",
             "components": [
                 "p-switch"
@@ -1958,11 +1705,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -1970,49 +1717,7 @@
             ]
         },
         {
-            "type": 88,
-            "module": "system-bar",
-            "components": [
-                "p-system-bar"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 89,
-            "module": "table",
-            "components": [
-                "p-table"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 90,
+            "type": 76,
             "module": "tabs",
             "components": [
                 "p-tabs",
@@ -2022,11 +1727,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2034,7 +1739,7 @@
             ]
         },
         {
-            "type": 91,
+            "type": 77,
             "module": "text",
             "components": [
                 "p-text"
@@ -2043,11 +1748,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2055,7 +1760,7 @@
             ]
         },
         {
-            "type": 92,
+            "type": 78,
             "module": "text-field",
             "components": [
                 "p-text-field"
@@ -2064,11 +1769,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2076,7 +1781,7 @@
             ]
         },
         {
-            "type": 93,
+            "type": 79,
             "module": "textarea",
             "components": [
                 "p-textarea"
@@ -2085,11 +1790,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2097,7 +1802,7 @@
             ]
         },
         {
-            "type": 94,
+            "type": 80,
             "module": "theme-provider",
             "components": [
                 "p-theme-provider"
@@ -2106,11 +1811,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2118,7 +1823,7 @@
             ]
         },
         {
-            "type": 95,
+            "type": 81,
             "module": "time-picker",
             "components": [
                 "p-time-picker",
@@ -2129,11 +1834,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2141,7 +1846,7 @@
             ]
         },
         {
-            "type": 96,
+            "type": 82,
             "module": "timeline",
             "components": [
                 "p-timeline",
@@ -2151,11 +1856,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2163,7 +1868,7 @@
             ]
         },
         {
-            "type": 97,
+            "type": 83,
             "module": "toolbar",
             "components": [
                 "p-toolbar",
@@ -2174,11 +1879,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2186,7 +1891,7 @@
             ]
         },
         {
-            "type": 98,
+            "type": 84,
             "module": "tooltip",
             "components": [
                 "p-tooltip"
@@ -2195,11 +1900,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2207,7 +1912,7 @@
             ]
         },
         {
-            "type": 99,
+            "type": 85,
             "module": "treeview",
             "components": [
                 "p-treeview",
@@ -2217,11 +1922,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2229,7 +1934,7 @@
             ]
         },
         {
-            "type": 100,
+            "type": 86,
             "module": "validation",
             "components": [
                 "p-validation"
@@ -2238,11 +1943,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2250,28 +1955,7 @@
             ]
         },
         {
-            "type": 101,
-            "module": "virtual-scroll",
-            "components": [
-                "p-virtual-scroll"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 102,
+            "type": 87,
             "module": "window",
             "components": [
                 "p-window",
@@ -2281,11 +1965,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,
@@ -2293,7 +1977,7 @@
             ]
         },
         {
-            "type": 103,
+            "type": 88,
             "module": "transition",
             "components": [
                 "p-transition"
@@ -2302,11 +1986,11 @@
                 3,
                 3,
                 3,
+                2,
                 3,
-                2,
-                2,
-                2,
-                2,
+                3,
+                3,
+                3,
                 3,
                 3,
                 3,

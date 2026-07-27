@@ -9,6 +9,7 @@ use App\ComponentGallery;
 use App\Orders;
 use App\Overview;
 use App\Profile;
+use App\ShowcaseRoute;
 use App\TypedCommunityCard;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\MobileUiPluginProvider;
@@ -40,7 +41,11 @@ AppTheme::install();
 PamUI::mode(ThemeMode::Dark);
 TypedCommunityCard::register();
 
-$allowedApplicationTags = ['AppScreen' => true, 'ContentState' => true];
+$allowedApplicationTags = [
+    'AppScreen' => true,
+    'ContentState' => true,
+    'DrawerLayoutAndroid' => true,
+];
 $renderedMaterialTags = [];
 foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $template) {
     $source = file_get_contents($template);
@@ -68,6 +73,9 @@ foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $t
 $materialModules = require $root.'/resources/pam-material-components.php';
 $expectedMaterialTags = [];
 foreach ($materialModules as $module) {
+    if (($module['mobile'] ?? true) !== true) {
+        continue;
+    }
     foreach ($module['components'] as $component) {
         $tag = strtolower(
             preg_replace('/(?<!^)[A-Z]/', '-$0', $component) ?? $component,
@@ -98,11 +106,22 @@ foreach ($screens as $screen) {
     (new $screen())->toElement();
 }
 
+$showcaseRoutes = [
+    'showcase-home',
+    'showcase-actions',
+    'showcase-forms',
+    'showcase-data',
+    'showcase-overlays',
+];
+foreach ($showcaseRoutes as $view) {
+    (new ShowcaseRoute($view))->toElement();
+}
+
 fwrite(
     STDOUT,
     sprintf(
         "Validated %d p-* showcase screens and %d/%d material components through the production template renderer.\n",
-        count($screens),
+        count($screens) + count($showcaseRoutes),
         count($expectedMaterialTags),
         count($expectedMaterialTags),
     ),

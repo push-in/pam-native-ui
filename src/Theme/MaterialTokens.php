@@ -43,6 +43,8 @@ final class MaterialTokens
         13 => [12.0, 16.0, 400.0, 0.4],
         14 => [14.0, 20.0, 500.0, 0.1],
         15 => [12.0, 16.0, 500.0, 0.5],
+        16 => [11.0, 16.0, 500.0, 0.5],
+        17 => [14.0, 20.0, 400.0, 0.1],
     ];
 
     public const array STATE_OPACITY = [
@@ -74,9 +76,9 @@ final class MaterialTokens
     ];
 
     public const array EASING = [
-        1 => [0.2, 0.0, 0.0, 1.0],
-        2 => [0.3, 0.0, 1.0, 1.0],
-        3 => [0.0, 0.0, 0.0, 1.0],
+        1 => [0.4, 0.0, 0.2, 1.0],
+        2 => [0.0, 0.0, 0.2, 1.0],
+        3 => [0.4, 0.0, 1.0, 1.0],
         4 => [0.2, 0.0, 1.0, 1.0],
         5 => [0.3, 0.0, 0.8, 0.15],
     ];
@@ -94,16 +96,39 @@ final class MaterialTokens
             MaterialShape::Medium => 12.0,
             MaterialShape::Large => 16.0,
             MaterialShape::ExtraLarge => 28.0,
-            MaterialShape::Full => 999.0,
+            MaterialShape::Full => 9999.0,
         };
     }
 
     public static function controlHeight(MaterialDensity $density): float
     {
+        return self::fieldHeight($density);
+    }
+
+    public static function buttonHeight(MaterialDensity $density): float
+    {
+        return match ($density) {
+            MaterialDensity::Default => 36.0,
+            MaterialDensity::Comfortable => 28.0,
+            MaterialDensity::Compact => 24.0,
+        };
+    }
+
+    public static function iconButtonHeight(MaterialDensity $density): float
+    {
         return match ($density) {
             MaterialDensity::Default => 48.0,
-            MaterialDensity::Comfortable => 40.0,
-            MaterialDensity::Compact => 32.0,
+            MaterialDensity::Comfortable => 36.0,
+            MaterialDensity::Compact => 28.0,
+        };
+    }
+
+    public static function fieldHeight(MaterialDensity $density): float
+    {
+        return match ($density) {
+            MaterialDensity::Default => 56.0,
+            MaterialDensity::Comfortable => 48.0,
+            MaterialDensity::Compact => 40.0,
         };
     }
 }

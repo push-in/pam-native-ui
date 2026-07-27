@@ -1,0 +1,38 @@
+<AppScreen title="Forms" subtitle="Inputs, validation and pickers">
+    <template #actions><p-btn variant="text" on:press="openDrawer"><p-text>Menu</p-text></p-btn></template>
+
+    <p-text size="xl">Text and numbers</p-text>
+    <p-card>
+        <p-col class="p-4 gap-4">
+            <p-text-field label="Project name" value="PAM UI" helper="Native text field" />
+            <p-text-field label="Outlined" value="Material field" variant="outlined" />
+            <p-textarea label="Description" value="Rendered without JavaScript." rows="3" />
+        </p-col>
+    </p-card>
+
+    <p-text size="xl">Choice and search</p-text>
+    <p-card>
+        <p-col class="p-4 gap-4">
+            <p-select label="Platform" value="Android" items="Android,iOS" />
+            <p-autocomplete label="Component" value="p-card" items="p-card,p-btn,p-dialog" />
+            <p-combobox label="Tags" value="native" items="native,material,typed" />
+        </p-col>
+    </p-card>
+
+    <p-text size="xl">Pickers and files</p-text>
+    <p-card>
+        <p-col class="p-4 gap-4">
+            <p-date-input label="Release date" value="2026-07-26" />
+            <p-color-input label="Brand" value="#4C8DFF" />
+            <p-file-input label="Artifacts" />
+        </p-col>
+    </p-card>
+
+    <p-text size="xl">Range</p-text>
+    <p-card>
+        <p-col class="p-4 gap-4">
+            <p-slider value="68" accessibilityLabel="Completion" />
+            <p-range-slider value="24" maximumValue="76" accessibilityLabel="Price range" />
+        </p-col>
+    </p-card>
+</AppScreen>

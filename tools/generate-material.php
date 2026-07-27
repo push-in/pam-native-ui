@@ -10,6 +10,7 @@ if (!is_array($specification) || !array_is_list($specification)) {
 }
 
 $tags = [];
+$facadeTags = [];
 $ids = [];
 $modules = [];
 $nextComponentId = 1;
@@ -22,6 +23,7 @@ foreach ($specification as $module) {
         || !is_string($module['module'] ?? null)
         || !is_array($module['components'] ?? null)
         || !array_is_list($module['components'])
+        || (isset($module['mobile']) && !is_bool($module['mobile']))
     ) {
         throw new RuntimeException("Invalid PAM Material module type {$expectedType}.");
     }
@@ -33,16 +35,21 @@ foreach ($specification as $module) {
         }
 
         $tag = strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $class));
-        if (isset($tags[$tag])) {
+        if (isset($facadeTags[$tag])) {
             throw new RuntimeException("Duplicate PAM Material tag {$tag}.");
         }
 
-        $tags[$tag] = $class;
+        $facadeTags[$tag] = $class;
         $ids[$class] = $nextComponentId++;
         $moduleTags[] = $tag;
     }
 
-    $modules[$module['module']] = $moduleTags;
+    if (($module['mobile'] ?? true) === true) {
+        foreach ($moduleTags as $tag) {
+            $tags[$tag] = $facadeTags[$tag];
+        }
+        $modules[$module['module']] = $moduleTags;
+    }
     $expectedType++;
 }
 
@@ -63,7 +70,7 @@ use Pam\MobileUi\Component\UiComponent;
 
 PHP;
 
-foreach ($tags as $tag => $class) {
+foreach ($facadeTags as $tag => $class) {
     $facades .= "final class {$class} extends UiComponent\n{\n";
     $facades .= "    protected const string COMPONENT = ".var_export($class, true).";\n";
     $facades .= "}\n\n";
@@ -130,7 +137,7 @@ $materialParity = json_encode([
             'type' => $index + 1,
             'module' => $module,
             'components' => $modules[$module],
-            'verification' => [3, 3, 3, 3, 2, 2, 2, 2, 3, 3, 3, 3],
+            'verification' => [3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3],
         ],
         array_keys($modules),
         array_keys(array_keys($modules)),

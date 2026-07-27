@@ -1,4 +1,5 @@
 import Foundation
+import PamNative
 import UIKit
 
 private extension WireValue {
@@ -86,28 +87,153 @@ final class MobileUiHostFactory: NativeViewFactory {
 
 final class MobileUiIconFactory: NativeViewFactory {
     func create(context: AnyObject?, emit: @escaping (Data) -> Void) -> UIView {
-        let image = UIImageView()
-        image.contentMode = .scaleAspectFit
-        image.isAccessibilityElement = false
-        return image
+        PamVectorIconView()
     }
 
     func update(view: UIView, properties: [String: WireValue]) {
-        guard let image = view as? UIImageView else { return }
-        applyCommonProperties(image, properties)
+        guard let iconView = view as? PamVectorIconView else { return }
+        applyCommonProperties(iconView, properties)
+        iconView.icon = properties["icon"]?.integerValue ?? 0
         if let color = properties["color"]?.integerValue {
-            image.tintColor = UIColor(pamARGB: color)
+            iconView.iconColor = UIColor(pamARGB: color)
         }
-        let icon = properties["icon"]?.integerValue ?? 0
-        image.image = UIImage(systemName: Self.symbols[icon] ?? "circle")
+    }
+}
+
+private final class PamVectorIconView: UIView {
+    var icon = 0 {
+        didSet {
+            guard icon != oldValue else { return }
+            paths = Self.paths(for: icon)
+            setNeedsDisplay()
+        }
+    }
+    var iconColor = UIColor.label {
+        didSet {
+            guard iconColor != oldValue else { return }
+            setNeedsDisplay()
+        }
     }
 
-    private static let symbols: [Int: String] = [
-        1: "house", 2: "magnifyingglass", 3: "person", 4: "gearshape",
-        5: "bell", 6: "star", 7: "clock", 8: "message", 9: "checkmark",
-        10: "xmark", 11: "chevron.left", 12: "chevron.right",
-        13: "chevron.up", 14: "chevron.down", 15: "plus", 16: "minus",
-    ]
+    private var paths: [UIBezierPath] = []
+    private static var cache: [Int: [UIBezierPath]] = [:]
+    private static let cacheLock = NSLock()
+
+    init() {
+        super.init(frame: .zero)
+        backgroundColor = .clear
+        isOpaque = false
+        isAccessibilityElement = false
+        contentMode = .redraw
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
+
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: 20, height: 20)
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard !paths.isEmpty, rect.width > 0, rect.height > 0 else { return }
+        let scale = min(rect.width, rect.height) / 24
+        let offsetX = (rect.width - 24 * scale) / 2
+        let offsetY = (rect.height - 24 * scale) / 2
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        context.saveGState()
+        context.translateBy(x: offsetX, y: offsetY)
+        context.scaleBy(x: scale, y: scale)
+        iconColor.setStroke()
+        for path in paths {
+            path.lineWidth = 2
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            path.stroke()
+        }
+        context.restoreGState()
+    }
+
+    private static func paths(for icon: Int) -> [UIBezierPath] {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        if let cached = cache[icon] {
+            return cached
+        }
+        let parsed = (GeneratedIcons.paths[icon] ?? []).compactMap(parse)
+        cache[icon] = parsed
+        return parsed
+    }
+
+    private static func parse(_ source: String) -> UIBezierPath? {
+        let pattern = #"[A-Za-z]|[-+]?(?:\d*\.?\d+(?:[eE][-+]?\d+)?)"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else {
+            return nil
+        }
+        let range = NSRange(source.startIndex..., in: source)
+        let tokens = expression.matches(in: source, range: range).compactMap {
+            Range($0.range, in: source).map { String(source[$0]) }
+        }
+        guard !tokens.isEmpty else { return nil }
+
+        let path = UIBezierPath()
+        var index = 0
+        var command = ""
+        var point = CGPoint.zero
+        func number() -> CGFloat? {
+            guard index < tokens.count, let value = Double(tokens[index]) else {
+                return nil
+            }
+            index += 1
+            return CGFloat(value)
+        }
+        while index < tokens.count {
+            if tokens[index].first?.isLetter == true {
+                command = tokens[index]
+                index += 1
+            }
+            switch command {
+            case "M":
+                guard let x = number(), let y = number() else { return nil }
+                point = CGPoint(x: x, y: y)
+                path.move(to: point)
+                command = "L"
+            case "L":
+                guard let x = number(), let y = number() else { return nil }
+                point = CGPoint(x: x, y: y)
+                path.addLine(to: point)
+            case "H":
+                guard let x = number() else { return nil }
+                point.x = x
+                path.addLine(to: point)
+            case "V":
+                guard let y = number() else { return nil }
+                point.y = y
+                path.addLine(to: point)
+            case "C":
+                guard
+                    let x1 = number(), let y1 = number(),
+                    let x2 = number(), let y2 = number(),
+                    let x = number(), let y = number()
+                else {
+                    return nil
+                }
+                point = CGPoint(x: x, y: y)
+                path.addCurve(
+                    to: point,
+                    controlPoint1: CGPoint(x: x1, y: y1),
+                    controlPoint2: CGPoint(x: x2, y: y2)
+                )
+            case "Z", "z":
+                path.close()
+                command = ""
+            default:
+                return nil
+            }
+        }
+        return path
+    }
 }
 
 final class MobileUiMarkdownFactory: NativeViewFactory {

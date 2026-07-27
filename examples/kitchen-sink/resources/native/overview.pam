@@ -2,12 +2,12 @@
     title="Workspace"
     subtitle="Sunday, July 26"
 >
-    <p-col class="ui-bg gap-5">
     <template #actions>
         <p-btn variant="outline" size="md" accessibilityLabel="Open notifications">
             <p-icon icon="notifications" />
         </p-btn>
     </template>
+    <p-col class="ui-bg gap-5">
 
     <p-card variant="tonal" class="p-5 rounded-3xl">
         <p-col class="gap-4">
