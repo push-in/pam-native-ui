@@ -43,8 +43,8 @@ $assert(
     'The package must be named pushinbr/pam-mobile-ui.',
 );
 $assert(
-    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.4.1',
-    'The package must require pushinbr/pam-native:^0.4.1.',
+    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.4.2',
+    'The package must require pushinbr/pam-native:^0.4.2.',
 );
 $assert(
     ($composer['type'] ?? null) === 'pam-native-plugin',

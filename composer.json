@@ -19,7 +19,7 @@
     },
     "require": {
         "php": "^8.4",
-        "pushinbr/pam-native": "^0.4.1"
+        "pushinbr/pam-native": "^0.4.2"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1"
