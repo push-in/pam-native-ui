@@ -12,4 +12,9 @@ enum MaterialVariant: int
     case Outlined = 4;
     case Text = 5;
     case Plain = 6;
+    case Underlined = 7;
+    case Filled = 8;
+    case Solo = 9;
+    case SoloInverted = 10;
+    case SoloFilled = 11;
 }

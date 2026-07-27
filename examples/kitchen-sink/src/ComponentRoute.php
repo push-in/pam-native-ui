@@ -710,15 +710,16 @@ final class ComponentRoute extends Component
                     );
                 }
             }
+            $intrinsicPreview = $this->belongsTo([
+                'p-avatar', 'p-badge', 'p-btn', 'p-checkbox', 'p-checkbox-btn',
+                'p-chip', 'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
+                'p-radio', 'p-rating', 'p-selection-control', 'p-switch',
+            ]);
             $samples[] = Column::make($caption, $preview)->style(new Style(
                 widthPercent: 100.0,
-                minHeight: 72.0,
-                padding: 16.0,
-                gap: 12.0,
-                borderRadius: 12.0,
-                backgroundColor: $theme->color(ColorToken::Surface),
-                borderWidth: 1.0,
-                borderColor: $theme->color(ColorToken::Border),
+                paddingVertical: 8.0,
+                gap: 8.0,
+                alignItems: $intrinsicPreview ? Align::Start : Align::Stretch,
             ));
         }
 
@@ -836,6 +837,10 @@ final class ComponentRoute extends Component
             ]);
         }
 
+        if ($this->tag === 'p-btn') {
+            $variations[] = ['label' => 'Block', 'props' => ['block' => true]];
+        }
+
         if ($this->belongsTo([
             'p-alert', 'p-avatar', 'p-badge', 'p-btn', 'p-card', 'p-chip',
             'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
@@ -921,10 +926,15 @@ final class ComponentRoute extends Component
             'p-field', 'p-file-input', 'p-input', 'p-number-input', 'p-select',
             'p-text-field', 'p-textarea',
         ])) {
-            $variations[] = [
-                'label' => 'Outlined',
-                'props' => ['variant' => 'outlined'],
-            ];
+            $variations = array_merge($variations, [
+                ['label' => 'Filled', 'props' => ['variant' => 'filled']],
+                ['label' => 'Outlined', 'props' => ['variant' => 'outlined']],
+                ['label' => 'Underlined', 'props' => ['variant' => 'underlined']],
+                ['label' => 'Solo', 'props' => ['variant' => 'solo']],
+                ['label' => 'Solo inverted', 'props' => ['variant' => 'solo-inverted']],
+                ['label' => 'Solo filled', 'props' => ['variant' => 'solo-filled']],
+                ['label' => 'Plain', 'props' => ['variant' => 'plain']],
+            ]);
             $variations[] = [
                 'label' => 'Hint and required',
                 'props' => [

@@ -144,6 +144,19 @@ $catalogHidden = array_merge(
     $catalogInternalParts,
     $catalogNativeInfrastructure,
 );
+$catalogGroup = static fn (string $tag): string => match (true) {
+    preg_match('/(btn|fab|chip|icon|avatar|badge|rating)/', $tag) === 1 =>
+        'Actions and identity',
+    preg_match('/(field|input|select|autocomplete|combobox|checkbox|radio|switch|slider|form|otp|file)/', $tag) === 1 =>
+        'Forms and selection',
+    preg_match('/(app-bar|toolbar|navigation|tabs|tab|breadcrumbs|pagination|stepper|window|carousel)/', $tag) === 1 =>
+        'Navigation',
+    preg_match('/(data|table|list|tree|virtual|infinite|timeline|calendar)/', $tag) === 1 =>
+        'Data display',
+    preg_match('/(dialog|menu|overlay|sheet|snackbar|tooltip|alert|banner)/', $tag) === 1 =>
+        'Feedback and overlays',
+    default => 'Layout and content',
+};
 foreach (MaterialComponentMap::TAGS as $tag => $component) {
     if (in_array($tag, $catalogHidden, true)) {
         continue;
@@ -155,18 +168,19 @@ foreach (MaterialComponentMap::TAGS as $tag => $component) {
         'catalog-'.$tag,
         $title,
         fn () => $route,
+        group: $catalogGroup($tag),
     );
 }
 $showcase = $drawer
     ->presentation(DrawerType::Front)
     ->responsive(840.0)
     ->appearance(
-        0xFF091526,
-        0xFFF8FAFC,
-        0xFF8EA3C0,
-        0xFF152941,
+        0xFF212121,
+        0xFF2196F3,
+        0xB3FFFFFF,
+        0xFF2F3E49,
         0x33000000,
-        0xFF253952,
+        0x1FFFFFFF,
         256.0,
     )
     ->persistence('pam-component-drawer-v2')

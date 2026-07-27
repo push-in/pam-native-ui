@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pam\MobileUi\Theme;
 
+use Pam\MobileUi\Enum\ComponentSize;
 use Pam\MobileUi\Enum\MaterialDensity;
 use Pam\MobileUi\Enum\MaterialShape;
 
@@ -109,18 +110,14 @@ final class MaterialTokens
     {
         return match ($density) {
             MaterialDensity::Default => 36.0,
-            MaterialDensity::Comfortable => 28.0,
-            MaterialDensity::Compact => 24.0,
+            MaterialDensity::Comfortable => 32.0,
+            MaterialDensity::Compact => 28.0,
         };
     }
 
     public static function iconButtonHeight(MaterialDensity $density): float
     {
-        return match ($density) {
-            MaterialDensity::Default => 48.0,
-            MaterialDensity::Comfortable => 36.0,
-            MaterialDensity::Compact => 28.0,
-        };
+        return self::buttonHeight($density);
     }
 
     public static function fieldHeight(MaterialDensity $density): float
@@ -130,5 +127,22 @@ final class MaterialTokens
             MaterialDensity::Comfortable => 48.0,
             MaterialDensity::Compact => 40.0,
         };
+    }
+
+    public static function componentSize(
+        mixed $size,
+        float $base,
+        float $step = 8.0,
+    ): float {
+        $scale = match ($size) {
+            'x-small', 'xs', ComponentSize::ExtraSmall->value => -2.0,
+            'small', 'sm', ComponentSize::Small->value => -1.0,
+            ComponentSize::Medium->value => 0.0,
+            'large', 'lg', ComponentSize::Large->value => 1.0,
+            'x-large', 'xl', ComponentSize::ExtraLarge->value => 2.0,
+            default => 0.0,
+        };
+
+        return max($step, $base + ($scale * $step));
     }
 }

@@ -122,21 +122,37 @@ $assertGeometry('PBtn', [], [
     'minHeight' => 36.0,
 ]);
 $assertGeometry('PBtn', ['density' => 'comfortable'], [
-    'minHeight' => 28.0,
+    'minHeight' => 32.0,
 ]);
 $assertGeometry('PBtn', ['density' => 'compact'], [
-    'minHeight' => 24.0,
+    'minHeight' => 28.0,
 ]);
 $assertGeometry('PBtn', ['disabled' => true], [
     'opacity' => 0.26,
 ]);
 $assertGeometry('PIconBtn', [], [
-    'width' => 48.0,
-    'height' => 48.0,
-]);
-$assertGeometry('PIconBtn', ['density' => 'comfortable'], [
     'width' => 36.0,
     'height' => 36.0,
+]);
+$assertGeometry('PIconBtn', ['size' => 'x-small'], [
+    'width' => 20.0,
+    'height' => 20.0,
+]);
+$assertGeometry('PIconBtn', ['size' => 'small'], [
+    'width' => 28.0,
+    'height' => 28.0,
+]);
+$assertGeometry('PIconBtn', ['size' => 'large'], [
+    'width' => 44.0,
+    'height' => 44.0,
+]);
+$assertGeometry('PIconBtn', ['size' => 'x-large'], [
+    'width' => 52.0,
+    'height' => 52.0,
+]);
+$assertGeometry('PIconBtn', ['density' => 'comfortable'], [
+    'width' => 32.0,
+    'height' => 32.0,
 ]);
 $assertGeometry('PIconBtn', ['density' => 'compact'], [
     'width' => 28.0,
@@ -195,6 +211,8 @@ $assertGeometry('PTab', ['density' => 'compact'], [
 $assertGeometry('PTextField', [], [
     'height' => 56.0,
     'minHeight' => 56.0,
+    'paddingTop' => 8.0,
+    'paddingBottom' => 4.0,
 ]);
 $assertGeometry('PTextField', ['density' => 'comfortable'], [
     'height' => 48.0,
@@ -203,6 +221,40 @@ $assertGeometry('PTextField', ['density' => 'comfortable'], [
 $assertGeometry('PTextField', ['density' => 'compact'], [
     'height' => 40.0,
     'minHeight' => 40.0,
+    'paddingTop' => 0.0,
+    'paddingBottom' => 0.0,
+]);
+$assertGeometry('PTextField', ['variant' => 'outlined'], [
+    'borderWidth' => 1.0,
+    'borderBottomWidth' => null,
+    'elevation' => 0.0,
+]);
+$assertGeometry('PTextField', ['variant' => 'underlined'], [
+    'paddingHorizontal' => 0.0,
+    'borderWidth' => 0.0,
+    'borderBottomWidth' => 1.0,
+    'borderRadius' => 0.0,
+]);
+$assertGeometry('PTextField', ['variant' => 'solo'], [
+    'borderWidth' => 0.0,
+    'borderBottomWidth' => null,
+    'elevation' => 1.0,
+]);
+$assertGeometry('PTextField', ['variant' => 'solo-inverted'], [
+    'borderWidth' => 0.0,
+    'borderBottomWidth' => null,
+    'elevation' => 1.0,
+]);
+$assertGeometry('PTextField', ['variant' => 'solo-filled'], [
+    'borderWidth' => 0.0,
+    'borderBottomWidth' => null,
+    'elevation' => 0.0,
+]);
+$assertGeometry('PTextField', ['variant' => 'plain'], [
+    'paddingHorizontal' => 0.0,
+    'borderWidth' => 0.0,
+    'borderBottomWidth' => null,
+    'borderRadius' => 0.0,
 ]);
 $assertGeometry('PDialog', [], [
     'margin' => 24.0,
@@ -518,7 +570,7 @@ $assertGeometry('PBreadcrumbsDivider', [], [
     'lineHeight' => 24.0,
 ]);
 $assertGeometry('PPagination', [], [
-    'minHeight' => 48.0,
+    'minHeight' => 36.0,
     'gap' => 9.6,
 ]);
 $assertGeometry('PPagination', ['density' => 'compact'], [

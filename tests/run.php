@@ -471,11 +471,11 @@ $assert(class_exists(SwitchControl::class), 'Reserved PHP names must receive a t
 
 ThemeManager::mode(ThemeMode::Light);
 $assert(
-    Themes::light()->color(ColorToken::Background) === 0xfff8fafc,
+    Themes::light()->color(ColorToken::Background) === 0xffffffff,
     'The upstream light background token changed unexpectedly.',
 );
 $assert(
-    Themes::dark()->color(ColorToken::Background) === 0xff0f172a,
+    Themes::dark()->color(ColorToken::Background) === 0xff121212,
     'The upstream dark background token changed unexpectedly.',
 );
 $previousSystemDark = getenv('PAM_SYSTEM_DARK');

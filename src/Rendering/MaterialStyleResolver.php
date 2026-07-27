@@ -43,6 +43,14 @@ final class MaterialStyleResolver
             MaterialVariant::Outlined->value, 'outlined', 'outline' => MaterialVariant::Outlined,
             MaterialVariant::Text->value, 'text' => MaterialVariant::Text,
             MaterialVariant::Plain->value, 'plain' => MaterialVariant::Plain,
+            MaterialVariant::Underlined->value, 'underlined' =>
+                MaterialVariant::Underlined,
+            MaterialVariant::Filled->value, 'filled' => MaterialVariant::Filled,
+            MaterialVariant::Solo->value, 'solo' => MaterialVariant::Solo,
+            MaterialVariant::SoloInverted->value, 'solo-inverted' =>
+                MaterialVariant::SoloInverted,
+            MaterialVariant::SoloFilled->value, 'solo-filled' =>
+                MaterialVariant::SoloFilled,
             default => MaterialVariant::Elevated,
         };
         $transparent = Color::rgb(0, 0, 0, 0)->argb;
@@ -142,6 +150,13 @@ final class MaterialStyleResolver
                 || ($props['errorMessages'] ?? []) !== [];
             $disabled = ($props['disabled'] ?? false) === true;
             $outlined = $variant === MaterialVariant::Outlined;
+            $underlined = $variant === MaterialVariant::Underlined;
+            $plain = $variant === MaterialVariant::Plain;
+            $solo = in_array($variant, [
+                MaterialVariant::Solo,
+                MaterialVariant::SoloInverted,
+                MaterialVariant::SoloFilled,
+            ], true);
             $borderColor = $error
                 ? $theme->color(ColorToken::Destructive)
                 : ($focused
@@ -151,18 +166,32 @@ final class MaterialStyleResolver
             return new Style(
                 widthPercent: 100.0,
                 minHeight: MaterialTokens::fieldHeight($density),
-                paddingHorizontal: 16.0,
+                paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
                 gap: 8.0,
                 alignItems: Align::Center,
-                backgroundColor: $outlined
-                    ? $transparent
-                    : $theme->color(ColorToken::SurfaceSunken),
+                backgroundColor: match ($variant) {
+                    MaterialVariant::Outlined,
+                    MaterialVariant::Underlined,
+                    MaterialVariant::Plain => $transparent,
+                    MaterialVariant::Solo => $theme->color(ColorToken::Surface),
+                    MaterialVariant::SoloInverted => $focused
+                        ? $theme->color(ColorToken::Surface)
+                        : $theme->color(ColorToken::Muted),
+                    default => $theme->color(ColorToken::SurfaceSunken),
+                },
                 borderColor: $borderColor,
                 borderWidth: $outlined ? ($focused || $error ? 2.0 : 1.0) : 0.0,
-                borderBottomWidth: $outlined ? null : ($focused || $error ? 2.0 : 1.0),
-                borderRadius: 4.0,
+                borderBottomWidth: $outlined || $solo || $plain
+                    ? null
+                    : ($focused || $error ? 2.0 : 1.0),
+                borderRadius: $underlined || $plain ? 0.0 : 4.0,
+                elevation: in_array($variant, [
+                    MaterialVariant::Solo,
+                    MaterialVariant::SoloInverted,
+                ], true) ? 1.0 : 0.0,
                 opacity: $disabled ? 0.38 : 1.0,
                 animationDurationMs: 150,
+                animateChanges: true,
             );
         }
 
@@ -1386,27 +1415,26 @@ final class MaterialStyleResolver
         if (in_array($part, ['PBtn', 'PIconBtn', 'PFab'], true)) {
             $icon = $part !== 'PBtn' || ($props['icon'] ?? false) === true;
             $height = match ($part) {
-                'PFab' => match ($props['size'] ?? null) {
-                    'small', 1 => 40.0,
-                    'large', 3 => 96.0,
-                    default => 56.0,
-                },
-                'PIconBtn' => MaterialTokens::iconButtonHeight($density),
-                default => match ($props['size'] ?? null) {
-                    'x-small', 'xs' => 20.0,
-                    'small', 'sm' => 28.0,
-                    'large', 'lg' => 44.0,
-                    'x-large', 'xl' => 52.0,
-                    default => MaterialTokens::buttonHeight($density),
-                },
+                'PFab' => MaterialTokens::componentSize(
+                    $props['size'] ?? null,
+                    56.0,
+                ),
+                'PIconBtn' => MaterialTokens::componentSize(
+                    $props['size'] ?? null,
+                    MaterialTokens::iconButtonHeight($density),
+                ),
+                default => MaterialTokens::componentSize(
+                    $props['size'] ?? null,
+                    MaterialTokens::buttonHeight($density),
+                ),
             };
 
             return new Style(
-                minWidth: $icon ? $height : 64.0,
+                minWidth: $icon ? $height : max(64.0, $height * (16.0 / 9.0)),
                 width: $icon ? $height : null,
                 minHeight: $height,
                 height: $height,
-                paddingHorizontal: $icon ? 0.0 : 16.0,
+                paddingHorizontal: $icon ? 0.0 : max(8.0, $height / 2.25),
                 gap: 8.0,
                 textColor: match ($variant) {
                     MaterialVariant::Tonal =>
@@ -1436,6 +1464,8 @@ final class MaterialStyleResolver
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
+                animationDurationMs: 200,
+                animateChanges: true,
             );
         }
 
@@ -1465,48 +1495,90 @@ final class MaterialStyleResolver
             'PColorInput', 'PDateInput', 'PFileInput', 'PSelect',
             'PAutocomplete', 'PCombobox',
         ], true)) {
+            $focused = ($props['focused'] ?? $props['active'] ?? false) === true;
+            $error = ($props['error'] ?? false) === true
+                || ($props['errorMessages'] ?? []) !== [];
+            $outlined = $variant === MaterialVariant::Outlined;
+            $underlined = $variant === MaterialVariant::Underlined;
+            $plain = $variant === MaterialVariant::Plain;
+            $solo = in_array($variant, [
+                MaterialVariant::Solo,
+                MaterialVariant::SoloInverted,
+                MaterialVariant::SoloFilled,
+            ], true);
+            $fieldBorder = $error
+                ? $theme->color(ColorToken::Destructive)
+                : ($focused
+                    ? $theme->color(ColorToken::Primary)
+                    : $theme->color(ColorToken::Border));
+            $textareaHeight = match ($density) {
+                MaterialDensity::Comfortable => 104.0,
+                MaterialDensity::Compact => 96.0,
+                default => 112.0,
+            };
+
             return new Style(
-                height: $part === 'PTextarea' ? match ($density) {
-                    MaterialDensity::Comfortable => 104.0,
-                    MaterialDensity::Compact => 96.0,
-                    default => 112.0,
-                } : $height,
-                minHeight: $part === 'PTextarea' ? match ($density) {
-                    MaterialDensity::Comfortable => 104.0,
-                    MaterialDensity::Compact => 96.0,
-                    default => 112.0,
-                } : $height,
-                paddingHorizontal: 16.0,
-                paddingVertical: 8.0,
+                height: $part === 'PTextarea' ? $textareaHeight : $height,
+                minHeight: $part === 'PTextarea' ? $textareaHeight : $height,
+                paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
+                paddingTop: match ($density) {
+                    MaterialDensity::Comfortable => 4.0,
+                    MaterialDensity::Compact => 0.0,
+                    default => 8.0,
+                },
+                paddingBottom: match ($density) {
+                    MaterialDensity::Comfortable => 2.0,
+                    MaterialDensity::Compact => 0.0,
+                    default => 4.0,
+                },
                 gap: 0.0,
-                backgroundColor: $variant === MaterialVariant::Outlined
-                    ? $theme->color(ColorToken::Background)
-                    : $theme->color(ColorToken::SurfaceSunken),
+                backgroundColor: match ($variant) {
+                    MaterialVariant::Outlined,
+                    MaterialVariant::Underlined,
+                    MaterialVariant::Plain => $transparent,
+                    MaterialVariant::Solo => $theme->color(ColorToken::Surface),
+                    MaterialVariant::SoloInverted => $focused
+                        ? $theme->color(ColorToken::Surface)
+                        : $theme->color(ColorToken::Muted),
+                    default => $theme->color(ColorToken::SurfaceSunken),
+                },
                 textColor: $theme->color(ColorToken::OnSurface),
                 placeholderColor: $theme->color(ColorToken::MutedForeground),
-                borderColor: $theme->color(ColorToken::Border),
-                borderWidth: 1.0,
-                borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
+                borderColor: $fieldBorder,
+                borderWidth: $outlined ? ($focused || $error ? 2.0 : 1.0) : 0.0,
+                borderBottomWidth: $outlined || $solo || $plain
+                    ? null
+                    : ($focused || $error ? 2.0 : 1.0),
+                borderRadius: $underlined || $plain
+                    ? 0.0
+                    : MaterialTokens::radius(MaterialShape::ExtraSmall),
+                elevation: in_array($variant, [
+                    MaterialVariant::Solo,
+                    MaterialVariant::SoloInverted,
+                ], true) ? 1.0 : 0.0,
                 opacity: $opacity,
                 flexDirection: FlexDirection::Column,
+                animationDurationMs: 150,
+                animateChanges: true,
             );
         }
 
         if ($part === 'PChip') {
             $semanticBackground = self::semanticColor($props, $theme, false);
-            $chipHeight = match ($density) {
+            $chipBaseHeight = match ($density) {
                 MaterialDensity::Comfortable => 28.0,
                 MaterialDensity::Compact => 24.0,
                 default => 32.0,
             };
+            $chipHeight = MaterialTokens::componentSize(
+                $props['size'] ?? null,
+                $chipBaseHeight,
+            );
 
             return new Style(
                 minHeight: $chipHeight,
-                paddingHorizontal: match ($density) {
-                    MaterialDensity::Comfortable => 10.0,
-                    MaterialDensity::Compact => 8.0,
-                    default => 12.0,
-                },
+                height: $chipHeight,
+                paddingHorizontal: max(4.0, ($chipHeight - 8.0) / 2.0),
                 gap: 6.0,
                 backgroundColor: $variant === MaterialVariant::Outlined
                     ? $transparent
@@ -1520,6 +1592,8 @@ final class MaterialStyleResolver
                 alignItems: Align::Center,
                 alignSelf: Align::Start,
                 justifyContent: Justify::Center,
+                animationDurationMs: 150,
+                animateChanges: true,
             );
         }
 
@@ -1783,11 +1857,15 @@ final class MaterialStyleResolver
                 'PCheckbox', 'PCheckboxBtn', 'PRadio', 'PSwitch',
                 'PSelectionControl',
             ], true);
-            $selectionSize = match ($density) {
+            $selectionBaseSize = match ($density) {
                 MaterialDensity::Comfortable => 36.0,
                 MaterialDensity::Compact => 28.0,
                 default => 40.0,
             };
+            $selectionSize = MaterialTokens::componentSize(
+                $props['size'] ?? null,
+                $selectionBaseSize,
+            );
 
             return new Style(
                 minWidth: in_array($part, ['PCheckbox', 'PCheckboxBtn', 'PRadio'], true)
@@ -1798,6 +1876,8 @@ final class MaterialStyleResolver
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
+                animationDurationMs: 200,
+                animateChanges: true,
             );
         }
 
@@ -1815,13 +1895,20 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, ['PProgressCircular', 'PRating'], true)) {
+            $progressSize = MaterialTokens::componentSize(
+                $props['size'] ?? null,
+                $part === 'PProgressCircular' ? 32.0 : 40.0,
+            );
+
             return new Style(
-                width: $part === 'PProgressCircular' ? 32.0 : null,
-                height: $part === 'PProgressCircular' ? 32.0 : 40.0,
+                width: $part === 'PProgressCircular' ? $progressSize : null,
+                height: $progressSize,
                 textColor: $theme->color(ColorToken::Primary),
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
+                animationDurationMs: 200,
+                animateChanges: true,
             );
         }
 
@@ -1946,13 +2033,10 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, ['PAvatar', 'PIcon'], true)) {
-            $diameter = match ($props['size'] ?? null) {
-                'xs' => 24.0,
-                'sm' => 32.0,
-                'lg' => 48.0,
-                'xl' => 64.0,
-                default => $part === 'PIcon' ? 24.0 : 40.0,
-            };
+            $diameter = MaterialTokens::componentSize(
+                $props['size'] ?? null,
+                $part === 'PIcon' ? 24.0 : 40.0,
+            );
 
             return new Style(
                 width: $diameter,
@@ -1966,6 +2050,8 @@ final class MaterialStyleResolver
                 opacity: $opacity,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
+                animationDurationMs: 200,
+                animateChanges: true,
             );
         }
 
@@ -2000,20 +2086,28 @@ final class MaterialStyleResolver
         }
 
         if ($part === 'PBadge') {
+            $badgeSize = MaterialTokens::componentSize(
+                $props['size'] ?? null,
+                20.0,
+                4.0,
+            );
+
             return new Style(
-                minWidth: 20.0,
-                minHeight: 20.0,
-                paddingHorizontal: 6.0,
-                paddingVertical: 4.0,
+                minWidth: $badgeSize,
+                minHeight: $badgeSize,
+                paddingHorizontal: max(4.0, $badgeSize * 0.3),
+                paddingVertical: 2.0,
                 backgroundColor: self::semanticColor($props, $theme, false)
                     ?? $theme->color(ColorToken::Secondary),
                 borderColor: $theme->color(ColorToken::Background),
                 borderWidth: 2.0,
-                borderRadius: 10.0,
+                borderRadius: $badgeSize / 2.0,
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
+                animationDurationMs: 150,
+                animateChanges: true,
             );
         }
 
