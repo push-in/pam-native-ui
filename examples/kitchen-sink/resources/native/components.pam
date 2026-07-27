@@ -10,7 +10,7 @@
             <p-col class="gap-2">
                 <p-chip variant="tonal"><p-text>Native design system</p-text></p-chip>
                 <p-text size="2xl" class="text-white">Build beautifully.</p-text>
-                <p-text size="md" class="text-white">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</p-text>
+                <p-text size="md" class="w-full text-white">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</p-text>
             </p-col>
         </p-card-item>
         <p-card-actions class="gap-2">

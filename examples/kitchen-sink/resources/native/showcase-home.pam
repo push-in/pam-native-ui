@@ -15,6 +15,6 @@
             <p-card on:press="goForms"><p-card-title>Forms</p-card-title><p-card-subtitle>Inputs, pickers and validation</p-card-subtitle></p-card>
             <p-card on:press="goData"><p-card-title>Data</p-card-title><p-card-subtitle>Tables, lists and visualization</p-card-subtitle></p-card>
             <p-card on:press="goOverlays"><p-card-title>Overlays</p-card-title><p-card-subtitle>Dialogs, sheets and menus</p-card-subtitle></p-card>
-            <p-btn on:press="goAll"><p-text>Explore the curated component system</p-text></p-btn>
+            <p-btn on:press="goAll"><p-text>Explore all components</p-text></p-btn>
         </p-col>
 </AppScreen>

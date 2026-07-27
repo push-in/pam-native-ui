@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App;
 
 use Pam\MobileUi\Component\UiComponent;
+use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Generated\MaterialComponentMap;
+use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\Align;
 use Pam\Native\Component;
@@ -41,10 +43,11 @@ final class ComponentRoute extends Component
 
     public function render(): Renderable
     {
+        $theme = ThemeManager::current();
         $samples = [];
         foreach ($this->variations() as $index => $variation) {
             $caption = Text::make($variation['label'])->style(new Style(
-                textColor: 0xFF49627F,
+                textColor: $theme->color(ColorToken::MutedForeground),
                 fontSize: 12.0,
                 lineHeight: 16.0,
                 fontWeight: 600,
@@ -518,13 +521,13 @@ final class ComponentRoute extends Component
                         fontSize: 20.0,
                         lineHeight: 28.0,
                         fontWeight: 600,
-                        textColor: 0xFF0B172A,
+                        textColor: $theme->color(ColorToken::OnSurface),
                     )),
                     Text::make('Android and iOS')->style(new Style(
                         paddingHorizontal: 16.0,
                         fontSize: 14.0,
                         lineHeight: 20.0,
-                        textColor: 0xFF5B6E87,
+                        textColor: $theme->color(ColorToken::MutedForeground),
                     )),
                     Text::make(
                         'One component API, rendered with platform-native views.',
@@ -532,7 +535,7 @@ final class ComponentRoute extends Component
                         padding: 16.0,
                         fontSize: 15.0,
                         lineHeight: 22.0,
-                        textColor: 0xFF24364D,
+                        textColor: $theme->color(ColorToken::OnSurface),
                     )),
                     $cardActions::make(
                         [],
@@ -713,15 +716,15 @@ final class ComponentRoute extends Component
                 padding: 16.0,
                 gap: 12.0,
                 borderRadius: 12.0,
-                backgroundColor: 0xFFFFFFFF,
+                backgroundColor: $theme->color(ColorToken::Surface),
                 borderWidth: 1.0,
-                borderColor: 0xFFDDE5EF,
+                borderColor: $theme->color(ColorToken::Border),
             ));
         }
 
         $menu = Pressable::make(
             Text::make('Menu')->style(new Style(
-                textColor: 0xFFFFFFFF,
+                textColor: $theme->color(ColorToken::PrimaryForeground),
                 fontSize: 14.0,
                 fontWeight: 600,
             )),
@@ -736,7 +739,7 @@ final class ComponentRoute extends Component
                 minHeight: 40.0,
                 paddingHorizontal: 16.0,
                 borderRadius: 20.0,
-                backgroundColor: 0xFF0E6FA5,
+                backgroundColor: $theme->color(ColorToken::Primary),
                 alignItems: Align::Center,
             ))
             ->accessibilityRole(AccessibilityRole::Button)
@@ -745,13 +748,13 @@ final class ComponentRoute extends Component
         $heading = Row::make(
             Column::make(
                 Text::make($this->title)->style(new Style(
-                    textColor: 0xFF0B172A,
+                    textColor: $theme->color(ColorToken::OnSurface),
                     fontSize: 24.0,
                     lineHeight: 32.0,
                     fontWeight: 700,
                 )),
                 Text::make($this->tag)->style(new Style(
-                    textColor: 0xFF5B6E87,
+                    textColor: $theme->color(ColorToken::MutedForeground),
                     fontSize: 14.0,
                     lineHeight: 20.0,
                 )),
@@ -769,7 +772,7 @@ final class ComponentRoute extends Component
             paddingVertical: 16.0,
             gap: 16.0,
             alignItems: Align::Center,
-            backgroundColor: 0xFFF3F6FA,
+            backgroundColor: $theme->color(ColorToken::Background),
             elevation: 1.0,
         ));
 
@@ -779,7 +782,7 @@ final class ComponentRoute extends Component
                 ScrollView::make(
                     Column::make(
                         Text::make('Variations')->style(new Style(
-                            textColor: 0xFF0B172A,
+                            textColor: $theme->color(ColorToken::OnSurface),
                             fontSize: 20.0,
                             lineHeight: 28.0,
                             fontWeight: 600,
@@ -800,13 +803,13 @@ final class ComponentRoute extends Component
                 widthPercent: 100.0,
                 heightPercent: 100.0,
                 flexGrow: 1.0,
-                backgroundColor: 0xFFF3F6FA,
+                backgroundColor: $theme->color(ColorToken::Background),
             )),
         )->style(new Style(
             widthPercent: 100.0,
             heightPercent: 100.0,
             flexGrow: 1.0,
-            backgroundColor: 0xFFF3F6FA,
+            backgroundColor: $theme->color(ColorToken::Background),
         ));
     }
 
