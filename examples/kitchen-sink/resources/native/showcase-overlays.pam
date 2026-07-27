@@ -16,10 +16,10 @@
     <p-card>
         <p-col class="p-4 gap-3">
             <p-text class="ui-text-muted">Focus trapping, Back, scrim, safe areas and entrance motion stay platform-owned.</p-text>
-            <p-row class="gap-2">
+            <p-col class="gap-2">
                 <p-btn class="flex-1" on:press="openDialog"><p-text>Dialog</p-text></p-btn>
                 <p-btn class="flex-1" variant="outline" on:press="openSheet"><p-text>Bottom sheet</p-text></p-btn>
-            </p-row>
+            </p-col>
             <p-btn variant="tonal" on:press="showLoadingOverlay"><p-text>Loading overlay</p-text></p-btn>
         </p-col>
     </p-card>
@@ -27,7 +27,7 @@
     <p-text size="xl">Contextual surfaces</p-text>
     <p-card>
         <p-col class="p-4 gap-3">
-            <p-row class="gap-2 items-center">
+            <p-col class="gap-2">
                 <p-menu>
                     <p-btn><p-text>Menu</p-text></p-btn>
                     <p-list>
@@ -38,7 +38,7 @@
                 <p-tooltip text="Long press for native tooltip">
                     <p-btn class="flex-1" variant="outline"><p-text>Tooltip</p-text></p-btn>
                 </p-tooltip>
-            </p-row>
+            </p-col>
             <p-btn variant="tonal" on:press="showSnackbar"><p-text>Snackbar</p-text></p-btn>
             <p-speed-dial class="w-16 h-16">
                 <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
