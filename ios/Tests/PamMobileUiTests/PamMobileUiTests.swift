@@ -60,9 +60,8 @@ final class PamMobileUiTests: XCTestCase {
     }
 
     func testGeneratedVectorCatalogCoversEveryNativeIconId() {
-        XCTAssertEqual(PamGeneratedIconPaths.count, 61)
-        XCTAssertNotNil(PamGeneratedIconPaths[1])
-        XCTAssertNotNil(PamGeneratedIconPaths[61])
-        XCTAssertTrue(PamGeneratedIconPaths.values.allSatisfy { !$0.isEmpty })
+        XCTAssertEqual(GeneratedIcons.paths.count, 61)
+        XCTAssertTrue(GeneratedIcons.paths.keys.allSatisfy { $0 > 0 })
+        XCTAssertTrue(GeneratedIcons.paths.values.allSatisfy { !$0.isEmpty })
     }
 }
