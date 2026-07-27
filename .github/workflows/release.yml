@@ -21,7 +21,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 08bc79c04481395e365834f5dd9cfdb7840173de
+  PAM_NATIVE_COMMIT: e98a953a8c84745b80576bb2e358a331547daff7
 
 jobs:
   ios:
