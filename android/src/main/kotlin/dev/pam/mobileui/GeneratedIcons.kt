@@ -3,6 +3,7 @@ package dev.pam.mobileui
 /** Generated from the versioned PamUI icon catalog. */
 internal object GeneratedIcons {
     val paths: Map<Int, Array<String>> = mapOf(
+        22 to arrayOf("M12 5V19", "M5 12H19"),
         24 to arrayOf("M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z", "M12 8V12", "M12 16H12.01"),
         34 to arrayOf("M12 5V19", "M19 12L12 19L5 12"),
         35 to arrayOf("M19 12H5", "M12 19L5 12L12 5"),

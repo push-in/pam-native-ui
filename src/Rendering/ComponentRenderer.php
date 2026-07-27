@@ -3493,7 +3493,7 @@ final class ComponentRenderer
             'more-vert' => 'ThreeDotsIcon',
             'palette' => 'SunIcon',
             'person' => 'CircleIcon',
-            'widgets' => 'TabsTriggerIcon',
+            'widgets' => 'GripVerticalIcon',
         ];
         if (isset($aliases[$normalized])) {
             return $aliases[$normalized];
