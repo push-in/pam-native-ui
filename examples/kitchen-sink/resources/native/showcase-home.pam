@@ -5,8 +5,8 @@
         <p-card class="bg-primary">
             <p-col class="p-4 gap-3">
                 <p-chip variant="tonal"><p-text>Material for native</p-text></p-chip>
-                <p-text size="2xl">One system. Two platforms.</p-text>
-                <p-text>Explore every p-* component as real Android and UIKit views.</p-text>
+                <p-text size="2xl" class="text-white">One system. Two platforms.</p-text>
+                <p-text class="text-white">Explore every p-* component as real Android and UIKit views.</p-text>
             </p-col>
         </p-card>
         <p-text size="xl">Browse by category</p-text>

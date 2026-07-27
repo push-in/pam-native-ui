@@ -378,6 +378,23 @@ final class ComponentRenderer
         }
         if (
             isset($props['__materialComponent'])
+            && in_array(
+                $props['__materialComponent'],
+                ['PBtn', 'PIconBtn', 'PFab'],
+                true,
+            )
+            && $style->textColor !== null
+        ) {
+            $foreground = $style->textColor;
+            $children = array_map(
+                static fn (Element $child): Element => $child->style(
+                    new Style(textColor: $foreground, tintColor: $foreground),
+                ),
+                $children,
+            );
+        }
+        if (
+            isset($props['__materialComponent'])
             && in_array($props['__materialComponent'], ['PBadge', 'PChip'], true)
         ) {
             $foregroundProps = $props['__materialComponent'] === 'PBadge'

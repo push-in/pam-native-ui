@@ -9,12 +9,12 @@
         <p-card-item>
             <p-col class="gap-2">
                 <p-chip variant="tonal"><p-text>Native design system</p-text></p-chip>
-                <p-text size="2xl">Build beautifully.</p-text>
-                <p-text size="md">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</p-text>
+                <p-text size="2xl" class="text-white">Build beautifully.</p-text>
+                <p-text size="md" class="text-white">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</p-text>
             </p-col>
         </p-card-item>
         <p-card-actions class="gap-2">
-            <p-chip><p-icon icon="widgets" /><p-text>Curated mobile component system</p-text></p-chip>
+            <p-chip><p-icon icon="widgets" /><p-text>Curated mobile</p-text></p-chip>
             <p-chip><p-icon icon="palette" /><p-text>Themes</p-text></p-chip>
         </p-card-actions>
     </p-card>
