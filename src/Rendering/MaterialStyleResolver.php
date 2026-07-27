@@ -1659,9 +1659,10 @@ final class MaterialStyleResolver
 
         if ($part === 'PSpeedDial') {
             return new Style(
-                widthPercent: 100.0,
-                minHeight: 240.0,
-                padding: 16.0,
+                width: 56.0,
+                height: 56.0,
+                minHeight: 56.0,
+                padding: 0.0,
                 gap: 8.0,
                 borderRadius: MaterialTokens::radius(MaterialShape::Large),
             );
