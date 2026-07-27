@@ -44,7 +44,7 @@ $assert(
 );
 $assert(
     ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.3',
-    'The package must require pushinbr/pam-native:^0.3.',
+    'The package must require pushinbr/pam-native:^0.4.1.',
 );
 $assert(
     ($composer['type'] ?? null) === 'pam-native-plugin',
