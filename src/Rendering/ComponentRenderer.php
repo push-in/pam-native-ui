@@ -3446,9 +3446,14 @@ final class ComponentRenderer
     {
         $requested = $props['name'] ?? $props['icon'] ?? $part;
         $materialIds = \Pam\MobileUi\Generated\MaterialComponentMap::IDS;
-        $icon = is_string($requested)
-            ? ($materialIds[$requested] ?? ComponentMap::IDS[$requested] ?? $materialIds[$part] ?? ComponentMap::IDS[$part] ?? 0)
-            : ($materialIds[$part] ?? ComponentMap::IDS[$part] ?? 0);
+        $iconName = is_string($requested)
+            ? self::nativeIconName($requested)
+            : $part;
+        $icon = $materialIds[$iconName]
+            ?? ComponentMap::IDS[$iconName]
+            ?? $materialIds[$part]
+            ?? ComponentMap::IDS[$part]
+            ?? 0;
         $requestedColor = $props['color'] ?? $props['action'] ?? null;
         $theme = ThemeManager::current();
         $semanticColor = is_string($requestedColor)
@@ -3472,6 +3477,37 @@ final class ComponentRenderer
             'icon' => $icon,
             'color' => $color,
         ];
+    }
+
+    private static function nativeIconName(string $requested): string
+    {
+        $normalized = strtolower(trim($requested));
+        $aliases = [
+            'favorite' => 'FavouriteIcon',
+            'format-align-center' => 'GripVerticalIcon',
+            'format-align-left' => 'ChevronsLeftIcon',
+            'format-align-right' => 'ChevronsRightIcon',
+            'home' => 'GlobeIcon',
+            'inbox' => 'MailIcon',
+            'more-horiz' => 'ThreeDotsIcon',
+            'more-vert' => 'ThreeDotsIcon',
+            'palette' => 'SunIcon',
+            'person' => 'CircleIcon',
+            'widgets' => 'TabsTriggerIcon',
+        ];
+        if (isset($aliases[$normalized])) {
+            return $aliases[$normalized];
+        }
+        if (str_ends_with($requested, 'Icon')) {
+            return $requested;
+        }
+        $words = preg_split('/[^a-zA-Z0-9]+/', $requested) ?: [];
+        $pascal = implode('', array_map(
+            static fn (string $word): string => ucfirst(strtolower($word)),
+            $words,
+        ));
+
+        return $pascal.'Icon';
     }
 
     private static function isPressable(string $part): bool
