@@ -15,19 +15,22 @@ let package = Package(
         .library(name: "PamMobileUi", targets: ["PamMobileUi"]),
     ],
     dependencies: [
-        .package(name: "PamNative", path: pamNativePath),
+        .package(path: pamNativePath),
     ],
     targets: [
         .target(
             name: "PamMobileUi",
             dependencies: [
-                .product(name: "PamNative", package: "PamNative"),
+                .product(name: "PamNative", package: "ios"),
             ],
             path: "Sources/PamMobileUi"
         ),
         .testTarget(
             name: "PamMobileUiTests",
-            dependencies: ["PamMobileUi", "PamNative"],
+            dependencies: [
+                "PamMobileUi",
+                .product(name: "PamNative", package: "ios"),
+            ],
             path: "Tests/PamMobileUiTests"
         ),
     ],
