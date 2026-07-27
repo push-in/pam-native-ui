@@ -25,10 +25,16 @@ let package = Package(
             ],
             path: "ios/Sources/PamMobileUi"
         ),
+        .target(
+            name: "PamMobileUiTestRuntimeShims",
+            path: "ios/Tests/PamMobileUiTestRuntimeShims",
+            publicHeadersPath: "include"
+        ),
         .testTarget(
             name: "PamMobileUiTests",
             dependencies: [
                 "PamMobileUi",
+                "PamMobileUiTestRuntimeShims",
                 .product(name: "PamNative", package: "ios"),
             ],
             path: "ios/Tests/PamMobileUiTests"
