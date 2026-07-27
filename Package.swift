@@ -4,7 +4,7 @@ import Foundation
 import PackageDescription
 
 let pamNativePath = ProcessInfo.processInfo.environment["PAM_NATIVE_IOS_PATH"]
-    ?? "../../pam-native/ios"
+    ?? "../pam-native/ios"
 
 let package = Package(
     name: "PamMobileUi",
@@ -23,7 +23,7 @@ let package = Package(
             dependencies: [
                 .product(name: "PamNative", package: "ios"),
             ],
-            path: "Sources/PamMobileUi"
+            path: "ios/Sources/PamMobileUi"
         ),
         .testTarget(
             name: "PamMobileUiTests",
@@ -31,7 +31,7 @@ let package = Package(
                 "PamMobileUi",
                 .product(name: "PamNative", package: "ios"),
             ],
-            path: "Tests/PamMobileUiTests"
+            path: "ios/Tests/PamMobileUiTests"
         ),
     ],
     swiftLanguageVersions: [.v5]

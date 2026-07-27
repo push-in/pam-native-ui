@@ -38,7 +38,6 @@ jobs:
           ref: ${{ env.PAM_NATIVE_COMMIT }}
           path: pam-native
       - name: Test and build UIKit package
-        working-directory: ios
         env:
           PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
         run: |
