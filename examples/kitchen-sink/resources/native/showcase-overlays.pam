@@ -75,7 +75,7 @@
         </p-card>
     </p-dialog>
 
-    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" on:event="closeSheet">
+    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="0" on:event="closeSheet">
         <p-list-subheader>Component actions</p-list-subheader>
         <p-list-item on:press="closeSheet">
             <p-list-item-title>Inspect accessibility tree</p-list-item-title>
