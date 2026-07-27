@@ -193,12 +193,17 @@ final class ComponentRenderer
                 || is_string($props['name'] ?? null)
             )
         ) {
+            $iconProperties = self::iconProperties($part, $props);
             $children = [
                 CustomView::make(
                     'pam.mobile_ui.icon',
-                    self::iconProperties($part, $props),
+                    $iconProperties,
                 )
                     ->style(new Style(width: 24.0, height: 24.0))
+                    ->property(
+                        PropKey::Value,
+                        'pam:icon:'.$iconProperties['icon'],
+                    )
                     ->accessible(false)
                     ->accessibilityImportance(
                         AccessibilityImportance::NoHideDescendants,
@@ -387,9 +392,8 @@ final class ComponentRenderer
         ) {
             $foreground = $style->textColor;
             $children = array_map(
-                static fn (Element $child): Element => $child->style(
-                    new Style(textColor: $foreground, tintColor: $foreground),
-                ),
+                static fn (Element $child): Element =>
+                    self::applyButtonForeground($child, $foreground),
                 $children,
             );
         }
@@ -1212,9 +1216,14 @@ final class ComponentRenderer
             return self::input($part, $props);
         }
         if (self::isIcon($part)) {
+            $iconProperties = self::iconProperties($part, $props);
+
             return CustomView::make(
                 'pam.mobile_ui.icon',
-                self::iconProperties($part, $props),
+                $iconProperties,
+            )->property(
+                PropKey::Value,
+                'pam:icon:'.$iconProperties['icon'],
             );
         }
         if (self::isImage($part)) {
@@ -3477,6 +3486,35 @@ final class ComponentRenderer
             'icon' => $icon,
             'color' => $color,
         ];
+    }
+
+    private static function applyButtonForeground(
+        Element $child,
+        int $foreground,
+    ): Element {
+        $styled = $child->style(
+            new Style(textColor: $foreground, tintColor: $foreground),
+        );
+        $marker = $child->properties()[PropKey::Value->value] ?? null;
+        if (
+            !$styled instanceof CustomView
+            || !is_string($marker)
+            || !str_starts_with($marker, 'pam:icon:')
+        ) {
+            return $styled;
+        }
+        $icon = filter_var(
+            substr($marker, strlen('pam:icon:')),
+            FILTER_VALIDATE_INT,
+        );
+        if (!is_int($icon)) {
+            return $styled;
+        }
+
+        return $styled->hostProperties([
+            'icon' => $icon,
+            'color' => $foreground,
+        ]);
     }
 
     private static function nativeIconName(string $requested): string
