@@ -294,6 +294,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutBottomSheet()
         case .overlay, .drawer, .modal, .alertDialog, .portal, .imageViewer:
             layoutOverlay()
+            if behavior == .imageViewer {
+                applyImageTransform()
+            }
         case .popover, .menu, .tooltip:
             layoutAnchoredOverlay()
         case .tabs:
@@ -312,8 +315,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutMessageBranch()
         case .fileTree:
             layoutFileTree()
-        case .imageViewer:
-            applyImageTransform()
         default:
             break
         }
@@ -1523,7 +1524,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? ""
         let points = source
             .split(whereSeparator: { $0 == "," || $0 == "\n" || $0 == ";" || $0 == " " })
-            .compactMap { Double($0).map(CGFloat.init) }
+            .compactMap { Double($0).map { CGFloat($0) } }
         guard points.count > 1, bounds.width > 0, bounds.height > 0,
               let low = points.min(), let high = points.max() else { return }
         let spread = max(0.000_001, high - low)
@@ -1823,7 +1824,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func parseNumbers(_ source: String?) -> [CGFloat] {
         source?
             .split(whereSeparator: { $0 == "," || $0 == "\n" || $0 == ";" || $0 == " " })
-            .compactMap { Double($0).map(CGFloat.init) }
+            .compactMap { Double($0).map { CGFloat($0) } }
             .map { min(100, max(1, $0)) } ?? []
     }
 
