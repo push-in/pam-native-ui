@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "PamMobileUi", targets: ["PamMobileUi"]),
     ],
     dependencies: [
-        .package(path: pamNativePath),
+        .package(name: "PamNative", path: pamNativePath),
     ],
     targets: [
         .target(
