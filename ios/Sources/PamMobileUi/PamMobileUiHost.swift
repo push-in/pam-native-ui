@@ -119,6 +119,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var maximum: CGFloat = 100
     private var step: CGFloat = 1
     private var value: CGFloat = 0
+    private var rangeEnabled = false
+    private var lowerValue: CGFloat = 0
+    private var upperValue: CGFloat = 100
+    private var activeRangeThumb = 1
+    private var orientation = 1
+    private var reversed = false
+    private var showSliderTicks = false
+    private var showThumbLabel = false
+    private var sliderThumbSize: CGFloat = 20
+    private var sliderTrackThickness: CGFloat = 4
     private var snapPoints: [CGFloat] = []
     private var snapIndex = 0
     private var dragOrigin: CGFloat = 0
@@ -148,6 +158,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private weak var anchoredPortalCatcher: UIControl?
     private var anchoredPortalIndex = 0
     private var anchoredPortalFrame = CGRect.zero
+    private var navigationKind = 0
+    private var carouselCycle = false
+    private var carouselContinuous = true
+    private var carouselInterval: TimeInterval = 6
+    private var carouselWorkItem: DispatchWorkItem?
+    private var sparklineAutoDrawApplied = false
 
     init(emit: @escaping EventEmitter) {
         self.emit = emit
@@ -234,6 +250,34 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         maximum = max(minimum, next["maximum"]?.pamDecimal ?? next["max"]?.pamDecimal ?? maximum)
         step = max(0.000_001, next["step"]?.pamDecimal ?? step)
         value = clamped(next["value"]?.pamDecimal ?? next["modelValue"]?.pamDecimal ?? value)
+        rangeEnabled = next["range"]?.pamFlag ?? rangeEnabled
+        lowerValue = clamped(next["lowerValue"]?.pamDecimal ?? lowerValue)
+        upperValue = clamped(next["upperValue"]?.pamDecimal ?? upperValue)
+        if rangeEnabled {
+            lowerValue = min(lowerValue, upperValue)
+            upperValue = max(lowerValue, upperValue)
+            value = upperValue
+        }
+        orientation = next["orientation"]?.pamInteger ?? orientation
+        reversed = next["reversed"]?.pamFlag
+            ?? next["isReversed"]?.pamFlag
+            ?? reversed
+        showSliderTicks = next["showTicks"]?.pamFlag == true
+            || next["alwaysShowTicks"]?.pamFlag == true
+        showThumbLabel = next["showThumbLabel"]?.pamFlag == true
+            || next["alwaysShowThumbLabel"]?.pamFlag == true
+        sliderThumbSize = max(1, next["thumbSize"]?.pamDecimal ?? sliderThumbSize)
+        sliderTrackThickness = max(
+            1,
+            next["trackThickness"]?.pamDecimal ?? sliderTrackThickness
+        )
+        navigationKind = next["navigationKind"]?.pamInteger ?? navigationKind
+        carouselCycle = next["cycle"]?.pamFlag ?? false
+        carouselContinuous = next["continuous"]?.pamFlag ?? true
+        carouselInterval = min(
+            60,
+            max(0.75, (next["interval"]?.pamDecimal ?? 6_000) / 1_000)
+        )
         snapPoints = parseNumbers(next["snapPoints"]?.pamText)
         snapIndex = min(
             max(0, next["snapToIndex"]?.pamInteger
@@ -260,7 +304,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         applyVisibility()
         applyBehaviorState()
         applyButtonToggleVisualState()
+        applyTabTextVisualState()
         applyProgressState()
+        scheduleCarousel()
         setNeedsLayout()
         setNeedsDisplay()
     }
@@ -274,6 +320,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         shimmerLayer = nil
         toastDismissWorkItem?.cancel()
         toastDismissWorkItem = nil
+        carouselWorkItem?.cancel()
+        carouselWorkItem = nil
         removeProgressLayers()
         emit = nil
         gestureRecognizers?.forEach(removeGestureRecognizer)
@@ -284,6 +332,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         setNeedsLayout()
         applySemantics()
         applyButtonToggleVisualState()
+        applyTabTextVisualState()
     }
 
     override func layoutSubviews() {
@@ -443,6 +492,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         tabTriggers(in: self).forEach { item in
             item.isSelectedState = item.properties["value"]?.pamText == target
             item.applyButtonToggleVisualState()
+            item.applyTabTextVisualState()
             item.applySemantics()
         }
         setNeedsLayout()
@@ -453,6 +503,54 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         ) {
             self.layoutTabs()
         }
+    }
+
+    private func scheduleCarousel() {
+        carouselWorkItem?.cancel()
+        carouselWorkItem = nil
+        guard behavior == .tabs, navigationKind == 1, carouselCycle else {
+            return
+        }
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            let triggers = self.carouselTriggers()
+            guard triggers.count > 1 else { return }
+            let current = triggers.firstIndex(where: { $0.isSelectedState }) ?? 0
+            let next = current + 1
+            guard next < triggers.count || self.carouselContinuous else { return }
+            self.selectTab(triggers[next % triggers.count])
+            self.scheduleCarousel()
+        }
+        carouselWorkItem = workItem
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + carouselInterval,
+            execute: workItem
+        )
+    }
+
+    private func panCarousel(_ recognizer: UIPanGestureRecognizer) {
+        guard recognizer.state == .ended else { return }
+        let velocity = recognizer.velocity(in: self)
+        let horizontal = abs(velocity.x) >= abs(velocity.y)
+        let primaryVelocity = horizontal ? velocity.x : velocity.y
+        guard abs(primaryVelocity) >= 360 else { return }
+        let triggers = carouselTriggers()
+        guard triggers.count > 1 else { return }
+        let current = triggers.firstIndex(where: { $0.isSelectedState }) ?? 0
+        var direction = primaryVelocity < 0 ? 1 : -1
+        if properties["reverse"]?.pamFlag == true {
+            direction *= -1
+        }
+        let requested = current + direction
+        let target: Int
+        if carouselContinuous {
+            target = (requested % triggers.count + triggers.count) % triggers.count
+        } else {
+            target = min(triggers.count - 1, max(0, requested))
+        }
+        guard target != current else { return }
+        selectTab(triggers[target])
+        scheduleCarousel()
     }
 
     private func tabTriggers(in root: UIView) -> [PamMobileUiHost] {
@@ -466,9 +564,25 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    private func carouselTriggers() -> [PamMobileUiHost] {
+        tabTriggers(in: self).filter {
+            $0.isUserInteractionEnabled
+                && !($0.properties["carouselControl"]?.pamFlag ?? false)
+        }
+    }
+
     private func applyButtonToggleVisualState() {
         guard buttonToggleItem, behavior == .tabTrigger else { return }
         backgroundColor = isSelectedState ? fillColor : .clear
+        layer.cornerRadius = CGFloat(
+            properties["selectionCornerRadius"]?.pamDecimal ?? 8
+        )
+        layer.masksToBounds = true
+        applyTabTextVisualState()
+    }
+
+    private func applyTabTextVisualState() {
+        guard behavior == .tabTrigger else { return }
         setTextColor(
             in: self,
             color: isSelectedState ? selectedForegroundColor : stateLayerColor
@@ -489,6 +603,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             panSheet(recognizer)
         case .slider:
             panSlider(recognizer)
+        case .tabs:
+            if navigationKind == 1 {
+                panCarousel(recognizer)
+            }
         case .drawer:
             if recognizer.state == .ended,
                recognizer.velocity(in: self).x < -560 {
@@ -551,7 +669,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             traits = [.adjustable]
             accessibilityValue = behavior == .bottomSheet
                 ? "Position \(snapIndex + 1) of \(max(1, snapPoints.count))"
-                : formatted(value)
+                : (rangeEnabled && behavior == .slider
+                    ? "\(formatted(lowerValue)) to \(formatted(upperValue))"
+                    : formatted(value))
         case .tabTrigger:
             isAccessibilityElement = true
             traits = [.button]
@@ -604,6 +724,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             applyImageTransform()
         case .transition:
             applyTransition()
+        case .sparkline:
+            applySparklineAutoDraw()
         case .parallax:
             applyParallax()
         case .hotkey:
@@ -1272,19 +1394,52 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func panSlider(_ recognizer: UIPanGestureRecognizer) {
-        guard bounds.width > 0 else { return }
+        guard bounds.width > 0, bounds.height > 0 else { return }
         let point = recognizer.location(in: self)
-        let logicalX = effectiveUserInterfaceLayoutDirection == .rightToLeft
-            ? bounds.width - point.x : point.x
-        let fraction = min(1, max(0, logicalX / bounds.width))
-        setRangeValue(minimum + fraction * (maximum - minimum), emitChange: true)
+        var fraction: CGFloat
+        if orientation == 2 {
+            fraction = 1 - point.y / bounds.height
+        } else {
+            fraction = point.x / bounds.width
+            if effectiveUserInterfaceLayoutDirection == .rightToLeft {
+                fraction = 1 - fraction
+            }
+        }
+        fraction = min(1, max(0, fraction))
+        if reversed { fraction = 1 - fraction }
+        let requested = snapped(minimum + fraction * (maximum - minimum))
+        if rangeEnabled {
+            if recognizer.state == .began {
+                activeRangeThumb = abs(requested - lowerValue) <= abs(requested - upperValue)
+                    ? 0 : 1
+            }
+            if activeRangeThumb == 0 {
+                lowerValue = min(requested, upperValue)
+            } else {
+                upperValue = max(requested, lowerValue)
+                value = upperValue
+            }
+            setNeedsDisplay()
+            accessibilityValue = "\(formatted(lowerValue)) to \(formatted(upperValue))"
+            emit?(.change, rangePayload())
+        } else {
+            setRangeValue(requested, emitChange: true)
+        }
         if recognizer.state == .ended || recognizer.state == .cancelled {
-            emit?(.native, Data(formatted(value).utf8))
+            emit?(.native, rangeEnabled ? rangePayload() : Data(formatted(value).utf8))
         }
     }
 
+    private func snapped(_ requested: CGFloat) -> CGFloat {
+        clamped(round((requested - minimum) / step) * step + minimum)
+    }
+
+    private func rangePayload() -> Data {
+        Data("[\(formatted(lowerValue)),\(formatted(upperValue))]".utf8)
+    }
+
     private func setRangeValue(_ requested: CGFloat, emitChange: Bool) {
-        value = clamped(round((requested - minimum) / step) * step + minimum)
+        value = snapped(requested)
         setNeedsDisplay()
         accessibilityValue = formatted(value)
         if emitChange {
@@ -1319,21 +1474,52 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         if behavior == .progress, properties["circular"]?.pamFlag == true {
             return
         }
-        let fraction = maximum > minimum ? (value - minimum) / (maximum - minimum) : 0
+        let fraction = maximum > minimum
+            ? min(1, max(0, (value - minimum) / (maximum - minimum)))
+            : 0
         let height = max(4, min(bounds.height, properties["thickness"]?.pamDecimal ?? 4))
         let track = CGRect(x: 0, y: (bounds.height - height) / 2, width: bounds.width, height: height)
         context.setFillColor(trackColor.cgColor)
-        context.fillPath()
         context.addPath(UIBezierPath(roundedRect: track, cornerRadius: height / 2).cgPath)
         context.fillPath()
         context.setFillColor(fillColor.cgColor)
         var fill = track
-        fill.size.width *= min(1, max(0, fraction))
-        if effectiveUserInterfaceLayoutDirection == .rightToLeft {
+        fill.size.width *= properties["indeterminate"]?.pamFlag == true
+            ? 0.34 : fraction
+        let reverse = properties["reverse"]?.pamFlag == true
+            || properties["reversed"]?.pamFlag == true
+        if reverse != (effectiveUserInterfaceLayoutDirection == .rightToLeft) {
             fill.origin.x = bounds.width - fill.width
         }
         context.addPath(UIBezierPath(roundedRect: fill, cornerRadius: height / 2).cgPath)
         context.fillPath()
+
+        if properties["striped"]?.pamFlag == true, fill.width > 0 {
+            context.saveGState()
+            context.clip(to: fill)
+            context.setStrokeColor(UIColor.white.withAlphaComponent(0.28).cgColor)
+            context.setLineWidth(max(2, height / 2))
+            var x = fill.minX - height
+            while x < fill.maxX + height {
+                context.move(to: CGPoint(x: x, y: fill.maxY))
+                context.addLine(to: CGPoint(x: x + height, y: fill.minY))
+                x += height
+            }
+            context.strokePath()
+            context.restoreGState()
+        }
+
+        if properties["stream"]?.pamFlag == true {
+            context.saveGState()
+            context.setStrokeColor(fillColor.withAlphaComponent(0.38).cgColor)
+            context.setLineWidth(max(1, height / 3))
+            context.setLineDash(phase: 0, lengths: [4, 4])
+            let y = track.maxY + 3
+            context.move(to: CGPoint(x: track.minX, y: y))
+            context.addLine(to: CGPoint(x: track.maxX, y: y))
+            context.strokePath()
+            context.restoreGState()
+        }
     }
 
     private func applyProgressState() {
@@ -1418,17 +1604,162 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func drawSlider(_ context: CGContext) {
-        drawProgress(context)
-        let fraction = maximum > minimum ? (value - minimum) / (maximum - minimum) : 0
-        let logical = bounds.width * min(1, max(0, fraction))
-        let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
-            ? bounds.width - logical : logical
+        let rating = properties["rating"]?.pamFlag == true
+        subviews.forEach { $0.isHidden = rating }
+        if rating {
+            drawRating(context)
+            return
+        }
+        let trackInset = sliderThumbSize / 2
+        let track = orientation == 2
+            ? CGRect(
+                x: bounds.midX - sliderTrackThickness / 2,
+                y: trackInset,
+                width: sliderTrackThickness,
+                height: max(1, bounds.height - sliderThumbSize)
+            )
+            : CGRect(
+                x: trackInset,
+                y: bounds.midY - sliderTrackThickness / 2,
+                width: max(1, bounds.width - sliderThumbSize),
+                height: sliderTrackThickness
+            )
+        context.setFillColor(trackColor.cgColor)
+        UIBezierPath(
+            roundedRect: track,
+            cornerRadius: sliderTrackThickness / 2
+        ).fill()
+
+        let lower = sliderPoint(rangeEnabled ? lowerValue : minimum, in: track)
+        let upper = sliderPoint(value, in: track)
+        context.setStrokeColor(fillColor.cgColor)
+        context.setLineWidth(sliderTrackThickness)
+        context.setLineCap(.round)
+        context.move(to: lower)
+        context.addLine(to: upper)
+        context.strokePath()
+
+        if showSliderTicks {
+            let intervals = min(100, max(1, Int(round((maximum - minimum) / step))))
+            context.setFillColor(trackColor.cgColor)
+            for index in 0...intervals {
+                let tickValue = minimum
+                    + (maximum - minimum) * CGFloat(index) / CGFloat(intervals)
+                let point = sliderPoint(tickValue, in: track)
+                context.fillEllipse(in: CGRect(
+                    x: point.x - 1.5,
+                    y: point.y - 1.5,
+                    width: 3,
+                    height: 3
+                ))
+            }
+        }
+
         context.setFillColor(fillColor.cgColor)
-        context.fillEllipse(in: CGRect(x: x - 10, y: bounds.midY - 10, width: 20, height: 20))
+        let radius = sliderThumbSize / 2
+        let thumbValues = rangeEnabled ? [lowerValue, upperValue] : [value]
+        for current in thumbValues {
+            let point = sliderPoint(current, in: track)
+            context.fillEllipse(in: CGRect(
+                x: point.x - radius,
+                y: point.y - radius,
+                width: sliderThumbSize,
+                height: sliderThumbSize
+            ))
+            if showThumbLabel {
+                drawThumbLabel(formatted(current), at: point, context: context)
+            }
+        }
+    }
+
+    private func drawRating(_ context: CGContext) {
+        let length = min(
+            20,
+            max(1, properties["length"]?.pamInteger ?? 5)
+        )
+        let stars = String(repeating: "\u{2605}", count: length)
+        let font = UIFont.systemFont(
+            ofSize: min(bounds.height * 0.78, bounds.width / CGFloat(length) * 0.88),
+            weight: .regular
+        )
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .left
+        let baseAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: trackColor,
+            .paragraphStyle: paragraph,
+        ]
+        let textSize = (stars as NSString).size(withAttributes: baseAttributes)
+        let origin = CGPoint(
+            x: (bounds.width - textSize.width) / 2,
+            y: (bounds.height - textSize.height) / 2
+        )
+        (stars as NSString).draw(at: origin, withAttributes: baseAttributes)
+
+        let fraction = maximum > minimum
+            ? min(1, max(0, (value - minimum) / (maximum - minimum)))
+            : 0
+        let fillFromEnd = (properties["reverse"]?.pamFlag == true)
+            != (effectiveUserInterfaceLayoutDirection == .rightToLeft)
+        let clip = CGRect(
+            x: fillFromEnd
+                ? origin.x + textSize.width * (1 - fraction)
+                : origin.x,
+            y: origin.y,
+            width: textSize.width * fraction,
+            height: textSize.height
+        )
+        context.saveGState()
+        context.clip(to: clip)
+        var fillAttributes = baseAttributes
+        fillAttributes[.foregroundColor] = fillColor
+        (stars as NSString).draw(at: origin, withAttributes: fillAttributes)
+        context.restoreGState()
+    }
+
+    private func sliderPoint(_ current: CGFloat, in track: CGRect) -> CGPoint {
+        var fraction = maximum > minimum
+            ? min(1, max(0, (current - minimum) / (maximum - minimum)))
+            : 0
+        if reversed { fraction = 1 - fraction }
+        if orientation == 2 {
+            return CGPoint(x: track.midX, y: track.maxY - track.height * fraction)
+        }
+        if effectiveUserInterfaceLayoutDirection == .rightToLeft {
+            fraction = 1 - fraction
+        }
+        return CGPoint(x: track.minX + track.width * fraction, y: track.midY)
+    }
+
+    private func drawThumbLabel(
+        _ text: String,
+        at point: CGPoint,
+        context: CGContext
+    ) {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
+            .foregroundColor: selectedForegroundColor,
+        ]
+        let size = (text as NSString).size(withAttributes: attributes)
+        let width = max(32, size.width + 16)
+        let bubble = orientation == 2
+            ? CGRect(x: point.x + 16, y: point.y - 14, width: width, height: 28)
+            : CGRect(x: point.x - width / 2, y: point.y - 40, width: width, height: 28)
+        context.setFillColor(fillColor.cgColor)
+        UIBezierPath(roundedRect: bubble, cornerRadius: 6).fill()
+        (text as NSString).draw(
+            at: CGPoint(
+                x: bubble.midX - size.width / 2,
+                y: bubble.midY - size.height / 2
+            ),
+            withAttributes: attributes
+        )
     }
 
     private func drawSwitch(_ context: CGContext) {
-        let track = CGRect(
+        let track = descendant(tag: "pam:switch-track").map {
+            $0.convert($0.bounds, to: self)
+        } ?? CGRect(
             x: max(0, (bounds.width - 52) / 2),
             y: max(0, (bounds.height - 32) / 2),
             width: 52,
@@ -1444,7 +1775,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         context.setFillColor((isChecked ? UIColor.white : UIColor.secondaryLabel).cgColor)
         context.fillEllipse(in: CGRect(
             x: isChecked ? checkedX : uncheckedX,
-            y: bounds.midY - diameter / 2,
+            y: track.midY - diameter / 2,
             width: diameter,
             height: diameter
         ))
@@ -1484,37 +1815,145 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func drawCalendar(_ context: CGContext) {
-        let calendar = Calendar.autoupdatingCurrent
-        let now = properties["visibleDate"]?.pamText
-            .flatMap(ISO8601DateFormatter().date(from:)) ?? Date()
-        let range = calendar.range(of: .day, in: .month, for: now) ?? 1..<31
-        let first = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
-        let offset = max(0, calendar.component(.weekday, from: first) - 1)
-        let cellWidth = bounds.width / 7
+        var calendar = Calendar.autoupdatingCurrent
+        calendar.firstWeekday = 1
+        let requestedYear = properties["year"]?.pamInteger
+        let requestedMonth = properties["month"]?.pamInteger
+        let now = calendar.date(from: DateComponents(
+            year: requestedYear,
+            month: requestedMonth,
+            day: 1
+        )) ?? Date()
+        let first = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: now)
+        ) ?? now
+        let offset = (
+            calendar.component(.weekday, from: first)
+            - calendar.firstWeekday
+            + 7
+        ) % 7
+        let firstVisible = calendar.date(
+            byAdding: .day,
+            value: -offset,
+            to: first
+        ) ?? first
+        let showWeek = properties["showWeek"]?.pamFlag == true
+        let showOutside = properties["showOutsideDays"]?.pamFlag ?? true
+        let columns = showWeek ? 8 : 7
+        let cellWidth = bounds.width / CGFloat(columns)
         let cellHeight = bounds.height / 7
         let font = UIFont.preferredFont(forTextStyle: .body)
-        let attributes: [NSAttributedString.Key: Any] = [
+        let mutedAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.preferredFont(forTextStyle: .caption1),
+            .foregroundColor: UIColor.secondaryLabel,
+        ]
+        let normalAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: stateLayerColor,
         ]
-        for day in range {
-            let index = offset + day - 1
-            let column = index % 7
+        let selected = Set(
+            (properties["selectedValues"]?.pamText ?? "")
+                .split(whereSeparator: \.isNewline)
+                .map(String.init)
+        )
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        for dayIndex in 0..<7 {
+            let dayColumn = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                ? 6 - dayIndex : dayIndex
+            let visualColumn = dayColumn + (
+                showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
+                    ? 1 : 0
+            )
+            let symbol = calendar.veryShortWeekdaySymbols[dayIndex] as NSString
+            let frame = CGRect(
+                x: CGFloat(visualColumn) * cellWidth,
+                y: 0,
+                width: cellWidth,
+                height: cellHeight
+            )
+            let size = symbol.size(withAttributes: mutedAttributes)
+            symbol.draw(
+                at: CGPoint(
+                    x: frame.midX - size.width / 2,
+                    y: frame.midY - size.height / 2
+                ),
+                withAttributes: mutedAttributes
+            )
+        }
+
+        for index in 0..<42 {
+            guard let date = calendar.date(
+                byAdding: .day,
+                value: index,
+                to: firstVisible
+            ) else { continue }
+            let dayColumn = index % 7
             let logicalColumn = effectiveUserInterfaceLayoutDirection == .rightToLeft
-                ? 6 - column : column
+                ? 6 - dayColumn : dayColumn
+            let visualColumn = logicalColumn + (
+                showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
+                    ? 1 : 0
+            )
             let row = index / 7 + 1
             let frame = CGRect(
-                x: CGFloat(logicalColumn) * cellWidth,
+                x: CGFloat(visualColumn) * cellWidth,
                 y: CGFloat(row) * cellHeight,
                 width: cellWidth,
                 height: cellHeight
             )
-            let text = String(day) as NSString
+            let outside = !calendar.isDate(date, equalTo: first, toGranularity: .month)
+            if outside && !showOutside { continue }
+            let text = String(calendar.component(.day, from: date)) as NSString
+            let dateKey = formatter.string(from: date)
+            let isSelected = selected.contains(dateKey)
+            if isSelected {
+                context.setFillColor(fillColor.cgColor)
+                context.fillEllipse(in: frame.insetBy(
+                    dx: cellWidth * 0.18,
+                    dy: max(2, (cellHeight - cellWidth * 0.64) / 2)
+                ))
+            }
+            var attributes = outside ? mutedAttributes : normalAttributes
+            if isSelected {
+                attributes[.foregroundColor] = selectedForegroundColor
+            }
             let size = text.size(withAttributes: attributes)
             text.draw(
                 at: CGPoint(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2),
                 withAttributes: attributes
             )
+        }
+
+        if showWeek {
+            for row in 0..<6 {
+                guard let date = calendar.date(
+                    byAdding: .day,
+                    value: row * 7,
+                    to: firstVisible
+                ) else { continue }
+                let week = calendar.component(.weekOfYear, from: date)
+                let column = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                    ? 7 : 0
+                let frame = CGRect(
+                    x: CGFloat(column) * cellWidth,
+                    y: CGFloat(row + 1) * cellHeight,
+                    width: cellWidth,
+                    height: cellHeight
+                )
+                let text = String(week) as NSString
+                let size = text.size(withAttributes: mutedAttributes)
+                text.draw(
+                    at: CGPoint(
+                        x: frame.midX - size.width / 2,
+                        y: frame.midY - size.height / 2
+                    ),
+                    withAttributes: mutedAttributes
+                )
+            }
         }
     }
 
@@ -1553,14 +1992,54 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             transform = .identity
             return
         }
+        let transition = properties["transition"]?.pamText
+            ?? properties["name"]?.pamText
+            ?? "fade"
         alpha = 0
-        transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        switch transition {
+        case "scale":
+            transform = CGAffineTransform(scaleX: 0.94, y: 0.94)
+        case "slide-x":
+            let direction: CGFloat = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                ? -1 : 1
+            transform = CGAffineTransform(translationX: 18 * direction, y: 0)
+        case "slide-y":
+            transform = CGAffineTransform(translationX: 0, y: 18)
+        case "expand":
+            transform = CGAffineTransform(scaleX: 1, y: 0.92)
+                .translatedBy(x: 0, y: 12)
+        default:
+            transform = .identity
+        }
         UIView.animate(
             withDuration: properties["duration"]?.pamDecimal.map {
                 TimeInterval($0 / 1_000)
             } ?? 0.22,
             delay: 0,
             options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]
+        ) {
+            self.alpha = 1
+            self.transform = .identity
+        }
+    }
+
+    private func applySparklineAutoDraw() {
+        guard properties["autoDraw"]?.pamFlag == true else {
+            sparklineAutoDrawApplied = false
+            return
+        }
+        guard !sparklineAutoDrawApplied else { return }
+        sparklineAutoDrawApplied = true
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        alpha = 0
+        transform = CGAffineTransform(scaleX: 0.15, y: 1)
+        UIView.animate(
+            withDuration: min(
+                4,
+                max(0.12, (properties["autoDrawDuration"]?.pamDecimal ?? 800) / 1_000)
+            ),
+            delay: 0,
+            options: [.curveEaseOut, .allowUserInteraction, .beginFromCurrentState]
         ) {
             self.alpha = 1
             self.transform = .identity

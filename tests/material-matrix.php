@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Pam\MobileUi\Enum\ThemeMode;
+use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Rendering\MaterialStyleResolver;
@@ -89,7 +90,7 @@ foreach ($tags as $tag => $class) {
 
 /**
  * @param array<string, mixed> $props
- * @param array<string, float|int|null> $expected
+ * @param array<string, \Pam\Native\Align|float|int|null> $expected
  */
 $assertGeometry = static function (
     string $component,
@@ -129,6 +130,24 @@ $assertGeometry('PBtn', ['density' => 'compact'], [
 ]);
 $assertGeometry('PBtn', ['disabled' => true], [
     'opacity' => 0.26,
+]);
+$assertGeometry('PBtn', ['block' => true], [
+    'widthPercent' => 100.0,
+    'minWidth' => null,
+    'alignSelf' => \Pam\Native\Align::Stretch,
+]);
+$assertGeometry('PBtn', ['color' => 'success'], [
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::Success),
+    'textColor' => $themes[0]['theme']->color(ColorToken::SuccessForeground),
+]);
+$assertGeometry('PBtn', ['color' => 'warning'], [
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::Warning),
+    'textColor' => $themes[0]['theme']->color(ColorToken::WarningForeground),
+]);
+$assertGeometry('PBtn', ['variant' => 'outlined', 'color' => 'error'], [
+    'backgroundColor' => 0,
+    'borderColor' => $themes[0]['theme']->color(ColorToken::Destructive),
+    'textColor' => $themes[0]['theme']->color(ColorToken::Destructive),
 ]);
 $assertGeometry('PIconBtn', [], [
     'width' => 36.0,

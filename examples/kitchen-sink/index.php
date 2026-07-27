@@ -23,8 +23,6 @@ use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\Native\App;
 use Pam\Native\Navigation\Router;
 use Pam\Native\Navigation\DrawerType;
-use Pam\Native\UserInterfaceAppearance;
-use Pam\Native\WindowMetrics;
 
 require __DIR__.'/vendor/autoload.php';
 
@@ -33,12 +31,7 @@ App::views(
     __DIR__.'/.pam-native/views',
 );
 AppTheme::install();
-PamUI::mode(ThemeMode::System);
-App::onDimensions(static function (WindowMetrics $metrics): void {
-    PamUI::systemDark(
-        $metrics->appearance === UserInterfaceAppearance::Dark,
-    );
-});
+PamUI::mode(ThemeMode::Light);
 TypedCommunityCard::register();
 $catalog = new Catalog();
 $gallery = new ComponentGallery();
@@ -175,12 +168,12 @@ $showcase = $drawer
     ->presentation(DrawerType::Front)
     ->responsive(840.0)
     ->appearance(
-        0xFF212121,
-        0xFF2196F3,
-        0xB3FFFFFF,
-        0xFF2F3E49,
+        0xFFFFFFFF,
+        0xFF1867C0,
+        0x99000000,
+        0xFFE3F2FD,
         0x33000000,
-        0x1FFFFFFF,
+        0x1F000000,
         256.0,
     )
     ->persistence('pam-component-drawer-v2')

@@ -13,6 +13,7 @@ use Pam\Native\Align;
 use Pam\Native\Component;
 use Pam\Native\Justify;
 use Pam\Native\Navigation\DrawerNavigator;
+use Pam\Native\PositionType;
 use Pam\Native\Renderable;
 use Pam\Native\Style;
 use Pam\Native\UI\ActivityIndicator;
@@ -55,8 +56,10 @@ final class ComponentRoute extends Component
             $component = $this->component;
             $previewProps = $this->sampleProps($variation['props']);
             if ($this->belongsTo([
-                'p-autocomplete', 'p-combobox', 'p-select',
-                'p-number-input', 'p-otp-input',
+                'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
+                'p-field', 'p-file-input', 'p-input', 'p-number-input',
+                'p-otp-input', 'p-range-slider', 'p-rating', 'p-select',
+                'p-slider', 'p-text-field', 'p-textarea',
             ])) {
                 $previewProps['modelValue'] = $this->sampleValues[$index]
                     ?? $previewProps['modelValue']
@@ -82,7 +85,7 @@ final class ComponentRoute extends Component
                     string $number,
                     string $label,
                     bool $active,
-                ): Row {
+                ) use ($previewProps): Row {
                     return Row::make(
                         Text::make($number)->style(new Style(
                             width: 28.0,
@@ -104,6 +107,9 @@ final class ComponentRoute extends Component
                         )),
                     )->style(new Style(
                         gap: 6.0,
+                        flexDirection: ($previewProps['altLabels'] ?? false)
+                            ? \Pam\Native\FlexDirection::Column
+                            : \Pam\Native\FlexDirection::Row,
                         alignItems: Align::Center,
                     ));
                 };
@@ -122,7 +128,10 @@ final class ComponentRoute extends Component
                             : new Style(),
                     ),
                     $item::make(
-                        ['value' => 'delivery'],
+                        [
+                            'value' => 'delivery',
+                            'disabled' => !($previewProps['nonLinear'] ?? false),
+                        ],
                         $stepLabel('2', 'Delivery', false),
                     )
                         ->style(
@@ -131,7 +140,10 @@ final class ComponentRoute extends Component
                                 : new Style(),
                         ),
                     $item::make(
-                        ['value' => 'confirm'],
+                        [
+                            'value' => 'confirm',
+                            'disabled' => !($previewProps['nonLinear'] ?? false),
+                        ],
                         $stepLabel('3', 'Confirm', false),
                     )
                         ->style(
@@ -208,16 +220,101 @@ final class ComponentRoute extends Component
                     : 'p-window-item';
                 $item = MaterialComponentMap::TAGS[$itemTag];
                 $slides = [];
+                $controls = [];
                 if ($this->tag === 'p-carousel') {
                     $indicator = MaterialComponentMap::TAGS['p-slide-group-item'];
-                    $slides = [
-                        $indicator::make(
-                            ['value' => 'overview', 'active' => true],
-                            Text::make('1'),
-                        ),
-                        $indicator::make(['value' => 'details'], Text::make('2')),
-                        $indicator::make(['value' => 'activity'], Text::make('3')),
-                    ];
+                    if ($previewProps['showArrows'] ?? false) {
+                        $controls[] = $indicator::make(
+                            [
+                                'value' => 'activity',
+                                'accessibilityLabel' => 'Previous slide',
+                                '__pamButtonToggleItem' => true,
+                                'selectionCornerRadius' => 24,
+                                'carouselControl' => true,
+                            ],
+                            Text::make('<')->style(new Style(
+                                fontSize: 24.0,
+                                fontWeight: 700,
+                                textColor: 0xFFFFFFFF,
+                                textAlign: \Pam\Native\TextAlignment::Center,
+                            )),
+                        )->style(new Style(
+                            positionType: PositionType::Absolute,
+                            left: 16.0,
+                            top: 218.0,
+                            width: 48.0,
+                            height: 48.0,
+                            minWidth: 48.0,
+                            minHeight: 48.0,
+                            borderRadius: 24.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                            backgroundColor: 0x66000000,
+                        ));
+                    }
+                    if (!($previewProps['hideDelimiters'] ?? false)) {
+                        $delimiters = [];
+                        foreach (['overview', 'details', 'activity'] as $index => $value) {
+                            $active = $index === 0;
+                            $delimiters[] = $indicator::make(
+                                [
+                                    'value' => $value,
+                                    'active' => $active,
+                                    'selected' => $active,
+                                    'accessibilityLabel' => 'Go to slide '.($index + 1),
+                                    '__pamButtonToggleItem' => true,
+                                    'selectionCornerRadius' => 6,
+                                ],
+                            )->style(new Style(
+                                width: 12.0,
+                                height: 12.0,
+                                minWidth: 12.0,
+                                minHeight: 12.0,
+                                padding: 0.0,
+                                borderRadius: 6.0,
+                                backgroundColor: 0x99FFFFFF,
+                            ));
+                        }
+                        $controls[] = Row::make(...$delimiters)->style(new Style(
+                            positionType: PositionType::Absolute,
+                            left: 0.0,
+                            right: 0.0,
+                            bottom: 18.0,
+                            minHeight: 28.0,
+                            gap: 10.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                        ));
+                    }
+                    if ($previewProps['showArrows'] ?? false) {
+                        $controls[] = $indicator::make(
+                            [
+                                'value' => 'details',
+                                'accessibilityLabel' => 'Next slide',
+                                '__pamButtonToggleItem' => true,
+                                'selectionCornerRadius' => 24,
+                                'carouselControl' => true,
+                            ],
+                            Text::make('>')->style(new Style(
+                                fontSize: 24.0,
+                                fontWeight: 700,
+                                textColor: 0xFFFFFFFF,
+                                textAlign: \Pam\Native\TextAlignment::Center,
+                            )),
+                        )->style(new Style(
+                            positionType: PositionType::Absolute,
+                            right: 16.0,
+                            top: 218.0,
+                            width: 48.0,
+                            height: 48.0,
+                            minWidth: 48.0,
+                            minHeight: 48.0,
+                            borderRadius: 24.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                            backgroundColor: 0x66000000,
+                        ));
+                    }
                 }
                 $slides[] = $item::make(
                         ['value' => 'overview', 'selected' => true],
@@ -230,24 +327,88 @@ final class ComponentRoute extends Component
                             Text::make('Fast transitions with no web view.')
                                 ->style(new Style(textColor: 0xFFD9EEFA)),
                         )->style(new Style(
-                            minHeight: 180.0,
+                            widthPercent: 100.0,
+                            heightPercent: 100.0,
                             padding: 24.0,
                             gap: 8.0,
-                            borderRadius: 12.0,
+                            alignItems: Align::Start,
+                            justifyContent: Justify::Center,
                             backgroundColor: 0xFF0E6FA5,
                         )),
-                );
+                )->style(new Style(
+                    positionType: $this->tag === 'p-carousel'
+                        ? PositionType::Absolute
+                        : PositionType::Relative,
+                    left: $this->tag === 'p-carousel' ? 0.0 : null,
+                    top: $this->tag === 'p-carousel' ? 0.0 : null,
+                    widthPercent: 100.0,
+                    heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
+                ));
                 $slides[] = $item::make(
                     ['value' => 'details'],
-                    Text::make('Composable'),
-                );
+                    Column::make(
+                        Text::make('Composable')->style(new Style(
+                            fontSize: 22.0,
+                            fontWeight: 700,
+                            textColor: 0xFFFFFFFF,
+                        )),
+                        Text::make('Build complex flows from small native parts.')
+                            ->style(new Style(textColor: 0xFFE4F6F2)),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        heightPercent: 100.0,
+                        padding: 24.0,
+                        gap: 8.0,
+                        alignItems: Align::Start,
+                        justifyContent: Justify::Center,
+                        backgroundColor: 0xFF00897B,
+                    )),
+                )->style(new Style(
+                    positionType: $this->tag === 'p-carousel'
+                        ? PositionType::Absolute
+                        : PositionType::Relative,
+                    left: $this->tag === 'p-carousel' ? 0.0 : null,
+                    top: $this->tag === 'p-carousel' ? 0.0 : null,
+                    widthPercent: 100.0,
+                    heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
+                ));
                 $slides[] = $item::make(
                     ['value' => 'activity'],
-                    Text::make('Accessible'),
-                );
-                $preview = $component::make($previewProps, ...$slides)->style(new Style(
+                    Column::make(
+                        Text::make('Accessible')->style(new Style(
+                            fontSize: 22.0,
+                            fontWeight: 700,
+                            textColor: 0xFFFFFFFF,
+                        )),
+                        Text::make('Keyboard, screen reader and reduced motion ready.')
+                            ->style(new Style(textColor: 0xFFFFF0DC)),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        heightPercent: 100.0,
+                        padding: 24.0,
+                        gap: 8.0,
+                        alignItems: Align::Start,
+                        justifyContent: Justify::Center,
+                        backgroundColor: 0xFFF57C00,
+                    )),
+                )->style(new Style(
+                    positionType: $this->tag === 'p-carousel'
+                        ? PositionType::Absolute
+                        : PositionType::Relative,
+                    left: $this->tag === 'p-carousel' ? 0.0 : null,
+                    top: $this->tag === 'p-carousel' ? 0.0 : null,
                     widthPercent: 100.0,
-                    minHeight: 220.0,
+                    heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
+                ));
+                $preview = $component::make(
+                    $previewProps,
+                    ...$slides,
+                    ...$controls,
+                )->style(new Style(
+                    positionType: PositionType::Relative,
+                    widthPercent: 100.0,
+                    minHeight: $this->tag === 'p-carousel' ? 500.0 : 220.0,
+                    overflow: \Pam\Native\Overflow::Hidden,
                 ));
             } elseif ($this->belongsTo(['p-menu', 'p-tooltip'])) {
                 $button = MaterialComponentMap::TAGS['p-btn'];
@@ -432,9 +593,49 @@ final class ComponentRoute extends Component
                     ? 'p-slide-group-item'
                     : 'p-tab';
                 $trigger = MaterialComponentMap::TAGS[$triggerTag];
-                $labels = $this->tag === 'p-pagination'
-                    ? ['‹', '1', '2', '3', '4', '5', '›']
-                    : ['Overview', 'Details', 'Activity'];
+                $labels = match ($this->tag) {
+                    'p-pagination' => ['‹', '1', '2', '3', '4', '5', '›'],
+                    'p-slide-group' => [
+                        'Overview', 'Design', 'Android', 'iOS',
+                        'Motion', 'Forms', 'Data', 'Release',
+                    ],
+                    default => ['Overview', 'Details', 'Activity'],
+                };
+                if (
+                    $this->tag === 'p-slide-group'
+                    && ($previewProps['centerActive'] ?? false)
+                ) {
+                    $labels = [
+                        'Design', 'Android', 'iOS', 'Overview',
+                        'Motion', 'Forms', 'Data', 'Release',
+                    ];
+                }
+                if (
+                    $this->tag === 'p-slide-group'
+                    && ($previewProps['showArrows'] ?? false)
+                ) {
+                    $labels = ['‹', ...$labels, '›'];
+                }
+                $requestedVisible = $previewProps['totalVisible'] ?? null;
+                if (
+                    $this->tag === 'p-pagination'
+                    && is_numeric($requestedVisible)
+                ) {
+                    $lengthValue = $previewProps['length'] ?? 7;
+                    $length = is_numeric($lengthValue) ? (int) $lengthValue : 7;
+                    $visible = max(1, min(
+                        $length,
+                        (int) $requestedVisible,
+                    ));
+                    $labels = [
+                        '‹',
+                        ...array_map(
+                            static fn (int $page): string => (string) $page,
+                            range(1, $visible),
+                        ),
+                        '›',
+                    ];
+                }
                 $triggers = [];
                 foreach ($labels as $label) {
                     $value = strtolower($label);
@@ -446,12 +647,26 @@ final class ComponentRoute extends Component
                             'value' => $value,
                             'active' => $active,
                             'selected' => $active,
+                            '__pamButtonToggleItem' => in_array(
+                                $this->tag,
+                                ['p-pagination', 'p-slide-group'],
+                                true,
+                            ),
+                            'selectionCornerRadius' => $this->tag === 'p-slide-group'
+                                ? 22
+                                : 20,
+                            ...array_intersect_key(
+                                $previewProps,
+                                array_flip([
+                                    'disabled', 'fixedTabs', 'grow', 'stacked',
+                                ]),
+                            ),
                         ],
                         Text::make($label)->style(new Style(
-                            textColor: $active ? 0xFFFFFFFF : 0xFF5B6E87,
+                            textColor: 0xFF5B6E87,
                             fontSize: 14.0,
                             lineHeight: 20.0,
-                            fontWeight: $active ? 600 : 400,
+                            fontWeight: 500,
                             textAlign: \Pam\Native\TextAlignment::Center,
                         )),
                     );
@@ -464,14 +679,38 @@ final class ComponentRoute extends Component
                             borderRadius: 20.0,
                             alignItems: Align::Center,
                             justifyContent: Justify::Center,
-                            backgroundColor: $active
-                                ? 0xFF0E6FA5
-                                : 0x00000000,
+                            backgroundColor: 0x00000000,
+                        ));
+                    } elseif ($this->tag === 'p-slide-group') {
+                        $triggerComponent = $triggerComponent->style(new Style(
+                            width: 108.0,
+                            minWidth: 108.0,
+                            minHeight: 44.0,
+                            paddingHorizontal: 12.0,
+                            borderRadius: 22.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                            backgroundColor: 0xFFE8EEF6,
                         ));
                     }
                     $triggers[] = $triggerComponent;
                 }
-                $preview = $component::make($previewProps, ...$triggers);
+                $group = $component::make($previewProps, ...$triggers);
+                if ($this->tag === 'p-slide-group') {
+                    $group = $group->style(new Style(
+                        width: (float) count($triggers) * 116.0,
+                        minHeight: 48.0,
+                        gap: 8.0,
+                    ));
+                    $preview = ScrollView::make($group)
+                        ->horizontal(true)
+                        ->style(new Style(
+                            widthPercent: 100.0,
+                            minHeight: 56.0,
+                        ));
+                } else {
+                    $preview = $group;
+                }
             } elseif ($this->tag === 'p-btn-toggle') {
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $preview = $component::make(
@@ -688,6 +927,404 @@ final class ComponentRoute extends Component
                     $chip::make(['value' => 'three'], Text::make('Three')),
                     $chip::make(['value' => 'four'], Text::make('Four')),
                 );
+            } elseif ($this->tag === 'p-spacer') {
+                $preview = Row::make(
+                    View::make()->style(new Style(
+                        width: 72.0,
+                        height: 48.0,
+                        borderRadius: 4.0,
+                        backgroundColor: $theme->color(ColorToken::Primary),
+                    )),
+                    $component::make($previewProps),
+                    View::make()->style(new Style(
+                        width: 72.0,
+                        height: 48.0,
+                        borderRadius: 4.0,
+                        backgroundColor: $theme->color(ColorToken::Secondary),
+                    )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: 48.0,
+                    alignItems: Align::Center,
+                ));
+            } elseif ($this->tag === 'p-divider') {
+                $preview = Column::make(
+                    Text::make('Content above'),
+                    $component::make($previewProps),
+                    Text::make('Content below'),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    gap: 12.0,
+                ));
+            } elseif ($this->belongsTo([
+                'p-alert', 'p-banner',
+            ])) {
+                $titleTag = $this->tag === 'p-alert'
+                    ? 'p-alert-title'
+                    : 'p-banner-text';
+                $actionsTag = $this->tag === 'p-alert'
+                    ? null
+                    : 'p-banner-actions';
+                $title = MaterialComponentMap::TAGS[$titleTag];
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $children = [
+                    $title::make(
+                        [],
+                        Text::make(
+                            $this->tag === 'p-alert'
+                                ? 'Your workspace is ready'
+                                : 'A new native release is available',
+                        ),
+                    ),
+                    Text::make(
+                        'The same tokens, spacing and interactions are shared by Android and iOS.',
+                    ),
+                ];
+                if ($actionsTag !== null) {
+                    $actions = MaterialComponentMap::TAGS[$actionsTag];
+                    $children[] = $actions::make(
+                        [],
+                        $button::make(
+                            ['variant' => 'text', 'size' => 'small'],
+                            Text::make('Later'),
+                        ),
+                        $button::make(
+                            ['variant' => 'tonal', 'size' => 'small'],
+                            Text::make('Update'),
+                        ),
+                    );
+                }
+                $preview = $component::make($previewProps, ...$children);
+            } elseif ($this->tag === 'p-btn-group') {
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $preview = $component::make(
+                    $previewProps,
+                    $button::make(['variant' => 'outlined'], Text::make('Day')),
+                    $button::make(['variant' => 'outlined'], Text::make('Week')),
+                    $button::make(['variant' => 'outlined'], Text::make('Month')),
+                )->style(new Style(widthPercent: 100.0, gap: 0.0));
+            } elseif ($this->belongsTo([
+                'p-radio-group', 'p-selection-control-group', 'p-item-group',
+            ])) {
+                $itemTag = match ($this->tag) {
+                    'p-radio-group' => 'p-radio',
+                    'p-item-group' => 'p-item',
+                    default => 'p-selection-control',
+                };
+                $item = MaterialComponentMap::TAGS[$itemTag];
+                $preview = $component::make(
+                    $previewProps,
+                    $item::make(
+                        ['value' => 'design', 'checked' => true, 'selected' => true],
+                        Text::make('Design'),
+                    ),
+                    $item::make(
+                        ['value' => 'engineering'],
+                        Text::make('Engineering'),
+                    ),
+                    $item::make(
+                        ['value' => 'product'],
+                        Text::make('Product'),
+                    ),
+                );
+            } elseif ($this->belongsTo([
+                'p-card-item', 'p-card-title', 'p-card-subtitle',
+                'p-card-text', 'p-card-actions',
+            ])) {
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $children = match ($this->tag) {
+                    'p-card-item' => [
+                        Text::make('Native workspace')->style(new Style(
+                            fontSize: 18.0,
+                            fontWeight: 700,
+                        )),
+                        Text::make('Updated a moment ago'),
+                    ],
+                    'p-card-title' => [Text::make('Native workspace')],
+                    'p-card-subtitle' => [Text::make('Updated a moment ago')],
+                    'p-card-text' => [Text::make(
+                        'Focused content with the same rhythm as the complete card.',
+                    )],
+                    default => [
+                        $button::make(
+                            ['variant' => 'text', 'size' => 'small'],
+                            Text::make('Cancel'),
+                        ),
+                        $button::make(
+                            ['variant' => 'tonal', 'size' => 'small'],
+                            Text::make('Continue'),
+                        ),
+                    ],
+                };
+                $preview = $component::make($previewProps, ...$children);
+            } elseif ($this->belongsTo([
+                'p-checkbox', 'p-checkbox-btn', 'p-radio',
+                'p-selection-control', 'p-switch',
+            ])) {
+                $selectionLabel = $previewProps['label'] ?? $this->title;
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make(is_scalar($selectionLabel) ? (string) $selectionLabel : $this->title),
+                );
+            } elseif ($this->belongsTo([
+                'p-color-picker-canvas', 'p-color-picker-edit',
+                'p-color-picker-preview', 'p-color-picker-swatches',
+            ])) {
+                $preview = $component::make($previewProps)->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: $this->tag === 'p-color-picker-canvas' ? 220.0 : 64.0,
+                ));
+            } elseif ($this->belongsTo([
+                'p-date-picker-controls', 'p-date-picker-header',
+                'p-date-picker-month', 'p-date-picker-months',
+                'p-date-picker-years', 'p-calendar-day',
+                'p-calendar-header', 'p-calendar-interval',
+                'p-picker', 'p-picker-title', 'p-confirm-edit',
+                'p-time-picker-clock', 'p-time-picker-controls',
+            ])) {
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make(match ($this->tag) {
+                        'p-date-picker-header' => 'Tuesday, July 15',
+                        'p-date-picker-controls' => 'July 2026',
+                        'p-date-picker-month' => '15',
+                        'p-date-picker-months' => 'July',
+                        'p-date-picker-years' => '2026',
+                        'p-calendar-day' => '15',
+                        'p-calendar-header' => 'July 2026',
+                        'p-calendar-interval' => '14:00',
+                        'p-picker-title' => 'Choose a value',
+                        'p-confirm-edit' => 'Confirm selection',
+                        'p-time-picker-clock' => '14:35',
+                        'p-time-picker-controls' => '14 : 35',
+                        default => 'Native picker surface',
+                    }),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: $this->belongsTo([
+                        'p-date-picker-month', 'p-date-picker-months',
+                        'p-date-picker-years', 'p-time-picker-clock',
+                    ]) ? 240.0 : 56.0,
+                ));
+            } elseif ($this->belongsTo([
+                'p-expansion-panel', 'p-expansion-panel-title',
+                'p-expansion-panel-text',
+            ])) {
+                $preview = $component::make(
+                    [...$previewProps, 'open' => true, 'expanded' => true],
+                    Text::make(match ($this->tag) {
+                        'p-expansion-panel-title' => 'Product details',
+                        'p-expansion-panel-text' => 'Native views with shared material tokens.',
+                        default => 'Product details and supporting content',
+                    }),
+                );
+            } elseif ($this->belongsTo([
+                'p-file-upload', 'p-file-upload-item',
+            ])) {
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $preview = $component::make(
+                    $previewProps,
+                    Column::make(
+                        Text::make(
+                            $this->tag === 'p-file-upload'
+                                ? 'Drop files here'
+                                : 'brand-guidelines.pdf',
+                        )->style(new Style(fontSize: 16.0, fontWeight: 600)),
+                        Text::make(
+                            $this->tag === 'p-file-upload'
+                                ? 'PDF, PNG or JPG up to 10 MB'
+                                : '2.4 MB · Ready',
+                        )->style(new Style(
+                            fontSize: 13.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                        )),
+                        $button::make(
+                            ['variant' => 'tonal', 'size' => 'small'],
+                            Text::make(
+                                $this->tag === 'p-file-upload'
+                                    ? 'Browse files'
+                                    : 'Remove',
+                            ),
+                        ),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        padding: 20.0,
+                        gap: 8.0,
+                        alignItems: Align::Center,
+                    )),
+                );
+            } elseif ($this->tag === 'p-form') {
+                $field = MaterialComponentMap::TAGS['p-text-field'];
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $preview = $component::make(
+                    $previewProps,
+                    $field::make([
+                        'label' => 'Project name',
+                        'modelValue' => 'Aurora',
+                        'variant' => 'outlined',
+                        'required' => true,
+                    ]),
+                    $field::make([
+                        'label' => 'Owner',
+                        'modelValue' => 'Design team',
+                        'variant' => 'outlined',
+                    ]),
+                    $button::make(
+                        ['variant' => 'flat', 'color' => 'primary', 'block' => true],
+                        Text::make('Save project'),
+                    ),
+                )->style(new Style(widthPercent: 100.0, gap: 16.0));
+            } elseif ($this->belongsTo([
+                'p-container', 'p-row', 'p-col',
+            ])) {
+                $tile = static fn (string $label, int $color): View => View::make(
+                    Text::make($label)->style(new Style(
+                        textColor: 0xFFFFFFFF,
+                        fontWeight: 700,
+                    )),
+                )->style(new Style(
+                    minHeight: 56.0,
+                    padding: 16.0,
+                    borderRadius: 8.0,
+                    backgroundColor: $color,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                    flexGrow: 1.0,
+                ));
+                $preview = $component::make(
+                    $previewProps,
+                    $tile('One', 0xFF0E6FA5),
+                    $tile('Two', 0xFF00897B),
+                    $tile('Three', 0xFFF57C00),
+                );
+            } elseif ($this->belongsTo([
+                'p-img', 'p-parallax', 'p-lazy',
+            ])) {
+                $preview = $component::make(
+                    $previewProps,
+                    Column::make(
+                        Text::make('Native media')->style(new Style(
+                            textColor: 0xFFFFFFFF,
+                            fontSize: 22.0,
+                            fontWeight: 700,
+                        )),
+                        Text::make('Cover, contain, ratio and loading states')
+                            ->style(new Style(textColor: 0xFFE6F4FB)),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        minHeight: 180.0,
+                        padding: 24.0,
+                        gap: 6.0,
+                        borderRadius: 12.0,
+                        backgroundColor: 0xFF0E6FA5,
+                        justifyContent: Justify::End,
+                    )),
+                )->style(new Style(widthPercent: 100.0, minHeight: 180.0));
+            } elseif ($this->belongsTo([
+                'p-item', 'p-slide-group-item', 'p-tab',
+            ])) {
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make($this->title),
+                );
+            } elseif ($this->belongsTo([
+                'p-list-group', 'p-list-subheader', 'p-list-item-title',
+                'p-list-item-subtitle',
+            ])) {
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make(match ($this->tag) {
+                        'p-list-group' => 'Workspace',
+                        'p-list-subheader' => 'Recent projects',
+                        'p-list-item-title' => 'Aurora',
+                        default => 'Updated a moment ago',
+                    }),
+                );
+            } elseif ($this->tag === 'p-sheet') {
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make('Native sheet surface')->style(new Style(
+                        fontSize: 18.0,
+                        fontWeight: 600,
+                    )),
+                    Text::make('Elevation, borders, shapes and semantic colors.'),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: 120.0,
+                    padding: 20.0,
+                    gap: 8.0,
+                ));
+            } elseif ($this->belongsTo([
+                'p-skeleton-loader', 'p-sparkline',
+            ])) {
+                $preview = $component::make($previewProps)->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: $this->tag === 'p-sparkline' ? 140.0 : 96.0,
+                ));
+            } elseif ($this->belongsTo([
+                'p-stepper-header', 'p-stepper-item', 'p-stepper-window',
+                'p-stepper-window-item', 'p-stepper-actions',
+                'p-stepper-vertical-item', 'p-stepper-vertical-actions',
+            ])) {
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $children = str_contains($this->tag, 'actions')
+                    ? [
+                        $button::make(
+                            ['variant' => 'text', 'size' => 'small'],
+                            Text::make('Back'),
+                        ),
+                        $button::make(
+                            ['variant' => 'tonal', 'size' => 'small'],
+                            Text::make('Continue'),
+                        ),
+                    ]
+                    : [
+                        Text::make(
+                            str_contains($this->tag, 'item')
+                                ? '1  Account'
+                                : 'Account details',
+                        ),
+                    ];
+                $preview = $component::make(
+                    [...$previewProps, 'active' => true, 'selected' => true],
+                    ...$children,
+                );
+            } elseif ($this->belongsTo([
+                'p-text', 'p-alert-title', 'p-app-bar-title',
+                'p-banner-text', 'p-breadcrumbs-item',
+                'p-breadcrumbs-divider', 'p-field-label', 'p-label',
+                'p-messages', 'p-counter', 'p-picker-title',
+                'p-toolbar-title',
+            ])) {
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make($this->previewText()),
+                );
+            } elseif ($this->tag === 'p-transition') {
+                $preview = $component::make(
+                    [...$previewProps, 'show' => true],
+                    View::make(
+                        Text::make('Animated native content')->style(new Style(
+                            textColor: 0xFFFFFFFF,
+                            fontWeight: 700,
+                        )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        minHeight: 96.0,
+                        padding: 20.0,
+                        borderRadius: 12.0,
+                        backgroundColor: 0xFF0E6FA5,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    )),
+                );
+            } elseif ($this->tag === 'p-treeview-item') {
+                $preview = $component::make(
+                    [...$previewProps, 'open' => true, 'selected' => true],
+                    Text::make('▾  Mobile'),
+                    Text::make('    Android'),
+                    Text::make('    iOS'),
+                );
             } else {
                 $preview = $this->generatesNativeAnatomy()
                     ? $component::make($previewProps)
@@ -697,8 +1334,10 @@ final class ComponentRoute extends Component
                     );
             }
             if ($this->belongsTo([
-                'p-autocomplete', 'p-combobox', 'p-select',
-                'p-number-input', 'p-otp-input',
+                'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
+                'p-field', 'p-file-input', 'p-input', 'p-number-input',
+                'p-otp-input', 'p-range-slider', 'p-rating', 'p-select',
+                'p-slider', 'p-text-field', 'p-textarea',
             ])) {
                 if ($preview instanceof UiComponent) {
                     $preview = $preview->onChange(
@@ -838,7 +1477,20 @@ final class ComponentRoute extends Component
         }
 
         if ($this->tag === 'p-btn') {
-            $variations[] = ['label' => 'Block', 'props' => ['block' => true]];
+            $variations = array_merge($variations, [
+                ['label' => 'Block', 'props' => ['block' => true]],
+                ['label' => 'Rounded', 'props' => ['rounded' => true]],
+                ['label' => 'Pill', 'props' => ['rounded' => 'pill']],
+                ['label' => 'Tile', 'props' => ['tile' => true]],
+                ['label' => 'Slim', 'props' => ['slim' => true]],
+            ]);
+        }
+
+        if ($this->belongsTo(['p-card', 'p-sheet'])) {
+            $variations = array_merge($variations, [
+                ['label' => 'Rounded XL', 'props' => ['rounded' => 'xl']],
+                ['label' => 'Tile', 'props' => ['tile' => true]],
+            ]);
         }
 
         if ($this->belongsTo([
@@ -849,16 +1501,17 @@ final class ComponentRoute extends Component
             $variations = array_merge($variations, [
                 ['label' => 'Primary', 'props' => ['color' => 'primary']],
                 ['label' => 'Secondary', 'props' => ['color' => 'secondary']],
-                ['label' => 'Success', 'props' => ['action' => 'success']],
-                ['label' => 'Information', 'props' => ['action' => 'info']],
-                ['label' => 'Warning', 'props' => ['action' => 'warning']],
-                ['label' => 'Error', 'props' => ['action' => 'error']],
+                ['label' => 'Success', 'props' => ['color' => 'success']],
+                ['label' => 'Information', 'props' => ['color' => 'info']],
+                ['label' => 'Warning', 'props' => ['color' => 'warning']],
+                ['label' => 'Error', 'props' => ['color' => 'error']],
             ]);
         }
 
         if ($this->belongsTo([
-            'p-avatar', 'p-badge', 'p-btn', 'p-chip', 'p-fab', 'p-icon',
-            'p-icon-btn', 'p-progress-circular', 'p-rating', 'p-switch',
+            'p-avatar', 'p-badge', 'p-btn', 'p-checkbox', 'p-checkbox-btn',
+            'p-chip', 'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
+            'p-radio', 'p-rating', 'p-selection-control', 'p-switch',
         ])) {
             $variations = array_merge($variations, [
                 ['label' => 'X Small', 'props' => ['size' => 'x-small']],
@@ -946,6 +1599,43 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
+            'p-autocomplete', 'p-combobox', 'p-input', 'p-select',
+            'p-text-field', 'p-textarea',
+        ])) {
+            $variations[] = [
+                'label' => 'Clearable',
+                'props' => [
+                    'clearable' => true,
+                    'modelValue' => 'Clear this value',
+                ],
+            ];
+        }
+
+        if ($this->belongsTo([
+            'p-input', 'p-text-field', 'p-textarea',
+        ])) {
+            $variations[] = [
+                'label' => 'Prefix and suffix',
+                'props' => [
+                    'prefix' => '$',
+                    'suffix' => 'USD',
+                    'modelValue' => '120',
+                ],
+            ];
+        }
+
+        if ($this->belongsTo(['p-input', 'p-text-field', 'p-textarea'])) {
+            $variations[] = [
+                'label' => 'Counter',
+                'props' => [
+                    'counter' => true,
+                    'maxLength' => 40,
+                    'modelValue' => 'Native value',
+                ],
+            ];
+        }
+
+        if ($this->belongsTo([
             'p-checkbox', 'p-radio', 'p-selection-control', 'p-switch',
         ])) {
             $variations = array_merge($variations, [
@@ -987,6 +1677,571 @@ final class ComponentRoute extends Component
                 ['label' => 'Card', 'props' => ['type' => 'card']],
                 ['label' => 'Article', 'props' => ['type' => 'article']],
             ];
+        }
+
+        $variations = array_merge($variations, $this->componentVariations());
+        $unique = [];
+        foreach ($variations as $variation) {
+            $unique[$variation['label']] = $variation;
+        }
+
+        return array_values($unique);
+    }
+
+    /**
+     * Mobile-relevant Vuetify variations that belong to a specific component
+     * family. Keeping these profiles here makes every catalog route explicit
+     * instead of silently falling back to a single generic preview.
+     *
+     * @return list<array{label: string, props: array<string, mixed>}>
+     */
+    private function componentVariations(): array
+    {
+        $variations = [];
+        $add = static function (
+            array &$target,
+            string $label,
+            array $props,
+        ): void {
+            $target[] = ['label' => $label, 'props' => $props];
+        };
+
+        if ($this->belongsTo([
+            'p-app-bar', 'p-app-bar-title', 'p-toolbar', 'p-toolbar-title',
+            'p-toolbar-items',
+        ])) {
+            $add($variations, 'Prominent', ['prominent' => true]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Primary', ['color' => 'primary']);
+            $add($variations, 'Flat', ['flat' => true, 'elevation' => 0]);
+        }
+
+        if ($this->tag === 'p-app-bar-nav-icon') {
+            $add($variations, 'Small', ['size' => 'small']);
+            $add($variations, 'Large', ['size' => 'large']);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Primary', ['color' => 'primary']);
+        }
+
+        if ($this->belongsTo([
+            'p-alert', 'p-alert-title', 'p-banner', 'p-banner-text',
+            'p-banner-actions', 'p-empty-state',
+        ])) {
+            $add($variations, 'Success', ['type' => 'success', 'color' => 'success']);
+            $add($variations, 'Information', ['type' => 'info', 'color' => 'info']);
+            $add($variations, 'Warning', ['type' => 'warning', 'color' => 'warning']);
+            $add($variations, 'Error', ['type' => 'error', 'color' => 'error']);
+            $add($variations, 'Closable', ['closable' => true]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+        }
+
+        if ($this->tag === 'p-alert') {
+            foreach (['start', 'top', 'end', 'bottom'] as $border) {
+                $add(
+                    $variations,
+                    'Border '.ucfirst($border),
+                    ['border' => $border, 'variant' => 'tonal'],
+                );
+            }
+        }
+
+        if ($this->belongsTo(['p-avatar', 'p-badge'])) {
+            $add($variations, 'Rounded', ['rounded' => true]);
+            $add($variations, 'Tile', ['tile' => true]);
+            $add($variations, 'Dot', ['dot' => true]);
+            $add($variations, 'Bordered', ['border' => true]);
+        }
+
+        if ($this->belongsTo(['p-breadcrumbs', 'p-breadcrumbs-item'])) {
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Large', ['density' => 'comfortable']);
+            $add($variations, 'Disabled Item', ['disabled' => true]);
+            $add($variations, 'Active Item', ['active' => true, 'color' => 'primary']);
+        }
+
+        if ($this->tag === 'p-breadcrumbs-divider') {
+            $add($variations, 'Slash', ['divider' => '/']);
+            $add($variations, 'Chevron', ['divider' => '›']);
+            $add($variations, 'Dot', ['divider' => '•']);
+        }
+
+        if ($this->belongsTo(['p-btn-group', 'p-btn-toggle'])) {
+            $add($variations, 'Divided', ['divided' => true]);
+            $add($variations, 'Rounded', ['rounded' => true]);
+            $add($variations, 'Tile', ['tile' => true]);
+            $add($variations, 'Mandatory', ['mandatory' => true]);
+            $add($variations, 'Multiple', ['multiple' => true]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+        }
+
+        if ($this->belongsTo([
+            'p-card', 'p-card-item', 'p-card-title', 'p-card-subtitle',
+            'p-card-text', 'p-card-actions', 'p-sheet',
+        ])) {
+            $add($variations, 'Bordered', ['border' => true, 'variant' => 'outlined']);
+            $add($variations, 'Loading', ['loading' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Horizontal', ['direction' => 'horizontal']);
+            $add($variations, 'Primary', ['color' => 'primary']);
+        }
+
+        if ($this->belongsTo([
+            'p-carousel', 'p-carousel-item', 'p-window', 'p-window-item',
+        ])) {
+            $add($variations, 'Continuous', ['continuous' => true]);
+            $add($variations, 'Cycle', ['cycle' => true, 'interval' => 3000]);
+            $add($variations, 'Hide Delimiters', ['hideDelimiters' => true]);
+            $add($variations, 'Show Arrows', ['showArrows' => true]);
+            $add($variations, 'Vertical', ['direction' => 'vertical', 'vertical' => true]);
+            $add($variations, 'Reverse', ['reverse' => true]);
+            $add($variations, 'Crossfade', ['transition' => 'fade']);
+        }
+
+        if ($this->belongsTo([
+            'p-checkbox', 'p-checkbox-btn', 'p-radio', 'p-switch',
+            'p-selection-control',
+        ])) {
+            $add($variations, 'Read Only', ['checked' => true, 'readonly' => true]);
+            $add($variations, 'Error', ['error' => true, 'errorMessage' => 'Invalid choice']);
+            $add($variations, 'Primary', ['checked' => true, 'color' => 'primary']);
+            $add($variations, 'Success', ['checked' => true, 'color' => 'success']);
+            $add($variations, 'Warning', ['checked' => true, 'color' => 'warning']);
+            $add($variations, 'Error Color', ['checked' => true, 'color' => 'error']);
+            $add($variations, 'Inline', ['inline' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-radio-group', 'p-selection-control-group', 'p-item-group',
+            'p-chip-group',
+        ])) {
+            $add($variations, 'Mandatory', ['mandatory' => true]);
+            $add($variations, 'Multiple', ['multiple' => true]);
+            $add($variations, 'Column', ['direction' => 'vertical']);
+            $add($variations, 'Inline', ['inline' => true, 'direction' => 'horizontal']);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo(['p-chip', 'p-chip-group'])) {
+            $add($variations, 'Closable', ['closable' => true]);
+            $add($variations, 'Filter', ['filter' => true, 'selected' => true]);
+            $add($variations, 'Label', ['label' => true]);
+            $add($variations, 'Link', ['link' => true]);
+            $add($variations, 'Draggable', ['draggable' => true]);
+            $add($variations, 'Column', ['column' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-color-input', 'p-color-picker', 'p-color-picker-canvas',
+            'p-color-picker-edit', 'p-color-picker-preview',
+            'p-color-picker-swatches',
+        ])) {
+            $add($variations, 'HEX', ['mode' => 'hex']);
+            $add($variations, 'RGB', ['mode' => 'rgb']);
+            $add($variations, 'HSL', ['mode' => 'hsl']);
+            $add($variations, 'Swatches', ['showSwatches' => true]);
+            $add($variations, 'Hide Inputs', ['hideInputs' => true]);
+            $add($variations, 'Hide Canvas', ['hideCanvas' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-data-iterator', 'p-data-table', 'p-data-table-server',
+            'p-data-table-virtual',
+        ])) {
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Comfortable', ['density' => 'comfortable']);
+            $add($variations, 'Fixed Header', ['fixedHeader' => true, 'height' => 280]);
+            $add($variations, 'Hover', ['hover' => true]);
+            $add($variations, 'Striped', ['striped' => true]);
+            $add($variations, 'Loading', ['loading' => true]);
+            $add($variations, 'Selectable', ['showSelect' => true]);
+            $add($variations, 'Mobile', ['mobile' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-date-input', 'p-date-picker', 'p-date-picker-controls',
+            'p-date-picker-header', 'p-date-picker-month',
+            'p-date-picker-months', 'p-date-picker-years', 'p-calendar',
+            'p-calendar-day', 'p-calendar-header', 'p-calendar-interval',
+        ])) {
+            $add($variations, 'Multiple', ['multiple' => true]);
+            $add($variations, 'Range', ['multiple' => 'range']);
+            $add($variations, 'Landscape', ['landscape' => true]);
+            $add($variations, 'Week Numbers', ['showWeek' => true]);
+            $add($variations, 'Adjacent Months', ['showAdjacentMonths' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Read Only', ['readonly' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-dialog', 'p-bottom-sheet', 'p-overlay',
+        ])) {
+            $add($variations, 'Persistent', ['persistent' => true]);
+            $add($variations, 'No Scrim', ['scrim' => false]);
+            $add($variations, 'Scrollable', ['scrollable' => true]);
+            $add($variations, 'Fullscreen', ['fullscreen' => true]);
+            $add($variations, 'Contained', ['contained' => true]);
+            $add($variations, 'Width Small', ['width' => 320]);
+            $add($variations, 'Width Large', ['width' => 560]);
+        }
+
+        if ($this->belongsTo([
+            'p-divider',
+        ])) {
+            $add($variations, 'Vertical', ['vertical' => true, 'orientation' => 2]);
+            $add($variations, 'Inset', ['inset' => true]);
+            $add($variations, 'Thick', ['thickness' => 4]);
+            $add($variations, 'Dashed', ['style' => 'dashed']);
+            $add($variations, 'Primary', ['color' => 'primary']);
+        }
+
+        if ($this->belongsTo([
+            'p-expansion-panels', 'p-expansion-panel',
+            'p-expansion-panel-title', 'p-expansion-panel-text',
+        ])) {
+            $add($variations, 'Accordion', ['variant' => 'accordion']);
+            $add($variations, 'Inset', ['variant' => 'inset']);
+            $add($variations, 'Popout', ['variant' => 'popout']);
+            $add($variations, 'Multiple', ['multiple' => true]);
+            $add($variations, 'Mandatory', ['mandatory' => true]);
+            $add($variations, 'Readonly', ['readonly' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->tag === 'p-fab') {
+            $add($variations, 'Extended', ['extended' => true, 'text' => 'Create']);
+            $add($variations, 'Top Start', ['location' => 'top start']);
+            $add($variations, 'Top End', ['location' => 'top end']);
+            $add($variations, 'Bottom Start', ['location' => 'bottom start']);
+            $add($variations, 'Bottom End', ['location' => 'bottom end']);
+        }
+
+        if ($this->belongsTo([
+            'p-field', 'p-field-label', 'p-input', 'p-label', 'p-messages',
+            'p-counter', 'p-validation', 'p-form',
+        ])) {
+            $add($variations, 'Focused', ['focused' => true]);
+            $add($variations, 'Required', ['required' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Read Only', ['readonly' => true]);
+            $add($variations, 'Error', ['error' => true, 'errorMessage' => 'Invalid value']);
+            $add($variations, 'Success', ['success' => true, 'messages' => 'Looks good']);
+        }
+
+        if ($this->belongsTo([
+            'p-autocomplete', 'p-combobox', 'p-select',
+        ])) {
+            $add($variations, 'Multiple', ['multiple' => true, 'chips' => true]);
+            $add($variations, 'Chips', ['chips' => true]);
+            $add($variations, 'Small Chips', ['chips' => true, 'smallChips' => true]);
+            $add($variations, 'Return Object', ['returnObject' => true]);
+            $add($variations, 'Hide Details', ['hideDetails' => true]);
+            $add($variations, 'No Data', ['items' => []]);
+        }
+
+        if ($this->belongsTo(['p-text-field', 'p-input', 'p-textarea'])) {
+            $add($variations, 'Prepend Icon', ['prependIcon' => 'SearchIcon']);
+            $add($variations, 'Append Icon', ['appendIcon' => 'SettingsIcon']);
+            $add($variations, 'Persistent Placeholder', ['persistentPlaceholder' => true]);
+            $add($variations, 'Hide Details', ['hideDetails' => true]);
+            $add($variations, 'Single Line', ['singleLine' => true]);
+        }
+
+        if ($this->tag === 'p-textarea') {
+            $add($variations, 'Auto Grow', ['autoGrow' => true, 'rows' => 2]);
+            $add($variations, 'No Resize', ['noResize' => true]);
+            $add($variations, 'Four Rows', ['rows' => 4]);
+        }
+
+        if ($this->tag === 'p-number-input') {
+            $add($variations, 'Inset Controls', ['controlVariant' => 'inset']);
+            $add($variations, 'Split Controls', ['controlVariant' => 'split']);
+            $add($variations, 'Stacked Controls', ['controlVariant' => 'stacked']);
+            $add($variations, 'Precision', ['precision' => 2, 'step' => 0.25]);
+            $add($variations, 'Reverse', ['reverse' => true]);
+        }
+
+        if ($this->tag === 'p-otp-input') {
+            $add($variations, 'Four Digits', ['length' => 4]);
+            $add($variations, 'Six Digits', ['length' => 6]);
+            $add($variations, 'Masked', ['type' => 'password']);
+            $add($variations, 'Divided', ['divider' => true]);
+            $add($variations, 'Focused', ['focused' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-file-input', 'p-file-upload', 'p-file-upload-item',
+        ])) {
+            $add($variations, 'Multiple', ['multiple' => true]);
+            $add($variations, 'Chips', ['chips' => true]);
+            $add($variations, 'Counter', ['counter' => true]);
+            $add($variations, 'Show Size', ['showSize' => true]);
+            $add($variations, 'Clearable', ['clearable' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-container', 'p-row', 'p-col', 'p-spacer',
+        ])) {
+            $add($variations, 'Compact Gap', ['gap' => 4]);
+            $add($variations, 'Default Gap', ['gap' => 12]);
+            $add($variations, 'Large Gap', ['gap' => 24]);
+            $add($variations, 'Centered', ['align' => 'center', 'justify' => 'center']);
+            $add($variations, 'Space Between', ['justify' => 'space-between']);
+            $add($variations, 'Reverse', ['reverse' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-icon', 'p-icon-btn',
+        ])) {
+            $add($variations, 'Start', ['start' => true]);
+            $add($variations, 'End', ['end' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Loading', ['loading' => true]);
+        }
+
+        if ($this->belongsTo(['p-img', 'p-parallax', 'p-lazy'])) {
+            $add($variations, 'Cover', ['cover' => true]);
+            $add($variations, 'Contain', ['cover' => false]);
+            $add($variations, 'Aspect 16:9', ['aspectRatio' => 16 / 9]);
+            $add($variations, 'Aspect Square', ['aspectRatio' => 1]);
+            $add($variations, 'Gradient', ['gradient' => 'to top, #0008, transparent']);
+            $add($variations, 'Loading', ['loading' => true]);
+        }
+
+        if ($this->tag === 'p-infinite-scroll') {
+            $add($variations, 'End', ['side' => 'end']);
+            $add($variations, 'Both Sides', ['side' => 'both']);
+            $add($variations, 'Manual', ['mode' => 'manual']);
+            $add($variations, 'Empty', ['empty' => true]);
+            $add($variations, 'Error', ['error' => true]);
+        }
+
+        if ($this->belongsTo(['p-item', 'p-slide-group-item', 'p-tab'])) {
+            $add($variations, 'Active', ['active' => true, 'selected' => true]);
+            $add($variations, 'Inactive', ['active' => false, 'selected' => false]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Primary', ['color' => 'primary']);
+        }
+
+        if ($this->belongsTo([
+            'p-list', 'p-list-item', 'p-list-group', 'p-list-subheader',
+            'p-list-item-title', 'p-list-item-subtitle',
+        ])) {
+            $add($variations, 'One Line', ['lines' => 'one']);
+            $add($variations, 'Two Lines', ['lines' => 'two']);
+            $add($variations, 'Three Lines', ['lines' => 'three']);
+            $add($variations, 'Navigation', ['nav' => true]);
+            $add($variations, 'Rounded', ['rounded' => true]);
+            $add($variations, 'Slim', ['slim' => true]);
+            $add($variations, 'Active', ['active' => true, 'color' => 'primary']);
+        }
+
+        if ($this->belongsTo(['p-menu', 'p-tooltip'])) {
+            foreach ([
+                'top', 'top start', 'top end', 'bottom', 'bottom start',
+                'bottom end', 'start', 'end',
+            ] as $location) {
+                $add(
+                    $variations,
+                    'Location '.ucwords($location),
+                    ['location' => $location, 'placement' => $location],
+                );
+            }
+            $add($variations, 'Open On Click', ['openOnClick' => true]);
+            $add($variations, 'Open On Long Press', ['openOnClick' => false, 'openOnContextmenu' => true]);
+            $add($variations, 'Persistent', ['persistent' => true]);
+        }
+
+        if ($this->tag === 'p-pagination') {
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Comfortable', ['density' => 'comfortable']);
+            $add($variations, 'Rounded', ['rounded' => true]);
+            $add($variations, 'Circle', ['rounded' => 'circle']);
+            $add($variations, 'Total Visible 3', ['totalVisible' => 3]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo(['p-picker', 'p-picker-title', 'p-confirm-edit'])) {
+            $add($variations, 'Landscape', ['landscape' => true]);
+            $add($variations, 'Hide Header', ['hideHeader' => true]);
+            $add($variations, 'Primary', ['color' => 'primary']);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo(['p-progress-circular', 'p-progress-linear'])) {
+            $add($variations, 'Reverse', ['reverse' => true]);
+            $add($variations, 'Rounded', ['rounded' => true]);
+            $add($variations, 'Striped', ['striped' => true]);
+            $add($variations, 'Stream', ['stream' => true]);
+            $add($variations, 'Buffer', ['modelValue' => 42, 'bufferValue' => 72]);
+            $add($variations, 'Rotate', ['rotate' => 90]);
+        }
+
+        if ($this->tag === 'p-rating') {
+            $add($variations, 'Half Increments', [
+                'halfIncrements' => true,
+                'step' => 0.5,
+                'modelValue' => 3.5,
+            ]);
+            $add($variations, 'Clearable', ['clearable' => true]);
+            $add($variations, 'Hover', ['hover' => true]);
+            $add($variations, 'Read Only', ['readonly' => true]);
+            $add($variations, 'Length 10', ['length' => 10, 'modelValue' => 7]);
+            $add($variations, 'Dense', ['density' => 'compact']);
+        }
+
+        if ($this->belongsTo(['p-slider', 'p-range-slider'])) {
+            $add($variations, 'Step 10', ['step' => 10, 'modelValue' => $this->tag === 'p-range-slider' ? [20, 80] : 60]);
+            $add($variations, 'Ticks', ['step' => 10, 'ticks' => true]);
+            $add($variations, 'Tick Labels', ['step' => 25, 'ticks' => 'always', 'tickLabels' => ['0', '25', '50', '75', '100']]);
+            $add($variations, 'Thumb Label', ['thumbLabel' => true]);
+            $add($variations, 'Always Thumb Label', ['thumbLabel' => 'always']);
+            $add($variations, 'Vertical', ['vertical' => true, 'orientation' => 2]);
+            $add($variations, 'Reverse', ['reverse' => true]);
+            $add($variations, 'Read Only', ['readonly' => true]);
+            $add($variations, 'Primary', ['color' => 'primary', 'trackColor' => 'secondary']);
+            $add($variations, 'Success', ['color' => 'success']);
+            $add($variations, 'Warning', ['color' => 'warning']);
+            $add($variations, 'Error', ['color' => 'error']);
+        }
+
+        if ($this->tag === 'p-skeleton-loader') {
+            $add($variations, 'Loading', ['loading' => true, 'type' => 'article']);
+            $add($variations, 'Boilerplate', ['boilerplate' => true, 'type' => 'article']);
+            $add($variations, 'Elevation', ['elevation' => 4, 'type' => 'card']);
+        }
+
+        if ($this->belongsTo(['p-slide-group', 'p-slide-group-item'])) {
+            $add($variations, 'Center Active', ['centerActive' => true]);
+            $add($variations, 'Show Arrows', ['showArrows' => true]);
+            $add($variations, 'Mandatory', ['mandatory' => true]);
+            $add($variations, 'Multiple', ['multiple' => true]);
+            $add($variations, 'Column', ['direction' => 'vertical']);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo(['p-snackbar', 'p-snackbar-queue'])) {
+            $add($variations, 'Top', ['location' => 'top']);
+            $add($variations, 'Bottom', ['location' => 'bottom']);
+            $add($variations, 'Multi Line', ['multiLine' => true]);
+            $add($variations, 'Vertical', ['vertical' => true]);
+            $add($variations, 'Timeout', ['timeout' => 3000]);
+            $add($variations, 'Persistent', ['timeout' => -1, 'persistent' => true]);
+            $add($variations, 'Success', ['color' => 'success']);
+            $add($variations, 'Error', ['color' => 'error']);
+        }
+
+        if ($this->tag === 'p-sparkline') {
+            $add($variations, 'Line', ['type' => 'trend']);
+            $add($variations, 'Bars', ['type' => 'bar']);
+            $add($variations, 'Fill', ['fill' => true]);
+            $add($variations, 'Smooth', ['smooth' => true]);
+            $add($variations, 'Labels', ['showLabels' => true]);
+            $add($variations, 'Auto Draw', ['autoDraw' => true]);
+        }
+
+        if ($this->tag === 'p-speed-dial') {
+            foreach (['top', 'bottom', 'start', 'end'] as $location) {
+                $add($variations, 'Direction '.ucfirst($location), ['direction' => $location]);
+            }
+            $add($variations, 'Scale Transition', ['transition' => 'scale']);
+            $add($variations, 'Slide Transition', ['transition' => 'slide']);
+            $add($variations, 'Persistent', ['persistent' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-stepper', 'p-stepper-header', 'p-stepper-item',
+            'p-stepper-window', 'p-stepper-window-item', 'p-stepper-actions',
+            'p-stepper-vertical', 'p-stepper-vertical-item',
+            'p-stepper-vertical-actions',
+        ])) {
+            $add($variations, 'Alternate Labels', ['altLabels' => true]);
+            $add($variations, 'Editable', ['editable' => true]);
+            $add($variations, 'Non Linear', ['nonLinear' => true]);
+            $add($variations, 'Mobile', ['mobile' => true]);
+            $add($variations, 'Flat', ['flat' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+            $add($variations, 'Error Step', ['error' => true]);
+            $add($variations, 'Complete Step', ['complete' => true]);
+        }
+
+        if ($this->belongsTo(['p-tabs', 'p-tab'])) {
+            $add($variations, 'Grow', ['grow' => true]);
+            $add($variations, 'Centered', ['alignTabs' => 'center']);
+            $add($variations, 'End', ['alignTabs' => 'end']);
+            $add($variations, 'Fixed Tabs', ['fixedTabs' => true]);
+            $add($variations, 'Stacked', ['stacked' => true]);
+            $add($variations, 'Vertical', ['direction' => 'vertical']);
+            $add($variations, 'Hide Slider', ['hideSlider' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-text', 'p-card-title', 'p-card-subtitle', 'p-card-text',
+            'p-list-item-title', 'p-list-item-subtitle', 'p-label',
+            'p-messages', 'p-counter',
+        ])) {
+            $add($variations, 'Display', ['typography' => 'display']);
+            $add($variations, 'Headline', ['typography' => 'headline']);
+            $add($variations, 'Title', ['typography' => 'title']);
+            $add($variations, 'Body', ['typography' => 'body']);
+            $add($variations, 'Label', ['typography' => 'label']);
+            $add($variations, 'Primary', ['color' => 'primary']);
+            $add($variations, 'Muted', ['color' => 'muted']);
+            $add($variations, 'Truncate', ['truncate' => true, 'maxLines' => 1]);
+        }
+
+        if ($this->belongsTo([
+            'p-time-picker', 'p-time-picker-clock', 'p-time-picker-controls',
+        ])) {
+            $add($variations, '24 Hour', ['format' => '24hr']);
+            $add($variations, 'AM PM', ['format' => 'ampm']);
+            $add($variations, 'Seconds', ['useSeconds' => true]);
+            $add($variations, 'Landscape', ['landscape' => true]);
+            $add($variations, 'Read Only', ['readonly' => true]);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo(['p-timeline', 'p-timeline-item'])) {
+            $add($variations, 'Start', ['side' => 'start']);
+            $add($variations, 'End', ['side' => 'end']);
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Comfortable', ['density' => 'comfortable']);
+            $add($variations, 'Truncate Line', ['truncateLine' => 'both']);
+            $add($variations, 'Success', ['color' => 'success']);
+        }
+
+        if ($this->belongsTo(['p-treeview', 'p-treeview-item'])) {
+            $add($variations, 'Activatable', ['activatable' => true]);
+            $add($variations, 'Selectable', ['selectable' => true]);
+            $add($variations, 'Independent', ['selectStrategy' => 'independent']);
+            $add($variations, 'Classic', ['selectStrategy' => 'classic']);
+            $add($variations, 'Open All', ['openAll' => true]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Lines', ['lines' => true]);
+        }
+
+        if ($this->tag === 'p-transition') {
+            foreach (['fade', 'scale', 'slide-x', 'slide-y', 'expand'] as $name) {
+                $add(
+                    $variations,
+                    ucwords(str_replace('-', ' ', $name)),
+                    ['name' => $name, 'transition' => $name],
+                );
+            }
+            $add($variations, 'Fast', ['duration' => 120]);
+            $add($variations, 'Slow', ['duration' => 500]);
+            $add($variations, 'Disabled Motion', ['disabled' => true]);
+        }
+
+        if ($this->belongsTo([
+            'p-defaults-provider', 'p-theme-provider', 'p-locale-provider',
+        ])) {
+            $add($variations, 'Light', ['theme' => 'light']);
+            $add($variations, 'Dark', ['theme' => 'dark']);
+            $add($variations, 'RTL', ['rtl' => true, 'locale' => 'ar']);
+            $add($variations, 'Portuguese', ['locale' => 'pt-BR']);
+            $add($variations, 'Scoped', ['scoped' => true]);
         }
 
         return $variations;
@@ -1068,6 +2323,14 @@ final class ComponentRoute extends Component
                 'modelValue' => '2026-07-15',
                 'visibleDate' => '2026-07-01',
             ],
+            'p-date-picker-month', 'p-date-picker-months' => [
+                'modelValue' => 7,
+                'visibleDate' => '2026-07-01',
+            ],
+            'p-date-picker-years' => [
+                'modelValue' => 2026,
+                'visibleDate' => '2026-07-01',
+            ],
             'p-data-table', 'p-data-table-server', 'p-data-table-virtual' => [
                 'headers' => [
                     ['title' => 'Product', 'key' => 'name'],
@@ -1104,7 +2367,13 @@ final class ComponentRoute extends Component
                 'modelValue' => [24, 76],
                 'helper' => 'Choose the allowed range',
             ],
-            'p-rating' => ['length' => 5, 'modelValue' => 4],
+            'p-rating' => [
+                'length' => 5,
+                'min' => 0,
+                'max' => 5,
+                'step' => 1,
+                'modelValue' => 4,
+            ],
             'p-icon' => ['name' => 'StarIcon', 'color' => 0xFF0B172A],
             'p-icon-btn' => ['icon' => 'SettingsIcon'],
             'p-app-bar-nav-icon' => ['icon' => 'MenuIcon'],
@@ -1130,12 +2399,32 @@ final class ComponentRoute extends Component
                 'value' => 'details',
             ],
             'p-progress-circular', 'p-progress-linear' => ['modelValue' => 64],
+            'p-skeleton-loader' => [
+                'type' => 'article',
+                'loading' => true,
+                'pulseDuration' => 1400,
+            ],
+            'p-sparkline' => [
+                'values' => '12,18,14,26,22,34,31,42,38,52,48,64',
+                'type' => 'trend',
+                'smooth' => true,
+                'fill' => true,
+                'lineWidth' => 3,
+            ],
+            'p-parallax' => [
+                'speed' => 0.28,
+            ],
             'p-color-input', 'p-color-picker' => ['modelValue' => '#5CBBF6'],
             'p-time-picker' => ['modelValue' => '14:35'],
             'p-text-field' => [
                 'modelValue' => 'Native field',
                 'placeholder' => 'Type here',
                 'helper' => 'Rendered by the platform',
+            ],
+            'p-field', 'p-input' => [
+                'modelValue' => 'Native input',
+                'placeholder' => 'Type here',
+                'helper' => 'Aligned label, value and details',
             ],
             'p-textarea' => [
                 'modelValue' => 'Built for Android and iOS.',
@@ -1146,6 +2435,10 @@ final class ComponentRoute extends Component
             'p-file-input', 'p-file-upload' => [
                 'placeholder' => 'Select a file',
                 'helper' => 'PDF, PNG or JPG',
+            ],
+            'p-switch' => [
+                'checked' => true,
+                'label' => 'Enabled',
             ],
             'p-alert', 'p-banner', 'p-empty-state', 'p-snackbar' => [
                 'text' => 'Everything is ready to continue.',

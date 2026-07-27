@@ -55,7 +55,7 @@ final class Themes
     {
         return self::$dark ??= new Theme([
             ColorToken::Primary->value => Color::rgb(33, 150, 243)->argb,
-            ColorToken::PrimaryForeground->value => Color::rgb(0, 0, 0)->argb,
+            ColorToken::PrimaryForeground->value => Color::rgb(255, 255, 255)->argb,
             ColorToken::Card->value => Color::rgb(33, 33, 33)->argb,
             ColorToken::Secondary->value => Color::rgb(84, 182, 178)->argb,
             ColorToken::SecondaryForeground->value => Color::rgb(0, 0, 0)->argb,
@@ -80,7 +80,7 @@ final class Themes
             ColorToken::Warning->value => Color::rgb(251, 140, 0)->argb,
             ColorToken::WarningForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Info->value => Color::rgb(33, 150, 243)->argb,
-            ColorToken::InfoForeground->value => Color::rgb(0, 0, 0)->argb,
+            ColorToken::InfoForeground->value => Color::rgb(255, 255, 255)->argb,
             ColorToken::Focus->value => Color::rgb(33, 150, 243)->argb,
             ColorToken::Overlay->value => Color::rgb(0, 0, 0, 128)->argb,
             ColorToken::OnSurface->value => Color::rgb(255, 255, 255)->argb,

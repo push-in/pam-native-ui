@@ -209,6 +209,14 @@ internal class MobileUiHost(
     private var sliderThumbSize = 16.0
     private var orientation = 1
     private var reversed = false
+    private var rangeEnabled = false
+    private var lowerValue = 0.0
+    private var upperValue = 100.0
+    private var activeRangeThumb = 1
+    private var showSliderTicks = false
+    private var alwaysShowSliderTicks = false
+    private var showThumbLabel = false
+    private var alwaysShowThumbLabel = false
     private var anchor = 1
     private var placement = 1
     private var resolvedPlacement = 1
@@ -261,6 +269,7 @@ internal class MobileUiHost(
     private var maximumCalendarYear: Int? = null
     private var firstDayOfWeek = 0
     private var showOutsideDays = true
+    private var showWeekNumbers = false
     private var fixedWeeks = false
     private var readOnly = false
     private var invalid = false
@@ -419,6 +428,14 @@ internal class MobileUiHost(
     private var tabsActivationMode = TABS_ACTIVATION_AUTOMATIC
     private var tabsIndicatorAnimator: ValueAnimator? = null
     private var tabsContentAnimator: ValueAnimator? = null
+    private var navigationKind = 0
+    private var carouselCycle = false
+    private var carouselContinuous = true
+    private var carouselIntervalMillis = 6_000L
+    private var carouselAdvance: Runnable? = null
+    private var carouselTouchDownX = 0f
+    private var carouselTouchDownY = 0f
+    private var carouselTouchActive = false
     private var treeReconciliationScheduled = false
     private val treeReconciliation = Runnable {
         treeReconciliationScheduled = false
@@ -586,6 +603,14 @@ internal class MobileUiHost(
             "activationMode",
             tabsActivationMode.toLong(),
         ).toInt().coerceIn(TABS_ACTIVATION_AUTOMATIC, TABS_ACTIVATION_MANUAL)
+        navigationKind = properties.integer(
+            "navigationKind",
+            navigationKind.toLong(),
+        ).toInt()
+        carouselCycle = properties.flag("cycle", false)
+        carouselContinuous = properties.flag("continuous", true)
+        carouselIntervalMillis = properties.integer("interval", 6_000L)
+            .coerceIn(750L, 60_000L)
         if (behavior == Behavior.TABS) {
             val controlledValue = properties.scalarText("value")
             if (controlledValue != null) {
@@ -768,6 +793,14 @@ internal class MobileUiHost(
         )
         step = properties.decimal("step", step).coerceAtLeast(0.000_001)
         value = snapped(value)
+        rangeEnabled = properties.flag("range", rangeEnabled)
+        lowerValue = snapped(properties.decimal("lowerValue", lowerValue))
+        upperValue = snapped(properties.decimal("upperValue", upperValue))
+        if (rangeEnabled) {
+            lowerValue = minOf(lowerValue, upperValue)
+            upperValue = maxOf(lowerValue, upperValue)
+            value = upperValue
+        }
         trackThickness = properties.decimal(
             "trackThickness",
             properties.decimal("sliderTrackHeight", trackThickness),
@@ -776,6 +809,16 @@ internal class MobileUiHost(
             .coerceAtLeast(1.0)
         orientation = properties.integer("orientation", orientation.toLong()).toInt()
         reversed = properties.flag("isReversed", properties.flag("reversed", reversed))
+        showSliderTicks = properties.flag("showTicks", showSliderTicks)
+        alwaysShowSliderTicks = properties.flag(
+            "alwaysShowTicks",
+            alwaysShowSliderTicks,
+        )
+        showThumbLabel = properties.flag("showThumbLabel", showThumbLabel)
+        alwaysShowThumbLabel = properties.flag(
+            "alwaysShowThumbLabel",
+            alwaysShowThumbLabel,
+        )
         anchor = properties.integer("anchor", anchor.toLong()).toInt()
         placement = properties.integer("placement", placement.toLong()).toInt().coerceIn(1, 13)
         resolvedPlacement = placement
@@ -833,6 +876,7 @@ internal class MobileUiHost(
         maximumCalendarYear = properties.integerOrNull("maxYear")
         firstDayOfWeek = properties.integer("firstDayOfWeek", 0L).toInt().coerceIn(0, 6)
         showOutsideDays = properties.flag("showOutsideDays", true)
+        showWeekNumbers = properties.flag("showWeek", false)
         fixedWeeks = properties.flag("fixedWeeks", false)
         readOnly = properties.flag("readOnly", properties.flag("isReadOnly", false))
         invalid = properties.flag("invalid", properties.flag("isInvalid", false))
@@ -1001,6 +1045,7 @@ internal class MobileUiHost(
                 animate = previousBehavior == Behavior.TABS
                     && previousTabValue != tabValue,
             )
+            scheduleCarouselAdvance()
         } else if (behavior == Behavior.TAB_TRIGGER) {
             updateTabTriggerAccessibility()
         } else if (behavior == Behavior.SHEET_ITEM) {
@@ -1176,6 +1221,14 @@ internal class MobileUiHost(
             Behavior.RADIO -> drawSelectionGlyph(canvas, radio = true)
             Behavior.CALENDAR -> drawCalendar(canvas)
             Behavior.INPUT_GROUP -> drawInputOutline(canvas)
+            Behavior.SLIDER -> if (nativeProperties.flag("rating", false)) {
+                drawRating(canvas)
+            } else {
+                drawSliderDecorations(canvas)
+            }
+            Behavior.PROGRESS -> if (!circularProgress) {
+                drawLinearProgress(canvas)
+            }
             else -> Unit
         }
     }
@@ -1562,6 +1615,30 @@ internal class MobileUiHost(
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        if (behavior == Behavior.TABS && navigationKind == 1 && isEnabled) {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    carouselTouchDownX = event.x
+                    carouselTouchDownY = event.y
+                    carouselTouchActive = false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = abs(event.x - carouselTouchDownX)
+                    val deltaY = abs(event.y - carouselTouchDownY)
+                    val vertical = orientation == 2 || nativeProperties.flag("vertical", false)
+                    val primary = if (vertical) deltaY else deltaX
+                    val cross = if (vertical) deltaX else deltaY
+                    if (primary >= 16f * density && primary > cross) {
+                        carouselTouchActive = true
+                        parent?.requestDisallowInterceptTouchEvent(false)
+                        return true
+                    }
+                }
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL,
+                -> carouselTouchActive = false
+            }
+        }
         if (
             behavior == Behavior.FILE_TREE_FILE
         ) {
@@ -1633,6 +1710,40 @@ internal class MobileUiHost(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (behavior == Behavior.TABS && navigationKind == 1) {
+            if (!isEnabled) return false
+            return when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    carouselTouchDownX = event.x
+                    carouselTouchDownY = event.y
+                    carouselTouchActive = true
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> true
+                MotionEvent.ACTION_UP -> {
+                    val vertical = orientation == 2 || nativeProperties.flag("vertical", false)
+                    val delta = if (vertical) {
+                        event.y - carouselTouchDownY
+                    } else {
+                        event.x - carouselTouchDownX
+                    }
+                    val activate = carouselTouchActive && abs(delta) >= 40f * density
+                    carouselTouchActive = false
+                    if (activate) {
+                        var direction = if (delta < 0f) 1 else -1
+                        if (reversed) direction *= -1
+                        moveCarousel(direction)
+                    }
+                    activate
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    val claimed = carouselTouchActive
+                    carouselTouchActive = false
+                    claimed
+                }
+                else -> carouselTouchActive
+            }
+        }
         if (
             behavior == Behavior.TAB_TRIGGER
             || behavior == Behavior.FILE_TREE_FOLDER
@@ -2815,23 +2926,79 @@ internal class MobileUiHost(
                 if (previousBehavior != behavior && visibility == VISIBLE) {
                     animate().cancel()
                     if (animationsEnabled()) {
+                        val transition = nativeProperties.text("transition")
+                            ?: nativeProperties.text("name")
+                            ?: "fade"
+                        val distance = 18f * density
                         alpha = 0f
-                        scaleX = 0.96f
-                        scaleY = 0.96f
+                        scaleX = if (
+                            transition == "scale"
+                            || transition == "expand"
+                        ) {
+                            0.94f
+                        } else {
+                            1f
+                        }
+                        scaleY = scaleX
+                        translationX = when (transition) {
+                            "slide-x" -> if (
+                                layoutDirection == LAYOUT_DIRECTION_RTL
+                            ) {
+                                -distance
+                            } else {
+                                distance
+                            }
+                            else -> 0f
+                        }
+                        translationY = when (transition) {
+                            "slide-y", "expand" -> distance
+                            else -> 0f
+                        }
                         animate()
                             .alpha(1f)
                             .scaleX(1f)
                             .scaleY(1f)
-                            .setDuration(220L)
+                            .translationX(0f)
+                            .translationY(0f)
+                            .setDuration(
+                                nativeProperties.integer("duration", 220L)
+                                    .coerceIn(0L, 2_000L),
+                            )
                             .start()
                     } else {
                         alpha = 1f
                         scaleX = 1f
                         scaleY = 1f
+                        translationX = 0f
+                        translationY = 0f
                     }
                 }
             }
             Behavior.PARALLAX -> post(::applyParallax)
+            Behavior.SPARKLINE -> {
+                if (
+                    previousBehavior != behavior
+                    && nativeProperties.flag("autoDraw", false)
+                    && animationsEnabled()
+                ) {
+                    animate().cancel()
+                    alpha = 0f
+                    scaleX = 0.15f
+                    pivotX = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                        width.toFloat()
+                    } else {
+                        0f
+                    }
+                    animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .setDuration(
+                            nativeProperties.integer("autoDrawDuration", 800L)
+                                .coerceIn(120L, 4_000L),
+                        )
+                        .start()
+                }
+            }
             Behavior.HOTKEY -> {
                 isFocusable = true
                 isFocusableInTouchMode = true
@@ -3598,6 +3765,16 @@ internal class MobileUiHost(
 
     private fun applyRangeVisualState() {
         if (behavior != Behavior.SLIDER && behavior != Behavior.PROGRESS) return
+        if (
+            behavior == Behavior.SLIDER
+            && nativeProperties.flag("rating", false)
+        ) {
+            findTaggedDescendant(this, SLIDER_TRACK_TAG)?.alpha = 0f
+            findTaggedDescendant(this, SLIDER_FILLED_TRACK_TAG)?.alpha = 0f
+            findTaggedDescendant(this, SLIDER_THUMB_TAG)?.alpha = 0f
+            invalidate()
+            return
+        }
         val progress = rangeProgress()
         val filledTag = if (behavior == Behavior.SLIDER) {
             SLIDER_FILLED_TRACK_TAG
@@ -3612,6 +3789,7 @@ internal class MobileUiHost(
             && filledParent.width > 0
             && filledParent.height > 0
         ) {
+            filled.alpha = if (rangeEnabled && behavior == Behavior.SLIDER) 0f else 1f
             filled.translationX = 0f
             filled.translationY = 0f
             filled.layout(0, 0, filledParent.width, filledParent.height)
@@ -3688,10 +3866,173 @@ internal class MobileUiHost(
             .coerceIn(0.0, 1.0)
             .toFloat()
 
+    private fun sliderProgress(current: Double): Float =
+        ((current - minimum) / (maximum - minimum))
+            .coerceIn(0.0, 1.0)
+            .toFloat()
+
+    private fun sliderPoint(bounds: RectF, current: Double): android.graphics.PointF {
+        var progress = sliderProgress(current)
+        if (reversed) progress = 1f - progress
+        return if (orientation == 2) {
+            android.graphics.PointF(
+                bounds.centerX(),
+                bounds.bottom - bounds.height() * progress,
+            )
+        } else {
+            android.graphics.PointF(
+                bounds.left + bounds.width() * progress,
+                bounds.centerY(),
+            )
+        }
+    }
+
+    private fun drawSliderDecorations(canvas: Canvas) {
+        if (behavior != Behavior.SLIDER) return
+        val bounds = sliderTrackBounds(includeHitSlop = false)
+        if (bounds.width() <= 0f || bounds.height() <= 0f) return
+
+        val previousTrackStyle = trackPaint.style
+        val previousTrackWidth = trackPaint.strokeWidth
+        val previousFillStyle = fillPaint.style
+        val previousFillWidth = fillPaint.strokeWidth
+        val previousFillCap = fillPaint.strokeCap
+
+        if (showSliderTicks || alwaysShowSliderTicks) {
+            val intervals = minOf(
+                100,
+                maxOf(1, round((maximum - minimum) / step).toInt()),
+            )
+            trackPaint.style = Paint.Style.FILL
+            for (index in 0..intervals) {
+                val tickValue = minimum + (maximum - minimum) * index / intervals
+                val point = sliderPoint(bounds, tickValue)
+                canvas.drawCircle(point.x, point.y, 1.5f * density, trackPaint)
+            }
+        }
+
+        if (rangeEnabled) {
+            val lower = sliderPoint(bounds, lowerValue)
+            val upper = sliderPoint(bounds, upperValue)
+            fillPaint.style = Paint.Style.STROKE
+            fillPaint.strokeWidth = (trackThickness * density).toFloat()
+            fillPaint.strokeCap = Paint.Cap.ROUND
+            canvas.drawLine(lower.x, lower.y, upper.x, upper.y, fillPaint)
+
+            fillPaint.style = Paint.Style.FILL
+            val radius = (sliderThumbSize * density / 2.0).toFloat()
+            canvas.drawCircle(lower.x, lower.y, radius, fillPaint)
+        }
+
+        if (showThumbLabel || alwaysShowThumbLabel) {
+            val values = if (rangeEnabled) {
+                listOf(lowerValue, upperValue)
+            } else {
+                listOf(value)
+            }
+            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = fillPaint.color
+                textAlign = Paint.Align.CENTER
+                textSize = 12f * density
+                typeface = android.graphics.Typeface.create(
+                    android.graphics.Typeface.DEFAULT,
+                    android.graphics.Typeface.BOLD,
+                )
+            }
+            values.forEach { current ->
+                val point = sliderPoint(bounds, current)
+                val label = formatRangeValue(current)
+                val bubbleWidth = maxOf(
+                    32f * density,
+                    textPaint.measureText(label) + 16f * density,
+                )
+                val bubbleHeight = 28f * density
+                val bubble = if (orientation == 2) {
+                    RectF(
+                        point.x + 16f * density,
+                        point.y - bubbleHeight / 2f,
+                        point.x + 16f * density + bubbleWidth,
+                        point.y + bubbleHeight / 2f,
+                    )
+                } else {
+                    RectF(
+                        point.x - bubbleWidth / 2f,
+                        point.y - 40f * density,
+                        point.x + bubbleWidth / 2f,
+                        point.y - 12f * density,
+                    )
+                }
+                canvas.drawRoundRect(
+                    bubble,
+                    6f * density,
+                    6f * density,
+                    fillPaint,
+                )
+                textPaint.color = Color.WHITE
+                val baseline = bubble.centerY() -
+                    (textPaint.ascent() + textPaint.descent()) / 2f
+                canvas.drawText(label, bubble.centerX(), baseline, textPaint)
+            }
+        }
+
+        trackPaint.style = previousTrackStyle
+        trackPaint.strokeWidth = previousTrackWidth
+        fillPaint.style = previousFillStyle
+        fillPaint.strokeWidth = previousFillWidth
+        fillPaint.strokeCap = previousFillCap
+    }
+
+    private fun drawRating(canvas: Canvas) {
+        if (width <= 0 || height <= 0) return
+        val length = nativeProperties.integer("length", 5L)
+            .toInt()
+            .coerceIn(1, 20)
+        val star = "\u2605"
+        val stars = star.repeat(length)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.NORMAL,
+            )
+            textAlign = Paint.Align.LEFT
+            textSize = minOf(
+                height * 0.78f,
+                width.toFloat() / length * 0.88f,
+            )
+        }
+        val textWidth = paint.measureText(stars)
+        val left = (width - textWidth) / 2f
+        val baseline = height / 2f - (paint.ascent() + paint.descent()) / 2f
+        paint.color = trackPaint.color
+        canvas.drawText(stars, left, baseline, paint)
+
+        val fraction = rangeProgress()
+        val fillFromEnd = reversed xor (
+            layoutDirection == LAYOUT_DIRECTION_RTL
+        )
+        val checkpoint = canvas.save()
+        canvas.clipRect(
+            if (fillFromEnd) {
+                left + textWidth * (1f - fraction)
+            } else {
+                left
+            },
+            0f,
+            if (fillFromEnd) {
+                left + textWidth
+            } else {
+                left + textWidth * fraction
+            },
+            height.toFloat(),
+        )
+        paint.color = fillPaint.color
+        canvas.drawText(stars, left, baseline, paint)
+        canvas.restoreToCount(checkpoint)
+    }
+
     private fun updateProgressAnimation() {
         if (
             behavior != Behavior.PROGRESS
-            || !circularProgress
             || !indeterminate
             || !animationsEnabled()
         ) {
@@ -3710,6 +4051,81 @@ internal class MobileUiHost(
                 invalidate()
             }
             start()
+        }
+    }
+
+    private fun drawLinearProgress(canvas: Canvas) {
+        if (width <= 0 || height <= 0) return
+        val thickness = (trackThickness * density).toFloat()
+            .coerceIn(1f, height.toFloat())
+        val top = (height - thickness) / 2f
+        val track = RectF(0f, top, width.toFloat(), top + thickness)
+        val radius = thickness / 2f
+        canvas.drawRoundRect(track, radius, radius, trackPaint)
+
+        val reverse = reversed xor (layoutDirection == LAYOUT_DIRECTION_RTL)
+        val animated = (progressRotation / 360f).coerceIn(0f, 1f)
+        val fraction = if (indeterminate) 0.34f else rangeProgress()
+        val startFraction = if (indeterminate) {
+            (animated * 1.34f - 0.34f).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        val endFraction = if (indeterminate) {
+            (startFraction + fraction).coerceIn(0f, 1f)
+        } else {
+            fraction
+        }
+        val fill = if (reverse) {
+            RectF(
+                width * (1f - endFraction),
+                top,
+                width * (1f - startFraction),
+                top + thickness,
+            )
+        } else {
+            RectF(
+                width * startFraction,
+                top,
+                width * endFraction,
+                top + thickness,
+            )
+        }
+        canvas.drawRoundRect(fill, radius, radius, fillPaint)
+
+        if (nativeProperties.flag("striped", false) && fill.width() > 0f) {
+            val checkpoint = canvas.save()
+            canvas.clipRect(fill)
+            val stripePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.argb(72, 255, 255, 255)
+                strokeWidth = maxOf(2f * density, thickness / 2f)
+            }
+            var x = fill.left - thickness
+            while (x < fill.right + thickness) {
+                canvas.drawLine(
+                    x,
+                    fill.bottom,
+                    x + thickness,
+                    fill.top,
+                    stripePaint,
+                )
+                x += thickness
+            }
+            canvas.restoreToCount(checkpoint)
+        }
+
+        if (nativeProperties.flag("stream", false)) {
+            val streamPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = fillPaint.color
+                alpha = 96
+                strokeWidth = maxOf(1f, thickness / 3f)
+                pathEffect = android.graphics.DashPathEffect(
+                    floatArrayOf(4f * density, 4f * density),
+                    progressRotation / 18f,
+                )
+            }
+            val y = track.bottom + 3f * density
+            canvas.drawLine(track.left, y, track.right, y, streamPaint)
         }
     }
 
@@ -3755,7 +4171,11 @@ internal class MobileUiHost(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
         stateDescription = when (behavior) {
             Behavior.PROGRESS -> "${(rangeProgress() * 100f).roundToInt()}%"
-            Behavior.SLIDER -> customStateDescription ?: formatRangeValue(value)
+            Behavior.SLIDER -> customStateDescription ?: if (rangeEnabled) {
+                "${formatRangeValue(lowerValue)} to ${formatRangeValue(upperValue)}"
+            } else {
+                formatRangeValue(value)
+            }
             else -> stateDescription
         }
     }
@@ -3791,11 +4211,17 @@ internal class MobileUiHost(
     }
 
     private fun drawSwitch(canvas: Canvas) {
-        val trackWidth = minOf(width.toFloat(), SWITCH_TRACK_WIDTH_DP * density)
-        val trackHeight = minOf(height.toFloat(), SWITCH_TRACK_HEIGHT_DP * density)
+        val anchor = findTaggedDescendant(this, SWITCH_TRACK_TAG)
+        val anchorBounds = if (anchor != null && anchor.width > 0 && anchor.height > 0) {
+            descendantBounds(anchor)
+        } else {
+            RectF(0f, 0f, width.toFloat(), height.toFloat())
+        }
+        val trackWidth = minOf(anchorBounds.width(), SWITCH_TRACK_WIDTH_DP * density)
+        val trackHeight = minOf(anchorBounds.height(), SWITCH_TRACK_HEIGHT_DP * density)
         if (trackWidth <= 0f || trackHeight <= 0f) return
-        val left = (width - trackWidth) / 2f
-        val top = (height - trackHeight) / 2f
+        val left = anchorBounds.left + (anchorBounds.width() - trackWidth) / 2f
+        val top = anchorBounds.top + (anchorBounds.height() - trackHeight) / 2f
         val track = RectF(left, top, left + trackWidth, top + trackHeight)
         val radius = trackHeight / 2f
         switchTrackPaint.color = blendColor(
@@ -3933,8 +4359,34 @@ internal class MobileUiHost(
                     val requested = snapped(
                         minimum + (maximum - minimum) * progress,
                     )
-                    if (requested != value) {
+                    if (rangeEnabled && event.actionMasked == MotionEvent.ACTION_DOWN) {
+                        activeRangeThumb = if (
+                            abs(requested - lowerValue) <= abs(requested - upperValue)
+                        ) {
+                            0
+                        } else {
+                            1
+                        }
+                    }
+                    val changed = if (rangeEnabled) {
+                        if (activeRangeThumb == 0) {
+                            val next = minOf(requested, upperValue)
+                            val changed = next != lowerValue
+                            lowerValue = next
+                            changed
+                        } else {
+                            val next = maxOf(requested, lowerValue)
+                            val changed = next != upperValue
+                            upperValue = next
+                            value = upperValue
+                            changed
+                        }
+                    } else {
+                        val changed = requested != value
                         value = requested
+                        changed
+                    }
+                    if (changed) {
                         applyRangeVisualState()
                         scheduleSliderChange()
                         invalidate()
@@ -4535,6 +4987,7 @@ internal class MobileUiHost(
                 trigger.updateTabTriggerAccessibility()
             }
             trigger.applyButtonToggleVisualState()
+            trigger.applyTabTextVisualState()
         }
 
         val contents = tabContents()
@@ -4555,6 +5008,62 @@ internal class MobileUiHost(
             animate,
         )
         animateTabsContentHeight(selectedContent?.view, animate)
+    }
+
+    private fun scheduleCarouselAdvance() {
+        carouselAdvance?.let(::removeCallbacks)
+        carouselAdvance = null
+        if (
+            behavior != Behavior.TABS
+            || navigationKind != 1
+            || !carouselCycle
+        ) {
+            return
+        }
+        carouselAdvance = Runnable {
+            val triggers = carouselTriggers()
+            if (triggers.size < 2) return@Runnable
+            val current = triggers.indexOfFirst { trigger ->
+                trigger.tabValue == tabValue
+            }.let { index -> if (index >= 0) index else 0 }
+            val next = current + 1
+            if (next >= triggers.size && !carouselContinuous) {
+                carouselAdvance = null
+                return@Runnable
+            }
+            val target = triggers[next % triggers.size]
+            tabValue = target.tabValue
+            applyTabsState(animate = true)
+            tabValue?.let { selected ->
+                emitter.emit(
+                    NativeViewEventKind.CHANGE,
+                    selected.encodeToByteArray(),
+                )
+            }
+            scheduleCarouselAdvance()
+        }.also { action ->
+            postDelayed(action, carouselIntervalMillis)
+        }
+    }
+
+    private fun carouselTriggers(): List<MobileUiHost> =
+        tabTriggers().filter { trigger ->
+            trigger.isEnabled
+                && !trigger.nativeProperties.flag("carouselControl", false)
+        }
+
+    private fun moveCarousel(direction: Int): Boolean {
+        val triggers = carouselTriggers()
+        if (triggers.size < 2) return false
+        val current = triggers.indexOfFirst { trigger ->
+            trigger.tabValue == tabValue
+        }.let { index -> if (index >= 0) index else 0 }
+        val requested = current + direction
+        if (!carouselContinuous && requested !in triggers.indices) return false
+        val target = (requested % triggers.size + triggers.size) % triggers.size
+        val changed = selectTab(triggers[target], emit = true)
+        if (changed) scheduleCarouselAdvance()
+        return changed
     }
 
     private fun tabContents(): List<TabContent> =
@@ -4589,12 +5098,21 @@ internal class MobileUiHost(
         background = if (selected) {
             GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = 8f * density
+                cornerRadius = nativeProperties.decimal(
+                    "selectionCornerRadius",
+                    8.0,
+                ).toFloat() * density
                 setColor(fillPaint.color)
             }
         } else {
             buttonToggleBackground?.constantState?.newDrawable()?.mutate()
         }
+        applyTabTextVisualState()
+        invalidate()
+    }
+
+    private fun applyTabTextVisualState() {
+        if (behavior != Behavior.TAB_TRIGGER) return
         descendantViews(this)
             .filterIsInstance<TextView>()
             .forEach { text ->
@@ -5158,7 +5676,8 @@ internal class MobileUiHost(
     private fun calendarCellBounds(index: Int): Rect {
         val bounds = calendarGridBounds()
         val rows = calendarRowCount()
-        val cellWidth = bounds.width() / DAYS_PER_WEEK
+        val columns = DAYS_PER_WEEK + if (showWeekNumbers) 1 else 0
+        val cellWidth = bounds.width() / columns
         val cellHeight = bounds.height() / rows
         val column = index % DAYS_PER_WEEK
         val row = index / DAYS_PER_WEEK
@@ -6387,7 +6906,8 @@ internal class MobileUiHost(
         if (bounds.width() <= 0f || bounds.height() <= 0f) return
 
         val rows = calendarRowCount()
-        val cellWidth = bounds.width() / DAYS_PER_WEEK
+        val columns = DAYS_PER_WEEK + if (showWeekNumbers) 1 else 0
+        val cellWidth = bounds.width() / columns
         val cellHeight = bounds.height() / rows
         val radius = minOf(cellWidth, cellHeight) * 0.38f
         val today = LocalDate.now()
@@ -6399,6 +6919,26 @@ internal class MobileUiHost(
         val originalTextAlpha = calendarTextPaint.alpha
         val originalTextColor = calendarTextPaint.color
 
+        if (showWeekNumbers) {
+            val weekFields = java.time.temporal.WeekFields.of(calendarLocale)
+            repeat(rows) { row ->
+                val date = firstVisibleDate.plusDays((row * DAYS_PER_WEEK).toLong())
+                val week = date.get(weekFields.weekOfWeekBasedYear())
+                val column = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    columns - 1
+                } else {
+                    0
+                }
+                val centerX = bounds.left + (column + 0.5f) * cellWidth
+                val centerY = bounds.top + (row + 0.5f) * cellHeight
+                val baseline = centerY - (
+                    calendarTextPaint.ascent() + calendarTextPaint.descent()
+                ) / 2f
+                calendarTextPaint.alpha = OUTSIDE_MONTH_ALPHA
+                canvas.drawText(week.toString(), centerX, baseline, calendarTextPaint)
+            }
+        }
+
         repeat(rows * DAYS_PER_WEEK) { index ->
             val date = firstVisibleDate.plusDays(index.toLong())
             val outside = date.monthValue != calendarMonth
@@ -6407,7 +6947,17 @@ internal class MobileUiHost(
             val insideRange = rangeFrom?.let { start ->
                 rangeTo?.let { end -> date > start && date < end }
             } == true
-            val centerX = bounds.left + (index % DAYS_PER_WEEK + 0.5f) * cellWidth
+            val dayColumn = index % DAYS_PER_WEEK
+            val visualColumn = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                DAYS_PER_WEEK - 1 - dayColumn
+            } else {
+                dayColumn
+            } + if (showWeekNumbers && layoutDirection != LAYOUT_DIRECTION_RTL) {
+                1
+            } else {
+                0
+            }
+            val centerX = bounds.left + (visualColumn + 0.5f) * cellWidth
             val centerY = bounds.top + (index / DAYS_PER_WEEK + 0.5f) * cellHeight
 
             if (insideRange) {
@@ -7663,9 +8213,14 @@ internal class MobileUiHost(
     }
 
     private fun emitSliderValue(kind: NativeViewEventKind, current: Double) {
+        val payload = if (rangeEnabled) {
+            "[${formatRangeValue(lowerValue)},${formatRangeValue(upperValue)}]"
+        } else {
+            formatRangeValue(current)
+        }
         emitter.emit(
             kind,
-            formatRangeValue(current).encodeToByteArray(),
+            payload.encodeToByteArray(),
         )
     }
 
@@ -7783,6 +8338,7 @@ internal class MobileUiHost(
         const val SELECTION_INDICATOR_TAG = "pam:selection-indicator"
         const val SELECTION_ICON_TAG = "pam:selection-icon"
         const val SELECTION_FORCE_ICON_TAG = "pam:selection-icon-force"
+        const val SWITCH_TRACK_TAG = "pam:switch-track"
         const val SLIDER_TRACK_TAG = "pam:slider-track"
         const val SLIDER_FILLED_TRACK_TAG = "pam:slider-filled-track"
         const val SLIDER_THUMB_TAG = "pam:slider-thumb"

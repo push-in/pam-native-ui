@@ -5,62 +5,54 @@
         </p-btn>
     </template>
 
-    <p-alert action="info" variant="tonal">
-        <p-col class="gap-1">
-            <p-alert-title class="text-white">Native interaction lab</p-alert-title>
-            <p-text class="text-white">{{ $feedback }}</p-text>
-        </p-col>
-    </p-alert>
+    <p-col class="gap-1">
+        <p-text size="2xl">Native interaction lab</p-text>
+        <p-text class="ui-text-muted">{{ $feedback }}</p-text>
+    </p-col>
 
     <p-text size="xl">Modal surfaces</p-text>
-    <p-card>
-        <p-col class="p-4 gap-3">
-            <p-text class="ui-text-muted">Focus trapping, Back, scrim, safe areas and entrance motion stay platform-owned.</p-text>
-            <p-col class="gap-2">
-                <p-btn class="flex-1" on:press="openDialog"><p-text>Dialog</p-text></p-btn>
-                <p-btn class="flex-1" variant="outline" on:press="openSheet"><p-text>Bottom sheet</p-text></p-btn>
-            </p-col>
-            <p-btn variant="tonal" on:press="showLoadingOverlay"><p-text>Loading overlay</p-text></p-btn>
+    <p-col class="gap-3">
+        <p-text class="ui-text-muted">Focus trapping, Back, scrim, safe areas and entrance motion stay platform-owned.</p-text>
+        <p-col class="gap-2">
+            <p-btn block="true" on:press="openDialog"><p-text>Dialog</p-text></p-btn>
+            <p-btn block="true" variant="outlined" on:press="openSheet"><p-text>Bottom sheet</p-text></p-btn>
         </p-col>
-    </p-card>
+        <p-btn block="true" variant="outlined" on:press="showLoadingOverlay"><p-text>Loading overlay</p-text></p-btn>
+    </p-col>
 
     <p-text size="xl">Contextual surfaces</p-text>
-    <p-card>
-        <p-col class="p-4 gap-3">
-            <p-col class="gap-2">
-                <p-menu>
-                    <p-btn><p-text>Menu</p-text></p-btn>
-                    <p-list>
-                        <p-list-item on:press="inspectMenuItem"><p-list-item-title>Inspect</p-list-item-title></p-list-item>
-                        <p-list-item on:press="shareMenuItem"><p-list-item-title>Share</p-list-item-title></p-list-item>
-                    </p-list>
-                </p-menu>
-                <p-tooltip text="Long press for native tooltip">
-                    <p-btn class="flex-1" variant="outline"><p-text>Tooltip</p-text></p-btn>
-                </p-tooltip>
-            </p-col>
-            <p-btn variant="tonal" on:press="showSnackbar"><p-text>Snackbar</p-text></p-btn>
-            <p-speed-dial class="w-16 h-16">
-                <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
-                <p-icon-btn accessibilityLabel="Edit"><p-icon icon="edit" /></p-icon-btn>
-                <p-icon-btn accessibilityLabel="Share"><p-icon icon="share" /></p-icon-btn>
-            </p-speed-dial>
+    <p-col class="gap-3">
+        <p-col class="gap-2">
+            <p-menu>
+                <p-btn block="true"><p-text>Menu</p-text></p-btn>
+                <p-list>
+                    <p-list-item on:press="inspectMenuItem"><p-list-item-title>Inspect</p-list-item-title></p-list-item>
+                    <p-list-item on:press="shareMenuItem"><p-list-item-title>Share</p-list-item-title></p-list-item>
+                </p-list>
+            </p-menu>
+            <p-tooltip text="Long press for native tooltip">
+                <p-btn block="true" variant="outlined"><p-text>Tooltip</p-text></p-btn>
+            </p-tooltip>
         </p-col>
-    </p-card>
+        <p-btn block="true" variant="text" on:press="showSnackbar"><p-text>Snackbar</p-text></p-btn>
+        <p-speed-dial class="w-16 h-16">
+            <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
+            <p-icon-btn accessibilityLabel="Edit"><p-icon icon="edit" /></p-icon-btn>
+            <p-icon-btn accessibilityLabel="Share"><p-icon icon="share" /></p-icon-btn>
+        </p-speed-dial>
+    </p-col>
 
     <p-text size="xl">Progress and loading</p-text>
-    <p-card>
-        <p-col class="p-4 gap-4">
-            <p-row class="gap-4 items-center">
-                <p-progress-circular value="68" size="sm" />
-                <p-progress-circular value="68" size="lg" />
-                <p-progress-circular indeterminate="true" />
-            </p-row>
-            <p-progress-linear value="34" />
-            <p-progress-linear indeterminate="true" />
-            <p-skeleton-loader class="h-24 rounded-2xl" />
-        </p-col>
-    </p-card>
+    <p-col class="gap-4">
+        <p-row class="gap-4 items-center">
+            <p-progress-circular value="68" size="sm" />
+            <p-progress-circular value="68" size="lg" />
+            <p-progress-circular indeterminate="true" />
+        </p-row>
+        <p-progress-linear value="34" />
+        <p-progress-linear indeterminate="true" />
+        <p-skeleton-loader class="h-24 rounded-2xl" />
+    </p-col>
 
     <p-btn variant="text" on:press="goAll"><p-text>Browse every component route</p-text></p-btn>
 

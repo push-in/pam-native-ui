@@ -3,7 +3,6 @@
     <p-container>
 
     <p-text size="xl">Lists</p-text>
-    <p-card>
         <p-list>
             <p-list-subheader>Packages</p-list-subheader>
             <p-list-item>
@@ -15,16 +14,12 @@
                 <p-list-item-subtitle>Android and UIKit renderer</p-list-item-subtitle>
             </p-list-item>
         </p-list>
-    </p-card>
 
     <p-text size="xl">Data table</p-text>
-    <p-card>
         <p-data-table-server headers="Target" items="Android,iOS,Composer,GitHub" />
-    </p-card>
 
     <p-text size="xl">Timeline</p-text>
-    <p-card>
-        <p-col class="p-4 gap-4">
+        <p-col class="gap-4">
             <p-row class="items-center gap-3">
                 <p-avatar class="w-8 h-8"><p-text>1</p-text></p-avatar>
                 <p-col><p-text>Design tokens</p-text><p-text size="sm">Theme and density foundations</p-text></p-col>
@@ -40,17 +35,14 @@
                 <p-col><p-text>Release</p-text><p-text size="sm">Validated package distribution</p-text></p-col>
             </p-row>
         </p-col>
-    </p-card>
 
     <p-text size="xl">Visualization</p-text>
-    <p-card>
-        <p-col class="p-4 gap-4">
+        <p-col class="gap-4">
             <p-sparkline value="18,32,29,44,68,61,82" accessibilityLabel="Weekly performance" />
             <p-treeview>
                 <p-treeview-item path="/src"><p-text>src</p-text></p-treeview-item>
                 <p-treeview-item path="/tests"><p-text>tests</p-text></p-treeview-item>
             </p-treeview>
         </p-col>
-    </p-card>
     </p-container>
 </AppScreen>

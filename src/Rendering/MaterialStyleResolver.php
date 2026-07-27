@@ -739,15 +739,21 @@ final class MaterialStyleResolver
             'PRadio',
             'PSwitch',
         ], true)) {
-            $controlSize = match ($density) {
+            $controlBaseSize = match ($density) {
                 MaterialDensity::Comfortable => 36.0,
                 MaterialDensity::Compact => 28.0,
                 default => 40.0,
             };
+            $controlSize = MaterialTokens::componentSize(
+                $props['size'] ?? null,
+                $controlBaseSize,
+            );
 
             return new Style(
                 minHeight: $controlSize,
-                minWidth: $part === 'PSwitch' ? 40.0 : $controlSize,
+                minWidth: $part === 'PSwitch'
+                    ? max(40.0, $controlSize)
+                    : $controlSize,
                 gap: $part === 'PSwitch' ? 10.0 : 8.0,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
@@ -1145,31 +1151,6 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PFab') {
-            $size = match ($props['size'] ?? null) {
-                'x-small' => 40.0,
-                'small' => 48.0,
-                'large' => 72.0,
-                'x-large' => 96.0,
-                default => is_numeric($props['size'] ?? null) ? (float) $props['size'] : 56.0,
-            };
-            $isFlat = in_array($props['variant'] ?? null, ['flat', 'text', 'plain'], true);
-
-            return new Style(
-                width: $size,
-                height: $size,
-                minWidth: $size,
-                minHeight: $size,
-                borderRadius: 9999.0,
-                alignItems: Align::Center,
-                justifyContent: Justify::Center,
-                backgroundColor: self::semanticColor($props, $theme, false)
-                    ?? $theme->color(ColorToken::Primary),
-                elevation: $isFlat ? 0 : 3,
-                opacity: ($props['disabled'] ?? false) ? 0.26 : 1.0,
-            );
-        }
-
         if ($part === 'PBadge') {
             $isDot = (bool) ($props['dot'] ?? false);
             $badgeSize = $isDot ? 9.0 : match ($props['size'] ?? 'default') {
@@ -1189,8 +1170,13 @@ final class MaterialStyleResolver
                 minHeight: $badgeSize,
                 paddingHorizontal: 0.0,
                 paddingVertical: 0.0,
-                borderWidth: ($props['bordered'] ?? false) ? 2.0 : 0.0,
-                borderRadius: 9999.0,
+                borderWidth: (
+                    ($props['border'] ?? false)
+                    || ($props['bordered'] ?? false)
+                ) ? 2.0 : 0.0,
+                borderRadius: ($props['tile'] ?? false)
+                    ? 0.0
+                    : (($props['rounded'] ?? true) ? 9999.0 : 4.0),
                 backgroundColor: self::semanticColor(
                     $props + ['color' => 'error'],
                     $theme,
@@ -1239,6 +1225,8 @@ final class MaterialStyleResolver
             return new Style(
                 width: $progressSize,
                 height: $progressSize,
+                textColor: self::semanticColor($props, $theme, false)
+                    ?? $theme->color(ColorToken::Primary),
                 opacity: $opacity,
                 animationDurationMs: 1400,
                 animateChanges: true,
@@ -1254,6 +1242,8 @@ final class MaterialStyleResolver
                 height: $progressHeight,
                 minHeight: $progressHeight,
                 backgroundColor: $theme->color(ColorToken::Secondary),
+                textColor: self::semanticColor($props, $theme, false)
+                    ?? $theme->color(ColorToken::Primary),
                 borderRadius: 9999.0,
                 opacity: $opacity,
                 animationDurationMs: 2200,
@@ -1414,11 +1404,22 @@ final class MaterialStyleResolver
 
         if (in_array($part, ['PBtn', 'PIconBtn', 'PFab'], true)) {
             $icon = $part !== 'PBtn' || ($props['icon'] ?? false) === true;
+            $block = ($props['block'] ?? false) === true;
+            $stacked = ($props['stacked'] ?? false) === true;
+            $slim = ($props['slim'] ?? false) === true;
+            $semanticBackground = self::semanticColor($props, $theme, false);
+            $semanticForeground = self::semanticColor($props, $theme, true);
             $height = match ($part) {
-                'PFab' => MaterialTokens::componentSize(
-                    $props['size'] ?? null,
-                    56.0,
-                ),
+                'PFab' => match ($props['size'] ?? null) {
+                    'xs', 'x-small' => 40.0,
+                    'sm', 'small' => 48.0,
+                    'lg', 'large' => 72.0,
+                    'xl', 'x-large' => 96.0,
+                    default => MaterialTokens::componentSize(
+                        $props['size'] ?? null,
+                        56.0,
+                    ),
+                },
                 'PIconBtn' => MaterialTokens::componentSize(
                     $props['size'] ?? null,
                     MaterialTokens::iconButtonHeight($density),
@@ -1428,41 +1429,66 @@ final class MaterialStyleResolver
                     MaterialTokens::buttonHeight($density),
                 ),
             };
+            $effectiveHeight = $stacked ? max(56.0, $height) : $height;
+            $rounded = $props['rounded'] ?? null;
+            $radius = match (true) {
+                ($props['tile'] ?? false) === true, $rounded === false,
+                    $rounded === 0, $rounded === '0' => 0.0,
+                $part === 'PFab' => MaterialTokens::radius(MaterialShape::Full),
+                $icon, $rounded === 'pill',
+                    $rounded === 'full' => $effectiveHeight / 2.0,
+                $rounded === true, $rounded === 'xl' =>
+                    MaterialTokens::radius(MaterialShape::ExtraLarge),
+                $rounded === 'lg' => MaterialTokens::radius(MaterialShape::Large),
+                $rounded === 'sm' => MaterialTokens::radius(MaterialShape::Small),
+                default => MaterialTokens::radius(MaterialShape::ExtraSmall),
+            };
 
             return new Style(
-                minWidth: $icon ? $height : max(64.0, $height * (16.0 / 9.0)),
-                width: $icon ? $height : null,
-                minHeight: $height,
-                height: $height,
-                paddingHorizontal: $icon ? 0.0 : max(8.0, $height / 2.25),
-                gap: 8.0,
+                widthPercent: $block ? 100.0 : null,
+                minWidth: $block
+                    ? null
+                    : ($icon
+                        ? $effectiveHeight
+                        : max(64.0, $height * (16.0 / 9.0))),
+                width: !$block && $icon ? $effectiveHeight : null,
+                minHeight: $effectiveHeight,
+                height: $effectiveHeight,
+                paddingHorizontal: $icon
+                    ? 0.0
+                    : ($slim ? 8.0 : max(8.0, $height / 2.25)),
+                paddingVertical: $stacked ? 8.0 : 0.0,
+                gap: $stacked ? 4.0 : 8.0,
                 textColor: match ($variant) {
-                    MaterialVariant::Tonal =>
-                        $theme->color(ColorToken::SecondaryForeground),
+                    MaterialVariant::Tonal => $semanticForeground
+                        ?? $theme->color(ColorToken::SecondaryForeground),
                     MaterialVariant::Outlined, MaterialVariant::Text,
-                    MaterialVariant::Plain =>
-                        $theme->color(ColorToken::Primary),
-                    default => $theme->color(ColorToken::PrimaryForeground),
+                    MaterialVariant::Plain => $semanticBackground
+                        ?? $theme->color(ColorToken::Primary),
+                    default => $semanticForeground
+                        ?? $theme->color(ColorToken::PrimaryForeground),
                 },
                 backgroundColor: match ($variant) {
-                    MaterialVariant::Tonal => $theme->color(ColorToken::Secondary),
+                    MaterialVariant::Tonal => $semanticBackground
+                        ?? $theme->color(ColorToken::Secondary),
                     MaterialVariant::Outlined, MaterialVariant::Text,
                     MaterialVariant::Plain => $transparent,
-                    default => $theme->color(ColorToken::Primary),
+                    default => $semanticBackground
+                        ?? $theme->color(ColorToken::Primary),
                 },
-                borderColor: $theme->color(ColorToken::Border),
+                borderColor: $variant === MaterialVariant::Outlined
+                    ? ($semanticBackground ?? $theme->color(ColorToken::Border))
+                    : $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
-                borderRadius: match (true) {
-                    $part === 'PFab' => MaterialTokens::radius(MaterialShape::Large),
-                    $icon => MaterialTokens::radius(MaterialShape::Full),
-                    ($props['rounded'] ?? false) === true =>
-                        MaterialTokens::radius(MaterialShape::ExtraLarge),
-                    default => MaterialTokens::radius(MaterialShape::ExtraSmall),
-                },
-                elevation: $variant === MaterialVariant::Elevated ? 1.0 : 0.0,
+                borderRadius: $radius,
+                elevation: ($props['flat'] ?? false) === true
+                    || $variant !== MaterialVariant::Elevated
+                        ? 0.0
+                        : ($part === 'PFab' ? 3.0 : 1.0),
                 opacity: $opacity,
-                flexDirection: FlexDirection::Row,
+                flexDirection: $stacked ? FlexDirection::Column : FlexDirection::Row,
                 alignItems: Align::Center,
+                alignSelf: $block ? Align::Stretch : null,
                 justifyContent: Justify::Center,
                 animationDurationMs: 200,
                 animateChanges: true,
@@ -1471,6 +1497,7 @@ final class MaterialStyleResolver
 
         if (in_array($part, ['PCard', 'PSheet', 'PEmptyState', 'PPicker'], true)) {
             $contentContainer = in_array($part, ['PEmptyState', 'PPicker'], true);
+            $semanticBackground = self::semanticColor($props, $theme, false);
 
             return new Style(
                 padding: $contentContainer ? match ($density) {
@@ -1479,12 +1506,18 @@ final class MaterialStyleResolver
                     MaterialDensity::Compact => 8.0,
                 } : 0.0,
                 gap: $contentContainer ? 12.0 : 0.0,
-                backgroundColor: $variant === MaterialVariant::Tonal
-                    ? $theme->color(ColorToken::Secondary)
-                    : $theme->color(ColorToken::Surface),
-                borderColor: $theme->color(ColorToken::Border),
+                backgroundColor: $semanticBackground ?? (
+                    $variant === MaterialVariant::Tonal
+                        ? $theme->color(ColorToken::Secondary)
+                        : $theme->color(ColorToken::Surface)
+                ),
+                borderColor: $semanticBackground ?? $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
-                borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
+                borderRadius: ($props['tile'] ?? false) === true
+                    ? 0.0
+                    : (($props['rounded'] ?? null) === 'xl'
+                        ? MaterialTokens::radius(MaterialShape::ExtraLarge)
+                        : MaterialTokens::radius(MaterialShape::ExtraSmall)),
                 elevation: $variant === MaterialVariant::Elevated ? 1.0 : 0.0,
                 opacity: $opacity,
             );
@@ -1584,7 +1617,7 @@ final class MaterialStyleResolver
                     ? $transparent
                     : ($semanticBackground
                         ?? $theme->color(ColorToken::Secondary)),
-                borderColor: $theme->color(ColorToken::Border),
+                borderColor: $semanticBackground ?? $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
                 borderRadius: MaterialTokens::radius(MaterialShape::Full),
                 opacity: $opacity,
@@ -1699,9 +1732,6 @@ final class MaterialStyleResolver
             'PConfirmEdit',
         ], true)) {
             $semanticColor = self::semanticColor($props, $theme, false);
-            $surfaceSemantic = in_array($part, [
-                'PAlert', 'PBanner', 'PConfirmEdit',
-            ], true);
 
             return new Style(
                 widthPercent: 100.0,
@@ -1715,9 +1745,8 @@ final class MaterialStyleResolver
                     default => 12.0,
                 },
                 gap: 12.0,
-                backgroundColor: $surfaceSemantic
-                    ? $theme->color(ColorToken::SurfaceElevated)
-                    : ($semanticColor ?? $theme->color(ColorToken::SurfaceElevated)),
+                backgroundColor: $semanticColor
+                    ?? $theme->color(ColorToken::SurfaceElevated),
                 borderColor: $semanticColor ?? $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined
                     ? 1.0
@@ -1916,8 +1945,16 @@ final class MaterialStyleResolver
             'PTabs', 'PSlideGroup', 'PBreadcrumbs', 'PPagination',
             'PStepperHeader', 'PCalendarHeader',
         ], true)) {
+            $verticalTabs = in_array($part, ['PTabs', 'PSlideGroup'], true)
+                && (
+                    ($props['direction'] ?? null) === 'vertical'
+                    || ($props['vertical'] ?? false) === true
+                );
+            $tabAlignment = $props['alignTabs'] ?? null;
+
             return new Style(
-                widthPercent: 100.0,
+                widthPercent: $verticalTabs ? null : 100.0,
+                width: $verticalTabs ? 160.0 : null,
                 minHeight: $part === 'PTabs'
                     ? match ($density) {
                         MaterialDensity::Comfortable => 44.0,
@@ -1928,8 +1965,15 @@ final class MaterialStyleResolver
                 paddingHorizontal: 8.0,
                 gap: 4.0,
                 backgroundColor: $theme->color(ColorToken::Surface),
-                flexDirection: FlexDirection::Row,
+                flexDirection: $verticalTabs
+                    ? FlexDirection::Column
+                    : FlexDirection::Row,
                 alignItems: Align::Center,
+                justifyContent: match ($tabAlignment) {
+                    'center' => Justify::Center,
+                    'end' => Justify::End,
+                    default => null,
+                },
             );
         }
 
@@ -1944,7 +1988,14 @@ final class MaterialStyleResolver
                         default => 48.0,
                     }
                     : 48.0,
-                minWidth: $part === 'PTab' ? 90.0 : 48.0,
+                minWidth: $part === 'PTab'
+                    ? (($props['fixedTabs'] ?? false) ? 160.0 : 90.0)
+                    : 48.0,
+                flexGrow: $part === 'PTab'
+                    && (
+                        ($props['grow'] ?? false)
+                        || ($props['fixedTabs'] ?? false)
+                    ) ? 1.0 : null,
                 paddingHorizontal: 16.0,
                 gap: 8.0,
                 textColor: ($props['selected'] ?? false)
@@ -1955,7 +2006,9 @@ final class MaterialStyleResolver
                     ? 0.0
                     : MaterialTokens::radius(MaterialShape::ExtraSmall),
                 opacity: $opacity,
-                flexDirection: FlexDirection::Row,
+                flexDirection: ($props['stacked'] ?? false)
+                    ? FlexDirection::Column
+                    : FlexDirection::Row,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
             );
@@ -2041,9 +2094,11 @@ final class MaterialStyleResolver
             return new Style(
                 width: $diameter,
                 height: $diameter,
-                textColor: $theme->color(ColorToken::OnSurface),
+                textColor: self::semanticColor($props, $theme, false)
+                    ?? $theme->color(ColorToken::OnSurface),
                 backgroundColor: $part === 'PAvatar'
-                    ? $theme->color(ColorToken::Secondary)
+                    ? (self::semanticColor($props, $theme, false)
+                        ?? $theme->color(ColorToken::Secondary))
                     : $transparent,
                 borderRadius: MaterialTokens::radius(MaterialShape::Full),
                 overflow: Overflow::Hidden,
@@ -2067,10 +2122,22 @@ final class MaterialStyleResolver
         }
 
         if ($part === 'PDivider') {
+            $vertical = ($props['vertical'] ?? false) === true
+                || ($props['orientation'] ?? null) === 2
+                || ($props['orientation'] ?? null) === 'vertical';
+            $thickness = is_numeric($props['thickness'] ?? null)
+                ? max(1.0, (float) $props['thickness'])
+                : 1.0;
+
             return new Style(
-                widthPercent: 100.0,
-                height: 1.0,
-                backgroundColor: $theme->color(ColorToken::Border),
+                widthPercent: $vertical ? null : 100.0,
+                width: $vertical ? $thickness : null,
+                height: $vertical ? 48.0 : $thickness,
+                minWidth: $vertical ? $thickness : null,
+                minHeight: $vertical ? 48.0 : $thickness,
+                marginLeft: ($props['inset'] ?? false) && !$vertical ? 72.0 : null,
+                backgroundColor: self::semanticColor($props, $theme, false)
+                    ?? $theme->color(ColorToken::Border),
                 opacity: $opacity,
             );
         }
@@ -2211,15 +2278,27 @@ final class MaterialStyleResolver
         $parentVariant = $parent['variant'] ?? null;
 
         if (in_array($parentComponent, ['PBtn', 'PFab'], true)) {
+            $semanticBackground = self::semanticColor($parent, $theme, false);
+            $semanticForeground = self::semanticColor($parent, $theme, true);
+
             return match ($parentVariant) {
                 MaterialVariant::Tonal->value, 'tonal' =>
-                    $theme->color(ColorToken::SecondaryForeground),
+                    $semanticForeground
+                        ?? $theme->color(ColorToken::SecondaryForeground),
                 MaterialVariant::Outlined->value, 'outlined', 'outline',
                 MaterialVariant::Text->value, 'text',
                 MaterialVariant::Plain->value, 'plain' =>
-                    $theme->color(ColorToken::Primary),
-                default => $theme->color(ColorToken::PrimaryForeground),
+                    $semanticBackground ?? $theme->color(ColorToken::Primary),
+                default => $semanticForeground
+                    ?? $theme->color(ColorToken::PrimaryForeground),
             };
+        }
+
+        if (in_array($parentComponent, [
+            'PAlert', 'PAvatar', 'PBanner', 'PCard', 'PSheet',
+        ], true)) {
+            return self::semanticColor($parent, $theme, true)
+                ?? $theme->color(ColorToken::OnSurface);
         }
 
         if (in_array($parentComponent, ['PChip', 'PBadge'], true)) {
