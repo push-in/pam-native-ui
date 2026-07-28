@@ -28,7 +28,7 @@
                 "size-full",
                 "size-5 rounded bg-background",
                 "size-12 rounded bg-muted",
-                "absolute top-2 right-2 size-6 rounded-full bg-background/80 opacity-0 group-hover:opacity-100",
+                "absolute top-2 right-2 size-6 rounded-full bg-background/80 opacity-0",
                 "absolute top-3 right-3 h-8 w-8 items-center flex justify-center rounded-full bg-muted",
                 "size-5 ml-auto",
                 "size-8 shrink-0 ml-auto",

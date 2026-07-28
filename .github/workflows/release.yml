@@ -21,9 +21,57 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 795fcf3104deeb700d225f8f2c0a6d16f9742c84
+  PAM_NATIVE_COMMIT: d420837613669483679ebafc50607a8952b6761b
 
 jobs:
+  ios:
+    name: Build iOS release artifact
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: ${{ env.PAM_NATIVE_COMMIT }}
+          path: pam-native
+      - name: Test and build UIKit package
+        env:
+          PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
+        run: |
+          udid=$(
+            xcrun simctl list devices available |
+              awk -F '[()]' '/iPhone/ { print $2; exit }'
+          )
+          test -n "${udid}"
+          xcodebuild \
+            -scheme PamMobileUi \
+            -destination "platform=iOS Simulator,id=${udid}" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+          xcodebuild \
+            -scheme PamMobileUi \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Create versioned iOS archive
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+        run: |
+          version=${RELEASE_TAG#v}
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent ios \
+            "dist/pam-mobile-ui-ios-${version}.zip"
+          shasum -a 256 "dist/pam-mobile-ui-ios-${version}.zip" \
+            >"dist/pam-mobile-ui-ios-${version}.zip.sha256"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pam-mobile-ui-ios-release
+          path: dist/pam-mobile-ui-ios-*
+          if-no-files-found: error
+
   package:
     name: Build release artifacts
     runs-on: ubuntu-24.04
@@ -99,12 +147,18 @@ jobs:
 
   publish:
     name: Publish GitHub release
-    needs: package
+    needs:
+      - ios
+      - package
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v8
         with:
           name: pam-mobile-ui-release
+          path: dist
+      - uses: actions/download-artifact@v8
+        with:
+          name: pam-mobile-ui-ios-release
           path: dist
       - uses: softprops/action-gh-release@v3
         with:

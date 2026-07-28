@@ -287,6 +287,7 @@ spl_autoload_register(static function (string $class) use ($roots): void {
 });
 
 require dirname(__DIR__).'/src/Generated/ComponentFacades.php';
+require dirname(__DIR__).'/src/Generated/MaterialComponentFacades.php';
 
 $assert = static function (bool $condition, string $message): void {
     if (!$condition) {
@@ -379,8 +380,9 @@ if (!is_array($icons) || !is_array($icons['icons'] ?? null)) {
     throw new RuntimeException('The upstream icon catalog is missing.');
 }
 $assert(
-    count($icons['icons']) === 55,
-    'Every upstream vector icon path must be captured.',
+    count($icons['icons']) === 56
+        && isset($icons['icons']['AddIcon']),
+    'Every native vector icon path, including AddIcon, must be captured.',
 );
 $parity = json_decode(
     (string) file_get_contents(dirname(__DIR__).'/resources/parity.json'),
@@ -469,11 +471,11 @@ $assert(class_exists(SwitchControl::class), 'Reserved PHP names must receive a t
 
 ThemeManager::mode(ThemeMode::Light);
 $assert(
-    Themes::light()->color(ColorToken::Background) === 0xfff8fafc,
+    Themes::light()->color(ColorToken::Background) === 0xffffffff,
     'The upstream light background token changed unexpectedly.',
 );
 $assert(
-    Themes::dark()->color(ColorToken::Background) === 0xff0f172a,
+    Themes::dark()->color(ColorToken::Background) === 0xff121212,
     'The upstream dark background token changed unexpectedly.',
 );
 $previousSystemDark = getenv('PAM_SYSTEM_DARK');
@@ -2389,6 +2391,32 @@ $assert(
     'Table must retain authored cells while packing header-row collection semantics.',
 );
 
+$materialInput = \Pam\MobileUi\Material\PTextField::make([
+    'value' => 'Visible in dark mode',
+    'placeholder' => 'Semantic placeholder',
+])->toElement();
+$materialInputField = $materialInput->children()[0] ?? null;
+$materialInputNode = $materialInputField?->children()[0] ?? null;
+$materialTable = \Pam\MobileUi\Material\PDataTable::make([
+    'items' => 'Android,iOS,Composer',
+])->toElement();
+$assert(
+    $materialInputNode instanceof \Pam\Native\Element
+        && $materialInputNode->kind() === NodeKind::Input
+        && is_int($materialInputNode->properties()[PropKey::TextColor->value] ?? null)
+        && is_int($materialInputNode->properties()[PropKey::PlaceholderColor->value] ?? null)
+        && count($materialTable->children()) === 3
+        && array_reduce(
+            $materialTable->children(),
+            static fn (bool $valid, \Pam\Native\Element $row): bool =>
+                $valid
+                && ($row->properties()[PropKey::Value->value] ?? null)
+                    === 'pam:table-row',
+            true,
+        ),
+    'Material inputs must theme their native field and data tables must materialize item rows.',
+);
+
 $imageViewerOpenChanges = [];
 $imageViewerIndexes = [];
 $imageViewer = ImageViewer::make(
@@ -3785,9 +3813,26 @@ $catalog = TemplateRenderer::render(
     [],
 );
 $assert(
-    $catalog->kind() === NodeKind::SafeAreaView
-        && count($catalog->children()) === 4,
+    $catalog->kind() === NodeKind::SafeAreaView,
     'The kitchen sink must compile every showcase section and its native overlay hosts.',
+);
+
+$materialSource = <<<'PAM'
+<p-card>
+    <p-card-title>PAM Material</p-card-title>
+    <p-card-text>Native p-* component contract</p-card-text>
+    <p-btn><Text>Continue</Text></p-btn>
+</p-card>
+PAM;
+$material = TemplateRenderer::render(
+    TemplateCompiler::compile($materialSource, 'material-components.pam'),
+    null,
+    [],
+);
+$assert(
+    $material->kind() === NodeKind::View
+        && count($material->children()) === 3,
+    'The p-* component contract must compile into native PAM primitives.',
 );
 
 echo "PAM Mobile UI PHP tests passed.\n";

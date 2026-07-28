@@ -4,6 +4,11 @@ PAM Mobile UI keeps interaction progress inside Android and sends PHP only the
 semantic result. Benchmarks are split by layer so a fast PHP microbenchmark
 cannot be mistaken for smooth rendered frames.
 
+The same boundary applies to UIKit. `p-ripple`, state layers, overlay motion,
+intersection, resize and mutation observation execute in native code. Only
+requested semantic events cross the bounded binary channel; listeners are
+absent when a directive is not authored.
+
 ## Android UI-thread microbenchmark
 
 Reference run:

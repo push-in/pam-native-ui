@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pam\MobileUi\Product;
 
 use Pam\MobileUi\Enum\ColorToken;
-use Pam\MobileUi\Theme\DesignTokens;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\KeyboardAvoidingBehavior;
@@ -105,17 +104,17 @@ final readonly class AppScreen implements Renderable
         $heading = Text::make($this->title)
             ->style(new Style(
                 textColor: $theme->color(ColorToken::OnSurface),
-                fontSize: DesignTokens::TEXT_HEADLINE,
+                fontSize: 22.0,
                 fontWeight: 700,
-                lineHeight: 34.0,
+                lineHeight: 28.0,
             ))
             ->accessibilityRole(AccessibilityRole::Header);
         $titles = [$heading];
         if ($this->subtitle !== null && $this->subtitle !== '') {
             $titles[] = Text::make($this->subtitle)->style(new Style(
                 textColor: $theme->color(ColorToken::MutedForeground),
-                fontSize: 15.0,
-                lineHeight: 22.0,
+                fontSize: 14.0,
+                lineHeight: 20.0,
             ));
         }
         $header = Row::make(
@@ -123,22 +122,29 @@ final readonly class AppScreen implements Renderable
             ...$this->actions,
         )->style(new Style(
             minHeight: 64.0,
-            paddingLeft: 24.0,
-            paddingTop: 16.0,
+            paddingLeft: 16.0,
+            paddingTop: 10.0,
             paddingRight: 16.0,
-            paddingBottom: 12.0,
-            gap: 12.0,
+            paddingBottom: 8.0,
+            gap: 8.0,
             alignItems: \Pam\Native\Align::Center,
         ));
         $content = Column::make(...$this->content)->style(new Style(
             flexGrow: 1.0,
-            paddingHorizontal: 24.0,
-            paddingTop: 12.0,
-            paddingBottom: $this->bottom === [] ? 32.0 : 16.0,
-            gap: DesignTokens::spacing(\Pam\MobileUi\Enum\InterfaceDensity::Comfortable),
+            paddingHorizontal: 16.0,
+            paddingTop: 8.0,
+            paddingBottom: $this->bottom === [] ? 16.0 : 12.0,
+            gap: 12.0,
+            backgroundColor: $theme->color(ColorToken::Background),
         ));
-        $body = ($this->scrollable ? ScrollView::make($content) : $content)
-            ->style(new Style(flexGrow: 1.0, flexShrink: 1.0));
+        $body = ($this->scrollable
+            ? ScrollView::make($content)->key('app-screen-scroll:'.$this->title)
+            : $content)
+            ->style(new Style(
+                flexGrow: 1.0,
+                flexShrink: 1.0,
+                backgroundColor: $theme->color(ColorToken::Background),
+            ));
         $body = $this->keyboardSafe
             ? KeyboardAvoidingView::make($body, KeyboardAvoidingBehavior::Resize)
                 ->style(new Style(flexGrow: 1.0, flexShrink: 1.0))
@@ -150,10 +156,17 @@ final readonly class AppScreen implements Renderable
                 $body,
                 ...$this->bottom,
             )->style(new Style(
+                widthPercent: 100.0,
+                heightPercent: 100.0,
                 flexGrow: 1.0,
                 backgroundColor: $theme->color(ColorToken::Background),
             )),
-        )->edges();
+        )->edges()->style(new Style(
+            widthPercent: 100.0,
+            heightPercent: 100.0,
+            flexGrow: 1.0,
+            backgroundColor: $theme->color(ColorToken::Background),
+        ));
     }
 
     /** @return list<Renderable> */

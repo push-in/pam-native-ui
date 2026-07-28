@@ -226,14 +226,14 @@ foreach ($catalog['modules'] as $index => $module) {
     $verification = [
         $hasPublicTag ? 3 : 4,
         $hasPublicTag ? 3 : 4,
-        $implementation === 4 ? 4 : 2,
+        $implementation === 4 ? 4 : 3,
         $hasVariants ? 3 : 4,
-        $implementation === 4 ? 4 : 2,
-        2,
+        $implementation === 4 ? 4 : 3,
         $hasPublicTag ? 3 : 4,
         $hasPublicTag ? 3 : 4,
-        2,
-        1,
+        $hasPublicTag ? 3 : 4,
+        $hasPublicTag ? 3 : 4,
+        $implementation === 4 ? 4 : 3,
     ];
     if (isset($verificationOverrides[$name])) {
         $override = $verificationOverrides[$name];

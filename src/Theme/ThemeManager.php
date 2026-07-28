@@ -20,7 +20,12 @@ final class ThemeManager
 
     public static function mode(ThemeMode $mode): void
     {
+        if (self::$mode === $mode) {
+            return;
+        }
+
         self::$mode = $mode;
+        self::$registeredTheme = null;
     }
 
     public static function configuredMode(): ThemeMode
@@ -30,11 +35,22 @@ final class ThemeManager
 
     public static function systemDark(bool $dark): void
     {
+        if (self::$systemDark === $dark) {
+            return;
+        }
+
         self::$systemDark = $dark;
+        if (self::$mode === ThemeMode::System) {
+            self::$registeredTheme = null;
+        }
     }
 
     public static function customize(?Theme $light = null, ?Theme $dark = null): void
     {
+        if (self::$customLight === $light && self::$customDark === $dark) {
+            return;
+        }
+
         self::$customLight = $light;
         self::$customDark = $dark;
         self::$registeredTheme = null;

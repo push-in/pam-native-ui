@@ -1,64 +1,75 @@
-<AppScreen title="Orders" subtitle="Track fulfillment and payment in one place.">
+<AppScreen title="Orders" subtitle="284 orders · R$ 128,450 in revenue">
     <template #actions>
-        <Button variant="outline" size="md" accessibilityLabel="Search orders">
-            <SearchIcon />
-        </Button>
+        <p-btn variant="outline" size="md" accessibilityLabel="Search orders">
+            <p-icon icon="search" />
+        </p-btn>
     </template>
 
-    <HStack class="gap-2">
-        <Button size="sm" variant="outline" on:press="showLoading">
-            <ButtonText>Loading</ButtonText>
-        </Button>
-        <Button size="sm" variant="outline" on:press="showEmpty">
-            <ButtonText>Empty</ButtonText>
-        </Button>
-        <Button size="sm" variant="outline" on:press="showError">
-            <ButtonText>Error</ButtonText>
-        </Button>
-    </HStack>
+    <Row class="gap-2">
+        <p-btn size="sm"><Text>All</Text></p-btn>
+        <p-btn size="sm" variant="outline"><Text>Paid</Text></p-btn>
+        <p-btn size="sm" variant="ghost"><Text>Pending</Text></p-btn>
+    </Row>
 
     <ContentState
         status="{{ $status }}"
         message="Orders could not be synchronized."
         @retry="retry"
     >
-        <VStack class="gap-3">
-            <Card class="p-4 rounded-2xl">
-                <VStack class="gap-2">
-                    <HStack class="items-center justify-between gap-3">
-                        <Heading size="md" class="w-24">#1048</Heading>
-                        <Heading size="md">R$ 389.00</Heading>
-                    </HStack>
-                    <HStack class="items-center justify-between gap-3">
-                        <Text class="ui-text-muted">Ana Martins - Today, 10:42</Text>
-                        <Badge action="success"><BadgeText>Paid</BadgeText></Badge>
-                    </HStack>
-                </VStack>
-            </Card>
-            <Card class="p-4 rounded-2xl">
-                <VStack class="gap-2">
-                    <HStack class="items-center justify-between gap-3">
-                        <Heading size="md" class="w-24">#1047</Heading>
-                        <Heading size="md">R$ 149.90</Heading>
-                    </HStack>
-                    <HStack class="items-center justify-between gap-3">
-                        <Text class="ui-text-muted">Lucas Costa - Today, 09:18</Text>
-                        <Badge action="warning"><BadgeText>Pending</BadgeText></Badge>
-                    </HStack>
-                </VStack>
-            </Card>
-            <Card class="p-4 rounded-2xl">
-                <VStack class="gap-2">
-                    <HStack class="items-center justify-between gap-3">
-                        <Heading size="md" class="w-24">#1046</Heading>
-                        <Heading size="md">R$ 829.00</Heading>
-                    </HStack>
-                    <HStack class="items-center justify-between gap-3">
-                        <Text class="ui-text-muted">Marina Alves - Yesterday</Text>
-                        <Badge variant="secondary"><BadgeText>Shipped</BadgeText></Badge>
-                    </HStack>
-                </VStack>
-            </Card>
-        </VStack>
+        <p-card class="rounded-2xl">
+            <Column>
+                <Column class="p-4 gap-2">
+                    <Row class="items-center justify-between gap-3">
+                        <Column class="gap-1">
+                            <Text size="md">Ana Martins</Text>
+                            <Text class="ui-text-muted">#1048 · Today, 10:42</Text>
+                        </Column>
+                        <Text size="md">R$ 389.00</Text>
+                    </Row>
+                    <Row class="items-center gap-2">
+                        <p-badge action="success"><Text>Paid</Text></p-badge>
+                        <Text class="ui-text-muted">Ready to fulfill</Text>
+                    </Row>
+                </Column>
+                <p-divider />
+                <Column class="p-4 gap-2">
+                    <Row class="items-center justify-between gap-3">
+                        <Column class="gap-1">
+                            <Text size="md">Lucas Costa</Text>
+                            <Text class="ui-text-muted">#1047 · Today, 09:18</Text>
+                        </Column>
+                        <Text size="md">R$ 149.90</Text>
+                    </Row>
+                    <Row class="items-center gap-2">
+                        <p-badge action="warning"><Text>Pending</Text></p-badge>
+                        <Text class="ui-text-muted">Waiting for PIX</Text>
+                    </Row>
+                </Column>
+                <p-divider />
+                <Column class="p-4 gap-2">
+                    <Row class="items-center justify-between gap-3">
+                        <Column class="gap-1">
+                            <Text size="md">Marina Alves</Text>
+                            <Text class="ui-text-muted">#1046 · Yesterday</Text>
+                        </Column>
+                        <Text size="md">R$ 829.00</Text>
+                    </Row>
+                    <Row class="items-center gap-2">
+                        <p-badge variant="secondary"><Text>Shipped</Text></p-badge>
+                        <Text class="ui-text-muted">Tracking sent</Text>
+                    </Row>
+                </Column>
+            </Column>
+        </p-card>
     </ContentState>
+
+    <p-card class="p-4 rounded-2xl">
+        <Row class="items-center justify-between">
+            <Column class="gap-1">
+                <Text class="ui-text-muted">Average order</Text>
+                <Text size="lg">R$ 452.29</Text>
+            </Column>
+            <p-badge variant="secondary"><Text>+8.4%</Text></p-badge>
+        </Row>
+    </p-card>
 </AppScreen>

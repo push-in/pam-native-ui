@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+## 0.4.0
+
+- Ship the curated mobile-first Material component system with 127 public
+  component parts across 75 modules, native Android and UIKit renderers,
+  complete variants, semantic Vuetify colors, density, elevation and motion.
+- Add the route-based native showcase with grouped drawer navigation, safe-area
+  handling and physical-device interaction coverage.
+- Remove desktop-only, runtime-owned and duplicate primitives in favor of PAM
+  Native Text, Row, Column, Spacer, Animated and scoped runtime configuration.
+- Add optimized forms, overlays, navigation, data display, feedback and media
+  behavior with accessibility and reduced-motion support.
+
+- Document the production capability lifecycle without adding a parallel
+  renderer or system-module abstraction.
+- Add additive `NativeCapabilities` factories for Bottom Sheets, WebView,
+  video/audio, native interaction regions and declarative entrance motion.
+
 ## 0.3.0
 
 - Add PAM's expanded semantic design language, density, typography, radius and

@@ -57,6 +57,11 @@ final class StyleResolver
      */
     public static function resolve(string $part, array $props, Theme $theme): Style
     {
+        $material = MaterialStyleResolver::resolve($props, $theme);
+        if ($material !== null) {
+            return $material;
+        }
+
         $recipe = StyleRecipeResolver::classes($part, $props);
 
         if ($recipe !== null) {

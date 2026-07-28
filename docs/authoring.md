@@ -12,17 +12,17 @@ developers:
 ```xml
 <SafeAreaView class="ui-bg">
     <VStack class="p-6 gap-4">
-        <Heading size="2xl">Create account</Heading>
-        <Input>
-            <InputField
+        <p-heading size="2xl">Create account</p-heading>
+        <p-input>
+            <p-input-field
                 value="{{ $email }}"
                 keyboardType="email"
                 on:change="setEmail"
             />
-        </Input>
-        <Button on:press="submit">
-            <ButtonText>Continue</ButtonText>
-        </Button>
+        </p-input>
+        <p-button on:press="submit">
+            <p-button-text>Continue</p-button-text>
+        </p-button>
     </VStack>
 </SafeAreaView>
 ```
@@ -122,6 +122,44 @@ You are not required to follow a component-class structure:
 Native extension views still participate in PAM identity, Rust reconciliation,
 layout, accessibility and the bounded binary event channel. See the PAM Native
 plugin guide for packaging Android sources, resources, AARs and JNI libraries.
+
+## Native directives
+
+PAM directives use the `p-*` namespace and compile directly to retained native
+properties and listeners. They are not Vue directives and do not require a
+JavaScript runtime:
+
+```xml
+<p-card
+    p-ripple
+    p-click-outside="closeMenu"
+    p-intersect="visibilityChanged"
+    p-resize="resized"
+    p-touch-start="dragStarted"
+    p-touch-move="dragMoved"
+    p-touch-end="dragEnded"
+>
+    <Text>Native interaction surface</Text>
+</p-card>
+```
+
+| Directive | Native behavior | Payload |
+| --- | --- | --- |
+| `p-ripple` | Android `RippleDrawable`; UIKit state layer | no application event |
+| `p-click-outside` | Root pointer observer / simultaneous host recognizer | `pageX`, `pageY` |
+| `p-intersect` | Visible-frame observer | intersection state |
+| `p-mutate` | Deduplicated frame mutation observer | `x`, `y`, `width`, `height` |
+| `p-resize` | Deduplicated size observer | `width`, `height` |
+| `p-scroll` | Native scroll delegate, coalesced per frame | native scroll offset |
+| `p-touch-start` | Native pointer recognizer | local and page coordinates |
+| `p-touch-move` | Native pointer recognizer | local and page coordinates |
+| `p-touch-end` | Native pointer recognizer | local and page coordinates |
+
+`p-ripple` accepts a boolean, an ARGB integer, or a map containing `color`,
+`alpha`, `borderless`, `radius`, and `foreground`. A color of `0` inherits the
+component foreground and current appearance. Gesture animation never crosses
+the PHP boundary. Observers and recognizers detach on update, unmount, hot
+reload, and runtime shutdown.
 
 The runnable combination of all styles is in
 [`examples/kitchen-sink`](../examples/kitchen-sink).

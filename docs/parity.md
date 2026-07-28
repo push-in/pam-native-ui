@@ -1,18 +1,20 @@
 # Parity contract
 
-The authoritative machine-readable gate is
-[`resources/parity.json`](../resources/parity.json).
+The authoritative PAM Material machine-readable gate is
+[`resources/material-parity.json`](../resources/material-parity.json). The
+legacy compatibility inventory remains separate in `resources/parity.json`
+until its old PascalCase API is removed.
 
 Reference:
 
-- source: the versioned PamUI component inventory
-- commit: `be060b5d184826d34623e490447a467ffb5cfe56`
-- committed: 2026-07-06
-- package version: `5.0.3`
-- captured surface: 61 modules, 404 exports, 326 PHP facades
+- source: the manually maintained PAM Material component specification;
+- namespace: `p-*` only, with no `v-*` aliases;
+- captured surface: 87 mobile modules and 143 public component parts;
+- targets: retained native Android and UIKit renderers;
+- metadata import: none.
 
 The original documentation navigation exposes fewer cards than the source tree.
-PAM tracks all 61 source modules, including `FlatList`, `SafeAreaView`,
+The compatibility inventory tracks 61 historical source modules, including `FlatList`, `SafeAreaView`,
 `StatusBar`, provider/util modules, and the full Chat AI anatomy. Core
 passthroughs use PAM primitives while remaining present in the public catalog.
 `SafeAreaView` forwards per-edge padding/margin insets and
@@ -54,12 +56,12 @@ A module reaches status `3` (`verified`) only when all applicable gates pass:
 - typed PHP facade and raw escape hatch;
 - sizes, variants, placements and orientations;
 - controlled/uncontrolled and disabled/loading/invalid/read-only states;
-- native Android interaction and lifecycle behavior;
+- native Android and iOS interaction and lifecycle behavior;
 - TalkBack semantics, focus order, font scale, contrast and target size;
 - light/dark/custom theme token coverage;
 - documented `.pam` and PHP examples;
 - PHP level-9 static analysis and contract tests;
-- Android unit/instrumentation tests;
+- Android unit/instrumentation and iOS package/application tests;
 - cold start, mount, update, event and frame-time benchmark evidence.
 
 Alpha upstream components remain labeled `alpha` but are not excluded from PAM
@@ -74,5 +76,6 @@ the build. Modules with no upstream variant axis use status `4`
 
 All coded fields use sequential integer IDs represented by PHP enums. Human
 names under `definitions` are documentation labels; component records store the
-IDs. `resources/parity.schema.json` fixes the module count at 61 and rejects
-unknown fields.
+IDs. `resources/material-parity.schema.json` fixes the new manual inventory at
+87 mobile modules and 143 public `p-*` components, requires both native targets, rejects
+metadata import, and rejects unknown fields.

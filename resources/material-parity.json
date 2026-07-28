@@ -1,0 +1,1721 @@
+{
+    "$schema": "./material-parity.schema.json",
+    "reference": {
+        "source": "resources/pam-material-components.php",
+        "namespace": "p-*",
+        "metadataImport": false,
+        "moduleCount": 75,
+        "componentCount": 127,
+        "targets": [
+            1,
+            2
+        ]
+    },
+    "targetDefinitions": [
+        {
+            "id": 1,
+            "name": "android"
+        },
+        {
+            "id": 2,
+            "name": "ios"
+        }
+    ],
+    "gateDefinitions": [
+        {
+            "id": 1,
+            "name": "inventory"
+        },
+        {
+            "id": 2,
+            "name": "tags"
+        },
+        {
+            "id": 3,
+            "name": "android"
+        },
+        {
+            "id": 4,
+            "name": "ios"
+        },
+        {
+            "id": 5,
+            "name": "md3-visual"
+        },
+        {
+            "id": 6,
+            "name": "motion-interaction"
+        },
+        {
+            "id": 7,
+            "name": "layout-insets-rtl"
+        },
+        {
+            "id": 8,
+            "name": "accessibility"
+        },
+        {
+            "id": 9,
+            "name": "themes"
+        },
+        {
+            "id": 10,
+            "name": "docs-showcase"
+        },
+        {
+            "id": 11,
+            "name": "tests"
+        },
+        {
+            "id": 12,
+            "name": "performance"
+        }
+    ],
+    "statusDefinitions": [
+        {
+            "id": 1,
+            "name": "planned"
+        },
+        {
+            "id": 2,
+            "name": "implemented"
+        },
+        {
+            "id": 3,
+            "name": "verified"
+        },
+        {
+            "id": 4,
+            "name": "not-applicable"
+        }
+    ],
+    "modules": [
+        {
+            "type": 1,
+            "module": "app-bar",
+            "components": [
+                "p-app-bar",
+                "p-app-bar-nav-icon",
+                "p-app-bar-title"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 2,
+            "module": "alert",
+            "components": [
+                "p-alert",
+                "p-alert-title"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 3,
+            "module": "autocomplete",
+            "components": [
+                "p-autocomplete"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 4,
+            "module": "avatar",
+            "components": [
+                "p-avatar"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 5,
+            "module": "badge",
+            "components": [
+                "p-badge"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 6,
+            "module": "banner",
+            "components": [
+                "p-banner",
+                "p-banner-text",
+                "p-banner-actions"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 7,
+            "module": "bottom-sheet",
+            "components": [
+                "p-bottom-sheet"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 8,
+            "module": "button",
+            "components": [
+                "p-btn"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 9,
+            "module": "button-group",
+            "components": [
+                "p-btn-group"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 10,
+            "module": "button-toggle",
+            "components": [
+                "p-btn-toggle"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 11,
+            "module": "calendar",
+            "components": [
+                "p-calendar",
+                "p-calendar-day",
+                "p-calendar-header",
+                "p-calendar-interval"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 12,
+            "module": "card",
+            "components": [
+                "p-card",
+                "p-card-item",
+                "p-card-title",
+                "p-card-subtitle",
+                "p-card-text",
+                "p-card-actions"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 13,
+            "module": "carousel",
+            "components": [
+                "p-carousel",
+                "p-carousel-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 14,
+            "module": "checkbox",
+            "components": [
+                "p-checkbox",
+                "p-checkbox-btn"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 15,
+            "module": "chip",
+            "components": [
+                "p-chip"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 16,
+            "module": "chip-group",
+            "components": [
+                "p-chip-group"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 17,
+            "module": "color-input",
+            "components": [
+                "p-color-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 18,
+            "module": "color-picker",
+            "components": [
+                "p-color-picker",
+                "p-color-picker-canvas",
+                "p-color-picker-edit",
+                "p-color-picker-preview",
+                "p-color-picker-swatches"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 19,
+            "module": "combobox",
+            "components": [
+                "p-combobox"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 20,
+            "module": "confirm-edit",
+            "components": [
+                "p-confirm-edit"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 21,
+            "module": "counter",
+            "components": [
+                "p-counter"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 22,
+            "module": "data-table",
+            "components": [
+                "p-data-table",
+                "p-data-table-virtual"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 23,
+            "module": "date-input",
+            "components": [
+                "p-date-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 24,
+            "module": "date-picker",
+            "components": [
+                "p-date-picker",
+                "p-date-picker-controls",
+                "p-date-picker-header",
+                "p-date-picker-month",
+                "p-date-picker-months",
+                "p-date-picker-years"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 25,
+            "module": "dialog",
+            "components": [
+                "p-dialog"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 26,
+            "module": "divider",
+            "components": [
+                "p-divider"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 27,
+            "module": "empty-state",
+            "components": [
+                "p-empty-state"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 28,
+            "module": "expansion-panels",
+            "components": [
+                "p-expansion-panels",
+                "p-expansion-panel",
+                "p-expansion-panel-title",
+                "p-expansion-panel-text"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 29,
+            "module": "fab",
+            "components": [
+                "p-fab"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 30,
+            "module": "field",
+            "components": [
+                "p-field",
+                "p-field-label"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 31,
+            "module": "file-input",
+            "components": [
+                "p-file-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 32,
+            "module": "file-upload",
+            "components": [
+                "p-file-upload",
+                "p-file-upload-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 33,
+            "module": "form",
+            "components": [
+                "p-form"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 34,
+            "module": "icon",
+            "components": [
+                "p-icon"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 35,
+            "module": "icon-button",
+            "components": [
+                "p-icon-btn"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 36,
+            "module": "image",
+            "components": [
+                "p-img"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 37,
+            "module": "infinite-scroll",
+            "components": [
+                "p-infinite-scroll"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 38,
+            "module": "input",
+            "components": [
+                "p-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 39,
+            "module": "item-group",
+            "components": [
+                "p-item-group",
+                "p-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 40,
+            "module": "label",
+            "components": [
+                "p-label"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 41,
+            "module": "list",
+            "components": [
+                "p-list",
+                "p-list-item",
+                "p-list-item-title",
+                "p-list-item-subtitle",
+                "p-list-group",
+                "p-list-subheader"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 42,
+            "module": "menu",
+            "components": [
+                "p-menu"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 43,
+            "module": "messages",
+            "components": [
+                "p-messages"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 44,
+            "module": "number-input",
+            "components": [
+                "p-number-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 45,
+            "module": "otp-input",
+            "components": [
+                "p-otp-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 46,
+            "module": "overlay",
+            "components": [
+                "p-overlay"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 47,
+            "module": "picker",
+            "components": [
+                "p-picker",
+                "p-picker-title"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 48,
+            "module": "progress-circular",
+            "components": [
+                "p-progress-circular"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 49,
+            "module": "progress-linear",
+            "components": [
+                "p-progress-linear"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 50,
+            "module": "radio",
+            "components": [
+                "p-radio"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 51,
+            "module": "radio-group",
+            "components": [
+                "p-radio-group"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 52,
+            "module": "range-slider",
+            "components": [
+                "p-range-slider"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 53,
+            "module": "rating",
+            "components": [
+                "p-rating"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 54,
+            "module": "select",
+            "components": [
+                "p-select"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 55,
+            "module": "selection-control",
+            "components": [
+                "p-selection-control"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 56,
+            "module": "selection-control-group",
+            "components": [
+                "p-selection-control-group"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 57,
+            "module": "sheet",
+            "components": [
+                "p-sheet"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 58,
+            "module": "skeleton-loader",
+            "components": [
+                "p-skeleton-loader"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 59,
+            "module": "slide-group",
+            "components": [
+                "p-slide-group",
+                "p-slide-group-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 60,
+            "module": "slider",
+            "components": [
+                "p-slider"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 61,
+            "module": "snackbar",
+            "components": [
+                "p-snackbar"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 62,
+            "module": "snackbar-queue",
+            "components": [
+                "p-snackbar-queue"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 63,
+            "module": "sparkline",
+            "components": [
+                "p-sparkline"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 64,
+            "module": "speed-dial",
+            "components": [
+                "p-speed-dial"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 65,
+            "module": "stepper",
+            "components": [
+                "p-stepper",
+                "p-stepper-header",
+                "p-stepper-item",
+                "p-stepper-window",
+                "p-stepper-window-item",
+                "p-stepper-actions"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 66,
+            "module": "stepper-vertical",
+            "components": [
+                "p-stepper-vertical",
+                "p-stepper-vertical-item",
+                "p-stepper-vertical-actions"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 67,
+            "module": "switch",
+            "components": [
+                "p-switch"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 68,
+            "module": "tabs",
+            "components": [
+                "p-tabs",
+                "p-tab"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 69,
+            "module": "text-field",
+            "components": [
+                "p-text-field"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 70,
+            "module": "textarea",
+            "components": [
+                "p-textarea"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 71,
+            "module": "time-picker",
+            "components": [
+                "p-time-picker",
+                "p-time-picker-clock",
+                "p-time-picker-controls"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 72,
+            "module": "timeline",
+            "components": [
+                "p-timeline",
+                "p-timeline-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 73,
+            "module": "toolbar",
+            "components": [
+                "p-toolbar",
+                "p-toolbar-title",
+                "p-toolbar-items"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 74,
+            "module": "tooltip",
+            "components": [
+                "p-tooltip"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 75,
+            "module": "treeview",
+            "components": [
+                "p-treeview",
+                "p-treeview-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        }
+    ]
+}

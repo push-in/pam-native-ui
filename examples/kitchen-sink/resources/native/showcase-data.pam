@@ -1,0 +1,48 @@
+<AppScreen title="Data" subtitle="Lists, tables and visualization">
+    <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
+    <Column>
+
+    <Text size="xl">Lists</Text>
+        <p-list>
+            <p-list-subheader>Packages</p-list-subheader>
+            <p-list-item>
+                <p-list-item-title>pam-mobile-ui</p-list-item-title>
+                <p-list-item-subtitle>Material components</p-list-item-subtitle>
+            </p-list-item>
+            <p-list-item>
+                <p-list-item-title>pam-native</p-list-item-title>
+                <p-list-item-subtitle>Android and UIKit renderer</p-list-item-subtitle>
+            </p-list-item>
+        </p-list>
+
+    <Text size="xl">Data table</Text>
+        <p-data-table headers="Target" items="Android,iOS,Composer,GitHub" />
+
+    <Text size="xl">Timeline</Text>
+        <Column class="gap-4">
+            <Row class="items-center gap-3">
+                <p-avatar class="w-8 h-8"><Text>1</Text></p-avatar>
+                <Column><Text>Design tokens</Text><Text size="sm">Theme and density foundations</Text></Column>
+            </Row>
+            <p-divider />
+            <Row class="items-center gap-3">
+                <p-avatar class="w-8 h-8"><Text>2</Text></p-avatar>
+                <Column><Text>Native render</Text><Text size="sm">Android and UIKit parity</Text></Column>
+            </Row>
+            <p-divider />
+            <Row class="items-center gap-3">
+                <p-avatar class="w-8 h-8"><Text>3</Text></p-avatar>
+                <Column><Text>Release</Text><Text size="sm">Validated package distribution</Text></Column>
+            </Row>
+        </Column>
+
+    <Text size="xl">Visualization</Text>
+        <Column class="gap-4">
+            <p-sparkline value="18,32,29,44,68,61,82" accessibilityLabel="Weekly performance" />
+            <p-treeview>
+                <p-treeview-item path="/src"><Text>src</Text></p-treeview-item>
+                <p-treeview-item path="/tests"><Text>tests</Text></p-treeview-item>
+            </p-treeview>
+        </Column>
+    </Column>
+</AppScreen>

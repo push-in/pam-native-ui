@@ -7,6 +7,7 @@ namespace Pam\MobileUi;
 use Closure;
 use Pam\MobileUi\Component\UiComponent;
 use Pam\MobileUi\Generated\ComponentMap;
+use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Rendering\ComponentRenderer;
 use Pam\MobileUi\Rendering\TailwindStyleCompiler;
 use Pam\MobileUi\Theme\ThemeClassRegistry;
@@ -66,6 +67,32 @@ final class MobileUiPluginProvider implements PluginProvider
                     array $props,
                 ): Closure => ComponentRenderer::adaptTemplateEvent(
                     $tag,
+                    $kind,
+                    $handler,
+                    $props,
+                ),
+            );
+        }
+
+        foreach (MaterialComponentMap::TAGS as $tag => $component) {
+            TemplateRegistry::component(
+                $tag,
+                static function (
+                    array $props,
+                    array $children,
+                    ?object $_scope,
+                ) use ($component): UiComponent {
+                    return $component::fromTemplate($props, $children);
+                },
+            );
+            TemplateRegistry::eventAdapter(
+                $tag,
+                static fn (
+                    EventKind $kind,
+                    Closure $handler,
+                    array $props,
+                ): Closure => ComponentRenderer::adaptTemplateEvent(
+                    $component::componentName(),
                     $kind,
                     $handler,
                     $props,

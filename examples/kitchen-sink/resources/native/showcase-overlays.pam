@@ -1,0 +1,93 @@
+<AppScreen title="Overlays" subtitle="Dialogs, sheets and menus">
+    <template #actions>
+        <p-btn variant="text" on:press="openDrawer" accessibilityLabel="Open component menu">
+            <Text>Menu</Text>
+        </p-btn>
+    </template>
+
+    <Column class="gap-1">
+        <Text size="2xl">Native interaction lab</Text>
+        <Text class="ui-text-muted">{{ $feedback }}</Text>
+    </Column>
+
+    <Text size="xl">Modal surfaces</Text>
+    <Column class="gap-3">
+        <Text class="ui-text-muted">Focus trapping, Back, scrim, safe areas and entrance motion stay platform-owned.</Text>
+        <Column class="gap-2">
+            <p-btn block="true" on:press="openDialog"><Text>Dialog</Text></p-btn>
+            <p-btn block="true" variant="outlined" on:press="openSheet"><Text>Bottom sheet</Text></p-btn>
+        </Column>
+        <p-btn block="true" variant="outlined" on:press="showLoadingOverlay"><Text>Loading overlay</Text></p-btn>
+    </Column>
+
+    <Text size="xl">Contextual surfaces</Text>
+    <Column class="gap-3">
+        <Column class="gap-2">
+            <p-menu>
+                <p-btn block="true"><Text>Menu</Text></p-btn>
+                <p-list>
+                    <p-list-item on:press="inspectMenuItem"><p-list-item-title>Inspect</p-list-item-title></p-list-item>
+                    <p-list-item on:press="shareMenuItem"><p-list-item-title>Share</p-list-item-title></p-list-item>
+                </p-list>
+            </p-menu>
+            <p-tooltip text="Long press for native tooltip">
+                <p-btn block="true" variant="outlined"><Text>Tooltip</Text></p-btn>
+            </p-tooltip>
+        </Column>
+        <p-btn block="true" variant="text" on:press="showSnackbar"><Text>Snackbar</Text></p-btn>
+        <p-speed-dial class="w-16 h-16">
+            <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
+            <p-icon-btn accessibilityLabel="Edit"><p-icon icon="edit" /></p-icon-btn>
+            <p-icon-btn accessibilityLabel="Share"><p-icon icon="share" /></p-icon-btn>
+        </p-speed-dial>
+    </Column>
+
+    <Text size="xl">Progress and loading</Text>
+    <Column class="gap-4">
+        <Row class="gap-4 items-center">
+            <p-progress-circular value="68" size="sm" />
+            <p-progress-circular value="68" size="lg" />
+            <p-progress-circular indeterminate="true" />
+        </Row>
+        <p-progress-linear value="34" />
+        <p-progress-linear indeterminate="true" />
+        <p-skeleton-loader class="h-24 rounded-2xl" />
+    </Column>
+
+    <p-btn variant="text" on:press="goAll"><Text>Browse every component route</Text></p-btn>
+
+    <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
+        <p-card>
+            <p-card-title>Discard draft?</p-card-title>
+            <p-card-text>The dialog traps focus and restores it to the activator when dismissed.</p-card-text>
+            <p-card-actions>
+                <p-btn variant="text" on:press="closeDialog"><Text>Cancel</Text></p-btn>
+                <p-btn on:press="closeDialog"><Text>Confirm</Text></p-btn>
+            </p-card-actions>
+        </p-card>
+    </p-dialog>
+
+    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="0" on:requestClose="closeSheet">
+        <p-list-subheader>Component actions</p-list-subheader>
+        <p-list-item on:press="closeSheet">
+            <p-list-item-title>Inspect accessibility tree</p-list-item-title>
+        </p-list-item>
+        <p-list-item on:press="closeSheet">
+            <p-list-item-title>View performance metrics</p-list-item-title>
+        </p-list-item>
+        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+    </p-bottom-sheet>
+
+    <p-snackbar open="{{ $snackbarOpen }}" timeout="4000" on:event="closeSnackbar">
+        <Text>Component state saved</Text>
+        <p-btn variant="text" on:press="closeSnackbar"><Text>Dismiss</Text></p-btn>
+    </p-snackbar>
+
+    <p-overlay open="{{ $loadingOverlayOpen }}" on:event="closeLoadingOverlay">
+        <Column class="items-center gap-3">
+            <p-progress-circular indeterminate="true" size="lg" />
+            <Text>Preparing native preview</Text>
+            <p-btn variant="tonal" on:press="closeLoadingOverlay"><Text>Complete</Text></p-btn>
+        </Column>
+    </p-overlay>
+</AppScreen>

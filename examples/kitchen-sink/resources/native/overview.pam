@@ -1,106 +1,110 @@
 <AppScreen
-    title="Good morning, David"
-    subtitle="Your PAM workspace is healthy and moving fast."
+    title="Workspace"
+    subtitle="Sunday, July 26"
 >
     <template #actions>
-        <Button variant="outline" size="md" accessibilityLabel="Open notifications">
-            <BellIcon />
-        </Button>
+        <p-btn variant="outline" size="md" accessibilityLabel="Open notifications">
+            <p-icon icon="notifications" />
+        </p-btn>
     </template>
+    <Column class="ui-bg gap-5">
 
-    <Card class="p-5 bg-blue-700 border-0 rounded-3xl">
-        <VStack class="gap-5">
-            <HStack class="items-center justify-between">
-                <VStack class="gap-1">
-                    <Text class="text-blue-100">Available balance</Text>
-                    <Heading size="3xl" class="text-white">R$ 128,450.90</Heading>
-                </VStack>
-                <Badge class="bg-white">
-                    <BadgeText class="text-blue-700">+12.8%</BadgeText>
-                </Badge>
-            </HStack>
-            <Progress value="72" class="bg-blue-900">
-                <ProgressFilledTrack class="bg-white" />
-            </Progress>
-            <Text class="text-blue-100">
-                72% of the monthly revenue target reached
-            </Text>
-        </VStack>
-    </Card>
+    <p-card variant="tonal" class="p-5 rounded-3xl">
+        <Column class="gap-4">
+            <Row class="items-center justify-between">
+                <Column class="gap-1">
+                    <Text class="ui-text-muted">Net revenue</Text>
+                    <Text size="xl" numberOfLines="1">R$ 128,450</Text>
+                </Column>
+                <p-badge action="success" variant="subtle">
+                    <Text>+12.8%</Text>
+                </p-badge>
+            </Row>
+            <p-progress-linear value="72" class="mt-2">
+                
+            </p-progress-linear>
+            <Row class="items-center justify-between">
+                    <Text size="sm" class="ui-text-muted" numberOfLines="1">Monthly target</Text>
+                    <Text size="sm" numberOfLines="1">72% complete</Text>
+            </Row>
+        </Column>
+    </p-card>
 
-    <VStack class="gap-3">
-        <Card class="p-4 rounded-2xl">
-            <HStack class="items-center justify-between gap-3">
-                <VStack class="flex-1 gap-1">
-                    <Text class="ui-text-muted">Revenue</Text>
-                    <Heading size="xl">R$ 42.8k</Heading>
-                </VStack>
-                <Badge variant="secondary">
-                    <BadgeText>+8.4%</BadgeText>
-                </Badge>
-            </HStack>
-        </Card>
-        <Card class="p-4 rounded-2xl">
-            <HStack class="items-center justify-between gap-3">
-                <VStack class="flex-1 gap-1">
+    <Row class="gap-3">
+        <Column class="flex-1">
+            <p-card class="p-4 rounded-2xl">
+                <Column class="gap-2">
+                    <Text class="ui-text-muted">Orders</Text>
+                    <Text size="xl">284</Text>
+                    <Text size="sm" class="text-blue-400" numberOfLines="1">+18 this week</Text>
+                </Column>
+            </p-card>
+        </Column>
+        <Column class="flex-1">
+            <p-card class="p-4 rounded-2xl">
+                <Column class="gap-2">
                     <Text class="ui-text-muted">Conversion</Text>
-                    <Heading size="xl">18.6%</Heading>
-                </VStack>
-                <Badge variant="secondary">
-                    <BadgeText>+2.1 pts</BadgeText>
-                </Badge>
-            </HStack>
-        </Card>
-    </VStack>
+                    <Text size="xl">18.6%</Text>
+                    <Text size="sm" class="text-blue-400" numberOfLines="1">+2.1 points</Text>
+                </Column>
+            </p-card>
+        </Column>
+    </Row>
 
-    <VStack class="gap-3">
-        <HStack class="items-center justify-between">
-            <Heading size="lg">Recent orders</Heading>
-            <Button variant="link" size="sm">
-                <ButtonText>View all</ButtonText>
-            </Button>
-        </HStack>
+    <Column class="gap-3">
+        <Row class="items-center justify-between">
+            <Column class="gap-1">
+                <Text size="lg">Recent orders</Text>
+                <Text class="ui-text-muted">Updated moments ago</Text>
+            </Column>
+            <p-btn variant="text" size="sm">
+                <Text size="sm" numberOfLines="1">See all</Text>
+            </p-btn>
+        </Row>
 
-        <Card class="rounded-2xl">
-            <VStack>
-                <HStack class="p-4 items-center gap-3">
-                    <Avatar size="md">
-                        <AvatarFallback><AvatarFallbackText>AM</AvatarFallbackText></AvatarFallback>
-                    </Avatar>
-                    <VStack class="flex-1 gap-1">
-                        <Heading size="sm">Ana Martins</Heading>
-                        <Text class="ui-text-muted">Order #1048 - 2 items</Text>
-                    </VStack>
-                    <VStack class="items-end gap-1">
-                        <Heading size="sm">R$ 389.00</Heading>
-                        <Badge action="success"><BadgeText>Paid</BadgeText></Badge>
-                    </VStack>
-                </HStack>
-                <Divider />
-                <HStack class="p-4 items-center gap-3">
-                    <Avatar size="md">
-                        <AvatarFallback><AvatarFallbackText>LC</AvatarFallbackText></AvatarFallback>
-                    </Avatar>
-                    <VStack class="flex-1 gap-1">
-                        <Heading size="sm">Lucas Costa</Heading>
-                        <Text class="ui-text-muted">Order #1047 - 1 item</Text>
-                    </VStack>
-                    <VStack class="items-end gap-1">
-                        <Heading size="sm">R$ 149.90</Heading>
-                        <Badge action="warning"><BadgeText>Pending</BadgeText></Badge>
-                    </VStack>
-                </HStack>
-            </VStack>
-        </Card>
-    </VStack>
+        <p-card class="rounded-2xl">
+            <Column>
+                <Row class="p-4 items-center gap-3">
+                    <p-avatar size="md">
+                        <Column><Text>AM</Text></Column>
+                    </p-avatar>
+                    <Column class="flex-1 min-w-0 gap-1">
+                        <Text size="sm" numberOfLines="1">Ana Martins</Text>
+                        <Text size="sm" class="ui-text-muted" numberOfLines="1">#1048 · 2 items</Text>
+                    </Column>
+                    <Column class="w-24 items-end gap-1">
+                        <Text size="sm" numberOfLines="1">R$ 389.00</Text>
+                        <Row class="justify-end">
+                            <p-badge action="success"><Text size="xs" numberOfLines="1">Paid</Text></p-badge>
+                        </Row>
+                    </Column>
+                </Row>
+                <p-divider />
+                <Row class="p-4 items-center gap-3">
+                    <p-avatar size="md">
+                        <Column><Text>LC</Text></Column>
+                    </p-avatar>
+                    <Column class="flex-1 min-w-0 gap-1">
+                        <Text size="sm" numberOfLines="1">Lucas Costa</Text>
+                        <Text size="sm" class="ui-text-muted" numberOfLines="1">#1047 · 1 item</Text>
+                    </Column>
+                    <Column class="w-24 items-end gap-1">
+                        <Text size="sm" numberOfLines="1">R$ 149.90</Text>
+                        <Row class="justify-end">
+                            <p-badge action="warning"><Text size="xs" numberOfLines="1">Pending</Text></p-badge>
+                        </Row>
+                    </Column>
+                </Row>
+            </Column>
+        </p-card>
+    </Column>
 
-    <Alert action="info" variant="subtle" class="rounded-2xl">
-        <InfoIcon />
-        <VStack class="gap-1">
-            <AlertText>Runtime performance</AlertText>
-            <Text class="ui-text-muted">
-                Live native metrics are available in PAM DevTools.
-            </Text>
-        </VStack>
-    </Alert>
+    <Row class="items-center gap-3">
+        <p-badge action="success"><p-icon icon="check" /></p-badge>
+        <Column class="flex-1 gap-1">
+            <Text size="sm">All systems healthy</Text>
+            <Text class="ui-text-muted">Native runtime · 60 FPS · 115 ms mount</Text>
+        </Column>
+    </Row>
+    </Column>
 </AppScreen>
