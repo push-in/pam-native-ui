@@ -1,9 +1,51 @@
+<div align="center">
+
 # PAM Mobile UI
 
+### Material Design 3, rebuilt for a truly native PHP stack.
+
+**The official accessible component system for PAM Native: manually authored
+for Android and iOS, retained by design, and free from WebViews, JavaScript,
+CSS engines, and metadata-generated imitations.**
+
+[![Documentation](https://img.shields.io/badge/docs-component%20catalog-5b50d6?style=flat-square)](https://push-in.github.io/pam-docs/mobile-ui/overview/)
+![Material](https://img.shields.io/badge/Material%20Design-3-6750A4?style=flat-square)
+![Components](https://img.shields.io/badge/components-124-22c55e?style=flat-square)
+![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-2563eb?style=flat-square)
+![License](https://img.shields.io/badge/license-BUSL--1.1-f59e0b?style=flat-square)
+
+**[Documentation](https://push-in.github.io/pam-docs/mobile-ui/overview/) ·
+[Component catalog](https://push-in.github.io/pam-docs/mobile-ui/components/) ·
+[Themes](https://push-in.github.io/pam-docs/mobile-ui/themes/) ·
+[Performance](https://push-in.github.io/pam-docs/mobile-ui/performance/) ·
+[Contributing](CONTRIBUTING.md)**
+
+</div>
+
+---
+
 PAM Mobile UI is a retained native Material Design 3 component library for
-PAM Native. It exposes 143 mobile `p-*` component parts across 87 manually authored
+PAM Native. It exposes 124 mobile `p-*` component parts across 73 manually authored
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
+
+This library does not wrap a web design system and call it native. Its
+components, themes, motion, interaction, accessibility semantics, responsive
+behavior, and platform contracts are designed for the PAM renderer itself.
+The public API stays expressive and familiar; the work underneath stays close
+to the operating system.
+
+## What we are building
+
+| Promise | Implementation |
+| --- | --- |
+| One component language | Typed PHP and declarative `p-*` tags share the same retained tree |
+| Real native output | Android Views and UIKit, not HTML or a canvas |
+| Material Design 3 | Semantic color, typography, shape, elevation and motion tokens |
+| Native performance | Gesture animation and transient interaction stay on the UI thread |
+| Accessibility by contract | Semantics are part of component parity and release verification |
+| Honest parity | A generated manifest and executable tests gate the published surface |
+| Extensible foundations | Themes, directives and native capabilities compose without forking the renderer |
 
 ## Principles
 
@@ -37,7 +79,7 @@ sources, and generates the native view registries during `pam mobile prepare`.
             <p-card-title>Production dashboard</p-card-title>
             <p-card-subtitle>Retained native Material UI</p-card-subtitle>
             <p-card-text>
-                <p-text>One component contract, two native renderers.</p-text>
+                <Text>One component contract, two native renderers.</Text>
             </p-card-text>
             <p-card-actions>
                 <p-btn on:press="continue">Continue</p-btn>
@@ -61,7 +103,7 @@ floats, booleans and bounded payloads rather than markup or style strings.
     p-touch-move="touchMoved"
     p-touch-end="touchEnded"
 >
-    <p-text>Interactive native surface</p-text>
+    <Text>Interactive native surface</Text>
 </p-card>
 ```
 
@@ -108,8 +150,8 @@ composer release:check
 `resources/material-parity.json` is the release gate for the new generation.
 It is generated from the manual specification and requires:
 
-- 103 sequential modules;
-- 143 mobile `p-*` components with 163 stable historical component IDs;
+- 73 sequential modules;
+- 124 mobile `p-*` components with sequential component IDs;
 - Android and iOS targets;
 - `metadataImport=false`;
 - exact equality with `MaterialComponentMap`.
