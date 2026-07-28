@@ -132,7 +132,7 @@ final class MaterialStyleResolver
             $lines = is_numeric($requestedLines) ? (int) $requestedLines : 3;
 
             return new Style(
-                paddingRight: 90.0,
+                paddingRight: 0.0,
                 textColor: $theme->color(ColorToken::OnSurface),
                 fontSize: 14.0,
                 opacity: $opacity,
@@ -241,7 +241,9 @@ final class MaterialStyleResolver
                 borderBottomWidth: $bottomBorder ? 8.0 : null,
                 borderRadius: 4.0,
                 opacity: $opacity,
-                elevation: $variant === MaterialVariant::Elevated ? 1.0 : 0.0,
+                elevation: $variant === MaterialVariant::Elevated
+                    ? self::resolvedElevation($props, 1.0)
+                    : 0.0,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
             );
@@ -279,8 +281,8 @@ final class MaterialStyleResolver
                 borderRadius: 0.0,
                 elevation: 0.0,
                 opacity: $opacity,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
+                flexDirection: FlexDirection::Column,
+                alignItems: Align::Stretch,
             );
         }
 
@@ -304,7 +306,6 @@ final class MaterialStyleResolver
 
         if ($part === 'PExpansionPanel') {
             $active = ($props['active'] ?? $props['expanded'] ?? false) === true;
-
             return new Style(
                 widthPercent: 100.0,
                 padding: 0.0,
@@ -347,7 +348,7 @@ final class MaterialStyleResolver
                 gap: 0.0,
                 backgroundColor: $theme->color(ColorToken::Surface),
                 borderRadius: 4.0,
-                elevation: 1.0,
+                elevation: self::resolvedElevation($props, 1.0),
                 opacity: $opacity,
             );
         }
@@ -355,7 +356,7 @@ final class MaterialStyleResolver
         if ($part === 'PStepperHeader') {
             return new Style(
                 widthPercent: 100.0,
-                elevation: 1.0,
+                elevation: self::resolvedElevation($props, 1.0),
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
             );
@@ -363,10 +364,13 @@ final class MaterialStyleResolver
 
         if (in_array($part, ['PStepperItem', 'PStepperVerticalItem'], true)) {
             $active = ($props['active'] ?? $props['selected'] ?? false) === true;
+            $horizontal = $part === 'PStepperItem';
 
             return new Style(
                 widthPercent: 100.0,
-                padding: 24.0,
+                padding: $horizontal ? 24.0 : null,
+                paddingHorizontal: $horizontal ? null : 16.0,
+                paddingVertical: $horizontal ? null : 12.0,
                 gap: 8.0,
                 opacity: $disabled ? 0.38 : ($active ? 1.0 : 0.6),
                 flexDirection: FlexDirection::Row,
@@ -499,10 +503,10 @@ final class MaterialStyleResolver
 
             return new Style(
                 widthPercent: 100.0,
-                minHeight: $inset ? 96.0 : 184.0,
+                minHeight: $inset ? 88.0 : 144.0,
                 paddingHorizontal: 16.0,
-                paddingVertical: $inset ? 16.0 : 64.0,
-                gap: 16.0,
+                paddingVertical: $inset ? 12.0 : 24.0,
+                gap: 12.0,
                 borderWidth: 2.0,
                 borderRadius: 4.0,
                 borderColor: $theme->color(ColorToken::Border),
@@ -562,10 +566,12 @@ final class MaterialStyleResolver
 
         if ($part === 'PImg') {
             $height = self::number($props['height'] ?? null);
+            $aspectRatio = self::number($props['aspectRatio'] ?? null);
 
             return new Style(
                 widthPercent: 100.0,
                 height: $height > 0.0 ? $height : null,
+                aspectRatio: $aspectRatio > 0.0 ? $aspectRatio : null,
                 minHeight: ($props['cardMedia'] ?? false) ? 200.0 : 1.0,
                 borderRadius: ($props['rounded'] ?? false) ? 4.0 : 0.0,
                 backgroundColor: $theme->color(ColorToken::SurfaceSunken),
@@ -575,14 +581,7 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PResponsive') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 1.0,
-                backgroundColor: 0x00000000,
-                opacity: $opacity,
-            );
-        }
+
 
         if ($part === 'PParallax') {
             $height = self::number($props['height'] ?? null);
@@ -613,9 +612,9 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PTable',
+            
             'PDataTable',
-            'PDataTableServer',
+            
             'PDataTableVirtual',
         ], true)) {
             $rowHeight = match ($density) {
@@ -641,20 +640,10 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PDataIterator') {
-            return new Style(
-                widthPercent: 100.0,
-                gap: 16.0,
-                paddingVertical: 8.0,
-                backgroundColor: 0x00000000,
-                opacity: ($props['loading'] ?? false) ? 0.38 : $opacity,
-                animationDurationMs: 280,
-                animateChanges: true,
-            );
-        }
+
 
         if (in_array($part, [
-            'PVirtualScroll',
+            
             'PInfiniteScroll',
         ], true)) {
             return new Style(
@@ -809,7 +798,7 @@ final class MaterialStyleResolver
                 width: $width,
                 minWidth: $width,
                 borderRadius: 4.0,
-                elevation: self::number($props['elevation'] ?? null),
+                elevation: self::resolvedElevation($props, 0.0),
                 backgroundColor: $theme->color(ColorToken::Surface),
                 opacity: $opacity,
             );
@@ -865,7 +854,7 @@ final class MaterialStyleResolver
                 minWidth: 328.0,
                 padding: 24.0,
                 borderRadius: 4.0,
-                elevation: self::number($props['elevation'] ?? null),
+                elevation: self::resolvedElevation($props, 0.0),
                 backgroundColor: $theme->color(ColorToken::Surface),
                 opacity: $opacity,
             );
@@ -904,9 +893,7 @@ final class MaterialStyleResolver
                 width: 300.0,
                 minWidth: 300.0,
                 borderRadius: 4.0,
-                elevation: is_numeric($props['elevation'] ?? null)
-                    ? (float) $props['elevation']
-                    : 1.0,
+                elevation: self::resolvedElevation($props, 1.0),
                 backgroundColor: $theme->color(ColorToken::Surface),
                 opacity: $opacity,
             );
@@ -958,55 +945,13 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PBreadcrumbs') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 56.0,
-                paddingHorizontal: 12.0,
-                paddingVertical: 16.0,
-                gap: 0.0,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                backgroundColor: 0x00000000,
-                opacity: $opacity,
-            );
-        }
 
-        if ($part === 'PBreadcrumbsItem') {
-            return new Style(
-                minHeight: 24.0,
-                paddingHorizontal: 4.0,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                borderRadius: 4.0,
-                opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-            );
-        }
 
-        if ($part === 'PBreadcrumbsDivider') {
-            return new Style(
-                minHeight: 24.0,
-                paddingHorizontal: 8.0,
-                fontSize: 16.0,
-                lineHeight: 24.0,
-                opacity: $opacity,
-            );
-        }
 
-        if ($part === 'PPagination') {
-            $buttonSize = MaterialTokens::iconButtonHeight($density);
 
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: $buttonSize,
-                gap: 9.6,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                justifyContent: Justify::Center,
-                backgroundColor: 0x00000000,
-                opacity: $opacity,
-            );
-        }
+
+
+
 
         if ($part === 'PCarousel') {
             $requestedHeight = $props['height'] ?? null;
@@ -1097,16 +1042,7 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PWindow' || $part === 'PWindowItem') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: $part === 'PWindowItem' ? 1.0 : null,
-                backgroundColor: 0x00000000,
-                opacity: $opacity,
-                animationDurationMs: 300,
-                animateChanges: true,
-            );
-        }
+
 
         if ($part === 'PAvatar') {
             $size = match ($props['size'] ?? null) {
@@ -1116,20 +1052,45 @@ final class MaterialStyleResolver
                 'x-large' => 56.0,
                 default => is_numeric($props['size'] ?? null) ? (float) $props['size'] : 40.0,
             };
-            $size -= match ($density) {
-                MaterialDensity::Comfortable => 4.0,
-                MaterialDensity::Compact => 8.0,
-                default => 0.0,
-            };
+            $semanticBackground = self::semanticColor($props, $theme, false);
+            $semanticForeground = self::semanticColor($props, $theme, true);
+            $outlined = $variant === MaterialVariant::Outlined;
+            $transparentAvatar = in_array(
+                $variant,
+                [
+                    MaterialVariant::Text,
+                    MaterialVariant::Plain,
+                ],
+                true,
+            ) || $outlined;
+            $tile = ($props['tile'] ?? false) === true;
 
             return new Style(
                 width: $size,
                 height: $size,
                 minWidth: $size,
                 minHeight: $size,
-                borderRadius: 9999.0,
-                backgroundColor: $theme->color(ColorToken::Surface),
+                textColor: $transparentAvatar
+                    ? ($semanticBackground ?? $theme->color(ColorToken::Primary))
+                    : ($semanticForeground
+                        ?? $theme->color(ColorToken::SecondaryForeground)),
+                backgroundColor: $transparentAvatar
+                    ? 0x00000000
+                    : ($semanticBackground ?? $theme->color(ColorToken::Secondary)),
+                borderColor: $semanticBackground ?? $theme->color(ColorToken::Border),
+                borderWidth: $outlined || ($props['border'] ?? false) === true
+                    ? 1.0
+                    : 0.0,
+                borderRadius: $tile ? 0.0 : 9999.0,
+                overflow: Overflow::Hidden,
                 opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
+                elevation: $variant === MaterialVariant::Elevated
+                    ? self::resolvedElevation($props, 1.0)
+                    : 0.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+                animationDurationMs: 200,
+                animateChanges: true,
             );
         }
 
@@ -1253,17 +1214,20 @@ final class MaterialStyleResolver
 
         if ($part === 'PSkeletonLoader') {
             $skeletonType = $props['type'] ?? 'text';
+            $boilerplate = ($props['boilerplate'] ?? false) === true;
+            $skeletonHeight = match ($skeletonType) {
+                'avatar', 'button' => 40.0,
+                'chip' => 32.0,
+                'heading' => 28.0,
+                'image' => 160.0,
+                'card', 'article' => 220.0,
+                default => 16.0,
+            };
 
             return new Style(
                 widthPercent: 100.0,
-                minHeight: match ($skeletonType) {
-                    'avatar', 'button' => 40.0,
-                    'chip' => 32.0,
-                    'heading' => 28.0,
-                    'image' => 160.0,
-                    'card', 'article' => 220.0,
-                    default => 16.0,
-                },
+                height: $skeletonHeight,
+                minHeight: $skeletonHeight,
                 maxWidth: match ($skeletonType) {
                     'avatar' => 40.0,
                     'button' => 112.0,
@@ -1277,9 +1241,10 @@ final class MaterialStyleResolver
                     'card', 'article', 'image' => MaterialTokens::radius(MaterialShape::Medium),
                     default => MaterialTokens::radius(MaterialShape::ExtraSmall),
                 },
-                opacity: $opacity,
+                elevation: self::resolvedElevation($props, 0.0),
+                opacity: $boilerplate ? $opacity * 0.72 : $opacity,
                 animationDurationMs: 1500,
-                animateChanges: true,
+                animateChanges: !$boilerplate,
             );
         }
 
@@ -1293,17 +1258,22 @@ final class MaterialStyleResolver
         }
 
         if ($part === 'PDialog') {
+            $fullscreen = ($props['fullscreen'] ?? false) === true;
+
             return new Style(
-                margin: 24.0,
+                margin: $fullscreen ? 0.0 : 24.0,
                 widthPercent: 100.0,
-                maxWidth: 560.0,
+                heightPercent: $fullscreen ? 100.0 : null,
+                maxWidth: $fullscreen ? null : 560.0,
                 minHeight: 140.0,
                 paddingHorizontal: 24.0,
                 paddingVertical: 24.0,
                 gap: 16.0,
                 backgroundColor: $theme->color(ColorToken::SurfaceElevated),
-                borderRadius: MaterialTokens::radius(MaterialShape::ExtraLarge),
-                elevation: 6.0,
+                borderRadius: $fullscreen
+                    ? 0.0
+                    : MaterialTokens::radius(MaterialShape::ExtraLarge),
+                elevation: self::resolvedElevation($props, 6.0),
                 opacity: $opacity,
             );
         }
@@ -1314,7 +1284,7 @@ final class MaterialStyleResolver
                 paddingVertical: 8.0,
                 backgroundColor: $theme->color(ColorToken::SurfaceElevated),
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                elevation: 3.0,
+                elevation: self::resolvedElevation($props, 3.0),
                 opacity: $opacity,
             );
         }
@@ -1330,7 +1300,7 @@ final class MaterialStyleResolver
                 backgroundColor: 0xFF1B2A3C,
                 textColor: 0xFFF7FAFF,
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                elevation: 6.0,
+                elevation: self::resolvedElevation($props, 6.0),
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
@@ -1348,7 +1318,7 @@ final class MaterialStyleResolver
                 backgroundColor: 0xFF1B2A3C,
                 textColor: 0xFFF7FAFF,
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                elevation: 6.0,
+                elevation: self::resolvedElevation($props, 6.0),
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
@@ -1365,7 +1335,7 @@ final class MaterialStyleResolver
                 gap: 16.0,
                 backgroundColor: $theme->color(ColorToken::SurfaceElevated),
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraLarge),
-                elevation: 6.0,
+                elevation: self::resolvedElevation($props, 6.0),
                 opacity: $opacity,
             );
         }
@@ -1484,22 +1454,27 @@ final class MaterialStyleResolver
                 elevation: ($props['flat'] ?? false) === true
                     || $variant !== MaterialVariant::Elevated
                         ? 0.0
-                        : ($part === 'PFab' ? 3.0 : 1.0),
+                        : self::resolvedElevation(
+                            $props,
+                            $part === 'PFab' ? 3.0 : 1.0,
+                        ),
                 opacity: $opacity,
                 flexDirection: $stacked ? FlexDirection::Column : FlexDirection::Row,
                 alignItems: Align::Center,
                 alignSelf: $block ? Align::Stretch : null,
                 justifyContent: Justify::Center,
-                animationDurationMs: 200,
-                animateChanges: true,
             );
         }
 
         if (in_array($part, ['PCard', 'PSheet', 'PEmptyState', 'PPicker'], true)) {
             $contentContainer = in_array($part, ['PEmptyState', 'PPicker'], true);
             $semanticBackground = self::semanticColor($props, $theme, false);
+            $semanticForeground = self::semanticColor($props, $theme, true);
+            $horizontal = $part === 'PCard'
+                && ($props['horizontal'] ?? false) === true;
 
             return new Style(
+                widthPercent: 100.0,
                 padding: $contentContainer ? match ($density) {
                     MaterialDensity::Default => 16.0,
                     MaterialDensity::Comfortable => 12.0,
@@ -1511,6 +1486,8 @@ final class MaterialStyleResolver
                         ? $theme->color(ColorToken::Secondary)
                         : $theme->color(ColorToken::Surface)
                 ),
+                textColor: $semanticForeground
+                    ?? $theme->color(ColorToken::OnSurface),
                 borderColor: $semanticBackground ?? $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
                 borderRadius: ($props['tile'] ?? false) === true
@@ -1518,8 +1495,12 @@ final class MaterialStyleResolver
                     : (($props['rounded'] ?? null) === 'xl'
                         ? MaterialTokens::radius(MaterialShape::ExtraLarge)
                         : MaterialTokens::radius(MaterialShape::ExtraSmall)),
-                elevation: $variant === MaterialVariant::Elevated ? 1.0 : 0.0,
+                elevation: $variant === MaterialVariant::Elevated
+                    ? self::resolvedElevation($props, 1.0)
+                    : 0.0,
                 opacity: $opacity,
+                overflow: Overflow::Hidden,
+                flexDirection: $horizontal ? FlexDirection::Row : null,
             );
         }
 
@@ -1651,53 +1632,49 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PAppBar', 'PToolbar', 'PBottomNavigation', 'PSystemBar', 'PFooter',
+            'PAppBar', 'PToolbar', 
         ], true)) {
-            $barHeight = match ($part) {
-                'PSystemBar' => 24.0,
-                'PBottomNavigation' => match ($density) {
-                    MaterialDensity::Comfortable => 48.0,
-                    MaterialDensity::Compact => 40.0,
-                    default => 56.0,
-                },
-                'PAppBar', 'PToolbar' => match ($density) {
-                    MaterialDensity::Comfortable => 56.0,
-                    MaterialDensity::Compact => 48.0,
-                    default => 64.0,
-                },
-                default => null,
+            $barHeight = match ($density) {
+                MaterialDensity::Comfortable => 56.0,
+                MaterialDensity::Compact => 48.0,
+                default => 64.0,
             };
+            if (
+                in_array($part, ['PAppBar', 'PToolbar'], true)
+                && ($props['prominent'] ?? false) === true
+            ) {
+                $barHeight = 128.0;
+            }
 
             return new Style(
                 widthPercent: 100.0,
                 minHeight: $barHeight,
                 paddingHorizontal: match ($part) {
                     'PAppBar' => 4.0,
-                    'PSystemBar' => 8.0,
-                    'PBottomNavigation' => 0.0,
                     default => 16.0,
                 },
-                paddingVertical: $part === 'PFooter' ? 8.0 : null,
+                paddingVertical: null,
                 gap: 8.0,
                 backgroundColor: $theme->color(ColorToken::Surface),
-                elevation: is_numeric($props['elevation'] ?? null)
-                    ? (float) $props['elevation']
-                    : ($part === 'PBottomNavigation' ? 2.0 : 0.0),
+                elevation: self::resolvedElevation(
+                    $props,
+                    0.0,
+                ),
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
-                justifyContent: $part === 'PSystemBar' ? Justify::End : null,
+                justifyContent: null,
             );
         }
 
         if (in_array($part, [
-            'PApp', 'PMain', 'PLayout', 'PLayoutItem', 'PContainer',
-            'PResponsive', 'PDefaultsProvider', 'PThemeProvider',
-            'PLocaleProvider', 'PLazy', 'PWindow', 'PWindowItem',
+            
+            'PDefaultsProvider', 'PThemeProvider',
+            'PLocaleProvider', 
             'PTransition',
         ], true)) {
             return new Style(
                 widthPercent: 100.0,
-                backgroundColor: in_array($part, ['PApp', 'PMain'], true)
+                backgroundColor: false
                     ? $theme->color(ColorToken::Background)
                     : null,
                 opacity: $opacity,
@@ -1705,7 +1682,7 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PRow', 'PCardItem', 'PCardActions', 'PBannerActions',
+            'PCardItem', 'PCardActions', 'PBannerActions',
             'PToolbarItems', 'PStepperActions', 'PStepperVerticalActions',
             'PDatePickerControls', 'PTimePickerControls',
             'PColorPickerPreview', 'PColorPickerEdit',
@@ -1719,13 +1696,34 @@ final class MaterialStyleResolver
             );
         }
 
+        if ($part === 'PRow') {
+            return new Style(
+                widthPercent: 100.0,
+                minWidth: 0.0,
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Stretch,
+            );
+        }
+
         if ($part === 'PCol') {
-            return new Style();
+            return new Style(
+                minWidth: 0.0,
+                flexDirection: FlexDirection::Column,
+                alignItems: Align::Stretch,
+            );
         }
 
         if ($part === 'PSpacer') {
-            return new Style(flexGrow: 1.0);
+            return new Style(
+                minWidth: 0.0,
+                minHeight: 0.0,
+                flexGrow: 1.0,
+            );
         }
+
+
+
+
 
         if (in_array($part, [
             'PAlert', 'PBanner', 'PSnackbar', 'PFileUpload',
@@ -1753,7 +1751,10 @@ final class MaterialStyleResolver
                     : 0.0,
                 borderBottomWidth: $part === 'PBanner' ? 1.0 : 0.0,
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                elevation: $part === 'PSnackbar' ? 6.0 : 0.0,
+                elevation: self::resolvedElevation(
+                    $props,
+                    $part === 'PSnackbar' ? 6.0 : 0.0,
+                ),
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
@@ -1773,7 +1774,7 @@ final class MaterialStyleResolver
 
         if (in_array($part, [
             'PDialog', 'PMenu', 'PBottomSheet', 'POverlay', 'PTooltip',
-            'PNavigationDrawer', 'PSnackbarQueue',
+            'PSnackbarQueue',
         ], true)) {
             return new Style(
                 paddingHorizontal: match ($part) {
@@ -1791,31 +1792,32 @@ final class MaterialStyleResolver
                     ? $theme->color(ColorToken::Overlay)
                     : $theme->color(ColorToken::SurfaceElevated),
                 borderColor: $theme->color(ColorToken::Border),
-                borderWidth: in_array($part, ['PMenu', 'PNavigationDrawer'], true)
+                borderWidth: in_array($part, ['PMenu'], true)
                     ? 1.0
                     : 0.0,
                 borderRadius: match ($part) {
                     'PBottomSheet' => 0.0,
                     'PTooltip' => MaterialTokens::radius(MaterialShape::ExtraSmall),
-                    'PNavigationDrawer' => 0.0,
                     default => MaterialTokens::radius(MaterialShape::ExtraSmall),
                 },
-                elevation: match ($part) {
-                    'POverlay' => 0.0,
-                    'PDialog' => 5.0,
-                    'PBottomSheet' => 4.0,
-                    'PNavigationDrawer' => 4.0,
-                    default => 3.0,
-                },
+                elevation: self::resolvedElevation(
+                    $props,
+                    match ($part) {
+                        'POverlay' => 0.0,
+                        'PDialog' => 5.0,
+                        'PBottomSheet' => 4.0,
+                        default => 3.0,
+                    },
+                ),
                 opacity: $part === 'POverlay' ? 0.20 : $opacity,
                 overflow: Overflow::Hidden,
             );
         }
 
         if (in_array($part, [
-            'PList', 'PListGroup', 'PDataIterator', 'PDataTable',
-            'PDataTableServer', 'PDataTableVirtual', 'PTable', 'PTreeview',
-            'PVirtualScroll', 'PInfiniteScroll',
+            'PList', 'PListGroup', 'PDataTable',
+            'PDataTableVirtual', 'PTreeview',
+            'PInfiniteScroll',
         ], true)) {
             return new Style(
                 widthPercent: 100.0,
@@ -1942,7 +1944,7 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PTabs', 'PSlideGroup', 'PBreadcrumbs', 'PPagination',
+            'PTabs', 'PSlideGroup', 
             'PStepperHeader', 'PCalendarHeader',
         ], true)) {
             $verticalTabs = in_array($part, ['PTabs', 'PSlideGroup'], true)
@@ -1978,7 +1980,7 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PTab', 'PAppBarNavIcon', 'PBreadcrumbsItem',
+            'PTab', 'PAppBarNavIcon', 
         ], true)) {
             return new Style(
                 minHeight: $part === 'PTab'
@@ -2031,9 +2033,12 @@ final class MaterialStyleResolver
                 borderColor: $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                elevation: in_array($part, [
-                    'PStepper', 'PStepperVertical',
-                ], true) ? 1.0 : 0.0,
+                elevation: self::resolvedElevation(
+                    $props,
+                    in_array($part, [
+                        'PStepper', 'PStepperVertical',
+                    ], true) ? 1.0 : 0.0,
+                ),
                 opacity: $opacity,
                 overflow: Overflow::Hidden,
             );
@@ -2061,16 +2066,25 @@ final class MaterialStyleResolver
                 minWidth: $horizontalStep ? 88.0 : null,
                 flexGrow: $horizontalStep ? 1.0 : null,
                 minHeight: $expansionTitle ? 48.0 : null,
+                padding: $horizontalStep ? 24.0 : null,
                 paddingHorizontal: $expansionPanel
                     ? 0.0
-                    : ($expansionTitle || $expansionText ? 24.0 : 12.0),
+                    : ($horizontalStep
+                        ? null
+                        : ($expansionTitle || $expansionText ? 24.0 : 12.0)),
                 paddingVertical: $expansionPanel
                     ? 0.0
-                    : ($expansionTitle ? 16.0 : 12.0),
+                    : ($horizontalStep
+                        ? null
+                        : ($expansionTitle ? 16.0 : 12.0)),
                 gap: $expansionPanel ? 0.0 : 8.0,
-                textColor: $activeStep
-                    ? $theme->color(ColorToken::Primary)
-                    : $theme->color(ColorToken::MutedForeground),
+                textColor: $expansionTitle
+                    ? $theme->color(ColorToken::OnSurface)
+                    : ($expansionText
+                        ? $theme->color(ColorToken::MutedForeground)
+                        : ($activeStep
+                            ? $theme->color(ColorToken::Primary)
+                            : $theme->color(ColorToken::MutedForeground))),
                 backgroundColor: $theme->color(ColorToken::Surface),
                 borderColor: $theme->color(ColorToken::Border),
                 borderBottomWidth: $activeStep
@@ -2081,14 +2095,16 @@ final class MaterialStyleResolver
                         true,
                     ) ? 1.0 : 0.0),
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                opacity: $opacity,
+                opacity: $horizontalStep
+                    ? ($activeStep ? 1.0 : 0.6)
+                    : $opacity,
             );
         }
 
-        if (in_array($part, ['PAvatar', 'PIcon'], true)) {
+        if ($part === 'PIcon') {
             $diameter = MaterialTokens::componentSize(
                 $props['size'] ?? null,
-                $part === 'PIcon' ? 24.0 : 40.0,
+                24.0,
             );
 
             return new Style(
@@ -2096,10 +2112,7 @@ final class MaterialStyleResolver
                 height: $diameter,
                 textColor: self::semanticColor($props, $theme, false)
                     ?? $theme->color(ColorToken::OnSurface),
-                backgroundColor: $part === 'PAvatar'
-                    ? (self::semanticColor($props, $theme, false)
-                        ?? $theme->color(ColorToken::Secondary))
-                    : $transparent,
+                backgroundColor: $transparent,
                 borderRadius: MaterialTokens::radius(MaterialShape::Full),
                 overflow: Overflow::Hidden,
                 opacity: $opacity,
@@ -2110,7 +2123,7 @@ final class MaterialStyleResolver
             );
         }
 
-        if (in_array($part, ['PImg', 'PParallax'], true)) {
+        if (in_array($part, ['PImg'], true)) {
             return new Style(
                 widthPercent: 100.0,
                 minHeight: 120.0,
@@ -2178,7 +2191,7 @@ final class MaterialStyleResolver
             );
         }
 
-        if (in_array($part, ['PForm', 'PValidation', 'PHotkey', 'PHover'], true)) {
+        if (in_array($part, ['PForm'], true)) {
             return new Style(widthPercent: 100.0, opacity: $opacity);
         }
 
@@ -2197,10 +2210,10 @@ final class MaterialStyleResolver
     private static function textPart(string $part): bool
     {
         return in_array($part, [
-            'PText', 'PCardTitle', 'PCardSubtitle', 'PCardText',
+            'PCardTitle', 'PCardSubtitle', 'PCardText',
             'PListItemTitle', 'PListItemSubtitle', 'PLabel', 'PMessages',
-            'PCounter', 'PCode', 'PKbd', 'PAlertTitle', 'PAppBarTitle',
-            'PBannerText', 'PBreadcrumbsItem', 'PBreadcrumbsDivider',
+            'PCounter', 'PAlertTitle', 'PAppBarTitle',
+            'PBannerText', 
             'PFieldLabel', 'PListSubheader', 'PPickerTitle', 'PToolbarTitle',
         ], true);
     }
@@ -2214,7 +2227,7 @@ final class MaterialStyleResolver
             $parentScale = match ($parentComponent) {
                 'PBtn', 'PFab' => 14,
                 'PChip' => 17,
-                'PBadge', 'PSystemBar', 'PBottomNavigation' => 15,
+                'PBadge' => 15,
                 'PSnackbar', 'PBanner' => 14,
                 default => null,
             };
@@ -2230,8 +2243,13 @@ final class MaterialStyleResolver
             'PBannerText', 'PListSubheader' => 12,
             'PListItemTitle' => 11,
             'PLabel', 'PFieldLabel' => 14,
-            'PMessages', 'PCounter', 'PKbd', 'PCode' => 13,
-            default => match ($props['size'] ?? null) {
+            'PMessages', 'PCounter' => 13,
+            default => match ($props['typography'] ?? $props['size'] ?? null) {
+                'display' => 3,
+                'headline' => 5,
+                'title' => 8,
+                'body' => 11,
+                'label' => 14,
                 'display-large' => 1,
                 'display-medium' => 2,
                 'display-small' => 3,
@@ -2298,7 +2316,9 @@ final class MaterialStyleResolver
             'PAlert', 'PAvatar', 'PBanner', 'PCard', 'PSheet',
         ], true)) {
             return self::semanticColor($parent, $theme, true)
-                ?? $theme->color(ColorToken::OnSurface);
+                ?? ($parentComponent === 'PAvatar'
+                    ? $theme->color(ColorToken::SecondaryForeground)
+                    : $theme->color(ColorToken::OnSurface));
         }
 
         if (in_array($parentComponent, ['PChip', 'PBadge'], true)) {
@@ -2349,6 +2369,18 @@ final class MaterialStyleResolver
         Theme $theme,
     ): ?int {
         return self::semanticColor($props, $theme, true);
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function resolvedElevation(
+        array $props,
+        float $fallback,
+    ): float {
+        if (!is_numeric($props['elevation'] ?? null)) {
+            return $fallback;
+        }
+
+        return max(0.0, min(24.0, (float) $props['elevation']));
     }
 
     /** @return array<string, mixed> */

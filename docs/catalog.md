@@ -2,7 +2,7 @@
 
 This catalog is generated from the manually authored `resources/pam-material-components.php` specification. It contains no imported Vuetify metadata and exposes only native `p-*` tags.
 
-**88 modules · 147 component parts · Android and iOS**
+**75 modules · 127 component parts · Android and iOS**
 
 ## `app-bar`
 
@@ -36,12 +36,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `bottom-sheet`
 
 - `<p-bottom-sheet />`
-
-## `breadcrumbs`
-
-- `<p-breadcrumbs />`
-- `<p-breadcrumbs-item />`
-- `<p-breadcrumbs-divider />`
 
 ## `button`
 
@@ -113,14 +107,9 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-counter />`
 
-## `data-iterator`
-
-- `<p-data-iterator />`
-
 ## `data-table`
 
 - `<p-data-table />`
-- `<p-data-table-server />`
 - `<p-data-table-virtual />`
 
 ## `date-input`
@@ -135,10 +124,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-date-picker-month />`
 - `<p-date-picker-months />`
 - `<p-date-picker-years />`
-
-## `defaults-provider`
-
-- `<p-defaults-provider />`
 
 ## `dialog`
 
@@ -181,13 +166,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-form />`
 
-## `grid`
-
-- `<p-container />`
-- `<p-row />`
-- `<p-col />`
-- `<p-spacer />`
-
 ## `icon`
 
 - `<p-icon />`
@@ -217,10 +195,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-label />`
 
-## `lazy`
-
-- `<p-lazy />`
-
 ## `list`
 
 - `<p-list />`
@@ -229,10 +203,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-list-item-subtitle />`
 - `<p-list-group />`
 - `<p-list-subheader />`
-
-## `locale-provider`
-
-- `<p-locale-provider />`
 
 ## `menu`
 
@@ -253,14 +223,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `overlay`
 
 - `<p-overlay />`
-
-## `pagination`
-
-- `<p-pagination />`
-
-## `parallax`
-
-- `<p-parallax />`
 
 ## `picker`
 
@@ -360,10 +322,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 - `<p-tabs />`
 - `<p-tab />`
 
-## `text`
-
-- `<p-text />`
-
 ## `text-field`
 
 - `<p-text-field />`
@@ -371,10 +329,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `textarea`
 
 - `<p-textarea />`
-
-## `theme-provider`
-
-- `<p-theme-provider />`
 
 ## `time-picker`
 
@@ -401,16 +355,3 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-treeview />`
 - `<p-treeview-item />`
-
-## `validation`
-
-- `<p-validation />`
-
-## `window`
-
-- `<p-window />`
-- `<p-window-item />`
-
-## `transition`
-
-- `<p-transition />`

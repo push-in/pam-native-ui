@@ -2397,7 +2397,7 @@ $materialInput = \Pam\MobileUi\Material\PTextField::make([
 ])->toElement();
 $materialInputField = $materialInput->children()[0] ?? null;
 $materialInputNode = $materialInputField?->children()[0] ?? null;
-$materialTable = \Pam\MobileUi\Material\PDataTableServer::make([
+$materialTable = \Pam\MobileUi\Material\PDataTable::make([
     'items' => 'Android,iOS,Composer',
 ])->toElement();
 $assert(
@@ -3821,7 +3821,7 @@ $materialSource = <<<'PAM'
 <p-card>
     <p-card-title>PAM Material</p-card-title>
     <p-card-text>Native p-* component contract</p-card-text>
-    <p-btn><p-text>Continue</p-text></p-btn>
+    <p-btn><Text>Continue</Text></p-btn>
 </p-card>
 PAM;
 $material = TemplateRenderer::render(

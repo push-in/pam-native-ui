@@ -43,8 +43,8 @@ $assert(
     'The package must be named pushinbr/pam-mobile-ui.',
 );
 $assert(
-    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.4.3',
-    'The package must require pushinbr/pam-native:^0.4.3.',
+    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.4.4',
+    'The package must require pushinbr/pam-native:^0.4.4.',
 );
 $assert(
     ($composer['type'] ?? null) === 'pam-native-plugin',
@@ -56,9 +56,9 @@ $assert(
     'The plugin schema must resolve through the pushinbr/pam-native package.',
 );
 $assert(
-    ($plugin['pamNative']['minimum'] ?? null) === '0.4.0'
+    ($plugin['pamNative']['(minimum'] ?? null) === '0.4.4'
         && ($plugin['pamNative']['maximumExclusive'] ?? null) === '0.5.0',
-    'The plugin must support PAM Native 0.4.x exclusively.',
+    'The plugin must support PAM Native 0.4.4 through 0.4.x.',
 );
 $assert(
     ($exampleComposer['require']['pushinbr/pam-mobile-ui'] ?? null) === '0.4.x-dev'

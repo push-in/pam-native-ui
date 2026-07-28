@@ -11,7 +11,7 @@ These removed aliases must use the existing PAM Native implementation:
 | Removed alias | Native capability |
 | --- | --- |
 | `p-app` | `App`, `Screen`, `SafeAreaView` |
-| `p-container`, `p-row`, `p-col`, `p-spacer` | `View`, `Row`, `Column`, `Spacer`, `Grid` |
+| `p-container` | Screen content owns its native width, insets and responsive constraints. |
 | `p-layout`, `p-layout-item`, `p-main` | `Screen`, native routers and safe-area layout |
 | `p-navigation-drawer` | `DrawerRouter`, `DrawerNavigator`, `DrawerLayoutAndroid` |
 | `p-bottom-navigation` | `TabRouter`, `TabNavigator` |
@@ -20,8 +20,8 @@ These removed aliases must use the existing PAM Native implementation:
 | `p-system-bar` | `StatusBar` |
 | `p-table` | `p-data-table` and native virtualized rows |
 
-The retained `p-infinite-scroll`, `p-data-table-virtual` and
-`p-data-iterator` components add data orchestration on top of native
+The retained `p-infinite-scroll` and `p-data-table-virtual` components add
+mobile-facing loading and presentation behavior on top of native
 virtualization; they do not implement a second scrolling engine.
 
 ## Removed web-oriented surface
@@ -36,6 +36,15 @@ The following Vuetify concepts do not justify a mobile component API:
 | `p-code` | Showcase code markup is intentionally outside the mobile component library. |
 | `p-footer` | Web document semantics do not map to a distinct native control. |
 | `p-responsive` | PAM Native layout and image sizing already provide responsive constraints. |
+| `p-breadcrumbs` | Native stack navigation, back actions and screen titles communicate hierarchy. |
+| `p-pagination` | Mobile collections use native virtualization, infinite loading or an explicit load-more action. |
+| `p-lazy` | Visibility-aware mounting belongs to the native renderer rather than a visual component. |
+| `p-window` | Routers, tabs, carousels and steppers already own mobile screen transitions. |
+| `p-data-iterator` | Data orchestration belongs to application state and repositories. |
+| `p-data-table-server` | Server pagination and sorting are data-source concerns; `p-data-table` receives the resulting rows. |
+
+`p-file-upload` remains public, but it launches native documents, media,
+camera or share flows. Drop zones and drag-to-upload variants are not exposed.
 
 ## Retention rule
 
@@ -48,6 +57,6 @@ A component remains public when at least one of these is true:
 4. It is required for theme, locale, defaults, accessibility or validation
    propagation.
 
-Generated facade classes for previously available aliases may remain internally
-for source compatibility, but removed tags are not registered, documented or
-shown as new PAM UI components.
+Removed concepts have no PAM UI facade, component ID, registered tag,
+documentation entry or showcase route. Their native equivalents live only in
+PAM Native.

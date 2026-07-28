@@ -18,8 +18,11 @@ $modules = MaterialComponentMap::MODULES;
 
 $sequentialIds = array_values($ids);
 sort($sequentialIds, SORT_NUMERIC);
-if ($sequentialIds !== range(1, 163)) {
-    throw new RuntimeException('Material component IDs must be sequential from 1 through 163.');
+$componentCount = count($ids);
+if ($sequentialIds !== range(1, $componentCount)) {
+    throw new RuntimeException(
+        "Material component IDs must be sequential from 1 through {$componentCount}.",
+    );
 }
 
 $moduleTags = [];
@@ -336,25 +339,6 @@ $assertGeometry('PAppBarTitle', [], [
     'fontSize' => 20.0,
     'lineHeight' => 28.0,
 ]);
-$assertGeometry('PBottomNavigation', [], [
-    'minHeight' => 56.0,
-    'paddingHorizontal' => 0.0,
-    'elevation' => 2.0,
-]);
-$assertGeometry('PBottomNavigation', ['density' => 'comfortable'], [
-    'minHeight' => 48.0,
-]);
-$assertGeometry('PBottomNavigation', ['density' => 'compact'], [
-    'minHeight' => 40.0,
-]);
-$assertGeometry('PSystemBar', [], [
-    'minHeight' => 24.0,
-    'paddingHorizontal' => 8.0,
-]);
-$assertGeometry('PFooter', [], [
-    'paddingHorizontal' => 16.0,
-    'paddingVertical' => 8.0,
-]);
 $assertGeometry('PAlert', [], [
     'paddingHorizontal' => 16.0,
     'paddingVertical' => 16.0,
@@ -465,10 +449,6 @@ $assertGeometry('PListItemTitle', [], [
     'fontSize' => 16.0,
     'lineHeight' => 24.0,
 ]);
-$assertGeometry('PNavigationDrawer', [], [
-    'borderRadius' => 0.0,
-    'elevation' => 4.0,
-]);
 $assertGeometry('PSelectionControl', [], [
     'minHeight' => 40.0,
 ]);
@@ -574,27 +554,6 @@ $assertGeometry('PBadge', ['dot' => true], [
     'height' => 9.0,
     'borderWidth' => 0.0,
 ]);
-$assertGeometry('PBreadcrumbs', [], [
-    'minHeight' => 56.0,
-    'paddingHorizontal' => 12.0,
-    'paddingVertical' => 16.0,
-]);
-$assertGeometry('PBreadcrumbsItem', [], [
-    'minHeight' => 24.0,
-    'paddingHorizontal' => 4.0,
-]);
-$assertGeometry('PBreadcrumbsDivider', [], [
-    'paddingHorizontal' => 8.0,
-    'fontSize' => 16.0,
-    'lineHeight' => 24.0,
-]);
-$assertGeometry('PPagination', [], [
-    'minHeight' => 36.0,
-    'gap' => 9.6,
-]);
-$assertGeometry('PPagination', ['density' => 'compact'], [
-    'minHeight' => 28.0,
-]);
 $assertGeometry('PCarousel', [], [
     'height' => 500.0,
     'minHeight' => 500.0,
@@ -623,10 +582,6 @@ $assertGeometry('PTimelineItem', [], [
     'padding' => 24.0,
     'gap' => 24.0,
     'borderWidth' => 2.0,
-]);
-$assertGeometry('PWindow', [], [
-    'widthPercent' => 100.0,
-    'animationDurationMs' => 300,
 ]);
 $assertGeometry('PPicker', [], [
     'borderRadius' => 4.0,
@@ -726,28 +681,11 @@ $assertGeometry('PRadioGroup', ['inline' => true], [
     'widthPercent' => 100.0,
     'gap' => 4.0,
 ]);
-$assertGeometry('PTable', [], [
-    'minHeight' => 52.0,
-    'paddingHorizontal' => 0.0,
-    'borderWidth' => 0.0,
-    'fontSize' => 14.0,
-    'lineHeight' => 21.0,
-    'animationDurationMs' => 280,
-]);
 $assertGeometry('PDataTable', ['density' => 'comfortable'], [
     'minHeight' => 44.0,
 ]);
 $assertGeometry('PDataTableVirtual', ['density' => 'compact'], [
     'minHeight' => 36.0,
-]);
-$assertGeometry('PDataIterator', [], [
-    'widthPercent' => 100.0,
-    'gap' => 16.0,
-    'paddingVertical' => 8.0,
-]);
-$assertGeometry('PVirtualScroll', [], [
-    'widthPercent' => 100.0,
-    'minHeight' => 52.0,
 ]);
 $assertGeometry('PTreeview', [], [
     'widthPercent' => 100.0,
@@ -775,15 +713,15 @@ $assertGeometry('POtpInput', ['divided' => true], [
     'width' => 360.0,
 ]);
 $assertGeometry('PFileUpload', [], [
-    'minHeight' => 184.0,
+    'minHeight' => 144.0,
     'paddingHorizontal' => 16.0,
-    'paddingVertical' => 64.0,
+    'paddingVertical' => 24.0,
     'borderWidth' => 2.0,
     'borderRadius' => 4.0,
 ]);
 $assertGeometry('PFileUpload', ['inset' => true], [
-    'minHeight' => 96.0,
-    'paddingVertical' => 16.0,
+    'minHeight' => 88.0,
+    'paddingVertical' => 12.0,
 ]);
 $assertGeometry('PFileUploadItem', [], [
     'minHeight' => 64.0,

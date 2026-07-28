@@ -15,6 +15,7 @@ import android.content.ContextWrapper
 import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RenderEffect
@@ -414,6 +415,8 @@ internal class MobileUiHost(
     private var fileTreeFolderExpanded = false
     private var fileTreeFolderInitialized = false
     private var animator: ValueAnimator? = null
+    private var skeletonShimmerProgress = 0f
+    private val skeletonShimmerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var nativeProperties: Map<String, WireValue> = emptyMap()
     private var activePickerDialog: Dialog? = null
     private var silentlyDismissedPickerDialog: Dialog? = null
@@ -1229,6 +1232,7 @@ internal class MobileUiHost(
             Behavior.PROGRESS -> if (!circularProgress) {
                 drawLinearProgress(canvas)
             }
+            Behavior.SKELETON -> drawSkeletonShimmer(canvas)
             else -> Unit
         }
     }
@@ -4312,20 +4316,60 @@ internal class MobileUiHost(
     }
 
     private fun startSkeleton() {
-        if (!animationsEnabled()) {
+        if (
+            !animationsEnabled()
+            || nativeProperties.flag("boilerplate", false)
+            || nativeProperties.flag("isLoaded", false)
+        ) {
             animator?.cancel()
             animator = null
             alpha = 1f
+            skeletonShimmerProgress = 0f
+            invalidate()
             return
         }
-        if (animator?.duration == skeletonPulseDurationMillis) return
+        if (animator?.duration == skeletonPulseDurationMillis && animator?.isRunning == true) {
+            return
+        }
         animator?.cancel()
-        animator = ObjectAnimator.ofFloat(this, View.ALPHA, 0.55f, 1f).apply {
+        alpha = 1f
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = skeletonPulseDurationMillis
-            repeatMode = ValueAnimator.REVERSE
+            repeatMode = ValueAnimator.RESTART
             repeatCount = ValueAnimator.INFINITE
+            addUpdateListener {
+                skeletonShimmerProgress = it.animatedValue as Float
+                invalidate()
+            }
             start()
         }
+    }
+
+    private fun drawSkeletonShimmer(canvas: Canvas) {
+        if (
+            animator?.isRunning != true
+            || width <= 0
+            || height <= 0
+        ) {
+            return
+        }
+        val band = max(width * 0.36f, 48f * density)
+        val center = -band + (width + band * 2f) * skeletonShimmerProgress
+        skeletonShimmerPaint.shader = LinearGradient(
+            center - band,
+            0f,
+            center + band,
+            0f,
+            intArrayOf(
+                Color.TRANSPARENT,
+                Color.argb(64, 255, 255, 255),
+                Color.TRANSPARENT,
+            ),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), skeletonShimmerPaint)
+        skeletonShimmerPaint.shader = null
     }
 
     private fun sliderTouchListener(): OnTouchListener =

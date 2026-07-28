@@ -5,11 +5,11 @@
         </p-btn>
     </template>
 
-    <p-row class="gap-2">
-        <p-btn size="sm"><p-text>All</p-text></p-btn>
-        <p-btn size="sm" variant="outline"><p-text>Paid</p-text></p-btn>
-        <p-btn size="sm" variant="ghost"><p-text>Pending</p-text></p-btn>
-    </p-row>
+    <Row class="gap-2">
+        <p-btn size="sm"><Text>All</Text></p-btn>
+        <p-btn size="sm" variant="outline"><Text>Paid</Text></p-btn>
+        <p-btn size="sm" variant="ghost"><Text>Pending</Text></p-btn>
+    </Row>
 
     <ContentState
         status="{{ $status }}"
@@ -17,59 +17,59 @@
         @retry="retry"
     >
         <p-card class="rounded-2xl">
-            <p-col>
-                <p-col class="p-4 gap-2">
-                    <p-row class="items-center justify-between gap-3">
-                        <p-col class="gap-1">
-                            <p-text size="md">Ana Martins</p-text>
-                            <p-text class="ui-text-muted">#1048 · Today, 10:42</p-text>
-                        </p-col>
-                        <p-text size="md">R$ 389.00</p-text>
-                    </p-row>
-                    <p-row class="items-center gap-2">
-                        <p-badge action="success"><p-text>Paid</p-text></p-badge>
-                        <p-text class="ui-text-muted">Ready to fulfill</p-text>
-                    </p-row>
-                </p-col>
+            <Column>
+                <Column class="p-4 gap-2">
+                    <Row class="items-center justify-between gap-3">
+                        <Column class="gap-1">
+                            <Text size="md">Ana Martins</Text>
+                            <Text class="ui-text-muted">#1048 · Today, 10:42</Text>
+                        </Column>
+                        <Text size="md">R$ 389.00</Text>
+                    </Row>
+                    <Row class="items-center gap-2">
+                        <p-badge action="success"><Text>Paid</Text></p-badge>
+                        <Text class="ui-text-muted">Ready to fulfill</Text>
+                    </Row>
+                </Column>
                 <p-divider />
-                <p-col class="p-4 gap-2">
-                    <p-row class="items-center justify-between gap-3">
-                        <p-col class="gap-1">
-                            <p-text size="md">Lucas Costa</p-text>
-                            <p-text class="ui-text-muted">#1047 · Today, 09:18</p-text>
-                        </p-col>
-                        <p-text size="md">R$ 149.90</p-text>
-                    </p-row>
-                    <p-row class="items-center gap-2">
-                        <p-badge action="warning"><p-text>Pending</p-text></p-badge>
-                        <p-text class="ui-text-muted">Waiting for PIX</p-text>
-                    </p-row>
-                </p-col>
+                <Column class="p-4 gap-2">
+                    <Row class="items-center justify-between gap-3">
+                        <Column class="gap-1">
+                            <Text size="md">Lucas Costa</Text>
+                            <Text class="ui-text-muted">#1047 · Today, 09:18</Text>
+                        </Column>
+                        <Text size="md">R$ 149.90</Text>
+                    </Row>
+                    <Row class="items-center gap-2">
+                        <p-badge action="warning"><Text>Pending</Text></p-badge>
+                        <Text class="ui-text-muted">Waiting for PIX</Text>
+                    </Row>
+                </Column>
                 <p-divider />
-                <p-col class="p-4 gap-2">
-                    <p-row class="items-center justify-between gap-3">
-                        <p-col class="gap-1">
-                            <p-text size="md">Marina Alves</p-text>
-                            <p-text class="ui-text-muted">#1046 · Yesterday</p-text>
-                        </p-col>
-                        <p-text size="md">R$ 829.00</p-text>
-                    </p-row>
-                    <p-row class="items-center gap-2">
-                        <p-badge variant="secondary"><p-text>Shipped</p-text></p-badge>
-                        <p-text class="ui-text-muted">Tracking sent</p-text>
-                    </p-row>
-                </p-col>
-            </p-col>
+                <Column class="p-4 gap-2">
+                    <Row class="items-center justify-between gap-3">
+                        <Column class="gap-1">
+                            <Text size="md">Marina Alves</Text>
+                            <Text class="ui-text-muted">#1046 · Yesterday</Text>
+                        </Column>
+                        <Text size="md">R$ 829.00</Text>
+                    </Row>
+                    <Row class="items-center gap-2">
+                        <p-badge variant="secondary"><Text>Shipped</Text></p-badge>
+                        <Text class="ui-text-muted">Tracking sent</Text>
+                    </Row>
+                </Column>
+            </Column>
         </p-card>
     </ContentState>
 
     <p-card class="p-4 rounded-2xl">
-        <p-row class="items-center justify-between">
-            <p-col class="gap-1">
-                <p-text class="ui-text-muted">Average order</p-text>
-                <p-text size="lg">R$ 452.29</p-text>
-            </p-col>
-            <p-badge variant="secondary"><p-text>+8.4%</p-text></p-badge>
-        </p-row>
+        <Row class="items-center justify-between">
+            <Column class="gap-1">
+                <Text class="ui-text-muted">Average order</Text>
+                <Text size="lg">R$ 452.29</Text>
+            </Column>
+            <p-badge variant="secondary"><Text>+8.4%</Text></p-badge>
+        </Row>
     </p-card>
 </AppScreen>

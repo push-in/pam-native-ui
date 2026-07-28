@@ -18,12 +18,15 @@ use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\SelectionMode;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
+use Pam\MobileUi\Theme\MaterialTokens;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\Align;
 use Pam\Native\AccessibilityCheckedState;
 use Pam\Native\AccessibilityImportance;
 use Pam\Native\AccessibilityLiveRegion;
+use Pam\Native\AnimationEasing;
+use Pam\Native\AnimationKeyframe;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
 use Pam\Native\ImageCachePolicy;
@@ -66,6 +69,7 @@ use Pam\Native\TextDataDetectorType;
 use Pam\Native\TextEllipsizeMode;
 use Pam\Native\TextHyphenationFrequency;
 use Pam\Native\UI\ActivityIndicator;
+use Pam\Native\UI\Animated;
 use Pam\Native\UI\Column;
 use Pam\Native\UI\CustomView;
 use Pam\Native\UI\FlatList;
@@ -126,9 +130,9 @@ final class ComponentRenderer
 
         if (
             in_array($part, [
-                'PTable',
+                
                 'PDataTable',
-                'PDataTableServer',
+                
                 'PDataTableVirtual',
             ], true)
             && !array_key_exists('rowHeight', $props)
@@ -348,17 +352,51 @@ final class ComponentRenderer
             && $children === []
         ) {
             $rawProgress = $props['modelValue'] ?? $props['value'] ?? 0;
-            $progress = is_numeric($rawProgress)
+            $indeterminate = self::flag($props, 'indeterminate');
+            $reverse = self::flag($props, 'reverse');
+            $progress = $indeterminate
+                ? 38.0
+                : (is_numeric($rawProgress)
                 ? max(0.0, min(100.0, (float) $rawProgress))
+                : 0.0);
+            $rawBuffer = $props['bufferValue'] ?? $props['buffer-value'] ?? 100;
+            $buffer = is_numeric($rawBuffer)
+                ? max($progress, min(100.0, (float) $rawBuffer))
+                : 100.0;
+            $height = isset($props['height']) && is_numeric($props['height'])
+                ? max(1.0, (float) $props['height'])
+                : 4.0;
+            $filledStyle = [
+                'widthPercent' => $progress,
+                'height' => $height,
+                'positionType' => \Pam\Native\PositionType::Absolute,
+                'top' => 0.0,
+                'backgroundColor' => self::materialSemanticColor($props),
+                'borderRadius' => 999.0,
+                'animationDurationMs' => $indeterminate ? 1100 : 250,
+                'animateChanges' => true,
+            ];
+            $filledStyle[$reverse ? 'right' : 'left'] = $indeterminate
+                ? 12.0
                 : 0.0;
             $children = [
                 View::make()
                     ->style(new Style(
-                        widthPercent: $progress,
-                        height: 4.0,
-                        backgroundColor: self::materialSemanticColor($props),
+                        widthPercent: $buffer,
+                        height: $height,
+                        positionType: \Pam\Native\PositionType::Absolute,
+                        top: 0.0,
+                        left: $reverse ? null : 0.0,
+                        right: $reverse ? 0.0 : null,
+                        backgroundColor: self::materialSemanticColor(
+                            [...$props, 'variant' => 'tonal'],
+                        ),
                         borderRadius: 999.0,
+                        opacity: 0.42,
                     ))
+                    ->property(PropKey::Value, 'pam:progress-buffer-track'),
+                View::make()
+                    ->style(new Style(...$filledStyle))
                     ->property(PropKey::Value, 'pam:progress-filled-track'),
             ];
         }
@@ -375,6 +413,67 @@ final class ComponentRenderer
             $props,
             ThemeManager::current(),
         );
+        $materialComponent = $props['__materialComponent'] ?? null;
+        $materialLoading = self::flag(
+            $props,
+            'loading',
+            self::flag($props, 'isLoading'),
+        );
+        if (
+            $materialLoading
+            && in_array($materialComponent, ['PBtn', 'PIconBtn', 'PFab'], true)
+        ) {
+            $loadingForeground = $style->textColor
+                ?? ThemeManager::current()->color(
+                    ColorToken::PrimaryForeground,
+                );
+            $props['progressColor'] = $loadingForeground;
+            $children = [
+                ActivityIndicator::make()
+                    ->color($loadingForeground)
+                    ->style(new Style(width: 20.0, height: 20.0)),
+            ];
+        }
+        if (
+            $materialLoading
+            && in_array($materialComponent, ['PCard', 'PSheet'], true)
+        ) {
+            $theme = ThemeManager::current();
+            array_unshift(
+                $children,
+                View::make(
+                    Animated::make(
+                        View::make()->style(new Style(
+                            widthPercent: 100.0,
+                            height: 4.0,
+                            borderRadius: 999.0,
+                            backgroundColor: $theme->color(ColorToken::Primary),
+                        )),
+                        [
+                            new AnimationKeyframe(
+                                offset: 0.0,
+                                translationXPercent: -42.0,
+                            ),
+                            new AnimationKeyframe(
+                                offset: 1.0,
+                                translationXPercent: 100.0,
+                            ),
+                        ],
+                        durationMs: 1_250,
+                        easing: AnimationEasing::Linear,
+                    )->iterations(0)->style(new Style(
+                        widthPercent: 42.0,
+                        height: 4.0,
+                    )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    height: 4.0,
+                    borderRadius: 999.0,
+                    backgroundColor: $theme->color(ColorToken::Secondary),
+                    overflow: \Pam\Native\Overflow::Hidden,
+                )),
+            );
+        }
         if (
             in_array($part, ['Input', 'Textarea'], true)
             && (
@@ -407,6 +506,23 @@ final class ComponentRenderer
             $children = array_map(
                 static fn (Element $child): Element =>
                     self::applyButtonForeground($child, $foreground),
+                $children,
+            );
+        }
+        if (
+            in_array(
+                $props['__materialComponent'] ?? null,
+                ['PCard', 'PSheet'],
+                true,
+            )
+            && $style->textColor !== null
+        ) {
+            $surfaceForeground = $style->textColor;
+            $children = array_map(
+                static fn (Element $child): Element =>
+                    $child->kind() === NodeKind::Text
+                        ? $child->style(new Style(textColor: $surfaceForeground))
+                        : $child,
                 $children,
             );
         }
@@ -487,6 +603,11 @@ final class ComponentRenderer
         );
         if ($materialField) {
             $theme = ThemeManager::current();
+            $fieldLoading = self::flag(
+                $props,
+                'loading',
+                self::flag($props, 'isLoading'),
+            );
             $fieldDisabled = self::flag(
                 $props,
                 'disabled',
@@ -514,6 +635,8 @@ final class ComponentRenderer
                 && !$fieldDisabled;
             $inputPaddingLeft = $prefix === '' ? 0.0 : 32.0;
             $inputPaddingRight = match (true) {
+                $fieldLoading && ($clearable || $suffix !== '') => 64.0,
+                $fieldLoading => 32.0,
                 $clearable && $suffix !== '' => 64.0,
                 $clearable || $suffix !== '' => 32.0,
                 in_array(
@@ -748,7 +871,7 @@ final class ComponentRenderer
                         $materialComponent,
                         ['PAutocomplete', 'PCombobox'],
                         true,
-                    )) {
+                    ) && !$fieldLoading) {
                         $fieldChildren[] = Text::make('⌄')->style(new Style(
                             positionType: PositionType::Absolute,
                             right: 0.0,
@@ -818,6 +941,17 @@ final class ComponentRenderer
                     );
                 }
                 $fieldChildren[] = $clear;
+            }
+            if ($fieldLoading && $materialComponent !== 'POtpInput') {
+                $fieldChildren[] = ActivityIndicator::make()
+                    ->color($theme->color(ColorToken::Primary))
+                    ->style(new Style(
+                        positionType: PositionType::Absolute,
+                        right: 0.0,
+                        bottom: 4.0,
+                        width: 24.0,
+                        height: 24.0,
+                    ));
             }
             if (!$hasNativeInput && $materialComponent !== 'PSelect') {
                 $displayValue = self::text(
@@ -1679,6 +1813,16 @@ final class ComponentRenderer
     ): Element {
         $props['__materialComponent'] = 'PBottomSheet';
         $props = self::withDefaults('BottomSheet', $props);
+        $nativeDismiss = $events[EventKind::Native->value] ?? null;
+        if (
+            $nativeDismiss !== null
+            && !isset($events[EventKind::ModalRequestClose->value])
+        ) {
+            $events[EventKind::ModalRequestClose->value] =
+                static function () use ($nativeDismiss): void {
+                    $nativeDismiss('');
+                };
+        }
 
         $backdrop = self::render(
             'BottomSheetBackdrop',
@@ -1708,7 +1852,7 @@ final class ComponentRenderer
         return self::providerSemantics(
             'PBottomSheet',
             $props,
-            View::make($portal)->collapsable(),
+            $portal,
         );
     }
 
@@ -1741,7 +1885,6 @@ final class ComponentRenderer
             : null;
         $values['navigationKind'] = match ($materialComponent) {
             'PCarousel' => 1,
-            'PWindow' => 2,
             'PSlideGroup' => 3,
             'PTabs' => 4,
             'PStepper', 'PStepperVertical' => 5,
@@ -1865,11 +2008,7 @@ final class ComponentRenderer
             'FileTree' => NativeBehavior::FileTree,
             'FileTreeFolder' => NativeBehavior::FileTreeFolder,
             'FileTreeFile' => NativeBehavior::FileTreeFile,
-            'PTransition' => NativeBehavior::Transition,
-            'PParallax' => NativeBehavior::Parallax,
             'PSparkline' => NativeBehavior::Sparkline,
-            'PHotkey' => NativeBehavior::Hotkey,
-            'PHover' => NativeBehavior::Hover,
             'ChipGroup' => NativeBehavior::ChipGroup,
             'ListItem' => NativeBehavior::ListItem,
             'Timeline' => NativeBehavior::Timeline,
@@ -2142,21 +2281,16 @@ final class ComponentRenderer
     private static function legacyMaterialPart(string $part): string
     {
         return match ($part) {
-            'PApp', 'PMain', 'PLayout', 'PLayoutItem', 'PContainer',
-            'PCardItem', 'PBanner', 'PFooter', 'PForm', 'PList',
-            'PThemeProvider',
-            'PDefaultsProvider', 'PLocaleProvider', 'PResponsive', 'PLazy',
-            'PValidation' => 'VStack',
-            'PRow', 'PToolbar', 'PToolbarItems', 'PAppBar',
-            'PBottomNavigation', 'PBreadcrumbs', 'PBtnGroup',
+            
+            'PCardItem', 'PBanner', 'PForm', 'PList',
+            'PToolbar', 'PToolbarItems', 'PAppBar',
+            'PBtnGroup',
             'PCardActions', 'PBannerActions', 'PCalendarHeader' => 'HStack',
-            'PCol' => 'VStack',
-            'PSpacer' => 'Spacer',
             'PAlert' => 'Alert',
             'PAlertTitle', 'PAppBarTitle', 'PBannerText',
-            'PBreadcrumbsDivider', 'PFieldLabel',
+            'PFieldLabel',
             'PListSubheader', 'PPickerTitle', 'PToolbarTitle' => 'Heading',
-            'PAppBarNavIcon', 'PBreadcrumbsItem' => 'Button',
+            'PAppBarNavIcon' => 'Button',
             'PAvatar' => 'Avatar',
             'PBadge' => 'Badge',
             'PBottomSheet' => 'BottomSheet',
@@ -2165,9 +2299,8 @@ final class ComponentRenderer
             'PSelectionControlGroup', 'PItemGroup' => 'CheckboxGroup',
             'PChipGroup' => 'ChipGroup',
             'PCalendar' => 'Calendar',
-            'PCarousel', 'PStepper', 'PStepperVertical', 'PWindow' => 'Tabs',
+            'PCarousel', 'PStepper', 'PStepperVertical' => 'Tabs',
             'PCarouselItem', 'PStepperWindow', 'PStepperWindowItem',
-            'PWindowItem' => 'TabsContent',
             'PCard', 'PSheet', 'PEmptyState', 'PPicker' => 'Card',
             'PCheckbox', 'PCheckboxBtn', 'PItem' => 'Checkbox',
             'PChip' => 'Button',
@@ -2192,13 +2325,10 @@ final class ComponentRenderer
             'PInput', 'PTextField', 'PNumberInput', 'POtpInput',
             'PColorInput', 'PDateInput', 'PFileInput' => 'Input',
             'PMenu' => 'Menu',
-            'PNavigationDrawer' => 'Drawer',
             'PListGroup' => 'Accordion',
             'PListItem' => 'ListItem',
             'POverlay' => 'Portal',
             'PProgressCircular', 'PProgressLinear' => 'Progress',
-            'PPullToRefresh' => 'RefreshControl',
-            'PPagination' => 'Tabs',
             'PRadio' => 'Radio',
             'PRadioGroup' => 'RadioGroup',
             'PSelect', 'PAutocomplete', 'PCombobox' => 'Select',
@@ -2212,19 +2342,19 @@ final class ComponentRenderer
             'PSpeedDial' => 'Popover',
             'PStepperHeader', 'PStepperActions', 'PStepperVerticalActions' => 'TabsList',
             'PSwitch' => 'Switch',
-            'PTable', 'PDataTable', 'PDataTableServer', 'PDataTableVirtual' => 'Table',
+            'PDataTable', 'PDataTableVirtual' => 'Table',
             'PTabs' => 'Tabs',
             'PTab' => 'TabsTrigger',
-            'PText', 'PCardTitle', 'PCardSubtitle', 'PCardText',
+            'PCardTitle', 'PCardSubtitle', 'PCardText',
             'PListItemTitle', 'PListItemSubtitle', 'PLabel', 'PMessages',
-            'PCounter', 'PCalendarInterval', 'PCode', 'PKbd' => 'Text',
+            'PCounter', 'PCalendarInterval' => 'Text',
             'PTextarea' => 'Textarea',
             'PTooltip' => 'Tooltip',
             'PTimeline' => 'Timeline',
             'PTimelineItem' => 'TimelineItem',
             'PTreeview' => 'FileTree',
             'PTreeviewItem' => 'FileTreeFolder',
-            'PDataIterator', 'PVirtualScroll', 'PInfiniteScroll' => 'VirtualizedList',
+            'PInfiniteScroll' => 'VirtualizedList',
             default => $part,
         };
     }
@@ -2480,7 +2610,6 @@ final class ComponentRenderer
 
         $semanticRole = match ($part) {
             'Heading' => AccessibilityRole::Header,
-            'PText' => AccessibilityRole::Text,
             'Link' => AccessibilityRole::Link,
             'Alert',
             'AlertDialog',
@@ -2523,9 +2652,9 @@ final class ComponentRenderer
             'SelectFlatList',
             'SelectVirtualizedList',
             'SelectSectionList',
-            'PBreadcrumbs',
+            
             'PList',
-            'PPagination',
+            
             'PStepper',
             'PTimeline',
             'PTreeview' => AccessibilityRole::List,
@@ -2726,7 +2855,9 @@ final class ComponentRenderer
             self::flag($props, 'isLoading'),
         );
         if ($loading) {
-            $element = $element->property(PropKey::Loading, true);
+            $element = $element
+                ->property(PropKey::Loading, true)
+                ->property(PropKey::Enabled, false);
         }
         $busy = self::accessibilityStateBoolean($props, 'busy');
         if ($busy !== null || $loading) {
@@ -3448,9 +3579,20 @@ final class ComponentRenderer
                 PropKey::Value,
                 'pam:overlay-trigger',
             );
-            $content = Column::make(...array_slice($children, 1))
+            $actions = array_map(
+                static fn (Element $action): Element => $action->style(
+                    new Style(
+                        width: 160.0,
+                        minWidth: 160.0,
+                    ),
+                ),
+                array_slice($children, 1),
+            );
+            $content = Column::make(...$actions)
                 ->collapsable(false)
                 ->style(new Style(
+                    width: 160.0,
+                    minWidth: 160.0,
                     paddingVertical: 8.0,
                     gap: 8.0,
                 ))
@@ -4658,6 +4800,12 @@ final class ComponentRenderer
     /** @param array<string, mixed> $props */
     private static function imageFit(array $props): ImageFit
     {
+        if (array_key_exists('cover', $props)) {
+            return self::flag($props, 'cover')
+                ? ImageFit::Cover
+                : ImageFit::Contain;
+        }
+
         return match (
             $props['resizeMode']
                 ?? $props['fit']
@@ -5880,7 +6028,7 @@ final class ComponentRenderer
                 $props['__materialComponent'] ?? null,
                 [
                     'PCheckbox', 'PCheckboxBtn', 'PRadio', 'PSwitch',
-                    'PSelectionControl',
+                    'PSelectionControl', 'PItem',
                 ],
                 true,
             )
@@ -5888,12 +6036,26 @@ final class ComponentRenderer
             $label = self::text($props, 'label');
             if ($label !== '') {
                 $theme = ThemeManager::current();
+                $indicatorSize = MaterialTokens::componentSize(
+                    $props['size'] ?? null,
+                    24.0,
+                );
+                $switchWidth = MaterialTokens::componentSize(
+                    $props['size'] ?? null,
+                    52.0,
+                );
+                $switchHeight = MaterialTokens::componentSize(
+                    $props['size'] ?? null,
+                    32.0,
+                );
                 $indicator = View::make()->style(new Style(
-                    width: $part === 'Switch' ? 52.0 : 24.0,
-                    height: $part === 'Switch' ? 32.0 : 24.0,
-                    minWidth: $part === 'Switch' ? 52.0 : 24.0,
-                    minHeight: $part === 'Switch' ? 32.0 : 24.0,
+                    width: $part === 'Switch' ? $switchWidth : $indicatorSize,
+                    height: $part === 'Switch' ? $switchHeight : $indicatorSize,
+                    minWidth: $part === 'Switch' ? $switchWidth : $indicatorSize,
+                    minHeight: $part === 'Switch' ? $switchHeight : $indicatorSize,
                     backgroundColor: 0x00000000,
+                    animationDurationMs: 200,
+                    animateChanges: true,
                 ))->property(
                     PropKey::Value,
                     $part === 'Switch'
@@ -5948,7 +6110,7 @@ final class ComponentRenderer
             $part === 'Table'
             && in_array(
                 $props['__materialComponent'] ?? null,
-                ['PDataTable', 'PDataTableServer', 'PDataTableVirtual'],
+                ['PDataTable', 'PDataTableVirtual'],
                 true,
             )
         ) {
@@ -7014,7 +7176,10 @@ final class ComponentRenderer
                 ))
                 ->property(PropKey::Value, 'pam:file-tree-header'),
             Column::make(...$children)
-                ->style(new Style(widthPercent: 100.0))
+                ->style(new Style(
+                    widthPercent: 100.0,
+                    paddingLeft: 24.0,
+                ))
                 ->property(PropKey::Value, 'pam:file-tree-content'),
         ];
     }

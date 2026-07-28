@@ -1,56 +1,56 @@
 <AppScreen title="Actions" subtitle="Buttons, chips and selection">
-    <template #actions><p-btn variant="text" on:press="openDrawer"><p-text>Menu</p-text></p-btn></template>
+    <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
 
-    <p-text size="xl">Buttons</p-text>
-        <p-col class="gap-3">
-            <p-row class="gap-2">
-                <p-btn><p-text class="text-white">Filled</p-text></p-btn>
-                <p-btn variant="tonal"><p-text>Tonal</p-text></p-btn>
-            </p-row>
-            <p-row class="gap-2">
-                <p-btn variant="outlined"><p-text>Outlined</p-text></p-btn>
-                <p-btn variant="text"><p-text>Text</p-text></p-btn>
-            </p-row>
-            <p-row class="gap-2">
-                <p-btn disabled="true"><p-text>Disabled</p-text></p-btn>
-                <p-btn loading="true"><p-text class="text-white">Loading</p-text></p-btn>
-            </p-row>
-            <p-row class="gap-4 items-center">
+    <Text size="xl">Buttons</Text>
+        <Column class="gap-3">
+            <Row class="gap-2">
+                <p-btn><Text class="text-white">Filled</Text></p-btn>
+                <p-btn variant="tonal"><Text>Tonal</Text></p-btn>
+            </Row>
+            <Row class="gap-2">
+                <p-btn variant="outlined"><Text>Outlined</Text></p-btn>
+                <p-btn variant="text"><Text>Text</Text></p-btn>
+            </Row>
+            <Row class="gap-2">
+                <p-btn disabled="true"><Text>Disabled</Text></p-btn>
+                <p-btn loading="true"><Text class="text-white">Loading</Text></p-btn>
+            </Row>
+            <Row class="gap-4 items-center">
                 <p-icon-btn accessibilityLabel="Favorite"><p-icon icon="favorite" /></p-icon-btn>
                 <p-fab accessibilityLabel="Create"><p-icon icon="add" /></p-fab>
                 <p-btn-group>
-                    <p-btn><p-text class="text-white">One</p-text></p-btn>
-                    <p-btn><p-text class="text-white">Two</p-text></p-btn>
+                    <p-btn><Text class="text-white">One</Text></p-btn>
+                    <p-btn><Text class="text-white">Two</Text></p-btn>
                 </p-btn-group>
-            </p-row>
-        </p-col>
+            </Row>
+        </Column>
 
-    <p-text size="xl">Chips</p-text>
-        <p-col class="gap-3">
-            <p-row class="gap-2">
-                <p-chip value="selected"><p-text>Selected</p-text></p-chip>
-                <p-chip variant="tonal"><p-text>Tonal</p-text></p-chip>
-            </p-row>
-            <p-row class="gap-2">
-                <p-chip variant="outlined"><p-text>Outlined</p-text></p-chip>
-                <p-chip closable="true"><p-text>Closable</p-text></p-chip>
-            </p-row>
-        </p-col>
+    <Text size="xl">Chips</Text>
+        <Column class="gap-3">
+            <Row class="gap-2">
+                <p-chip value="selected"><Text>Selected</Text></p-chip>
+                <p-chip variant="tonal"><Text>Tonal</Text></p-chip>
+            </Row>
+            <Row class="gap-2">
+                <p-chip variant="outlined"><Text>Outlined</Text></p-chip>
+                <p-chip closable="true"><Text>Closable</Text></p-chip>
+            </Row>
+        </Column>
 
-    <p-text size="xl">Selection</p-text>
-        <p-col class="gap-4">
-            <p-row class="items-center justify-between">
-                <p-text>Checkbox</p-text>
+    <Text size="xl">Selection</Text>
+        <Column class="gap-4">
+            <Row class="items-center justify-between">
+                <Text>Checkbox</Text>
                 <p-checkbox class="w-12 h-12" checked="true" accessibilityLabel="Checkbox" />
-            </p-row>
-            <p-row class="items-center justify-between">
-                <p-text>Radio</p-text>
+            </Row>
+            <Row class="items-center justify-between">
+                <Text>Radio</Text>
                 <p-radio class="w-12 h-12" checked="true" accessibilityLabel="Radio" />
-            </p-row>
-            <p-row class="items-center justify-between">
-                <p-text>Switch</p-text>
+            </Row>
+            <Row class="items-center justify-between">
+                <Text>Switch</Text>
                 <p-switch class="w-16 h-12" checked="true" accessibilityLabel="Switch" />
-            </p-row>
+            </Row>
             <p-rating value="4" accessibilityLabel="Four out of five stars" />
-        </p-col>
+        </Column>
 </AppScreen>

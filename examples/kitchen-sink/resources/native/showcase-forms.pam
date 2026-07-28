@@ -1,8 +1,8 @@
 <AppScreen title="Forms" subtitle="Fields, density and validation">
-    <template #actions><p-btn variant="text" on:press="openDrawer"><p-text>Menu</p-text></p-btn></template>
+    <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
 
-    <p-text size="xl">Field variants</p-text>
-    <p-col class="gap-4">
+    <Text size="xl">Field variants</Text>
+    <Column class="gap-4">
         <p-text-field label="Filled" value="PAM UI" helper="56dp default field" />
         <p-text-field label="Outlined" value="Native field" variant="outlined" />
         <p-text-field label="Underlined" value="Border on the baseline" variant="underlined" />
@@ -11,48 +11,48 @@
         <p-text-field label="Solo filled" value="Filled without border" variant="solo-filled" />
         <p-text-field label="Plain" value="No surface or border" variant="plain" />
         <p-textarea label="Textarea outlined" value="Aligned label, input and details." rows="3" variant="outlined" />
-    </p-col>
+    </Column>
 
-    <p-text size="xl">Density</p-text>
-    <p-col class="gap-4">
+    <Text size="xl">Density</Text>
+    <Column class="gap-4">
         <p-text-field label="Default" value="56dp" variant="outlined" />
         <p-text-field label="Comfortable" value="48dp" density="comfortable" variant="outlined" />
         <p-text-field label="Compact" value="40dp" density="compact" variant="outlined" />
-    </p-col>
+    </Column>
 
-    <p-text size="xl">States</p-text>
-    <p-col class="gap-4">
+    <Text size="xl">States</Text>
+    <Column class="gap-4">
         <p-text-field label="Focused" value="Active border" focused="true" variant="outlined" />
         <p-text-field label="Error" value="Invalid value" error="true" helper="This value needs attention" variant="outlined" />
         <p-text-field label="Read only" value="Protected value" readonly="true" variant="outlined" />
         <p-text-field label="Disabled" value="Unavailable" disabled="true" variant="outlined" />
-    </p-col>
+    </Column>
 
-    <p-text size="xl">Choice and search</p-text>
-    <p-col class="gap-4">
+    <Text size="xl">Choice and search</Text>
+    <Column class="gap-4">
         <p-select label="Platform" value="Android" items="Android,iOS" variant="outlined" />
         <p-autocomplete label="Component" value="p-card" items="p-card,p-btn,p-dialog" variant="outlined" />
         <p-combobox label="Tags" value="native" items="native,material,typed" variant="outlined" />
-    </p-col>
+    </Column>
 
-    <p-text size="xl">Pickers and files</p-text>
-    <p-col class="gap-4">
+    <Text size="xl">Pickers and files</Text>
+    <Column class="gap-4">
         <p-date-input label="Release date" value="2026-07-27" variant="outlined" />
         <p-color-input label="Primary color" value="#1867C0" variant="outlined" />
         <p-file-input label="Artifacts" variant="outlined" />
-    </p-col>
+    </Column>
 
-    <p-text size="xl">Selection controls</p-text>
-    <p-col class="gap-3">
+    <Text size="xl">Selection controls</Text>
+    <Column class="gap-3">
         <p-checkbox label="Remember settings" checked="true" />
         <p-radio label="Stable channel" checked="true" />
         <p-switch label="Automatic updates" checked="true" />
         <p-switch label="Compact switch" checked="true" density="compact" />
-    </p-col>
+    </Column>
 
-    <p-text size="xl">Range</p-text>
-    <p-col class="gap-4">
+    <Text size="xl">Range</Text>
+    <Column class="gap-4">
         <p-slider value="68" accessibilityLabel="Completion" />
         <p-range-slider value="24" maximumValue="76" accessibilityLabel="Price range" />
-    </p-col>
+    </Column>
 </AppScreen>

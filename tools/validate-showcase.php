@@ -45,6 +45,10 @@ $allowedApplicationTags = [
     'AppScreen' => true,
     'ContentState' => true,
     'DrawerLayoutAndroid' => true,
+    'Column' => true,
+    'Row' => true,
+    'Spacer' => true,
+    'Text' => true,
 ];
 $renderedMaterialTags = [];
 foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $template) {
@@ -63,7 +67,7 @@ foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $t
     foreach ($matches[1] ?? [] as $tag) {
         if (!isset($allowedApplicationTags[$tag])) {
             throw new RuntimeException(
-                "Legacy UI tag {$tag} found in {$template}; use p-*.",
+                "Unsupported application or PAM Native tag {$tag} found in {$template}.",
             );
         }
     }

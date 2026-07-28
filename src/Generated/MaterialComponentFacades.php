@@ -11,11 +11,6 @@ use Pam\MobileUi\Component\UiComponent;
  *
  * @codeCoverageIgnore
  */
-final class PApp extends UiComponent
-{
-    protected const string COMPONENT = 'PApp';
-}
-
 final class PAppBar extends UiComponent
 {
     protected const string COMPONENT = 'PAppBar';
@@ -71,29 +66,9 @@ final class PBannerActions extends UiComponent
     protected const string COMPONENT = 'PBannerActions';
 }
 
-final class PBottomNavigation extends UiComponent
-{
-    protected const string COMPONENT = 'PBottomNavigation';
-}
-
 final class PBottomSheet extends UiComponent
 {
     protected const string COMPONENT = 'PBottomSheet';
-}
-
-final class PBreadcrumbs extends UiComponent
-{
-    protected const string COMPONENT = 'PBreadcrumbs';
-}
-
-final class PBreadcrumbsItem extends UiComponent
-{
-    protected const string COMPONENT = 'PBreadcrumbsItem';
-}
-
-final class PBreadcrumbsDivider extends UiComponent
-{
-    protected const string COMPONENT = 'PBreadcrumbsDivider';
 }
 
 final class PBtn extends UiComponent
@@ -191,11 +166,6 @@ final class PChipGroup extends UiComponent
     protected const string COMPONENT = 'PChipGroup';
 }
 
-final class PCode extends UiComponent
-{
-    protected const string COMPONENT = 'PCode';
-}
-
 final class PColorInput extends UiComponent
 {
     protected const string COMPONENT = 'PColorInput';
@@ -241,19 +211,9 @@ final class PCounter extends UiComponent
     protected const string COMPONENT = 'PCounter';
 }
 
-final class PDataIterator extends UiComponent
-{
-    protected const string COMPONENT = 'PDataIterator';
-}
-
 final class PDataTable extends UiComponent
 {
     protected const string COMPONENT = 'PDataTable';
-}
-
-final class PDataTableServer extends UiComponent
-{
-    protected const string COMPONENT = 'PDataTableServer';
 }
 
 final class PDataTableVirtual extends UiComponent
@@ -294,11 +254,6 @@ final class PDatePickerMonths extends UiComponent
 final class PDatePickerYears extends UiComponent
 {
     protected const string COMPONENT = 'PDatePickerYears';
-}
-
-final class PDefaultsProvider extends UiComponent
-{
-    protected const string COMPONENT = 'PDefaultsProvider';
 }
 
 final class PDialog extends UiComponent
@@ -366,44 +321,9 @@ final class PFileUploadItem extends UiComponent
     protected const string COMPONENT = 'PFileUploadItem';
 }
 
-final class PFooter extends UiComponent
-{
-    protected const string COMPONENT = 'PFooter';
-}
-
 final class PForm extends UiComponent
 {
     protected const string COMPONENT = 'PForm';
-}
-
-final class PContainer extends UiComponent
-{
-    protected const string COMPONENT = 'PContainer';
-}
-
-final class PRow extends UiComponent
-{
-    protected const string COMPONENT = 'PRow';
-}
-
-final class PCol extends UiComponent
-{
-    protected const string COMPONENT = 'PCol';
-}
-
-final class PSpacer extends UiComponent
-{
-    protected const string COMPONENT = 'PSpacer';
-}
-
-final class PHotkey extends UiComponent
-{
-    protected const string COMPONENT = 'PHotkey';
-}
-
-final class PHover extends UiComponent
-{
-    protected const string COMPONENT = 'PHover';
 }
 
 final class PIcon extends UiComponent
@@ -441,29 +361,9 @@ final class PItem extends UiComponent
     protected const string COMPONENT = 'PItem';
 }
 
-final class PKbd extends UiComponent
-{
-    protected const string COMPONENT = 'PKbd';
-}
-
 final class PLabel extends UiComponent
 {
     protected const string COMPONENT = 'PLabel';
-}
-
-final class PLayout extends UiComponent
-{
-    protected const string COMPONENT = 'PLayout';
-}
-
-final class PLayoutItem extends UiComponent
-{
-    protected const string COMPONENT = 'PLayoutItem';
-}
-
-final class PLazy extends UiComponent
-{
-    protected const string COMPONENT = 'PLazy';
 }
 
 final class PList extends UiComponent
@@ -496,16 +396,6 @@ final class PListSubheader extends UiComponent
     protected const string COMPONENT = 'PListSubheader';
 }
 
-final class PLocaleProvider extends UiComponent
-{
-    protected const string COMPONENT = 'PLocaleProvider';
-}
-
-final class PMain extends UiComponent
-{
-    protected const string COMPONENT = 'PMain';
-}
-
 final class PMenu extends UiComponent
 {
     protected const string COMPONENT = 'PMenu';
@@ -514,11 +404,6 @@ final class PMenu extends UiComponent
 final class PMessages extends UiComponent
 {
     protected const string COMPONENT = 'PMessages';
-}
-
-final class PNavigationDrawer extends UiComponent
-{
-    protected const string COMPONENT = 'PNavigationDrawer';
 }
 
 final class PNumberInput extends UiComponent
@@ -534,16 +419,6 @@ final class POtpInput extends UiComponent
 final class POverlay extends UiComponent
 {
     protected const string COMPONENT = 'POverlay';
-}
-
-final class PPagination extends UiComponent
-{
-    protected const string COMPONENT = 'PPagination';
-}
-
-final class PParallax extends UiComponent
-{
-    protected const string COMPONENT = 'PParallax';
 }
 
 final class PPicker extends UiComponent
@@ -566,11 +441,6 @@ final class PProgressLinear extends UiComponent
     protected const string COMPONENT = 'PProgressLinear';
 }
 
-final class PPullToRefresh extends UiComponent
-{
-    protected const string COMPONENT = 'PPullToRefresh';
-}
-
 final class PRadio extends UiComponent
 {
     protected const string COMPONENT = 'PRadio';
@@ -589,11 +459,6 @@ final class PRangeSlider extends UiComponent
 final class PRating extends UiComponent
 {
     protected const string COMPONENT = 'PRating';
-}
-
-final class PResponsive extends UiComponent
-{
-    protected const string COMPONENT = 'PResponsive';
 }
 
 final class PSelect extends UiComponent
@@ -706,16 +571,6 @@ final class PSwitch extends UiComponent
     protected const string COMPONENT = 'PSwitch';
 }
 
-final class PSystemBar extends UiComponent
-{
-    protected const string COMPONENT = 'PSystemBar';
-}
-
-final class PTable extends UiComponent
-{
-    protected const string COMPONENT = 'PTable';
-}
-
 final class PTabs extends UiComponent
 {
     protected const string COMPONENT = 'PTabs';
@@ -726,11 +581,6 @@ final class PTab extends UiComponent
     protected const string COMPONENT = 'PTab';
 }
 
-final class PText extends UiComponent
-{
-    protected const string COMPONENT = 'PText';
-}
-
 final class PTextField extends UiComponent
 {
     protected const string COMPONENT = 'PTextField';
@@ -739,11 +589,6 @@ final class PTextField extends UiComponent
 final class PTextarea extends UiComponent
 {
     protected const string COMPONENT = 'PTextarea';
-}
-
-final class PThemeProvider extends UiComponent
-{
-    protected const string COMPONENT = 'PThemeProvider';
 }
 
 final class PTimePicker extends UiComponent
@@ -799,29 +644,4 @@ final class PTreeview extends UiComponent
 final class PTreeviewItem extends UiComponent
 {
     protected const string COMPONENT = 'PTreeviewItem';
-}
-
-final class PValidation extends UiComponent
-{
-    protected const string COMPONENT = 'PValidation';
-}
-
-final class PVirtualScroll extends UiComponent
-{
-    protected const string COMPONENT = 'PVirtualScroll';
-}
-
-final class PWindow extends UiComponent
-{
-    protected const string COMPONENT = 'PWindow';
-}
-
-final class PWindowItem extends UiComponent
-{
-    protected const string COMPONENT = 'PWindowItem';
-}
-
-final class PTransition extends UiComponent
-{
-    protected const string COMPONENT = 'PTransition';
 }

@@ -1,24 +1,24 @@
 <AppScreen title="Profile" subtitle="Your identity across PAM products">
     <p-card class="p-4 rounded-2xl">
-        <p-row class="gap-4 items-center">
+        <Row class="gap-4 items-center">
             <p-avatar size="xl">
-                <p-col>
-                    <p-text>DB</p-text>
-                </p-col>
+                <Column>
+                    <Text>DB</Text>
+                </Column>
                 <p-badge />
             </p-avatar>
-            <p-col class="flex-1 gap-1">
-                <p-row class="items-center gap-2">
-                    <p-text size="md">David Balbino</p-text>
-                    <p-badge action="success"><p-text>Active</p-text></p-badge>
-                </p-row>
-                <p-text class="ui-text-muted">Product builder · Pushin</p-text>
-            </p-col>
-        </p-row>
+            <Column class="flex-1 gap-1">
+                <Row class="items-center gap-2">
+                    <Text size="md">David Balbino</Text>
+                    <p-badge action="success"><Text>Active</Text></p-badge>
+                </Row>
+                <Text class="ui-text-muted">Product builder · Pushin</Text>
+            </Column>
+        </Row>
     </p-card>
 
-    <p-col class="gap-3">
-        <p-text size="md">Account details</p-text>
+    <Column class="gap-3">
+        <Text size="md">Account details</Text>
         <p-text-field
             :form="$form"
             field="name"
@@ -46,9 +46,9 @@
             status="{{ $actionStatus }}"
             on:press="save"
         />
-    </p-col>
+    </Column>
 
-    <p-text class="ui-text-muted">
+    <Text class="ui-text-muted">
         Changes are validated as you type and saved securely on this device.
-    </p-text>
+    </Text>
 </AppScreen>

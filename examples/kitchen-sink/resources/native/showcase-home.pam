@@ -1,13 +1,13 @@
 <AppScreen title="PAM UI" subtitle="Native component showcase">
         <template #actions>
-            <p-btn variant="text" on:press="openDrawer" accessibilityLabel="Open component menu"><p-text>Menu</p-text></p-btn>
+            <p-btn variant="text" on:press="openDrawer" accessibilityLabel="Open component menu"><Text>Menu</Text></p-btn>
         </template>
-        <p-col class="gap-3 py-2">
-            <p-chip variant="tonal"><p-text>Material for native</p-text></p-chip>
-            <p-text size="2xl">One system. Two platforms.</p-text>
-            <p-text>Explore every p-* component as real Android and UIKit views.</p-text>
-        </p-col>
-        <p-text size="xl">Browse by category</p-text>
+        <Column class="gap-3 py-2">
+            <p-chip variant="tonal"><Text>Material for native</Text></p-chip>
+            <Text size="2xl">One system. Two platforms.</Text>
+            <Text>Explore every p-* component as real Android and UIKit views.</Text>
+        </Column>
+        <Text size="xl">Browse by category</Text>
         <p-list>
             <p-list-item on:press="goActions"><p-list-item-title>Actions</p-list-item-title><p-list-item-subtitle>Buttons, chips and selection</p-list-item-subtitle></p-list-item>
             <p-divider />
@@ -17,5 +17,5 @@
             <p-divider />
             <p-list-item on:press="goOverlays"><p-list-item-title>Overlays</p-list-item-title><p-list-item-subtitle>Dialogs, sheets and menus</p-list-item-subtitle></p-list-item>
         </p-list>
-        <p-btn block="true" on:press="goAll"><p-text>Explore all components</p-text></p-btn>
+        <p-btn block="true" on:press="goAll"><Text>Explore all components</Text></p-btn>
 </AppScreen>

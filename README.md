@@ -16,6 +16,10 @@ JavaScript runtime, CSS engine, or Vuetify metadata importer.
 - Gesture animation and transient state remain on the native UI thread.
 - PHP receives requested semantic results, not animation frames.
 
+Product-safe factories for Bottom Sheet, WebView, native media, context menus
+and keyframe entrance motion are available through `NativeCapabilities`; see
+[`docs/native-capabilities.md`](docs/native-capabilities.md).
+
 ## Installation
 
 ```bash
@@ -28,8 +32,7 @@ sources, and generates the native view registries during `pam mobile prepare`.
 ## Quick start
 
 ```xml
-<p-app>
-    <p-theme-provider mode="system">
+<AppScreen>
         <p-card class="pa-6">
             <p-card-title>Production dashboard</p-card-title>
             <p-card-subtitle>Retained native Material UI</p-card-subtitle>
@@ -40,8 +43,7 @@ sources, and generates the native view registries during `pam mobile prepare`.
                 <p-btn on:press="continue">Continue</p-btn>
             </p-card-actions>
         </p-card>
-    </p-theme-provider>
-</p-app>
+</AppScreen>
 ```
 
 Templates are compiled once. Android and iOS receive resolved integers,

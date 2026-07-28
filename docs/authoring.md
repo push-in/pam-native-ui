@@ -139,7 +139,7 @@ JavaScript runtime:
     p-touch-move="dragMoved"
     p-touch-end="dragEnded"
 >
-    <p-text>Native interaction surface</p-text>
+    <Text>Native interaction surface</Text>
 </p-card>
 ```
 

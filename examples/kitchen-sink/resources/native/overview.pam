@@ -7,104 +7,104 @@
             <p-icon icon="notifications" />
         </p-btn>
     </template>
-    <p-col class="ui-bg gap-5">
+    <Column class="ui-bg gap-5">
 
     <p-card variant="tonal" class="p-5 rounded-3xl">
-        <p-col class="gap-4">
-            <p-row class="items-center justify-between">
-                <p-col class="gap-1">
-                    <p-text class="ui-text-muted">Net revenue</p-text>
-                    <p-text size="xl" numberOfLines="1">R$ 128,450</p-text>
-                </p-col>
+        <Column class="gap-4">
+            <Row class="items-center justify-between">
+                <Column class="gap-1">
+                    <Text class="ui-text-muted">Net revenue</Text>
+                    <Text size="xl" numberOfLines="1">R$ 128,450</Text>
+                </Column>
                 <p-badge action="success" variant="subtle">
-                    <p-text>+12.8%</p-text>
+                    <Text>+12.8%</Text>
                 </p-badge>
-            </p-row>
+            </Row>
             <p-progress-linear value="72" class="mt-2">
                 
             </p-progress-linear>
-            <p-row class="items-center justify-between">
-                    <p-text size="sm" class="ui-text-muted" numberOfLines="1">Monthly target</p-text>
-                    <p-text size="sm" numberOfLines="1">72% complete</p-text>
-            </p-row>
-        </p-col>
+            <Row class="items-center justify-between">
+                    <Text size="sm" class="ui-text-muted" numberOfLines="1">Monthly target</Text>
+                    <Text size="sm" numberOfLines="1">72% complete</Text>
+            </Row>
+        </Column>
     </p-card>
 
-    <p-row class="gap-3">
-        <p-col class="flex-1">
+    <Row class="gap-3">
+        <Column class="flex-1">
             <p-card class="p-4 rounded-2xl">
-                <p-col class="gap-2">
-                    <p-text class="ui-text-muted">Orders</p-text>
-                    <p-text size="xl">284</p-text>
-                    <p-text size="sm" class="text-blue-400" numberOfLines="1">+18 this week</p-text>
-                </p-col>
+                <Column class="gap-2">
+                    <Text class="ui-text-muted">Orders</Text>
+                    <Text size="xl">284</Text>
+                    <Text size="sm" class="text-blue-400" numberOfLines="1">+18 this week</Text>
+                </Column>
             </p-card>
-        </p-col>
-        <p-col class="flex-1">
+        </Column>
+        <Column class="flex-1">
             <p-card class="p-4 rounded-2xl">
-                <p-col class="gap-2">
-                    <p-text class="ui-text-muted">Conversion</p-text>
-                    <p-text size="xl">18.6%</p-text>
-                    <p-text size="sm" class="text-blue-400" numberOfLines="1">+2.1 points</p-text>
-                </p-col>
+                <Column class="gap-2">
+                    <Text class="ui-text-muted">Conversion</Text>
+                    <Text size="xl">18.6%</Text>
+                    <Text size="sm" class="text-blue-400" numberOfLines="1">+2.1 points</Text>
+                </Column>
             </p-card>
-        </p-col>
-    </p-row>
+        </Column>
+    </Row>
 
-    <p-col class="gap-3">
-        <p-row class="items-center justify-between">
-            <p-col class="gap-1">
-                <p-text size="lg">Recent orders</p-text>
-                <p-text class="ui-text-muted">Updated moments ago</p-text>
-            </p-col>
+    <Column class="gap-3">
+        <Row class="items-center justify-between">
+            <Column class="gap-1">
+                <Text size="lg">Recent orders</Text>
+                <Text class="ui-text-muted">Updated moments ago</Text>
+            </Column>
             <p-btn variant="text" size="sm">
-                <p-text size="sm" numberOfLines="1">See all</p-text>
+                <Text size="sm" numberOfLines="1">See all</Text>
             </p-btn>
-        </p-row>
+        </Row>
 
         <p-card class="rounded-2xl">
-            <p-col>
-                <p-row class="p-4 items-center gap-3">
+            <Column>
+                <Row class="p-4 items-center gap-3">
                     <p-avatar size="md">
-                        <p-col><p-text>AM</p-text></p-col>
+                        <Column><Text>AM</Text></Column>
                     </p-avatar>
-                    <p-col class="flex-1 min-w-0 gap-1">
-                        <p-text size="sm" numberOfLines="1">Ana Martins</p-text>
-                        <p-text size="sm" class="ui-text-muted" numberOfLines="1">#1048 · 2 items</p-text>
-                    </p-col>
-                    <p-col class="w-24 items-end gap-1">
-                        <p-text size="sm" numberOfLines="1">R$ 389.00</p-text>
-                        <p-row class="justify-end">
-                            <p-badge action="success"><p-text size="xs" numberOfLines="1">Paid</p-text></p-badge>
-                        </p-row>
-                    </p-col>
-                </p-row>
+                    <Column class="flex-1 min-w-0 gap-1">
+                        <Text size="sm" numberOfLines="1">Ana Martins</Text>
+                        <Text size="sm" class="ui-text-muted" numberOfLines="1">#1048 · 2 items</Text>
+                    </Column>
+                    <Column class="w-24 items-end gap-1">
+                        <Text size="sm" numberOfLines="1">R$ 389.00</Text>
+                        <Row class="justify-end">
+                            <p-badge action="success"><Text size="xs" numberOfLines="1">Paid</Text></p-badge>
+                        </Row>
+                    </Column>
+                </Row>
                 <p-divider />
-                <p-row class="p-4 items-center gap-3">
+                <Row class="p-4 items-center gap-3">
                     <p-avatar size="md">
-                        <p-col><p-text>LC</p-text></p-col>
+                        <Column><Text>LC</Text></Column>
                     </p-avatar>
-                    <p-col class="flex-1 min-w-0 gap-1">
-                        <p-text size="sm" numberOfLines="1">Lucas Costa</p-text>
-                        <p-text size="sm" class="ui-text-muted" numberOfLines="1">#1047 · 1 item</p-text>
-                    </p-col>
-                    <p-col class="w-24 items-end gap-1">
-                        <p-text size="sm" numberOfLines="1">R$ 149.90</p-text>
-                        <p-row class="justify-end">
-                            <p-badge action="warning"><p-text size="xs" numberOfLines="1">Pending</p-text></p-badge>
-                        </p-row>
-                    </p-col>
-                </p-row>
-            </p-col>
+                    <Column class="flex-1 min-w-0 gap-1">
+                        <Text size="sm" numberOfLines="1">Lucas Costa</Text>
+                        <Text size="sm" class="ui-text-muted" numberOfLines="1">#1047 · 1 item</Text>
+                    </Column>
+                    <Column class="w-24 items-end gap-1">
+                        <Text size="sm" numberOfLines="1">R$ 149.90</Text>
+                        <Row class="justify-end">
+                            <p-badge action="warning"><Text size="xs" numberOfLines="1">Pending</Text></p-badge>
+                        </Row>
+                    </Column>
+                </Row>
+            </Column>
         </p-card>
-    </p-col>
+    </Column>
 
-    <p-row class="items-center gap-3">
+    <Row class="items-center gap-3">
         <p-badge action="success"><p-icon icon="check" /></p-badge>
-        <p-col class="flex-1 gap-1">
-            <p-text size="sm">All systems healthy</p-text>
-            <p-text class="ui-text-muted">Native runtime · 60 FPS · 115 ms mount</p-text>
-        </p-col>
-    </p-row>
-    </p-col>
+        <Column class="flex-1 gap-1">
+            <Text size="sm">All systems healthy</Text>
+            <Text class="ui-text-muted">Native runtime · 60 FPS · 115 ms mount</Text>
+        </Column>
+    </Row>
+    </Column>
 </AppScreen>

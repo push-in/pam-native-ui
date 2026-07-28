@@ -1,51 +1,51 @@
 <AppScreen title="Activity" subtitle="A clear timeline of what changed">
-    <p-row class="items-center justify-between">
-        <p-text size="md">Today</p-text>
-        <p-badge variant="secondary"><p-text>3 updates</p-text></p-badge>
-    </p-row>
+    <Row class="items-center justify-between">
+        <Text size="md">Today</Text>
+        <p-badge variant="secondary"><Text>3 updates</Text></p-badge>
+    </Row>
 
     <p-card class="rounded-2xl">
-        <p-col>
-            <p-row class="p-4 gap-3 items-start">
+        <Column>
+            <Row class="p-4 gap-3 items-start">
                 <p-badge action="success"><p-icon icon="check" /></p-badge>
-                <p-col class="flex-1 gap-1">
-                    <p-row class="items-center justify-between">
-                        <p-text size="sm">Payment confirmed</p-text>
-                        <p-text class="ui-text-muted">2m</p-text>
-                    </p-row>
-                    <p-text class="ui-text-muted">Order #1048 · Credit card</p-text>
-                </p-col>
-            </p-row>
+                <Column class="flex-1 gap-1">
+                    <Row class="items-center justify-between">
+                        <Text size="sm">Payment confirmed</Text>
+                        <Text class="ui-text-muted">2m</Text>
+                    </Row>
+                    <Text class="ui-text-muted">Order #1048 · Credit card</Text>
+                </Column>
+            </Row>
             <p-divider />
-            <p-row class="p-4 gap-3 items-start">
+            <Row class="p-4 gap-3 items-start">
                 <p-badge action="info"><p-icon icon="share" /></p-badge>
-                <p-col class="flex-1 gap-1">
-                    <p-row class="items-center justify-between">
-                        <p-text size="sm">Order shipped</p-text>
-                        <p-text class="ui-text-muted">48m</p-text>
-                    </p-row>
-                    <p-text class="ui-text-muted">Order #1046 · Tracking sent</p-text>
-                </p-col>
-            </p-row>
+                <Column class="flex-1 gap-1">
+                    <Row class="items-center justify-between">
+                        <Text size="sm">Order shipped</Text>
+                        <Text class="ui-text-muted">48m</Text>
+                    </Row>
+                    <Text class="ui-text-muted">Order #1046 · Tracking sent</Text>
+                </Column>
+            </Row>
             <p-divider />
-            <p-row class="p-4 gap-3 items-start">
+            <Row class="p-4 gap-3 items-start">
                 <p-badge action="warning"><p-icon icon="schedule" /></p-badge>
-                <p-col class="flex-1 gap-1">
-                    <p-row class="items-center justify-between">
-                        <p-text size="sm">Payment pending</p-text>
-                        <p-text class="ui-text-muted">1h</p-text>
-                    </p-row>
-                    <p-text class="ui-text-muted">Order #1047 · Waiting for PIX</p-text>
-                </p-col>
-            </p-row>
-        </p-col>
+                <Column class="flex-1 gap-1">
+                    <Row class="items-center justify-between">
+                        <Text size="sm">Payment pending</Text>
+                        <Text class="ui-text-muted">1h</Text>
+                    </Row>
+                    <Text class="ui-text-muted">Order #1047 · Waiting for PIX</Text>
+                </Column>
+            </Row>
+        </Column>
     </p-card>
 
-    <p-row class="items-center gap-3">
+    <Row class="items-center gap-3">
         <p-badge variant="secondary"><p-icon icon="chat" /></p-badge>
-        <p-col class="flex-1 gap-1">
-            <p-text size="sm">You are all caught up</p-text>
-            <p-text class="ui-text-muted">New events will appear here automatically.</p-text>
-        </p-col>
-    </p-row>
+        <Column class="flex-1 gap-1">
+            <Text size="sm">You are all caught up</Text>
+            <Text class="ui-text-muted">New events will appear here automatically.</Text>
+        </Column>
+    </Row>
 </AppScreen>

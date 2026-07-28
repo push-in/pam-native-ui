@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App;
 
+use Pam\MobileUi\Component\AccordionIcon;
+use Pam\MobileUi\Component\ChevronDownIcon;
 use Pam\MobileUi\Component\UiComponent;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Generated\MaterialComponentMap;
@@ -64,6 +66,15 @@ final class ComponentRoute extends Component
                 $previewProps['modelValue'] = $this->sampleValues[$index]
                     ?? $previewProps['modelValue']
                     ?? null;
+            }
+            if (
+                $this->belongsTo([
+                    'p-checkbox', 'p-checkbox-btn', 'p-radio',
+                    'p-selection-control', 'p-switch',
+                ])
+                && array_key_exists($index, $this->sampleValues)
+            ) {
+                $previewProps['checked'] = (bool) $this->sampleValues[$index];
             }
             if ($this->belongsTo(['p-stepper', 'p-stepper-vertical'])) {
                 $itemTag = $this->tag === 'p-stepper'
@@ -173,19 +184,33 @@ final class ComponentRoute extends Component
                 $panel = MaterialComponentMap::TAGS['p-expansion-panel'];
                 $title = MaterialComponentMap::TAGS['p-expansion-panel-title'];
                 $text = MaterialComponentMap::TAGS['p-expansion-panel-text'];
+                $icon = MaterialComponentMap::TAGS['p-icon'];
                 $preview = $component::make(
                     $previewProps,
                     $panel::make(
-                        ['value' => 'details', 'open' => true],
-                        $title::make([], Row::make(
+                        ['value' => 'details', 'open' => true, 'expanded' => true],
+                        $title::make(['active' => true, 'expanded' => true], Row::make(
                             Text::make('Product details'),
-                            Text::make('^'),
+                            $icon::make([
+                                'icon' => 'chevron-down',
+                                'size' => 'small',
+                            ])->style(new Style(
+                                width: 24.0,
+                                height: 24.0,
+                                minWidth: 24.0,
+                                minHeight: 24.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                                rotation: 180.0,
+                                alignItems: Align::Center,
+                                justifyContent: Justify::Center,
+                            )),
                         )->style(new Style(
                             widthPercent: 100.0,
+                            paddingHorizontal: 24.0,
                             alignItems: Align::Center,
                             justifyContent: Justify::SpaceBetween,
                         ))),
-                        $text::make([], Text::make(
+                        $text::make(['active' => true, 'expanded' => true], Text::make(
                             'Native components share the same tokens on Android and iOS.',
                         )),
                     ),
@@ -193,9 +218,22 @@ final class ComponentRoute extends Component
                         ['value' => 'delivery', 'open' => false],
                         $title::make([], Row::make(
                             Text::make('Delivery'),
-                            Text::make('v'),
+                            $icon::make([
+                                'icon' => 'chevron-down',
+                                'size' => 'small',
+                            ])->style(new Style(
+                                width: 24.0,
+                                height: 24.0,
+                                minWidth: 24.0,
+                                minHeight: 24.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                                rotation: 0.0,
+                                alignItems: Align::Center,
+                                justifyContent: Justify::Center,
+                            )),
                         )->style(new Style(
                             widthPercent: 100.0,
+                            paddingHorizontal: 24.0,
                             alignItems: Align::Center,
                             justifyContent: Justify::SpaceBetween,
                         ))),
@@ -205,32 +243,70 @@ final class ComponentRoute extends Component
                         ['value' => 'support', 'open' => false],
                         $title::make([], Row::make(
                             Text::make('Support'),
-                            Text::make('v'),
+                            $icon::make([
+                                'icon' => 'chevron-down',
+                                'size' => 'small',
+                            ])->style(new Style(
+                                width: 24.0,
+                                height: 24.0,
+                                minWidth: 24.0,
+                                minHeight: 24.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                                rotation: 0.0,
+                                alignItems: Align::Center,
+                                justifyContent: Justify::Center,
+                            )),
                         )->style(new Style(
                             widthPercent: 100.0,
+                            paddingHorizontal: 24.0,
                             alignItems: Align::Center,
                             justifyContent: Justify::SpaceBetween,
                         ))),
                         $text::make([], Text::make('Accessible states and keyboard navigation.')),
                     ),
                 );
-            } elseif ($this->belongsTo(['p-carousel', 'p-window'])) {
-                $itemTag = $this->tag === 'p-carousel'
-                    ? 'p-carousel-item'
-                    : 'p-window-item';
-                $item = MaterialComponentMap::TAGS[$itemTag];
+            } elseif ($this->tag === 'p-carousel') {
+                $item = MaterialComponentMap::TAGS['p-carousel-item'];
+                $slideValues = ['overview', 'details', 'activity'];
+                $currentSlide = (string) (
+                    $this->sampleValues[$index]
+                    ?? $previewProps['modelValue']
+                    ?? $previewProps['value']
+                    ?? 'overview'
+                );
+                if (!in_array($currentSlide, $slideValues, true)) {
+                    $currentSlide = 'overview';
+                }
+                $setSlide = function (string $value) use ($index): bool {
+                    $this->sampleValues[$index] = $value;
+
+                    return true;
+                };
+                $previewProps['value'] = $currentSlide;
+                $previewProps['modelValue'] = $currentSlide;
                 $slides = [];
                 $controls = [];
                 if ($this->tag === 'p-carousel') {
-                    $indicator = MaterialComponentMap::TAGS['p-slide-group-item'];
+                    $indicator = MaterialComponentMap::TAGS['p-btn'];
+                    $currentIndex = array_search(
+                        $currentSlide,
+                        $slideValues,
+                        true,
+                    );
+                    $previousSlide = $slideValues[
+                        ($currentIndex + count($slideValues) - 1)
+                        % count($slideValues)
+                    ];
+                    $nextSlide = $slideValues[
+                        ($currentIndex + 1) % count($slideValues)
+                    ];
                     if ($previewProps['showArrows'] ?? false) {
                         $controls[] = $indicator::make(
                             [
-                                'value' => 'activity',
+                                'value' => 'carousel-control-previous',
                                 'accessibilityLabel' => 'Previous slide',
-                                '__pamButtonToggleItem' => true,
-                                'selectionCornerRadius' => 24,
                                 'carouselControl' => true,
+                                'variant' => 'flat',
                             ],
                             Text::make('<')->style(new Style(
                                 fontSize: 24.0,
@@ -238,6 +314,8 @@ final class ComponentRoute extends Component
                                 textColor: 0xFFFFFFFF,
                                 textAlign: \Pam\Native\TextAlignment::Center,
                             )),
+                        )->onPress(
+                            fn (): bool => $setSlide($previousSlide),
                         )->style(new Style(
                             positionType: PositionType::Absolute,
                             left: 16.0,
@@ -254,17 +332,18 @@ final class ComponentRoute extends Component
                     }
                     if (!($previewProps['hideDelimiters'] ?? false)) {
                         $delimiters = [];
-                        foreach (['overview', 'details', 'activity'] as $index => $value) {
-                            $active = $index === 0;
+                        foreach ($slideValues as $slideIndex => $value) {
+                            $active = $value === $currentSlide;
                             $delimiters[] = $indicator::make(
                                 [
-                                    'value' => $value,
+                                    'value' => 'carousel-delimiter-'.$value,
                                     'active' => $active,
                                     'selected' => $active,
-                                    'accessibilityLabel' => 'Go to slide '.($index + 1),
-                                    '__pamButtonToggleItem' => true,
-                                    'selectionCornerRadius' => 6,
+                                    'accessibilityLabel' => 'Go to slide '.($slideIndex + 1),
+                                    'variant' => 'flat',
                                 ],
+                            )->onPress(
+                                fn (): bool => $setSlide($value),
                             )->style(new Style(
                                 width: 12.0,
                                 height: 12.0,
@@ -289,11 +368,10 @@ final class ComponentRoute extends Component
                     if ($previewProps['showArrows'] ?? false) {
                         $controls[] = $indicator::make(
                             [
-                                'value' => 'details',
+                                'value' => 'carousel-control-next',
                                 'accessibilityLabel' => 'Next slide',
-                                '__pamButtonToggleItem' => true,
-                                'selectionCornerRadius' => 24,
                                 'carouselControl' => true,
+                                'variant' => 'flat',
                             ],
                             Text::make('>')->style(new Style(
                                 fontSize: 24.0,
@@ -301,6 +379,8 @@ final class ComponentRoute extends Component
                                 textColor: 0xFFFFFFFF,
                                 textAlign: \Pam\Native\TextAlignment::Center,
                             )),
+                        )->onPress(
+                            fn (): bool => $setSlide($nextSlide),
                         )->style(new Style(
                             positionType: PositionType::Absolute,
                             right: 16.0,
@@ -317,7 +397,11 @@ final class ComponentRoute extends Component
                     }
                 }
                 $slides[] = $item::make(
-                        ['value' => 'overview', 'selected' => true],
+                        [
+                            'value' => 'overview',
+                            'active' => $currentSlide === 'overview',
+                            'selected' => $currentSlide === 'overview',
+                        ],
                         Column::make(
                             Text::make('Native by design')->style(new Style(
                                 fontSize: 22.0,
@@ -345,7 +429,11 @@ final class ComponentRoute extends Component
                     heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
                 ));
                 $slides[] = $item::make(
-                    ['value' => 'details'],
+                    [
+                        'value' => 'details',
+                        'active' => $currentSlide === 'details',
+                        'selected' => $currentSlide === 'details',
+                    ],
                     Column::make(
                         Text::make('Composable')->style(new Style(
                             fontSize: 22.0,
@@ -373,7 +461,11 @@ final class ComponentRoute extends Component
                     heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
                 ));
                 $slides[] = $item::make(
-                    ['value' => 'activity'],
+                    [
+                        'value' => 'activity',
+                        'active' => $currentSlide === 'activity',
+                        'selected' => $currentSlide === 'activity',
+                    ],
                     Column::make(
                         Text::make('Accessible')->style(new Style(
                             fontSize: 22.0,
@@ -427,9 +519,18 @@ final class ComponentRoute extends Component
                     )->style(new Style(width: $this->tag === 'p-menu' ? 144.0 : 184.0)),
                     $this->tag === 'p-menu'
                         ? Column::make(
-                            $listItem::make([], Text::make('Edit profile')),
-                            $listItem::make([], Text::make('Manage notifications')),
-                            $listItem::make([], Text::make('Sign out')),
+                            $listItem::make(
+                                ['value' => 'edit-profile'],
+                                Text::make('Edit profile'),
+                            )->onPress(static fn (): bool => true),
+                            $listItem::make(
+                                ['value' => 'manage-notifications'],
+                                Text::make('Manage notifications'),
+                            )->onPress(static fn (): bool => true),
+                            $listItem::make(
+                                ['value' => 'sign-out'],
+                                Text::make('Sign out'),
+                            )->onPress(static fn (): bool => true),
                         )->style(new Style(
                             minWidth: 220.0,
                             paddingVertical: 8.0,
@@ -463,7 +564,12 @@ final class ComponentRoute extends Component
                 )->style(new Style(width: 184.0))
                     ->onPress(fn (): bool => $setOpen(true));
                 $close = $button::make(
-                    ['variant' => 'tonal', 'size' => 'small'],
+                    [
+                        'variant' => 'tonal',
+                        'size' => 'small',
+                        'value' => 'pam:modal-close',
+                        'accessibilityLabel' => 'Close modal',
+                    ],
                     Text::make('Close'),
                 )->onPress(fn (): bool => $setOpen(false));
                 $surface = $component::make(
@@ -552,10 +658,20 @@ final class ComponentRoute extends Component
             } elseif ($this->tag === 'p-speed-dial') {
                 $fab = MaterialComponentMap::TAGS['p-fab'];
                 $button = MaterialComponentMap::TAGS['p-btn'];
-                unset($previewProps['open']);
+                $speedDialOpen = (bool) ($this->sampleValues[$index] ?? false);
+                $toggleSpeedDial = function () use ($index): bool {
+                    $this->sampleValues[$index] = !(
+                        $this->sampleValues[$index] ?? false
+                    );
+
+                    return true;
+                };
                 $preview = $component::make(
                     [
                         ...$previewProps,
+                        'open' => $speedDialOpen,
+                        'modelValue' => $speedDialOpen,
+                        'direction' => $previewProps['direction'] ?? 'bottom',
                         'placement' => \Pam\MobileUi\Enum\Placement::BottomStart->value,
                         'accessibilityLabel' => 'Create actions',
                     ],
@@ -566,7 +682,7 @@ final class ComponentRoute extends Component
                             fontSize: 24.0,
                             fontWeight: 500,
                         )),
-                    ),
+                    )->onPress($toggleSpeedDial),
                     $button::make(
                         ['variant' => 'tonal', 'size' => 'small'],
                         Text::make('New message'),
@@ -588,13 +704,12 @@ final class ComponentRoute extends Component
                     $previewProps,
                     Text::make('8'),
                 );
-            } elseif ($this->belongsTo(['p-tabs', 'p-slide-group', 'p-pagination'])) {
+            } elseif ($this->belongsTo(['p-tabs', 'p-tab', 'p-slide-group'])) {
                 $triggerTag = $this->tag === 'p-slide-group'
                     ? 'p-slide-group-item'
                     : 'p-tab';
                 $trigger = MaterialComponentMap::TAGS[$triggerTag];
                 $labels = match ($this->tag) {
-                    'p-pagination' => ['‹', '1', '2', '3', '4', '5', '›'],
                     'p-slide-group' => [
                         'Overview', 'Design', 'Android', 'iOS',
                         'Motion', 'Forms', 'Data', 'Release',
@@ -616,42 +731,17 @@ final class ComponentRoute extends Component
                 ) {
                     $labels = ['‹', ...$labels, '›'];
                 }
-                $requestedVisible = $previewProps['totalVisible'] ?? null;
-                if (
-                    $this->tag === 'p-pagination'
-                    && is_numeric($requestedVisible)
-                ) {
-                    $lengthValue = $previewProps['length'] ?? 7;
-                    $length = is_numeric($lengthValue) ? (int) $lengthValue : 7;
-                    $visible = max(1, min(
-                        $length,
-                        (int) $requestedVisible,
-                    ));
-                    $labels = [
-                        '‹',
-                        ...array_map(
-                            static fn (int $page): string => (string) $page,
-                            range(1, $visible),
-                        ),
-                        '›',
-                    ];
-                }
                 $triggers = [];
                 foreach ($labels as $label) {
                     $value = strtolower($label);
-                    $active = $value === (
-                        $this->tag === 'p-pagination' ? '3' : 'overview'
-                    );
+                    $active = $value === 'overview';
                     $triggerComponent = $trigger::make(
                         [
                             'value' => $value,
                             'active' => $active,
                             'selected' => $active,
-                            '__pamButtonToggleItem' => in_array(
-                                $this->tag,
-                                ['p-pagination', 'p-slide-group'],
-                                true,
-                            ),
+                            '__pamButtonToggleItem' =>
+                                $this->tag === 'p-slide-group',
                             'selectionCornerRadius' => $this->tag === 'p-slide-group'
                                 ? 22
                                 : 20,
@@ -663,25 +753,14 @@ final class ComponentRoute extends Component
                             ),
                         ],
                         Text::make($label)->style(new Style(
-                            textColor: 0xFF5B6E87,
+                            textColor: $active ? 0xFF1867C0 : 0xFF5B6E87,
                             fontSize: 14.0,
                             lineHeight: 20.0,
                             fontWeight: 500,
                             textAlign: \Pam\Native\TextAlignment::Center,
                         )),
                     );
-                    if ($this->tag === 'p-pagination') {
-                        $triggerComponent = $triggerComponent->style(new Style(
-                            width: 40.0,
-                            minWidth: 40.0,
-                            height: 40.0,
-                            minHeight: 40.0,
-                            borderRadius: 20.0,
-                            alignItems: Align::Center,
-                            justifyContent: Justify::Center,
-                            backgroundColor: 0x00000000,
-                        ));
-                    } elseif ($this->tag === 'p-slide-group') {
+                    if ($this->tag === 'p-slide-group') {
                         $triggerComponent = $triggerComponent->style(new Style(
                             width: 108.0,
                             minWidth: 108.0,
@@ -695,7 +774,17 @@ final class ComponentRoute extends Component
                     }
                     $triggers[] = $triggerComponent;
                 }
-                $group = $component::make($previewProps, ...$triggers);
+                $groupComponent = $this->tag === 'p-tab'
+                    ? MaterialComponentMap::TAGS['p-tabs']
+                    : $component;
+                $group = $groupComponent::make(
+                    [
+                        ...$previewProps,
+                        'value' => 'overview',
+                        'modelValue' => 'overview',
+                    ],
+                    ...$triggers,
+                );
                 if ($this->tag === 'p-slide-group') {
                     $group = $group->style(new Style(
                         width: (float) count($triggers) * 116.0,
@@ -728,27 +817,6 @@ final class ComponentRoute extends Component
                         Text::make('Right'),
                     ),
                 )->style(new Style(widthPercent: 100.0, gap: 0.0));
-            } elseif ($this->tag === 'p-breadcrumbs') {
-                $item = MaterialComponentMap::TAGS['p-breadcrumbs-item'];
-                $preview = $component::make(
-                    $previewProps,
-                    $item::make(['value' => 'home'], Text::make('Home')),
-                    Text::make('/')->style(new Style(
-                        width: 16.0,
-                        textColor: 0xFF5B6E87,
-                        textAlign: \Pam\Native\TextAlignment::Center,
-                    )),
-                    $item::make(['value' => 'library'], Text::make('Library')),
-                    Text::make('/')->style(new Style(
-                        width: 16.0,
-                        textColor: 0xFF5B6E87,
-                        textAlign: \Pam\Native\TextAlignment::Center,
-                    )),
-                    $item::make(
-                        ['value' => 'components', 'active' => true],
-                        Text::make('Components'),
-                    ),
-                );
             } elseif ($this->tag === 'p-card') {
                 $cardActions = MaterialComponentMap::TAGS['p-card-actions'];
                 $button = MaterialComponentMap::TAGS['p-btn'];
@@ -767,6 +835,7 @@ final class ComponentRoute extends Component
                         fontSize: 14.0,
                         lineHeight: 20.0,
                         textColor: $theme->color(ColorToken::MutedForeground),
+                        opacity: 0.72,
                     )),
                     Text::make(
                         'One component API, rendered with platform-native views.',
@@ -795,8 +864,10 @@ final class ComponentRoute extends Component
                 if ($this->tag === 'p-app-bar') {
                     $nav = MaterialComponentMap::TAGS['p-app-bar-nav-icon'];
                     $barChildren[] = $nav::make(
-                        ['accessibilityLabel' => 'Open navigation'],
-                        Text::make('<'),
+                        [
+                            'accessibilityLabel' => 'Open navigation',
+                            'icon' => 'menu',
+                        ],
                     );
                 }
                 $barChildren[] = $toolbarTitle::make(
@@ -804,8 +875,10 @@ final class ComponentRoute extends Component
                     Text::make('PAM Workspace'),
                 );
                 $barChildren[] = $button::make(
-                    ['accessibilityLabel' => 'More options'],
-                    Text::make('...'),
+                    [
+                        'accessibilityLabel' => 'More options',
+                        'icon' => 'more-vert',
+                    ],
                 );
                 $preview = $component::make($previewProps, ...$barChildren);
             } elseif ($this->tag === 'p-list') {
@@ -830,32 +903,6 @@ final class ComponentRoute extends Component
                         $listSubtitle::make([], Text::make('Validated packages')),
                     ),
                 );
-            } elseif ($this->tag === 'p-data-iterator') {
-                $card = MaterialComponentMap::TAGS['p-card'];
-                $iteratorItems = [];
-                foreach ([
-                    ['Aurora', 'Design tokens'],
-                    ['Atlas', 'Native runtime'],
-                    ['Canvas', 'Release pipeline'],
-                ] as [$name, $description]) {
-                    $iteratorItems[] = $card::make(
-                        ['variant' => 'outlined'],
-                        Text::make($name)->style(new Style(
-                            fontSize: 16.0,
-                            fontWeight: 600,
-                            textColor: 0xFF0B172A,
-                        )),
-                        Text::make($description)->style(new Style(
-                            fontSize: 14.0,
-                            textColor: 0xFF5B6E87,
-                        )),
-                    )->style(new Style(
-                        widthPercent: 100.0,
-                        padding: 16.0,
-                        gap: 4.0,
-                    ));
-                }
-                $preview = $component::make($previewProps, ...$iteratorItems);
             } elseif ($this->tag === 'p-infinite-scroll') {
                 $listItem = MaterialComponentMap::TAGS['p-list-item'];
                 $listTitle = MaterialComponentMap::TAGS['p-list-item-title'];
@@ -927,26 +974,6 @@ final class ComponentRoute extends Component
                     $chip::make(['value' => 'three'], Text::make('Three')),
                     $chip::make(['value' => 'four'], Text::make('Four')),
                 );
-            } elseif ($this->tag === 'p-spacer') {
-                $preview = Row::make(
-                    View::make()->style(new Style(
-                        width: 72.0,
-                        height: 48.0,
-                        borderRadius: 4.0,
-                        backgroundColor: $theme->color(ColorToken::Primary),
-                    )),
-                    $component::make($previewProps),
-                    View::make()->style(new Style(
-                        width: 72.0,
-                        height: 48.0,
-                        borderRadius: 4.0,
-                        backgroundColor: $theme->color(ColorToken::Secondary),
-                    )),
-                )->style(new Style(
-                    widthPercent: 100.0,
-                    minHeight: 48.0,
-                    alignItems: Align::Center,
-                ));
             } elseif ($this->tag === 'p-divider') {
                 $preview = Column::make(
                     Text::make('Content above'),
@@ -967,7 +994,7 @@ final class ComponentRoute extends Component
                     : 'p-banner-actions';
                 $title = MaterialComponentMap::TAGS[$titleTag];
                 $button = MaterialComponentMap::TAGS['p-btn'];
-                $children = [
+                $copy = Column::make(
                     $title::make(
                         [],
                         Text::make(
@@ -979,7 +1006,12 @@ final class ComponentRoute extends Component
                     Text::make(
                         'The same tokens, spacing and interactions are shared by Android and iOS.',
                     ),
-                ];
+                )->style(new Style(
+                    flexGrow: 1.0,
+                    flexShrink: 1.0,
+                    gap: 4.0,
+                ));
+                $children = [$copy];
                 if ($actionsTag !== null) {
                     $actions = MaterialComponentMap::TAGS[$actionsTag];
                     $children[] = $actions::make(
@@ -1015,17 +1047,38 @@ final class ComponentRoute extends Component
                 $preview = $component::make(
                     $previewProps,
                     $item::make(
-                        ['value' => 'design', 'checked' => true, 'selected' => true],
-                        Text::make('Design'),
+                        [
+                            'value' => 'design',
+                            'label' => 'Design',
+                            'checked' => true,
+                            'selected' => true,
+                        ],
                     ),
                     $item::make(
-                        ['value' => 'engineering'],
-                        Text::make('Engineering'),
+                        ['value' => 'engineering', 'label' => 'Engineering'],
                     ),
                     $item::make(
-                        ['value' => 'product'],
-                        Text::make('Product'),
+                        ['value' => 'product', 'label' => 'Product'],
                     ),
+                );
+            } elseif ($this->tag === 'p-field') {
+                $preview = $component::make(
+                    $previewProps,
+                    Column::make(
+                        Text::make($this->title)->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 16.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                        )),
+                        Text::make('Native field value')->style(new Style(
+                            fontSize: 16.0,
+                            lineHeight: 24.0,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                        )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        gap: 2.0,
+                    )),
                 );
             } elseif ($this->belongsTo([
                 'p-card-item', 'p-card-title', 'p-card-subtitle',
@@ -1061,10 +1114,151 @@ final class ComponentRoute extends Component
                 'p-checkbox', 'p-checkbox-btn', 'p-radio',
                 'p-selection-control', 'p-switch',
             ])) {
-                $selectionLabel = $previewProps['label'] ?? $this->title;
+                $preview = $component::make($previewProps);
+            } elseif ($this->tag === 'p-color-picker') {
+                $canvas = MaterialComponentMap::TAGS['p-color-picker-canvas'];
+                $pickerPreview = MaterialComponentMap::TAGS['p-color-picker-preview'];
+                $edit = MaterialComponentMap::TAGS['p-color-picker-edit'];
+                $swatches = MaterialComponentMap::TAGS['p-color-picker-swatches'];
+                $color = 0xFF5CBBF6;
+                $swatch = static fn (int $value): View => View::make()->style(
+                    new Style(
+                        width: 32.0,
+                        height: 32.0,
+                        borderRadius: 16.0,
+                        backgroundColor: $value,
+                    ),
+                );
                 $preview = $component::make(
                     $previewProps,
-                    Text::make(is_scalar($selectionLabel) ? (string) $selectionLabel : $this->title),
+                    $canvas::make(
+                        $previewProps,
+                        View::make()->style(new Style(
+                            widthPercent: 100.0,
+                            minHeight: 150.0,
+                            backgroundColor: $color,
+                        )),
+                    ),
+                    $pickerPreview::make(
+                        $previewProps,
+                        $swatch($color),
+                        Text::make('#5CBBF6')->style(new Style(
+                            fontSize: 16.0,
+                            fontWeight: 600,
+                        )),
+                    ),
+                    $edit::make(
+                        $previewProps,
+                        Text::make('HEX'),
+                        Text::make('#5CBBF6')->style(new Style(
+                            fontSize: 16.0,
+                            fontWeight: 500,
+                        )),
+                    ),
+                    $swatches::make(
+                        $previewProps,
+                        Row::make(
+                            $swatch(0xFF1867C0),
+                            $swatch(0xFF4CAF50),
+                            $swatch(0xFFFFC107),
+                            $swatch(0xFFF44336),
+                            $swatch(0xFF9C27B0),
+                        )->style(new Style(gap: 12.0)),
+                    ),
+                );
+            } elseif ($this->tag === 'p-time-picker') {
+                $controls = MaterialComponentMap::TAGS['p-time-picker-controls'];
+                $clock = MaterialComponentMap::TAGS['p-time-picker-clock'];
+                $hour = static fn (string $value, bool $active = false): Text =>
+                    Text::make($value)->style(new Style(
+                        width: 40.0,
+                        height: 40.0,
+                        borderRadius: 20.0,
+                        backgroundColor: $active ? 0xFF1867C0 : 0x00000000,
+                        textColor: $active ? 0xFFFFFFFF : 0xFF212121,
+                        fontSize: 14.0,
+                        lineHeight: 40.0,
+                        textAlign: \Pam\Native\TextAlignment::Center,
+                    ));
+                $preview = $component::make(
+                    $previewProps,
+                    $controls::make(
+                        $previewProps,
+                        Text::make('14 : 35')->style(new Style(
+                            fontSize: 48.0,
+                            lineHeight: 64.0,
+                            fontWeight: 500,
+                            textColor: 0xFF212121,
+                        )),
+                    ),
+                    $clock::make(
+                        $previewProps,
+                        Row::make(
+                            $hour('12'),
+                            $hour('1'),
+                            $hour('2'),
+                            $hour('3'),
+                        )->style(new Style(
+                            widthPercent: 100.0,
+                            justifyContent: Justify::SpaceBetween,
+                        )),
+                        Row::make(
+                            $hour('11'),
+                            $hour('14', true),
+                            $hour('4'),
+                        )->style(new Style(
+                            widthPercent: 100.0,
+                            justifyContent: Justify::SpaceBetween,
+                        )),
+                        Row::make(
+                            $hour('10'),
+                            $hour('9'),
+                            $hour('8'),
+                            $hour('7'),
+                        )->style(new Style(
+                            widthPercent: 100.0,
+                            justifyContent: Justify::SpaceBetween,
+                        )),
+                    ),
+                );
+            } elseif ($this->tag === 'p-confirm-edit') {
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $preview = $component::make(
+                    $previewProps,
+                    Column::make(
+                        Text::make('Selected value')->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 16.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                        )),
+                        Text::make('July 15, 2026')->style(new Style(
+                            fontSize: 16.0,
+                            lineHeight: 24.0,
+                            fontWeight: 500,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                        )),
+                        Row::make(
+                            $button::make(
+                                ['variant' => 'text', 'size' => 'small'],
+                                Text::make('Cancel'),
+                            ),
+                            $button::make(
+                                [
+                                    'variant' => 'flat',
+                                    'size' => 'small',
+                                    'color' => 'primary',
+                                ],
+                                Text::make('Save'),
+                            ),
+                        )->style(new Style(
+                            widthPercent: 100.0,
+                            gap: 8.0,
+                            justifyContent: Justify::End,
+                        )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        gap: 8.0,
+                    )),
                 );
             } elseif ($this->belongsTo([
                 'p-color-picker-canvas', 'p-color-picker-edit',
@@ -1106,17 +1300,73 @@ final class ComponentRoute extends Component
                         'p-date-picker-years', 'p-time-picker-clock',
                     ]) ? 240.0 : 56.0,
                 ));
-            } elseif ($this->belongsTo([
-                'p-expansion-panel', 'p-expansion-panel-title',
-                'p-expansion-panel-text',
-            ])) {
+            } elseif ($this->tag === 'p-expansion-panel') {
+                $title = MaterialComponentMap::TAGS['p-expansion-panel-title'];
+                $text = MaterialComponentMap::TAGS['p-expansion-panel-text'];
+                $icon = MaterialComponentMap::TAGS['p-icon'];
                 $preview = $component::make(
                     [...$previewProps, 'open' => true, 'expanded' => true],
-                    Text::make(match ($this->tag) {
-                        'p-expansion-panel-title' => 'Product details',
-                        'p-expansion-panel-text' => 'Native views with shared material tokens.',
-                        default => 'Product details and supporting content',
-                    }),
+                    $title::make(
+                        ['active' => true, 'expanded' => true],
+                        Row::make(
+                            Text::make('Product details')->style(new Style(
+                                fontSize: 16.0,
+                                lineHeight: 24.0,
+                                fontWeight: 500,
+                                textColor: $theme->color(ColorToken::OnSurface),
+                            )),
+                            $icon::make([
+                                'icon' => 'chevron-down',
+                                'size' => 'small',
+                            ])->style(new Style(
+                                width: 24.0,
+                                height: 24.0,
+                                minWidth: 24.0,
+                                minHeight: 24.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                                rotation: 180.0,
+                                alignItems: Align::Center,
+                                justifyContent: Justify::Center,
+                            )),
+                        )->style(new Style(
+                            widthPercent: 100.0,
+                            paddingHorizontal: 24.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::SpaceBetween,
+                        )),
+                    ),
+                    $text::make(
+                        ['active' => true, 'expanded' => true],
+                        Text::make(
+                            'Native views with shared material tokens.',
+                        )->style(new Style(
+                            fontSize: 14.0,
+                            lineHeight: 20.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                        )),
+                    ),
+                );
+            } elseif ($this->belongsTo([
+                'p-expansion-panel-title',
+                'p-expansion-panel-text',
+            ])) {
+                $panelText = match ($this->tag) {
+                    'p-expansion-panel-title' => 'Product details',
+                    'p-expansion-panel-text' => 'Native views with shared material tokens.',
+                    default => 'Product details and supporting content',
+                };
+                $preview = $component::make(
+                    [...$previewProps, 'open' => true, 'expanded' => true],
+                    Text::make($panelText)->style(new Style(
+                        fontSize: 16.0,
+                        lineHeight: 24.0,
+                        fontWeight: $this->tag === 'p-expansion-panel-title'
+                            ? 500
+                            : 400,
+                        textColor: $this->tag === 'p-expansion-panel-text'
+                            ? $theme->color(ColorToken::MutedForeground)
+                            : $theme->color(ColorToken::OnSurface),
+                    )),
                 );
             } elseif ($this->belongsTo([
                 'p-file-upload', 'p-file-upload-item',
@@ -1127,12 +1377,12 @@ final class ComponentRoute extends Component
                     Column::make(
                         Text::make(
                             $this->tag === 'p-file-upload'
-                                ? 'Drop files here'
+                                ? 'Choose files'
                                 : 'brand-guidelines.pdf',
                         )->style(new Style(fontSize: 16.0, fontWeight: 600)),
                         Text::make(
                             $this->tag === 'p-file-upload'
-                                ? 'PDF, PNG or JPG up to 10 MB'
+                                ? 'Device, camera or gallery'
                                 : '2.4 MB · Ready',
                         )->style(new Style(
                             fontSize: 13.0,
@@ -1142,13 +1392,13 @@ final class ComponentRoute extends Component
                             ['variant' => 'tonal', 'size' => 'small'],
                             Text::make(
                                 $this->tag === 'p-file-upload'
-                                    ? 'Browse files'
+                                    ? 'Open picker'
                                     : 'Remove',
                             ),
                         ),
                     )->style(new Style(
                         widthPercent: 100.0,
-                        padding: 20.0,
+                        padding: 0.0,
                         gap: 8.0,
                         alignItems: Align::Center,
                     )),
@@ -1175,7 +1425,7 @@ final class ComponentRoute extends Component
                     ),
                 )->style(new Style(widthPercent: 100.0, gap: 16.0));
             } elseif ($this->belongsTo([
-                'p-container', 'p-row', 'p-col',
+                
             ])) {
                 $tile = static fn (string $label, int $color): View => View::make(
                     Text::make($label)->style(new Style(
@@ -1198,10 +1448,13 @@ final class ComponentRoute extends Component
                     $tile('Three', 0xFFF57C00),
                 );
             } elseif ($this->belongsTo([
-                'p-img', 'p-parallax', 'p-lazy',
-            ])) {
+                'p-img',])) {
                 $preview = $component::make(
-                    $previewProps,
+                    [
+                        ...$previewProps,
+                        'source' => 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200',
+                        'alt' => 'Forest landscape',
+                    ],
                     Column::make(
                         Text::make('Native media')->style(new Style(
                             textColor: 0xFFFFFFFF,
@@ -1257,10 +1510,10 @@ final class ComponentRoute extends Component
             } elseif ($this->belongsTo([
                 'p-skeleton-loader', 'p-sparkline',
             ])) {
-                $preview = $component::make($previewProps)->style(new Style(
-                    widthPercent: 100.0,
-                    minHeight: $this->tag === 'p-sparkline' ? 140.0 : 96.0,
-                ));
+                $previewStyle = $this->tag === 'p-sparkline'
+                    ? new Style(widthPercent: 100.0, minHeight: 140.0)
+                    : new Style(widthPercent: 100.0);
+                $preview = $component::make($previewProps)->style($previewStyle);
             } elseif ($this->belongsTo([
                 'p-stepper-header', 'p-stepper-item', 'p-stepper-window',
                 'p-stepper-window-item', 'p-stepper-actions',
@@ -1289,10 +1542,29 @@ final class ComponentRoute extends Component
                     [...$previewProps, 'active' => true, 'selected' => true],
                     ...$children,
                 );
+            } elseif ($this->tag === 'p-avatar') {
+                $avatarSize = match ($previewProps['size'] ?? null) {
+                    'x-small' => 24.0,
+                    'small' => 32.0,
+                    'large' => 48.0,
+                    'x-large' => 56.0,
+                    default => is_numeric($previewProps['size'] ?? null)
+                        ? (float) $previewProps['size']
+                        : 40.0,
+                };
+                $preview = $component::make(
+                    $previewProps,
+                    Text::make('PA')->style(new Style(
+                        fontSize: max(9.0, $avatarSize * 0.36),
+                        lineHeight: max(12.0, $avatarSize * 0.48),
+                        fontWeight: 600,
+                        textAlign: \Pam\Native\TextAlignment::Center,
+                    )),
+                );
             } elseif ($this->belongsTo([
-                'p-text', 'p-alert-title', 'p-app-bar-title',
-                'p-banner-text', 'p-breadcrumbs-item',
-                'p-breadcrumbs-divider', 'p-field-label', 'p-label',
+                'p-alert-title', 'p-app-bar-title',
+                'p-banner-text', 
+                'p-field-label', 'p-label',
                 'p-messages', 'p-counter', 'p-picker-title',
                 'p-toolbar-title',
             ])) {
@@ -1349,17 +1621,37 @@ final class ComponentRoute extends Component
                     );
                 }
             }
+            if (
+                $preview instanceof UiComponent
+                && $this->belongsTo([
+                    'p-checkbox', 'p-checkbox-btn', 'p-radio',
+                    'p-selection-control', 'p-switch',
+                ])
+            ) {
+                $preview = $preview->onToggle(
+                    function (mixed $value) use ($index): bool {
+                        $this->sampleValues[$index] = in_array(
+                            $value,
+                            [true, 1, '1'],
+                            true,
+                        );
+
+                        return true;
+                    },
+                );
+            }
             $intrinsicPreview = $this->belongsTo([
                 'p-avatar', 'p-badge', 'p-btn', 'p-checkbox', 'p-checkbox-btn',
                 'p-chip', 'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
                 'p-radio', 'p-rating', 'p-selection-control', 'p-switch',
             ]);
-            $samples[] = Column::make($caption, $preview)->style(new Style(
-                widthPercent: 100.0,
-                paddingVertical: 8.0,
-                gap: 8.0,
-                alignItems: $intrinsicPreview ? Align::Start : Align::Stretch,
-            ));
+            $samples[] = Column::make($caption, $preview)
+                ->style(new Style(
+                    widthPercent: 100.0,
+                    paddingVertical: 4.0,
+                    gap: 4.0,
+                    alignItems: $intrinsicPreview ? Align::Start : Align::Stretch,
+                ));
         }
 
         $menu = Pressable::make(
@@ -1367,6 +1659,7 @@ final class ComponentRoute extends Component
                 textColor: $theme->color(ColorToken::PrimaryForeground),
                 fontSize: 14.0,
                 fontWeight: 600,
+                lineHeight: 20.0,
             )),
         )
             ->onPress(function (): bool {
@@ -1375,12 +1668,13 @@ final class ComponentRoute extends Component
                 return true;
             })
             ->style(new Style(
-                minWidth: 72.0,
-                minHeight: 40.0,
-                paddingHorizontal: 16.0,
-                borderRadius: 20.0,
+                minWidth: 64.0,
+                minHeight: 36.0,
+                paddingHorizontal: 12.0,
+                borderRadius: 18.0,
                 backgroundColor: $theme->color(ColorToken::Primary),
                 alignItems: Align::Center,
+                justifyContent: Justify::Center,
             ))
             ->accessibilityRole(AccessibilityRole::Button)
             ->accessibilityLabel('Open component navigation');
@@ -1389,8 +1683,8 @@ final class ComponentRoute extends Component
             Column::make(
                 Text::make($this->title)->style(new Style(
                     textColor: $theme->color(ColorToken::OnSurface),
-                    fontSize: 24.0,
-                    lineHeight: 32.0,
+                    fontSize: 22.0,
+                    lineHeight: 28.0,
                     fontWeight: 700,
                 )),
                 Text::make($this->tag)->style(new Style(
@@ -1407,10 +1701,10 @@ final class ComponentRoute extends Component
             $menu,
         )->style(new Style(
             widthPercent: 100.0,
-            minHeight: 88.0,
-            paddingHorizontal: 20.0,
-            paddingVertical: 16.0,
-            gap: 16.0,
+            minHeight: 72.0,
+            paddingHorizontal: 16.0,
+            paddingVertical: 10.0,
+            gap: 12.0,
             alignItems: Align::Center,
             backgroundColor: $theme->color(ColorToken::Background),
             elevation: 1.0,
@@ -1423,16 +1717,16 @@ final class ComponentRoute extends Component
                     Column::make(
                         Text::make('Variations')->style(new Style(
                             textColor: $theme->color(ColorToken::OnSurface),
-                            fontSize: 20.0,
-                            lineHeight: 28.0,
+                            fontSize: 18.0,
+                            lineHeight: 24.0,
                             fontWeight: 600,
                         )),
                         ...$samples,
                     )->style(new Style(
                         widthPercent: 100.0,
-                        padding: 20.0,
-                        paddingBottom: 32.0,
-                        gap: 12.0,
+                        padding: 16.0,
+                        paddingBottom: 24.0,
+                        gap: 8.0,
                     )),
                 )->style(new Style(
                     widthPercent: 100.0,
@@ -1523,7 +1817,7 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo([
             'p-alert', 'p-autocomplete', 'p-btn', 'p-checkbox', 'p-chip',
-            'p-combobox', 'p-data-table', 'p-data-table-server',
+            'p-combobox', 'p-data-table', 
             'p-data-table-virtual', 'p-field', 'p-file-input', 'p-input',
             'p-list', 'p-list-item', 'p-number-input', 'p-radio', 'p-select',
             'p-selection-control', 'p-slider', 'p-switch', 'p-tab', 'p-tabs',
@@ -1536,8 +1830,8 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-app-bar', 'p-bottom-navigation', 'p-card', 'p-dialog', 'p-menu',
-            'p-navigation-drawer', 'p-sheet', 'p-snackbar', 'p-toolbar',
+            'p-app-bar', 'p-card', 'p-dialog', 'p-menu',
+            'p-sheet', 'p-snackbar', 'p-toolbar',
         ])) {
             foreach ([0, 1, 2, 4, 8, 12, 16, 24] as $elevation) {
                 $variations[] = [
@@ -1748,22 +2042,16 @@ final class ComponentRoute extends Component
         if ($this->belongsTo(['p-avatar', 'p-badge'])) {
             $add($variations, 'Rounded', ['rounded' => true]);
             $add($variations, 'Tile', ['tile' => true]);
-            $add($variations, 'Dot', ['dot' => true]);
             $add($variations, 'Bordered', ['border' => true]);
         }
 
-        if ($this->belongsTo(['p-breadcrumbs', 'p-breadcrumbs-item'])) {
-            $add($variations, 'Compact', ['density' => 'compact']);
-            $add($variations, 'Large', ['density' => 'comfortable']);
-            $add($variations, 'Disabled Item', ['disabled' => true]);
-            $add($variations, 'Active Item', ['active' => true, 'color' => 'primary']);
+        if ($this->tag === 'p-badge') {
+            $add($variations, 'Dot', ['dot' => true]);
         }
 
-        if ($this->tag === 'p-breadcrumbs-divider') {
-            $add($variations, 'Slash', ['divider' => '/']);
-            $add($variations, 'Chevron', ['divider' => '›']);
-            $add($variations, 'Dot', ['divider' => '•']);
-        }
+
+
+
 
         if ($this->belongsTo(['p-btn-group', 'p-btn-toggle'])) {
             $add($variations, 'Divided', ['divided' => true]);
@@ -1785,9 +2073,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Primary', ['color' => 'primary']);
         }
 
-        if ($this->belongsTo([
-            'p-carousel', 'p-carousel-item', 'p-window', 'p-window-item',
-        ])) {
+        if ($this->belongsTo(['p-carousel', 'p-carousel-item'])) {
             $add($variations, 'Continuous', ['continuous' => true]);
             $add($variations, 'Cycle', ['cycle' => true, 'interval' => 3000]);
             $add($variations, 'Hide Delimiters', ['hideDelimiters' => true]);
@@ -1826,7 +2112,6 @@ final class ComponentRoute extends Component
             $add($variations, 'Filter', ['filter' => true, 'selected' => true]);
             $add($variations, 'Label', ['label' => true]);
             $add($variations, 'Link', ['link' => true]);
-            $add($variations, 'Draggable', ['draggable' => true]);
             $add($variations, 'Column', ['column' => true]);
         }
 
@@ -1845,13 +2130,11 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-data-iterator', 'p-data-table', 'p-data-table-server',
-            'p-data-table-virtual',
+            'p-data-table', 'p-data-table-virtual',
         ])) {
             $add($variations, 'Compact', ['density' => 'compact']);
             $add($variations, 'Comfortable', ['density' => 'comfortable']);
             $add($variations, 'Fixed Header', ['fixedHeader' => true, 'height' => 280]);
-            $add($variations, 'Hover', ['hover' => true]);
             $add($variations, 'Striped', ['striped' => true]);
             $add($variations, 'Loading', ['loading' => true]);
             $add($variations, 'Selectable', ['showSelect' => true]);
@@ -1918,7 +2201,7 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo([
             'p-field', 'p-field-label', 'p-input', 'p-label', 'p-messages',
-            'p-counter', 'p-validation', 'p-form',
+            'p-counter', 'p-form',
         ])) {
             $add($variations, 'Focused', ['focused' => true]);
             $add($variations, 'Required', ['required' => true]);
@@ -1981,7 +2264,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-container', 'p-row', 'p-col', 'p-spacer',
+            
         ])) {
             $add($variations, 'Compact Gap', ['gap' => 4]);
             $add($variations, 'Default Gap', ['gap' => 12]);
@@ -2000,7 +2283,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Loading', ['loading' => true]);
         }
 
-        if ($this->belongsTo(['p-img', 'p-parallax', 'p-lazy'])) {
+        if ($this->belongsTo(['p-img'])) {
             $add($variations, 'Cover', ['cover' => true]);
             $add($variations, 'Contain', ['cover' => false]);
             $add($variations, 'Aspect 16:9', ['aspectRatio' => 16 / 9]);
@@ -2053,14 +2336,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Persistent', ['persistent' => true]);
         }
 
-        if ($this->tag === 'p-pagination') {
-            $add($variations, 'Compact', ['density' => 'compact']);
-            $add($variations, 'Comfortable', ['density' => 'comfortable']);
-            $add($variations, 'Rounded', ['rounded' => true]);
-            $add($variations, 'Circle', ['rounded' => 'circle']);
-            $add($variations, 'Total Visible 3', ['totalVisible' => 3]);
-            $add($variations, 'Disabled', ['disabled' => true]);
-        }
+
 
         if ($this->belongsTo(['p-picker', 'p-picker-title', 'p-confirm-edit'])) {
             $add($variations, 'Landscape', ['landscape' => true]);
@@ -2177,7 +2453,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-text', 'p-card-title', 'p-card-subtitle', 'p-card-text',
+            'p-card-title', 'p-card-subtitle', 'p-card-text',
             'p-list-item-title', 'p-list-item-subtitle', 'p-label',
             'p-messages', 'p-counter',
         ])) {
@@ -2282,11 +2558,14 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-bottom-navigation', 'p-btn-toggle', 'p-carousel',
-            'p-expansion-panels', 'p-pagination', 'p-slide-group', 'p-stepper',
-            'p-stepper-vertical', 'p-tab', 'p-tabs', 'p-window',
+            'p-btn-toggle', 'p-carousel',
+            'p-expansion-panels', 'p-slide-group', 'p-stepper',
+            'p-stepper-vertical', 'p-tab', 'p-tabs', 
         ])) {
             $defaults['active'] = true;
+        }
+        if ($this->tag === 'p-tab') {
+            $defaults['selected'] = true;
         }
 
         return $variation + $this->componentFixture() + $defaults;
@@ -2331,7 +2610,7 @@ final class ComponentRoute extends Component
                 'modelValue' => 2026,
                 'visibleDate' => '2026-07-01',
             ],
-            'p-data-table', 'p-data-table-server', 'p-data-table-virtual' => [
+            'p-data-table', 'p-data-table-virtual' => [
                 'headers' => [
                     ['title' => 'Product', 'key' => 'name'],
                     ['title' => 'Status', 'key' => 'status'],
@@ -2377,7 +2656,6 @@ final class ComponentRoute extends Component
             'p-icon' => ['name' => 'StarIcon', 'color' => 0xFF0B172A],
             'p-icon-btn' => ['icon' => 'SettingsIcon'],
             'p-app-bar-nav-icon' => ['icon' => 'MenuIcon'],
-            'p-pagination' => ['length' => 7, 'value' => '3'],
             'p-tabs' => [
                 'items' => ['Overview', 'Details', 'Activity'],
                 'value' => 'overview',
@@ -2386,7 +2664,7 @@ final class ComponentRoute extends Component
                 'items' => ['Overview', 'Details', 'Activity'],
                 'value' => 'overview',
             ],
-            'p-carousel', 'p-window' => [
+            'p-carousel' => [
                 'items' => ['Overview', 'Details', 'Activity'],
                 'value' => 'overview',
             ],
@@ -2410,9 +2688,6 @@ final class ComponentRoute extends Component
                 'smooth' => true,
                 'fill' => true,
                 'lineWidth' => 3,
-            ],
-            'p-parallax' => [
-                'speed' => 0.28,
             ],
             'p-color-input', 'p-color-picker' => ['modelValue' => '#5CBBF6'],
             'p-time-picker' => ['modelValue' => '14:35'],
@@ -2468,9 +2743,6 @@ final class ComponentRoute extends Component
     {
         return match ($this->tag) {
             'p-icon' => 'star',
-            'p-breadcrumbs-divider' => '/',
-            'p-code' => 'PAM',
-            'p-kbd' => 'K',
             default => $this->title,
         };
     }
@@ -2485,7 +2757,6 @@ final class ComponentRoute extends Component
             'p-combobox',
             'p-carousel',
             'p-data-table',
-            'p-data-table-server',
             'p-data-table-virtual',
             'p-date-input',
             'p-date-picker',
@@ -2512,7 +2783,6 @@ final class ComponentRoute extends Component
             'p-textarea',
             'p-time-picker',
             'p-treeview',
-            'p-window',
         ]);
     }
 

@@ -1262,7 +1262,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func applyShimmer() {
         guard !UIAccessibility.isReduceMotionEnabled,
-              !(properties["isLoaded"]?.pamFlag ?? false) else {
+              !(properties["isLoaded"]?.pamFlag ?? false),
+              !(properties["boilerplate"]?.pamFlag ?? false) else {
             shimmerLayer?.removeAllAnimations()
             shimmerLayer?.removeFromSuperlayer()
             shimmerLayer = nil

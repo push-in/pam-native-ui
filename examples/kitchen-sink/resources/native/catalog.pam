@@ -1,113 +1,113 @@
 <AppScreen title="PAM Studio" subtitle="Inspect, tune and ship native products">
     <p-card class="p-5 rounded-3xl">
-        <p-col class="gap-4">
-            <p-row class="items-center justify-between">
-                <p-col class="gap-1">
-                    <p-text class="ui-text-muted">Runtime health</p-text>
-                    <p-text size="xl">Production ready</p-text>
-                </p-col>
-                <p-badge action="success"><p-text>LIVE</p-text></p-badge>
-            </p-row>
+        <Column class="gap-4">
+            <Row class="items-center justify-between">
+                <Column class="gap-1">
+                    <Text class="ui-text-muted">Runtime health</Text>
+                    <Text size="xl">Production ready</Text>
+                </Column>
+                <p-badge action="success"><Text>LIVE</Text></p-badge>
+            </Row>
             <p-divider />
-            <p-row class="gap-3">
-                <p-col class="flex-1 min-w-0">
-                    <p-col class="gap-1">
-                        <p-text size="lg">60</p-text>
-                        <p-text class="ui-text-muted">FPS</p-text>
-                    </p-col>
-                </p-col>
-                <p-col class="flex-1 min-w-0">
-                    <p-col class="gap-1">
-                        <p-text size="lg">29 ms</p-text>
-                        <p-text class="ui-text-muted">Decode</p-text>
-                    </p-col>
-                </p-col>
-                <p-col class="flex-1 min-w-0">
-                    <p-col class="gap-1">
-                        <p-text size="lg">115 ms</p-text>
-                        <p-text class="ui-text-muted">Mount</p-text>
-                    </p-col>
-                </p-col>
-            </p-row>
-        </p-col>
+            <Row class="gap-3">
+                <Column class="flex-1 min-w-0">
+                    <Column class="gap-1">
+                        <Text size="lg">60</Text>
+                        <Text class="ui-text-muted">FPS</Text>
+                    </Column>
+                </Column>
+                <Column class="flex-1 min-w-0">
+                    <Column class="gap-1">
+                        <Text size="lg">29 ms</Text>
+                        <Text class="ui-text-muted">Decode</Text>
+                    </Column>
+                </Column>
+                <Column class="flex-1 min-w-0">
+                    <Column class="gap-1">
+                        <Text size="lg">115 ms</Text>
+                        <Text class="ui-text-muted">Mount</Text>
+                    </Column>
+                </Column>
+            </Row>
+        </Column>
     </p-card>
 
-    <p-col class="gap-3">
-        <p-col class="gap-1">
-            <p-text size="lg">Native playground</p-text>
-            <p-text class="ui-text-muted">Real controls, rendered without a JavaScript runtime.</p-text>
-        </p-col>
+    <Column class="gap-3">
+        <Column class="gap-1">
+            <Text size="lg">Native playground</Text>
+            <Text class="ui-text-muted">Real controls, rendered without a JavaScript runtime.</Text>
+        </Column>
         <p-card class="p-4 rounded-2xl">
-            <p-col class="gap-4">
-                <p-row class="items-center justify-between">
-                    <p-col class="gap-1">
-                        <p-text size="sm">Motion and haptics</p-text>
-                        <p-text class="ui-text-muted">Platform-aware feedback</p-text>
-                    </p-col>
+            <Column class="gap-4">
+                <Row class="items-center justify-between">
+                    <Column class="gap-1">
+                        <Text size="sm">Motion and haptics</Text>
+                        <Text class="ui-text-muted">Platform-aware feedback</Text>
+                    </Column>
                     <p-switch checked="{{ $checked }}" on:change="toggle" />
-                </p-row>
+                </Row>
                 <p-progress-linear value="{{ $progress }}" />
-                <p-row class="gap-2">
+                <Row class="gap-2">
                     <p-btn class="flex-1" on:press="toggleModal">
-                        <p-text>Open modal</p-text>
+                        <Text>Open modal</Text>
                     </p-btn>
                     <p-btn class="flex-1" variant="outline" on:press="toggleSheet">
-                        <p-text>Open sheet</p-text>
+                        <Text>Open sheet</Text>
                     </p-btn>
-                </p-row>
-            </p-col>
+                </Row>
+            </Column>
         </p-card>
-    </p-col>
+    </Column>
 
-    <p-col class="gap-3">
-        <p-text size="lg">Product primitives</p-text>
-        <p-col class="gap-3">
-            <p-col>
+    <Column class="gap-3">
+        <Text size="lg">Product primitives</Text>
+        <Column class="gap-3">
+            <Column>
                 <p-card class="p-4 rounded-2xl">
-                    <p-col class="gap-2">
+                    <Column class="gap-2">
                         <p-badge action="success"><p-icon icon="check" /></p-badge>
-                        <p-text size="sm">Typed forms</p-text>
-                        <p-text class="ui-text-muted">Rules, drafts and server errors.</p-text>
-                    </p-col>
+                        <Text size="sm">Typed forms</Text>
+                        <Text class="ui-text-muted">Rules, drafts and server errors.</Text>
+                    </Column>
                 </p-card>
-            </p-col>
-            <p-col>
+            </Column>
+            <Column>
                 <p-card class="p-4 rounded-2xl">
-                    <p-col class="gap-2">
+                    <Column class="gap-2">
                         <p-badge action="info"><p-icon icon="schedule" /></p-badge>
-                        <p-text size="sm">Async states</p-text>
-                        <p-text class="ui-text-muted">Loading through recovery.</p-text>
-                    </p-col>
+                        <Text size="sm">Async states</Text>
+                        <Text class="ui-text-muted">Loading through recovery.</Text>
+                    </Column>
                 </p-card>
-            </p-col>
-        </p-col>
-    </p-col>
+            </Column>
+        </Column>
+    </Column>
 
     <p-alert action="info" variant="subtle" class="rounded-2xl">
         <p-icon icon="info" />
-        <p-col class="gap-1">
-            <p-text>DevTools are one command away</p-text>
-            <p-text class="ui-text-muted">pam mobile devtools .</p-text>
-        </p-col>
+        <Column class="gap-1">
+            <Text>DevTools are one command away</Text>
+            <Text class="ui-text-muted">pam mobile devtools .</Text>
+        </Column>
     </p-alert>
 
     <p-btn on:press="openComponents" class="w-full">
         <p-icon icon="widgets" />
-        <p-text>Explore all native components</p-text>
+        <Text>Explore all native components</Text>
     </p-btn>
 
     <p-dialog open="{{ $modalOpen }}" on:event="closeModal">
 
         <p-card>
             <p-card-title>
-                <p-text size="lg">Native by default</p-text>
+                <Text size="lg">Native by default</Text>
                 <p-icon-btn on:press="closeModal"><p-icon icon="close" /></p-icon-btn>
             </p-card-title>
             <p-card-text>
-                <p-text>Focus, Back and accessibility remain owned by the platform.</p-text>
+                <Text>Focus, Back and accessibility remain owned by the platform.</Text>
             </p-card-text>
             <p-card-actions>
-                <p-btn on:press="closeModal"><p-text>Got it</p-text></p-btn>
+                <p-btn on:press="closeModal"><Text>Got it</Text></p-btn>
             </p-card-actions>
         </p-card>
     </p-dialog>

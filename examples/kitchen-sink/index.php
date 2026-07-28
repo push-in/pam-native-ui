@@ -50,32 +50,13 @@ $drawer = Router::drawer('overview')
     ->route('overlays', 'Overlays', fn () => $showcaseRoutes['showcase-overlays'])
     ->route('all', 'All components', fn () => $gallery);
 $componentRoutes = [];
-$catalogPrimitives = [
-    'p-app',
-    'p-col',
-    'p-container',
-    'p-footer',
-    'p-layout',
-    'p-layout-item',
-    'p-main',
-    'p-responsive',
-    'p-row',
-    'p-spacer',
-];
-$catalogProviders = [
-    'p-defaults-provider',
-    'p-locale-provider',
-    'p-theme-provider',
-    'p-validation',
-];
+$catalogProviders = [];
 $catalogInternalParts = [
     'p-app-bar-nav-icon',
     'p-app-bar-title',
     'p-alert-title',
     'p-banner-actions',
     'p-banner-text',
-    'p-breadcrumbs-divider',
-    'p-breadcrumbs-item',
     'p-calendar-day',
     'p-calendar-header',
     'p-calendar-interval',
@@ -125,29 +106,28 @@ $catalogInternalParts = [
     'p-toolbar-items',
     'p-toolbar-title',
     'p-treeview-item',
-    'p-window-item',
-];
-$catalogNativeInfrastructure = [
-    // PAM Native already owns the system insets and status bar lifecycle.
-    'p-system-bar',
 ];
 $catalogHidden = array_merge(
-    $catalogPrimitives,
     $catalogProviders,
     $catalogInternalParts,
-    $catalogNativeInfrastructure,
 );
 $catalogGroup = static fn (string $tag): string => match (true) {
     preg_match('/(btn|fab|chip|icon|avatar|badge|rating)/', $tag) === 1 =>
         'Actions and identity',
-    preg_match('/(field|input|select|autocomplete|combobox|checkbox|radio|switch|slider|form|otp|file)/', $tag) === 1 =>
-        'Forms and selection',
-    preg_match('/(app-bar|toolbar|navigation|tabs|tab|breadcrumbs|pagination|stepper|window|carousel)/', $tag) === 1 =>
-        'Navigation',
+    preg_match('/(checkbox|radio|switch|slider|item-group)/', $tag) === 1 =>
+        'Selection controls',
+    preg_match('/(field|input|select|autocomplete|combobox|form|otp|file|textarea)/', $tag) === 1 =>
+        'Forms and inputs',
+    preg_match('/(color-picker|date-picker|time-picker|confirm-edit|calendar)/', $tag) === 1 =>
+        'Pickers and editing',
     preg_match('/(data|table|list|tree|virtual|infinite|timeline|calendar)/', $tag) === 1 =>
         'Data display',
-    preg_match('/(dialog|menu|overlay|sheet|snackbar|tooltip|alert|banner)/', $tag) === 1 =>
+    preg_match('/(img|lazy|parallax|skeleton|sparkline|transition)/', $tag) === 1 =>
+        'Media and motion',
+    preg_match('/(dialog|menu|overlay|sheet|snackbar|tooltip|alert|banner|progress)/', $tag) === 1 =>
         'Feedback and overlays',
+    preg_match('/(app-bar|toolbar|navigation|tabs|tab|slide-group|speed-dial|breadcrumbs|pagination|stepper|window|carousel)/', $tag) === 1 =>
+        'Navigation',
     default => 'Layout and content',
 };
 foreach (MaterialComponentMap::TAGS as $tag => $component) {
