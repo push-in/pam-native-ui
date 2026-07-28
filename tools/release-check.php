@@ -56,7 +56,7 @@ $assert(
     'The plugin schema must resolve through the pushinbr/pam-native package.',
 );
 $assert(
-    ($plugin['pamNative']['(minimum'] ?? null) === '0.4.0'
+    ($plugin['pamNative']['minimum'] ?? null) === '0.4.0'
         && ($plugin['pamNative']['maximumExclusive'] ?? null) === '0.5.0',
     'The plugin must support PAM Native 0.4.x.',
 );

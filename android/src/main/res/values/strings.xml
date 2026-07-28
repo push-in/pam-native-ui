@@ -14,4 +14,5 @@
     <string name="pam_calendar_select_year">Select year</string>
     <string name="pam_calendar_selected_month">Selected month %1$d</string>
     <string name="pam_calendar_selected_year">Selected year %1$d</string>
+    <string name="pam_use_custom_value">Use &quot;%1$s&quot;</string>
 </resources>

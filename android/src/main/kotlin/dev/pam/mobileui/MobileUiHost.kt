@@ -7391,7 +7391,7 @@ internal class MobileUiHost(
         val showCustomAction = sheetAllowCustomValue && query.isNotEmpty() && !hasExactMatch
         sheetCustomAction?.apply {
             visibility = if (showCustomAction) View.VISIBLE else View.GONE
-            text = "Use \"$query\""
+            text = context.getString(R.string.pam_use_custom_value, query)
             contentDescription = text
         }
         val showEmptyState = query.isNotEmpty() && visibleItems.isEmpty() && !showCustomAction

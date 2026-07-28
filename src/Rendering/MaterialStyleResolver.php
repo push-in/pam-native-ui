@@ -1639,10 +1639,7 @@ final class MaterialStyleResolver
                 MaterialDensity::Compact => 48.0,
                 default => 64.0,
             };
-            if (
-                in_array($part, ['PAppBar', 'PToolbar'], true)
-                && ($props['prominent'] ?? false) === true
-            ) {
+            if (($props['prominent'] ?? false) === true) {
                 $barHeight = 128.0;
             }
 
@@ -1663,21 +1660,6 @@ final class MaterialStyleResolver
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
                 justifyContent: null,
-            );
-        }
-
-        if (in_array($part, [
-            
-            'PDefaultsProvider', 'PThemeProvider',
-            'PLocaleProvider', 
-            'PTransition',
-        ], true)) {
-            return new Style(
-                widthPercent: 100.0,
-                backgroundColor: false
-                    ? $theme->color(ColorToken::Background)
-                    : null,
-                opacity: $opacity,
             );
         }
 

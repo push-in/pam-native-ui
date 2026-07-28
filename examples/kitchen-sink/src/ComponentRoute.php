@@ -268,12 +268,14 @@ final class ComponentRoute extends Component
             } elseif ($this->tag === 'p-carousel') {
                 $item = MaterialComponentMap::TAGS['p-carousel-item'];
                 $slideValues = ['overview', 'details', 'activity'];
-                $currentSlide = (string) (
+                $currentSlideValue =
                     $this->sampleValues[$index]
                     ?? $previewProps['modelValue']
                     ?? $previewProps['value']
-                    ?? 'overview'
-                );
+                    ?? 'overview';
+                $currentSlide = is_string($currentSlideValue)
+                    ? $currentSlideValue
+                    : 'overview';
                 if (!in_array($currentSlide, $slideValues, true)) {
                     $currentSlide = 'overview';
                 }
@@ -286,13 +288,12 @@ final class ComponentRoute extends Component
                 $previewProps['modelValue'] = $currentSlide;
                 $slides = [];
                 $controls = [];
-                if ($this->tag === 'p-carousel') {
-                    $indicator = MaterialComponentMap::TAGS['p-btn'];
-                    $currentIndex = array_search(
-                        $currentSlide,
-                        $slideValues,
-                        true,
-                    );
+                $indicator = MaterialComponentMap::TAGS['p-btn'];
+                $currentIndex = array_search(
+                    $currentSlide,
+                    $slideValues,
+                    true,
+                );
                     $previousSlide = $slideValues[
                         ($currentIndex + count($slideValues) - 1)
                         % count($slideValues)
@@ -300,7 +301,7 @@ final class ComponentRoute extends Component
                     $nextSlide = $slideValues[
                         ($currentIndex + 1) % count($slideValues)
                     ];
-                    if ($previewProps['showArrows'] ?? false) {
+                if ($previewProps['showArrows'] ?? false) {
                         $controls[] = $indicator::make(
                             [
                                 'value' => 'carousel-control-previous',
@@ -329,8 +330,8 @@ final class ComponentRoute extends Component
                             justifyContent: Justify::Center,
                             backgroundColor: 0x66000000,
                         ));
-                    }
-                    if (!($previewProps['hideDelimiters'] ?? false)) {
+                }
+                if (!($previewProps['hideDelimiters'] ?? false)) {
                         $delimiters = [];
                         foreach ($slideValues as $slideIndex => $value) {
                             $active = $value === $currentSlide;
@@ -364,8 +365,8 @@ final class ComponentRoute extends Component
                             alignItems: Align::Center,
                             justifyContent: Justify::Center,
                         ));
-                    }
-                    if ($previewProps['showArrows'] ?? false) {
+                }
+                if ($previewProps['showArrows'] ?? false) {
                         $controls[] = $indicator::make(
                             [
                                 'value' => 'carousel-control-next',
@@ -394,7 +395,6 @@ final class ComponentRoute extends Component
                             justifyContent: Justify::Center,
                             backgroundColor: 0x66000000,
                         ));
-                    }
                 }
                 $slides[] = $item::make(
                         [
@@ -420,13 +420,11 @@ final class ComponentRoute extends Component
                             backgroundColor: 0xFF0E6FA5,
                         )),
                 )->style(new Style(
-                    positionType: $this->tag === 'p-carousel'
-                        ? PositionType::Absolute
-                        : PositionType::Relative,
-                    left: $this->tag === 'p-carousel' ? 0.0 : null,
-                    top: $this->tag === 'p-carousel' ? 0.0 : null,
+                    positionType: PositionType::Absolute,
+                    left: 0.0,
+                    top: 0.0,
                     widthPercent: 100.0,
-                    heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
+                    heightPercent: 100.0,
                 ));
                 $slides[] = $item::make(
                     [
@@ -452,13 +450,11 @@ final class ComponentRoute extends Component
                         backgroundColor: 0xFF00897B,
                     )),
                 )->style(new Style(
-                    positionType: $this->tag === 'p-carousel'
-                        ? PositionType::Absolute
-                        : PositionType::Relative,
-                    left: $this->tag === 'p-carousel' ? 0.0 : null,
-                    top: $this->tag === 'p-carousel' ? 0.0 : null,
+                    positionType: PositionType::Absolute,
+                    left: 0.0,
+                    top: 0.0,
                     widthPercent: 100.0,
-                    heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
+                    heightPercent: 100.0,
                 ));
                 $slides[] = $item::make(
                     [
@@ -484,13 +480,11 @@ final class ComponentRoute extends Component
                         backgroundColor: 0xFFF57C00,
                     )),
                 )->style(new Style(
-                    positionType: $this->tag === 'p-carousel'
-                        ? PositionType::Absolute
-                        : PositionType::Relative,
-                    left: $this->tag === 'p-carousel' ? 0.0 : null,
-                    top: $this->tag === 'p-carousel' ? 0.0 : null,
+                    positionType: PositionType::Absolute,
+                    left: 0.0,
+                    top: 0.0,
                     widthPercent: 100.0,
-                    heightPercent: $this->tag === 'p-carousel' ? 100.0 : null,
+                    heightPercent: 100.0,
                 ));
                 $preview = $component::make(
                     $previewProps,
@@ -499,7 +493,7 @@ final class ComponentRoute extends Component
                 )->style(new Style(
                     positionType: PositionType::Relative,
                     widthPercent: 100.0,
-                    minHeight: $this->tag === 'p-carousel' ? 500.0 : 220.0,
+                    minHeight: 500.0,
                     overflow: \Pam\Native\Overflow::Hidden,
                 ));
             } elseif ($this->belongsTo(['p-menu', 'p-tooltip'])) {

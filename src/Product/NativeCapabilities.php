@@ -26,6 +26,7 @@ final class NativeCapabilities
     {
     }
 
+    /** @param list<float> $snapPoints */
     public static function bottomSheet(
         Renderable $content,
         array $snapPoints = [0.4, 0.9],
