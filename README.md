@@ -29,6 +29,17 @@ PAM Native. It exposes 124 mobile `p-*` component parts across 73 manually autho
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
 
+## Part of the PAM ecosystem
+
+- [PAM Native core](https://github.com/push-in/pam-native) — required native
+  runtime, renderer, navigation and platform modules.
+- [PAM Native Nitro](https://github.com/push-in/pam-native-nitro) —
+  high-performance offline-first data for native applications.
+- [PAM Native documentation](https://push-in.github.io/pam-docs/native/overview/)
+  — start here if you are new to native PHP applications.
+- [PAM Mobile UI documentation](https://push-in.github.io/pam-docs/mobile-ui/overview/)
+  — components, themes, accessibility and performance.
+
 This library does not wrap a web design system and call it native. Its
 components, themes, motion, interaction, accessibility semantics, responsive
 behavior, and platform contracts are designed for the PAM renderer itself.
@@ -76,11 +87,9 @@ sources, and generates the native view registries during `pam mobile prepare`.
 ```xml
 <AppScreen>
         <p-card class="pa-6">
-            <p-card-title>Production dashboard</p-card-title>
-            <p-card-subtitle>Retained native Material UI</p-card-subtitle>
-            <p-card-text>
-                <Text>One component contract, two native renderers.</Text>
-            </p-card-text>
+            <Text size="xl">Production dashboard</Text>
+            <Text>Retained native Material UI</Text>
+            <Text>One component contract, two native renderers.</Text>
             <p-card-actions>
                 <p-btn on:press="continue">Continue</p-btn>
             </p-card-actions>
