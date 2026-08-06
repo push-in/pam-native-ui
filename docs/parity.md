@@ -1,22 +1,25 @@
 # Parity contract
 
 The authoritative PAM Material machine-readable gate is
-[`resources/material-parity.json`](../resources/material-parity.json). The
-legacy compatibility inventory remains separate in `resources/parity.json`
-until its old PascalCase API is removed.
+[`resources/material-parity.json`](../resources/material-parity.json).
+`resources/parity.json` is an internal renderer-regression inventory; its
+historical PascalCase names are neither registered tags nor Composer-autoloaded
+public facades.
 
 Reference:
 
 - source: the manually maintained PAM Material component specification;
 - namespace: `p-*` only, with no `v-*` aliases;
-- captured surface: 87 mobile modules and 143 public component parts;
+- captured surface: 62 mobile modules and 84 public component parts;
 - targets: retained native Android and UIKit renderers;
 - metadata import: none.
 
 The original documentation navigation exposes fewer cards than the source tree.
-The compatibility inventory tracks 61 historical source modules, including `FlatList`, `SafeAreaView`,
-`StatusBar`, provider/util modules, and the full Chat AI anatomy. Core
-passthroughs use PAM primitives while remaining present in the public catalog.
+The private renderer fixture inventory contains only parts reachable from the
+curated public surface, including dynamically selected icons. It exercises
+native behavior and style recipes in tests but is not Composer-autoloaded.
+Public applications use PAM Native primitives for layout and the curated
+`p-*` surface for Material components.
 `SafeAreaView` forwards per-edge padding/margin insets and
 `KeyboardAvoidingView` forwards height/position/padding behavior, vertical
 offset and enabled state to the Android UI thread.
@@ -38,14 +41,14 @@ viewport filling, nested scrolling, overscroll, fading edge, persistent
 scrollbar, paging/snap, deceleration and keyboard dismissal. Spinner forwards
 animation, stopped visibility, tint and small/large or numeric size; Switch
 retains its Android-owned state and disabled-aware track/thumb tinting.
-Image, ImageBackground, AvatarImage and image-viewer content forward source
+Image, ImageBackground and AvatarImage forward source
 objects/candidates, `src`/`srcSet`, all five resize modes, placeholders, fade,
 resize method/multiplier, progressive flag, cache policy, safe headers, tint,
 overlay, blur, accessibility alt and the five lifecycle callbacks. Android
 owns cancellation, redirects, measured-size decode, RAM/disk caching and
 crossfade; unobserved lifecycle work emits no PHP event.
-InputField, TextareaInput, BottomSheetTextInput, SelectInput,
-ModelSelectorInput, PromptInputTextarea and DateTimePickerInput share the full
+InputField, TextareaInput, BottomSheetTextInput, SelectInput and
+DateTimePickerInput share the full
 native input contract: keyboard/input mode, capitalization, correction,
 autofill, secure/read-only state, selection, cursor styling, multiline sizing,
 submit behavior and typed end/key/selection/content-size events.
@@ -76,6 +79,6 @@ the build. Modules with no upstream variant axis use status `4`
 
 All coded fields use sequential integer IDs represented by PHP enums. Human
 names under `definitions` are documentation labels; component records store the
-IDs. `resources/material-parity.schema.json` fixes the new manual inventory at
-87 mobile modules and 143 public `p-*` components, requires both native targets, rejects
+IDs. `resources/material-parity.schema.json` fixes the curated inventory at
+62 mobile modules and 84 public `p-*` components, requires both native targets, rejects
 metadata import, and rejects unknown fields.

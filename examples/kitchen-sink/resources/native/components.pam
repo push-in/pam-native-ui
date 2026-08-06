@@ -6,13 +6,13 @@
     </template>
 
     <p-card class="p-5 rounded-3xl bg-primary">
-        <p-card-item>
-            <Column class="gap-2">
+        <Row class="px-4 py-3 items-center">
+            <Column class="gap-2 flex-1">
                 <p-chip variant="tonal"><Text>Native design system</Text></p-chip>
                 <Text size="2xl" class="text-white">Build beautifully.</Text>
                 <Text size="md" class="w-full text-white">Every PAM component, rendered by UIKit and Android with the same expressive Material language.</Text>
             </Column>
-        </p-card-item>
+        </Row>
         <p-card-actions class="gap-2">
             <p-chip><p-icon icon="widgets" /><Text>Curated mobile</Text></p-chip>
             <p-chip><p-icon icon="palette" /><Text>Themes</Text></p-chip>
@@ -30,10 +30,10 @@
     </p-slide-group>
 
     <p-banner class="rounded-2xl">
-        <p-banner-text>
+        <Column class="gap-1 flex-1">
             <Text size="sm">Manual UIKit and Android implementations</Text>
             <Text class="ui-text-muted">No Vue runtime, metadata importer or v-* tags.</Text>
-        </p-banner-text>
+        </Column>
         <p-banner-actions>
             <p-chip action="success"><Text>MD3</Text></p-chip>
         </p-banner-actions>
@@ -93,22 +93,22 @@
         <Text class="ui-text-muted">Variants, borders and elevation</Text>
         <Row class="gap-3">
             <p-card variant="elevated" elevation="8" class="p-4 rounded-2xl flex-1">
-                <p-card-title>Elevated</p-card-title>
-                <p-card-subtitle>Elevation 8</p-card-subtitle>
+                <Text>Elevated</Text>
+                <Text>Elevation 8</Text>
             </p-card>
             <p-card variant="tonal" class="p-4 rounded-2xl flex-1">
-                <p-card-title>Tonal</p-card-title>
-                <p-card-subtitle>Soft emphasis</p-card-subtitle>
+                <Text>Tonal</Text>
+                <Text>Soft emphasis</Text>
             </p-card>
         </Row>
         <Row class="gap-3">
             <p-card variant="outline" border="true" class="p-4 rounded-lg flex-1">
-                <p-card-title>Outlined</p-card-title>
-                <p-card-subtitle>Border</p-card-subtitle>
+                <Text>Outlined</Text>
+                <Text>Border</Text>
             </p-card>
             <p-card variant="flat" class="p-4 rounded-none flex-1">
-                <p-card-title>Flat</p-card-title>
-                <p-card-subtitle>Square</p-card-subtitle>
+                <Text>Flat</Text>
+                <Text>Square</Text>
             </p-card>
         </Row>
         <Row class="gap-2">
@@ -150,10 +150,10 @@
     <Column class="gap-3">
         <Text size="xl">Feedback</Text>
         <Text class="ui-text-muted">Semantic colors and variants</Text>
-        <p-alert action="success" variant="tonal"><p-alert-title>Success</p-alert-title><Text>Everything is ready to ship.</Text></p-alert>
-        <p-alert action="info" variant="outline"><p-alert-title>Information</p-alert-title><Text>A useful contextual message.</Text></p-alert>
-        <p-alert action="warning" variant="tonal"><p-alert-title>Warning</p-alert-title><Text>Review this choice before continuing.</Text></p-alert>
-        <p-alert action="error" variant="flat"><p-alert-title>Error</p-alert-title><Text>Something needs your attention.</Text></p-alert>
+        <p-alert action="success" variant="tonal"><Text>Success</Text><Text>Everything is ready to ship.</Text></p-alert>
+        <p-alert action="info" variant="outline"><Text>Information</Text><Text>A useful contextual message.</Text></p-alert>
+        <p-alert action="warning" variant="tonal"><Text>Warning</Text><Text>Review this choice before continuing.</Text></p-alert>
+        <p-alert action="error" variant="flat"><Text>Error</Text><Text>Something needs your attention.</Text></p-alert>
         <Row class="gap-3 items-center">
             <p-progress-circular value="72" size="sm" />
             <p-progress-circular value="72" size="lg" />
@@ -169,22 +169,20 @@
     <Column class="gap-3">
         <Text size="lg">Foundations</Text>
         <p-card class="p-4 rounded-2xl">
-            <p-card-item>
+            <Row class="px-4 py-3 items-center">
                 <Row class="items-center gap-3">
                     <p-avatar size="lg"><Text>P</Text></p-avatar>
                     <Column class="flex-1 gap-1">
-            <p-card-title>PAM Material</p-card-title>
-                        <p-card-subtitle>Native surfaces and typography</p-card-subtitle>
+            <Text>PAM Material</Text>
+                        <Text>Native surfaces and typography</Text>
                     </Column>
                     <p-badge action="success"><Text>Ready</Text></p-badge>
                 </Row>
-            </p-card-item>
-            <p-card-text>
-                <Text>Cards, sheets, alerts, banners, dividers and labels share semantic tokens.</Text>
-            </p-card-text>
+            </Row>
+            <Text>Cards, sheets, alerts, banners, dividers and labels share semantic tokens.</Text>
         </p-card>
         <p-alert action="info" variant="tonal">
-            <p-alert-title>Adaptive by default</p-alert-title>
+            <Text>Adaptive by default</Text>
             <Text>Safe areas, density, themes, locale and RTL flow through every primitive.</Text>
         </p-alert>
         <p-empty-state>
@@ -211,20 +209,20 @@
             <p-btn value="native" on:press="selectNative"><Text>Native</Text></p-btn>
             <p-btn value="typed" on:press="selectTyped"><Text>Typed</Text></p-btn>
         </p-btn-toggle>
-        <p-selection-control-group>
+        <Column class="gap-3">
             <Column class="gap-3">
                 <p-checkbox checked="{{ $checked }}" on:change="toggle">
-                    <p-label>Checkbox</p-label>
+                    <Text>Checkbox</Text>
                 </p-checkbox>
                 <p-radio-group value="{{ $selection }}">
-                    <p-radio value="native"><p-label>Android and iOS</p-label></p-radio>
-                    <p-radio value="typed"><p-label>Typed protocol</p-label></p-radio>
+                    <p-radio value="native"><Text>Android and iOS</Text></p-radio>
+                    <p-radio value="typed"><Text>Typed protocol</Text></p-radio>
                 </p-radio-group>
                 <p-switch checked="{{ $checked }}" on:change="toggle">
-                    <p-label>Motion and haptics</p-label>
+                    <Text>Motion and haptics</Text>
                 </p-switch>
             </Column>
-        </p-selection-control-group>
+        </Column>
     </Column>
 
     <Column class="gap-3">
@@ -247,36 +245,32 @@
             <p-combobox label="Tags" value="material" items="material,native,typed" />
             <p-date-input label="Release date" value="2026-07-26" />
             <p-color-input label="Brand color" value="#4C8DFF" />
-            <p-file-input label="Artifacts" />
-            <p-file-upload>
-                <p-file-upload-item><Text>pam-mobile-ui.zip</Text></p-file-upload-item>
-            </p-file-upload>
-            <p-messages><Text class="ui-text-muted">Validation, drafts, server errors and autofill are native.</Text></p-messages>
-            <p-counter><Text>24 / 120</Text></p-counter>
+            <Text class="ui-text-muted">Validation, drafts, server errors and autofill are native.</Text>
+            <Text>24 / 120</Text>
         </p-form>
     </Column>
 
     <Column class="gap-3">
         <Text size="xl">Selection controls</Text>
         <p-card class="p-4 rounded-3xl">
-            <p-selection-control-group>
+            <Column class="gap-3">
                 <Row class="gap-4 items-center">
-                    <p-checkbox checked="true"><p-label>Checked</p-label></p-checkbox>
-                    <p-checkbox checked="false"><p-label>Empty</p-label></p-checkbox>
-                    <p-checkbox indeterminate="true"><p-label>Mixed</p-label></p-checkbox>
-                    <p-checkbox disabled="true"><p-label>Disabled</p-label></p-checkbox>
+                    <p-checkbox checked="true"><Text>Checked</Text></p-checkbox>
+                    <p-checkbox checked="false"><Text>Empty</Text></p-checkbox>
+                    <p-checkbox indeterminate="true"><Text>Mixed</Text></p-checkbox>
+                    <p-checkbox disabled="true"><Text>Disabled</Text></p-checkbox>
                 </Row>
                 <p-radio-group value="primary">
-                    <p-radio value="primary"><p-label>Selected</p-label></p-radio>
-                    <p-radio value="secondary"><p-label>Unselected</p-label></p-radio>
-                    <p-radio value="disabled" disabled="true"><p-label>Disabled</p-label></p-radio>
+                    <p-radio value="primary"><Text>Selected</Text></p-radio>
+                    <p-radio value="secondary"><Text>Unselected</Text></p-radio>
+                    <p-radio value="disabled" disabled="true"><Text>Disabled</Text></p-radio>
                 </p-radio-group>
                 <Row class="gap-4 items-center">
-                    <p-switch checked="true"><p-label>On</p-label></p-switch>
-                    <p-switch checked="false"><p-label>Off</p-label></p-switch>
-                    <p-switch checked="true" disabled="true"><p-label>Disabled</p-label></p-switch>
+                    <p-switch checked="true"><Text>On</Text></p-switch>
+                    <p-switch checked="false"><Text>Off</Text></p-switch>
+                    <p-switch checked="true" disabled="true"><Text>Disabled</Text></p-switch>
                 </Row>
-            </p-selection-control-group>
+            </Column>
         </p-card>
     </Column>
 
@@ -333,14 +327,14 @@
     <Column class="gap-3">
         <Text size="lg">Data display</Text>
         <p-list>
-            <p-list-subheader>Native packages</p-list-subheader>
+            <Text>Native packages</Text>
             <p-list-item>
-                <p-list-item-title>pushinbr/pam-mobile-ui</p-list-item-title>
-                <p-list-item-subtitle>Material components</p-list-item-subtitle>
+                <Text>pushinbr/pam-mobile-ui</Text>
+                <Text>Material components</Text>
             </p-list-item>
             <p-list-item>
-                <p-list-item-title>pushinbr/pam-native</p-list-item-title>
-                <p-list-item-subtitle>Android + UIKit renderer</p-list-item-subtitle>
+                <Text>pushinbr/pam-native</Text>
+                <Text>Android + UIKit renderer</Text>
             </p-list-item>
         </p-list>
         <Column>
@@ -375,19 +369,8 @@
     <Column class="gap-3">
         <Text size="lg">Date, color and visualization</Text>
         <p-calendar value="2026-07-26" />
-        <p-date-picker value="2026-07-26">
-            <p-date-picker-header><Text>July 2026</Text></p-date-picker-header>
-            <p-date-picker-month />
-        </p-date-picker>
-        <p-time-picker value="19:30">
-            <p-time-picker-clock />
-            <p-time-picker-controls />
-        </p-time-picker>
-        <p-color-picker value="#4C8DFF">
-            <p-color-picker-preview />
-            <p-color-picker-canvas />
-            <p-color-picker-swatches />
-        </p-color-picker>
+        <p-date-picker value="2026-07-26" />
+        <p-time-picker value="19:30" />
         <p-sparkline value="18,32,29,44,68,61,82" />
     </Column>
 
@@ -423,12 +406,12 @@
         <Column>
             <p-card variant="outline" class="rounded-3xl">
                 <p-toolbar>
-                    <p-toolbar-title>Workspace</p-toolbar-title>
+                    <Text>Workspace</Text>
                     <Spacer />
-                    <p-toolbar-items>
+                    <Row class="gap-2 items-center">
                         <p-icon-btn accessibilityLabel="Search"><p-icon icon="search" /></p-icon-btn>
                         <p-icon-btn accessibilityLabel="More options"><p-icon icon="more-vert" /></p-icon-btn>
-                    </p-toolbar-items>
+                    </Row>
                 </p-toolbar>
                 <p-sheet class="p-4"><Text>A complete native application surface</Text></p-sheet>
             </p-card>
@@ -436,13 +419,13 @@
         <p-card variant="outline" class="rounded-3xl">
             <p-app-bar>
                 <p-app-bar-nav-icon><p-icon icon="menu" /></p-app-bar-nav-icon>
-                <p-app-bar-title>Native workspace</p-app-bar-title>
+                <Text>Native workspace</Text>
                 <p-icon-btn><p-icon icon="more-vert" /></p-icon-btn>
             </p-app-bar>
             <Column>
                 <Column>
-                    <p-list-item><p-list-item-title>Overview</p-list-item-title></p-list-item>
-                    <p-list-item><p-list-item-title>Components</p-list-item-title></p-list-item>
+                    <p-list-item><Text>Overview</Text></p-list-item>
+                    <p-list-item><Text>Components</Text></p-list-item>
                 </Column>
                 <Column>
                     <Column><p-sheet class="p-5"><Text>Adaptive content area</Text></p-sheet></Column>
@@ -462,69 +445,41 @@
         <Text class="ui-text-muted">Specialized views and composable building blocks</Text>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Calendar anatomy</p-card-title>
+            <Text>Calendar anatomy</Text>
             <p-calendar value="2026-07-26">
-                <p-calendar-header><Text>July 2026</Text></p-calendar-header>
-                <p-calendar-interval><Text>09:00</Text></p-calendar-interval>
+                <Row><Text>July 2026</Text></Row>
+                <Text>09:00</Text>
                 <p-calendar-day value="2026-07-26"><Text>26</Text></p-calendar-day>
             </p-calendar>
         </p-card>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Date picker views</p-card-title>
-            <p-date-picker value="2026-07-26">
-                <p-date-picker-header><Text>Sunday, July 26</Text></p-date-picker-header>
-                <p-date-picker-controls />
-                <p-date-picker-month />
-                <p-date-picker-months />
-                <p-date-picker-years />
-            </p-date-picker>
+            <Text>Date picker views</Text>
+            <p-date-picker value="2026-07-26" />
         </p-card>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Color editing</p-card-title>
-            <p-color-picker value="#4C8DFF">
-                <p-color-picker-preview />
-                <p-color-picker-canvas />
-                <p-color-picker-edit />
-                <p-color-picker-swatches />
-            </p-color-picker>
-        </p-card>
-
-        <p-card class="p-4 rounded-3xl">
-            <p-card-title>Picker and confirmation</p-card-title>
-            <p-picker>
-                <p-picker-title>Choose a release channel</p-picker-title>
-                <p-list>
-                    <p-list-group value="stable">
-                        <p-list-subheader>Recommended</p-list-subheader>
-                        <p-list-item><p-list-item-title>Stable</p-list-item-title></p-list-item>
-                        <p-list-item><p-list-item-title>Preview</p-list-item-title></p-list-item>
-                    </p-list-group>
-                </p-list>
-            </p-picker>
-            <p-confirm-edit value="Stable">
-                <Text>Stable channel selected</Text>
-            </p-confirm-edit>
-        </p-card>
-
-        <p-card class="p-4 rounded-3xl">
-            <p-card-title>Selection primitives</p-card-title>
+            <Text>Selection primitives</Text>
             <Row class="gap-3 items-center">
-                <p-checkbox-btn checked="true" accessibilityLabel="Selected checkbox button" />
-                <p-selection-control checked="true"><p-label>Custom selection control</p-label></p-selection-control>
+                <p-checkbox checked="true" accessibilityLabel="Selected checkbox" />
+                <p-checkbox checked="true"><Text>Custom checkbox</Text></p-checkbox>
             </Row>
+            <p-list>
+                <Text>Release channel</Text>
+                <p-list-item><Text>Stable</Text></p-list-item>
+                <p-list-item><Text>Preview</Text></p-list-item>
+            </p-list>
         </p-card>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Data strategies</p-card-title>
+            <Text>Data strategies</Text>
             <p-data-table items="Release,Status,Owner" />
             <p-divider />
             <p-data-table-virtual items="Android,iOS,Composer,GitHub" />
         </p-card>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Stepper window</p-card-title>
+            <Text>Stepper window</Text>
             <p-stepper value="2">
                 <p-stepper-header>
                     <p-stepper-item value="1"><Text>Design</Text></p-stepper-item>
@@ -541,12 +496,12 @@
         </p-card>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Queued feedback</p-card-title>
-            <p-snackbar-queue items="Build complete,Android artifact ready,iOS checks passed" />
+            <Text>Queued feedback</Text>
+            <p-snackbar open="true"><Text>Build complete and artifacts ready.</Text></p-snackbar>
         </p-card>
 
         <p-card class="p-4 rounded-3xl">
-            <p-card-title>Overlay surface</p-card-title>
+            <Text>Overlay surface</Text>
             <Column aspectRatio="16/9">
                 <p-sheet class="p-4 rounded-2xl">
                     <Text>Content beneath the overlay</Text>
@@ -559,11 +514,11 @@
     <Column class="gap-3">
         <Text size="xl">Form foundations</Text>
                     <p-card variant="tonal" class="p-4 rounded-2xl">
-                            <p-field>
-                                <p-field-label>Material field</p-field-label>
-                                <p-input value="Typed native form state" />
-                                <p-messages><Text>Valid and accessible</Text></p-messages>
-                            </p-field>
+                            <p-text-field
+                                label="Material field"
+                                value="Typed native form state"
+                                helper="Valid and accessible"
+                            />
         </p-card>
     </Column>
 
@@ -576,7 +531,7 @@
         </Row>
         <p-menu>
             <p-btn><Text>Menu</Text></p-btn>
-            <p-list><p-list-item><p-list-item-title>Menu item</p-list-item-title></p-list-item></p-list>
+            <p-list><p-list-item><Text>Menu item</Text></p-list-item></p-list>
         </p-menu>
         <p-speed-dial>
             <p-fab><p-icon icon="add" /></p-fab>
@@ -588,15 +543,15 @@
 
     <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
         <p-card>
-            <p-card-title>Production dialog</p-card-title>
-            <p-card-text><Text>Focus trapping, Back, scrim and motion are platform-owned.</Text></p-card-text>
+            <Text>Production dialog</Text>
+            <Text>Focus trapping, Back, scrim and motion are platform-owned.</Text>
             <p-card-actions><p-btn on:press="closeDialog"><Text>Close</Text></p-btn></p-card-actions>
         </p-card>
     </p-dialog>
 
     <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" on:requestClose="closeSheet">
-        <p-list-item><p-list-item-title>Inspect component</p-list-item-title></p-list-item>
-        <p-list-item><p-list-item-title>View accessibility</p-list-item-title></p-list-item>
-        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+        <p-list-item><Text>Inspect component</Text></p-list-item>
+        <p-list-item><Text>View accessibility</Text></p-list-item>
+        <p-list-item on:press="closeSheet"><Text>Close</Text></p-list-item>
     </p-bottom-sheet>
 </AppScreen>

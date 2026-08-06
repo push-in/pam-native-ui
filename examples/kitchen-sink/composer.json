@@ -2,7 +2,7 @@
     "name": "pushinbr/pam-mobile-ui-kitchen-sink",
     "description": "PAM Mobile UI native component catalog.",
     "type": "project",
-    "license": "BUSL-1.1",
+    "license": "Apache-2.0",
     "require": {
         "php": "^8.4",
         "pushinbr/pam-mobile-ui": "0.4.x-dev",

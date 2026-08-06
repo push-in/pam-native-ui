@@ -17,12 +17,9 @@ final class StyleRecipeResolver
      * @var array<string, string>
      */
     private const array NATIVE_DEFAULTS = [
-        'Attachment' => 'flex-row',
         'DateTimePickerInput' => 'flex-1 min-w-0',
         'FileTreeFolder' => 'flex-col items-stretch',
         'InputSlot' => 'w-10 h-full shrink-0',
-        'MessageContent' => 'w-full',
-        'PromptInput' => 'relative bottom-0',
         'Popover' => 'w-auto h-auto items-stretch justify-start',
         'SelectInput' => 'flex-1 min-w-0',
         'Table' => 'w-full',
@@ -55,12 +52,7 @@ final class StyleRecipeResolver
         $variants = $recipe['variants'];
 
         foreach ($variants as $axis => $options) {
-            if (!is_string($axis) || !is_array($options)) {
-                continue;
-            }
-            $selected = $props[$axis]
-                ?? $defaults[$axis]
-                ?? (array_key_exists('default', $options) ? 'default' : null);
+            $selected = self::selected($axis, $props, $defaults, $options);
             self::appendSelected($classes, $axis, $selected, $options);
         }
 
@@ -68,13 +60,12 @@ final class StyleRecipeResolver
         $parentVariants = $recipe['parentVariants'];
 
         foreach ($parentVariants as $axis => $options) {
-            if (!is_string($axis) || !is_array($options)) {
-                continue;
-            }
-            $selected = $parent[$axis]
-                ?? $props[$axis]
-                ?? $defaults[$axis]
-                ?? (array_key_exists('default', $options) ? 'default' : null);
+            $selected = self::selected(
+                $axis,
+                [...$props, ...$parent],
+                $defaults,
+                $options,
+            );
             self::appendSelected($classes, $axis, $selected, $options);
         }
 
@@ -98,6 +89,27 @@ final class StyleRecipeResolver
         }
 
         return $classes;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<string, mixed> $defaults
+     * @param array<array-key, string> $options
+     */
+    private static function selected(
+        string $axis,
+        array $props,
+        array $defaults,
+        array $options,
+    ): mixed {
+        if (array_key_exists($axis, $props)) {
+            return $props[$axis];
+        }
+        if (array_key_exists($axis, $defaults)) {
+            return $defaults[$axis];
+        }
+
+        return array_key_exists('default', $options) ? 'default' : null;
     }
 
     /**

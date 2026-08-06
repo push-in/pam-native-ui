@@ -15,13 +15,9 @@ use Pam\Native\TextAlignment;
 final class StyleResolver
 {
     private const array TEXT_PARTS = [
-        'ActionsheetItemText',
-        'ActionsheetSectionHeaderText',
         'AlertText',
-        'AttachmentHoverCardText',
         'AvatarFallbackText',
         'BadgeText',
-        'BottomSheetItemText',
         'ButtonText',
         'CalendarDayText',
         'CalendarHeaderTitle',
@@ -34,8 +30,6 @@ final class StyleResolver
         'Heading',
         'LinkText',
         'MenuItemLabel',
-        'MessageResponse',
-        'ModelSelectorName',
         'RadioLabel',
         'SelectInput',
         'SelectSectionHeaderText',
@@ -231,9 +225,9 @@ final class StyleResolver
             );
         }
 
-        if (in_array($part, ['Skeleton', 'SkeletonText'], true)) {
+        if ($part === 'Skeleton') {
             return new Style(
-                minHeight: $part === 'SkeletonText' ? 16.0 : 48.0,
+                minHeight: 48.0,
                 backgroundColor: $theme->color(ColorToken::Muted),
                 borderRadius: 4.0,
             );

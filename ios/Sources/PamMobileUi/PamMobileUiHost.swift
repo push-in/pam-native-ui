@@ -36,57 +36,42 @@ private enum PamMobileBehavior: Int {
     case tabs = 6
     case calendar = 7
     case skeleton = 8
-    case glass = 9
-    case checkbox = 10
-    case radio = 11
-    case toast = 12
-    case imageViewer = 13
-    case chat = 14
-    case progress = 15
-    case drawer = 16
-    case modal = 17
-    case alertDialog = 18
-    case popover = 19
-    case menu = 20
-    case tooltip = 21
-    case dateTimePicker = 22
-    case portal = 23
-    case accordionGroup = 24
-    case checkboxGroup = 25
-    case radioGroup = 26
-    case switchControl = 27
-    case tabTrigger = 28
-    case sheetItem = 29
-    case menuItem = 30
-    case overlayDismiss = 31
-    case inputGroup = 32
-    case inputSlot = 33
-    case formControl = 34
-    case table = 35
-    case tableRow = 36
-    case imageViewerControl = 37
-    case messageBranch = 38
-    case messageBranchControl = 39
-    case promptInput = 40
-    case promptInputSubmit = 41
-    case conversationScrollButton = 42
-    case fileTree = 43
-    case fileTreeFolder = 44
-    case fileTreeFile = 45
-    case transition = 46
-    case parallax = 47
-    case sparkline = 48
-    case hotkey = 49
-    case hover = 50
-    case chipGroup = 51
-    case listItem = 52
-    case timeline = 53
-    case timelineItem = 54
+    case checkbox = 9
+    case radio = 10
+    case toast = 11
+    case progress = 12
+    case modal = 13
+    case popover = 14
+    case menu = 15
+    case tooltip = 16
+    case dateTimePicker = 17
+    case portal = 18
+    case accordionGroup = 19
+    case checkboxGroup = 20
+    case radioGroup = 21
+    case switchControl = 22
+    case tabTrigger = 23
+    case sheetItem = 24
+    case menuItem = 25
+    case overlayDismiss = 26
+    case inputGroup = 27
+    case inputSlot = 28
+    case formControl = 29
+    case table = 30
+    case tableRow = 31
+    case fileTree = 32
+    case fileTreeFolder = 33
+    case fileTreeFile = 34
+    case sparkline = 35
+    case chipGroup = 36
+    case listItem = 37
+    case timeline = 38
+    case timelineItem = 39
 
     var isOverlay: Bool {
         switch self {
-        case .bottomSheet, .overlay, .drawer, .modal, .alertDialog,
-             .popover, .menu, .tooltip, .imageViewer, .portal:
+        case .bottomSheet, .overlay, .modal,
+             .popover, .menu, .tooltip, .portal:
             true
         default:
             false
@@ -96,10 +81,7 @@ private enum PamMobileBehavior: Int {
 
 private enum PamHostAction: Int64 {
     case dismiss = 1
-    case select = 2
-    case open = 3
-    case zoom = 4
-    case navigate = 5
+    case open = 2
 }
 
 final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
@@ -144,12 +126,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var trackColor = UIColor.secondarySystemFill
     private var selectedForegroundColor = UIColor.white
     private var pressAnimator: UIViewPropertyAnimator?
-    private var imageScale: CGFloat = 1
-    private var imageTranslation = CGPoint.zero
     private var shimmerLayer: CAGradientLayer?
     private var progressTrackLayer: CAShapeLayer?
     private var progressFillLayer: CAShapeLayer?
-    private var hoverActive = false
     private var toastDismissWorkItem: DispatchWorkItem?
     private var toastScheduleSignature: String?
     private var toastAnnouncementSignature: String?
@@ -164,6 +143,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var carouselInterval: TimeInterval = 6
     private var carouselWorkItem: DispatchWorkItem?
     private var sparklineAutoDrawApplied = false
+
+    private var animationsEnabled: Bool {
+        !UIAccessibility.isReduceMotionEnabled
+            && !(properties["reduceMotion"]?.pamFlag ?? false)
+            && (properties["animationDuration"]?.pamInteger ?? 1) > 0
+    }
 
     init(emit: @escaping EventEmitter) {
         self.emit = emit
@@ -182,29 +167,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         press.delegate = self
         addGestureRecognizer(press)
 
+        let overlayLongPress = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(onOverlayLongPress(_:))
+        )
+        overlayLongPress.minimumPressDuration = 0.5
+        overlayLongPress.cancelsTouchesInView = false
+        overlayLongPress.delegate = self
+        addGestureRecognizer(overlayLongPress)
+
         let pan = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
         pan.maximumNumberOfTouches = 1
         pan.delegate = self
         addGestureRecognizer(pan)
 
-        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(onPinch(_:)))
-        pinch.delegate = self
-        addGestureRecognizer(pinch)
-
-        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(onDoubleTap(_:)))
-        doubleTap.numberOfTapsRequired = 2
-        doubleTap.delegate = self
-        addGestureRecognizer(doubleTap)
-        tap.require(toFail: doubleTap)
-
-        if #available(iOS 13.0, *) {
-            let hover = UIHoverGestureRecognizer(
-                target: self,
-                action: #selector(onHover(_:))
-            )
-            hover.delegate = self
-            addGestureRecognizer(hover)
-        }
     }
 
     @available(*, unavailable)
@@ -335,17 +311,30 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         applyTabTextVisualState()
     }
 
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        guard isUserInteractionEnabled, !isHidden, alpha > 0.01 else {
+            return false
+        }
+        guard requiresMinimumTouchTarget else {
+            return super.point(inside: point, with: event)
+        }
+        let horizontalInset = max(0, (44 - bounds.width) / 2)
+        let verticalInset = max(0, (44 - bounds.height) / 2)
+
+        return bounds.insetBy(
+            dx: -horizontalInset,
+            dy: -verticalInset
+        ).contains(point)
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         layoutProgressLayers()
         switch behavior {
         case .bottomSheet:
             layoutBottomSheet()
-        case .overlay, .drawer, .modal, .alertDialog, .portal, .imageViewer:
+        case .overlay, .modal, .portal:
             layoutOverlay()
-            if behavior == .imageViewer {
-                applyImageTransform()
-            }
         case .popover, .menu, .tooltip:
             layoutAnchoredOverlay()
         case .tabs:
@@ -360,8 +349,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutTimeline()
         case .timelineItem:
             layoutTimelineItem()
-        case .messageBranch:
-            layoutMessageBranch()
         case .fileTree:
             layoutFileTree()
         default:
@@ -381,7 +368,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .switchControl:
             drawSwitch(context)
         case .checkbox, .radio:
-            drawSelection(context)
+            if !(properties["abstractSelectionItem"]?.pamFlag ?? false) {
+                drawSelection(context)
+            }
         case .skeleton:
             drawSkeleton(context)
         case .calendar:
@@ -440,20 +429,32 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             isExpanded.toggle()
             applyAccordion()
             emit?(.toggle, Data((isExpanded ? "1" : "0").utf8))
+        case .slider:
+            let requested = sliderValue(at: point)
+            let next = properties["rating"]?.pamFlag == true
+                && properties["clearable"]?.pamFlag == true
+                && requested == value
+                ? minimum
+                : requested
+            setRangeValue(next, emitChange: true)
+            emit?(.native, Data(formatted(value).utf8))
         case .tabTrigger:
             tabsAncestor()?.selectTab(self)
             emit?(.press, Data())
         case .sheetItem, .menuItem, .inputSlot,
-             .imageViewerControl, .messageBranchControl, .promptInputSubmit,
-             .conversationScrollButton, .fileTreeFolder, .fileTreeFile:
+             .fileTreeFolder, .fileTreeFile:
             emit?(.press, Data())
             if behavior == .sheetItem,
                properties["closeOnPress"]?.pamFlag ?? true {
                 sheetAncestor()?.clearSheetSearch()
                 sheetAncestor()?.requestDismiss()
             }
-        case .popover, .menu, .tooltip:
+        case .popover, .menu:
             setOpen(!isOpen, shouldEmit: true)
+        case .tooltip:
+            if properties["openOnClick"]?.pamFlag ?? false {
+                setOpen(!isOpen, shouldEmit: true)
+            }
         case .dateTimePicker:
             presentDateTimePicker()
         case .overlayDismiss:
@@ -476,6 +477,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    @objc private func onOverlayLongPress(_ recognizer: UILongPressGestureRecognizer) {
+        guard behavior == .tooltip,
+              properties["openOnLongPress"]?.pamFlag ?? true,
+              isUserInteractionEnabled else {
+            return
+        }
+        switch recognizer.state {
+        case .began:
+            setOpen(true, shouldEmit: true)
+        case .ended, .cancelled, .failed:
+            setOpen(false, shouldEmit: true)
+        default:
+            break
+        }
+    }
+
     private func tabsAncestor() -> PamMobileUiHost? {
         var ancestor = superview
         while let view = ancestor {
@@ -489,15 +506,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func selectTab(_ trigger: PamMobileUiHost) {
         let target = trigger.properties["value"]?.pamText
+        let previous = tabTriggers(in: self)
+            .first(where: \.isSelectedState)?
+            .properties["value"]?
+            .pamText
         tabTriggers(in: self).forEach { item in
             item.isSelectedState = item.properties["value"]?.pamText == target
             item.applyButtonToggleVisualState()
             item.applyTabTextVisualState()
             item.applySemantics()
         }
+        if let target, target != previous {
+            emit?(.change, Data(target.utf8))
+        }
         setNeedsLayout()
         UIView.animate(
-            withDuration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.2,
+            withDuration: animationsEnabled ? 0.2 : 0,
             delay: 0,
             options: [.beginFromCurrentState, .curveEaseInOut, .allowUserInteraction]
         ) {
@@ -607,44 +631,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             if navigationKind == 1 {
                 panCarousel(recognizer)
             }
-        case .drawer:
-            if recognizer.state == .ended,
-               recognizer.velocity(in: self).x < -560 {
-                requestDismiss()
-            }
-        case .imageViewer:
-            let translation = recognizer.translation(in: self)
-            imageTranslation.x += translation.x
-            imageTranslation.y += translation.y
-            recognizer.setTranslation(.zero, in: self)
-            applyImageTransform()
         default:
             break
         }
-    }
-
-    @objc private func onPinch(_ recognizer: UIPinchGestureRecognizer) {
-        guard behavior == .imageViewer else { return }
-        imageScale = min(5, max(1, imageScale * recognizer.scale))
-        recognizer.scale = 1
-        applyImageTransform()
-        if recognizer.state == .ended {
-            emitMap([
-                "action": .integer(PamHostAction.zoom.rawValue),
-                "scale": .decimal(Double(imageScale)),
-            ])
-        }
-    }
-
-    @objc private func onDoubleTap(_ recognizer: UITapGestureRecognizer) {
-        guard behavior == .imageViewer else { return }
-        imageScale = imageScale > 1 ? 1 : 2
-        if imageScale == 1 { imageTranslation = .zero }
-        applyImageTransform(animated: true)
-        emitMap([
-            "action": .integer(PamHostAction.zoom.rawValue),
-            "scale": .decimal(Double(imageScale)),
-        ])
     }
 
     private func applySemantics() {
@@ -659,6 +648,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
         var traits: UIAccessibilityTraits = []
         switch behavior {
+        case .checkbox where properties["abstractSelectionItem"]?.pamFlag ?? false:
+            isAccessibilityElement = true
+            traits = [.button]
+            if isChecked { traits.insert(.selected) }
+            accessibilityValue = isChecked ? "Selected" : "Not selected"
         case .checkbox, .radio, .switchControl:
             isAccessibilityElement = true
             traits = [.button]
@@ -677,13 +671,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             traits = [.button]
             if isSelectedState { traits.insert(.selected) }
         case .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
-             .imageViewerControl, .messageBranchControl, .promptInputSubmit,
-             .conversationScrollButton, .fileTreeFolder, .fileTreeFile:
+             .fileTreeFolder, .fileTreeFile:
             isAccessibilityElement = true
             traits = [.button]
-        case .alertDialog:
-            accessibilityViewIsModal = isOpen
-            isAccessibilityElement = false
         default:
             isAccessibilityElement = accessibilityLabel != nil
         }
@@ -691,6 +681,18 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             traits.insert(.notEnabled)
         }
         accessibilityTraits = traits
+    }
+
+    private var requiresMinimumTouchTarget: Bool {
+        switch behavior {
+        case .accordion, .slider, .checkbox, .radio, .switchControl,
+             .tabTrigger, .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
+             .fileTreeFolder, .fileTreeFile,
+             .calendar, .dateTimePicker:
+            true
+        default:
+            false
+        }
     }
 
     private func applyVisibility() {
@@ -718,18 +720,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             applyShimmer()
         case .fileTree, .fileTreeFolder:
             setNeedsLayout()
-        case .messageBranch:
-            setNeedsLayout()
-        case .imageViewer:
-            applyImageTransform()
-        case .transition:
-            applyTransition()
         case .sparkline:
             applySparklineAutoDraw()
-        case .parallax:
-            applyParallax()
-        case .hotkey:
-            becomeFirstResponder()
         default:
             shimmerLayer?.removeAllAnimations()
             shimmerLayer?.removeFromSuperlayer()
@@ -959,16 +951,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func layoutOverlay() {
         overlayBackdrop()?.frame = bounds
         guard let content = overlayContent() else { return }
-        if behavior == .drawer {
-            let width = min(bounds.width * 0.86, 360)
-            content.frame = CGRect(
-                x: effectiveUserInterfaceLayoutDirection == .rightToLeft
-                    ? bounds.width - width : 0,
-                y: 0,
-                width: width,
-                height: bounds.height
-            )
-        } else if behavior == .modal || behavior == .alertDialog {
+        if behavior == .modal {
             let width = min(max(280, bounds.width - 48), 560)
             let measured = content.sizeThatFits(
                 CGSize(width: width, height: bounds.height - 96)
@@ -1004,6 +987,14 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? triggers.first
         let selected = selectedTrigger?.properties["value"]?.pamText
             ?? controlled
+        if navigationKind == 1 {
+            triggers.forEach { trigger in
+                let visible = selected == nil
+                    || trigger.properties["value"]?.pamText == selected
+                trigger.isHidden = !visible
+                trigger.accessibilityElementsHidden = !visible
+            }
+        }
         descendants(prefix: "pam:tabs-content").forEach { child in
             let value = child.accessibilityIdentifier?.split(separator: ":").last.map(String.init)
             let visible = selected == nil || value == selected
@@ -1115,20 +1106,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
     }
 
-    private func layoutMessageBranch() {
-        let selected = properties["activeBranch"]?.pamInteger
-            ?? properties["branchIndex"]?.pamInteger
-            ?? 0
-        let pages = subviews.filter { !$0.isHidden || $0.accessibilityElementsHidden }
-        for (index, page) in pages.enumerated() {
-            let visible = index == min(max(0, selected), max(0, pages.count - 1))
-            page.isHidden = !visible
-            page.accessibilityElementsHidden = !visible
-            if visible { page.frame = bounds }
-        }
-        accessibilityValue = "Branch \(selected + 1) of \(max(1, pages.count))"
-    }
-
     private func layoutFileTree() {
         let expanded = Set(
             properties["expandedPaths"]?.pamText?
@@ -1219,16 +1196,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? ""
         let signature = "\(identity)\u{0}\(duration)\u{0}\(persistent)\u{0}\(isOpen)"
 
-        isHidden = !isOpen
-        accessibilityElementsHidden = !isOpen
-        toastDismissWorkItem?.cancel()
-        toastDismissWorkItem = nil
-
         guard isOpen else {
+            toastDismissWorkItem?.cancel()
+            toastDismissWorkItem = nil
+            layer.removeAllAnimations()
+            isHidden = true
+            alpha = 1
+            transform = .identity
+            accessibilityElementsHidden = true
             toastScheduleSignature = signature
             return
         }
 
+        isHidden = false
+        accessibilityElementsHidden = false
         let announcement = accessibilityLabel ?? findFirstText(in: self) ?? "Notification"
         let announcementSignature = "\(identity)\u{0}\(announcement)"
         if announcementSignature != toastAnnouncementSignature {
@@ -1239,14 +1220,61 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             )
         }
 
-        guard !persistent, signature != toastScheduleSignature else { return }
+        guard signature != toastScheduleSignature else { return }
         toastScheduleSignature = signature
+        toastDismissWorkItem?.cancel()
+        toastDismissWorkItem = nil
+        layer.removeAllAnimations()
+        if animationsEnabled {
+            let entersFromTop = properties["location"]?.pamText
+                .lowercased()
+                .contains("top") ?? false
+            alpha = 0
+            transform = CGAffineTransform(
+                translationX: 0,
+                y: entersFromTop ? -8 : 8
+            )
+            UIView.animate(
+                withDuration: 0.18,
+                delay: 0,
+                options: [.beginFromCurrentState, .curveEaseOut]
+            ) {
+                self.alpha = 1
+                self.transform = .identity
+            }
+        } else {
+            alpha = 1
+            transform = .identity
+        }
+
+        guard !persistent else { return }
         let workItem = DispatchWorkItem { [weak self] in
             guard let self, self.isOpen else { return }
             if !self.isControlled {
                 self.isOpen = false
-                self.isHidden = true
-                self.accessibilityElementsHidden = true
+                let hide = {
+                    self.isHidden = true
+                    self.alpha = 1
+                    self.transform = .identity
+                    self.accessibilityElementsHidden = true
+                }
+                if self.animationsEnabled {
+                    UIView.animate(
+                        withDuration: 0.14,
+                        delay: 0,
+                        options: [.beginFromCurrentState, .curveEaseIn],
+                        animations: {
+                            self.alpha = 0
+                            self.transform = CGAffineTransform(
+                                translationX: 0,
+                                y: -8
+                            )
+                        },
+                        completion: { _ in hide() }
+                    )
+                } else {
+                    hide()
+                }
             }
             self.emitMap([
                 "action": .integer(PamHostAction.dismiss.rawValue),
@@ -1261,7 +1289,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func applyShimmer() {
-        guard !UIAccessibility.isReduceMotionEnabled,
+        guard animationsEnabled,
               !(properties["isLoaded"]?.pamFlag ?? false),
               !(properties["boilerplate"]?.pamFlag ?? false) else {
             shimmerLayer?.removeAllAnimations()
@@ -1291,28 +1319,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             gradient.add(animation, forKey: "pam.shimmer")
         }
         shimmerLayer = gradient
-    }
-
-    private func applyImageTransform(animated: Bool = false) {
-        guard behavior == .imageViewer else { return }
-        let content = overlayContent() ?? subviews.last
-        guard let content else { return }
-        let transform = CGAffineTransform(
-            translationX: imageTranslation.x,
-            y: imageTranslation.y
-        ).scaledBy(x: imageScale, y: imageScale)
-        if animated, !UIAccessibility.isReduceMotionEnabled {
-            UIView.animate(
-                withDuration: 0.24,
-                delay: 0,
-                options: [.beginFromCurrentState, .allowUserInteraction]
-            ) {
-                content.transform = transform
-            }
-        } else {
-            content.transform = transform
-        }
-        accessibilityValue = "Zoom \(formatted(imageScale * 100)) percent"
     }
 
     private func presentDateTimePicker() {
@@ -1346,7 +1352,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             let formatter = ISO8601DateFormatter()
             self.emit?(.change, Data(formatter.string(from: picker.date).utf8))
         })
-        controller.present(alert, animated: !UIAccessibility.isReduceMotionEnabled)
+        controller.present(alert, animated: animationsEnabled)
     }
 
     private func panSheet(_ recognizer: UIPanGestureRecognizer) {
@@ -1397,18 +1403,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func panSlider(_ recognizer: UIPanGestureRecognizer) {
         guard bounds.width > 0, bounds.height > 0 else { return }
         let point = recognizer.location(in: self)
-        var fraction: CGFloat
-        if orientation == 2 {
-            fraction = 1 - point.y / bounds.height
-        } else {
-            fraction = point.x / bounds.width
-            if effectiveUserInterfaceLayoutDirection == .rightToLeft {
-                fraction = 1 - fraction
-            }
-        }
-        fraction = min(1, max(0, fraction))
-        if reversed { fraction = 1 - fraction }
-        let requested = snapped(minimum + fraction * (maximum - minimum))
+        let requested = sliderValue(at: point)
         if rangeEnabled {
             if recognizer.state == .began {
                 activeRangeThumb = abs(requested - lowerValue) <= abs(requested - upperValue)
@@ -1429,6 +1424,23 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         if recognizer.state == .ended || recognizer.state == .cancelled {
             emit?(.native, rangeEnabled ? rangePayload() : Data(formatted(value).utf8))
         }
+    }
+
+    private func sliderValue(at point: CGPoint) -> CGFloat {
+        guard bounds.width > 0, bounds.height > 0 else { return value }
+        var fraction: CGFloat
+        if orientation == 2 {
+            fraction = 1 - point.y / bounds.height
+        } else {
+            fraction = point.x / bounds.width
+            if effectiveUserInterfaceLayoutDirection == .rightToLeft {
+                fraction = 1 - fraction
+            }
+        }
+        fraction = min(1, max(0, fraction))
+        if reversed { fraction = 1 - fraction }
+
+        return snapped(minimum + fraction * (maximum - minimum))
     }
 
     private func snapped(_ requested: CGFloat) -> CGFloat {
@@ -1553,7 +1565,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         fill.strokeStart = 0
         fill.strokeEnd = indeterminate ? 0.72 : fraction
 
-        if indeterminate && !UIAccessibility.isReduceMotionEnabled {
+        if indeterminate && animationsEnabled {
             if fill.animation(forKey: "pam.progress.rotation") == nil {
                 let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
                 rotation.fromValue = 0
@@ -1987,43 +1999,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         path.stroke()
     }
 
-    private func applyTransition() {
-        guard !UIAccessibility.isReduceMotionEnabled else {
-            alpha = 1
-            transform = .identity
-            return
-        }
-        let transition = properties["transition"]?.pamText
-            ?? properties["name"]?.pamText
-            ?? "fade"
-        alpha = 0
-        switch transition {
-        case "scale":
-            transform = CGAffineTransform(scaleX: 0.94, y: 0.94)
-        case "slide-x":
-            let direction: CGFloat = effectiveUserInterfaceLayoutDirection == .rightToLeft
-                ? -1 : 1
-            transform = CGAffineTransform(translationX: 18 * direction, y: 0)
-        case "slide-y":
-            transform = CGAffineTransform(translationX: 0, y: 18)
-        case "expand":
-            transform = CGAffineTransform(scaleX: 1, y: 0.92)
-                .translatedBy(x: 0, y: 12)
-        default:
-            transform = .identity
-        }
-        UIView.animate(
-            withDuration: properties["duration"]?.pamDecimal.map {
-                TimeInterval($0 / 1_000)
-            } ?? 0.22,
-            delay: 0,
-            options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]
-        ) {
-            self.alpha = 1
-            self.transform = .identity
-        }
-    }
-
     private func applySparklineAutoDraw() {
         guard properties["autoDraw"]?.pamFlag == true else {
             sparklineAutoDrawApplied = false
@@ -2031,7 +2006,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
         guard !sparklineAutoDrawApplied else { return }
         sparklineAutoDrawApplied = true
-        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        guard animationsEnabled else { return }
         alpha = 0
         transform = CGAffineTransform(scaleX: 0.15, y: 1)
         UIView.animate(
@@ -2047,71 +2022,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
     }
 
-    private func applyParallax() {
-        guard let window, bounds.height > 0 else { return }
-        let frame = convert(bounds, to: window)
-        let offset = frame.midY - window.bounds.midY
-        let speed = min(1, max(-1, properties["speed"]?.pamDecimal ?? 0.28))
-        let translation = min(bounds.height / 3, max(-bounds.height / 3, -offset * speed))
-        subviews.forEach {
-            $0.transform = CGAffineTransform(translationX: 0, y: translation)
-        }
-    }
-
-    override var canBecomeFirstResponder: Bool {
-        behavior == .hotkey
-    }
-
-    override var keyCommands: [UIKeyCommand]? {
-        guard behavior == .hotkey else { return nil }
-        let source = properties["keys"]?.pamText
-            ?? properties["hotkey"]?.pamText
-            ?? properties["value"]?.pamText
-            ?? ""
-        let pieces = source.lowercased().split(separator: "+").map(String.init)
-        guard let input = pieces.last, !input.isEmpty else { return nil }
-        var modifiers: UIKeyModifierFlags = []
-        if pieces.contains("ctrl") || pieces.contains("control") { modifiers.insert(.control) }
-        if pieces.contains("alt") || pieces.contains("option") { modifiers.insert(.alternate) }
-        if pieces.contains("shift") { modifiers.insert(.shift) }
-        if pieces.contains("meta") || pieces.contains("cmd") { modifiers.insert(.command) }
-        return [UIKeyCommand(
-            input: input,
-            modifierFlags: modifiers,
-            action: #selector(onHotkey)
-        )]
-    }
-
-    @objc private func onHotkey() {
-        emit?(.press, Data())
-    }
-
-    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        if behavior == .hover {
-            emit?(.toggle, Data("1".utf8))
-        }
-        super.pressesBegan(presses, with: event)
-    }
-
-    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        if behavior == .hover {
-            emit?(.toggle, Data("0".utf8))
-        }
-        super.pressesEnded(presses, with: event)
-    }
-
-    @available(iOS 13.0, *)
-    @objc private func onHover(_ gesture: UIHoverGestureRecognizer) {
-        guard behavior == .hover else { return }
-        let active = gesture.state == .began || gesture.state == .changed
-        guard hoverActive != active else { return }
-        hoverActive = active
-        emit?(.toggle, Data(active ? "1".utf8 : "0".utf8))
-    }
-
     private func animateStateLayer(to alpha: CGFloat, duration: TimeInterval) {
         pressAnimator?.stopAnimation(true)
-        guard !UIAccessibility.isReduceMotionEnabled else {
+        guard animationsEnabled else {
             self.alpha = alpha
             return
         }
@@ -2169,14 +2082,75 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         content.removeFromSuperview()
         window.addSubview(content)
         let safeFrame = window.safeAreaLayoutGuide.layoutFrame.insetBy(dx: 8, dy: 8)
-        var x = effectiveUserInterfaceLayoutDirection == .rightToLeft
-            ? triggerFrame.maxX - size.width
-            : triggerFrame.minX
-        var y = triggerFrame.maxY + 8
+        let gap = CGFloat(properties["offset"]?.pamDecimal ?? 8)
+        let placement = Int(properties["placement"]?.pamInteger ?? 4)
+        let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
+        let startX = rtl ? triggerFrame.maxX - size.width : triggerFrame.minX
+        let endX = rtl ? triggerFrame.minX : triggerFrame.maxX - size.width
+        let centeredX = triggerFrame.midX - size.width / 2
+        let centeredY = triggerFrame.midY - size.height / 2
+        var x: CGFloat
+        var y: CGFloat
+        switch placement {
+        case 1:
+            x = centeredX
+            y = triggerFrame.minY - size.height - gap
+        case 2:
+            x = startX
+            y = triggerFrame.minY - size.height - gap
+        case 3:
+            x = endX
+            y = triggerFrame.minY - size.height - gap
+        case 5:
+            x = startX
+            y = triggerFrame.maxY + gap
+        case 6:
+            x = endX
+            y = triggerFrame.maxY + gap
+        case 7:
+            x = triggerFrame.minX - size.width - gap
+            y = centeredY
+        case 8:
+            x = triggerFrame.minX - size.width - gap
+            y = triggerFrame.minY
+        case 9:
+            x = triggerFrame.minX - size.width - gap
+            y = triggerFrame.maxY - size.height
+        case 10:
+            x = triggerFrame.maxX + gap
+            y = centeredY
+        case 11:
+            x = triggerFrame.maxX + gap
+            y = triggerFrame.minY
+        case 12:
+            x = triggerFrame.maxX + gap
+            y = triggerFrame.maxY - size.height
+        case 13:
+            x = safeFrame.midX - size.width / 2
+            y = safeFrame.midY - size.height / 2
+        default:
+            x = centeredX
+            y = triggerFrame.maxY + gap
+        }
         x = min(max(safeFrame.minX, x), max(safeFrame.minX, safeFrame.maxX - size.width))
         y = min(max(safeFrame.minY, y), max(safeFrame.minY, safeFrame.maxY - size.height))
         content.frame = CGRect(origin: CGPoint(x: x, y: y), size: size)
         content.layer.zPosition = 1
+        if animationsEnabled {
+            content.alpha = 0
+            content.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+            UIView.animate(
+                withDuration: 0.18,
+                delay: 0,
+                options: [.beginFromCurrentState, .curveEaseOut]
+            ) {
+                content.alpha = 1
+                content.transform = .identity
+            }
+        } else {
+            content.alpha = 1
+            content.transform = .identity
+        }
     }
 
     @objc

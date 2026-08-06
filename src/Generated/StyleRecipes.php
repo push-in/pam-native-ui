@@ -176,466 +176,6 @@ final class StyleRecipes
   ),
   9 =>
   array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'absolute left-0 top-0 right-0 bottom-0 bg-[#000]/50 web:cursor-default web:pointer-events-auto',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  10 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'items-center rounded-t-lg p-4 bg-background web:pointer-events-auto web:select-none border-t border-border dark:border-border/10 max-h-[80vh] pb-safe',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  11 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-[100px] h-2 bg-muted rounded-full',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  12 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full py-1 items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  13 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full h-auto',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  14 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'text-foreground fill-none h-4 w-4',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  15 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full flex-row items-center p-3 rounded-sm data-[disabled=true]:opacity-40 data-[disabled=true]:web:pointer-events-auto data-[disabled=true]:web:cursor-not-allowed data-[hover=true]:bg-accent data-[active=true]:bg-accent data-[focus=true]:bg-accent web:data-[focus-visible=true]:bg-accent gap-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  16 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'text-foreground font-normal text-sm',
-    'variants' =>
-    array (
-      'isTruncated' =>
-      array (
-        'true' => '',
-      ),
-      'bold' =>
-      array (
-        'true' => 'font-bold',
-      ),
-      'underline' =>
-      array (
-        'true' => 'underline',
-      ),
-      'strikeThrough' =>
-      array (
-        'true' => 'line-through',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  17 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full h-auto',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  18 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'leading-5 font-semibold my-0 text-muted-foreground p-3 uppercase text-xs',
-    'variants' =>
-    array (
-      'isTruncated' =>
-      array (
-        'true' => '',
-      ),
-      'bold' =>
-      array (
-        'true' => 'font-bold',
-      ),
-      'underline' =>
-      array (
-        'true' => 'underline',
-      ),
-      'strikeThrough' =>
-      array (
-        'true' => 'line-through',
-      ),
-      'sub' =>
-      array (
-        'true' => 'text-xs',
-      ),
-      'italic' =>
-      array (
-        'true' => 'italic',
-      ),
-      'highlight' =>
-      array (
-        'true' => 'bg-yellow-500',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  19 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full h-auto',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  20 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full h-full web:pointer-events-none',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  21 =>
-  array (
-    'source' => 'src/components/ui/actionsheet/index.tsx',
-    'base' => 'w-full h-auto',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  22 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => 'absolute left-0 top-0 right-0 bottom-0 bg-[#000]/50 web:cursor-default',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  23 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  24 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => 'group/alert-dialog-close-button z-10 rounded-sm p-2 data-[focus-visible=true]:bg-background/10 web:cursor-pointer outline-0',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  25 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => 'bg-background rounded-lg overflow-hidden border border-border p-6',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'size' =>
-      array (
-        'xs' => 'w-[60%] max-w-[360px]',
-        'sm' => 'w-[70%] max-w-[420px]',
-        'md' => 'w-[80%] max-w-[510px]',
-        'lg' => 'w-[90%] max-w-[640px]',
-        'full' => 'w-full',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  26 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => 'flex-row justify-end items-center gap-3',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  27 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => 'justify-between items-center flex-row',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  28 =>
-  array (
-    'source' => 'src/components/ui/alert-dialog/index.tsx',
-    'base' => 'group/modal w-full h-full justify-center items-center web:pointer-events-none',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'size' =>
-      array (
-        'xs' => '',
-        'sm' => '',
-        'md' => '',
-        'lg' => '',
-        'full' => '',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  29 =>
-  array (
     'source' => 'src/components/ui/alert/index.tsx',
     'base' => 'fill-none w-4 h-4 mt-0.5',
     'variants' =>
@@ -659,7 +199,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  30 =>
+  10 =>
   array (
     'source' => 'src/components/ui/alert/index.tsx',
     'base' => 'rounded-lg border px-2.5 py-2 flex-row gap-2 items-start ',
@@ -684,7 +224,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  31 =>
+  11 =>
   array (
     'source' => 'src/components/ui/alert/index.tsx',
     'base' => 'font-medium tracking-tight text-sm flex-1',
@@ -709,7 +249,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  32 =>
+  12 =>
   array (
     'source' => 'src/components/ui/avatar/index.tsx',
     'base' => 'absolute h-3 w-3 rounded-full border-2 border-background right-0 bottom-0 bg-green-500',
@@ -729,7 +269,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  33 =>
+  13 =>
   array (
     'source' => 'src/components/ui/avatar/index.tsx',
     'base' => 'text-foreground text-xs font-medium text-transform:uppercase',
@@ -749,7 +289,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  34 =>
+  14 =>
   array (
     'source' => 'src/components/ui/avatar/index.tsx',
     'base' => 'group/avatar-group flex-row-reverse relative avatar-group',
@@ -769,7 +309,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  35 =>
+  15 =>
   array (
     'source' => 'src/components/ui/avatar/index.tsx',
     'base' => 'h-full w-full rounded-full absolute',
@@ -789,7 +329,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  36 =>
+  16 =>
   array (
     'source' => 'src/components/ui/avatar/index.tsx',
     'base' => 'relative flex h-12 w-12 shrink-0 rounded-full bg-muted items-center justify-center group-[.avatar-group]/avatar-group:-ml-2.5',
@@ -809,7 +349,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  37 =>
+  17 =>
   array (
     'source' => 'src/components/ui/badge/index.tsx',
     'base' => 'fill-none h-3 w-3 pointer-events-none',
@@ -836,7 +376,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  38 =>
+  18 =>
   array (
     'source' => 'src/components/ui/badge/index.tsx',
     'base' => 'flex-row items-center justify-center rounded-sm px-2 py-0.5',
@@ -863,7 +403,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  39 =>
+  19 =>
   array (
     'source' => 'src/components/ui/badge/index.tsx',
     'base' => 'text-xs font-medium tracking-normal uppercase',
@@ -890,7 +430,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  40 =>
+  20 =>
   array (
     'source' => 'src/components/ui/bottomsheet/index.tsx',
     'base' => 'absolute inset-0 bg-black opacity-50',
@@ -910,7 +450,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  41 =>
+  21 =>
   array (
     'source' => 'src/components/ui/bottomsheet/index.tsx',
     'base' => 'px-4 gap-2',
@@ -930,7 +470,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  42 =>
+  22 =>
   array (
     'source' => 'src/components/ui/bottomsheet/index.tsx',
     'base' => 'p-4 border-t border-border/90',
@@ -950,7 +490,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  43 =>
+  23 =>
   array (
     'source' => 'src/components/ui/bottomsheet/index.tsx',
     'base' => 'py-3 w-full items-center rounded-t-xl',
@@ -970,47 +510,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  44 =>
-  array (
-    'source' => 'src/components/ui/bottomsheet/index.tsx',
-    'base' => 'p-3 flex-row items-center rounded-sm w-full disabled:opacity-40 web:pointer-events-auto disabled:cursor-not-allowed hover:bg-accent/40 active:bg-accent/50 data-[focus=true]:bg-accent/20 web:data-[focus-visible=true]:bg-accent/40',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  45 =>
-  array (
-    'source' => 'src/components/ui/bottomsheet/index.tsx',
-    'base' => 'text-foreground font-normal text-sm',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  46 =>
+  24 =>
   array (
     'source' => 'src/components/ui/bottomsheet/index.tsx',
     'base' => 'flex-1 text-foreground text-sm md:text-sm py-1 placeholder:text-muted-foreground  web:outline-none ios:leading-[0px] web:cursor-text  h-9 w-full flex-row items-center rounded-md border border-border dark:bg-input/30 bg-transparent shadow-xs overflow-hidden px-3 gap-2',
@@ -1030,7 +530,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  47 =>
+  25 =>
   array (
     'source' => 'src/components/ui/bottomsheet/index.tsx',
     'base' => 'p-4 rounded-lg border border-border/90',
@@ -1050,27 +550,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  48 =>
-  array (
-    'source' => 'src/components/ui/box/styles.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  49 =>
+  26 =>
   array (
     'source' => 'src/components/ui/button/index.tsx',
     'base' => '',
@@ -1112,7 +592,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  50 =>
+  27 =>
   array (
     'source' => 'src/components/ui/button/index.tsx',
     'base' => 'fill-none pointer-events-none shrink-0',
@@ -1148,7 +628,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  51 =>
+  28 =>
   array (
     'source' => 'src/components/ui/button/index.tsx',
     'base' => '',
@@ -1175,7 +655,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  52 =>
+  29 =>
   array (
     'source' => 'src/components/ui/button/index.tsx',
     'base' => 'rounded-xl flex-row items-center justify-center data-[focus-visible=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[disabled=true]:opacity-40 gap-2 h-fit',
@@ -1211,7 +691,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  53 =>
+  30 =>
   array (
     'source' => 'src/components/ui/button/index.tsx',
     'base' => 'web:select-none font-sans',
@@ -1247,7 +727,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  54 =>
+  31 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'gap-0',
@@ -1267,7 +747,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  55 =>
+  32 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'absolute bottom-1 flex-row gap-0.5 z-0',
@@ -1293,7 +773,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  56 =>
+  33 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'flex-1 aspect-square items-center justify-center rounded-md web:max-w-[2.25rem] relative transition-colors',
@@ -1324,7 +804,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  57 =>
+  34 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'text-foreground text-sm font-normal z-10',
@@ -1355,7 +835,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  58 =>
+  35 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'w-1 h-1 rounded-full',
@@ -1375,7 +855,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  59 =>
+  36 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'mt-4 pt-4 border-t border-border',
@@ -1395,7 +875,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  60 =>
+  37 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'gap-0',
@@ -1415,7 +895,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  61 =>
+  38 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent active:bg-accent/80 data-[disabled=true]:opacity-40 data-[disabled=true]:cursor-not-allowed',
@@ -1435,7 +915,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  62 =>
+  39 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'bg-transparent border border-border rounded-md px-2 py-1 text-sm text-foreground',
@@ -1455,7 +935,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  63 =>
+  40 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'flex-row items-center justify-between mb-2',
@@ -1475,7 +955,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  64 =>
+  41 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'text-foreground text-base font-semibold',
@@ -1495,7 +975,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  65 =>
+  42 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'w-full web:w-fit bg-background border border-border rounded-lg p-4 gap-2',
@@ -1522,7 +1002,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  66 =>
+  43 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'flex-1 items-center justify-center min-w-[2.0rem] web:max-w-[2.5rem]',
@@ -1542,7 +1022,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  67 =>
+  44 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'text-muted-foreground text-xs font-medium uppercase',
@@ -1562,7 +1042,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  68 =>
+  45 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'flex-row gap-0 mb-2',
@@ -1582,7 +1062,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  69 =>
+  46 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'w-8 items-center justify-center mr-1',
@@ -1602,7 +1082,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  70 =>
+  47 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'text-muted-foreground text-xs font-normal',
@@ -1622,7 +1102,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  71 =>
+  48 =>
   array (
     'source' => 'src/components/ui/calendar/styles.tsx',
     'base' => 'flex-row gap-0',
@@ -1642,7 +1122,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  72 =>
+  49 =>
   array (
     'source' => 'src/components/ui/card/styles.tsx',
     'base' => 'flex-col bg-card border border-border rounded-2xl shadow-sm',
@@ -1668,1066 +1148,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  73 =>
-  array (
-    'source' => 'src/components/ui/center/styles.tsx',
-    'base' => 'justify-center items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  74 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => 'flex items-center justify-center text-muted-foreground text-sm',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  75 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => 'w-auto p-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  76 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => 'font-normal tracking-normal text-xs text-foreground/90',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  77 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => 'flex shrink-0 items-center justify-center overflow-hidden',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'variant' =>
-      array (
-        'grid' => 'size-full',
-        'inline' => 'size-5 rounded bg-background',
-        'list' => 'size-12 rounded bg-muted',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-      'variant' => 'grid',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  78 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'variant' =>
-      array (
-        'grid' => 'opacity-100 absolute top-3 right-3 z-10 h-8 w-8 items-center flex justify-center rounded-full bg-muted',
-        'inline' => 'size-5 ml-auto',
-        'list' => 'size-8 shrink-0 ml-auto',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-      'variant' => 'grid',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  79 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => 'group relative',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'variant' =>
-      array (
-        'grid' => 'w-24 h-24 overflow-hidden rounded-lg',
-        'inline' => 'flex h-8 items-center gap-1.5 rounded-md border border-border px-1.5 text-sm font-medium',
-        'list' => 'flex w-full items-center gap-3 rounded-lg border p-3',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-      'variant' => 'grid',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  80 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/attatchments.tsx',
-    'base' => 'bg-muted h-20 overflow-hidden',
-    'variants' =>
-    array (
-      'variant' =>
-      array (
-        'grid' => 'flex-row',
-        'inline' => 'flex-row',
-        'list' => 'flex-col',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'variant' => 'grid',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  81 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/conversation.tsx',
-    'base' => 'flex-1',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  82 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/conversation.tsx',
-    'base' => 'absolute top-4 right-4 bg-card p-3 rounded-2xl shadow-sm',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  83 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/conversation.tsx',
-    'base' => 'flex-1 items-center justify-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  84 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/conversation.tsx',
-    'base' => 'absolute bottom-6 left-1/2 -translate-x-1/2 bg-primary h-11 w-11 items-center justify-center rounded-full shadow-lg',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  85 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/conversation.tsx',
-    'base' => 'flex-1 bg-background px-4',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  86 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
-    'base' => 'ml-auto flex-row items-center gap-1.5',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  87 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
-    'base' => 'flex-row items-center py-1.5 px-2 rounded-md',
-    'variants' =>
-    array (
-      'selected' =>
-      array (
-        'true' => 'bg-accent',
-        'false' => '',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'selected' => false,
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  88 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
-    'base' => 'flex-row items-center py-1.5 px-2 rounded-md',
-    'variants' =>
-    array (
-      'selected' =>
-      array (
-        'true' => 'bg-accent',
-        'false' => '',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'selected' => false,
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  89 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
-    'base' => 'bg-background rounded-xl border border-border overflow-hidden p-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  90 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'h-8 w-8 items-center justify-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  91 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-      'active' =>
-      array (
-        'true' => 'flex',
-        'false' => 'hidden',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'active' => true,
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  92 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'h-8 w-8 items-center justify-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  93 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'text-sm text-muted-foreground',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  94 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'h-8 w-8 items-center justify-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  95 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'flex-row items-center gap-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  96 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'w-full gap-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  97 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'flex w-fit min-w-0 flex-col justify-center gap-2 overflow-hidden text-base py-3 rounded-3xl',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'role' =>
-      array (
-        'user' => 'self-end bg-muted max-w-[90%] px-4',
-        'assistant' => 'self-start',
-        'system' => 'self-start',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-      'role' => 'assistant',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  98 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'text-lg text-foreground',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  99 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => 'group flex w-full max-w-[95%] flex-col gap-2',
-    'variants' =>
-    array (
-      'role' =>
-      array (
-        'user' => 'mt-4',
-        'assistant' => '',
-        'system' => '',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'role' => 'assistant',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  100 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/message.tsx',
-    'base' => '-mt-4 ml-2 flex-row items-center gap-3',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'role' =>
-      array (
-        'user' => 'hidden self-end',
-        'assistant' => 'self-start',
-        'system' => 'self-start',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-      'role' => 'assistant',
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  101 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'bg-background rounded-md overflow-hidden border border-border/80 shadow-hard-2 p-6',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  102 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'flex-1 items-center justify-center py-12',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  103 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  104 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'h-12 px-4 border-b border-border text-base text-foreground placeholder:text-muted-foreground',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  105 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'flex-row items-center h-4 w-4 px-4 py-3',
-    'variants' =>
-    array (
-      'selected' =>
-      array (
-        'true' => 'bg-accent',
-        'false' => 'active:bg-muted',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'selected' => false,
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  106 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'flex-1 w-full',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  107 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'flex-row -space-x-1',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  108 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'w-5 h-5 rounded-full bg-muted items-center justify-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  109 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'flex-1 text-left text-base ml-3 text-foreground',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  110 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'h-px bg-border mx-4 my-1',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  111 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'ml-auto',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  112 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'w-full h-full justify-center items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  113 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/model-selector.tsx',
-    'base' => 'w-[200px] h-[40px] bg-primary justify-between',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  114 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'h-10 w-10 rounded-full items-center justify-center bg-primary/10',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  115 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'flex-row pt-2 items-center gap-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  116 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'px-3 py-1 rounded-full bg-muted',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  117 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'flex-row items-center justify-between mt-6',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  118 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'bg-muted border-border absolute bottom-4 w-full rounded-3xl px-3 py-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  119 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'h-10 w-10 rounded-full items-center justify-center mx-3 bg-primary',
-    'variants' =>
-    array (
-      'disabled' =>
-      array (
-        'true' => 'opacity-50',
-        'false' => '',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-      'disabled' => false,
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  120 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'flex-1 text-xl px-4 items-center justify-center rounded-3xl text-foreground placeholder:text-muted-foreground',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  121 =>
-  array (
-    'source' => 'src/components/ui/chat-ai/prompt-input.tsx',
-    'base' => 'flex-row items-center gap-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  122 =>
+  50 =>
   array (
     'source' => 'src/components/ui/checkbox/index.tsx',
     'base' => 'text-primary-foreground fill-none h-3.5 w-3.5',
@@ -2747,7 +1168,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  123 =>
+  51 =>
   array (
     'source' => 'src/components/ui/checkbox/index.tsx',
     'base' => 'justify-center items-center w-4 h-4 shrink-0 rounded border border-input dark:bg-input/30   shadow-xs web:outline-none web:data-[focus-visible=true]:ring-[3px] web:data-[focus-visible=true]:ring-ring/50 web:data-[focus-visible=true]:border-ring data-[checked=true]:bg-primary  data-[checked=true]:border-primary dark:data-[checked=true]:bg-primary dark:data-[checked=true]:border-primary data-[invalid=true]:ring-destructive/20 data-[invalid=true]:border-destructive data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50',
@@ -2767,7 +1188,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  124 =>
+  52 =>
   array (
     'source' => 'src/components/ui/checkbox/index.tsx',
     'base' => 'text-foreground text-sm font-medium font-body web:select-none web:cursor-pointer data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50',
@@ -2787,7 +1208,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  125 =>
+  53 =>
   array (
     'source' => 'src/components/ui/checkbox/index.tsx',
     'base' => 'group/checkbox flex-row items-center justify-start gap-2 web:cursor-pointer data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50',
@@ -2807,7 +1228,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  126 =>
+  54 =>
   array (
     'source' => 'src/components/ui/date-time-picker/styles.tsx',
     'base' => 'text-foreground/50 fill-none',
@@ -2836,7 +1257,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  127 =>
+  55 =>
   array (
     'source' => 'src/components/ui/date-time-picker/styles.tsx',
     'base' => 'px-3 placeholder:text-muted-foreground web:w-full h-full text-foreground/90 pointer-events-none web:outline-none ios:leading-[0px] py-0',
@@ -2869,7 +1290,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  128 =>
+  56 =>
   array (
     'source' => 'src/components/ui/date-time-picker/styles.tsx',
     'base' => '',
@@ -2889,7 +1310,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  129 =>
+  57 =>
   array (
     'source' => 'src/components/ui/date-time-picker/styles.tsx',
     'base' => 'border border-border rounded flex-row items-center overflow-hidden data-[hover=true]:border-primary/80 data-[focus=true]:border-primary/80 data-[disabled=true]:opacity-40 data-[disabled=true]:data-[hover=true]:border-border/80',
@@ -2922,7 +1343,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  130 =>
+  58 =>
   array (
     'source' => 'src/components/ui/divider/index.tsx',
     'base' => 'bg-border',
@@ -2947,271 +1368,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  131 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'absolute left-0 top-0 right-0 bottom-0 bg-[#000]/50 web:cursor-default',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  132 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'mt-4 mb-6 shrink-0',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  133 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'z-10 rounded-sm p-2 data-[focus-visible=true]:bg-accent web:cursor-pointer web:outline-0 data-[hover=true]:bg-accent/50',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  134 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'bg-background shadow-hard-5 p-6 absolute',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-      'size' =>
-      array (
-        'sm' => '',
-        'md' => '',
-        'lg' => '',
-        'full' => '',
-      ),
-      'anchor' =>
-      array (
-        'left' => 'h-full border-r border-border/80',
-        'right' => 'h-full border-l border-border/80',
-        'top' => 'w-full border-b border-border/80 rounded-b-xl',
-        'bottom' => 'w-full border-t border-border/80 rounded-t-xl',
-      ),
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-      0 =>
-      array (
-        'size' => 'sm',
-        'anchor' => 'left',
-        'class' => 'sm:w-1/4 w-2/5',
-      ),
-      1 =>
-      array (
-        'size' => 'sm',
-        'anchor' => 'right',
-        'class' => 'sm:w-1/4 w-2/5',
-      ),
-      2 =>
-      array (
-        'size' => 'sm',
-        'anchor' => 'top',
-        'class' => 'h-1/4',
-      ),
-      3 =>
-      array (
-        'size' => 'sm',
-        'anchor' => 'bottom',
-        'class' => 'h-1/4',
-      ),
-      4 =>
-      array (
-        'size' => 'md',
-        'anchor' => 'left',
-        'class' => 'w-1/2',
-      ),
-      5 =>
-      array (
-        'size' => 'md',
-        'anchor' => 'right',
-        'class' => 'w-1/2',
-      ),
-      6 =>
-      array (
-        'size' => 'md',
-        'anchor' => 'top',
-        'class' => 'h-1/2',
-      ),
-      7 =>
-      array (
-        'size' => 'md',
-        'anchor' => 'bottom',
-        'class' => 'h-1/2',
-      ),
-      8 =>
-      array (
-        'size' => 'lg',
-        'anchor' => 'left',
-        'class' => 'w-3/4',
-      ),
-      9 =>
-      array (
-        'size' => 'lg',
-        'anchor' => 'right',
-        'class' => 'w-3/4',
-      ),
-      10 =>
-      array (
-        'size' => 'lg',
-        'anchor' => 'top',
-        'class' => 'h-3/4',
-      ),
-      11 =>
-      array (
-        'size' => 'lg',
-        'anchor' => 'bottom',
-        'class' => 'h-3/4',
-      ),
-      12 =>
-      array (
-        'size' => 'full',
-        'anchor' => 'left',
-        'class' => 'w-full',
-      ),
-      13 =>
-      array (
-        'size' => 'full',
-        'anchor' => 'right',
-        'class' => 'w-full',
-      ),
-      14 =>
-      array (
-        'size' => 'full',
-        'anchor' => 'top',
-        'class' => 'h-full',
-      ),
-      15 =>
-      array (
-        'size' => 'full',
-        'anchor' => 'bottom',
-        'class' => 'h-full',
-      ),
-    ),
-  ),
-  135 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-4',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  136 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'justify-between items-center flex-row pb-4',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  137 =>
-  array (
-    'source' => 'src/components/ui/drawer/index.tsx',
-    'base' => 'w-full h-full web:pointer-events-none relative',
-    'variants' =>
-    array (
-      'size' =>
-      array (
-        'sm' => '',
-        'md' => '',
-        'lg' => '',
-        'full' => '',
-      ),
-      'anchor' =>
-      array (
-        'left' => 'items-start',
-        'right' => 'items-end',
-        'top' => 'justify-start',
-        'bottom' => 'justify-end',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  138 =>
+  59 =>
   array (
     'source' => 'src/components/ui/fab/index.tsx',
     'base' => 'text-primary-foreground/90 fill-none',
@@ -3237,7 +1394,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  139 =>
+  60 =>
   array (
     'source' => 'src/components/ui/fab/index.tsx',
     'base' => 'text-primary-foreground/90 font-normal font-body tracking-md text-left mx-2',
@@ -3297,7 +1454,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  140 =>
+  61 =>
   array (
     'source' => 'src/components/ui/fab/index.tsx',
     'base' => 'group/fab bg-primary rounded-full z-20 p-4 flex-row items-center justify-center absolute hover:bg-primary/90 active:bg-primary/80 disabled:opacity-40 disabled:pointer-events-all disabled:cursor-not-allowed data-[focus=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[focus-visible=true]:web:ring-indicator-info shadow-hard-2',
@@ -3332,7 +1489,99 @@ final class StyleRecipes
     array (
     ),
   ),
-  141 =>
+  62 =>
+  array (
+    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
+    'base' => 'ml-auto flex-row items-center gap-1.5',
+    'variants' =>
+    array (
+    ),
+    'parentVariants' =>
+    array (
+    ),
+    'defaultVariants' =>
+    array (
+    ),
+    'compoundVariants' =>
+    array (
+    ),
+    'parentCompoundVariants' =>
+    array (
+    ),
+  ),
+  63 =>
+  array (
+    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
+    'base' => 'flex-row items-center py-1.5 px-2 rounded-md',
+    'variants' =>
+    array (
+      'selected' =>
+      array (
+        'true' => 'bg-accent',
+        'false' => '',
+      ),
+    ),
+    'parentVariants' =>
+    array (
+    ),
+    'defaultVariants' =>
+    array (
+      'selected' => false,
+    ),
+    'compoundVariants' =>
+    array (
+    ),
+    'parentCompoundVariants' =>
+    array (
+    ),
+  ),
+  64 =>
+  array (
+    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
+    'base' => 'flex-row items-center py-1.5 px-2 rounded-md',
+    'variants' =>
+    array (
+      'selected' =>
+      array (
+        'true' => 'bg-accent',
+        'false' => '',
+      ),
+    ),
+    'parentVariants' =>
+    array (
+    ),
+    'defaultVariants' =>
+    array (
+      'selected' => false,
+    ),
+    'compoundVariants' =>
+    array (
+    ),
+    'parentCompoundVariants' =>
+    array (
+    ),
+  ),
+  65 =>
+  array (
+    'source' => 'src/components/ui/chat-ai/file-tree.tsx',
+    'base' => 'bg-background rounded-xl border border-border overflow-hidden p-2',
+    'variants' =>
+    array (
+    ),
+    'parentVariants' =>
+    array (
+    ),
+    'defaultVariants' =>
+    array (
+    ),
+    'compoundVariants' =>
+    array (
+    ),
+    'parentCompoundVariants' =>
+    array (
+    ),
+  ),
+  66 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'text-destructive fill-none h-[18px] w-[18px]',
@@ -3352,7 +1601,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  142 =>
+  67 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'flex flex-row justify-start items-center mt-1 gap-1',
@@ -3372,7 +1621,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  143 =>
+  68 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'text-destructive text-xs font-body',
@@ -3420,7 +1669,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  144 =>
+  69 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'flex flex-row justify-start items-center mt-1 font-body',
@@ -3440,7 +1689,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  145 =>
+  70 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'text-foreground/70 font-body text-sm',
@@ -3488,7 +1737,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  146 =>
+  71 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'font-medium text-foreground text-base',
@@ -3536,7 +1785,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  147 =>
+  72 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'flex flex-row justify-start items-center mb-1',
@@ -3556,7 +1805,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  148 =>
+  73 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'font-medium text-foreground text-base font-body',
@@ -3604,7 +1853,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  149 =>
+  74 =>
   array (
     'source' => 'src/components/ui/form-control/index.tsx',
     'base' => 'flex flex-col',
@@ -3624,107 +1873,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  150 =>
-  array (
-    'source' => 'src/components/ui/grid/styles.tsx',
-    'base' => 'w-full',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  151 =>
-  array (
-    'source' => 'src/components/ui/grid/styles.tsx',
-    'base' => 'w-full',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  152 =>
-  array (
-    'source' => 'src/components/ui/heading/styles.tsx',
-    'base' => 'text-foreground font-bold font-heading tracking-sm my-0',
-    'variants' =>
-    array (
-      'isTruncated' =>
-      array (
-        'true' => 'truncate',
-      ),
-      'bold' =>
-      array (
-        'true' => 'font-bold',
-      ),
-      'underline' =>
-      array (
-        'true' => 'underline',
-      ),
-      'strikeThrough' =>
-      array (
-        'true' => 'line-through',
-      ),
-      'sub' =>
-      array (
-        'true' => 'text-xs',
-      ),
-      'italic' =>
-      array (
-        'true' => 'italic',
-      ),
-      'highlight' =>
-      array (
-        'true' => 'bg-yellow-500',
-      ),
-      'size' =>
-      array (
-        '5xl' => 'text-6xl',
-        '4xl' => 'text-5xl',
-        '3xl' => 'text-4xl',
-        '2xl' => 'text-3xl',
-        'xl' => 'text-2xl',
-        'lg' => 'text-xl',
-        'md' => 'text-lg',
-        'sm' => 'text-base',
-        'xs' => 'text-sm',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  153 =>
+  75 =>
   array (
     'source' => 'src/components/ui/hstack/styles.tsx',
     'base' => 'flex-row',
@@ -3759,7 +1908,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  154 =>
+  76 =>
   array (
     'source' => 'src/components/ui/icon/index.tsx',
     'base' => 'text-foreground fill-none pointer-events-none',
@@ -3788,187 +1937,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  155 =>
-  array (
-    'source' => 'src/components/ui/image-background/index.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  156 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'absolute top-12 right-4 z-50 w-10 h-10 rounded-full bg-black/60 justify-center items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  157 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'flex-1 justify-center items-center overflow-hidden web:flex web:justify-center web:items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  158 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'absolute bottom-12 left-0 right-0 items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  159 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'text-white text-sm font-medium bg-black/60 px-4 py-2 rounded-full',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  160 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'flex-1 bg-[#000]/50',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  161 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'w-12 h-12 rounded-full bg-black/50 justify-center items-center',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  162 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'absolute inset-0 flex-row justify-between items-center px-2',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  163 =>
-  array (
-    'source' => 'src/components/ui/image-viewer/index.tsx',
-    'base' => 'w-full',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  164 =>
+  77 =>
   array (
     'source' => 'src/components/ui/image/index.tsx',
     'base' => 'max-w-full',
@@ -4000,7 +1969,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  165 =>
+  78 =>
   array (
     'source' => 'src/components/ui/input/index.tsx',
     'base' => 'flex-1 text-foreground text-sm md:text-sm py-1 h-full placeholder:text-muted-foreground  web:outline-none ios:leading-[0px] web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
@@ -4020,7 +1989,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  166 =>
+  79 =>
   array (
     'source' => 'src/components/ui/input/index.tsx',
     'base' => 'justify-center items-center text-muted-foreground fill-none h-4 w-4',
@@ -4040,7 +2009,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  167 =>
+  80 =>
   array (
     'source' => 'src/components/ui/input/index.tsx',
     'base' => 'justify-center items-center web:disabled:cursor-not-allowed',
@@ -4060,7 +2029,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  168 =>
+  81 =>
   array (
     'source' => 'src/components/ui/input/index.tsx',
     'base' => 'min-h-9 w-full flex-row items-center rounded-md border border-border  dark:bg-input/30 bg-transparent shadow-xs transition-[color,box-shadow] overflow-hidden data-[focus=true]:outline-none data-[focus=true]:border-ring dark:data-[focus=true]:border-ring data-[focus=true]:web:ring-[3px] data-[focus=true]:web:ring-ring/50 data-[invalid=true]:border-destructive/40 dark:data-[invalid=true]:border-destructive/40 data-[invalid=true]:web:ring-destructive/20 dark:data-[invalid=true]:web:ring-destructive/40 data-[disabled=true]:pointer-events-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50 px-3 gap-2',
@@ -4080,129 +2049,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  169 =>
-  array (
-    'source' => 'src/components/ui/link/index.tsx',
-    'base' => 'group/link web:outline-0 data-[disabled=true]:web:cursor-not-allowed data-[focus-visible=true]:web:ring-2 data-[focus-visible=true]:web:ring-indicator-primary data-[focus-visible=true]:web:outline-0 data-[disabled=true]:opacity-4 ',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  170 =>
-  array (
-    'source' => 'src/components/ui/link/index.tsx',
-    'base' => 'underline text-primary data-[hover=true]:text-primary/80 data-[hover=true]:no-underline data-[active=true]:text-destructive/80 font-normal font-body web:font-sans web:tracking-sm web:my-0 web:bg-transparent web:border-0 web:box-border web:inline web:list-none web:m-0 web:p-0 web:relative web:text-start web:whitespace-pre-wrap web:break-words',
-    'variants' =>
-    array (
-      'isTruncated' =>
-      array (
-        'true' => 'web:truncate',
-      ),
-      'bold' =>
-      array (
-        'true' => 'font-bold',
-      ),
-      'underline' =>
-      array (
-        'true' => 'underline',
-      ),
-      'strikeThrough' =>
-      array (
-        'true' => 'line-through',
-      ),
-      'size' =>
-      array (
-        '2xs' => 'text-2xs',
-        'xs' => 'text-xs',
-        'sm' => 'text-sm',
-        'md' => 'text-base',
-        'lg' => 'text-lg',
-        'xl' => 'text-xl',
-        '2xl' => 'text-2xl',
-        '3xl' => 'text-3xl',
-        '4xl' => 'text-4xl',
-        '5xl' => 'text-5xl',
-        '6xl' => 'text-6xl',
-      ),
-      'sub' =>
-      array (
-        'true' => 'text-xs',
-      ),
-      'italic' =>
-      array (
-        'true' => 'italic',
-      ),
-      'highlight' =>
-      array (
-        'true' => 'bg-yellow-500',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  171 =>
-  array (
-    'source' => 'src/components/ui/liquid-glass/index.tsx',
-    'base' => 'overflow-hidden',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  172 =>
-  array (
-    'source' => 'src/components/ui/liquid-glass/index.tsx',
-    'base' => 'overflow-hidden',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  173 =>
+  82 =>
   array (
     'source' => 'src/components/ui/menu/index.tsx',
     'base' => 'absolute top-0 bottom-0 left-0 right-0 web:cursor-default',
@@ -4222,7 +2069,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  174 =>
+  83 =>
   array (
     'source' => 'src/components/ui/menu/index.tsx',
     'base' => 'text-popover-foreground font-normal font-body',
@@ -4270,7 +2117,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  175 =>
+  84 =>
   array (
     'source' => 'src/components/ui/menu/index.tsx',
     'base' => 'min-w-[200px] p-3 flex-row items-center rounded data-[hover=true]:bg-accent data-[hover=true]:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[focus=true]:bg-accent data-[focus=true]:text-accent-foreground data-[focus=true]:web:outline-none data-[focus=true]:web:outline-0 data-[disabled=true]:opacity-40 data-[disabled=true]:web:cursor-not-allowed data-[focus-visible=true]:web:outline-2 data-[focus-visible=true]:web:outline-ring data-[focus-visible=true]:web:outline data-[focus-visible=true]:web:cursor-pointer data-[disabled=true]:data-[focus=true]:bg-transparent',
@@ -4290,7 +2137,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  176 =>
+  85 =>
   array (
     'source' => 'src/components/ui/menu/index.tsx',
     'base' => 'bg-border h-px w-full',
@@ -4310,7 +2157,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  177 =>
+  86 =>
   array (
     'source' => 'src/components/ui/menu/index.tsx',
     'base' => 'rounded-md bg-popover text-popover-foreground border border-border p-1 shadow-hard-5 max-h-[300px] overflow-y-auto',
@@ -4330,7 +2177,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  178 =>
+  87 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'absolute left-0 top-0 right-0 bottom-0 bg-[#000]/50 web:cursor-default',
@@ -4350,7 +2197,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  179 =>
+  88 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'mt-2 mb-6',
@@ -4370,7 +2217,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  180 =>
+  89 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'group/modal-close-button z-10 rounded data-[focus-visible=true]:web:bg-background/90 web:outline-0 cursor-pointer',
@@ -4390,7 +2237,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  181 =>
+  90 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'bg-background rounded-md overflow-hidden border border-border/80 shadow-hard-2 p-6',
@@ -4418,7 +2265,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  182 =>
+  91 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'flex-row justify-end items-center gap-2',
@@ -4438,7 +2285,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  183 =>
+  92 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'justify-between items-center flex-row',
@@ -4458,7 +2305,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  184 =>
+  93 =>
   array (
     'source' => 'src/components/ui/modal/index.tsx',
     'base' => 'group/modal w-full h-full justify-center items-center web:pointer-events-none',
@@ -4486,7 +2333,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  185 =>
+  94 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'bg-popover z-[1] border absolute overflow-hidden h-3.5 w-3.5 border-border dark:border-border/90',
@@ -4521,7 +2368,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  186 =>
+  95 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'absolute left-0 top-0 right-0 bottom-0 web:cursor-default',
@@ -4541,7 +2388,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  187 =>
+  96 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => '',
@@ -4561,7 +2408,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  188 =>
+  97 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'group/popover-close-button z-[1] rounded-sm p-2 data-[focus-visible=true]:bg-accent web:outline-0 web:cursor-pointer data-[hover=true]:bg-accent/50',
@@ -4581,7 +2428,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  189 =>
+  98 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'bg-popover text-popover-foreground rounded-lg overflow-hidden border border-border dark:border-border/10 shadow-md p-4 w-full max-w-xs web:pointer-events-auto',
@@ -4601,7 +2448,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  190 =>
+  99 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'flex-row justify-between items-center',
@@ -4621,7 +2468,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  191 =>
+  100 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'flex-row justify-between items-center',
@@ -4641,7 +2488,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  192 =>
+  101 =>
   array (
     'source' => 'src/components/ui/popover/index.tsx',
     'base' => 'group/popover w-full h-full justify-center items-center web:pointer-events-none',
@@ -4661,27 +2508,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  193 =>
-  array (
-    'source' => 'src/components/ui/pressable/index.tsx',
-    'base' => 'data-[focus-visible=true]:outline-none data-[focus-visible=true]:ring-indicator-info data-[focus-visible=true]:ring-2 data-[disabled=true]:opacity-40',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  194 =>
+  102 =>
   array (
     'source' => 'src/components/ui/progress/index.tsx',
     'base' => 'bg-primary  transition-all',
@@ -4706,7 +2533,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  195 =>
+  103 =>
   array (
     'source' => 'src/components/ui/progress/index.tsx',
     'base' => 'bg-primary/20 relative h-2 w-full overflow-hidden rounded-full',
@@ -4731,7 +2558,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  196 =>
+  104 =>
   array (
     'source' => 'src/components/ui/radio/index.tsx',
     'base' => 'gap-3',
@@ -4751,7 +2578,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  197 =>
+  105 =>
   array (
     'source' => 'src/components/ui/radio/index.tsx',
     'base' => 'rounded-full absolute stroke-none fill-primary h-2 w-2',
@@ -4777,7 +2604,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  198 =>
+  106 =>
   array (
     'source' => 'src/components/ui/radio/index.tsx',
     'base' => 'relative justify-center items-center aspect-square h-4 w-4 shrink-0 rounded-full border border-border  dark:bg-input/30 shadow-xs web:outline-none web:data-[focus-visible=true]:ring-[3px] web:data-[focus-visible=true]:ring-ring/50 web:data-[focus-visible=true]:border-ring data-[invalid=true]:ring-destructive/20 data-[invalid=true]:border-destructive data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50',
@@ -4803,7 +2630,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  199 =>
+  107 =>
   array (
     'source' => 'src/components/ui/radio/index.tsx',
     'base' => 'text-foreground text-sm font-medium web:select-none web:cursor-pointer data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50 font-body',
@@ -4837,7 +2664,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  200 =>
+  108 =>
   array (
     'source' => 'src/components/ui/radio/index.tsx',
     'base' => 'group/radio flex-row justify-start items-center gap-2 web:cursor-pointer data-[disabled=true]:web:cursor-not-allowed data-[disabled=true]:opacity-50',
@@ -4863,7 +2690,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  201 =>
+  109 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'absolute left-0 top-0 right-0 bottom-0 bg-[#000]/50 web:cursor-default web:pointer-events-auto',
@@ -4883,7 +2710,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  202 =>
+  110 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'items-center rounded-tl-3xl rounded-tr-3xl p-2 bg-background web:pointer-events-auto web:select-none shadow-lg pb-safe',
@@ -4903,7 +2730,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  203 =>
+  111 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-16 h-1 bg-muted-foreground rounded-full',
@@ -4923,7 +2750,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  204 =>
+  112 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full py-1 items-center',
@@ -4943,7 +2770,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  205 =>
+  113 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full h-auto',
@@ -4963,7 +2790,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  206 =>
+  114 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'text-foreground/90',
@@ -4992,7 +2819,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  207 =>
+  115 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full flex-row items-center p-3 rounded-sm data-[disabled=true]:opacity-40 data-[disabled=true]:web:pointer-events-auto data-[disabled=true]:web:cursor-not-allowed hover:bg-accent/40 active:bg-accent/50 data-[focus=true]:bg-accent/20 web:data-[focus-visible=true]:bg-accent/40 data-[checked=true]:bg-accent/80',
@@ -5012,7 +2839,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  208 =>
+  116 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'text-foreground/70 font-normal font-body tracking-md text-left mx-2',
@@ -5063,7 +2890,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  209 =>
+  117 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full h-auto',
@@ -5083,7 +2910,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  210 =>
+  118 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'leading-5 font-bold font-heading my-0 text-foreground/50 p-3 uppercase',
@@ -5144,7 +2971,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  211 =>
+  119 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full h-auto',
@@ -5164,7 +2991,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  212 =>
+  120 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full h-full web:pointer-events-none',
@@ -5184,7 +3011,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  213 =>
+  121 =>
   array (
     'source' => 'src/components/ui/select/select-actionsheet.tsx',
     'base' => 'w-full h-auto',
@@ -5204,7 +3031,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  214 =>
+  122 =>
   array (
     'source' => 'src/components/ui/select/index.tsx',
     'base' => 'text-foreground/50 fill-none',
@@ -5233,7 +3060,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  215 =>
+  123 =>
   array (
     'source' => 'src/components/ui/select/index.tsx',
     'base' => 'px-3 placeholder:text-foreground/50 web:w-full h-full text-foreground/90 pointer-events-none web:outline-none ios:leading-[0px] py-0',
@@ -5266,7 +3093,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  216 =>
+  124 =>
   array (
     'source' => 'src/components/ui/select/index.tsx',
     'base' => '',
@@ -5286,7 +3113,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  217 =>
+  125 =>
   array (
     'source' => 'src/components/ui/select/index.tsx',
     'base' => 'border border-border rounded flex-row items-center overflow-hidden data-[hover=true]:border-primary/80 data-[focus=true]:border-primary/80 data-[disabled=true]:opacity-40 data-[disabled=true]:data-[hover=true]:border-border/80',
@@ -5319,7 +3146,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  218 =>
+  126 =>
   array (
     'source' => 'src/components/ui/skeleton/styles.tsx',
     'base' => 'w-full h-full rounded-sm',
@@ -5352,41 +3179,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  219 =>
-  array (
-    'source' => 'src/components/ui/skeleton/styles.tsx',
-    'base' => 'rounded-sm w-full',
-    'variants' =>
-    array (
-      'speed' =>
-      array (
-        1 => 'duration-750',
-        2 => 'duration-1000',
-        3 => 'duration-1500',
-        4 => 'duration-2000',
-      ),
-      'gap' =>
-      array (
-        1 => 'gap-1',
-        2 => 'gap-2',
-        3 => 'gap-3',
-        4 => 'gap-4',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  220 =>
+  127 =>
   array (
     'source' => 'src/components/ui/slider/index.tsx',
     'base' => 'bg-primary',
@@ -5411,7 +3204,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  221 =>
+  128 =>
   array (
     'source' => 'src/components/ui/slider/index.tsx',
     'base' => 'justify-center items-center data-[disabled=true]:opacity-40 data-[disabled=true]:web:pointer-events-none',
@@ -5441,7 +3234,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  222 =>
+  129 =>
   array (
     'source' => 'src/components/ui/slider/index.tsx',
     'base' => 'bg-white border border-primary ring-ring/50 absolute rounded-full shadow-sm transition-[color,box-shadow] data-[hover=true]:ring-4 data-[focus-visible=true]:ring-4 data-[focus-visible=true]:outline-hidden disabled:pointer-events-none disabled:opacity-50 web:cursor-pointer h-4 w-4',
@@ -5461,7 +3254,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  223 =>
+  130 =>
   array (
     'source' => 'src/components/ui/slider/index.tsx',
     'base' => 'bg-muted rounded-full overflow-hidden',
@@ -5503,27 +3296,7 @@ final class StyleRecipes
       ),
     ),
   ),
-  224 =>
-  array (
-    'source' => 'src/components/ui/spinner/index.tsx',
-    'base' => '',
-    'variants' =>
-    array (
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  225 =>
+  131 =>
   array (
     'source' => 'src/components/ui/switch/index.tsx',
     'base' => 'data-[focus=true]:outline-0 data-[focus=true]:ring-2 data-[focus=true]:ring-indicator-primary web:cursor-pointer disabled:cursor-not-allowed data-[disabled=true]:opacity-40 data-[invalid=true]:border-destructive data-[invalid=true]:rounded-xl data-[invalid=true]:border-2',
@@ -5549,7 +3322,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  226 =>
+  132 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => '',
@@ -5569,7 +3342,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  227 =>
+  133 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => 'px-6 py-[14px] text-[16px] font-normal leading-[22px] text-foreground/90 bg-background/90 font-roboto',
@@ -5589,7 +3362,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  228 =>
+  134 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => 'flex-1 px-6 py-[14px] text-left text-[16px] font-medium leading-[22px] text-foreground/80 font-roboto',
@@ -5609,7 +3382,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  229 =>
+  135 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => '',
@@ -5629,7 +3402,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  230 =>
+  136 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => 'flex-1 px-6 py-[14px] text-left font-bold text-[16px] leading-[22px] text-foreground/80 font-roboto',
@@ -5649,7 +3422,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  231 =>
+  137 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => '',
@@ -5669,7 +3442,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  232 =>
+  138 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => 'border-0 border-b border-solid border-border/80 bg-background',
@@ -5697,7 +3470,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  233 =>
+  139 =>
   array (
     'source' => 'src/components/ui/table/styles.tsx',
     'base' => 'table border-collapse w-[800px]',
@@ -5717,7 +3490,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  234 =>
+  140 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'p-2 h-auto',
@@ -5737,7 +3510,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  235 =>
+  141 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'overflow-hidden rounded-lg',
@@ -5757,7 +3530,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  236 =>
+  142 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'pointer-events-none',
@@ -5782,7 +3555,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  237 =>
+  143 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'flex relative z-10 bg-muted p-1 rounded-lg',
@@ -5807,7 +3580,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  238 =>
+  144 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'w-full gap-1',
@@ -5827,7 +3600,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  239 =>
+  145 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'h-4 w-4 fill-none pointer-events-none shrink-0 text-foreground/70 data-[selected=true]:text-foreground',
@@ -5847,7 +3620,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  240 =>
+  146 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'justify-center relative z-30 items-center web:outline-none data-[disabled=true]:opacity-40 data-[focus-visible=true]:web:ring-2 data-[focus-visible=true]:web:ring-primary/20  px-3 py-1.5 flex-row gap-1',
@@ -5872,7 +3645,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  241 =>
+  147 =>
   array (
     'source' => 'src/components/ui/tabs/index.tsx',
     'base' => 'text-foreground/70 data-[selected=true]:text-foreground font-medium data-[hover=true]:text-foreground/90 ',
@@ -5892,69 +3665,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  242 =>
-  array (
-    'source' => 'src/components/ui/text/styles.tsx',
-    'base' => 'text-foreground font-body',
-    'variants' =>
-    array (
-      'isTruncated' =>
-      array (
-        'true' => 'web:truncate',
-      ),
-      'bold' =>
-      array (
-        'true' => 'font-bold',
-      ),
-      'underline' =>
-      array (
-        'true' => 'underline',
-      ),
-      'strikeThrough' =>
-      array (
-        'true' => 'line-through',
-      ),
-      'size' =>
-      array (
-        '2xs' => 'text-2xs',
-        'xs' => 'text-xs',
-        'sm' => 'text-sm',
-        'md' => 'text-base',
-        'lg' => 'text-lg',
-        'xl' => 'text-xl',
-        '2xl' => 'text-2xl',
-        '3xl' => 'text-3xl',
-        '4xl' => 'text-4xl',
-        '5xl' => 'text-5xl',
-        '6xl' => 'text-6xl',
-      ),
-      'sub' =>
-      array (
-        'true' => 'text-xs',
-      ),
-      'italic' =>
-      array (
-        'true' => 'italic',
-      ),
-      'highlight' =>
-      array (
-        'true' => 'bg-yellow-500',
-      ),
-    ),
-    'parentVariants' =>
-    array (
-    ),
-    'defaultVariants' =>
-    array (
-    ),
-    'compoundVariants' =>
-    array (
-    ),
-    'parentCompoundVariants' =>
-    array (
-    ),
-  ),
-  243 =>
+  148 =>
   array (
     'source' => 'src/components/ui/textarea/index.tsx',
     'base' => 'p-2 web:outline-0 web:outline-none flex-1 text-foreground placeholder:text-foreground/60 web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
@@ -5981,7 +3692,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  244 =>
+  149 =>
   array (
     'source' => 'src/components/ui/textarea/index.tsx',
     'base' => 'w-full h-[100px] border border-border  dark:bg-input/30 rounded data-[hover=true]:border-border/80 data-[focus=true]:border-primary/80 data-[focus=true]:data-[hover=true]:border-primary/80 data-[disabled=true]:opacity-40 data-[disabled=true]:bg-background/90 data-[disabled=true]:data-[hover=true]:border-border/80',
@@ -6012,7 +3723,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  245 =>
+  150 =>
   array (
     'source' => 'src/components/ui/toast/index.tsx',
     'base' => 'font-normal font-body tracking-md text-left',
@@ -6067,7 +3778,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  246 =>
+  151 =>
   array (
     'source' => 'src/components/ui/toast/index.tsx',
     'base' => 'p-4 m-1 rounded-md gap-1 web:pointer-events-auto border-border',
@@ -6100,7 +3811,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  247 =>
+  152 =>
   array (
     'source' => 'src/components/ui/toast/index.tsx',
     'base' => 'font-medium font-body tracking-md text-left',
@@ -6223,7 +3934,7 @@ final class StyleRecipes
       ),
     ),
   ),
-  248 =>
+  153 =>
   array (
     'source' => 'src/components/ui/tooltip/index.tsx',
     'base' => 'py-1 px-3 rounded-sm bg-background/90 web:pointer-events-auto',
@@ -6243,7 +3954,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  249 =>
+  154 =>
   array (
     'source' => 'src/components/ui/tooltip/index.tsx',
     'base' => 'w-full h-full web:pointer-events-none',
@@ -6263,7 +3974,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  250 =>
+  155 =>
   array (
     'source' => 'src/components/ui/tooltip/index.tsx',
     'base' => 'font-normal tracking-normal web:select-none text-xs text-foreground/90',
@@ -6325,7 +4036,7 @@ final class StyleRecipes
     array (
     ),
   ),
-  251 =>
+  156 =>
   array (
     'source' => 'src/components/ui/vstack/styles.tsx',
     'base' => 'flex-col',
@@ -6366,305 +4077,113 @@ final class StyleRecipes
     public const array COMPONENTS = array (
   'Accordion' => 6,
   'AccordionContent' => 1,
-  'AccordionContentText' => 2,
-  'AccordionHeader' => 3,
-  'AccordionIcon' => 4,
   'AccordionItem' => 5,
-  'AccordionTitleText' => 7,
   'AccordionTrigger' => 8,
-  'Actionsheet' => 20,
-  'ActionsheetBackdrop' => 9,
-  'ActionsheetContent' => 10,
-  'ActionsheetDragIndicator' => 11,
-  'ActionsheetDragIndicatorWrapper' => 12,
-  'ActionsheetFlatList' => 13,
-  'ActionsheetIcon' => 14,
-  'ActionsheetItem' => 15,
-  'ActionsheetItemText' => 16,
-  'ActionsheetScrollView' => 17,
-  'ActionsheetSectionHeaderText' => 18,
-  'ActionsheetSectionList' => 19,
-  'ActionsheetVirtualizedList' => 21,
-  'AddIcon' => 154,
-  'Alert' => 30,
-  'AlertCircleIcon' => 154,
-  'AlertDialog' => 28,
-  'AlertDialogBackdrop' => 22,
-  'AlertDialogBody' => 23,
-  'AlertDialogCloseButton' => 24,
-  'AlertDialogContent' => 25,
-  'AlertDialogFooter' => 26,
-  'AlertDialogHeader' => 27,
-  'AlertIcon' => 29,
-  'AlertText' => 31,
-  'ArrowDownIcon' => 154,
-  'ArrowLeftIcon' => 154,
-  'ArrowRightIcon' => 154,
-  'ArrowUpIcon' => 154,
-  'AtSignIcon' => 154,
-  'Attachment' => 79,
-  'AttachmentEmpty' => 74,
-  'AttachmentHoverCardContent' => 75,
-  'AttachmentHoverCardText' => 76,
-  'AttachmentPreview' => 77,
-  'AttachmentRemove' => 78,
-  'Attachments' => 80,
-  'Avatar' => 36,
-  'AvatarBadge' => 32,
-  'AvatarFallback' => 33,
-  'AvatarFallbackText' => 33,
-  'AvatarGroup' => 34,
-  'AvatarImage' => 35,
-  'Badge' => 38,
-  'BadgeIcon' => 37,
-  'BadgeText' => 39,
-  'BellIcon' => 154,
-  'BottomSheetBackdrop' => 40,
-  'BottomSheetContent' => 41,
-  'BottomSheetDragIndicator' => 43,
-  'BottomSheetFooter' => 42,
-  'BottomSheetItem' => 44,
-  'BottomSheetItemText' => 45,
-  'BottomSheetTextInput' => 46,
-  'BottomSheetTrigger' => 47,
-  'Box' => 48,
-  'Button' => 52,
-  'ButtonGroup' => 49,
-  'ButtonIcon' => 50,
-  'ButtonSpinner' => 51,
-  'ButtonText' => 53,
-  'Calendar' => 65,
-  'CalendarBody' => 54,
-  'CalendarDay' => 56,
-  'CalendarDayIndicator' => 55,
-  'CalendarDayText' => 57,
-  'CalendarDaysIcon' => 154,
-  'CalendarFooter' => 59,
-  'CalendarGrid' => 60,
-  'CalendarHeader' => 63,
-  'CalendarHeaderMonthSelect' => 62,
-  'CalendarHeaderNextButton' => 61,
-  'CalendarHeaderPrevButton' => 61,
-  'CalendarHeaderTitle' => 64,
-  'CalendarHeaderYearSelect' => 62,
-  'CalendarWeek' => 71,
-  'CalendarWeekDay' => 66,
-  'CalendarWeekDaysHeader' => 68,
-  'CalendarWeekNumber' => 69,
-  'Card' => 72,
-  'Center' => 73,
-  'CheckCircleIcon' => 154,
-  'CheckIcon' => 154,
-  'Checkbox' => 125,
-  'CheckboxIcon' => 122,
-  'CheckboxIndicator' => 123,
-  'CheckboxLabel' => 124,
-  'ChevronDownIcon' => 154,
-  'ChevronLeftIcon' => 154,
-  'ChevronRightIcon' => 154,
-  'ChevronUpIcon' => 154,
-  'ChevronsLeftIcon' => 154,
-  'ChevronsRightIcon' => 154,
-  'ChevronsUpDownIcon' => 154,
-  'CircleIcon' => 154,
-  'ClockIcon' => 154,
-  'CloseCircleIcon' => 154,
-  'CloseIcon' => 154,
-  'Conversation' => 85,
-  'ConversationContent' => 81,
-  'ConversationDownload' => 82,
-  'ConversationEmptyState' => 83,
-  'ConversationScrollButton' => 84,
-  'CopyIcon' => 154,
-  'DateTimePicker' => 128,
-  'DateTimePickerIcon' => 126,
-  'DateTimePickerInput' => 127,
-  'DateTimePickerTrigger' => 129,
-  'Divider' => 130,
-  'DownloadIcon' => 154,
-  'Drawer' => 137,
-  'DrawerBackdrop' => 131,
-  'DrawerBody' => 132,
-  'DrawerCloseButton' => 133,
-  'DrawerContent' => 134,
-  'DrawerFooter' => 135,
-  'DrawerHeader' => 136,
-  'EditIcon' => 154,
-  'ExternalLinkIcon' => 154,
-  'EyeIcon' => 154,
-  'EyeOffIcon' => 154,
-  'Fab' => 140,
-  'FabIcon' => 138,
-  'FabLabel' => 139,
-  'FavouriteIcon' => 154,
-  'FileTree' => 89,
-  'FileTreeActions' => 86,
-  'FileTreeFile' => 87,
-  'FileTreeFolder' => 88,
-  'FormControl' => 149,
-  'FormControlError' => 142,
-  'FormControlErrorIcon' => 141,
-  'FormControlErrorText' => 143,
-  'FormControlHelper' => 144,
-  'FormControlHelperText' => 145,
-  'FormControlLabel' => 147,
-  'FormControlLabelAstrick' => 146,
-  'FormControlLabelText' => 148,
-  'GlassContainer' => 171,
-  'GlassView' => 172,
-  'GlobeIcon' => 154,
-  'Grid' => 151,
-  'GridItem' => 150,
-  'GripVerticalIcon' => 154,
-  'HStack' => 153,
-  'Heading' => 152,
-  'HelpCircleIcon' => 154,
-  'Icon' => 154,
-  'Image' => 164,
-  'ImageBackground' => 155,
-  'ImageViewer' => 163,
-  'ImageViewerCloseButton' => 156,
-  'ImageViewerContent' => 157,
-  'ImageViewerCounter' => 158,
-  'ImageViewerNavigation' => 162,
-  'InfoIcon' => 154,
-  'Input' => 168,
-  'InputField' => 165,
-  'InputIcon' => 166,
-  'InputSlot' => 167,
-  'Link' => 169,
-  'LinkIcon' => 154,
-  'LinkText' => 170,
-  'LoaderIcon' => 154,
-  'LockIcon' => 154,
-  'MailIcon' => 154,
-  'Menu' => 177,
-  'MenuIcon' => 154,
-  'MenuItem' => 175,
-  'MenuItemLabel' => 174,
-  'MenuSeparator' => 176,
-  'Message' => 99,
-  'MessageAction' => 90,
-  'MessageBranch' => 96,
-  'MessageBranchContent' => 91,
-  'MessageBranchNext' => 92,
-  'MessageBranchPage' => 93,
-  'MessageBranchPrevious' => 94,
-  'MessageBranchSelector' => 95,
-  'MessageCircleIcon' => 154,
-  'MessageContent' => 97,
-  'MessageResponse' => 98,
-  'MessageToolbar' => 100,
-  'Modal' => 184,
-  'ModalBackdrop' => 178,
-  'ModalBody' => 179,
-  'ModalCloseButton' => 180,
-  'ModalContent' => 181,
-  'ModalFooter' => 182,
-  'ModalHeader' => 183,
-  'ModelSelector' => 112,
-  'ModelSelectorContent' => 101,
-  'ModelSelectorEmpty' => 102,
-  'ModelSelectorGroup' => 103,
-  'ModelSelectorInput' => 104,
-  'ModelSelectorItem' => 105,
-  'ModelSelectorList' => 106,
-  'ModelSelectorLogo' => 108,
-  'ModelSelectorLogoGroup' => 107,
-  'ModelSelectorName' => 109,
-  'ModelSelectorSeparator' => 110,
-  'ModelSelectorShortcut' => 111,
-  'ModelSelectorTrigger' => 113,
-  'MoonIcon' => 154,
-  'PaperclipIcon' => 154,
-  'PhoneIcon' => 154,
-  'PlayIcon' => 154,
-  'Popover' => 192,
-  'PopoverArrow' => 185,
-  'PopoverBackdrop' => 186,
-  'PopoverBody' => 187,
-  'PopoverCloseButton' => 188,
-  'PopoverContent' => 189,
-  'PopoverFooter' => 190,
-  'PopoverHeader' => 191,
-  'Pressable' => 193,
-  'Progress' => 195,
-  'ProgressFilledTrack' => 194,
-  'PromptInput' => 118,
-  'PromptInputActionMenuTrigger' => 114,
-  'PromptInputBody' => 115,
-  'PromptInputButton' => 116,
-  'PromptInputFooter' => 117,
-  'PromptInputSubmit' => 119,
-  'PromptInputTextarea' => 120,
-  'PromptInputTools' => 121,
-  'Radio' => 200,
-  'RadioGroup' => 196,
-  'RadioIcon' => 197,
-  'RadioIndicator' => 198,
-  'RadioLabel' => 199,
-  'RemoveIcon' => 154,
-  'Repeat1Icon' => 154,
-  'RepeatIcon' => 154,
-  'SearchIcon' => 154,
-  'Select' => 216,
-  'SelectBackdrop' => 201,
-  'SelectContent' => 202,
-  'SelectDragIndicator' => 203,
-  'SelectDragIndicatorWrapper' => 204,
-  'SelectFlatList' => 205,
-  'SelectIcon' => 214,
-  'SelectInput' => 215,
-  'SelectItem' => 207,
-  'SelectPortal' => 212,
-  'SelectScrollView' => 209,
-  'SelectSectionHeaderText' => 210,
-  'SelectSectionList' => 211,
-  'SelectTrigger' => 217,
-  'SelectVirtualizedList' => 213,
-  'SettingsIcon' => 154,
-  'ShareIcon' => 154,
-  'Skeleton' => 218,
-  'SkeletonText' => 219,
-  'SlashIcon' => 154,
-  'Slider' => 221,
-  'SliderFilledTrack' => 220,
-  'SliderThumb' => 222,
-  'SliderTrack' => 223,
-  'Spinner' => 224,
-  'StarIcon' => 154,
-  'SunIcon' => 154,
-  'Switch' => 225,
-  'Table' => 233,
-  'TableBody' => 226,
-  'TableCaption' => 227,
-  'TableData' => 228,
-  'TableFooter' => 229,
-  'TableHead' => 230,
-  'TableHeader' => 231,
-  'TableRow' => 232,
-  'Tabs' => 238,
-  'TabsAnimatedIndicator' => 236,
-  'TabsContent' => 234,
-  'TabsContentWrapper' => 235,
-  'TabsIndicator' => 236,
-  'TabsList' => 237,
-  'TabsTrigger' => 240,
-  'TabsTriggerIcon' => 239,
-  'TabsTriggerText' => 241,
-  'Text' => 242,
-  'Textarea' => 244,
-  'TextareaInput' => 243,
-  'ThreeDotsIcon' => 154,
-  'Toast' => 246,
-  'ToastDescription' => 245,
-  'ToastTitle' => 247,
-  'Tooltip' => 249,
-  'TooltipContent' => 248,
-  'TooltipText' => 250,
-  'TrashIcon' => 154,
-  'UnlockIcon' => 154,
-  'VStack' => 251,
+  'AddIcon' => 76,
+  'Alert' => 10,
+  'AlertCircleIcon' => 76,
+  'ArrowDownIcon' => 76,
+  'ArrowLeftIcon' => 76,
+  'ArrowRightIcon' => 76,
+  'ArrowUpIcon' => 76,
+  'AtSignIcon' => 76,
+  'Avatar' => 16,
+  'Badge' => 18,
+  'BellIcon' => 76,
+  'BottomSheetBackdrop' => 20,
+  'BottomSheetContent' => 21,
+  'Button' => 29,
+  'Calendar' => 42,
+  'CalendarDay' => 33,
+  'CalendarDaysIcon' => 76,
+  'Card' => 49,
+  'CheckCircleIcon' => 76,
+  'CheckIcon' => 76,
+  'Checkbox' => 53,
+  'ChevronDownIcon' => 76,
+  'ChevronLeftIcon' => 76,
+  'ChevronRightIcon' => 76,
+  'ChevronUpIcon' => 76,
+  'ChevronsLeftIcon' => 76,
+  'ChevronsRightIcon' => 76,
+  'ChevronsUpDownIcon' => 76,
+  'CircleIcon' => 76,
+  'ClockIcon' => 76,
+  'CloseCircleIcon' => 76,
+  'CloseIcon' => 76,
+  'CopyIcon' => 76,
+  'DateTimePicker' => 56,
+  'Divider' => 58,
+  'DownloadIcon' => 76,
+  'EditIcon' => 76,
+  'ExternalLinkIcon' => 76,
+  'EyeIcon' => 76,
+  'EyeOffIcon' => 76,
+  'Fab' => 61,
+  'FavouriteIcon' => 76,
+  'FileTree' => 65,
+  'FileTreeFile' => 63,
+  'FileTreeFolder' => 64,
+  'FormControl' => 74,
+  'GlobeIcon' => 76,
+  'GripVerticalIcon' => 76,
+  'HStack' => 75,
+  'HelpCircleIcon' => 76,
+  'Icon' => 76,
+  'Image' => 77,
+  'InfoIcon' => 76,
+  'Input' => 81,
+  'LinkIcon' => 76,
+  'LoaderIcon' => 76,
+  'LockIcon' => 76,
+  'MailIcon' => 76,
+  'Menu' => 86,
+  'MenuIcon' => 76,
+  'MessageCircleIcon' => 76,
+  'Modal' => 93,
+  'MoonIcon' => 76,
+  'PaperclipIcon' => 76,
+  'PhoneIcon' => 76,
+  'PlayIcon' => 76,
+  'Popover' => 101,
+  'Progress' => 103,
+  'Radio' => 108,
+  'RadioGroup' => 104,
+  'RemoveIcon' => 76,
+  'Repeat1Icon' => 76,
+  'RepeatIcon' => 76,
+  'SearchIcon' => 76,
+  'Select' => 124,
+  'SelectBackdrop' => 109,
+  'SelectContent' => 110,
+  'SelectItem' => 115,
+  'SelectPortal' => 120,
+  'SelectTrigger' => 125,
+  'SettingsIcon' => 76,
+  'ShareIcon' => 76,
+  'Skeleton' => 126,
+  'SlashIcon' => 76,
+  'Slider' => 128,
+  'SliderFilledTrack' => 127,
+  'SliderThumb' => 129,
+  'SliderTrack' => 130,
+  'StarIcon' => 76,
+  'SunIcon' => 76,
+  'Switch' => 131,
+  'Table' => 139,
+  'TableRow' => 138,
+  'Tabs' => 144,
+  'TabsContent' => 140,
+  'TabsContentWrapper' => 141,
+  'TabsList' => 143,
+  'TabsTrigger' => 146,
+  'Textarea' => 149,
+  'ThreeDotsIcon' => 76,
+  'Toast' => 151,
+  'Tooltip' => 154,
+  'TrashIcon' => 76,
+  'UnlockIcon' => 76,
+  'VStack' => 156,
 );
 
     private function __construct()

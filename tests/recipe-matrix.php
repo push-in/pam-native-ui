@@ -87,24 +87,15 @@ foreach ($themes as [$mode, $theme]) {
             $stateMatrixCases++;
         }
 
-        $recipeId = StyleRecipes::COMPONENTS[$part] ?? null;
-        if ($recipeId === null) {
+        if (!array_key_exists($part, StyleRecipes::COMPONENTS)) {
             continue;
         }
-        $recipe = StyleRecipes::RECIPES[$recipeId] ?? null;
-        if (!is_array($recipe)) {
-            throw new RuntimeException("Recipe {$recipeId} for {$part} is missing.");
-        }
+        $recipeId = StyleRecipes::COMPONENTS[$part];
+        $recipe = StyleRecipes::RECIPES[$recipeId];
 
         foreach (['variants', 'parentVariants'] as $variantGroup) {
-            $axes = $recipe[$variantGroup] ?? null;
-            if (!is_array($axes)) {
-                throw new RuntimeException("Recipe {$recipeId} has an invalid {$variantGroup} map.");
-            }
+            $axes = $recipe[$variantGroup];
             foreach ($axes as $axis => $options) {
-                if (!is_string($axis) || !is_array($options)) {
-                    throw new RuntimeException("Recipe {$recipeId} contains an invalid variant axis.");
-                }
                 foreach (array_keys($options) as $option) {
                     $props = ValueNormalizer::props([$axis => $option]);
                     $componentClass::make([$axis => $option])->toElement();
@@ -115,17 +106,11 @@ foreach ($themes as [$mode, $theme]) {
         }
 
         foreach (['compoundVariants', 'parentCompoundVariants'] as $compoundGroup) {
-            $rules = $recipe[$compoundGroup] ?? null;
-            if (!is_array($rules)) {
-                throw new RuntimeException("Recipe {$recipeId} has an invalid {$compoundGroup} list.");
-            }
+            $rules = $recipe[$compoundGroup];
             foreach ($rules as $rule) {
-                if (!is_array($rule)) {
-                    throw new RuntimeException("Recipe {$recipeId} contains an invalid compound rule.");
-                }
                 $props = [];
                 foreach ($rule as $axis => $option) {
-                    if ($axis !== 'class' && is_string($axis)) {
+                    if ($axis !== 'class') {
                         $props[$axis] = $option;
                     }
                 }

@@ -9,13 +9,13 @@
         </Column>
         <Text size="xl">Browse by category</Text>
         <p-list>
-            <p-list-item on:press="goActions"><p-list-item-title>Actions</p-list-item-title><p-list-item-subtitle>Buttons, chips and selection</p-list-item-subtitle></p-list-item>
+            <p-list-item on:press="goActions"><Text>Actions</Text><Text>Buttons, chips and selection</Text></p-list-item>
             <p-divider />
-            <p-list-item on:press="goForms"><p-list-item-title>Forms</p-list-item-title><p-list-item-subtitle>Inputs, pickers and validation</p-list-item-subtitle></p-list-item>
+            <p-list-item on:press="goForms"><Text>Forms</Text><Text>Inputs, pickers and validation</Text></p-list-item>
             <p-divider />
-            <p-list-item on:press="goData"><p-list-item-title>Data</p-list-item-title><p-list-item-subtitle>Tables, lists and visualization</p-list-item-subtitle></p-list-item>
+            <p-list-item on:press="goData"><Text>Data</Text><Text>Tables, lists and visualization</Text></p-list-item>
             <p-divider />
-            <p-list-item on:press="goOverlays"><p-list-item-title>Overlays</p-list-item-title><p-list-item-subtitle>Dialogs, sheets and menus</p-list-item-subtitle></p-list-item>
+            <p-list-item on:press="goOverlays"><Text>Overlays</Text><Text>Dialogs, sheets and menus</Text></p-list-item>
         </p-list>
         <p-btn block="true" on:press="goAll"><Text>Explore all components</Text></p-btn>
 </AppScreen>

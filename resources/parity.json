@@ -5,9 +5,9 @@
         "commit": "be060b5d184826d34623e490447a467ffb5cfe56",
         "packageVersion": "5.0.3",
         "capturedAt": "2026-07-23",
-        "moduleCount": 61,
-        "exportCount": 404,
-        "facadeCount": 326
+        "moduleCount": 36,
+        "exportCount": 115,
+        "facadeCount": 115
     },
     "definitions": {
         "categories": [
@@ -123,23 +123,13 @@
             "exports": [
                 "Accordion",
                 "AccordionContent",
-                "AccordionContentText",
-                "AccordionHeader",
-                "AccordionIcon",
                 "AccordionItem",
-                "AccordionTitleText",
-                "AccordionTrigger",
-                "AnimatedHeight",
-                "AnimatedIcon"
+                "AccordionTrigger"
             ],
             "parts": [
                 "Accordion",
                 "AccordionContent",
-                "AccordionContentText",
-                "AccordionHeader",
-                "AccordionIcon",
                 "AccordionItem",
-                "AccordionTitleText",
                 "AccordionTrigger"
             ],
             "variantAxes": [],
@@ -159,101 +149,15 @@
         },
         {
             "id": 2,
-            "name": "actionsheet",
-            "category": 6,
-            "maturity": 1,
-            "implementation": 2,
-            "exports": [
-                "Actionsheet",
-                "ActionsheetBackdrop",
-                "ActionsheetContent",
-                "ActionsheetDragIndicator",
-                "ActionsheetDragIndicatorWrapper",
-                "ActionsheetFlatList",
-                "ActionsheetIcon",
-                "ActionsheetItem",
-                "ActionsheetItemText",
-                "ActionsheetScrollView",
-                "ActionsheetSectionHeaderText",
-                "ActionsheetSectionList",
-                "ActionsheetVirtualizedList",
-                "UIActionsheet"
-            ],
-            "parts": [
-                "Actionsheet",
-                "ActionsheetBackdrop",
-                "ActionsheetContent",
-                "ActionsheetDragIndicator",
-                "ActionsheetDragIndicatorWrapper",
-                "ActionsheetFlatList",
-                "ActionsheetIcon",
-                "ActionsheetItem",
-                "ActionsheetItemText",
-                "ActionsheetScrollView",
-                "ActionsheetSectionHeaderText",
-                "ActionsheetSectionList",
-                "ActionsheetVirtualizedList"
-            ],
-            "variantAxes": [
-                {
-                    "id": 1,
-                    "name": "isTruncated"
-                },
-                {
-                    "id": 2,
-                    "name": "bold"
-                },
-                {
-                    "id": 3,
-                    "name": "underline"
-                },
-                {
-                    "id": 4,
-                    "name": "strikeThrough"
-                },
-                {
-                    "id": 5,
-                    "name": "sub"
-                },
-                {
-                    "id": 6,
-                    "name": "italic"
-                },
-                {
-                    "id": 7,
-                    "name": "highlight"
-                }
-            ],
-            "examples": 9,
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 3,
             "name": "alert",
             "category": 3,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "Alert",
-                "AlertIcon",
-                "AlertText",
-                "UIAlert"
+                "Alert"
             ],
             "parts": [
-                "Alert",
-                "AlertIcon",
-                "AlertText"
+                "Alert"
             ],
             "variantAxes": [
                 {
@@ -276,88 +180,16 @@
             ]
         },
         {
-            "id": 4,
-            "name": "alert-dialog",
-            "category": 6,
-            "maturity": 1,
-            "implementation": 2,
-            "exports": [
-                "AlertDialog",
-                "AlertDialogBackdrop",
-                "AlertDialogBody",
-                "AlertDialogCloseButton",
-                "AlertDialogContent",
-                "AlertDialogFooter",
-                "AlertDialogHeader"
-            ],
-            "parts": [
-                "AlertDialog",
-                "AlertDialogBackdrop",
-                "AlertDialogBody",
-                "AlertDialogCloseButton",
-                "AlertDialogContent",
-                "AlertDialogFooter",
-                "AlertDialogHeader"
-            ],
-            "variantAxes": [],
-            "examples": 4,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 5,
-            "name": "all-components",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 4,
-            "exports": [],
-            "parts": [],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4
-            ]
-        },
-        {
-            "id": 6,
+            "id": 3,
             "name": "avatar",
             "category": 8,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "Avatar",
-                "AvatarBadge",
-                "AvatarFallback",
-                "AvatarFallbackText",
-                "AvatarGroup",
-                "AvatarImage"
+                "Avatar"
             ],
             "parts": [
-                "Avatar",
-                "AvatarBadge",
-                "AvatarFallback",
-                "AvatarFallbackText",
-                "AvatarGroup",
-                "AvatarImage"
+                "Avatar"
             ],
             "variantAxes": [],
             "examples": 9,
@@ -375,20 +207,16 @@
             ]
         },
         {
-            "id": 7,
+            "id": 4,
             "name": "badge",
             "category": 4,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "Badge",
-                "BadgeIcon",
-                "BadgeText"
+                "Badge"
             ],
             "parts": [
-                "Badge",
-                "BadgeIcon",
-                "BadgeText"
+                "Badge"
             ],
             "variantAxes": [
                 {
@@ -411,7 +239,7 @@
             ]
         },
         {
-            "id": 8,
+            "id": 5,
             "name": "bottomsheet",
             "category": 6,
             "maturity": 2,
@@ -419,32 +247,14 @@
             "exports": [
                 "BottomSheet",
                 "BottomSheetPortal",
-                "BottomSheetTrigger",
                 "BottomSheetBackdrop",
-                "BottomSheetDragIndicator",
-                "BottomSheetContent",
-                "BottomSheetFooter",
-                "BottomSheetItem",
-                "BottomSheetItemText",
-                "BottomSheetTextInput",
-                "BottomSheetScrollView",
-                "BottomSheetFlatList",
-                "BottomSheetSectionList"
+                "BottomSheetContent"
             ],
             "parts": [
                 "BottomSheet",
                 "BottomSheetPortal",
-                "BottomSheetTrigger",
                 "BottomSheetBackdrop",
-                "BottomSheetDragIndicator",
-                "BottomSheetContent",
-                "BottomSheetFooter",
-                "BottomSheetItem",
-                "BottomSheetItemText",
-                "BottomSheetTextInput",
-                "BottomSheetScrollView",
-                "BottomSheetFlatList",
-                "BottomSheetSectionList"
+                "BottomSheetContent"
             ],
             "variantAxes": [],
             "examples": 4,
@@ -462,52 +272,16 @@
             ]
         },
         {
-            "id": 9,
-            "name": "box",
-            "category": 2,
-            "maturity": 1,
-            "implementation": 1,
-            "exports": [
-                "Box",
-                "boxStyle"
-            ],
-            "parts": [
-                "Box"
-            ],
-            "variantAxes": [],
-            "examples": 1,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 10,
+            "id": 6,
             "name": "button",
             "category": 5,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "Button",
-                "ButtonGroup",
-                "ButtonIcon",
-                "ButtonSpinner",
-                "ButtonText"
+                "Button"
             ],
             "parts": [
-                "Button",
-                "ButtonGroup",
-                "ButtonIcon",
-                "ButtonSpinner",
-                "ButtonText"
+                "Button"
             ],
             "variantAxes": [
                 {
@@ -546,66 +320,18 @@
             ]
         },
         {
-            "id": 11,
+            "id": 7,
             "name": "calendar",
             "category": 5,
             "maturity": 2,
             "implementation": 2,
             "exports": [
                 "Calendar",
-                "CalendarHeader",
-                "CalendarHeaderPrevButton",
-                "CalendarHeaderNextButton",
-                "CalendarHeaderTitle",
-                "CalendarHeaderMonthSelect",
-                "CalendarHeaderYearSelect",
-                "CalendarWeekDaysHeader",
-                "CalendarWeekDay",
-                "CalendarBody",
-                "CalendarGrid",
-                "CalendarWeek",
-                "CalendarDay",
-                "CalendarDayText",
-                "CalendarDayIndicator",
-                "CalendarWeekNumber",
-                "CalendarFooter",
-                "calendarStyle",
-                "calendarHeaderStyle",
-                "calendarHeaderButtonStyle",
-                "calendarHeaderTitleStyle",
-                "calendarWeekDaysHeaderStyle",
-                "calendarWeekDayStyle",
-                "calendarWeekDayTextStyle",
-                "calendarBodyStyle",
-                "calendarGridStyle",
-                "calendarWeekStyle",
-                "calendarDayStyle",
-                "calendarDayTextStyle",
-                "calendarDayIndicatorStyle",
-                "calendarDotStyle",
-                "calendarWeekNumberStyle",
-                "calendarWeekNumberTextStyle",
-                "calendarFooterStyle",
-                "calendarHeaderSelectStyle"
+                "CalendarDay"
             ],
             "parts": [
                 "Calendar",
-                "CalendarHeader",
-                "CalendarHeaderPrevButton",
-                "CalendarHeaderNextButton",
-                "CalendarHeaderTitle",
-                "CalendarHeaderMonthSelect",
-                "CalendarHeaderYearSelect",
-                "CalendarWeekDaysHeader",
-                "CalendarWeekDay",
-                "CalendarBody",
-                "CalendarGrid",
-                "CalendarWeek",
-                "CalendarDay",
-                "CalendarDayText",
-                "CalendarDayIndicator",
-                "CalendarWeekNumber",
-                "CalendarFooter"
+                "CalendarDay"
             ],
             "variantAxes": [
                 {
@@ -636,14 +362,13 @@
             ]
         },
         {
-            "id": 12,
+            "id": 8,
             "name": "card",
             "category": 4,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "Card",
-                "cardStyle"
+                "Card"
             ],
             "parts": [
                 "Card"
@@ -669,156 +394,20 @@
             ]
         },
         {
-            "id": 13,
-            "name": "center",
-            "category": 2,
-            "maturity": 1,
-            "implementation": 1,
-            "exports": [
-                "Center",
-                "centerStyle"
-            ],
-            "parts": [
-                "Center"
-            ],
-            "variantAxes": [],
-            "examples": 1,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 14,
-            "name": "chat-ai",
+            "id": 9,
+            "name": "file-tree",
             "category": 10,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "getMediaCategory",
-                "getAttachmentLabel",
-                "useAttachmentsContext",
-                "useAttachmentContext",
-                "Attachments",
-                "Attachment",
-                "AttachmentPreview",
-                "AttachmentRemove",
-                "AttachmentHoverCard",
-                "AttachmentHoverCardContent",
-                "AttachmentHoverCardText",
-                "AttachmentEmpty",
-                "BlankContext",
-                "BlankProvider",
-                "useBlankContext",
-                "Conversation",
-                "ConversationEmptyState",
-                "ConversationContent",
-                "ConversationScrollButton",
-                "ConversationDownload",
                 "FileTree",
                 "FileTreeFolder",
-                "FileTreeFile",
-                "FileTreeActions",
-                "Message",
-                "MessageContent",
-                "MessageResponse",
-                "MessageToolbar",
-                "MessageAction",
-                "MessageBranch",
-                "MessageBranchContent",
-                "MessageBranchSelector",
-                "MessageBranchPrevious",
-                "MessageBranchNext",
-                "MessageBranchPage",
-                "ModelSelector",
-                "ModelSelectorTrigger",
-                "ModelSelectorContent",
-                "ModelSelectorInput",
-                "ModelSelectorList",
-                "ModelSelectorEmpty",
-                "ModelSelectorGroup",
-                "ModelSelectorItem",
-                "ModelSelectorShortcut",
-                "ModelSelectorSeparator",
-                "ModelSelectorLogo",
-                "ModelSelectorLogoGroup",
-                "ModelSelectorName",
-                "usePromptInputAttachments",
-                "PromptInputProvider",
-                "PromptInput",
-                "PromptInputBody",
-                "PromptInputTextarea",
-                "PromptInputFooter",
-                "PromptInputTools",
-                "PromptInputButton",
-                "PromptInputSubmit",
-                "PromptInputActionMenu",
-                "PromptInputActionMenuTrigger",
-                "PromptInputActionMenuContent"
+                "FileTreeFile"
             ],
             "parts": [
-                "Attachments",
-                "Attachment",
-                "AttachmentPreview",
-                "AttachmentRemove",
-                "AttachmentHoverCard",
-                "AttachmentHoverCardContent",
-                "AttachmentHoverCardText",
-                "AttachmentEmpty",
-                "BlankContext",
-                "BlankProvider",
-                "Conversation",
-                "ConversationEmptyState",
-                "ConversationContent",
-                "ConversationScrollButton",
-                "ConversationDownload",
                 "FileTree",
                 "FileTreeFolder",
-                "FileTreeFile",
-                "FileTreeActions",
-                "Message",
-                "MessageContent",
-                "MessageResponse",
-                "MessageToolbar",
-                "MessageAction",
-                "MessageBranch",
-                "MessageBranchContent",
-                "MessageBranchSelector",
-                "MessageBranchPrevious",
-                "MessageBranchNext",
-                "MessageBranchPage",
-                "ModelSelector",
-                "ModelSelectorTrigger",
-                "ModelSelectorContent",
-                "ModelSelectorInput",
-                "ModelSelectorList",
-                "ModelSelectorEmpty",
-                "ModelSelectorGroup",
-                "ModelSelectorItem",
-                "ModelSelectorShortcut",
-                "ModelSelectorSeparator",
-                "ModelSelectorLogo",
-                "ModelSelectorLogoGroup",
-                "ModelSelectorName",
-                "PromptInputProvider",
-                "PromptInput",
-                "PromptInputBody",
-                "PromptInputTextarea",
-                "PromptInputFooter",
-                "PromptInputTools",
-                "PromptInputButton",
-                "PromptInputSubmit",
-                "PromptInputActionMenu",
-                "PromptInputActionMenuTrigger",
-                "PromptInputActionMenuContent"
+                "FileTreeFile"
             ],
             "variantAxes": [],
             "examples": 3,
@@ -836,24 +425,18 @@
             ]
         },
         {
-            "id": 15,
+            "id": 10,
             "name": "checkbox",
             "category": 5,
             "maturity": 1,
             "implementation": 2,
             "exports": [
                 "Checkbox",
-                "CheckboxGroup",
-                "CheckboxIcon",
-                "CheckboxIndicator",
-                "CheckboxLabel"
+                "CheckboxGroup"
             ],
             "parts": [
                 "Checkbox",
-                "CheckboxGroup",
-                "CheckboxIcon",
-                "CheckboxIndicator",
-                "CheckboxLabel"
+                "CheckboxGroup"
             ],
             "variantAxes": [],
             "examples": 9,
@@ -871,26 +454,16 @@
             ]
         },
         {
-            "id": 16,
+            "id": 11,
             "name": "date-time-picker",
             "category": 5,
             "maturity": 2,
             "implementation": 2,
             "exports": [
-                "DateTimePicker",
-                "DateTimePickerIcon",
-                "DateTimePickerInput",
-                "DateTimePickerTrigger",
-                "dateTimePickerStyle",
-                "dateTimePickerTriggerStyle",
-                "dateTimePickerInputStyle",
-                "dateTimePickerIconStyle"
+                "DateTimePicker"
             ],
             "parts": [
-                "DateTimePicker",
-                "DateTimePickerIcon",
-                "DateTimePickerInput",
-                "DateTimePickerTrigger"
+                "DateTimePicker"
             ],
             "variantAxes": [
                 {
@@ -917,7 +490,7 @@
             ]
         },
         {
-            "id": 17,
+            "id": 12,
             "name": "divider",
             "category": 2,
             "maturity": 1,
@@ -949,68 +522,16 @@
             ]
         },
         {
-            "id": 18,
-            "name": "drawer",
-            "category": 6,
-            "maturity": 1,
-            "implementation": 2,
-            "exports": [
-                "Drawer",
-                "DrawerBackdrop",
-                "DrawerBody",
-                "DrawerCloseButton",
-                "DrawerContent",
-                "DrawerFooter",
-                "DrawerHeader"
-            ],
-            "parts": [
-                "Drawer",
-                "DrawerBackdrop",
-                "DrawerBody",
-                "DrawerCloseButton",
-                "DrawerContent",
-                "DrawerFooter",
-                "DrawerHeader"
-            ],
-            "variantAxes": [
-                {
-                    "id": 1,
-                    "name": "size"
-                },
-                {
-                    "id": 2,
-                    "name": "anchor"
-                }
-            ],
-            "examples": 3,
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 19,
+            "id": 13,
             "name": "fab",
             "category": 6,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "Fab",
-                "FabIcon",
-                "FabLabel"
+                "Fab"
             ],
             "parts": [
-                "Fab",
-                "FabIcon",
-                "FabLabel"
+                "Fab"
             ],
             "variantAxes": [
                 {
@@ -1065,61 +586,16 @@
             ]
         },
         {
-            "id": 20,
-            "name": "flat-list",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "RNFlatList",
-                "FlatList"
-            ],
-            "parts": [
-                "FlatList"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 21,
+            "id": 14,
             "name": "form-control",
             "category": 5,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "FormControl",
-                "FormControlError",
-                "FormControlErrorText",
-                "FormControlErrorIcon",
-                "FormControlLabel",
-                "FormControlLabelText",
-                "FormControlLabelAstrick",
-                "FormControlHelper",
-                "FormControlHelperText",
-                "UIFormControl"
+                "FormControl"
             ],
             "parts": [
-                "FormControl",
-                "FormControlError",
-                "FormControlErrorText",
-                "FormControlErrorIcon",
-                "FormControlLabel",
-                "FormControlLabelText",
-                "FormControlLabelAstrick",
-                "FormControlHelper",
-                "FormControlHelperText"
+                "FormControl"
             ],
             "variantAxes": [
                 {
@@ -1166,13 +642,12 @@
             ]
         },
         {
-            "id": 22,
+            "id": 15,
             "name": "pam-ui-provider",
             "category": 9,
             "maturity": 1,
             "implementation": 4,
             "exports": [
-                "useSafeLayoutEffect",
                 "PamUIProvider"
             ],
             "parts": [
@@ -1194,106 +669,13 @@
             ]
         },
         {
-            "id": 23,
-            "name": "grid",
-            "category": 2,
-            "maturity": 2,
-            "implementation": 1,
-            "exports": [
-                "Grid",
-                "GridItem",
-                "gridStyle",
-                "gridItemStyle"
-            ],
-            "parts": [
-                "Grid",
-                "GridItem"
-            ],
-            "variantAxes": [],
-            "examples": 5,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 24,
-            "name": "heading",
-            "category": 1,
-            "maturity": 1,
-            "implementation": 1,
-            "exports": [
-                "Heading",
-                "headingStyle"
-            ],
-            "parts": [
-                "Heading"
-            ],
-            "variantAxes": [
-                {
-                    "id": 1,
-                    "name": "isTruncated"
-                },
-                {
-                    "id": 2,
-                    "name": "bold"
-                },
-                {
-                    "id": 3,
-                    "name": "underline"
-                },
-                {
-                    "id": 4,
-                    "name": "strikeThrough"
-                },
-                {
-                    "id": 5,
-                    "name": "sub"
-                },
-                {
-                    "id": 6,
-                    "name": "italic"
-                },
-                {
-                    "id": 7,
-                    "name": "highlight"
-                },
-                {
-                    "id": 8,
-                    "name": "size"
-                }
-            ],
-            "examples": 2,
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 25,
+            "id": 16,
             "name": "hstack",
             "category": 2,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "HStack",
-                "hstackStyle"
+                "HStack"
             ],
             "parts": [
                 "HStack"
@@ -1323,14 +705,13 @@
             ]
         },
         {
-            "id": 26,
+            "id": 17,
             "name": "icon",
             "category": 8,
             "maturity": 1,
             "implementation": 1,
             "exports": [
                 "Icon",
-                "createIcon",
                 "AddIcon",
                 "AlertCircleIcon",
                 "ArrowUpIcon",
@@ -1385,8 +766,7 @@
                 "SunIcon",
                 "ThreeDotsIcon",
                 "TrashIcon",
-                "UnlockIcon",
-                "UIIcon"
+                "UnlockIcon"
             ],
             "parts": [
                 "Icon",
@@ -1467,7 +847,7 @@
             ]
         },
         {
-            "id": 27,
+            "id": 18,
             "name": "image",
             "category": 8,
             "maturity": 1,
@@ -1499,86 +879,16 @@
             ]
         },
         {
-            "id": 28,
-            "name": "image-background",
-            "category": 8,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "ImageBackground"
-            ],
-            "parts": [
-                "ImageBackground"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 29,
-            "name": "image-viewer",
-            "category": 6,
-            "maturity": 2,
-            "implementation": 2,
-            "exports": [
-                "ImageViewer",
-                "ImageViewerTrigger",
-                "ImageViewerContent",
-                "ImageViewerCloseButton",
-                "ImageViewerNavigation",
-                "ImageViewerCounter"
-            ],
-            "parts": [
-                "ImageViewer",
-                "ImageViewerTrigger",
-                "ImageViewerContent",
-                "ImageViewerCloseButton",
-                "ImageViewerNavigation",
-                "ImageViewerCounter"
-            ],
-            "variantAxes": [],
-            "examples": 3,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 30,
+            "id": 19,
             "name": "input",
             "category": 5,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Input",
-                "InputField",
-                "InputIcon",
-                "InputSlot"
+                "Input"
             ],
             "parts": [
-                "Input",
-                "InputField",
-                "InputIcon",
-                "InputSlot"
+                "Input"
             ],
             "variantAxes": [],
             "examples": 3,
@@ -1596,171 +906,16 @@
             ]
         },
         {
-            "id": 31,
-            "name": "input-accessory-view",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "InputAccessoryView"
-            ],
-            "parts": [
-                "InputAccessoryView"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 32,
-            "name": "keyboard-avoiding-view",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "KeyboardAvoidingView"
-            ],
-            "parts": [
-                "KeyboardAvoidingView"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 33,
-            "name": "link",
-            "category": 5,
-            "maturity": 1,
-            "implementation": 1,
-            "exports": [
-                "Link",
-                "LinkText",
-                "UILink"
-            ],
-            "parts": [
-                "Link",
-                "LinkText"
-            ],
-            "variantAxes": [
-                {
-                    "id": 1,
-                    "name": "isTruncated"
-                },
-                {
-                    "id": 2,
-                    "name": "bold"
-                },
-                {
-                    "id": 3,
-                    "name": "underline"
-                },
-                {
-                    "id": 4,
-                    "name": "strikeThrough"
-                },
-                {
-                    "id": 5,
-                    "name": "size"
-                },
-                {
-                    "id": 6,
-                    "name": "sub"
-                },
-                {
-                    "id": 7,
-                    "name": "italic"
-                },
-                {
-                    "id": 8,
-                    "name": "highlight"
-                }
-            ],
-            "examples": 3,
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 34,
-            "name": "liquid-glass",
-            "category": 6,
-            "maturity": 2,
-            "implementation": 2,
-            "exports": [
-                "isGlassEffectAPIAvailable",
-                "isLiquidGlassAvailable",
-                "GlassView",
-                "GlassContainer"
-            ],
-            "parts": [
-                "GlassView",
-                "GlassContainer"
-            ],
-            "variantAxes": [],
-            "examples": 4,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 35,
+            "id": 20,
             "name": "menu",
             "category": 6,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Menu",
-                "MenuItem",
-                "MenuItemLabel",
-                "MenuSeparator",
-                "UIMenu"
+                "Menu"
             ],
             "parts": [
-                "Menu",
-                "MenuItem",
-                "MenuItemLabel",
-                "MenuSeparator"
+                "Menu"
             ],
             "variantAxes": [
                 {
@@ -1807,28 +962,16 @@
             ]
         },
         {
-            "id": 36,
+            "id": 21,
             "name": "modal",
             "category": 6,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Modal",
-                "ModalBackdrop",
-                "ModalBody",
-                "ModalCloseButton",
-                "ModalContent",
-                "ModalFooter",
-                "ModalHeader"
+                "Modal"
             ],
             "parts": [
-                "Modal",
-                "ModalBackdrop",
-                "ModalBody",
-                "ModalCloseButton",
-                "ModalContent",
-                "ModalFooter",
-                "ModalHeader"
+                "Modal"
             ],
             "variantAxes": [
                 {
@@ -1851,30 +994,16 @@
             ]
         },
         {
-            "id": 37,
+            "id": 22,
             "name": "popover",
             "category": 6,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Popover",
-                "PopoverArrow",
-                "PopoverBackdrop",
-                "PopoverBody",
-                "PopoverCloseButton",
-                "PopoverContent",
-                "PopoverFooter",
-                "PopoverHeader"
+                "Popover"
             ],
             "parts": [
-                "Popover",
-                "PopoverArrow",
-                "PopoverBackdrop",
-                "PopoverBody",
-                "PopoverCloseButton",
-                "PopoverContent",
-                "PopoverFooter",
-                "PopoverHeader"
+                "Popover"
             ],
             "variantAxes": [
                 {
@@ -1897,7 +1026,7 @@
             ]
         },
         {
-            "id": 38,
+            "id": 23,
             "name": "portal",
             "category": 6,
             "maturity": 1,
@@ -1924,46 +1053,16 @@
             ]
         },
         {
-            "id": 39,
-            "name": "pressable",
-            "category": 5,
-            "maturity": 1,
-            "implementation": 1,
-            "exports": [
-                "Pressable"
-            ],
-            "parts": [
-                "Pressable"
-            ],
-            "variantAxes": [],
-            "examples": 2,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 40,
+            "id": 24,
             "name": "progress",
             "category": 3,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Progress",
-                "ProgressFilledTrack",
-                "UIProgress"
+                "Progress"
             ],
             "parts": [
-                "Progress",
-                "ProgressFilledTrack"
+                "Progress"
             ],
             "variantAxes": [
                 {
@@ -1986,24 +1085,18 @@
             ]
         },
         {
-            "id": 41,
+            "id": 25,
             "name": "radio",
             "category": 5,
             "maturity": 1,
             "implementation": 2,
             "exports": [
                 "Radio",
-                "RadioGroup",
-                "RadioIcon",
-                "RadioIndicator",
-                "RadioLabel"
+                "RadioGroup"
             ],
             "parts": [
                 "Radio",
-                "RadioGroup",
-                "RadioIcon",
-                "RadioIndicator",
-                "RadioLabel"
+                "RadioGroup"
             ],
             "variantAxes": [
                 {
@@ -2026,115 +1119,7 @@
             ]
         },
         {
-            "id": 42,
-            "name": "refresh-control",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "RefreshControl"
-            ],
-            "parts": [
-                "RefreshControl"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 43,
-            "name": "safe-area-view",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "SafeAreaView"
-            ],
-            "parts": [
-                "SafeAreaView"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 44,
-            "name": "scroll-view",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "ScrollView"
-            ],
-            "parts": [
-                "ScrollView"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 45,
-            "name": "section-list",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "SectionList"
-            ],
-            "parts": [
-                "SectionList"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 46,
+            "id": 26,
             "name": "select",
             "category": 5,
             "maturity": 1,
@@ -2142,63 +1127,18 @@
             "exports": [
                 "Select",
                 "SelectTrigger",
-                "SelectInput",
-                "SelectIcon",
                 "SelectPortal",
                 "SelectBackdrop",
                 "SelectContent",
-                "SelectDragIndicator",
-                "SelectDragIndicatorWrapper",
-                "SelectItem",
-                "SelectScrollView",
-                "SelectVirtualizedList",
-                "SelectFlatList",
-                "SelectSectionList",
-                "SelectSectionHeaderText",
-                "Actionsheet",
-                "ActionsheetContent",
-                "ActionsheetItem",
-                "ActionsheetItemText",
-                "ActionsheetDragIndicator",
-                "ActionsheetDragIndicatorWrapper",
-                "ActionsheetBackdrop",
-                "ActionsheetScrollView",
-                "ActionsheetVirtualizedList",
-                "ActionsheetFlatList",
-                "ActionsheetSectionList",
-                "ActionsheetSectionHeaderText",
-                "ActionsheetIcon",
-                "UIActionsheet"
+                "SelectItem"
             ],
             "parts": [
                 "Select",
                 "SelectTrigger",
-                "SelectInput",
-                "SelectIcon",
                 "SelectPortal",
                 "SelectBackdrop",
                 "SelectContent",
-                "SelectDragIndicator",
-                "SelectDragIndicatorWrapper",
-                "SelectItem",
-                "SelectScrollView",
-                "SelectVirtualizedList",
-                "SelectFlatList",
-                "SelectSectionList",
-                "SelectSectionHeaderText",
-                "Actionsheet",
-                "ActionsheetContent",
-                "ActionsheetItem",
-                "ActionsheetItemText",
-                "ActionsheetDragIndicator",
-                "ActionsheetDragIndicatorWrapper",
-                "ActionsheetBackdrop",
-                "ActionsheetScrollView",
-                "ActionsheetVirtualizedList",
-                "ActionsheetFlatList",
-                "ActionsheetSectionList",
-                "ActionsheetSectionHeaderText",
-                "ActionsheetIcon"
+                "SelectItem"
             ],
             "variantAxes": [
                 {
@@ -2253,20 +1193,16 @@
             ]
         },
         {
-            "id": 47,
+            "id": 27,
             "name": "skeleton",
             "category": 3,
             "maturity": 2,
             "implementation": 2,
             "exports": [
-                "Skeleton",
-                "SkeletonText",
-                "skeletonStyle",
-                "skeletonTextStyle"
+                "Skeleton"
             ],
             "parts": [
-                "Skeleton",
-                "SkeletonText"
+                "Skeleton"
             ],
             "variantAxes": [
                 {
@@ -2297,7 +1233,7 @@
             ]
         },
         {
-            "id": 48,
+            "id": 28,
             "name": "slider",
             "category": 5,
             "maturity": 1,
@@ -2306,8 +1242,7 @@
                 "Slider",
                 "SliderFilledTrack",
                 "SliderThumb",
-                "SliderTrack",
-                "UISlider"
+                "SliderTrack"
             ],
             "parts": [
                 "Slider",
@@ -2340,61 +1275,7 @@
             ]
         },
         {
-            "id": 49,
-            "name": "spinner",
-            "category": 3,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "Spinner"
-            ],
-            "parts": [
-                "Spinner"
-            ],
-            "variantAxes": [],
-            "examples": 3,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 50,
-            "name": "status-bar",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "StatusBar"
-            ],
-            "parts": [
-                "StatusBar"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 51,
+            "id": 29,
             "name": "switch",
             "category": 5,
             "maturity": 1,
@@ -2426,38 +1307,18 @@
             ]
         },
         {
-            "id": 52,
+            "id": 30,
             "name": "table",
             "category": 4,
             "maturity": 2,
             "implementation": 2,
             "exports": [
                 "Table",
-                "TableHeader",
-                "TableBody",
-                "TableFooter",
-                "TableHead",
-                "TableRow",
-                "TableData",
-                "TableCaption",
-                "tableStyle",
-                "tableHeaderStyle",
-                "tableBodyStyle",
-                "tableFooterStyle",
-                "tableHeadStyle",
-                "tableRowStyleStyle",
-                "tableDataStyle",
-                "tableCaptionStyle"
+                "TableRow"
             ],
             "parts": [
                 "Table",
-                "TableHeader",
-                "TableBody",
-                "TableFooter",
-                "TableHead",
-                "TableRow",
-                "TableData",
-                "TableCaption"
+                "TableRow"
             ],
             "variantAxes": [
                 {
@@ -2484,7 +1345,7 @@
             ]
         },
         {
-            "id": 53,
+            "id": 31,
             "name": "tabs",
             "category": 4,
             "maturity": 2,
@@ -2494,22 +1355,14 @@
                 "TabsList",
                 "TabsTrigger",
                 "TabsContent",
-                "TabsContentWrapper",
-                "TabsTriggerText",
-                "TabsTriggerIcon",
-                "TabsIndicator",
-                "TabsAnimatedIndicator"
+                "TabsContentWrapper"
             ],
             "parts": [
                 "Tabs",
                 "TabsList",
                 "TabsTrigger",
                 "TabsContent",
-                "TabsContentWrapper",
-                "TabsTriggerText",
-                "TabsTriggerIcon",
-                "TabsIndicator",
-                "TabsAnimatedIndicator"
+                "TabsContentWrapper"
             ],
             "variantAxes": [
                 {
@@ -2532,79 +1385,16 @@
             ]
         },
         {
-            "id": 54,
-            "name": "text",
-            "category": 1,
-            "maturity": 1,
-            "implementation": 1,
-            "exports": [
-                "Text",
-                "textStyle"
-            ],
-            "parts": [
-                "Text"
-            ],
-            "variantAxes": [
-                {
-                    "id": 1,
-                    "name": "isTruncated"
-                },
-                {
-                    "id": 2,
-                    "name": "bold"
-                },
-                {
-                    "id": 3,
-                    "name": "underline"
-                },
-                {
-                    "id": 4,
-                    "name": "strikeThrough"
-                },
-                {
-                    "id": 5,
-                    "name": "size"
-                },
-                {
-                    "id": 6,
-                    "name": "sub"
-                },
-                {
-                    "id": 7,
-                    "name": "italic"
-                },
-                {
-                    "id": 8,
-                    "name": "highlight"
-                }
-            ],
-            "examples": 2,
-            "verification": [
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 55,
+            "id": 32,
             "name": "textarea",
             "category": 5,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Textarea",
-                "TextareaInput"
+                "Textarea"
             ],
             "parts": [
-                "Textarea",
-                "TextareaInput"
+                "Textarea"
             ],
             "variantAxes": [
                 {
@@ -2631,21 +1421,16 @@
             ]
         },
         {
-            "id": 56,
+            "id": 33,
             "name": "toast",
             "category": 3,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Toast",
-                "ToastDescription",
-                "ToastTitle",
-                "useToast"
+                "Toast"
             ],
             "parts": [
-                "Toast",
-                "ToastDescription",
-                "ToastTitle"
+                "Toast"
             ],
             "variantAxes": [
                 {
@@ -2692,21 +1477,16 @@
             ]
         },
         {
-            "id": 57,
+            "id": 34,
             "name": "tooltip",
             "category": 6,
             "maturity": 1,
             "implementation": 2,
             "exports": [
-                "Tooltip",
-                "TooltipContent",
-                "TooltipText",
-                "UITooltip"
+                "Tooltip"
             ],
             "parts": [
-                "Tooltip",
-                "TooltipContent",
-                "TooltipText"
+                "Tooltip"
             ],
             "variantAxes": [
                 {
@@ -2757,57 +1537,7 @@
             ]
         },
         {
-            "id": 58,
-            "name": "utils",
-            "category": 9,
-            "maturity": 1,
-            "implementation": 4,
-            "exports": [],
-            "parts": [],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4,
-                4
-            ]
-        },
-        {
-            "id": 59,
-            "name": "view",
-            "category": 2,
-            "maturity": 1,
-            "implementation": 3,
-            "exports": [
-                "View"
-            ],
-            "parts": [
-                "View"
-            ],
-            "variantAxes": [],
-            "examples": 0,
-            "verification": [
-                3,
-                3,
-                3,
-                4,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "id": 60,
+            "id": 35,
             "name": "virtualized-list",
             "category": 9,
             "maturity": 1,
@@ -2834,14 +1564,13 @@
             ]
         },
         {
-            "id": 61,
+            "id": 36,
             "name": "vstack",
             "category": 2,
             "maturity": 1,
             "implementation": 1,
             "exports": [
-                "VStack",
-                "vstackStyle"
+                "VStack"
             ],
             "parts": [
                 "VStack"

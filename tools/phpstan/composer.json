@@ -2,7 +2,7 @@
     "name": "pushinbr/pam-mobile-ui-analysis-tools",
     "description": "Isolated static-analysis toolchain for PAM Mobile UI.",
     "type": "project",
-    "license": "BUSL-1.1",
+    "license": "Apache-2.0",
     "require": {
         "php": "^8.4",
         "phpstan/phpstan": "^2.1"

@@ -162,7 +162,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             checkbox.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(10),
+                    "behavior" to WireValue.Integer(9),
                     "component" to WireValue.Integer(GeneratedComponents.CHECKBOX.toLong()),
                     "checked" to WireValue.Flag(false),
                 ),
@@ -188,7 +188,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             val radioGroup = MobileUiHost(context) { _, _ -> }
             radioGroup.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(26),
+                    "behavior" to WireValue.Integer(21),
                     "component" to WireValue.Integer(GeneratedComponents.RADIO_GROUP.toLong()),
                 ),
             )
@@ -197,7 +197,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             firstRadio.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(11),
+                    "behavior" to WireValue.Integer(10),
                     "component" to WireValue.Integer(GeneratedComponents.RADIO.toLong()),
                     "checked" to WireValue.Flag(true),
                 ),
@@ -207,7 +207,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             secondRadio.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(11),
+                    "behavior" to WireValue.Integer(10),
                     "component" to WireValue.Integer(GeneratedComponents.RADIO.toLong()),
                     "checked" to WireValue.Flag(false),
                 ),
@@ -259,7 +259,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             switch.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(27),
+                    "behavior" to WireValue.Integer(22),
                     "component" to WireValue.Integer(GeneratedComponents.SWITCH.toLong()),
                     "checked" to WireValue.Flag(false),
                 ),
@@ -296,7 +296,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             val firstTab = MobileUiHost(context) { _, _ -> }
             firstTab.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(28),
+                    "behavior" to WireValue.Integer(23),
                     "value" to WireValue.Text("first"),
                     "selected" to WireValue.Flag(true),
                 ),
@@ -304,7 +304,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             val secondTab = MobileUiHost(context) { _, _ -> }
             secondTab.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(28),
+                    "behavior" to WireValue.Integer(23),
                     "value" to WireValue.Text("second"),
                 ),
             )
@@ -391,9 +391,9 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             sheetItem.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(29),
+                    "behavior" to WireValue.Integer(24),
                     "component" to WireValue.Integer(
-                        GeneratedComponents.ACTIONSHEET_ITEM.toLong(),
+                        GeneratedComponents.SELECT_ITEM.toLong(),
                     ),
                 ),
             )
@@ -418,7 +418,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             val anchored = MobileUiHost(context) { kind, _ -> anchoredEvents += kind }
             anchored.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(19),
+                    "behavior" to WireValue.Integer(14),
                     "isOpen" to WireValue.Flag(true),
                     "placement" to WireValue.Integer(4),
                     "shouldFlip" to WireValue.Flag(true),
@@ -463,7 +463,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             val menu = MobileUiHost(context) { _, _ -> }
             menu.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(20),
+                    "behavior" to WireValue.Integer(15),
                     "defaultIsOpen" to WireValue.Flag(true),
                     "selectionMode" to WireValue.Integer(2),
                     "closeOnSelect" to WireValue.Flag(false),
@@ -477,7 +477,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             firstMenuItem.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(30),
+                    "behavior" to WireValue.Integer(25),
                     "selectionMode" to WireValue.Integer(2),
                     "closeOnSelect" to WireValue.Flag(false),
                 ),
@@ -487,7 +487,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             secondMenuItem.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(30),
+                    "behavior" to WireValue.Integer(25),
                     "selectionMode" to WireValue.Integer(2),
                     "closeOnSelect" to WireValue.Flag(false),
                 ),
@@ -516,7 +516,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             val inputGroup = MobileUiHost(context) { kind, _ -> inputGroupEvents += kind }
             inputGroup.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(32),
+                    "behavior" to WireValue.Integer(27),
                     "invalid" to WireValue.Flag(false),
                 ),
             )
@@ -543,7 +543,7 @@ class MobileUiHostPerformanceInstrumentedTest {
             }
             inputSlot.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(33),
+                    "behavior" to WireValue.Integer(28),
                     "slotAction" to WireValue.Integer(1),
                 ),
             )
@@ -574,7 +574,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                 "lines" to WireValue.Integer(3),
             )
             val toastProperties = mapOf(
-                "behavior" to WireValue.Integer(12),
+                "behavior" to WireValue.Integer(11),
                 "action" to WireValue.Integer(5),
                 "persistent" to WireValue.Flag(true),
             )
@@ -597,129 +597,18 @@ class MobileUiHostPerformanceInstrumentedTest {
                 feedbackEvents.isEmpty(),
             )
 
-            val imageEvents = ArrayList<NativeViewEventKind>()
-            val imageViewer = MobileUiHost(context) { kind, _ -> imageEvents += kind }
-            imageViewer.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(13),
-                    "loop" to WireValue.Flag(true),
-                ),
-            )
-            repeat(3) { index ->
-                imageViewer.addView(View(context).apply {
-                    tag = "pam:image-viewer-image:$index"
-                })
-            }
-            val imageNext = MobileUiHost(context) { _, _ -> }
-            imageNext.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(37),
-                    "navigationAction" to WireValue.Integer(2),
-                ),
-            )
-            imageViewer.addView(imageNext)
-            imageViewer.layout(0, 0, 1_080, 2_000)
-            repeat(WARMUP_ITERATIONS) {
-                imageNext.performClick()
-            }
-            imageEvents.clear()
-            val imageNavigation = measure(SAMPLE_ITERATIONS) {
-                imageNext.performClick()
-            }
-            assertTrue(
-                "Image navigation p99 ${imageNavigation.p99Micros}µs exceeded 4ms",
-                imageNavigation.p99Nanos < FOUR_MILLISECONDS_NANOS,
-            )
-            assertEquals(
-                "Image navigation must emit one final index per activation",
-                SAMPLE_ITERATIONS,
-                imageEvents.size,
-            )
-
-            val branchEvents = ArrayList<NativeViewEventKind>()
-            val messageBranch = MobileUiHost(context) { kind, _ -> branchEvents += kind }
-            messageBranch.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(38),
-                    "loop" to WireValue.Flag(true),
-                ),
-            )
-            repeat(3) { index ->
-                messageBranch.addView(View(context).apply {
-                    tag = "pam:message-branch-page:$index"
-                })
-            }
-            val branchNext = MobileUiHost(context) { _, _ -> }
-            branchNext.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(39),
-                    "navigationAction" to WireValue.Integer(2),
-                ),
-            )
-            messageBranch.addView(branchNext)
-            messageBranch.layout(0, 0, 1_080, 800)
-            repeat(WARMUP_ITERATIONS) {
-                branchNext.performClick()
-            }
-            branchEvents.clear()
-            val branchNavigation = measure(SAMPLE_ITERATIONS) {
-                branchNext.performClick()
-            }
-            assertTrue(
-                "Message branch p99 ${branchNavigation.p99Micros}µs exceeded 4ms",
-                branchNavigation.p99Nanos < FOUR_MILLISECONDS_NANOS,
-            )
-            assertEquals(
-                "Message branches must emit one final index per activation",
-                SAMPLE_ITERATIONS,
-                branchEvents.size,
-            )
-
-            val promptEvents = ArrayList<NativeViewEventKind>()
-            val prompt = MobileUiHost(context) { kind, _ -> promptEvents += kind }
-            prompt.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(40),
-                    "clearOnSubmit" to WireValue.Flag(true),
-                ),
-            )
-            val promptField = EditText(context)
-            val promptSubmit = MobileUiHost(context) { _, _ -> }
-            promptSubmit.update(mapOf("behavior" to WireValue.Integer(41)))
-            prompt.addView(promptField)
-            prompt.addView(promptSubmit)
-            prompt.layout(0, 0, 1_080, 240)
-            repeat(WARMUP_ITERATIONS) {
-                promptField.setText("warmup")
-                promptSubmit.performClick()
-            }
-            promptEvents.clear()
-            val promptSubmission = measure(SAMPLE_ITERATIONS) {
-                promptField.setText("prompt")
-                promptSubmit.performClick()
-            }
-            assertTrue(
-                "Prompt submission p99 ${promptSubmission.p99Micros}µs exceeded 4ms",
-                promptSubmission.p99Nanos < FOUR_MILLISECONDS_NANOS,
-            )
-            assertEquals(
-                "Prompt submit must emit one semantic event per activation",
-                SAMPLE_ITERATIONS,
-                promptEvents.size,
-            )
-
             val fileTreeEvents = ArrayList<NativeViewEventKind>()
             val fileTree = MobileUiHost(context) { kind, _ -> fileTreeEvents += kind }
             fileTree.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(43),
+                    "behavior" to WireValue.Integer(32),
                     "expandedPaths" to WireValue.Text("/src"),
                 ),
             )
             val fileTreeFolder = MobileUiHost(context) { _, _ -> }
             fileTreeFolder.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(44),
+                    "behavior" to WireValue.Integer(33),
                     "path" to WireValue.Text("/src"),
                 ),
             )
@@ -767,12 +656,12 @@ class MobileUiHostPerformanceInstrumentedTest {
 
             val tableEvents = ArrayList<NativeViewEventKind>()
             val table = MobileUiHost(context) { kind, _ -> tableEvents += kind }
-            table.update(mapOf("behavior" to WireValue.Integer(35)))
+            table.update(mapOf("behavior" to WireValue.Integer(30)))
             repeat(TABLE_ROWS) { rowIndex ->
                 val row = MobileUiHost(context) { kind, _ -> tableEvents += kind }
                 row.update(
                     mapOf(
-                        "behavior" to WireValue.Integer(36),
+                        "behavior" to WireValue.Integer(31),
                         "isHeaderRow" to WireValue.Flag(rowIndex == 0),
                     ),
                 )
@@ -835,9 +724,6 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"inputState\":${inputState.json()},")
                     append("\"inputSlotPress\":${inputSlotPress.json()},")
                     append("\"feedbackUpdate\":${feedbackUpdate.json()},")
-                    append("\"imageNavigation\":${imageNavigation.json()},")
-                    append("\"branchNavigation\":${branchNavigation.json()},")
-                    append("\"promptSubmission\":${promptSubmission.json()},")
                     append("\"fileTreeToggle\":${fileTreeToggle.json()},")
                     append("\"markdownUpdate\":${markdownUpdate.json()},")
                     append("\"tableLayout\":${tableLayout.json()},")
@@ -859,9 +745,6 @@ class MobileUiHostPerformanceInstrumentedTest {
                     append("\"inputStateBridgeEvents\":${inputGroupEvents.size},")
                     append("\"inputSlotBridgeEvents\":$inputSlotEvents,")
                     append("\"feedbackBridgeEvents\":${feedbackEvents.size},")
-                    append("\"imageBridgeEvents\":${imageEvents.size},")
-                    append("\"branchBridgeEvents\":${branchEvents.size},")
-                    append("\"promptBridgeEvents\":${promptEvents.size},")
                     append("\"fileTreeBridgeEvents\":${fileTreeEvents.size},")
                     append("\"markdownBridgeEvents\":${markdownEvents.size},")
                     append("\"tableBridgeEvents\":${tableEvents.size}")
@@ -894,12 +777,6 @@ class MobileUiHostPerformanceInstrumentedTest {
             inputGroup.release()
             skeleton.release()
             toast.release()
-            imageNext.release()
-            imageViewer.release()
-            branchNext.release()
-            messageBranch.release()
-            promptSubmit.release()
-            prompt.release()
             fileTreeFolder.release()
             fileTree.release()
             markdownFactory.release(markdown)
@@ -922,14 +799,14 @@ class MobileUiHostPerformanceInstrumentedTest {
 
     private fun progressProperties(iteration: Int): Map<String, WireValue> =
         mapOf(
-            "behavior" to WireValue.Integer(15),
+            "behavior" to WireValue.Integer(12),
             "component" to WireValue.Integer(GeneratedComponents.PROGRESS.toLong()),
             "value" to WireValue.Decimal((iteration % 101).toDouble()),
         )
 
     private fun inputGroupProperties(iteration: Int): Map<String, WireValue> =
         mapOf(
-            "behavior" to WireValue.Integer(32),
+            "behavior" to WireValue.Integer(27),
             "invalid" to WireValue.Flag(iteration % 2 == 0),
             "required" to WireValue.Flag(true),
             "focusColor" to WireValue.Integer(0xff2563eb),
@@ -954,7 +831,7 @@ class MobileUiHostPerformanceInstrumentedTest {
         val minute = (iteration % 60).toString().padStart(2, '0')
 
         return mapOf(
-            "behavior" to WireValue.Integer(22),
+            "behavior" to WireValue.Integer(17),
             "component" to WireValue.Integer(GeneratedComponents.DATE_TIME_PICKER.toLong()),
             "mode" to WireValue.Integer(6),
             "value" to WireValue.Text("2026-07-${day}T14:${minute}:00-03:00"),

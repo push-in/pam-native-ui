@@ -4,14 +4,14 @@
 
     <Text size="xl">Lists</Text>
         <p-list>
-            <p-list-subheader>Packages</p-list-subheader>
+            <Text>Packages</Text>
             <p-list-item>
-                <p-list-item-title>pam-mobile-ui</p-list-item-title>
-                <p-list-item-subtitle>Material components</p-list-item-subtitle>
+                <Text>pam-mobile-ui</Text>
+                <Text>Material components</Text>
             </p-list-item>
             <p-list-item>
-                <p-list-item-title>pam-native</p-list-item-title>
-                <p-list-item-subtitle>Android and UIKit renderer</p-list-item-subtitle>
+                <Text>pam-native</Text>
+                <Text>Android and UIKit renderer</Text>
             </p-list-item>
         </p-list>
 

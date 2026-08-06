@@ -21,7 +21,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: d420837613669483679ebafc50607a8952b6761b
+  PAM_NATIVE_COMMIT: 8d8a09591b449737ede32acd03ee506cfb6612cd
 
 jobs:
   ios:
@@ -74,6 +74,8 @@ jobs:
 
   package:
     name: Build release artifacts
+    needs:
+      - ios
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -98,6 +100,7 @@ jobs:
       - name: Validate release version and package
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          PAM_CI_VERIFIED_GATES: ios
         run: |
           tools/distribution-package.sh validate-tag "${RELEASE_TAG}"
           composer install \

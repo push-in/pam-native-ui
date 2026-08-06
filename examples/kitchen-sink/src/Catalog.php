@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App;
 
-use Pam\MobileUi\Enum\AttachmentType;
 use Pam\Native\Component;
 use Pam\Native\Navigation\Navigator;
 use Pam\Native\Renderable;
@@ -19,9 +18,6 @@ final class Catalog extends Component
     private bool $sheetOpen = false;
     private bool $drawerOpen = false;
     private bool $selectOpen = false;
-    private bool $galleryOpen = false;
-    private int $galleryIndex = 0;
-    private int $responseBranch = 0;
     private string $framework = 'Laravel';
     private string $email = '';
     private string $plan = 'starter';
@@ -33,37 +29,6 @@ final class Catalog extends Component
         'pushinbr/pam-mobile-ui',
         'pushinbr/pam-plugin-api',
         'pushinbr/pam-cli',
-    ];
-    /**
-     * @var list<array{
-     *     id: string,
-     *     filename: string,
-     *     mediaType: string,
-     *     type: int,
-     *     url: string
-     * }>
-     */
-    private array $promptFiles = [[
-        'id' => 'architecture',
-        'filename' => 'architecture.md',
-        'mediaType' => 'text/markdown',
-        'type' => AttachmentType::File->value,
-        'url' => 'file:///architecture.md',
-    ]];
-    /** @var list<array{url: string, alt: string}> */
-    private array $gallery = [
-        [
-            'url' => 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600',
-            'alt' => 'Mountains under a bright sky',
-        ],
-        [
-            'url' => 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1600',
-            'alt' => 'Sunrise over a green landscape',
-        ],
-        [
-            'url' => 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600',
-            'alt' => 'Sunlight crossing a forest',
-        ],
     ];
     /** @var list<string> */
     private array $expandedFolders = ['/src'];
@@ -145,59 +110,6 @@ final class Catalog extends Component
         $this->selectOpen = false;
     }
 
-    public function setGalleryOpen(bool $open): void
-    {
-        $this->galleryOpen = $open;
-    }
-
-    public function selectGalleryImage(string $payload): void
-    {
-        $this->galleryIndex = max(
-            0,
-            min(count($this->gallery) - 1, (int) $payload),
-        );
-    }
-
-    public function selectResponseBranch(string $payload): void
-    {
-        $this->responseBranch = max(0, min(1, (int) $payload));
-    }
-
-    /**
-     * @return list<array{
-     *     id: string,
-     *     filename: string,
-     *     mediaType: string,
-     *     type: int,
-     *     url: string
-     * }>
-     */
-    public function promptFiles(): array
-    {
-        return $this->promptFiles;
-    }
-
-    /**
-     * @param array{
-     *     text: string,
-     *     files: list<array<string, string|int|float|bool|null>>
-     * } $submission
-     */
-    public function sendPrompt(array $submission): void
-    {
-        $text = $submission['text'];
-        $fileCount = count($submission['files']);
-        $this->promptFiles = [];
-        $this->notice = $text === ''
-            ? "Submitted {$fileCount} attachment(s)."
-            : "Submitted prompt: {$text} ({$fileCount} attachment(s))";
-    }
-
-    public function openMessageLink(string $uri): void
-    {
-        $this->notice = "Markdown link activated: {$uri}";
-    }
-
     public function selectDate(string $payload): void
     {
         if ($payload !== '') {
@@ -213,10 +125,6 @@ final class Catalog extends Component
      *     sheetOpen: bool,
      *     drawerOpen: bool,
      *     selectOpen: bool,
-     *     galleryOpen: bool,
-     *     galleryIndex: int,
-     *     gallery: list<array{url: string, alt: string}>,
-     *     responseBranch: int,
      *     framework: string,
      *     email: string,
      *     plan: string,
@@ -236,10 +144,6 @@ final class Catalog extends Component
             'sheetOpen' => $this->sheetOpen,
             'drawerOpen' => $this->drawerOpen,
             'selectOpen' => $this->selectOpen,
-            'galleryOpen' => $this->galleryOpen,
-            'galleryIndex' => $this->galleryIndex,
-            'gallery' => $this->gallery,
-            'responseBranch' => $this->responseBranch,
             'framework' => $this->framework,
             'email' => $this->email,
             'plan' => $this->plan,

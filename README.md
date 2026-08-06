@@ -12,7 +12,7 @@ CSS engines, and metadata-generated imitations.**
 ![Material](https://img.shields.io/badge/Material%20Design-3-6750A4?style=flat-square)
 ![Components](https://img.shields.io/badge/components-124-22c55e?style=flat-square)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-2563eb?style=flat-square)
-![License](https://img.shields.io/badge/license-BUSL--1.1-f59e0b?style=flat-square)
+![License](https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square)
 
 **[Documentation](https://push-in.github.io/pam-docs/mobile-ui/overview/) ·
 [Component catalog](https://push-in.github.io/pam-docs/mobile-ui/components/) ·
@@ -180,4 +180,4 @@ release can be published.
 
 ## License
 
-BUSL-1.1. See [LICENSE](LICENSE) and [LICENSING.md](LICENSING.md).
+Apache-2.0. See [LICENSE](LICENSE) and [LICENSING.md](LICENSING.md).

@@ -22,7 +22,6 @@ enum MaterialMotion: int
     case TabIndicator = 14;
     case Snackbar = 15;
     case MenuOrigin = 16;
-    case Drawer = 17;
-    case AppBar = 18;
-    case Window = 19;
+    case AppBar = 17;
+    case Window = 18;
 }

@@ -1,0 +1,188 @@
+<?php
+
+declare(strict_types=1);
+
+use Pam\MobileUi\Generated\MaterialComponentMap;
+use Pam\MobileUi\MobileUiPluginProvider;
+use Pam\Native\TemplateRegistry;
+
+require dirname(__DIR__).'/vendor/autoload.php';
+
+TemplateRegistry::reset();
+(new MobileUiPluginProvider())->register();
+
+foreach (MaterialComponentMap::TAGS as $tag => $class) {
+    if (TemplateRegistry::factory($tag) === null) {
+        throw new RuntimeException("Public Material tag {$tag} is not registered.");
+    }
+    if (!class_exists($class)) {
+        throw new RuntimeException("Public Material facade {$class} is not autoloadable.");
+    }
+}
+
+foreach ([
+    'Text',
+    'View',
+    'Box',
+    'Grid',
+    'GridItem',
+    'HStack',
+    'VStack',
+    'FileTree',
+] as $removedTag) {
+    if (TemplateRegistry::factory($removedTag) !== null) {
+        throw new RuntimeException("Removed legacy tag {$removedTag} is still registered.");
+    }
+    if (class_exists("Pam\\MobileUi\\Component\\{$removedTag}")) {
+        throw new RuntimeException("Removed legacy facade {$removedTag} is still autoloadable.");
+    }
+}
+
+$removedMaterialTags = [
+    'p-action-sheet',
+    'p-alert-dialog',
+    'p-alert-title',
+    'p-app',
+    'p-app-bar-title',
+    'p-banner-text',
+    'p-bottom-navigation',
+    'p-breadcrumbs',
+    'p-calendar-header',
+    'p-calendar-interval',
+    'p-card-subtitle',
+    'p-card-text',
+    'p-card-title',
+    'p-card-item',
+    'p-code',
+    'p-col',
+    'p-container',
+    'p-data-iterator',
+    'p-data-table-server',
+    'p-date-picker-controls',
+    'p-date-picker-header',
+    'p-date-picker-month',
+    'p-date-picker-months',
+    'p-date-picker-years',
+    'p-file-input',
+    'p-file-upload',
+    'p-file-upload-item',
+    'p-field',
+    'p-footer',
+    'p-hotkey',
+    'p-hover',
+    'p-input',
+    'p-kbd',
+    'p-layout',
+    'p-layout-item',
+    'p-lazy',
+    'p-list-item-subtitle',
+    'p-list-item-title',
+    'p-list-group',
+    'p-list-subheader',
+    'p-main',
+    'p-navigation-drawer',
+    'p-pagination',
+    'p-parallax',
+    'p-pull-to-refresh',
+    'p-responsive',
+    'p-row',
+    'p-skeleton-text',
+    'p-system-bar',
+    'p-table',
+    'p-text',
+    'p-time-picker-clock',
+    'p-time-picker-controls',
+    'p-toolbar-items',
+    'p-toolbar-title',
+    'p-transition',
+    'p-virtual-scroll',
+    'p-window',
+];
+foreach ($removedMaterialTags as $removedTag) {
+    if (TemplateRegistry::factory($removedTag) !== null) {
+        throw new RuntimeException("Removed mobile tag {$removedTag} is still registered.");
+    }
+    if (array_key_exists($removedTag, MaterialComponentMap::TAGS)) {
+        throw new RuntimeException("Removed mobile tag {$removedTag} is still catalogued.");
+    }
+}
+
+$publicDocumentation = [
+    dirname(__DIR__).'/README.md',
+    dirname(__DIR__).'/docs/authoring.md',
+    dirname(__DIR__).'/examples/kitchen-sink/README.md',
+];
+$removedPublicTags = [
+    'p-text',
+    'p-col',
+    'p-row',
+    'p-container',
+    'p-layout',
+    'p-main',
+    ...$removedMaterialTags,
+];
+foreach ($publicDocumentation as $path) {
+    $contents = file_get_contents($path);
+    if (!is_string($contents)) {
+        throw new RuntimeException("Cannot inspect public documentation {$path}.");
+    }
+    foreach ($removedPublicTags as $removedTag) {
+        if (preg_match('/<'.preg_quote($removedTag, '/').'(?:\\s|>|\\/)/', $contents) === 1) {
+            throw new RuntimeException(
+                "Public documentation {$path} still uses removed tag {$removedTag}.",
+            );
+        }
+    }
+}
+
+$componentIds = json_decode(
+    file_get_contents(dirname(__DIR__).'/resources/component-ids.json')
+        ?: throw new RuntimeException('Cannot read component IDs.'),
+    true,
+    flags: JSON_THROW_ON_ERROR,
+);
+$iconCatalog = json_decode(
+    file_get_contents(dirname(__DIR__).'/resources/icons.json')
+        ?: throw new RuntimeException('Cannot read the icon catalog.'),
+    true,
+    flags: JSON_THROW_ON_ERROR,
+);
+if (!is_array($componentIds) || !is_array($iconCatalog)) {
+    throw new RuntimeException('Generated ID resources must decode to objects.');
+}
+$icons = $iconCatalog['icons'] ?? null;
+if (!is_array($icons)) {
+    throw new RuntimeException('The icon catalog is missing its icon map.');
+}
+$expectedIconIds = [];
+foreach (array_keys($icons) as $icon) {
+    if (is_string($icon) && is_int($componentIds[$icon] ?? null)) {
+        $expectedIconIds[] = $componentIds[$icon];
+    }
+}
+sort($expectedIconIds, SORT_NUMERIC);
+$nativeIconMaps = [
+    dirname(__DIR__).'/android/src/main/kotlin/dev/pam/mobileui/GeneratedIcons.kt'
+        => '/^        (\d+) to arrayOf\(/m',
+    dirname(__DIR__).'/ios/Sources/PamMobileUi/GeneratedIcons.swift'
+        => '/^        (\d+): \[/m',
+];
+foreach ($nativeIconMaps as $path => $pattern) {
+    $contents = file_get_contents($path);
+    if (!is_string($contents)) {
+        throw new RuntimeException("Cannot inspect generated icon map {$path}.");
+    }
+    preg_match_all($pattern, $contents, $matches);
+    $actualIds = array_map('intval', $matches[1]);
+    sort($actualIds, SORT_NUMERIC);
+    if ($actualIds !== $expectedIconIds) {
+        throw new RuntimeException(
+            "Generated icon IDs in {$path} diverge from the component protocol.",
+        );
+    }
+}
+
+echo sprintf(
+    "Validated the curated public surface: %d p-* components; no removed mobile or legacy aliases.\n",
+    count(MaterialComponentMap::TAGS),
+);

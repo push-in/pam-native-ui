@@ -99,13 +99,11 @@
     <p-dialog open="{{ $modalOpen }}" on:event="closeModal">
 
         <p-card>
-            <p-card-title>
+            <Row class="items-center justify-between">
                 <Text size="lg">Native by default</Text>
                 <p-icon-btn on:press="closeModal"><p-icon icon="close" /></p-icon-btn>
-            </p-card-title>
-            <p-card-text>
-                <Text>Focus, Back and accessibility remain owned by the platform.</Text>
-            </p-card-text>
+            </Row>
+            <Text>Focus, Back and accessibility remain owned by the platform.</Text>
             <p-card-actions>
                 <p-btn on:press="closeModal"><Text>Got it</Text></p-btn>
             </p-card-actions>
@@ -119,8 +117,8 @@
         on:event="closeSheet"
     >
         <p-divider />
-        <p-list-item on:press="closeSheet"><p-list-item-title>Inspect tree</p-list-item-title></p-list-item>
-        <p-list-item on:press="closeSheet"><p-list-item-title>View metrics</p-list-item-title></p-list-item>
-        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+        <p-list-item on:press="closeSheet"><Text>Inspect tree</Text></p-list-item>
+        <p-list-item on:press="closeSheet"><Text>View metrics</Text></p-list-item>
+        <p-list-item on:press="closeSheet"><Text>Close</Text></p-list-item>
     </p-bottom-sheet>
 </AppScreen>

@@ -39,7 +39,6 @@
     <Column class="gap-4">
         <p-date-input label="Release date" value="2026-07-27" variant="outlined" />
         <p-color-input label="Primary color" value="#1867C0" variant="outlined" />
-        <p-file-input label="Artifacts" variant="outlined" />
     </Column>
 
     <Text size="xl">Selection controls</Text>

@@ -105,29 +105,10 @@ and persistent Toast. The single pulse animator and identity-stable timer must
 keep p99 below 4 ms with zero bridge events; the result remains excluded from
 the reference table until measured on hardware.
 
-ImageViewer adds a pending 10,000-operation native navigation gate. Every
-selection must update active-image visibility, counter, control state and
-accessibility metadata below 4 ms p99 while emitting exactly one scalar semantic
-index. Pinch, pan and the animation between settled states remain bridge-free.
-This row is excluded from the reference table until the physical-device suite
-records it.
-
-Chat AI adds two pending 10,000-operation gates. MessageBranch navigation must
-update page visibility, counter, controls and accessibility below 4 ms p99 with
-exactly one index event per activation. PromptInput must recompute enabled
-state, submit, trim and clear below 4 ms p99 with exactly one `SUBMIT` event.
-Conversation scroll progress and button visibility remain entirely native; its
-large-history memory/frame profile belongs to the full-renderer benchmark.
-
 FileTree adds a pending 10,000-toggle gate below 4 ms p99. Each folder
 activation performs its selection and expansion updates locally and emits
 exactly two semantic results (selected path plus bounded expansion map);
 animation frames never cross the bridge.
-
-MessageResponse adds a pending 10,000-update gate below 4 ms p99 for a mixed
-heading/emphasis/list/link/code document. Parsing and span application happen
-once per changed source on the Android UI thread and emit zero bridge events;
-only explicit safe-link activation emits one URI.
 
 The unified vertical/horizontal ScrollView adds a pending native fling and
 10,000 property-update gate. Drag, momentum, paging and snap remain inside the

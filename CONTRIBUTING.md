@@ -54,10 +54,11 @@ composer generate
 composer verify
 ```
 
-`resources/pam-ui-components.json` records the versioned PamUI component surface.
-`resources/parity.json` uses integer-backed enum values for every gate and
-status. A gate can move to verified only when a reproducible test or measurement
-exists.
+`resources/pam-ui-components.json` and `resources/parity.json` are internal
+renderer-regression inventories. They must never be registered or autoloaded as
+public PascalCase components. The public surface is authored in
+`resources/pam-material-components.php` and gated by
+`resources/material-parity.json`.
 
 Every public tag must:
 
@@ -80,6 +81,6 @@ end-to-end baseline.
 
 ## Licensing
 
-Contributions are distributed under the repository's Business Source License
-1.1 and its stated Change License. Preserve third-party notices and include the
-license of any incorporated material.
+Contributions are distributed under the repository's Apache License 2.0.
+Preserve third-party notices and include the license of any incorporated
+material.

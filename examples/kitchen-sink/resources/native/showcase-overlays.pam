@@ -26,8 +26,8 @@
             <p-menu>
                 <p-btn block="true"><Text>Menu</Text></p-btn>
                 <p-list>
-                    <p-list-item on:press="inspectMenuItem"><p-list-item-title>Inspect</p-list-item-title></p-list-item>
-                    <p-list-item on:press="shareMenuItem"><p-list-item-title>Share</p-list-item-title></p-list-item>
+                    <p-list-item on:press="inspectMenuItem"><Text>Inspect</Text></p-list-item>
+                    <p-list-item on:press="shareMenuItem"><Text>Share</Text></p-list-item>
                 </p-list>
             </p-menu>
             <p-tooltip text="Long press for native tooltip">
@@ -58,8 +58,8 @@
 
     <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
         <p-card>
-            <p-card-title>Discard draft?</p-card-title>
-            <p-card-text>The dialog traps focus and restores it to the activator when dismissed.</p-card-text>
+            <Text>Discard draft?</Text>
+            <Text>The dialog traps focus and restores it to the activator when dismissed.</Text>
             <p-card-actions>
                 <p-btn variant="text" on:press="closeDialog"><Text>Cancel</Text></p-btn>
                 <p-btn on:press="closeDialog"><Text>Confirm</Text></p-btn>
@@ -68,14 +68,14 @@
     </p-dialog>
 
     <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="0" on:requestClose="closeSheet">
-        <p-list-subheader>Component actions</p-list-subheader>
+        <Text>Component actions</Text>
         <p-list-item on:press="closeSheet">
-            <p-list-item-title>Inspect accessibility tree</p-list-item-title>
+            <Text>Inspect accessibility tree</Text>
         </p-list-item>
         <p-list-item on:press="closeSheet">
-            <p-list-item-title>View performance metrics</p-list-item-title>
+            <Text>View performance metrics</Text>
         </p-list-item>
-        <p-list-item on:press="closeSheet"><p-list-item-title>Close</p-list-item-title></p-list-item>
+        <p-list-item on:press="closeSheet"><Text>Close</Text></p-list-item>
     </p-bottom-sheet>
 
     <p-snackbar open="{{ $snackbarOpen }}" timeout="4000" on:event="closeSnackbar">

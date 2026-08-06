@@ -6,7 +6,6 @@ namespace Pam\MobileUi;
 
 use Closure;
 use Pam\MobileUi\Component\UiComponent;
-use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Rendering\ComponentRenderer;
 use Pam\MobileUi\Rendering\TailwindStyleCompiler;
@@ -47,32 +46,6 @@ final class MobileUiPluginProvider implements PluginProvider
             static fn (array $props, array $children, ?object $_scope): FormField =>
                 FormField::fromTemplate($props, $children),
         );
-
-        foreach (ComponentMap::TAGS as $tag => $component) {
-            TemplateRegistry::component(
-                $tag,
-                static function (
-                    array $props,
-                    array $children,
-                    ?object $_scope,
-                ) use ($component): UiComponent {
-                    return $component::fromTemplate($props, $children);
-                },
-            );
-            TemplateRegistry::eventAdapter(
-                $tag,
-                static fn (
-                    EventKind $kind,
-                    Closure $handler,
-                    array $props,
-                ): Closure => ComponentRenderer::adaptTemplateEvent(
-                    $tag,
-                    $kind,
-                    $handler,
-                    $props,
-                ),
-            );
-        }
 
         foreach (MaterialComponentMap::TAGS as $tag => $component) {
             TemplateRegistry::component(

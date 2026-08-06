@@ -12,11 +12,11 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "d9c3b00adfa1bb2106bc2b467c4859d3d538ba0d"
+                "reference": "e0393a53d3f40dd3946626c9922d801d0dde8393"
             },
             "require": {
                 "php": "^8.4",
-                "pushinbr/pam-native": "^0.4.1"
+                "pushinbr/pam-native": "^0.4.4"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1"
@@ -32,8 +32,10 @@
                     "Pam\\MobileUi\\": "src/"
                 },
                 "classmap": [
-                    "src/Generated/ComponentFacades.php",
                     "src/Generated/MaterialComponentFacades.php"
+                ],
+                "exclude-from-classmap": [
+                    "tests/fixtures/InternalComponentFacades.php"
                 ]
             },
             "autoload-dev": {
@@ -79,6 +81,9 @@
                 "test:showcase": [
                     "php tools/validate-showcase.php"
                 ],
+                "test:public-surface": [
+                    "php tests/public-surface.php"
+                ],
                 "test": [
                     "php tests/run.php"
                 ],
@@ -88,6 +93,7 @@
                     "@analyse",
                     "@test:recipes",
                     "@test:material",
+                    "@test:public-surface",
                     "@test:native-gates",
                     "@benchmark:material",
                     "@test",
@@ -96,7 +102,7 @@
                 ]
             },
             "license": [
-                "BUSL-1.1"
+                "Apache-2.0"
             ],
             "description": "Official accessible native UI component library for PAM Native.",
             "homepage": "https://github.com/push-in/pam-mobile-ui-php",
@@ -144,7 +150,7 @@
                 }
             },
             "license": [
-                "BUSL-1.1"
+                "Apache-2.0"
             ],
             "description": "Build fast native Android and iOS applications with PHP and PAM.",
             "homepage": "https://github.com/push-in/pam-native",

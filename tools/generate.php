@@ -63,28 +63,16 @@ foreach ($ids as $tag => $id) {
     }
     $usedIds[$id] = true;
 }
+
+/*
+ * These IDs describe private renderer parts, not the public Material API. Rebuild
+ * them from the source catalog so deleting a dead part deletes its protocol entry
+ * on PHP, Android and iOS instead of leaving a permanent tombstone.
+ */
+$ids = [];
 $nextId = 1;
 foreach (array_keys($tags) as $tag) {
-    if (isset($ids[$tag])) {
-        continue;
-    }
-    while (isset($usedIds[$nextId])) {
-        $nextId++;
-    }
-    $ids[$tag] = $nextId;
-    $usedIds[$nextId] = true;
-}
-foreach (array_keys($ids) as $tag) {
-    if (!isset($tags[$tag])) {
-        throw new RuntimeException(
-            "Component {$tag} was removed from PamUI; public component IDs are append-only.",
-        );
-    }
-}
-$sequentialIds = array_values($ids);
-sort($sequentialIds, SORT_NUMERIC);
-if ($sequentialIds !== range(1, count($ids))) {
-    throw new RuntimeException('PamUI component IDs must remain sequential without gaps.');
+    $ids[$tag] = $nextId++;
 }
 ksort($ids, SORT_STRING);
 $encodedIds = json_encode(
@@ -134,15 +122,13 @@ $categories = [
     'icon' => 8,
     'image' => 8,
     'image-background' => 8,
-    'chat-ai' => 10,
+    'file-tree' => 10,
 ];
 $alphaModules = array_fill_keys([
     'bottomsheet',
     'calendar',
     'date-time-picker',
     'grid',
-    'image-viewer',
-    'liquid-glass',
     'skeleton',
     'table',
     'tabs',
@@ -153,14 +139,12 @@ $nativeModules = array_fill_keys([
     'alert-dialog',
     'bottomsheet',
     'calendar',
-    'chat-ai',
+    'file-tree',
     'checkbox',
     'date-time-picker',
     'drawer',
     'form-control',
-    'image-viewer',
     'input',
-    'liquid-glass',
     'menu',
     'modal',
     'popover',
@@ -499,6 +483,31 @@ foreach ($iconCatalog['icons'] as $icon => $paths) {
 
 $kotlinIcons .= "\n    )\n}\n";
 
+$swiftIcons = <<<'SWIFT'
+import Foundation
+
+/** Generated from the versioned PamUI icon catalog. */
+enum GeneratedIcons {
+    static let paths: [Int: [String]] = [
+SWIFT;
+
+foreach ($iconCatalog['icons'] as $icon => $paths) {
+    if (!isset($ids[$icon])) {
+        continue;
+    }
+
+    $encodedPaths = array_map(
+        static fn (string $path): string => json_encode(
+            $path,
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+        ),
+        $paths,
+    );
+    $swiftIcons .= "\n        {$ids[$icon]}: [".implode(', ', $encodedPaths).'],';
+}
+
+$swiftIcons .= "\n    ]\n}\n";
+
 $styleContents = file_get_contents($root.'/resources/styles.json');
 
 if ($styleContents === false) {
@@ -600,9 +609,6 @@ $styleAliases = [
         'CalendarHeaderMonthSelect' => 'calendarHeaderSelectStyle',
         'CalendarHeaderYearSelect' => 'calendarHeaderSelectStyle',
     ],
-    'image-viewer' => [
-        'ImageViewer' => 'imageViewerStyle',
-    ],
     'select' => [
         'Select' => 'selectStyle',
         'SelectPortal' => 'actionsheetStyle',
@@ -685,11 +691,12 @@ $styleRecipes .= "    public const array COMPONENTS = ".var_export($componentRec
 $styleRecipes .= "    private function __construct()\n    {\n    }\n}\n";
 
 $targets = [
-    $root.'/src/Generated/ComponentFacades.php' => $facades,
+    $root.'/tests/fixtures/InternalComponentFacades.php' => $facades,
     $root.'/src/Generated/ComponentMap.php' => $map,
     $root.'/src/Generated/StyleRecipes.php' => $styleRecipes,
     $root.'/android/src/main/kotlin/dev/pam/mobileui/GeneratedComponents.kt' => $kotlin,
     $root.'/android/src/main/kotlin/dev/pam/mobileui/GeneratedIcons.kt' => $kotlinIcons,
+    $root.'/ios/Sources/PamMobileUi/GeneratedIcons.swift' => $swiftIcons,
     $root.'/resources/parity.json' => $parity,
     $root.'/docs/catalog.md' => $catalogMarkdown,
 ];
@@ -709,4 +716,7 @@ foreach ($targets as $path => $generated) {
     }
 }
 
-fwrite(STDOUT, sprintf("Generated %d component facades.\n", count($tags)));
+fwrite(
+    STDOUT,
+    sprintf("Generated %d internal renderer test fixtures.\n", count($tags)),
+);

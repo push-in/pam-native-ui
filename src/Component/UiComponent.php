@@ -861,25 +861,6 @@ abstract class UiComponent implements Renderable
             return false;
         }
 
-        if ($name === 'images') {
-            foreach ($value as $image) {
-                if (is_string($image)) {
-                    continue;
-                }
-                if (
-                    !is_array($image)
-                    || !is_string($image['url'] ?? null)
-                ) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        if (in_array($name, ['attachments', 'files', 'message'], true)) {
-            return self::isSafeContextArray($value, 0);
-        }
-
         foreach ($value as $item) {
             if (!is_scalar($item)) {
                 return false;
@@ -889,24 +870,4 @@ abstract class UiComponent implements Renderable
         return true;
     }
 
-    /** @param array<array-key, mixed> $value */
-    private static function isSafeContextArray(array $value, int $depth): bool
-    {
-        if ($depth >= 4 || count($value) > 256) {
-            return false;
-        }
-        foreach ($value as $item) {
-            if (is_scalar($item) || $item === null) {
-                continue;
-            }
-            if (
-                !is_array($item)
-                || !self::isSafeContextArray($item, $depth + 1)
-            ) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

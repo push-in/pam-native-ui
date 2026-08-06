@@ -26,5 +26,5 @@ spl_autoload_register(
     },
 );
 
-require_once dirname(__DIR__).'/src/Generated/ComponentFacades.php';
+require_once __DIR__.'/fixtures/InternalComponentFacades.php';
 require_once dirname(__DIR__).'/src/Generated/MaterialComponentFacades.php';

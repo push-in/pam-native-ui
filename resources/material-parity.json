@@ -4,8 +4,8 @@
         "source": "resources/pam-material-components.php",
         "namespace": "p-*",
         "metadataImport": false,
-        "moduleCount": 75,
-        "componentCount": 127,
+        "moduleCount": 62,
+        "componentCount": 84,
         "targets": [
             1,
             2
@@ -95,8 +95,7 @@
             "module": "app-bar",
             "components": [
                 "p-app-bar",
-                "p-app-bar-nav-icon",
-                "p-app-bar-title"
+                "p-app-bar-nav-icon"
             ],
             "verification": [
                 3,
@@ -117,8 +116,7 @@
             "type": 2,
             "module": "alert",
             "components": [
-                "p-alert",
-                "p-alert-title"
+                "p-alert"
             ],
             "verification": [
                 3,
@@ -203,7 +201,6 @@
             "module": "banner",
             "components": [
                 "p-banner",
-                "p-banner-text",
                 "p-banner-actions"
             ],
             "verification": [
@@ -310,9 +307,7 @@
             "module": "calendar",
             "components": [
                 "p-calendar",
-                "p-calendar-day",
-                "p-calendar-header",
-                "p-calendar-interval"
+                "p-calendar-day"
             ],
             "verification": [
                 3,
@@ -334,10 +329,6 @@
             "module": "card",
             "components": [
                 "p-card",
-                "p-card-item",
-                "p-card-title",
-                "p-card-subtitle",
-                "p-card-text",
                 "p-card-actions"
             ],
             "verification": [
@@ -381,8 +372,7 @@
             "type": 14,
             "module": "checkbox",
             "components": [
-                "p-checkbox",
-                "p-checkbox-btn"
+                "p-checkbox"
             ],
             "verification": [
                 3,
@@ -464,31 +454,6 @@
         },
         {
             "type": 18,
-            "module": "color-picker",
-            "components": [
-                "p-color-picker",
-                "p-color-picker-canvas",
-                "p-color-picker-edit",
-                "p-color-picker-preview",
-                "p-color-picker-swatches"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 19,
             "module": "combobox",
             "components": [
                 "p-combobox"
@@ -509,49 +474,7 @@
             ]
         },
         {
-            "type": 20,
-            "module": "confirm-edit",
-            "components": [
-                "p-confirm-edit"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 21,
-            "module": "counter",
-            "components": [
-                "p-counter"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 22,
+            "type": 19,
             "module": "data-table",
             "components": [
                 "p-data-table",
@@ -573,7 +496,7 @@
             ]
         },
         {
-            "type": 23,
+            "type": 20,
             "module": "date-input",
             "components": [
                 "p-date-input"
@@ -594,15 +517,10 @@
             ]
         },
         {
-            "type": 24,
+            "type": 21,
             "module": "date-picker",
             "components": [
-                "p-date-picker",
-                "p-date-picker-controls",
-                "p-date-picker-header",
-                "p-date-picker-month",
-                "p-date-picker-months",
-                "p-date-picker-years"
+                "p-date-picker"
             ],
             "verification": [
                 3,
@@ -620,7 +538,7 @@
             ]
         },
         {
-            "type": 25,
+            "type": 22,
             "module": "dialog",
             "components": [
                 "p-dialog"
@@ -641,7 +559,7 @@
             ]
         },
         {
-            "type": 26,
+            "type": 23,
             "module": "divider",
             "components": [
                 "p-divider"
@@ -662,7 +580,7 @@
             ]
         },
         {
-            "type": 27,
+            "type": 24,
             "module": "empty-state",
             "components": [
                 "p-empty-state"
@@ -683,7 +601,7 @@
             ]
         },
         {
-            "type": 28,
+            "type": 25,
             "module": "expansion-panels",
             "components": [
                 "p-expansion-panels",
@@ -707,7 +625,7 @@
             ]
         },
         {
-            "type": 29,
+            "type": 26,
             "module": "fab",
             "components": [
                 "p-fab"
@@ -728,72 +646,7 @@
             ]
         },
         {
-            "type": 30,
-            "module": "field",
-            "components": [
-                "p-field",
-                "p-field-label"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 31,
-            "module": "file-input",
-            "components": [
-                "p-file-input"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 32,
-            "module": "file-upload",
-            "components": [
-                "p-file-upload",
-                "p-file-upload-item"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 33,
+            "type": 27,
             "module": "form",
             "components": [
                 "p-form"
@@ -814,7 +667,7 @@
             ]
         },
         {
-            "type": 34,
+            "type": 28,
             "module": "icon",
             "components": [
                 "p-icon"
@@ -835,7 +688,7 @@
             ]
         },
         {
-            "type": 35,
+            "type": 29,
             "module": "icon-button",
             "components": [
                 "p-icon-btn"
@@ -856,7 +709,7 @@
             ]
         },
         {
-            "type": 36,
+            "type": 30,
             "module": "image",
             "components": [
                 "p-img"
@@ -877,7 +730,7 @@
             ]
         },
         {
-            "type": 37,
+            "type": 31,
             "module": "infinite-scroll",
             "components": [
                 "p-infinite-scroll"
@@ -898,28 +751,7 @@
             ]
         },
         {
-            "type": 38,
-            "module": "input",
-            "components": [
-                "p-input"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 39,
+            "type": 32,
             "module": "item-group",
             "components": [
                 "p-item-group",
@@ -941,36 +773,11 @@
             ]
         },
         {
-            "type": 40,
-            "module": "label",
-            "components": [
-                "p-label"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 41,
+            "type": 33,
             "module": "list",
             "components": [
                 "p-list",
-                "p-list-item",
-                "p-list-item-title",
-                "p-list-item-subtitle",
-                "p-list-group",
-                "p-list-subheader"
+                "p-list-item"
             ],
             "verification": [
                 3,
@@ -988,7 +795,7 @@
             ]
         },
         {
-            "type": 42,
+            "type": 34,
             "module": "menu",
             "components": [
                 "p-menu"
@@ -1009,28 +816,7 @@
             ]
         },
         {
-            "type": 43,
-            "module": "messages",
-            "components": [
-                "p-messages"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 44,
+            "type": 35,
             "module": "number-input",
             "components": [
                 "p-number-input"
@@ -1051,7 +837,7 @@
             ]
         },
         {
-            "type": 45,
+            "type": 36,
             "module": "otp-input",
             "components": [
                 "p-otp-input"
@@ -1072,7 +858,7 @@
             ]
         },
         {
-            "type": 46,
+            "type": 37,
             "module": "overlay",
             "components": [
                 "p-overlay"
@@ -1093,29 +879,7 @@
             ]
         },
         {
-            "type": 47,
-            "module": "picker",
-            "components": [
-                "p-picker",
-                "p-picker-title"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 48,
+            "type": 38,
             "module": "progress-circular",
             "components": [
                 "p-progress-circular"
@@ -1136,7 +900,7 @@
             ]
         },
         {
-            "type": 49,
+            "type": 39,
             "module": "progress-linear",
             "components": [
                 "p-progress-linear"
@@ -1157,7 +921,7 @@
             ]
         },
         {
-            "type": 50,
+            "type": 40,
             "module": "radio",
             "components": [
                 "p-radio"
@@ -1178,7 +942,7 @@
             ]
         },
         {
-            "type": 51,
+            "type": 41,
             "module": "radio-group",
             "components": [
                 "p-radio-group"
@@ -1199,7 +963,7 @@
             ]
         },
         {
-            "type": 52,
+            "type": 42,
             "module": "range-slider",
             "components": [
                 "p-range-slider"
@@ -1220,7 +984,7 @@
             ]
         },
         {
-            "type": 53,
+            "type": 43,
             "module": "rating",
             "components": [
                 "p-rating"
@@ -1241,7 +1005,7 @@
             ]
         },
         {
-            "type": 54,
+            "type": 44,
             "module": "select",
             "components": [
                 "p-select"
@@ -1262,49 +1026,7 @@
             ]
         },
         {
-            "type": 55,
-            "module": "selection-control",
-            "components": [
-                "p-selection-control"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 56,
-            "module": "selection-control-group",
-            "components": [
-                "p-selection-control-group"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 57,
+            "type": 45,
             "module": "sheet",
             "components": [
                 "p-sheet"
@@ -1325,7 +1047,7 @@
             ]
         },
         {
-            "type": 58,
+            "type": 46,
             "module": "skeleton-loader",
             "components": [
                 "p-skeleton-loader"
@@ -1346,7 +1068,7 @@
             ]
         },
         {
-            "type": 59,
+            "type": 47,
             "module": "slide-group",
             "components": [
                 "p-slide-group",
@@ -1368,7 +1090,7 @@
             ]
         },
         {
-            "type": 60,
+            "type": 48,
             "module": "slider",
             "components": [
                 "p-slider"
@@ -1389,7 +1111,7 @@
             ]
         },
         {
-            "type": 61,
+            "type": 49,
             "module": "snackbar",
             "components": [
                 "p-snackbar"
@@ -1410,28 +1132,7 @@
             ]
         },
         {
-            "type": 62,
-            "module": "snackbar-queue",
-            "components": [
-                "p-snackbar-queue"
-            ],
-            "verification": [
-                3,
-                3,
-                3,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3
-            ]
-        },
-        {
-            "type": 63,
+            "type": 50,
             "module": "sparkline",
             "components": [
                 "p-sparkline"
@@ -1452,7 +1153,7 @@
             ]
         },
         {
-            "type": 64,
+            "type": 51,
             "module": "speed-dial",
             "components": [
                 "p-speed-dial"
@@ -1473,7 +1174,7 @@
             ]
         },
         {
-            "type": 65,
+            "type": 52,
             "module": "stepper",
             "components": [
                 "p-stepper",
@@ -1499,7 +1200,7 @@
             ]
         },
         {
-            "type": 66,
+            "type": 53,
             "module": "stepper-vertical",
             "components": [
                 "p-stepper-vertical",
@@ -1522,7 +1223,7 @@
             ]
         },
         {
-            "type": 67,
+            "type": 54,
             "module": "switch",
             "components": [
                 "p-switch"
@@ -1543,7 +1244,7 @@
             ]
         },
         {
-            "type": 68,
+            "type": 55,
             "module": "tabs",
             "components": [
                 "p-tabs",
@@ -1565,7 +1266,7 @@
             ]
         },
         {
-            "type": 69,
+            "type": 56,
             "module": "text-field",
             "components": [
                 "p-text-field"
@@ -1586,7 +1287,7 @@
             ]
         },
         {
-            "type": 70,
+            "type": 57,
             "module": "textarea",
             "components": [
                 "p-textarea"
@@ -1607,12 +1308,10 @@
             ]
         },
         {
-            "type": 71,
+            "type": 58,
             "module": "time-picker",
             "components": [
-                "p-time-picker",
-                "p-time-picker-clock",
-                "p-time-picker-controls"
+                "p-time-picker"
             ],
             "verification": [
                 3,
@@ -1630,7 +1329,7 @@
             ]
         },
         {
-            "type": 72,
+            "type": 59,
             "module": "timeline",
             "components": [
                 "p-timeline",
@@ -1652,12 +1351,10 @@
             ]
         },
         {
-            "type": 73,
+            "type": 60,
             "module": "toolbar",
             "components": [
-                "p-toolbar",
-                "p-toolbar-title",
-                "p-toolbar-items"
+                "p-toolbar"
             ],
             "verification": [
                 3,
@@ -1675,7 +1372,7 @@
             ]
         },
         {
-            "type": 74,
+            "type": 61,
             "module": "tooltip",
             "components": [
                 "p-tooltip"
@@ -1696,7 +1393,7 @@
             ]
         },
         {
-            "type": 75,
+            "type": 62,
             "module": "treeview",
             "components": [
                 "p-treeview",

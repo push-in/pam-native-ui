@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Pam\MobileUi\Enum\ThemeMode;
+use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\PamUI;
@@ -10,6 +11,58 @@ use Pam\Native\Internal\TreeEncoder;
 use Pam\Native\PropKey;
 
 require __DIR__.'/bootstrap.php';
+
+$expectedBehaviors = [];
+foreach (NativeBehavior::cases() as $behavior) {
+    $expectedBehaviors[strtolower($behavior->name)] = $behavior->value;
+}
+$nativeBehaviorSources = [
+    dirname(__DIR__).'/android/src/main/kotlin/dev/pam/mobileui/MobileUiHost.kt'
+        => [
+            'pattern' => '/^        ([A-Z_]+)\((\d+)\)[,;]?$/m',
+            'start' => 'private enum class Behavior',
+            'end' => '        companion object',
+            'aliases' => [
+                'switch' => 'switchcontrol',
+                'tabtrigger' => 'tabstrigger',
+            ],
+        ],
+    dirname(__DIR__).'/ios/Sources/PamMobileUi/PamMobileUiHost.swift'
+        => [
+            'pattern' => '/^    case ([a-zA-Z]+) = (\d+)$/m',
+            'start' => 'private enum PamMobileBehavior',
+            'end' => '    var isOverlay',
+            'aliases' => [
+                'tabtrigger' => 'tabstrigger',
+            ],
+        ],
+];
+foreach ($nativeBehaviorSources as $path => $source) {
+    $contents = file_get_contents($path);
+    if (!is_string($contents)) {
+        throw new RuntimeException("Cannot inspect native behavior source {$path}.");
+    }
+    $start = strpos($contents, $source['start']);
+    $end = $start === false
+        ? false
+        : strpos($contents, $source['end'], $start);
+    if ($start === false || $end === false) {
+        throw new RuntimeException("Cannot locate native behavior enum in {$path}.");
+    }
+    $behaviorSource = substr($contents, $start, $end - $start);
+    preg_match_all($source['pattern'], $behaviorSource, $matches, PREG_SET_ORDER);
+    $actualBehaviors = [];
+    foreach ($matches as $match) {
+        $name = strtolower(str_replace('_', '', $match[1]));
+        $name = $source['aliases'][$name] ?? $name;
+        $actualBehaviors[$name] = (int) $match[2];
+    }
+    if ($actualBehaviors !== $expectedBehaviors) {
+        throw new RuntimeException(
+            "Native behavior protocol in {$path} diverges from PHP.",
+        );
+    }
+}
 
 $catalogs = [
     'technical' => ComponentMap::TAGS,

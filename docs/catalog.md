@@ -2,18 +2,16 @@
 
 This catalog is generated from the manually authored `resources/pam-material-components.php` specification. It contains no imported Vuetify metadata and exposes only native `p-*` tags.
 
-**75 modules · 127 component parts · Android and iOS**
+**62 modules · 84 component parts · Android and iOS**
 
 ## `app-bar`
 
 - `<p-app-bar />`
 - `<p-app-bar-nav-icon />`
-- `<p-app-bar-title />`
 
 ## `alert`
 
 - `<p-alert />`
-- `<p-alert-title />`
 
 ## `autocomplete`
 
@@ -30,7 +28,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `banner`
 
 - `<p-banner />`
-- `<p-banner-text />`
 - `<p-banner-actions />`
 
 ## `bottom-sheet`
@@ -53,16 +50,10 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-calendar />`
 - `<p-calendar-day />`
-- `<p-calendar-header />`
-- `<p-calendar-interval />`
 
 ## `card`
 
 - `<p-card />`
-- `<p-card-item />`
-- `<p-card-title />`
-- `<p-card-subtitle />`
-- `<p-card-text />`
 - `<p-card-actions />`
 
 ## `carousel`
@@ -73,7 +64,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `checkbox`
 
 - `<p-checkbox />`
-- `<p-checkbox-btn />`
 
 ## `chip`
 
@@ -87,25 +77,9 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-color-input />`
 
-## `color-picker`
-
-- `<p-color-picker />`
-- `<p-color-picker-canvas />`
-- `<p-color-picker-edit />`
-- `<p-color-picker-preview />`
-- `<p-color-picker-swatches />`
-
 ## `combobox`
 
 - `<p-combobox />`
-
-## `confirm-edit`
-
-- `<p-confirm-edit />`
-
-## `counter`
-
-- `<p-counter />`
 
 ## `data-table`
 
@@ -119,11 +93,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `date-picker`
 
 - `<p-date-picker />`
-- `<p-date-picker-controls />`
-- `<p-date-picker-header />`
-- `<p-date-picker-month />`
-- `<p-date-picker-months />`
-- `<p-date-picker-years />`
 
 ## `dialog`
 
@@ -148,20 +117,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-fab />`
 
-## `field`
-
-- `<p-field />`
-- `<p-field-label />`
-
-## `file-input`
-
-- `<p-file-input />`
-
-## `file-upload`
-
-- `<p-file-upload />`
-- `<p-file-upload-item />`
-
 ## `form`
 
 - `<p-form />`
@@ -182,35 +137,19 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-infinite-scroll />`
 
-## `input`
-
-- `<p-input />`
-
 ## `item-group`
 
 - `<p-item-group />`
 - `<p-item />`
 
-## `label`
-
-- `<p-label />`
-
 ## `list`
 
 - `<p-list />`
 - `<p-list-item />`
-- `<p-list-item-title />`
-- `<p-list-item-subtitle />`
-- `<p-list-group />`
-- `<p-list-subheader />`
 
 ## `menu`
 
 - `<p-menu />`
-
-## `messages`
-
-- `<p-messages />`
 
 ## `number-input`
 
@@ -223,11 +162,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `overlay`
 
 - `<p-overlay />`
-
-## `picker`
-
-- `<p-picker />`
-- `<p-picker-title />`
 
 ## `progress-circular`
 
@@ -257,14 +191,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 
 - `<p-select />`
 
-## `selection-control`
-
-- `<p-selection-control />`
-
-## `selection-control-group`
-
-- `<p-selection-control-group />`
-
 ## `sheet`
 
 - `<p-sheet />`
@@ -285,10 +211,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `snackbar`
 
 - `<p-snackbar />`
-
-## `snackbar-queue`
-
-- `<p-snackbar-queue />`
 
 ## `sparkline`
 
@@ -333,8 +255,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `time-picker`
 
 - `<p-time-picker />`
-- `<p-time-picker-clock />`
-- `<p-time-picker-controls />`
 
 ## `timeline`
 
@@ -344,8 +264,6 @@ This catalog is generated from the manually authored `resources/pam-material-com
 ## `toolbar`
 
 - `<p-toolbar />`
-- `<p-toolbar-title />`
-- `<p-toolbar-items />`
 
 ## `tooltip`
 

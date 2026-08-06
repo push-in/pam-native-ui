@@ -4,17 +4,82 @@ declare(strict_types=1);
 
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\ComponentMode;
+use Pam\MobileUi\Enum\NativeBehavior;
+use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Rendering\MaterialStyleResolver;
 use Pam\MobileUi\Theme\Themes;
+use Pam\Native\AccessibilityCheckedState;
+use Pam\Native\AccessibilityRole;
+use Pam\Native\Internal\BinaryValue;
+use Pam\Native\Internal\Wire;
+use Pam\Native\EventKind;
+use Pam\Native\ImageErrorEvent;
+use Pam\Native\Align;
+use Pam\Native\FlexDirection;
+use Pam\Native\ModalAnimationType;
+use Pam\Native\ModalPresentation;
+use Pam\Native\NodeKind;
+use Pam\Native\PositionType;
+use Pam\Native\PropKey;
 use Pam\Native\Style;
+use Pam\Native\UI\Text;
 
 require __DIR__.'/bootstrap.php';
 
 $tags = MaterialComponentMap::TAGS;
 $ids = MaterialComponentMap::IDS;
 $modules = MaterialComponentMap::MODULES;
+$parity = json_decode(
+    file_get_contents(dirname(__DIR__).'/resources/material-parity.json')
+        ?: throw new RuntimeException('Unable to read the Material parity contract.'),
+    true,
+    flags: JSON_THROW_ON_ERROR,
+);
+$paritySchema = json_decode(
+    file_get_contents(dirname(__DIR__).'/resources/material-parity.schema.json')
+        ?: throw new RuntimeException('Unable to read the Material parity schema.'),
+    true,
+    flags: JSON_THROW_ON_ERROR,
+);
+if (!is_array($parity) || !is_array($paritySchema)) {
+    throw new RuntimeException('Material parity resources must decode to objects.');
+}
+$reference = $parity['reference'] ?? null;
+$schemaProperties = $paritySchema['properties'] ?? null;
+if (
+    !is_array($reference)
+    || !is_array($schemaProperties)
+) {
+    throw new RuntimeException('Material parity resources have an invalid shape.');
+}
+$schemaReferenceNode = $schemaProperties['reference'] ?? null;
+$schemaModules = $schemaProperties['modules'] ?? null;
+if (!is_array($schemaReferenceNode) || !is_array($schemaModules)) {
+    throw new RuntimeException('Material parity schema is missing inventory nodes.');
+}
+$schemaReference = $schemaReferenceNode['properties'] ?? null;
+if (!is_array($schemaReference)) {
+    throw new RuntimeException('Material parity schema reference is invalid.');
+}
+$moduleCountNode = $schemaReference['moduleCount'] ?? null;
+$componentCountNode = $schemaReference['componentCount'] ?? null;
+if (
+    !is_array($moduleCountNode)
+    || !is_array($componentCountNode)
+    || ($reference['moduleCount'] ?? null) !== count($modules)
+    || ($reference['componentCount'] ?? null) !== count($tags)
+    || ($moduleCountNode['const'] ?? null) !== count($modules)
+    || ($componentCountNode['const'] ?? null) !== count($tags)
+    || ($schemaModules['minItems'] ?? null) !== count($modules)
+    || ($schemaModules['maxItems'] ?? null) !== count($modules)
+) {
+    throw new RuntimeException(
+        'Material parity document, schema, module map and public tags must agree.',
+    );
+}
 
 $sequentialIds = array_values($ids);
 sort($sequentialIds, SORT_NUMERIC);
@@ -91,9 +156,1018 @@ foreach ($tags as $tag => $class) {
     }
 }
 
+$formClass = $tags['p-form'];
+$form = $formClass::make([
+    'accessibilityLabel' => 'Profile form',
+])->toElement();
+$formHost = $form->properties()[PropKey::HostProperties->value] ?? null;
+if ($form->kind() !== NodeKind::CustomView || !$formHost instanceof BinaryValue) {
+    throw new RuntimeException(
+        'p-form must render the native form host instead of a passive layout row.',
+    );
+}
+$formProperties = Wire::decodeMap($formHost->bytes);
+if (($formProperties['behavior'] ?? null) !== NativeBehavior::FormControl->value) {
+    throw new RuntimeException(
+        'p-form must retain native form-control behavior.',
+    );
+}
+
+$calendarDayClass = $tags['p-calendar-day'];
+$calendarDay = $calendarDayClass::make([
+    'text' => '28',
+    'value' => '2026-07-28',
+    'accessibilityLabel' => 'July 28, 2026',
+])->toElement();
+if ($calendarDay->kind() !== NodeKind::Pressable) {
+    throw new RuntimeException(
+        'p-calendar-day must render an interactive native pressable.',
+    );
+}
+
+$listClass = $tags['p-list'];
+$list = $listClass::make([
+    'accessibilityLabel' => 'Settings',
+])->toElement();
+if ($list->kind() !== NodeKind::Column) {
+    throw new RuntimeException(
+        'p-list must stack list items vertically instead of rendering a horizontal row.',
+    );
+}
+
+$twoLineItemClass = $tags['p-list-item'];
+$twoLineItem = $twoLineItemClass::make(
+    ['accessibilityLabel' => 'Account'],
+    Text::make('Account'),
+    Text::make('Profile and security'),
+)->toElement();
+if (($twoLineItem->properties()[PropKey::Height->value] ?? null) !== 64.0) {
+    throw new RuntimeException(
+        'p-list-item must infer the 64dp two-line Material height.',
+    );
+}
+$compactItem = $twoLineItemClass::make([
+    'density' => 'compact',
+    'lines' => 1,
+    'text' => 'Account',
+])->toElement();
+if (($compactItem->properties()[PropKey::Height->value] ?? null) !== 40.0) {
+    throw new RuntimeException(
+        'Compact one-line p-list-item must use a 40dp visual height.',
+    );
+}
+
+$chipClass = $tags['p-chip'];
+$passiveChip = $chipClass::make(['text' => 'Stable'])->toElement();
+if ($passiveChip->kind() !== NodeKind::Row) {
+    throw new RuntimeException(
+        'A passive p-chip must not expose button semantics.',
+    );
+}
+$chipClosed = false;
+$closableChip = $chipClass::make([
+    'text' => 'Draft',
+    'closable' => true,
+])->onClose(static function () use (&$chipClosed): void {
+    $chipClosed = true;
+})->toElement();
+$chipClose = $closableChip->children()[1] ?? null;
+if (
+    $closableChip->kind() !== NodeKind::Row
+    || !$chipClose instanceof \Pam\Native\Element
+    || $chipClose->kind() !== NodeKind::Pressable
+    || ($chipClose->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Close Draft'
+    || !isset($chipClose->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'A closable p-chip must keep a passive root and expose a labelled close affordance.',
+    );
+}
+$chipClose->events()[EventKind::Press->value]();
+if (!$chipClosed) {
+    throw new RuntimeException('p-chip close must emit its close callback.');
+}
+
+$stepperClass = $tags['p-stepper'];
+$stepperHeaderClass = $tags['p-stepper-header'];
+$stepperItemClass = $tags['p-stepper-item'];
+$stepperWindowClass = $tags['p-stepper-window'];
+$stepperWindowItemClass = $tags['p-stepper-window-item'];
+$stepperActionsClass = $tags['p-stepper-actions'];
+$stepper = $stepperClass::make(
+    ['value' => 'delivery'],
+    $stepperHeaderClass::make(
+        $stepperItemClass::make(['value' => 'account'], Text::make('Account')),
+        $stepperItemClass::make(['value' => 'delivery'], Text::make('Delivery')),
+    ),
+    $stepperWindowClass::make(
+        $stepperWindowItemClass::make(
+            ['value' => 'account'],
+            Text::make('Account details'),
+        ),
+        $stepperWindowItemClass::make(
+            ['value' => 'delivery'],
+            Text::make('Delivery details'),
+        ),
+    ),
+    $stepperActionsClass::make(Text::make('Continue')),
+)->toElement();
+$stepperWindow = $stepper->children()[1] ?? null;
+$stepperActions = $stepper->children()[2] ?? null;
+$accountPanel = $stepperWindow?->children()[0] ?? null;
+$deliveryPanel = $stepperWindow?->children()[1] ?? null;
+if (
+    !$stepperWindow instanceof \Pam\Native\Element
+    || !$stepperActions instanceof \Pam\Native\Element
+    || !$accountPanel instanceof \Pam\Native\Element
+    || !$deliveryPanel instanceof \Pam\Native\Element
+    || ($stepperWindow->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:tabs-content-wrapper'
+    || ($accountPanel->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:tabs-content:account'
+    || ($deliveryPanel->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:tabs-content:delivery'
+    || $stepperActions->kind() !== NodeKind::Row
+) {
+    throw new RuntimeException(
+        'p-stepper must coordinate selected panels and render actions as actions.',
+    );
+}
+
+$carouselClass = $tags['p-carousel'];
+$carouselItemClass = $tags['p-carousel-item'];
+$carousel = $carouselClass::make(
+    ['value' => 'details', 'cycle' => true],
+    $carouselItemClass::make(['value' => 'overview'], Text::make('Overview')),
+    $carouselItemClass::make(['value' => 'details'], Text::make('Details')),
+)->toElement();
+$carouselHost = $carousel->properties()[PropKey::HostProperties->value] ?? null;
+$firstCarouselItem = $carousel->children()[0] ?? null;
+$secondCarouselItem = $carousel->children()[1] ?? null;
+$firstCarouselHost =
+    $firstCarouselItem?->properties()[PropKey::HostProperties->value] ?? null;
+if (
+    !$carouselHost instanceof BinaryValue
+    || !$firstCarouselHost instanceof BinaryValue
+    || !$secondCarouselItem instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('p-carousel must render native coordinated pages.');
+}
+$carouselNative = Wire::decodeMap($carouselHost->bytes);
+$firstCarouselNative = Wire::decodeMap($firstCarouselHost->bytes);
+if (
+    ($carouselNative['behavior'] ?? null) !== NativeBehavior::Tabs->value
+    || ($carouselNative['navigationKind'] ?? null) !== 1
+    || ($firstCarouselNative['behavior'] ?? null)
+        !== NativeBehavior::TabsTrigger->value
+    || ($firstCarouselNative['value'] ?? null) !== 'overview'
+    || ($firstCarouselItem->properties()[PropKey::Selected->value] ?? false)
+        !== false
+    || ($secondCarouselItem->properties()[PropKey::Selected->value] ?? null)
+        !== true
+) {
+    throw new RuntimeException(
+        'p-carousel must coordinate its selected page for swipe and cycle behavior.',
+    );
+}
+
+$verticalStepperClass = $tags['p-stepper-vertical'];
+$verticalStepperItemClass = $tags['p-stepper-vertical-item'];
+$verticalStepperActionsClass = $tags['p-stepper-vertical-actions'];
+$verticalStepChange = null;
+$verticalStepper = $verticalStepperClass::make(
+    ['value' => 'details'],
+    $verticalStepperItemClass::make(
+        ['value' => 'account', 'title' => 'Account'],
+        Text::make('Account'),
+        Text::make('Account details'),
+    ),
+    $verticalStepperItemClass::make(
+        ['value' => 'details', 'title' => 'Details'],
+        Text::make('Details'),
+        Text::make('Delivery details'),
+        $verticalStepperActionsClass::make(Text::make('Continue')),
+    ),
+)->onChange(
+    static function (string $value) use (&$verticalStepChange): void {
+        $verticalStepChange = $value;
+    },
+)->toElement();
+$verticalStepperHost =
+    $verticalStepper->properties()[PropKey::HostProperties->value] ?? null;
+$collapsedStep = $verticalStepper->children()[0] ?? null;
+$expandedStep = $verticalStepper->children()[1] ?? null;
+$collapsedTrigger = $collapsedStep?->children()[0] ?? null;
+$collapsedContent = $collapsedStep?->children()[1] ?? null;
+$expandedContent = $expandedStep?->children()[1] ?? null;
+$collapsedToggle = $collapsedStep?->events()[EventKind::Toggle->value] ?? null;
+if (
+    !$verticalStepperHost instanceof BinaryValue
+    || !$collapsedTrigger instanceof \Pam\Native\Element
+    || !$collapsedContent instanceof \Pam\Native\Element
+    || !$expandedContent instanceof \Pam\Native\Element
+    || !$collapsedToggle instanceof Closure
+) {
+    throw new RuntimeException(
+        'p-stepper-vertical must render coordinated native disclosure anatomy.',
+    );
+}
+$verticalStepperNative = Wire::decodeMap($verticalStepperHost->bytes);
+$collapsedToggle(true);
+if (
+    ($verticalStepperNative['behavior'] ?? null)
+        !== NativeBehavior::AccordionGroup->value
+    || ($collapsedTrigger->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:accordion-trigger'
+    || ($collapsedContent->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:accordion-content'
+    || ($collapsedContent->properties()[PropKey::Visible->value] ?? null)
+        !== false
+    || array_key_exists(PropKey::Visible->value, $expandedContent->properties())
+    || $verticalStepChange !== 'account'
+) {
+    throw new RuntimeException(
+        'p-stepper-vertical must expand one step with native state and typed change events.',
+    );
+}
+
+foreach (['p-time-picker'] as $timePickerTag) {
+    $timePickerClass = $tags[$timePickerTag];
+    $timePicker = $timePickerClass::make([
+        'accessibilityLabel' => 'Select time',
+    ])->toElement();
+    $timePickerHost =
+        $timePicker->properties()[PropKey::HostProperties->value] ?? null;
+    if (
+        $timePicker->kind() !== NodeKind::CustomView
+        || !$timePickerHost instanceof BinaryValue
+    ) {
+        throw new RuntimeException(
+            "{$timePickerTag} must use the native date/time picker host.",
+        );
+    }
+    $timePickerProperties = Wire::decodeMap($timePickerHost->bytes);
+    if (
+        ($timePickerProperties['behavior'] ?? null)
+            !== NativeBehavior::DateTimePicker->value
+        || ($timePickerProperties['mode'] ?? null) !== ComponentMode::Time->value
+    ) {
+        throw new RuntimeException(
+            "{$timePickerTag} must open a native time picker, not calendar behavior.",
+        );
+    }
+}
+
+$dateInputClass = $tags['p-date-input'];
+$dateInput = $dateInputClass::make([
+    'modelValue' => '2026-07-28',
+    'minimumDate' => '2026-07-01',
+    'maximumDate' => '2026-07-31',
+    'accessibilityLabel' => 'Select date',
+])->toElement();
+$dateInputHost = $dateInput->properties()[PropKey::HostProperties->value] ?? null;
+if (!$dateInputHost instanceof BinaryValue) {
+    throw new RuntimeException('p-date-input must render a native date picker host.');
+}
+$dateInputNative = Wire::decodeMap($dateInputHost->bytes);
+if (
+    $dateInput->kind() !== NodeKind::CustomView
+    || ($dateInputNative['behavior'] ?? null)
+        !== NativeBehavior::DateTimePicker->value
+    || ($dateInputNative['mode'] ?? null) !== ComponentMode::Date->value
+    || ($dateInputNative['minimumDate'] ?? null) !== '2026-07-01'
+    || ($dateInputNative['maximumDate'] ?? null) !== '2026-07-31'
+) {
+    throw new RuntimeException(
+        'p-date-input must open a bounded native date selector instead of a plain text field.',
+    );
+}
+
+$ratingClass = $tags['p-rating'];
+$rating = $ratingClass::make([
+    'modelValue' => 3.5,
+    'length' => 5,
+    'halfIncrements' => true,
+])->toElement();
+$ratingHost = $rating->properties()[PropKey::HostProperties->value] ?? null;
+if (!$ratingHost instanceof BinaryValue) {
+    throw new RuntimeException('p-rating must retain native rating behavior.');
+}
+$ratingProperties = Wire::decodeMap($ratingHost->bytes);
+if (
+    ($ratingProperties['behavior'] ?? null) !== NativeBehavior::Slider->value
+    || ($ratingProperties['rating'] ?? null) !== true
+    || ($ratingProperties['min'] ?? null) !== 0.0
+    || ($ratingProperties['max'] ?? null) !== 5.0
+    || ($ratingProperties['step'] ?? null) !== 0.5
+    || ($ratingProperties['value'] ?? null) !== 3.5
+) {
+    throw new RuntimeException(
+        'p-rating must normalize its native range to its star length and increment.',
+    );
+}
+
+$textFieldClass = $tags['p-text-field'];
+$clearedValue = null;
+$clearableField = $textFieldClass::make([
+    'label' => 'Name',
+    'modelValue' => 'Ada',
+    'clearable' => true,
+])->onChange(
+    static function (string $value) use (&$clearedValue): void {
+        $clearedValue = $value;
+    },
+)->toElement();
+$fieldLayout = $clearableField->children()[0] ?? null;
+$clearButton = $fieldLayout?->children()[2] ?? null;
+if (
+    !$clearButton instanceof \Pam\Native\Element
+    || $clearButton->kind() !== NodeKind::Pressable
+    || ($clearButton->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Clear Name'
+    || ($clearButton->properties()[PropKey::HitSlopLeft->value] ?? null) !== 6.0
+    || !isset($clearButton->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'A dirty clearable field must expose an accessible 44dp clear action.',
+    );
+}
+$clearButton->events()[EventKind::Press->value]();
+if ($clearedValue !== '') {
+    throw new RuntimeException(
+        'The clearable field action must emit an empty model value.',
+    );
+}
+$emptyField = $textFieldClass::make([
+    'modelValue' => '',
+    'clearable' => true,
+])->toElement();
+if (count(($emptyField->children()[0] ?? null)?->children() ?? []) !== 1) {
+    throw new RuntimeException(
+        'An empty clearable field must not render a redundant clear action.',
+    );
+}
+
+$itemClass = $tags['p-item'];
+$item = $itemClass::make([
+    'label' => 'Grid view',
+    'value' => 'grid',
+    'selected' => true,
+    'accessibilityLabel' => 'Grid view',
+])->toElement();
+$itemHost = $item->properties()[PropKey::HostProperties->value] ?? null;
+if (!$itemHost instanceof BinaryValue) {
+    throw new RuntimeException('p-item must retain native selection behavior.');
+}
+$itemProperties = Wire::decodeMap($itemHost->bytes);
+if (
+    ($itemProperties['abstractSelectionItem'] ?? null) !== true
+    || ($itemProperties['checked'] ?? null) !== true
+    || ($item->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::Button->value
+    || count($item->children()) !== 1
+) {
+    throw new RuntimeException(
+        'p-item must be a selected button without checkbox chrome or semantics.',
+    );
+}
+
+$itemGroupClass = $tags['p-item-group'];
+$selectedItems = null;
+$itemGroup = $itemGroupClass::make(
+    ['value' => ['list']],
+    $itemClass::make([
+        'label' => 'Grid view',
+        'value' => 'grid',
+    ]),
+)->onChange(
+    static function (array $value) use (&$selectedItems): void {
+        $selectedItems = $value;
+    },
+)->toElement();
+$groupItem = $itemGroup->children()[0] ?? null;
+$groupToggle = $groupItem?->events()[EventKind::Toggle->value] ?? null;
+if (!$groupToggle instanceof Closure) {
+    throw new RuntimeException(
+        'p-item-group must forward its change contract to p-item.',
+    );
+}
+$groupToggle(true);
+if ($selectedItems !== ['list', 'grid']) {
+    throw new RuntimeException(
+        'p-item-group must emit the updated selected value list.',
+    );
+}
+
+$chipGroupClass = $tags['p-chip-group'];
+$chipClass = $tags['p-chip'];
+$selectedChip = null;
+$chipGroup = $chipGroupClass::make(
+    ['value' => 'news'],
+    $chipClass::make(['text' => 'News', 'value' => 'news']),
+    $chipClass::make(['text' => 'Sports', 'value' => 'sports']),
+)->onChange(
+    static function (string $value) use (&$selectedChip): void {
+        $selectedChip = $value;
+    },
+)->toElement();
+$sportsChip = $chipGroup->children()[1] ?? null;
+$sportsPress = $sportsChip?->events()[EventKind::Press->value] ?? null;
+if (!$sportsPress instanceof Closure) {
+    throw new RuntimeException(
+        'p-chip-group must forward its change contract to p-chip.',
+    );
+}
+$sportsPress();
+if ($selectedChip !== 'sports') {
+    throw new RuntimeException(
+        'Single p-chip-group selection must emit the selected chip value.',
+    );
+}
+
+$selectedChips = null;
+$multipleChipGroup = $chipGroupClass::make(
+    ['value' => ['news'], 'multiple' => true],
+    $chipClass::make(['text' => 'Sports', 'value' => 'sports']),
+)->onChange(
+    static function (array $value) use (&$selectedChips): void {
+        $selectedChips = $value;
+    },
+)->toElement();
+$multiplePress = ($multipleChipGroup->children()[0] ?? null)?->events()[
+    EventKind::Press->value
+] ?? null;
+if (!$multiplePress instanceof Closure) {
+    throw new RuntimeException(
+        'Multiple p-chip-group must bind chip presses.',
+    );
+}
+$multiplePress();
+if ($selectedChips !== ['news', 'sports']) {
+    throw new RuntimeException(
+        'Multiple p-chip-group selection must emit the updated value list.',
+    );
+}
+
+$buttonToggleClass = $tags['p-btn-toggle'];
+$buttonClass = $tags['p-btn'];
+$selectedButton = null;
+$buttonToggle = $buttonToggleClass::make(
+    ['value' => 'left'],
+    $buttonClass::make(['text' => 'Left', 'value' => 'left']),
+    $buttonClass::make(['text' => 'Right', 'value' => 'right']),
+)->onChange(
+    static function (string $value) use (&$selectedButton): void {
+        $selectedButton = $value;
+    },
+)->toElement();
+$rightButtonPress = ($buttonToggle->children()[1] ?? null)?->events()[
+    EventKind::Press->value
+] ?? null;
+if (!$rightButtonPress instanceof Closure) {
+    throw new RuntimeException(
+        'p-btn-toggle must forward its change contract to p-btn.',
+    );
+}
+$rightButtonPress();
+if ($selectedButton !== 'right') {
+    throw new RuntimeException(
+        'Single p-btn-toggle selection must emit the selected button value.',
+    );
+}
+
+$mandatoryButtons = null;
+$mandatoryToggle = $buttonToggleClass::make(
+    ['value' => ['left'], 'multiple' => true, 'mandatory' => true],
+    $buttonClass::make(['text' => 'Left', 'value' => 'left']),
+)->onChange(
+    static function (array $value) use (&$mandatoryButtons): void {
+        $mandatoryButtons = $value;
+    },
+)->toElement();
+$mandatoryPress = ($mandatoryToggle->children()[0] ?? null)?->events()[
+    EventKind::Press->value
+] ?? null;
+if (!$mandatoryPress instanceof Closure) {
+    throw new RuntimeException(
+        'Multiple p-btn-toggle must bind button presses.',
+    );
+}
+$mandatoryPress();
+if ($mandatoryButtons !== ['left']) {
+    throw new RuntimeException(
+        'Mandatory p-btn-toggle must not deselect its final active button.',
+    );
+}
+
+$tabsClass = $tags['p-tabs'];
+$tabClass = $tags['p-tab'];
+$selectedTab = null;
+$tabs = $tabsClass::make(
+    ['value' => 'overview'],
+    $tabClass::make(['text' => 'Overview', 'value' => 'overview']),
+    $tabClass::make(['text' => 'Activity', 'value' => 'activity']),
+)->onChange(
+    static function (string $value) use (&$selectedTab): void {
+        $selectedTab = $value;
+    },
+)->toElement();
+$activityPress = ($tabs->children()[1] ?? null)?->events()[
+    EventKind::Press->value
+] ?? null;
+if (!$activityPress instanceof Closure) {
+    throw new RuntimeException('p-tabs must bind press handling to p-tab.');
+}
+$activityPress();
+if ($selectedTab !== 'activity') {
+    throw new RuntimeException('p-tabs must emit the selected tab value.');
+}
+
+$slideGroupClass = $tags['p-slide-group'];
+$slideItemClass = $tags['p-slide-group-item'];
+$selectedSlide = null;
+$slideGroup = $slideGroupClass::make(
+    ['value' => 'first'],
+    $slideItemClass::make(['text' => 'Second', 'value' => 'second']),
+)->onChange(
+    static function (string $value) use (&$selectedSlide): void {
+        $selectedSlide = $value;
+    },
+)->toElement();
+$slidePress = ($slideGroup->children()[0] ?? null)?->events()[
+    EventKind::Press->value
+] ?? null;
+if (!$slidePress instanceof Closure) {
+    throw new RuntimeException(
+        'p-slide-group must bind press handling to p-slide-group-item.',
+    );
+}
+$slidePress();
+if ($selectedSlide !== 'second') {
+    throw new RuntimeException(
+        'p-slide-group must emit the selected item value.',
+    );
+}
+
+$tooltipClass = $tags['p-tooltip'];
+$tooltip = $tooltipClass::make(
+    ['text' => 'More information'],
+    $buttonClass::make(['text' => 'Details']),
+)->toElement();
+$tooltipChildren = $tooltip->children();
+$tooltipTriggerTag = $tooltipChildren[0]->properties()[PropKey::Value->value]
+    ?? null;
+$tooltipContentTag = $tooltipChildren[1]->properties()[PropKey::Value->value]
+    ?? null;
+$tooltipHost = $tooltip->properties()[PropKey::HostProperties->value] ?? null;
+if (!$tooltipHost instanceof BinaryValue) {
+    throw new RuntimeException('p-tooltip must use its anchored native host.');
+}
+$tooltipProperties = Wire::decodeMap($tooltipHost->bytes);
+if (
+    $tooltipTriggerTag !== 'pam:overlay-trigger'
+    || $tooltipContentTag !== 'pam:overlay-content'
+    || ($tooltipProperties['openOnClick'] ?? null) !== false
+    || ($tooltipProperties['openOnLongPress'] ?? null) !== true
+    || ($tooltipProperties['openDelay'] ?? null) !== 500
+) {
+    throw new RuntimeException(
+        'p-tooltip text shorthand must create long-press trigger and content anatomy.',
+    );
+}
+
+foreach ([
+    'p-select' => [false, false],
+    'p-autocomplete' => [true, false],
+    'p-combobox' => [true, true],
+] as $selectionTag => [$searchable, $allowCustomValue]) {
+    $selectionClass = $tags[$selectionTag];
+    $selection = $selectionClass::make([
+        'label' => 'Framework',
+        'items' => ['PAM', 'Native'],
+    ])->toElement();
+    $stack = [$selection];
+    $hasTrigger = false;
+    $hasInput = false;
+    $sheetProperties = null;
+    while ($stack !== []) {
+        $candidate = array_pop($stack);
+        $marker = $candidate->properties()[PropKey::Value->value] ?? null;
+        $hasTrigger = $hasTrigger || (
+            is_string($marker)
+            && str_starts_with($marker, 'pam:local-modal-trigger:')
+        );
+        $hasInput = $hasInput || $candidate->kind() === NodeKind::Input;
+        $host = $candidate->properties()[PropKey::HostProperties->value] ?? null;
+        if ($host instanceof BinaryValue) {
+            $decoded = Wire::decodeMap($host->bytes);
+            if (array_key_exists('searchable', $decoded)) {
+                $sheetProperties = $decoded;
+            }
+        }
+        array_push($stack, ...$candidate->children());
+    }
+    if (!is_array($sheetProperties)) {
+        throw new RuntimeException(
+            "{$selectionTag} must expose native sheet properties.",
+        );
+    }
+    if (
+        !$hasTrigger
+        || $hasInput
+        || $sheetProperties['searchable'] !== $searchable
+        || $sheetProperties['allowCustomValue'] !== $allowCustomValue
+    ) {
+        throw new RuntimeException(
+            "{$selectionTag} must open a platform-neutral searchable mobile sheet.",
+        );
+    }
+}
+
+$numberClass = $tags['p-number-input'];
+$numberChanges = [];
+$numberInput = $numberClass::make([
+    'modelValue' => 10,
+    'min' => 0,
+    'max' => 10,
+    'step' => 2,
+])->onChange(
+    static function (string $value) use (&$numberChanges): void {
+        $numberChanges[] = $value;
+    },
+)->toElement();
+$stack = [$numberInput];
+$nativeNumberInput = null;
+$disabledNumberButtons = 0;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if ($candidate->kind() === NodeKind::Input) {
+        $nativeNumberInput = $candidate;
+    }
+    if (
+        $candidate->kind() === NodeKind::Pressable
+        && ($candidate->properties()[PropKey::Enabled->value] ?? true) === false
+    ) {
+        $disabledNumberButtons++;
+    }
+    array_push($stack, ...$candidate->children());
+}
+$numberChange = $nativeNumberInput
+    ?->events()[EventKind::Change->value]
+    ?? null;
+if (!$numberChange instanceof Closure) {
+    throw new RuntimeException('p-number-input must expose native change handling.');
+}
+$numberChange('13');
+$numberChange('3.1');
+if ($numberChanges !== ['10', '4'] || $disabledNumberButtons !== 1) {
+    throw new RuntimeException(
+        'p-number-input must clamp, snap and disable controls at numeric limits.',
+    );
+}
+
+$speedDialClass = $tags['p-speed-dial'];
+$fabClass = $tags['p-fab'];
+$buttonClass = $tags['p-btn'];
+$speedDial = $speedDialClass::make(
+    ['open' => true, 'direction' => 'top', 'persistent' => true],
+    $fabClass::make('Create'),
+    $buttonClass::make('Photo'),
+    $buttonClass::make('Document'),
+)->toElement();
+$speedDialHost = $speedDial->properties()[PropKey::HostProperties->value]
+    ?? null;
+if (!$speedDialHost instanceof BinaryValue) {
+    throw new RuntimeException('p-speed-dial must use its anchored native host.');
+}
+$speedDialProperties = Wire::decodeMap($speedDialHost->bytes);
+$speedDialTrigger = $speedDial->children()[0] ?? null;
+$speedDialContent = $speedDial->children()[1] ?? null;
+if (
+    ($speedDialProperties['placement'] ?? null) !== Placement::Top->value
+    || ($speedDialProperties['dismissible'] ?? null) !== false
+    || ($speedDialTrigger?->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:overlay-trigger'
+    || ($speedDialContent?->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:overlay-content'
+) {
+    throw new RuntimeException(
+        'p-speed-dial direction, persistence and anchored anatomy must be native.',
+    );
+}
+
+$dialogClass = $tags['p-dialog'];
+$persistentDialog = $dialogClass::make([
+    'open' => true,
+    'persistent' => true,
+    'scrim' => false,
+    'fullscreen' => true,
+    'dismissible' => true,
+    'allowSwipeDismissal' => true,
+], Text::make('Unsaved changes'))->toElement();
+$dialogSurface = $persistentDialog->children()[0] ?? null;
+$dialogHost = $dialogSurface?->properties()[PropKey::HostProperties->value]
+    ?? null;
+if (!$dialogHost instanceof BinaryValue) {
+    throw new RuntimeException('p-dialog must retain its native modal host.');
+}
+$dialogProperties = Wire::decodeMap($dialogHost->bytes);
+if (
+    ($dialogProperties['dismissible'] ?? null) !== false
+    || ($dialogProperties['isDismissable'] ?? null) !== false
+    || ($dialogProperties['allowSwipeDismissal'] ?? null) !== false
+    || $persistentDialog->properties()[PropKey::ModalPresentation->value]
+        !== ModalPresentation::FullScreen->value
+    || $persistentDialog->properties()[PropKey::ModalAnimationType->value]
+        !== ModalAnimationType::Fade->value
+    || $persistentDialog->properties()[PropKey::ModalBackdropColor->value]
+        !== 0x00000000
+    || $persistentDialog->properties()[
+        PropKey::ModalAllowSwipeDismissal->value
+    ] !== false
+) {
+    throw new RuntimeException(
+        'p-dialog persistent, fullscreen and scrim semantics must reach the native window.',
+    );
+}
+
+$menuClass = $tags['p-menu'];
+$persistentMenu = $menuClass::make(
+    ['open' => true, 'persistent' => true, 'dismissible' => true],
+    Text::make('Trigger'),
+    Text::make('Action'),
+)->toElement();
+$menuHost = $persistentMenu->properties()[PropKey::HostProperties->value] ?? null;
+if (!$menuHost instanceof BinaryValue) {
+    throw new RuntimeException('p-menu must retain its anchored native host.');
+}
+$menuProperties = Wire::decodeMap($menuHost->bytes);
+if (
+    ($menuProperties['dismissible'] ?? null) !== false
+    || ($menuProperties['isDismissable'] ?? null) !== false
+) {
+    throw new RuntimeException(
+        'A persistent p-menu must override conflicting dismissal properties.',
+    );
+}
+
+$overlayClass = $tags['p-overlay'];
+$overlay = $overlayClass::make(
+    ['open' => true],
+    Text::make('Loading'),
+)->toElement();
+if (
+    $overlay->properties()[PropKey::ModalAnimationType->value]
+        !== ModalAnimationType::Fade->value
+) {
+    throw new RuntimeException(
+        'p-overlay must use the Material fade transition by default.',
+    );
+}
+
+$navIconClass = $tags['p-app-bar-nav-icon'];
+$navIcon = $navIconClass::make(['icon' => 'menu'])->toElement();
+if (
+    $navIcon->kind() !== NodeKind::Pressable
+    || ($navIcon->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Open navigation'
+    || ($navIcon->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+    || ($navIcon->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
+) {
+    throw new RuntimeException(
+        'p-app-bar-nav-icon must be an accessible 48dp navigation action.',
+    );
+}
+
+$calendarClass = $tags['p-calendar'];
+$calendar = $calendarClass::make([
+    'modelValue' => '2026-07-28',
+])->toElement();
+$calendarHeader = $calendar->children()[0] ?? null;
+$previousMonth = $calendarHeader?->children()[0] ?? null;
+$nextMonth = $calendarHeader?->children()[2] ?? null;
+if (
+    !$previousMonth instanceof \Pam\Native\Element
+    || ($previousMonth->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Previous month'
+    || ($previousMonth->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+    || !$nextMonth instanceof \Pam\Native\Element
+    || ($nextMonth->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Next month'
+    || ($nextMonth->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+) {
+    throw new RuntimeException(
+        'p-calendar month navigation must expose labelled 48dp actions.',
+    );
+}
+
+$treeClass = $tags['p-treeview'];
+$selectedTreePath = null;
+$tree = $treeClass::make([
+    'items' => [
+        [
+            'title' => 'Mobile',
+            'value' => 'mobile',
+            'children' => [
+                ['title' => 'Android', 'value' => 'android'],
+            ],
+        ],
+    ],
+    'opened' => ['mobile'],
+    'modelValue' => 'mobile',
+])->onChange(
+    static function (string $value) use (&$selectedTreePath): void {
+        $selectedTreePath = $value;
+    },
+)->toElement();
+$treeFolder = $tree->children()[0] ?? null;
+$treeFile = ($treeFolder?->children()[1] ?? null)?->children()[0] ?? null;
+$treeFilePress = $treeFile?->events()[EventKind::Press->value] ?? null;
+if (!$treeFilePress instanceof Closure) {
+    throw new RuntimeException(
+        'p-treeview must bind selection handling to generated tree items.',
+    );
+}
+$treeFilePress();
+if ($selectedTreePath !== 'android') {
+    throw new RuntimeException(
+        'p-treeview must emit the selected item path.',
+    );
+}
+
+$imageClass = $tags['p-img'];
+$imageError = null;
+$image = $imageClass::make([
+    'src' => 'https://cdn.example.com/cover.jpg',
+    'alt' => 'Community cover',
+])->onError(
+    static function (ImageErrorEvent $error) use (&$imageError): void {
+        $imageError = $error;
+    },
+)->toElement();
+$imageErrorHandler = $image->events()[EventKind::ImageError->value] ?? null;
+if (
+    $image->kind() !== NodeKind::Image
+    || ($image->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Community cover'
+    || !$imageErrorHandler instanceof Closure
+) {
+    throw new RuntimeException(
+        'p-img must expose its alt text and typed native image events.',
+    );
+}
+$imageErrorHandler(Wire::map(['error' => 'Network unavailable']));
+if (
+    !$imageError instanceof ImageErrorEvent
+    || $imageError->message !== 'Network unavailable'
+) {
+    throw new RuntimeException(
+        'p-img must adapt native failures to ImageErrorEvent.',
+    );
+}
+
+$infiniteClass = $tags['p-infinite-scroll'];
+$endReached = false;
+$infinite = $infiniteClass::make(
+    [
+        'loading' => true,
+        'loadingText' => 'Loading packages',
+        'onEndReachedThreshold' => 0.25,
+    ],
+    Text::make('Package 1'),
+)->onEndReached(static function () use (&$endReached): void {
+    $endReached = true;
+})->toElement();
+$infiniteEvent = $infinite->events()[EventKind::EndReached->value] ?? null;
+$loadingRow = $infinite->children()[1] ?? null;
+if (
+    $infinite->kind() !== NodeKind::VirtualList
+    || !$infiniteEvent instanceof Closure
+    || ($infinite->properties()[PropKey::EndReachedThreshold->value] ?? null)
+        !== 0.25
+    || !$loadingRow instanceof \Pam\Native\Element
+    || ($loadingRow->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::ProgressBar->value
+) {
+    throw new RuntimeException(
+        'p-infinite-scroll must expose end-reached behavior and an accessible loading row.',
+    );
+}
+$infiniteEvent();
+if (!$endReached) {
+    throw new RuntimeException('p-infinite-scroll must emit its end-reached callback.');
+}
+
+$dataTableClass = $tags['p-data-table'];
+$selectedRows = null;
+$dataTable = $dataTableClass::make([
+    'headers' => [
+        ['title' => 'Name', 'key' => 'name'],
+    ],
+    'items' => [
+        ['id' => 1, 'name' => 'Ada'],
+        ['id' => 2, 'name' => 'Grace'],
+    ],
+    'modelValue' => [1],
+    'showSelect' => true,
+])->onChange(
+    static function (array $value) use (&$selectedRows): void {
+        $selectedRows = $value;
+    },
+)->toElement();
+$selectedCell = (($dataTable->children()[1] ?? null)?->children()[0] ?? null)
+    ?->children()[0] ?? null;
+$secondCell = (($dataTable->children()[2] ?? null)?->children()[0] ?? null)
+    ?->children()[0] ?? null;
+$secondPress = $secondCell?->events()[EventKind::Press->value] ?? null;
+if (
+    !$selectedCell instanceof \Pam\Native\Element
+    || ($selectedCell->properties()[
+        PropKey::AccessibilityCheckedState->value
+    ] ?? null) !== AccessibilityCheckedState::Checked->value
+    || !$secondCell instanceof \Pam\Native\Element
+    || ($secondCell->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Select row 2'
+    || !$secondPress instanceof Closure
+) {
+    throw new RuntimeException(
+        'p-data-table selectable rows must expose controlled checkbox actions.',
+    );
+}
+$secondPress();
+if ($selectedRows !== [1, 2]) {
+    throw new RuntimeException(
+        'p-data-table row selection must emit the updated model value.',
+    );
+}
+
+$emptyTable = $dataTableClass::make([
+    'headers' => [
+        ['title' => 'Name', 'key' => 'name'],
+    ],
+    'items' => [],
+    'noDataText' => 'No packages found',
+])->toElement();
+$emptyState = (($emptyTable->children()[1] ?? null)?->children()[0] ?? null)
+    ?->children()[0] ?? null;
+if (
+    !$emptyState instanceof \Pam\Native\Element
+    || ($emptyState->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::Summary->value
+    || ($emptyState->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'No packages found'
+) {
+    throw new RuntimeException(
+        'An empty p-data-table must expose its no-data state accessibly.',
+    );
+}
+
+$linearProgressClass = $tags['p-progress-linear'];
+$indeterminateProgress = $linearProgressClass::make([
+    'indeterminate' => true,
+    'reduceMotion' => true,
+])->toElement();
+$progressFill = $indeterminateProgress->children()[1] ?? null;
+if (
+    ($indeterminateProgress->properties()[
+        PropKey::AccessibilityBusy->value
+    ] ?? null) !== true
+    || isset($indeterminateProgress->properties()[
+        PropKey::AccessibilityValueNow->value
+    ])
+    || ($indeterminateProgress->properties()[
+        PropKey::AccessibilityValueText->value
+    ] ?? null) !== 'In progress'
+    || !$progressFill instanceof \Pam\Native\Element
+    || ($progressFill->properties()[PropKey::AnimateChanges->value] ?? true)
+        !== false
+) {
+    throw new RuntimeException(
+        'Indeterminate progress must announce a busy state and honor reduced motion.',
+    );
+}
+$reducedSkeleton = MaterialStyleResolver::resolve(
+    [
+        '__materialComponent' => 'PSkeletonLoader',
+        'reduceMotion' => true,
+    ],
+    Themes::light(),
+);
+if (
+    !$reducedSkeleton instanceof Style
+    ||
+    $reducedSkeleton->animateChanges !== false
+    || $reducedSkeleton->animationDurationMs !== null
+) {
+    throw new RuntimeException(
+        'p-skeleton-loader must disable shimmer transitions for reduced motion.',
+    );
+}
+
 /**
  * @param array<string, mixed> $props
- * @param array<string, \Pam\Native\Align|float|int|null> $expected
+ * @param array<string, Align|FlexDirection|PositionType|bool|float|int|null> $expected
  */
 $assertGeometry = static function (
     string $component,
@@ -283,6 +1357,11 @@ $assertGeometry('PDialog', [], [
     'borderRadius' => 28.0,
     'elevation' => 6.0,
 ]);
+$assertGeometry('PDialog', ['width' => 320], [
+    'width' => 320.0,
+    'widthPercent' => null,
+    'maxWidth' => 560.0,
+]);
 $assertGeometry('PProgressCircular', [], [
     'width' => 32.0,
     'height' => 32.0,
@@ -331,24 +1410,12 @@ $assertGeometry('PToolbar', ['density' => 'comfortable'], [
 $assertGeometry('PToolbar', ['density' => 'compact'], [
     'minHeight' => 48.0,
 ]);
-$assertGeometry('PToolbarTitle', [], [
-    'fontSize' => 20.0,
-    'lineHeight' => 28.0,
-]);
-$assertGeometry('PAppBarTitle', [], [
-    'fontSize' => 20.0,
-    'lineHeight' => 28.0,
-]);
 $assertGeometry('PAlert', [], [
     'paddingHorizontal' => 16.0,
     'paddingVertical' => 16.0,
     'gap' => 16.0,
     'borderRadius' => 4.0,
     'elevation' => 1.0,
-]);
-$assertGeometry('PAlertTitle', [], [
-    'fontSize' => 24.0,
-    'lineHeight' => 28.0,
 ]);
 $assertGeometry('PAlert', ['border' => 'start'], [
     'paddingLeft' => 24.0,
@@ -387,41 +1454,6 @@ $assertGeometry('PBottomSheet', [], [
     'borderRadius' => 28.0,
     'elevation' => 6.0,
 ]);
-$assertGeometry('PCardTitle', [], [
-    'fontSize' => 20.0,
-    'lineHeight' => 28.0,
-]);
-$assertGeometry('PCardTitle', ['density' => 'compact'], [
-    'lineHeight' => 24.8,
-]);
-$assertGeometry('PCardSubtitle', [], [
-    'paddingHorizontal' => 16.0,
-    'fontSize' => 14.0,
-    'lineHeight' => 20.0,
-]);
-$assertGeometry('PCardSubtitle', ['density' => 'comfortable'], [
-    'lineHeight' => 18.0,
-]);
-$assertGeometry('PCardSubtitle', ['density' => 'compact'], [
-    'lineHeight' => 16.0,
-]);
-$assertGeometry('PCardText', [], [
-    'paddingHorizontal' => 16.0,
-    'paddingTop' => 16.0,
-    'paddingBottom' => 16.0,
-    'fontSize' => 14.0,
-    'lineHeight' => 20.0,
-]);
-$assertGeometry('PCardText', ['density' => 'comfortable'], [
-    'lineHeight' => 19.2,
-]);
-$assertGeometry('PCardText', ['density' => 'compact'], [
-    'lineHeight' => 18.4,
-]);
-$assertGeometry('PCardItem', [], [
-    'paddingHorizontal' => 16.0,
-    'paddingVertical' => 10.0,
-]);
 $assertGeometry('PCardActions', [], [
     'minHeight' => 52.0,
     'padding' => 8.0,
@@ -445,26 +1477,27 @@ $assertGeometry('PExpansionPanelText', [], [
     'paddingTop' => 8.0,
     'paddingBottom' => 16.0,
 ]);
-$assertGeometry('PListItemTitle', [], [
-    'fontSize' => 16.0,
-    'lineHeight' => 24.0,
-]);
-$assertGeometry('PSelectionControl', [], [
-    'minHeight' => 40.0,
-]);
-$assertGeometry('PSelectionControl', ['density' => 'comfortable'], [
-    'minHeight' => 36.0,
-]);
-$assertGeometry('PSelectionControl', ['density' => 'compact'], [
-    'minHeight' => 28.0,
-]);
 $assertGeometry('PSnackbar', [], [
-    'widthPercent' => 100.0,
     'minHeight' => 48.0,
     'maxWidth' => 672.0,
     'paddingHorizontal' => 16.0,
     'paddingVertical' => 12.0,
     'elevation' => 6.0,
+    'zIndex' => 1000,
+    'positionType' => PositionType::Absolute,
+    'left' => 8.0,
+    'right' => 8.0,
+    'bottom' => 8.0,
+    'safeAreaBottom' => true,
+]);
+$assertGeometry('PSnackbar', ['location' => 'top end'], [
+    'positionType' => PositionType::Absolute,
+    'top' => 8.0,
+    'right' => 8.0,
+]);
+$assertGeometry('PSnackbar', ['vertical' => true], [
+    'flexDirection' => FlexDirection::Column,
+    'alignItems' => Align::Start,
 ]);
 $assertGeometry('PStepper', [], [
     'borderRadius' => 4.0,
@@ -501,6 +1534,7 @@ $assertGeometry('PTooltip', [], [
 $assertGeometry('POverlay', [], [
     'widthPercent' => 100.0,
     'heightPercent' => 100.0,
+    'backgroundColor' => 0x00000000,
     'opacity' => 1.0,
 ]);
 $assertGeometry('PMenu', [], [
@@ -583,67 +1617,15 @@ $assertGeometry('PTimelineItem', [], [
     'gap' => 24.0,
     'borderWidth' => 2.0,
 ]);
-$assertGeometry('PPicker', [], [
-    'borderRadius' => 4.0,
-    'elevation' => 0.0,
-]);
 $assertGeometry('PDatePicker', [], [
     'width' => 328.0,
     'minWidth' => 328.0,
     'borderRadius' => 4.0,
 ]);
-$assertGeometry('PDatePickerHeader', [], [
-    'height' => 70.0,
-    'paddingHorizontal' => 12.0,
-    'paddingVertical' => 4.0,
-]);
-$assertGeometry('PDatePickerMonth', [], [
-    'minHeight' => 288.0,
-    'paddingHorizontal' => 12.0,
-    'paddingBottom' => 8.0,
-]);
-$assertGeometry('PDatePickerMonths', [], [
-    'height' => 288.0,
-    'gap' => 24.0,
-]);
-$assertGeometry('PDatePickerYears', [], [
-    'height' => 288.0,
-    'paddingHorizontal' => 32.0,
-]);
 $assertGeometry('PTimePicker', [], [
     'width' => 328.0,
     'padding' => 24.0,
     'borderRadius' => 4.0,
-]);
-$assertGeometry('PTimePickerControls', [], [
-    'height' => 80.0,
-    'fontSize' => 56.0,
-    'lineHeight' => 74.0,
-]);
-$assertGeometry('PTimePickerClock', [], [
-    'width' => 290.0,
-    'height' => 290.0,
-    'padding' => 10.0,
-    'borderRadius' => 9999.0,
-]);
-$assertGeometry('PColorPicker', [], [
-    'width' => 300.0,
-    'borderRadius' => 4.0,
-    'elevation' => 1.0,
-]);
-$assertGeometry('PColorPickerPreview', [], [
-    'minHeight' => 46.0,
-    'padding' => 16.0,
-    'gap' => 8.0,
-]);
-$assertGeometry('PColorPickerEdit', [], [
-    'minHeight' => 64.0,
-    'marginTop' => 24.0,
-    'marginBottom' => 8.0,
-]);
-$assertGeometry('PColorPickerSwatches', [], [
-    'paddingBottom' => 10.0,
-    'borderRadius' => 8.0,
 ]);
 $assertGeometry('PSlider', [], [
     'widthPercent' => 100.0,
@@ -657,15 +1639,6 @@ $assertGeometry('PRangeSlider', ['vertical' => true], [
     'minHeight' => 300.0,
     'marginTop' => 12.0,
     'marginBottom' => 12.0,
-]);
-$assertGeometry('PSelectionControl', [], [
-    'minHeight' => 40.0,
-]);
-$assertGeometry('PSelectionControl', ['density' => 'comfortable'], [
-    'minHeight' => 36.0,
-]);
-$assertGeometry('PSelectionControl', ['density' => 'compact'], [
-    'minHeight' => 28.0,
 ]);
 $assertGeometry('PSwitch', [], [
     'minHeight' => 40.0,
@@ -712,23 +1685,6 @@ $assertGeometry('POtpInput', [], [
 $assertGeometry('POtpInput', ['divided' => true], [
     'width' => 360.0,
 ]);
-$assertGeometry('PFileUpload', [], [
-    'minHeight' => 144.0,
-    'paddingHorizontal' => 16.0,
-    'paddingVertical' => 24.0,
-    'borderWidth' => 2.0,
-    'borderRadius' => 4.0,
-]);
-$assertGeometry('PFileUpload', ['inset' => true], [
-    'minHeight' => 88.0,
-    'paddingVertical' => 12.0,
-]);
-$assertGeometry('PFileUploadItem', [], [
-    'minHeight' => 64.0,
-    'marginTop' => 16.0,
-    'marginBottom' => 16.0,
-    'padding' => 16.0,
-]);
 $assertGeometry('PAutocomplete', [], [
     'height' => 56.0,
     'minHeight' => 56.0,
@@ -744,10 +1700,6 @@ $assertGeometry('PImg', ['cardMedia' => true], [
     'minHeight' => 200.0,
     'animationDurationMs' => 200,
 ]);
-$assertGeometry('PParallax', [], [
-    'height' => 500.0,
-    'minHeight' => 500.0,
-]);
 $assertGeometry('PSparkline', [], [
     'height' => 100.0,
     'minHeight' => 100.0,
@@ -758,23 +1710,10 @@ $assertGeometry('PCalendar', [], [
     'borderWidth' => 1.0,
     'borderRadius' => 0.0,
 ]);
-$assertGeometry('PCalendarHeader', [], [
-    'height' => 56.0,
-    'minHeight' => 56.0,
-    'paddingHorizontal' => 4.0,
-    'borderWidth' => 1.0,
-]);
 $assertGeometry('PCalendarDay', [], [
     'minHeight' => 56.0,
     'paddingTop' => 4.0,
     'fontSize' => 12.0,
-    'lineHeight' => 20.0,
-]);
-$assertGeometry('PCalendarInterval', [], [
-    'minWidth' => 50.0,
-    'minHeight' => 20.0,
-    'paddingRight' => 8.0,
-    'fontSize' => 10.0,
     'lineHeight' => 20.0,
 ]);
 

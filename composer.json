@@ -2,7 +2,7 @@
     "name": "pushinbr/pam-mobile-ui",
     "description": "Official accessible native UI component library for PAM Native.",
     "type": "pam-native-plugin",
-    "license": "BUSL-1.1",
+    "license": "Apache-2.0",
     "keywords": [
         "android",
         "components",
@@ -29,8 +29,10 @@
             "Pam\\MobileUi\\": "src/"
         },
         "classmap": [
-            "src/Generated/ComponentFacades.php",
             "src/Generated/MaterialComponentFacades.php"
+        ],
+        "exclude-from-classmap": [
+            "tests/fixtures/InternalComponentFacades.php"
         ]
     },
     "autoload-dev": {
@@ -59,13 +61,15 @@
         "test:material": "php tests/material-matrix.php",
         "test:native-gates": "php tests/native-gate-matrix.php",
         "test:showcase": "php tools/validate-showcase.php",
-        "test": "php tests/run.php",
+        "test:public-surface": "php tests/public-surface.php",
+        "test": "php tests/theme-runtime.php",
         "verify": [
             "@generate",
             "@audit:styles",
             "@analyse",
             "@test:recipes",
             "@test:material",
+            "@test:public-surface",
             "@test:native-gates",
             "@benchmark:material",
             "@test",

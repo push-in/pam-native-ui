@@ -12,11 +12,7 @@ use App\Overview;
 use App\Profile;
 use App\ShowcaseRoute;
 use App\TypedCommunityCard;
-use Pam\MobileUi\Component\BellIcon;
-use Pam\MobileUi\Component\ClockIcon;
-use Pam\MobileUi\Component\MessageCircleIcon;
-use Pam\MobileUi\Component\SettingsIcon;
-use Pam\MobileUi\Component\StarIcon;
+use Pam\MobileUi\Material\PIcon;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Generated\MaterialComponentMap;
@@ -50,48 +46,15 @@ $drawer = Router::drawer('overview')
     ->route('overlays', 'Overlays', fn () => $showcaseRoutes['showcase-overlays'])
     ->route('all', 'All components', fn () => $gallery);
 $componentRoutes = [];
-$catalogProviders = [];
 $catalogInternalParts = [
     'p-app-bar-nav-icon',
-    'p-app-bar-title',
-    'p-alert-title',
     'p-banner-actions',
-    'p-banner-text',
     'p-calendar-day',
-    'p-calendar-header',
-    'p-calendar-interval',
     'p-card-actions',
-    'p-card-item',
-    'p-card-subtitle',
-    'p-card-text',
-    'p-card-title',
     'p-carousel-item',
-    'p-checkbox-btn',
-    'p-color-picker-canvas',
-    'p-color-picker-edit',
-    'p-color-picker-preview',
-    'p-color-picker-swatches',
-    'p-counter',
-    'p-date-picker-controls',
-    'p-date-picker-header',
-    'p-date-picker-month',
-    'p-date-picker-months',
-    'p-date-picker-years',
     'p-expansion-panel-text',
     'p-expansion-panel-title',
-    'p-field-label',
-    'p-file-upload-item',
     'p-item',
-    'p-label',
-    'p-list-group',
-    'p-list-item-subtitle',
-    'p-list-item-title',
-    'p-list-subheader',
-    'p-messages',
-    'p-picker',
-    'p-picker-title',
-    'p-selection-control',
-    'p-selection-control-group',
     'p-slide-group-item',
     'p-stepper-actions',
     'p-stepper-header',
@@ -100,29 +63,22 @@ $catalogInternalParts = [
     'p-stepper-vertical-item',
     'p-stepper-window',
     'p-stepper-window-item',
-    'p-time-picker-clock',
-    'p-time-picker-controls',
     'p-timeline-item',
-    'p-toolbar-items',
-    'p-toolbar-title',
     'p-treeview-item',
 ];
-$catalogHidden = array_merge(
-    $catalogProviders,
-    $catalogInternalParts,
-);
+$catalogHidden = $catalogInternalParts;
 $catalogGroup = static fn (string $tag): string => match (true) {
     preg_match('/(btn|fab|chip|icon|avatar|badge|rating)/', $tag) === 1 =>
         'Actions and identity',
     preg_match('/(checkbox|radio|switch|slider|item-group)/', $tag) === 1 =>
         'Selection controls',
-    preg_match('/(field|input|select|autocomplete|combobox|form|otp|file|textarea)/', $tag) === 1 =>
+    preg_match('/(field|input|select|autocomplete|combobox|form|otp|textarea)/', $tag) === 1 =>
         'Forms and inputs',
-    preg_match('/(color-picker|date-picker|time-picker|confirm-edit|calendar)/', $tag) === 1 =>
+    preg_match('/(date-picker|time-picker|calendar)/', $tag) === 1 =>
         'Pickers and editing',
     preg_match('/(data|table|list|tree|virtual|infinite|timeline|calendar)/', $tag) === 1 =>
         'Data display',
-    preg_match('/(img|lazy|parallax|skeleton|sparkline|transition)/', $tag) === 1 =>
+    preg_match('/(img|lazy|skeleton|sparkline)/', $tag) === 1 =>
         'Media and motion',
     preg_match('/(dialog|menu|overlay|sheet|snackbar|tooltip|alert|banner|progress)/', $tag) === 1 =>
         'Feedback and overlays',
@@ -173,11 +129,11 @@ foreach ($componentRoutes as $componentRoute) {
 }
 
 $tabs = Router::tabs('overview')
-    ->tab('overview', 'Overview', new Overview(), StarIcon::make())
-    ->tab('orders', 'Orders', new Orders(), BellIcon::make())
-    ->tab('activity', 'Activity', new Activity(), ClockIcon::make())
-    ->tab('profile', 'Profile', new Profile(), MessageCircleIcon::make())
-    ->tab('lab', 'Studio', $studio, SettingsIcon::make())
+    ->tab('overview', 'Overview', new Overview(), PIcon::make(['icon' => 'star']))
+    ->tab('orders', 'Orders', new Orders(), PIcon::make(['icon' => 'bell']))
+    ->tab('activity', 'Activity', new Activity(), PIcon::make(['icon' => 'clock']))
+    ->tab('profile', 'Profile', new Profile(), PIcon::make(['icon' => 'message-circle']))
+    ->tab('lab', 'Studio', $studio, PIcon::make(['icon' => 'settings']))
     ->appearance(0xFF091526, 0xFF4C8DFF, 0xFF7F93B0, 0xFF253952)
     ->persistence('premium-showcase')
     ->build();

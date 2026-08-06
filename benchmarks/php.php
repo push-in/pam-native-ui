@@ -2,20 +2,12 @@
 
 declare(strict_types=1);
 
-use Pam\MobileUi\Component\Badge;
-use Pam\MobileUi\Component\BadgeText;
-use Pam\MobileUi\Component\Button;
-use Pam\MobileUi\Component\ButtonText;
-use Pam\MobileUi\Component\Card;
-use Pam\MobileUi\Component\Heading;
-use Pam\MobileUi\Component\Input;
-use Pam\MobileUi\Component\InputField;
-use Pam\MobileUi\Component\Progress;
-use Pam\MobileUi\Component\ProgressFilledTrack;
-use Pam\MobileUi\Component\Text;
-use Pam\MobileUi\Component\VStack;
-use Pam\MobileUi\Enum\ComponentSize;
-use Pam\MobileUi\Enum\ComponentVariant;
+use Pam\MobileUi\Enum\ButtonVariant;
+use Pam\MobileUi\Material\PBtn;
+use Pam\MobileUi\Material\PCard;
+use Pam\MobileUi\Material\PChip;
+use Pam\MobileUi\Material\PProgressLinear;
+use Pam\MobileUi\Material\PTextField;
 use Pam\Native\Internal\TreeEncoder;
 use Pam\Native\Renderable;
 
@@ -27,28 +19,18 @@ require dirname(__DIR__).'/tests/bootstrap.php';
  * style compilation, native element creation and binary encoding.
  */
 $tree = static function (int $iteration): Renderable {
-    return Card::make(
-        VStack::make(
-            ['space' => 'md'],
-            Heading::make('Checkout')->size(ComponentSize::ExtraLarge),
-            Text::make('Native UI iteration '.$iteration),
-            Input::make(
-                ['variant' => ComponentVariant::Outline],
-                InputField::make(['value' => 'hello@example.com']),
-            ),
-            Progress::make(
-                ['value' => 64.0],
-                ProgressFilledTrack::make(),
-            ),
-            Badge::make(
-                ['variant' => ComponentVariant::Secondary],
-                BadgeText::make('Ready'),
-            ),
-            Button::make(
-                ['variant' => ComponentVariant::Default],
-                ButtonText::make('Continue'),
-            ),
-        ),
+    return PCard::make(
+        ['title' => 'Checkout', 'subtitle' => 'Native UI iteration '.$iteration],
+        PTextField::make([
+            'label' => 'Email',
+            'value' => 'hello@example.com',
+        ]),
+        PProgressLinear::make(['value' => 64.0]),
+        PChip::make(['text' => 'Ready']),
+        PBtn::make([
+            'text' => 'Continue',
+            'variant' => ButtonVariant::Default,
+        ]),
     );
 };
 

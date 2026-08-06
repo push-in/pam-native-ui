@@ -6,11 +6,9 @@ namespace Pam\MobileUi\Rendering;
 
 use Closure;
 use InvalidArgumentException;
-use Pam\MobileUi\Enum\AttachmentType;
-use Pam\MobileUi\Enum\BranchControlAction;
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\ComponentMode;
 use Pam\MobileUi\Enum\ComponentSize;
-use Pam\MobileUi\Enum\ImageViewerControlAction;
 use Pam\MobileUi\Enum\InputSlotAction;
 use Pam\MobileUi\Enum\MaterialDensity;
 use Pam\MobileUi\Enum\NativeBehavior;
@@ -108,7 +106,12 @@ final class ComponentRenderer
         array $props,
         array $parentProps,
     ): array {
-        return self::controlledItemState($part, $props, $parentProps);
+        $mappedPart = self::legacyMaterialPart($part);
+        $props = self::controlledItemState($mappedPart, $props, $parentProps);
+
+        return $mappedPart === $part
+            ? $props
+            : self::controlledItemState($part, $props, $parentProps);
     }
 
     /**
@@ -157,6 +160,27 @@ final class ComponentRenderer
         if (isset(MaterialComponentMap::IDS[$part])) {
             $props['__materialComponent'] = $part;
         }
+        if (
+            $part === 'PAppBarNavIcon'
+            && !array_key_exists('accessibilityLabel', $props)
+            && !array_key_exists('ariaLabel', $props)
+        ) {
+            $props['accessibilityLabel'] = 'Open navigation';
+        }
+        if (in_array($part, ['PDialog', 'PMenu', 'POverlay', 'PSpeedDial'], true)) {
+            $props = self::materialOverlayProperties($props);
+        }
+        if (
+            $part === 'PSpeedDial'
+            && array_key_exists('direction', $props)
+        ) {
+            $props['placement'] = match ($props['direction'] ?? null) {
+                'top' => Placement::Top->value,
+                'start', 'left' => Placement::Left->value,
+                'end', 'right' => Placement::Right->value,
+                default => Placement::Bottom->value,
+            };
+        }
         $part = self::legacyMaterialPart($part);
         $props = self::withDefaults($part, $props);
         if (
@@ -186,6 +210,20 @@ final class ComponentRenderer
             }
         }
         $children = self::fallbackChildren($part, $props, $children, $events);
+        if (
+            $part === 'Tooltip'
+            && ($props['__materialComponent'] ?? null) === 'PTooltip'
+            && count($children) === 1
+            && self::text($props, 'text') !== ''
+        ) {
+            $children[] = self::themedText(self::text($props, 'text'));
+        }
+        if (
+            ($props['__materialComponent'] ?? null) === 'PListItem'
+            && !array_key_exists('lines', $props)
+        ) {
+            $props['lines'] = count($children) > 1 ? 2 : 1;
+        }
         if (
             in_array(
                 $props['__materialComponent'] ?? null,
@@ -276,7 +314,7 @@ final class ComponentRenderer
 
             return self::providerSemantics($part, $props, $provider);
         }
-        if (in_array($part, ['BottomSheet', 'ModelSelector'], true)) {
+        if ($part === 'BottomSheet') {
             $selector = View::make(...self::providerRootChildren($children))
                 ->collapsable();
             if ($elementKey !== null) {
@@ -285,10 +323,7 @@ final class ComponentRenderer
 
             return self::providerSemantics($part, $props, $selector);
         }
-        if (
-            in_array($part, ['Skeleton', 'SkeletonText'], true)
-            && self::flag($props, 'isLoaded')
-        ) {
+        if ($part === 'Skeleton' && self::flag($props, 'isLoaded')) {
             $loaded = self::oneChild($children);
             if ($children === []) {
                 $loaded = $loaded->visible(false);
@@ -299,12 +334,9 @@ final class ComponentRenderer
 
             return self::providerSemantics($part, $props, $loaded);
         }
-        if (in_array($part, ['Skeleton', 'SkeletonText'], true)) {
+        if ($part === 'Skeleton') {
             $children = [];
         }
-        $children = self::imageViewerChildren($part, $props, $children);
-        $children = self::messageBranchChildren($part, $props, $children);
-        $children = self::messageResponseChildren($part, $props, $children);
         $children = self::fileTreeFolderChildren($part, $props, $children);
         $children = self::anchoredOverlayChildren($part, $props, $children);
         $parentProps = is_array($props['__parentVariants'] ?? null)
@@ -330,6 +362,24 @@ final class ComponentRenderer
             }
         }
         $props = self::controlledItemState($part, $props, $parentProps);
+        if (($props['__materialComponent'] ?? null) === 'PChip') {
+            $props['__pamInteractive'] =
+                isset($events[EventKind::Press->value])
+                || isset($events[EventKind::LongPress->value])
+                || ($parentProps['__pamParentComponent'] ?? null) === 'PChipGroup'
+                || self::flag($props, 'clickable')
+                || self::flag($props, 'link');
+        }
+        if (
+            ($props['__materialComponent'] ?? null) === 'PItem'
+            && !array_key_exists('checked', $props)
+        ) {
+            $props['checked'] = self::flag(
+                $props,
+                'selected',
+                self::flag($props, 'active'),
+            );
+        }
         if (
             isset($props['__materialComponent'])
             && array_key_exists('modelValue', $props)
@@ -339,20 +389,16 @@ final class ComponentRenderer
         }
         $runtimeProps = [...$parentProps, ...$props];
         $events = self::componentEvents($part, $runtimeProps, $events);
-        $children = self::modelSelectorChildren(
-            $part,
-            $runtimeProps,
-            $children,
-        );
         $children = self::formControlChildren($part, $runtimeProps, $children);
         $children = self::inputEventChildren($part, $events, $children);
-        $children = self::messageResponseEventChildren($part, $events, $children);
+        $children = self::chipChildren($runtimeProps, $events, $children);
         if (
             ($props['__materialComponent'] ?? null) === 'PProgressLinear'
             && $children === []
         ) {
             $rawProgress = $props['modelValue'] ?? $props['value'] ?? 0;
             $indeterminate = self::flag($props, 'indeterminate');
+            $reduceMotion = self::flag($props, 'reduceMotion');
             $reverse = self::flag($props, 'reverse');
             $progress = $indeterminate
                 ? 38.0
@@ -373,8 +419,10 @@ final class ComponentRenderer
                 'top' => 0.0,
                 'backgroundColor' => self::materialSemanticColor($props),
                 'borderRadius' => 999.0,
-                'animationDurationMs' => $indeterminate ? 1100 : 250,
-                'animateChanges' => true,
+                'animationDurationMs' => $reduceMotion
+                    ? null
+                    : ($indeterminate ? 1100 : 250),
+                'animateChanges' => !$reduceMotion,
             ];
             $filledStyle[$reverse ? 'right' : 'left'] = $indeterminate
                 ? 12.0
@@ -400,7 +448,10 @@ final class ComponentRenderer
                     ->property(PropKey::Value, 'pam:progress-filled-track'),
             ];
         }
-        if (in_array($part, ['AlertDialog', 'Modal'], true)) {
+        if (
+            $part === 'Modal'
+            && ($props['__materialComponent'] ?? null) !== 'PDialog'
+        ) {
             $children = array_map(
                 static fn (Element $child): Element => $child->style(
                     new Style(marginHorizontal: 24.0),
@@ -408,11 +459,7 @@ final class ComponentRenderer
                 $children,
             );
         }
-        $style = StyleResolver::resolve(
-            $part === 'ModelSelectorContent' ? 'ModalContent' : $part,
-            $props,
-            ThemeManager::current(),
-        );
+        $style = StyleResolver::resolve($part, $props, ThemeManager::current());
         $materialComponent = $props['__materialComponent'] ?? null;
         $materialLoading = self::flag(
             $props,
@@ -570,8 +617,6 @@ final class ComponentRenderer
         $styleAppliedToContent = false;
         $rootStyle = $style;
         if (in_array($part, [
-            'Actionsheet',
-            'AlertDialog',
             'BottomSheetPortal',
             'Modal',
             'Portal',
@@ -595,8 +640,8 @@ final class ComponentRenderer
         $materialField = in_array(
             $props['__materialComponent'] ?? null,
             [
-                'PInput', 'PTextField', 'PTextarea', 'PNumberInput',
-                'POtpInput', 'PColorInput', 'PDateInput', 'PFileInput',
+                'PTextField', 'PTextarea', 'PNumberInput',
+                'POtpInput', 'PColorInput', 'PDateInput',
                 'PSelect', 'PAutocomplete', 'PCombobox',
             ],
             true,
@@ -692,13 +737,10 @@ final class ComponentRenderer
             if (
                 !$hasNativeInput
                 && in_array($materialComponent, [
-                    'PInput',
                     'PTextField',
                     'PTextarea',
                     'PNumberInput',
                     'POtpInput',
-                    'PAutocomplete',
-                    'PCombobox',
                 ], true)
             ) {
                 $inputProps = $props;
@@ -730,6 +772,51 @@ final class ComponentRenderer
                 ] as $inputEvent) {
                     $handler = $events[$inputEvent->value] ?? null;
                     if ($handler !== null) {
+                        if (
+                            $inputEvent === EventKind::Change
+                            && $materialComponent === 'PNumberInput'
+                        ) {
+                            $minimum = self::number(
+                                $props,
+                                'min',
+                                -PHP_FLOAT_MAX,
+                            );
+                            $maximum = self::number(
+                                $props,
+                                'max',
+                                PHP_FLOAT_MAX,
+                            );
+                            $step = max(
+                                0.000001,
+                                self::number($props, 'step', 1.0),
+                            );
+                            $origin = is_numeric($props['min'] ?? null)
+                                ? $minimum
+                                : 0.0;
+                            $handler = static function (
+                                string $payload,
+                            ) use (
+                                $handler,
+                                $minimum,
+                                $maximum,
+                                $step,
+                                $origin,
+                            ): void {
+                                if (!is_numeric($payload)) {
+                                    return;
+                                }
+                                $value = min(
+                                    $maximum,
+                                    max($minimum, (float) $payload),
+                                );
+                                $snapped = $origin
+                                    + round(($value - $origin) / $step) * $step;
+                                $handler((string) min(
+                                    $maximum,
+                                    max($minimum, $snapped),
+                                ));
+                            };
+                        }
                         $nativeInput = $nativeInput->on($inputEvent, $handler);
                     }
                 }
@@ -746,6 +833,7 @@ final class ComponentRenderer
                         string $glyph,
                         string $accessibilityLabel,
                         float $next,
+                        bool $atLimit,
                     ) use ($change, $fieldDisabled): Element {
                         $button = Pressable::make(
                             Text::make($glyph)->style(new Style(
@@ -761,7 +849,7 @@ final class ComponentRenderer
                                 alignItems: Align::Center,
                                 justifyContent: Justify::Center,
                             ))
-                            ->enabled(!$fieldDisabled)
+                            ->enabled(!$fieldDisabled && !$atLimit)
                             ->accessibilityLabel($accessibilityLabel)
                             ->accessibilityRole(AccessibilityRole::Button);
                         return $change === null
@@ -776,6 +864,7 @@ final class ComponentRenderer
                             '−',
                             'Decrease value',
                             max($minimum, $current - $step),
+                            $current <= $minimum,
                         ),
                         $nativeInput->style(new Style(
                             flexGrow: 1.0,
@@ -791,6 +880,7 @@ final class ComponentRenderer
                             '+',
                             'Increase value',
                             min($maximum, $current + $step),
+                            $current >= $maximum,
                         ),
                     )->style(new Style(
                         widthPercent: 100.0,
@@ -867,23 +957,6 @@ final class ComponentRenderer
                         fontSize: 16.0,
                         lineHeight: 24.0,
                     ));
-                    if (in_array(
-                        $materialComponent,
-                        ['PAutocomplete', 'PCombobox'],
-                        true,
-                    ) && !$fieldLoading) {
-                        $fieldChildren[] = Text::make('⌄')->style(new Style(
-                            positionType: PositionType::Absolute,
-                            right: 0.0,
-                            bottom: 4.0,
-                            width: 24.0,
-                            height: 24.0,
-                            textColor: $theme->color(ColorToken::MutedForeground),
-                            fontSize: 20.0,
-                            lineHeight: 24.0,
-                            textAlign: TextAlignment::Center,
-                        ));
-                    }
                 }
                 $hasNativeInput = true;
             }
@@ -931,8 +1004,15 @@ final class ComponentRenderer
                         alignItems: Align::Center,
                         justifyContent: Justify::Center,
                     ))
+                    ->hitSlop(6.0)
                     ->accessibilityRole(AccessibilityRole::Button)
-                    ->accessibilityLabel('Clear '.$label);
+                    ->accessibilityLabel(
+                        self::text(
+                            $props,
+                            'clearLabel',
+                            $label === '' ? 'Clear field' : 'Clear '.$label,
+                        ),
+                    );
                 $change = $events[EventKind::Change->value] ?? null;
                 if ($change !== null) {
                     $clear = $clear->on(
@@ -942,7 +1022,15 @@ final class ComponentRenderer
                 }
                 $fieldChildren[] = $clear;
             }
-            if ($fieldLoading && $materialComponent !== 'POtpInput') {
+            if (
+                $fieldLoading
+                && $materialComponent !== 'POtpInput'
+                && !in_array(
+                    $materialComponent,
+                    ['PSelect', 'PAutocomplete', 'PCombobox'],
+                    true,
+                )
+            ) {
                 $fieldChildren[] = ActivityIndicator::make()
                     ->color($theme->color(ColorToken::Primary))
                     ->style(new Style(
@@ -953,7 +1041,14 @@ final class ComponentRenderer
                         height: 24.0,
                     ));
             }
-            if (!$hasNativeInput && $materialComponent !== 'PSelect') {
+            if (
+                !$hasNativeInput
+                && !in_array(
+                    $materialComponent,
+                    ['PSelect', 'PAutocomplete', 'PCombobox'],
+                    true,
+                )
+            ) {
                 $displayValue = self::text(
                     $props,
                     'value',
@@ -1036,24 +1131,12 @@ final class ComponentRenderer
             $nativeBackground = null;
             $styleAppliedToContent = true;
         }
-        $element = $part === 'SkeletonText'
-            && self::integer(
-                $runtimeProps,
-                '_lines',
-                self::integer($runtimeProps, 'lines', 1),
-            ) > 1
-                ? self::skeletonText(
-                    $runtimeProps,
-                    $rootStyle,
-                    $styleOverride,
-                    $nativeBackground,
-                )
-                : self::primitive(
-                    $part,
-                    $runtimeProps,
-                    $children,
-                    $nativeBackground,
-                )->style($rootStyle);
+        $element = self::primitive(
+            $part,
+            $runtimeProps,
+            $children,
+            $nativeBackground,
+        )->style($rootStyle);
 
         if (
             self::hasSemanticValue($part)
@@ -1101,7 +1184,6 @@ final class ComponentRenderer
                 )
                 ->property(PropKey::PointerEvents, PointerEvents::None->value);
         } elseif (in_array($part, [
-            'ActionsheetBackdrop',
             'BottomSheetBackdrop',
             'PopoverBackdrop',
             'SelectBackdrop',
@@ -1112,11 +1194,8 @@ final class ComponentRenderer
             }
             $element = $element->property(PropKey::Value, $backdropTag);
         } elseif (in_array($part, [
-            'ActionsheetContent',
-            'AttachmentHoverCardContent',
             'BottomSheetContent',
             'PopoverContent',
-            'PromptInputActionMenuContent',
             'SelectContent',
             'TooltipContent',
         ], true)) {
@@ -1134,13 +1213,11 @@ final class ComponentRenderer
         } elseif ($part === 'PopoverArrow') {
             $element = $element->property(PropKey::Value, 'pam:overlay-arrow');
         } elseif (in_array($part, [
-            'ActionsheetDragIndicator',
             'BottomSheetDragIndicator',
             'SelectDragIndicator',
         ], true)) {
             $element = $element->property(PropKey::Value, 'pam:sheet-drag-indicator');
         } elseif (in_array($part, [
-            'ActionsheetDragIndicatorWrapper',
             'SelectDragIndicatorWrapper',
         ], true)) {
             $element = $element->property(
@@ -1185,32 +1262,6 @@ final class ComponentRenderer
             $element = $element->property(PropKey::Value, 'pam:form-helper');
         } elseif ($part === 'FormControlError') {
             $element = $element->property(PropKey::Value, 'pam:form-error');
-        } elseif ($part === 'ConversationContent') {
-            $element = $element->property(
-                PropKey::Value,
-                'pam:conversation-content',
-            );
-        } elseif ($part === 'Message') {
-            $role = self::integer($runtimeProps, 'role', 2);
-            $element = $element->property(
-                PropKey::Value,
-                'pam:message:'.max(1, min(3, $role)),
-            );
-        } elseif ($part === 'MessageBranchSelector') {
-            $element = $element->property(
-                PropKey::Value,
-                'pam:message-branch-selector',
-            );
-        } elseif ($part === 'MessageBranchPage') {
-            $element = $element->property(
-                PropKey::Value,
-                'pam:message-branch-counter',
-            );
-        } elseif ($part === 'Attachment') {
-            $element = $element->property(
-                PropKey::Value,
-                'pam:prompt-attachment',
-            );
         } elseif ($part === 'GridItem') {
             $element = $element->property(
                 PropKey::Value,
@@ -1310,13 +1361,6 @@ final class ComponentRenderer
                 && !self::flag($runtimeProps, 'invalid', self::flag($runtimeProps, 'isInvalid'))
             )
             || (
-                $part === 'MessageToolbar'
-                && (
-                    self::integer($runtimeProps, 'role', 2) === 1
-                    || self::messageHasNoText($runtimeProps)
-                )
-            )
-            || (
                 self::isClosed($runtimeProps)
                 && (
                     self::hidesEntireRootWhenClosed($part)
@@ -1388,15 +1432,12 @@ final class ComponentRenderer
                 ->animationType(self::modalAnimationType($part, $runtimeProps))
                 ->backdropColor(
                     in_array($part, [
-                        'Actionsheet',
                         'BottomSheetPortal',
                         'SelectPortal',
                     ], true)
                         ? 0x00000000
                         : (
-                            self::packedColor(
-                                $runtimeProps['backdropColor'] ?? null,
-                            ) ?? 0x66000000
+                            self::modalBackdropColor($runtimeProps)
                         ),
                 )
                 ->transparent(self::flag($runtimeProps, 'transparent', true))
@@ -1447,24 +1488,8 @@ final class ComponentRenderer
         array $children,
         ?int $nativeBackground,
     ): Element {
-        if ($part === 'SkeletonText') {
-            return CustomView::make(
-                'pam.mobile_ui.host',
-                self::nativeProperties(
-                    $part,
-                    NativeBehavior::Skeleton,
-                    $props,
-                    [],
-                    $nativeBackground,
-                ),
-            );
-        }
         if (self::isText($part)) {
-            $text = self::text(
-                $props,
-                'text',
-                $part === 'MessageBranchPage' ? '1 of 1' : '',
-            );
+            $text = self::text($props, 'text');
             if ($text === '') {
                 foreach ($children as $child) {
                     if ($child->kind() !== NodeKind::Text) {
@@ -1529,39 +1554,36 @@ final class ComponentRenderer
             return $color === null ? $spinner : $spinner->color($color);
         }
         if (
-            $part === 'Attachments'
-            || (
-                in_array($part, [
-                    'ScrollView',
-                    'ActionsheetScrollView',
-                    'BottomSheetScrollView',
-                    'SelectScrollView',
-                ], true)
-                && self::flag($props, 'horizontal')
-            )
+            in_array($part, [
+                'ScrollView',
+                'BottomSheetScrollView',
+                'SelectScrollView',
+            ], true)
+            && self::flag($props, 'horizontal')
         ) {
-            return self::horizontalScroll($part, $props, $children);
+            return self::horizontalScroll($props, $children);
         }
         if ($part === 'VirtualizedList' && $children !== []) {
-            return \Pam\Native\UI\VirtualizedList::make(...$children)
-                ->rowHeight(self::number($props, 'rowHeight', 52.0))
-                ->prefetch(self::integer($props, 'prefetch', 8))
-                ->horizontal(self::flag($props, 'horizontal'))
-                ->columns(self::integer($props, 'numColumns', 1))
-                ->inverted(self::flag($props, 'inverted'))
-                ->removeClippedSubviews(
-                    self::flag($props, 'removeClippedSubviews', true),
-                )
-                ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
-                ->showsIndicator(
-                    self::flag($props, 'showsScrollIndicator', true),
-                );
+            return self::configuredList(
+                \Pam\Native\UI\VirtualizedList::make(...$children)
+                    ->rowHeight(self::number($props, 'rowHeight', 52.0))
+                    ->prefetch(self::integer($props, 'prefetch', 8))
+                    ->horizontal(self::flag($props, 'horizontal'))
+                    ->columns(self::integer($props, 'numColumns', 1))
+                    ->inverted(self::flag($props, 'inverted'))
+                    ->removeClippedSubviews(
+                        self::flag($props, 'removeClippedSubviews', true),
+                    )
+                    ->scrollEnabled(self::flag($props, 'scrollEnabled', true))
+                    ->showsIndicator(
+                        self::flag($props, 'showsScrollIndicator', true),
+                    ),
+                $props,
+            );
         }
         if (in_array($part, [
             'FlatList',
             'VirtualizedList',
-            'ActionsheetFlatList',
-            'ActionsheetVirtualizedList',
             'BottomSheetFlatList',
             'SelectFlatList',
             'SelectVirtualizedList',
@@ -1573,7 +1595,6 @@ final class ComponentRenderer
         }
         if (in_array($part, [
             'SectionList',
-            'ActionsheetSectionList',
             'BottomSheetSectionList',
             'SelectSectionList',
         ], true)) {
@@ -1582,27 +1603,12 @@ final class ComponentRenderer
                 $props,
             );
         }
-        if ($part === 'MessageResponse') {
-            return count($children) === 1
-                ? $children[0]
-                : Column::make(...$children);
-        }
-        if ($part === 'ConversationContent') {
-            return self::configuredScroll(
-                $part,
-                $props,
-                $children,
-                false,
-            );
-        }
         if (in_array($part, [
             'ScrollView',
-            'ActionsheetScrollView',
             'BottomSheetScrollView',
             'SelectScrollView',
         ], true)) {
             return self::configuredScroll(
-                $part,
                 $props,
                 $children,
                 false,
@@ -1685,13 +1691,6 @@ final class ComponentRenderer
                     : 'pam:table-row',
             );
         }
-        if (
-            $part === 'ModelSelectorTrigger'
-            && self::flag($props, 'asChild')
-            && count($children) === 1
-        ) {
-            return $children[0];
-        }
         $behavior = self::flag($props, '__pamButtonToggleItem')
             ? NativeBehavior::TabsTrigger
             : self::nativeBehavior($part);
@@ -1712,7 +1711,25 @@ final class ComponentRenderer
                     height: max(40.0, (float) ceil(count($children) / 2) * 40.0),
                 ));
             } elseif ($behavior === NativeBehavior::ListItem) {
-                $host = $host->style(new Style(height: count($children) > 1 ? 72.0 : 56.0));
+                $lines = max(1, min(3, self::integer(
+                    $props,
+                    'lines',
+                    count($children) > 1 ? 2 : 1,
+                )));
+                $densityOffset = match ($props['density'] ?? null) {
+                    MaterialDensity::Comfortable->value,
+                    'comfortable' => -4.0,
+                    MaterialDensity::Compact->value,
+                    'compact' => -8.0,
+                    default => 0.0,
+                };
+                $host = $host->style(new Style(
+                    height: match ($lines) {
+                        2 => 64.0,
+                        3 => 88.0,
+                        default => 48.0,
+                    } + $densityOffset,
+                ));
             } elseif ($behavior === NativeBehavior::Timeline) {
                 $host = $host->style(new Style(height: max(64.0, count($children) * 64.0)));
             } elseif ($behavior === NativeBehavior::TimelineItem) {
@@ -1725,8 +1742,14 @@ final class ComponentRenderer
             return Row::make(...$children);
         }
         if (
+            $part === 'Button'
+            && ($props['__materialComponent'] ?? null) === 'PChip'
+            && !self::flag($props, '__pamInteractive')
+        ) {
+            return Row::make(...$children);
+        }
+        if (
             $part === 'VStack'
-            || $part === 'Conversation'
             || $part === 'FileTree'
             || in_array($part, [
                 'PopoverContent',
@@ -1812,6 +1835,7 @@ final class ComponentRenderer
         ?string $elementKey,
     ): Element {
         $props['__materialComponent'] = 'PBottomSheet';
+        $props = self::materialOverlayProperties($props);
         $props = self::withDefaults('BottomSheet', $props);
         $nativeDismiss = $events[EventKind::Native->value] ?? null;
         if (
@@ -1883,11 +1907,12 @@ final class ComponentRenderer
         $materialComponent = is_string($props['__materialComponent'] ?? null)
             ? $props['__materialComponent']
             : null;
+        $values['abstractSelectionItem'] = $materialComponent === 'PItem';
         $values['navigationKind'] = match ($materialComponent) {
             'PCarousel' => 1,
             'PSlideGroup' => 3,
             'PTabs' => 4,
-            'PStepper', 'PStepperVertical' => 5,
+            'PStepper' => 5,
             default => 0,
         };
         $values['rating'] = $materialComponent === 'PRating';
@@ -1953,7 +1978,7 @@ final class ComponentRenderer
             ];
         }
         if ($behavior === NativeBehavior::Skeleton) {
-            $values['pulseDuration'] = self::skeletonDurationMillis($part, $props);
+            $values['pulseDuration'] = self::skeletonDurationMillis($props);
             $values['lines'] = max(
                 1,
                 self::integer(
@@ -1963,20 +1988,8 @@ final class ComponentRenderer
                 ),
             );
         }
-        if ($behavior === NativeBehavior::MessageBranchControl) {
-            $values['navigationAction'] = match ($part) {
-                'MessageBranchNext' => BranchControlAction::Next->value,
-                default => BranchControlAction::Previous->value,
-            };
-        }
         if ($behavior === NativeBehavior::FileTree) {
             $values = [...$values, ...self::fileTreeNativeProperties($props)];
-        }
-        if ($behavior === NativeBehavior::PromptInput) {
-            $files = self::promptFiles($props);
-            if ($files !== null) {
-                $values['attachmentCount'] = count($files);
-            }
         }
 
         return $values;
@@ -2003,8 +2016,6 @@ final class ComponentRenderer
         $part = self::legacyMaterialPart($part);
 
         return match ($part) {
-            'Conversation' => NativeBehavior::Chat,
-            'ConversationScrollButton' => NativeBehavior::ConversationScrollButton,
             'FileTree' => NativeBehavior::FileTree,
             'FileTreeFolder' => NativeBehavior::FileTreeFolder,
             'FileTreeFile' => NativeBehavior::FileTreeFile,
@@ -2013,31 +2024,18 @@ final class ComponentRenderer
             'ListItem' => NativeBehavior::ListItem,
             'Timeline' => NativeBehavior::Timeline,
             'TimelineItem' => NativeBehavior::TimelineItem,
-            'MessageBranch' => NativeBehavior::MessageBranch,
-            'MessageBranchPrevious',
-            'MessageBranchNext' => NativeBehavior::MessageBranchControl,
-            'PromptInput' => NativeBehavior::PromptInput,
-            'PromptInputSubmit' => NativeBehavior::PromptInputSubmit,
-            'AttachmentHoverCard' => NativeBehavior::Tooltip,
-            'PromptInputActionMenu' => NativeBehavior::Menu,
             'Accordion' => NativeBehavior::AccordionGroup,
             'AccordionItem' => NativeBehavior::Accordion,
             'CheckboxGroup' => NativeBehavior::CheckboxGroup,
             'RadioGroup' => NativeBehavior::RadioGroup,
             'Switch' => NativeBehavior::SwitchControl,
-            'Actionsheet',
             'BottomSheetPortal',
             'SelectPortal' => NativeBehavior::BottomSheet,
             'Slider' => NativeBehavior::Slider,
             'Tabs' => NativeBehavior::Tabs,
             'TabsTrigger' => NativeBehavior::TabsTrigger,
-            'ActionsheetItem',
-            'BottomSheetItem',
             'SelectItem' => NativeBehavior::SheetItem,
             'MenuItem' => NativeBehavior::MenuItem,
-            'AlertDialogCloseButton',
-            'DrawerCloseButton',
-            'ImageViewerCloseButton',
             'ModalCloseButton',
             'PopoverCloseButton' => NativeBehavior::OverlayDismiss,
             'Input',
@@ -2048,16 +2046,12 @@ final class ComponentRenderer
             'TableRow' => NativeBehavior::TableRow,
             'Calendar' => NativeBehavior::Calendar,
             'DateTimePicker' => NativeBehavior::DateTimePicker,
-            'Skeleton', 'SkeletonText' => NativeBehavior::Skeleton,
-            'GlassView', 'GlassContainer' => NativeBehavior::Glass,
+            'Skeleton' => NativeBehavior::Skeleton,
             'Checkbox' => NativeBehavior::Checkbox,
             'Radio' => NativeBehavior::Radio,
             'Toast' => NativeBehavior::Toast,
-            'ImageViewerContent' => NativeBehavior::ImageViewer,
             'Progress' => NativeBehavior::Progress,
-            'Drawer' => NativeBehavior::Drawer,
-            'Modal', 'ModelSelectorContent' => NativeBehavior::Modal,
-            'AlertDialog' => NativeBehavior::AlertDialog,
+            'Modal' => NativeBehavior::Modal,
             'Popover' => NativeBehavior::Popover,
             'Menu' => NativeBehavior::Menu,
             'Tooltip' => NativeBehavior::Tooltip,
@@ -2072,6 +2066,8 @@ final class ComponentRenderer
      */
     public static function withDefaults(string $part, array $props): array
     {
+        $materialComponent = $props['__materialComponent']
+            ?? (isset(MaterialComponentMap::IDS[$part]) ? $part : null);
         $part = self::legacyMaterialPart($part);
 
         if (self::isIcon($part) && !array_key_exists('size', $props)) {
@@ -2097,37 +2093,18 @@ final class ComponentRenderer
         ) {
             $props['size'] = 3;
         }
-        if ($part === 'ModelSelector') {
-            if (
-                !array_key_exists('open', $props)
-                && !array_key_exists('isOpen', $props)
-                && !array_key_exists('defaultIsOpen', $props)
-            ) {
-                $props['defaultIsOpen'] = false;
-            }
-            if (!array_key_exists('size', $props)) {
-                $props['size'] = 3;
-            }
-        } elseif ($part === 'ModelSelectorContent') {
-            if (!array_key_exists('title', $props)) {
-                $props['title'] = 'Model Selector';
-            }
-            if (!array_key_exists('accessibilityLabel', $props)) {
-                $props['accessibilityLabel'] = self::text(
-                    $props,
-                    'title',
-                    'Model Selector',
-                );
-            }
+        if ($part === 'DateTimePicker' && !array_key_exists('mode', $props)) {
+            $props['mode'] = match ($materialComponent) {
+                'PTimePicker' => ComponentMode::Time->value,
+                'PDateInput' => ComponentMode::Date->value,
+                default => ComponentMode::DateTime->value,
+            };
         }
         if (
             in_array(
                 $part,
                 [
-                    'Actionsheet',
-                    'AlertDialog',
                     'BottomSheet',
-                    'Drawer',
                     'Modal',
                     'Select',
                 ],
@@ -2138,19 +2115,6 @@ final class ComponentRenderer
             && !array_key_exists('defaultIsOpen', $props)
         ) {
             $props['defaultIsOpen'] = false;
-        }
-        if ($part === 'ImageViewer') {
-            if (
-                !array_key_exists('open', $props)
-                && !array_key_exists('isOpen', $props)
-                && !array_key_exists('defaultOpen', $props)
-                && !array_key_exists('defaultIsOpen', $props)
-            ) {
-                $props['defaultOpen'] = false;
-            }
-            if (!array_key_exists('initialIndex', $props)) {
-                $props['initialIndex'] = 0;
-            }
         }
         if (
             $part === 'BottomSheet'
@@ -2176,56 +2140,17 @@ final class ComponentRenderer
             && !array_key_exists('focusScope', $props)
         ) {
             $props['focusScope'] = true;
-        } elseif (
-            $part === 'BottomSheetItem'
-            && !array_key_exists('closeOnSelect', $props)
-            && !array_key_exists('closeOnPress', $props)
-        ) {
-            $props['closeOnSelect'] = true;
         }
-        if ($part === 'Conversation' && !array_key_exists('autoScroll', $props)) {
-            $props['autoScroll'] = true;
-        } elseif ($part === 'SelectInput') {
+        if ($part === 'SelectInput') {
             if (!array_key_exists('editable', $props)) {
                 $props['editable'] = false;
-            }
-        } elseif ($part === 'ModelSelectorInput') {
-            if (!array_key_exists('placeholder', $props)) {
-                $props['placeholder'] = 'Search models...';
-            }
-        } elseif ($part === 'PromptInputTextarea') {
-            if (!array_key_exists('placeholder', $props)) {
-                $props['placeholder'] = 'Let’s start building it';
-            }
-            if (!array_key_exists('multiline', $props)) {
-                $props['multiline'] = true;
-            }
-        } elseif ($part === 'MessageBranch') {
-            if (
-                !array_key_exists('branch', $props)
-                && !array_key_exists('currentBranch', $props)
-                && !array_key_exists('defaultBranch', $props)
-            ) {
-                $props['defaultBranch'] = 0;
-            }
-            if (!array_key_exists('loop', $props)) {
-                $props['loop'] = true;
-            }
-        } elseif ($part === 'PromptInput') {
-            if (!array_key_exists('clearOnSubmit', $props)) {
-                $props['clearOnSubmit'] = true;
-            }
-            if (!array_key_exists('trimOnSubmit', $props)) {
-                $props['trimOnSubmit'] = true;
             }
         }
         if (!in_array(
             $part,
             [
-                'AttachmentHoverCard',
                 'Menu',
                 'Popover',
-                'PromptInputActionMenu',
                 'Tooltip',
             ],
             true,
@@ -2241,27 +2166,12 @@ final class ComponentRenderer
         }
         if (!array_key_exists('placement', $props)) {
             $props['placement'] = match ($part) {
-                'PromptInputActionMenu',
-                'AttachmentHoverCard' => Placement::Top->value,
                 'Menu' => Placement::BottomStart->value,
                 default => Placement::Bottom->value,
             };
         }
-        if ($part === 'AttachmentHoverCard') {
-            if (!array_key_exists('openDelay', $props)) {
-                $props['openDelay'] = 0;
-            }
-            if (!array_key_exists('closeDelay', $props)) {
-                $props['closeDelay'] = 100;
-            }
-        } elseif (
-            $part === 'PromptInputActionMenu'
-            && !array_key_exists('offset', $props)
-        ) {
-            $props['offset'] = 5;
-        }
         if (
-            in_array($part, ['Menu', 'PromptInputActionMenu'], true)
+            $part === 'Menu'
             && !array_key_exists('selectionMode', $props)
         ) {
             $props['selectionMode'] = array_key_exists('selectedKeys', $props)
@@ -2269,10 +2179,16 @@ final class ComponentRenderer
                 : SelectionMode::None->value;
         }
         if (
-            in_array($part, ['AttachmentHoverCard', 'Tooltip'], true)
+            $part === 'Tooltip'
             && !array_key_exists('trapFocus', $props)
         ) {
             $props['trapFocus'] = false;
+        }
+        if ($part === 'Tooltip') {
+            $props['openOnClick'] ??= false;
+            $props['openOnLongPress'] ??= true;
+            $props['openDelay'] ??= 500;
+            $props['closeDelay'] ??= 100;
         }
 
         return $props;
@@ -2282,36 +2198,30 @@ final class ComponentRenderer
     {
         return match ($part) {
             
-            'PCardItem', 'PBanner', 'PForm', 'PList',
-            'PToolbar', 'PToolbarItems', 'PAppBar',
+            'PBanner',
+            'PToolbar', 'PAppBar',
             'PBtnGroup',
-            'PCardActions', 'PBannerActions', 'PCalendarHeader' => 'HStack',
+            'PCardActions', 'PBannerActions' => 'HStack',
+            'PList' => 'VStack',
             'PAlert' => 'Alert',
-            'PAlertTitle', 'PAppBarTitle', 'PBannerText',
-            'PFieldLabel',
-            'PListSubheader', 'PPickerTitle', 'PToolbarTitle' => 'Heading',
             'PAppBarNavIcon' => 'Button',
             'PAvatar' => 'Avatar',
             'PBadge' => 'Badge',
             'PBottomSheet' => 'BottomSheet',
             'PBtn', 'PIconBtn' => 'Button',
             'PBtnToggle' => 'Tabs',
-            'PSelectionControlGroup', 'PItemGroup' => 'CheckboxGroup',
+            'PItemGroup' => 'CheckboxGroup',
             'PChipGroup' => 'ChipGroup',
             'PCalendar' => 'Calendar',
-            'PCarousel', 'PStepper', 'PStepperVertical' => 'Tabs',
-            'PCarouselItem', 'PStepperWindow', 'PStepperWindowItem',
-            'PCard', 'PSheet', 'PEmptyState', 'PPicker' => 'Card',
-            'PCheckbox', 'PCheckboxBtn', 'PItem' => 'Checkbox',
+            'PCalendarDay' => 'CalendarDay',
+            'PCarousel', 'PStepper' => 'Tabs',
+            'PStepperVertical' => 'Accordion',
+            'PCard', 'PSheet', 'PEmptyState' => 'Card',
+            'PCheckbox', 'PItem' => 'Checkbox',
             'PChip' => 'Button',
-            'PColorPicker', 'PColorPickerCanvas', 'PRating' => 'Slider',
-            'PColorPickerEdit', 'PConfirmEdit', 'PFileUpload' => 'FormControl',
-            'PColorPickerPreview', 'PColorPickerSwatches',
-            'PFileUploadItem' => 'InputSlot',
-            'PDatePicker', 'PDatePickerMonth', 'PDatePickerMonths',
-            'PDatePickerYears', 'PTimePicker', 'PTimePickerClock' => 'Calendar',
-            'PDatePickerControls', 'PTimePickerControls' => 'DateTimePicker',
-            'PDatePickerHeader' => 'Heading',
+            'PRating' => 'Slider',
+            'PDatePicker' => 'Calendar',
+            'PTimePicker' => 'DateTimePicker',
             'PDialog' => 'Modal',
             'PDivider' => 'Divider',
             'PExpansionPanels' => 'Accordion',
@@ -2322,32 +2232,31 @@ final class ComponentRenderer
             'PForm' => 'FormControl',
             'PIcon' => 'Icon',
             'PImg' => 'Image',
-            'PInput', 'PTextField', 'PNumberInput', 'POtpInput',
-            'PColorInput', 'PDateInput', 'PFileInput' => 'Input',
+            'PTextField', 'PNumberInput', 'POtpInput',
+            'PColorInput' => 'Input',
+            'PDateInput' => 'DateTimePicker',
             'PMenu' => 'Menu',
-            'PListGroup' => 'Accordion',
             'PListItem' => 'ListItem',
             'POverlay' => 'Portal',
             'PProgressCircular', 'PProgressLinear' => 'Progress',
             'PRadio' => 'Radio',
             'PRadioGroup' => 'RadioGroup',
             'PSelect', 'PAutocomplete', 'PCombobox' => 'Select',
-            'PSelectionControl' => 'Checkbox',
-            'PSelectionControlGroup' => 'CheckboxGroup',
             'PSkeletonLoader' => 'Skeleton',
             'PSlideGroup' => 'Tabs',
-            'PSlideGroupItem', 'PStepperItem', 'PStepperVerticalItem' => 'TabsTrigger',
+            'PCarouselItem', 'PSlideGroupItem', 'PStepperItem' => 'TabsTrigger',
+            'PStepperVerticalItem' => 'AccordionItem',
             'PSlider', 'PRangeSlider' => 'Slider',
-            'PSnackbar', 'PSnackbarQueue' => 'Toast',
+            'PSnackbar' => 'Toast',
             'PSpeedDial' => 'Popover',
-            'PStepperHeader', 'PStepperActions', 'PStepperVerticalActions' => 'TabsList',
+            'PStepperHeader' => 'TabsList',
+            'PStepperWindow' => 'TabsContentWrapper',
+            'PStepperWindowItem' => 'TabsContent',
+            'PStepperActions', 'PStepperVerticalActions' => 'HStack',
             'PSwitch' => 'Switch',
             'PDataTable', 'PDataTableVirtual' => 'Table',
             'PTabs' => 'Tabs',
             'PTab' => 'TabsTrigger',
-            'PCardTitle', 'PCardSubtitle', 'PCardText',
-            'PListItemTitle', 'PListItemSubtitle', 'PLabel', 'PMessages',
-            'PCounter', 'PCalendarInterval' => 'Text',
             'PTextarea' => 'Textarea',
             'PTooltip' => 'Tooltip',
             'PTimeline' => 'Timeline',
@@ -2376,15 +2285,17 @@ final class ComponentRenderer
 
     public static function forwardsEventsToDescendants(string $part): bool
     {
+        $part = self::legacyMaterialPart($part);
+
         return in_array($part, [
             'Accordion',
             'BottomSheet',
             'CheckboxGroup',
+            'ChipGroup',
             'Menu',
-            'ModelSelector',
             'RadioGroup',
             'Select',
-            'ImageViewer',
+            'Tabs',
         ], true);
     }
 
@@ -2401,84 +2312,11 @@ final class ComponentRenderer
         array $sourceProps,
         array $events,
     ): array {
-        if ($source === 'ImageViewer') {
-            if ($target === 'ImageViewerTrigger') {
-                $toggle = $events[EventKind::Toggle->value] ?? null;
-                $press = $events[EventKind::Press->value] ?? null;
-                if ($toggle === null && $press === null) {
-                    return [];
-                }
+        $materialSource = $source;
+        $materialTarget = $target;
+        $source = self::legacyMaterialPart($source);
+        $target = self::legacyMaterialPart($target);
 
-                return [
-                    EventKind::Press->value => static function () use (
-                        $toggle,
-                        $press,
-                    ): void {
-                        $press?->__invoke();
-                        $toggle?->__invoke(true);
-                    },
-                ];
-            }
-            if ($target === 'ImageViewerContent') {
-                $inherited = [];
-                $change = $events[EventKind::Change->value] ?? null;
-                $native = $events[EventKind::Native->value] ?? null;
-                $toggle = $events[EventKind::Toggle->value] ?? null;
-                if ($change !== null) {
-                    $inherited[EventKind::Change->value] = $change;
-                }
-                if ($native !== null || $toggle !== null) {
-                    $inherited[EventKind::Native->value] =
-                        static function (string $payload) use (
-                            $native,
-                            $toggle,
-                        ): void {
-                            $native?->__invoke($payload);
-                            if (
-                                $toggle !== null
-                                && self::nativeEventAction($payload) === 1
-                            ) {
-                                $toggle(false);
-                            }
-                        };
-                }
-
-                return $inherited;
-            }
-        }
-        if ($source === 'ModelSelector') {
-            if ($target === 'ModelSelectorTrigger') {
-                $toggle = $events[EventKind::Toggle->value] ?? null;
-
-                return $toggle === null
-                    ? []
-                    : [
-                        EventKind::Press->value =>
-                            static function () use ($toggle): void {
-                                $toggle(true);
-                            },
-                    ];
-            }
-            if ($target === 'ModelSelectorContent') {
-                $inherited = $events;
-                $native = $events[EventKind::Native->value] ?? null;
-                $toggle = $events[EventKind::Toggle->value] ?? null;
-                if ($toggle !== null) {
-                    $inherited[EventKind::Native->value] =
-                        static function (string $payload) use (
-                            $native,
-                            $toggle,
-                        ): void {
-                            $native?->__invoke($payload);
-                            if (self::nativeEventAction($payload) === 1) {
-                                $toggle(false);
-                            }
-                        };
-                }
-
-                return $inherited;
-            }
-        }
         if ($source === 'BottomSheet') {
             if ($target === 'BottomSheetTrigger') {
                 $toggle = $events[EventKind::Toggle->value] ?? null;
@@ -2534,10 +2372,7 @@ final class ComponentRenderer
             return [];
         }
 
-        if (
-            ($source === 'Select' && $target === 'SelectItem')
-            || ($source === 'ModelSelector' && $target === 'ModelSelectorItem')
-        ) {
+        if ($source === 'Select' && $target === 'SelectItem') {
             return [
                 EventKind::Press->value => self::scalarSelectionHandler(
                     $handler,
@@ -2571,6 +2406,51 @@ final class ComponentRenderer
                 ),
             ];
         }
+        if (
+            $source === 'ChipGroup'
+            && $target === 'Button'
+            && $materialTarget === 'PChip'
+        ) {
+            return [
+                EventKind::Press->value => self::flag($sourceProps, 'multiple')
+                    ? self::listSelectionHandler(
+                        $handler,
+                        $semanticValue,
+                        self::selectedValues($sourceProps),
+                    )
+                    : self::scalarSelectionHandler($handler, $semanticValue),
+            ];
+        }
+        if (
+            $source === 'Tabs'
+            && $materialSource === 'PBtnToggle'
+            && $target === 'Button'
+            && $materialTarget === 'PBtn'
+        ) {
+            return [
+                EventKind::Press->value => self::flag($sourceProps, 'multiple')
+                    ? self::listSelectionHandler(
+                        $handler,
+                        $semanticValue,
+                        self::selectedValues($sourceProps),
+                        !self::flag($sourceProps, 'mandatory'),
+                    )
+                    : self::scalarSelectionHandler($handler, $semanticValue),
+            ];
+        }
+        if (
+            $source === 'Tabs'
+            && in_array($materialSource, ['PTabs', 'PSlideGroup'], true)
+            && $target === 'TabsTrigger'
+            && in_array($materialTarget, ['PTab', 'PSlideGroupItem'], true)
+        ) {
+            return [
+                EventKind::Press->value => self::scalarSelectionHandler(
+                    $handler,
+                    $semanticValue,
+                ),
+            ];
+        }
         if ($source === 'CheckboxGroup' && $target === 'Checkbox') {
             return [
                 EventKind::Toggle->value => self::listSelectionHandler(
@@ -2581,6 +2461,13 @@ final class ComponentRenderer
             ];
         }
         if ($source === 'Accordion' && $target === 'AccordionItem') {
+            if ($materialSource === 'PStepperVertical') {
+                return [
+                    EventKind::Toggle->value =>
+                        self::scalarSelectionHandler($handler, $semanticValue),
+                ];
+            }
+
             return [
                 EventKind::Toggle->value => self::listSelectionHandler(
                     $handler,
@@ -2600,36 +2487,33 @@ final class ComponentRenderer
         string $part,
         array $props,
     ): AccessibilityRole {
-        $explicit = $part !== 'Message' && array_key_exists('role', $props)
+        $explicit = array_key_exists('role', $props)
             ? $props['role']
             : ($props['accessibilityRole'] ?? null);
         $explicitRole = self::namedAccessibilityRole($explicit);
         if ($explicitRole !== null) {
             return $explicitRole;
         }
+        if (($props['__materialComponent'] ?? null) === 'PItem') {
+            return AccessibilityRole::Button;
+        }
 
         $semanticRole = match ($part) {
             'Heading' => AccessibilityRole::Header,
             'Link' => AccessibilityRole::Link,
             'Alert',
-            'AlertDialog',
             'PBanner',
-            'PSnackbar',
-            'PSnackbarQueue' => AccessibilityRole::Alert,
+            'PSnackbar' => AccessibilityRole::Alert,
             'Checkbox' => AccessibilityRole::Checkbox,
             'Radio' => AccessibilityRole::Radio,
             'RadioGroup' => AccessibilityRole::RadioGroup,
             'SelectTrigger',
-            'ModelSelectorTrigger',
             'PAutocomplete',
             'PCombobox',
             'PSelect' => AccessibilityRole::ComboBox,
             'PNumberInput' => AccessibilityRole::SpinButton,
             'PColorInput',
             'PDateInput',
-            'PField',
-            'PFileInput',
-            'PInput',
             'POtpInput',
             'PTextField',
             'PTextarea' => AccessibilityRole::Input,
@@ -2644,9 +2528,6 @@ final class ComponentRenderer
             'FlatList',
             'VirtualizedList',
             'SectionList',
-            'ActionsheetFlatList',
-            'ActionsheetVirtualizedList',
-            'ActionsheetSectionList',
             'BottomSheetFlatList',
             'BottomSheetSectionList',
             'SelectFlatList',
@@ -2663,7 +2544,6 @@ final class ComponentRenderer
             'PTreeviewItem' => AccessibilityRole::ListItem,
             'PAppBar', 'PToolbar' => AccessibilityRole::Toolbar,
             'PCalendarDay',
-            'PFileUpload',
             'PSpeedDial' => AccessibilityRole::Button,
             'PEmptyState' => AccessibilityRole::Summary,
             'PTooltip' => AccessibilityRole::Presentation,
@@ -2815,9 +2695,7 @@ final class ComponentRenderer
         $liveRegion ??= match ($part) {
             'PAlert' => AccessibilityLiveRegion::Assertive,
             'PBanner',
-            'PMessages',
-            'PSnackbar',
-            'PSnackbarQueue' => AccessibilityLiveRegion::Polite,
+            'PSnackbar' => AccessibilityLiveRegion::Polite,
             default => null,
         };
         if ($liveRegion !== null) {
@@ -2860,8 +2738,11 @@ final class ComponentRenderer
                 ->property(PropKey::Enabled, false);
         }
         $busy = self::accessibilityStateBoolean($props, 'busy');
-        if ($busy !== null || $loading) {
-            $element = $element->accessibilityBusy($busy ?? true);
+        $indeterminate = self::flag($props, 'indeterminate');
+        if ($busy !== null || $loading || $indeterminate) {
+            $element = $element->accessibilityBusy(
+                $busy ?? ($loading || $indeterminate),
+            );
         }
 
         $expanded = self::accessibilityStateBoolean($props, 'expanded');
@@ -3042,6 +2923,19 @@ final class ComponentRenderer
     ): array {
         $value = $props['accessibilityValue'] ?? null;
         $range = is_array($value) ? $value : [];
+        if ($part === 'Progress' && self::flag($props, 'indeterminate')) {
+            $text = $props['ariaValueText']
+                ?? $props['aria-valuetext']
+                ?? $range['text']
+                ?? 'In progress';
+
+            return [
+                'min' => null,
+                'max' => null,
+                'now' => null,
+                'text' => is_scalar($text) ? (string) $text : 'In progress',
+            ];
+        }
         if (in_array($part, ['Progress', 'Slider'], true)) {
             $range['min'] ??= $props['minValue'] ?? $props['min'] ?? 0;
             $range['max'] ??= $props['maxValue'] ?? $props['max'] ?? 100;
@@ -3464,9 +3358,6 @@ final class ComponentRenderer
     private static function hidesEntireRootWhenClosed(string $part): bool
     {
         return in_array($part, [
-            'Actionsheet',
-            'AlertDialog',
-            'Drawer',
             'Modal',
             'Toast',
         ], true);
@@ -3475,24 +3366,14 @@ final class ComponentRenderer
     private static function isOverlayContent(string $part): bool
     {
         return in_array($part, [
-            'ActionsheetBackdrop',
-            'ActionsheetContent',
-            'AlertDialogBackdrop',
-            'AlertDialogContent',
-            'AttachmentHoverCardContent',
             'BottomSheetBackdrop',
             'BottomSheetContent',
             'BottomSheetPortal',
-            'DrawerBackdrop',
-            'DrawerContent',
-            'ImageViewerContent',
             'ModalBackdrop',
             'ModalContent',
-            'ModelSelectorContent',
             'PopoverBackdrop',
             'PopoverContent',
             'Portal',
-            'PromptInputActionMenuContent',
             'SelectBackdrop',
             'SelectContent',
             'SelectPortal',
@@ -3510,11 +3391,7 @@ final class ComponentRenderer
         array $props,
         array $children,
     ): array {
-        $overlayPart = match ($part) {
-            'AttachmentHoverCard' => 'Tooltip',
-            'PromptInputActionMenu' => 'Menu',
-            default => $part,
-        };
+        $overlayPart = $part;
         if (
             !in_array($overlayPart, ['Menu', 'Popover', 'Tooltip'], true)
             || $children === []
@@ -3634,13 +3511,8 @@ final class ComponentRenderer
     private static function usesNativeWindow(string $part): bool
     {
         return in_array($part, [
-            'Actionsheet',
-            'AlertDialog',
             'BottomSheetPortal',
-            'Drawer',
-            'ImageViewerContent',
             'Modal',
-            'ModelSelectorContent',
             'Portal',
             'SelectPortal',
         ], true);
@@ -3651,6 +3523,12 @@ final class ComponentRenderer
         string $part,
         array $props,
     ): ModalPresentation {
+        if (
+            ($props['__materialComponent'] ?? null) === 'PDialog'
+            && self::flag($props, 'fullscreen')
+        ) {
+            return ModalPresentation::FullScreen;
+        }
         $requested = $props['presentation'] ?? null;
         if ($requested === 1 || $requested === 'fullScreen') {
             return ModalPresentation::FullScreen;
@@ -3660,11 +3538,8 @@ final class ComponentRenderer
         }
 
         return match ($part) {
-            'Actionsheet',
             'BottomSheetPortal',
             'SelectPortal' => ModalPresentation::Sheet,
-            'Drawer',
-            'ImageViewerContent',
             'Portal' => ModalPresentation::FullScreen,
             default => ModalPresentation::Dialog,
         };
@@ -3678,10 +3553,39 @@ final class ComponentRenderer
         return match ($props['animationType'] ?? null) {
             2, 'slide' => ModalAnimationType::Slide,
             3, 'fade' => ModalAnimationType::Fade,
-            default => in_array($part, ['AlertDialog', 'Modal'], true)
+            default => in_array($part, ['Modal', 'Portal'], true)
                 ? ModalAnimationType::Fade
                 : ModalAnimationType::None,
         };
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return array<string, mixed>
+     */
+    private static function materialOverlayProperties(array $props): array
+    {
+        if (self::flag($props, 'persistent')) {
+            $props['dismissible'] = false;
+            $props['isDismissable'] = false;
+            $props['allowSwipeDismissal'] = false;
+        }
+
+        return $props;
+    }
+
+    /** @param array<string, mixed> $props */
+    private static function modalBackdropColor(array $props): int
+    {
+        $scrimValue = $props['scrim'] ?? null;
+        if ($scrimValue === false) {
+            return 0x00000000;
+        }
+        $scrim = self::packedColor($scrimValue);
+
+        return $scrim
+            ?? self::packedColor($props['backdropColor'] ?? null)
+            ?? 0x66000000;
     }
 
     private static function isText(string $part): bool
@@ -3700,8 +3604,6 @@ final class ComponentRenderer
             || str_ends_with($part, 'Caption')
             || in_array($part, [
                 'AvatarFallback',
-                'MessageBranchPage',
-                'ModelSelectorName',
                 'TableHead',
                 'TableData',
             ], true);
@@ -3722,15 +3624,13 @@ final class ComponentRenderer
             'TextareaInput',
             'DateTimePickerInput',
             'BottomSheetTextInput',
-            'ModelSelectorInput',
-            'PromptInputTextarea',
             'SelectInput',
         ], true);
     }
 
     private static function isImage(string $part): bool
     {
-        return in_array($part, ['Image', 'AvatarImage', 'ImageViewerImage'], true);
+        return in_array($part, ['Image', 'AvatarImage'], true);
     }
 
     private static function isIcon(string $part): bool
@@ -3842,19 +3742,15 @@ final class ComponentRenderer
     private static function isPressable(string $part): bool
     {
         return in_array($part, [
-            'AttachmentRemove',
             'Button',
             'CalendarDay',
             'CalendarHeaderMonthSelect',
             'CalendarHeaderNextButton',
             'CalendarHeaderPrevButton',
             'CalendarHeaderYearSelect',
-            'ConversationDownload',
             'Fab',
             'Link',
-            'MessageAction',
             'Pressable',
-            'PromptInputButton',
         ], true)
             || str_ends_with($part, 'Trigger')
             || str_ends_with($part, 'CloseButton')
@@ -3869,10 +3765,8 @@ final class ComponentRenderer
         return $part === 'TabsTrigger'
             || in_array($part, [
                 'AccordionItem',
-                'BottomSheetItem',
                 'Checkbox',
                 'MenuItem',
-                'ModelSelectorItem',
                 'Radio',
                 'SelectItem',
             ], true);
@@ -3890,6 +3784,8 @@ final class ComponentRenderer
     ): array {
         $buttonToggleItem = $part === 'PBtn'
             && ($parentProps['__pamParentComponent'] ?? null) === 'PBtnToggle';
+        $chipGroupItem = $part === 'PChip'
+            && ($parentProps['__pamParentComponent'] ?? null) === 'PChipGroup';
         if ($buttonToggleItem) {
             $props['__pamButtonToggleItem'] = true;
         }
@@ -3927,9 +3823,11 @@ final class ComponentRenderer
             'AccordionItem' => [...$props, 'expanded' => $selected],
             'Checkbox', 'Radio', 'SelectItem' => [...$props, 'checked' => $selected],
             'MenuItem',
-            'ModelSelectorItem',
             'TabsTrigger' => [...$props, 'selected' => $selected],
             'PBtn' => $buttonToggleItem
+                ? [...$props, 'selected' => $selected]
+                : $props,
+            'PChip' => $chipGroupItem
                 ? [...$props, 'selected' => $selected]
                 : $props,
             default => $props,
@@ -3938,11 +3836,7 @@ final class ComponentRenderer
 
     private static function isTransparentProvider(string $part): bool
     {
-        return in_array($part, [
-            'BlankContext',
-            'BlankProvider',
-            'PromptInputProvider',
-        ], true);
+        return false;
     }
 
     /**
@@ -3979,92 +3873,6 @@ final class ComponentRenderer
         }
 
         return [...$triggers, ...$content];
-    }
-
-    /**
-     * Synthesizes the fixed PamUI anatomy for ModelSelectorContent
-     * and ModelSelectorGroup while keeping authored list/items untouched.
-     *
-     * @param array<string, mixed> $props
-     * @param list<Element> $children
-     * @return list<Element>
-     */
-    private static function modelSelectorChildren(
-        string $part,
-        array $props,
-        array $children,
-    ): array {
-        if ($part === 'ModelSelectorGroup') {
-            $heading = self::text($props, 'heading');
-            if ($heading === '') {
-                return $children;
-            }
-
-            $headingElement = Text::make($heading)
-                ->style(
-                    StyleResolver::resolve(
-                        'Text',
-                        [
-                            'className' =>
-                                'px-4 py-2 text-sm font-semibold text-muted-foreground',
-                        ],
-                        ThemeManager::current(),
-                    ),
-                )
-                ->property(PropKey::Value, 'pam:model-selector-heading');
-
-            return [$headingElement, ...$children];
-        }
-        if ($part !== 'ModelSelectorContent') {
-            return $children;
-        }
-
-        $title = self::text($props, 'title', 'Model Selector');
-        $titleElement = Text::make($title)
-            ->style(
-                StyleResolver::resolve(
-                    'Text',
-                    ['className' => 'sr-only'],
-                    ThemeManager::current(),
-                ),
-            );
-        $closeIcon = self::render(
-            'CloseIcon',
-            ['size' => 4],
-            [],
-            [],
-            null,
-            null,
-        );
-        $close = self::render(
-            'ModalCloseButton',
-            ['accessibilityLabel' => 'Close model selector'],
-            [$closeIcon],
-            [],
-            null,
-            null,
-        );
-        $header = self::render(
-            'ModalHeader',
-            [],
-            [$titleElement, $close],
-            [],
-            null,
-            null,
-        );
-        $body = self::render(
-            'ModalBody',
-            [],
-            $children,
-            [],
-            null,
-            null,
-        );
-        $scroll = Scroll::make($body)
-            ->showsIndicator(true)
-            ->style(new Style(maxHeight: 500.0));
-
-        return [$header, $scroll];
     }
 
     /** @param array<string, mixed> $props
@@ -4139,12 +3947,14 @@ final class ComponentRenderer
             } elseif ($nextChecked && !$active) {
                 $next = [...$selected, $value];
             } elseif (!$nextChecked && $active) {
-                $next = array_values(
-                    array_filter(
-                        $selected,
-                        static fn (string|int|float|bool $item): bool => $item !== $value,
-                    ),
-                );
+                $next = !$collapsible && count($selected) === 1
+                    ? $selected
+                    : array_values(
+                        array_filter(
+                            $selected,
+                            static fn (string|int|float|bool $item): bool => $item !== $value,
+                        ),
+                    );
             } else {
                 $next = $selected;
             }
@@ -4157,7 +3967,10 @@ final class ComponentRenderer
      */
     private static function selectedValues(array $props): array
     {
-        $value = $props['value'] ?? $props['defaultValue'] ?? [];
+        $value = $props['modelValue']
+            ?? $props['value']
+            ?? $props['defaultValue']
+            ?? [];
         if (!is_array($value)) {
             return is_scalar($value) ? [$value] : [];
         }
@@ -4342,22 +4155,6 @@ final class ComponentRenderer
                         );
                     };
             }
-        }
-        if ($part === 'PromptInput') {
-            $handler = $events[EventKind::Submit->value] ?? null;
-            if ($handler === null) {
-                return $events;
-            }
-            $files = self::promptFiles($props) ?? [];
-            $events[EventKind::Submit->value] =
-                static function (string $text) use ($handler, $files): void {
-                    $handler([
-                        'text' => $text,
-                        'files' => $files,
-                    ]);
-                };
-
-            return $events;
         }
         if ($part !== 'Calendar') {
             return $events;
@@ -4620,6 +4417,16 @@ final class ComponentRenderer
         }
         if (is_numeric($props['step'] ?? null)) {
             $values['step'] = max(0.000001, (float) $props['step']);
+        }
+        if (($props['__materialComponent'] ?? null) === 'PRating') {
+            $values['min'] = 0.0;
+            $values['max'] = (float) min(
+                20,
+                max(1, self::integer($props, 'length', 5)),
+            );
+            $values['step'] = self::flag($props, 'halfIncrements')
+                ? 0.5
+                : max(0.000001, (float) ($values['step'] ?? 1.0));
         }
 
         $vertical = self::flag($props, 'vertical')
@@ -5223,11 +5030,10 @@ final class ComponentRenderer
      * @param list<Element> $children
      */
     private static function horizontalScroll(
-        string $part,
         array $props,
         array $children,
     ): Element {
-        return self::configuredScroll($part, $props, $children, true);
+        return self::configuredScroll($props, $children, true);
     }
 
     /**
@@ -5235,25 +5041,13 @@ final class ComponentRenderer
      * @param list<Element> $children
      */
     private static function configuredScroll(
-        string $part,
         array $props,
         array $children,
         bool $horizontal,
     ): Scroll {
-        $listAttachments = $part === 'Attachments'
-            && self::integer($props, 'variant', 15) === 17;
         $content = $horizontal
-            ? (
-                $listAttachments
-                    ? Column::make(...$children)
-                    : Row::make(...$children)
-            )
+            ? Row::make(...$children)
             : self::oneChild($children);
-        $defaultIndicator = !in_array(
-            $part,
-            ['Attachments', 'ConversationContent'],
-            true,
-        );
         $indicator = $horizontal
             ? self::flag(
                 $props,
@@ -5261,7 +5055,7 @@ final class ComponentRenderer
                 self::flag(
                     $props,
                     'showsScrollIndicator',
-                    $defaultIndicator,
+                    true,
                 ),
             )
             : self::flag(
@@ -5270,7 +5064,7 @@ final class ComponentRenderer
                 self::flag(
                     $props,
                     'showsScrollIndicator',
-                    $defaultIndicator,
+                    true,
                 ),
             );
         [$offsetX, $offsetY] = self::scrollOffsets($props, $horizontal);
@@ -5937,63 +5731,6 @@ final class ComponentRenderer
     }
 
     /**
-     * Normalizes the upstream FileUIPart contract once during PHP composition.
-     * Files stay in PHP memory; only their count is sent to Android.
-     *
-     * @param array<string, mixed> $props
-     * @return list<array<string, string|int|float|bool|null>>|null
-     */
-    private static function promptFiles(array $props): ?array
-    {
-        if (
-            !array_key_exists('files', $props)
-            && !array_key_exists('attachments', $props)
-        ) {
-            return null;
-        }
-        $source = $props['files'] ?? $props['attachments'];
-        if (!is_array($source)) {
-            return [];
-        }
-
-        $files = [];
-        foreach (array_slice(array_values($source), 0, 256) as $index => $sourceFile) {
-            if (!is_array($sourceFile)) {
-                continue;
-            }
-            $file = [];
-            foreach ($sourceFile as $name => $value) {
-                if ($name === 'type') {
-                    $file['type'] = match (true) {
-                        $value instanceof AttachmentType => $value->value,
-                        $value === AttachmentType::SourceDocument->value,
-                        $value === 'source-document' =>
-                            AttachmentType::SourceDocument->value,
-                        default => AttachmentType::File->value,
-                    };
-                    continue;
-                }
-                if (
-                    !is_string($name)
-                    || preg_match('/^[A-Za-z][A-Za-z0-9_]{0,127}$/D', $name)
-                        !== 1
-                    || (!is_scalar($value) && $value !== null)
-                ) {
-                    continue;
-                }
-                $file[$name] = $value;
-            }
-            $file['type'] ??= AttachmentType::File->value;
-            if (!isset($file['id']) || !is_string($file['id']) || $file['id'] === '') {
-                $file['id'] = 'attachment-'.$index;
-            }
-            $files[] = $file;
-        }
-
-        return $files;
-    }
-
-    /**
      * @param array<string, mixed> $props
      * @param list<Element> $children
      * @param array<int, Closure> $events
@@ -6005,6 +5742,68 @@ final class ComponentRenderer
         array $children,
         array $events,
     ): array {
+        if (
+            $part === 'AccordionItem'
+            && ($props['__materialComponent'] ?? null) === 'PStepperVerticalItem'
+        ) {
+            $header = array_shift($children)
+                ?? self::themedText(self::text($props, 'title', 'Step'));
+            $expanded = self::flag($props, 'expanded');
+            $trigger = self::render(
+                'AccordionTrigger',
+                [
+                    'expanded' => $expanded,
+                    'disabled' => self::flag($props, 'disabled'),
+                    'accessibilityLabel' => self::text(
+                        $props,
+                        'accessibilityLabel',
+                        self::text($props, 'title', 'Step'),
+                    ),
+                ],
+                [$header],
+                [],
+                null,
+                null,
+            );
+            $content = self::render(
+                'AccordionContent',
+                ['expanded' => $expanded, 'hidden' => !$expanded],
+                $children,
+                [],
+                new Style(
+                    widthPercent: 100.0,
+                    paddingLeft: 24.0,
+                    paddingRight: 16.0,
+                    paddingBottom: 16.0,
+                ),
+                null,
+            );
+
+            return [$trigger, $content];
+        }
+
+        if (
+            $part === 'VirtualizedList'
+            && ($props['__materialComponent'] ?? null) === 'PInfiniteScroll'
+            && self::flag($props, 'loading')
+        ) {
+            $theme = ThemeManager::current();
+            $children[] = Row::make(
+                ActivityIndicator::make()->color(
+                    $theme->color(ColorToken::Primary),
+                ),
+                self::themedText(
+                    self::text($props, 'loadingText', 'Loading more'),
+                ),
+            )->style(new Style(
+                widthPercent: 100.0,
+                minHeight: 52.0,
+                gap: 12.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))->accessibilityRole(AccessibilityRole::ProgressBar);
+        }
+
         if ($children !== []) {
             return $children;
         }
@@ -6027,8 +5826,7 @@ final class ComponentRenderer
             && in_array(
                 $props['__materialComponent'] ?? null,
                 [
-                    'PCheckbox', 'PCheckboxBtn', 'PRadio', 'PSwitch',
-                    'PSelectionControl', 'PItem',
+                    'PCheckbox', 'PRadio', 'PSwitch', 'PItem',
                 ],
                 true,
             )
@@ -6036,6 +5834,16 @@ final class ComponentRenderer
             $label = self::text($props, 'label');
             if ($label !== '') {
                 $theme = ThemeManager::current();
+                if ($props['__materialComponent'] === 'PItem') {
+                    return [
+                        self::themedText($label)->style(new Style(
+                            flexGrow: 1.0,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                            fontSize: 16.0,
+                            lineHeight: 24.0,
+                        )),
+                    ];
+                }
                 $indicatorSize = MaterialTokens::componentSize(
                     $props['size'] ?? null,
                     24.0,
@@ -6097,9 +5905,6 @@ final class ComponentRenderer
                 [
                     'PCalendar',
                     'PDatePicker',
-                    'PDatePickerMonth',
-                    'PDatePickerMonths',
-                    'PDatePickerYears',
                 ],
                 true,
             )
@@ -6114,7 +5919,7 @@ final class ComponentRenderer
                 true,
             )
         ) {
-            return self::materialDataTableChildren($props);
+            return self::materialDataTableChildren($props, $events);
         }
         if (
             $part === 'Select'
@@ -6126,71 +5931,10 @@ final class ComponentRenderer
         ) {
             return self::materialSelectChildren($props, $events);
         }
-        if ($part === 'ImageViewerNavigation') {
-            return self::imageViewerNavigationChildren();
-        }
-        if ($part === 'ImageViewerCounter') {
-            return [
-                self::themedText('1 / 1')
-                    ->property(PropKey::Value, 'pam:image-viewer-counter'),
-            ];
-        }
-        if ($part === 'MessageBranchPrevious') {
-            return [self::themedText('‹')];
-        }
-        if ($part === 'MessageBranchNext') {
-            return [self::themedText('›')];
-        }
-        if ($part === 'PromptInputSubmit') {
-            return [self::themedText('↑')];
-        }
-        if ($part === 'PromptInputActionMenuTrigger') {
-            return [self::themedText('+')];
-        }
-        if ($part === 'ConversationScrollButton') {
-            return [self::themedText('↓')];
-        }
-        if ($part === 'ConversationDownload') {
-            return [
-                CustomView::make(
-                    'pam.mobile_ui.icon',
-                    self::iconProperties('DownloadIcon', []),
-                ),
-            ];
-        }
-        if ($part === 'AttachmentRemove') {
-            return [
-                CustomView::make(
-                    'pam.mobile_ui.icon',
-                    self::iconProperties('RemoveIcon', []),
-                ),
-            ];
-        }
         if ($part === 'FileTreeFile') {
             return [self::themedText(
                 self::text($props, 'name', self::text($props, 'path')),
             )];
-        }
-        if ($part === 'AttachmentPreview') {
-            return self::attachmentPreviewChildren($props);
-        }
-        if ($part === 'AttachmentEmpty') {
-            return [
-                self::themedText(
-                    self::text($props, 'text', 'No attachments'),
-                ),
-            ];
-        }
-        if ($part === 'ModelSelectorEmpty') {
-            return [self::themedText('No models found.')];
-        }
-        if ($part === 'ModelSelectorLogo') {
-            $provider = self::text($props, 'provider', '?');
-            $initials = function_exists('mb_substr')
-                ? mb_substr($provider, 0, 2)
-                : substr($provider, 0, 2);
-
-            return [self::themedText(strtoupper($initials))];
         }
         if (in_array($part, ['CalendarWeekDay', 'CalendarWeekNumber'], true)) {
             return [self::themedText(self::text($props, 'text'))];
@@ -6201,22 +5945,64 @@ final class ComponentRenderer
         ], true)) {
             return [Text::make(self::calendarSelectLabel($part, $props))];
         }
-        if ($part === 'ConversationEmptyState') {
-            return [
-                Column::make(
-                    Text::make(self::text($props, 'title', 'Start a conversation')),
-                    Text::make(
-                        self::text(
-                            $props,
-                            'description',
-                            'Type a message below to begin chatting',
-                        ),
-                    ),
-                ),
-            ];
-        }
 
         return [];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @param list<Element> $children
+     * @return list<Element>
+     */
+    private static function chipChildren(
+        array $props,
+        array $events,
+        array $children,
+    ): array {
+        if (
+            ($props['__materialComponent'] ?? null) !== 'PChip'
+            || !self::flag($props, 'closable')
+        ) {
+            return $children;
+        }
+
+        $label = self::text($props, 'text');
+        $closeLabel = self::text($props, 'closeLabel');
+        if ($closeLabel === '') {
+            $closeLabel = $label === '' ? 'Close chip' : 'Close '.$label;
+        }
+        $theme = ThemeManager::current();
+        $close = Pressable::make(
+            Text::make('×')->style(new Style(
+                textColor: $theme->color(ColorToken::OnSurface),
+                fontSize: 18.0,
+                lineHeight: 20.0,
+                textAlign: TextAlignment::Center,
+            )),
+        )
+            ->style(new Style(
+                width: 32.0,
+                height: 32.0,
+                borderRadius: 16.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))
+            ->hitSlop(6.0)
+            ->accessibilityRole(AccessibilityRole::Button)
+            ->accessibilityLabel($closeLabel);
+        $handler = $events[EventKind::Native->value] ?? null;
+        if ($handler !== null) {
+            $close = $close->on(
+                EventKind::Press,
+                static function () use ($handler): void {
+                    $handler('');
+                },
+            );
+        }
+        $children[] = $close;
+
+        return $children;
     }
 
     /**
@@ -6297,6 +6083,26 @@ final class ComponentRenderer
         $change = $events[EventKind::Change->value] ?? null;
         foreach ($normalized as $item) {
             $selected = self::sameScalar($item['value'], $selectedValue);
+            $selectionIcon = self::render(
+                'Icon',
+                [
+                    'icon' => 'check',
+                    'accessibilityHidden' => true,
+                ],
+                [],
+                [],
+                new Style(
+                    width: 24.0,
+                    height: 24.0,
+                    minWidth: 24.0,
+                    minHeight: 24.0,
+                    opacity: $selected ? 1.0 : 0.0,
+                    tintColor: $theme->color(ColorToken::Primary),
+                    alignItems: \Pam\Native\Align::Center,
+                    justifyContent: \Pam\Native\Justify::Center,
+                ),
+                'select-item-check',
+            );
             $itemProps = [
                 ...$compoundProps,
                 'label' => $item['label'],
@@ -6315,9 +6121,36 @@ final class ComponentRenderer
             $contentChildren[] = self::render(
                 'SelectItem',
                 $itemProps,
-                [self::themedText($item['label'])],
+                [
+                    Row::make(
+                        self::themedText($item['label'])->style(new Style(
+                            flexGrow: 1.0,
+                            flexShrink: 1.0,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                            fontSize: 16.0,
+                            lineHeight: 24.0,
+                        )),
+                        $selectionIcon,
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        minHeight: 48.0,
+                        alignItems: \Pam\Native\Align::Center,
+                        justifyContent: \Pam\Native\Justify::SpaceBetween,
+                        gap: 12.0,
+                    )),
+                ],
                 $itemEvents,
-                null,
+                new Style(
+                    widthPercent: 100.0,
+                    minHeight: 56.0,
+                    paddingHorizontal: 16.0,
+                    paddingVertical: 4.0,
+                    backgroundColor: $selected
+                        ? $theme->color(ColorToken::SurfaceSunken)
+                        : 0x00000000,
+                    alignItems: \Pam\Native\Align::Center,
+                    justifyContent: \Pam\Native\Justify::Center,
+                ),
                 'select-item-'.(string) $item['value'],
             );
         }
@@ -6340,7 +6173,8 @@ final class ComponentRenderer
             'selectedValue' => $selectedValue,
             'open' => true,
             'presentation' => 'sheet',
-            'snapPoints' => $props['snapPoints'] ?? '32%',
+            'snapPoints' => $props['snapPoints']
+                ?? ($component === 'PSelect' ? '50%' : '60%'),
             'closeOnSelect' => !self::flag($props, 'multiple'),
             'searchable' => $component !== 'PSelect',
             'allowCustomValue' => $component === 'PCombobox',
@@ -6352,6 +6186,7 @@ final class ComponentRenderer
             'searchBackgroundColor' => $theme->color(ColorToken::Surface),
             'searchTextColor' => $theme->color(ColorToken::OnSurface),
             'searchHintColor' => $theme->color(ColorToken::MutedForeground),
+            'searchBorderColor' => $theme->color(ColorToken::Border),
         ];
         $localModalKey = substr(hash(
             'sha256',
@@ -6375,9 +6210,9 @@ final class ComponentRenderer
             [],
             new Style(
                 widthPercent: 100.0,
-                minHeight: 96.0,
-                paddingTop: 8.0,
-                paddingBottom: 16.0,
+                minHeight: 240.0,
+                paddingTop: 12.0,
+                paddingBottom: 24.0,
                 backgroundColor: $theme->color(ColorToken::Surface),
                 borderTopLeftRadius: 28.0,
                 borderTopRightRadius: 28.0,
@@ -6411,10 +6246,6 @@ final class ComponentRenderer
             ->property(PropKey::Value, 'pam:local-modal:'.$localModalKey)
             ->property(PropKey::Visible, $initiallyOpen);
 
-        if ($component !== 'PSelect') {
-            return [$portal];
-        }
-
         $triggerEvents = [];
         $toggle = $events[EventKind::Toggle->value] ?? null;
         if ($toggle !== null) {
@@ -6432,7 +6263,9 @@ final class ComponentRenderer
                 'text' => null,
                 'disabled' => $disabled,
                 'accessibilityLabel' => self::text($props, 'label', $display),
-                'accessibilityHint' => 'Opens available options',
+                'accessibilityHint' => $component === 'PSelect'
+                    ? 'Opens available options'
+                    : 'Opens searchable options',
                 'expanded' => self::flag($props, 'open'),
             ],
             [
@@ -6447,13 +6280,37 @@ final class ComponentRenderer
                         fontSize: 16.0,
                         lineHeight: 24.0,
                     )),
-                    self::themedText('⌄')->style(new Style(
-                        width: 24.0,
-                        textColor: $theme->color(ColorToken::MutedForeground),
-                        fontSize: 20.0,
-                        lineHeight: 24.0,
-                        textAlign: \Pam\Native\TextAlignment::Center,
-                    )),
+                    self::flag($props, 'loading')
+                        ? ActivityIndicator::make()
+                            ->color($theme->color(ColorToken::Primary))
+                            ->style(new Style(
+                                width: 20.0,
+                                height: 20.0,
+                                minWidth: 20.0,
+                                minHeight: 20.0,
+                            ))
+                        : self::render(
+                            'Icon',
+                            [
+                                'icon' => 'chevron-down',
+                                'accessibilityHidden' => true,
+                            ],
+                            [],
+                            [],
+                            new Style(
+                                width: 24.0,
+                                height: 24.0,
+                                minWidth: 24.0,
+                                minHeight: 24.0,
+                                tintColor: $theme->color(ColorToken::MutedForeground),
+                                rotation: self::flag($props, 'open') ? 180.0 : 0.0,
+                                alignItems: \Pam\Native\Align::Center,
+                                justifyContent: \Pam\Native\Justify::Center,
+                                animationDurationMs: 150,
+                                animateChanges: true,
+                            ),
+                            'select-trigger-chevron',
+                        ),
                 )->style(new Style(
                     widthPercent: 100.0,
                     minHeight: 32.0,
@@ -6564,12 +6421,14 @@ final class ComponentRenderer
             self::themedText('‹'),
         )
             ->property(PropKey::Value, 'pam:calendar-prev')
+            ->accessibilityRole(AccessibilityRole::Button)
+            ->accessibilityLabel('Previous month')
             ->style(new Style(
-                width: 40.0,
-                height: 40.0,
-                minWidth: 40.0,
-                minHeight: 40.0,
-                borderRadius: 20.0,
+                width: 48.0,
+                height: 48.0,
+                minWidth: 48.0,
+                minHeight: 48.0,
+                borderRadius: 24.0,
                 alignItems: \Pam\Native\Align::Center,
                 justifyContent: \Pam\Native\Justify::Center,
             ));
@@ -6586,12 +6445,14 @@ final class ComponentRenderer
             self::themedText('›'),
         )
             ->property(PropKey::Value, 'pam:calendar-next')
+            ->accessibilityRole(AccessibilityRole::Button)
+            ->accessibilityLabel('Next month')
             ->style(new Style(
-                width: 40.0,
-                height: 40.0,
-                minWidth: 40.0,
-                minHeight: 40.0,
-                borderRadius: 20.0,
+                width: 48.0,
+                height: 48.0,
+                minWidth: 48.0,
+                minHeight: 48.0,
+                borderRadius: 24.0,
                 alignItems: \Pam\Native\Align::Center,
                 justifyContent: \Pam\Native\Justify::Center,
             ));
@@ -6707,10 +6568,13 @@ final class ComponentRenderer
 
     /**
      * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
      * @return list<Element>
      */
-    private static function materialDataTableChildren(array $props): array
-    {
+    private static function materialDataTableChildren(
+        array $props,
+        array $events,
+    ): array {
         $source = $props['items'] ?? [];
         if (is_string($source)) {
             $source = array_values(array_filter(
@@ -6760,6 +6624,18 @@ final class ComponentRenderer
 
         $rows = [];
         $showSelect = self::flag($props, 'showSelect');
+        $selectionChange = $events[EventKind::Change->value] ?? null;
+        $selectedValues = self::selectedValues($props);
+        $itemValue = self::text($props, 'itemValue', 'id');
+        $selectableValues = [];
+        foreach (array_values($source) as $rowIndex => $item) {
+            $candidate = is_array($item)
+                ? ($item[$itemValue] ?? $item['value'] ?? $rowIndex)
+                : $item;
+            if (is_scalar($candidate)) {
+                $selectableValues[] = $candidate;
+            }
+        }
         if ($headers !== []) {
             $headerCells = array_map(
                 static fn (array $header): Element => self::materialDataTableCell(
@@ -6770,9 +6646,26 @@ final class ComponentRenderer
                 $headers,
             );
             if ($showSelect) {
+                $allSelected = $selectableValues !== []
+                    && array_diff($selectableValues, $selectedValues) === [];
                 array_unshift(
                     $headerCells,
-                    self::materialDataTableCell('☐', $rowHeight, true),
+                    self::materialDataTableSelectionCell(
+                        $allSelected,
+                        $rowHeight,
+                        'Select all rows',
+                        $selectionChange === null
+                            ? null
+                            : static function () use (
+                                $selectionChange,
+                                $allSelected,
+                                $selectableValues,
+                            ): void {
+                                $selectionChange(
+                                    $allSelected ? [] : $selectableValues,
+                                );
+                            },
+                    ),
                 );
             }
             $rows[] = self::render(
@@ -6799,6 +6692,19 @@ final class ComponentRenderer
             );
         }
         $items = array_values($source);
+        if (self::flag($props, 'loading')) {
+            $rows[] = self::materialDataTableStateRow(
+                self::text($props, 'loadingText', 'Loading items'),
+                $rowHeight,
+                true,
+            );
+        } elseif ($items === []) {
+            $rows[] = self::materialDataTableStateRow(
+                self::text($props, 'noDataText', 'No data available'),
+                $rowHeight,
+                false,
+            );
+        }
         if (($props['__materialComponent'] ?? null) !== 'PDataTableVirtual') {
             $items = array_slice($items, 0, 256);
         }
@@ -6821,9 +6727,25 @@ final class ComponentRenderer
                 );
             }
             if ($showSelect) {
+                $rowValue = is_array($item)
+                    ? ($item[$itemValue] ?? $item['value'] ?? $rowIndex)
+                    : $item;
+                $rowSelected = is_scalar($rowValue)
+                    && in_array($rowValue, $selectedValues, true);
                 array_unshift(
                     $children,
-                    self::materialDataTableCell('☐', $rowHeight, false),
+                    self::materialDataTableSelectionCell(
+                        $rowSelected,
+                        $rowHeight,
+                        'Select row '.($rowIndex + 1),
+                        $selectionChange !== null && is_scalar($rowValue)
+                            ? self::listSelectionHandler(
+                                $selectionChange,
+                                $rowValue,
+                                $selectedValues,
+                            )
+                            : null,
+                    ),
                 );
             }
             if ($children === []) {
@@ -6876,253 +6798,85 @@ final class ComponentRenderer
         ));
     }
 
-    /**
-     * @param array<string, mixed> $props
-     * @param list<Element> $children
-     * @return list<Element>
-     */
-    private static function messageBranchChildren(
-        string $part,
-        array $props,
-        array $children,
-    ): array {
-        if ($part !== 'MessageBranchContent') {
-            return $children;
-        }
-
-        $parent = is_array($props['__parentVariants'] ?? null)
-            ? $props['__parentVariants']
-            : [];
-        $selected = self::integer(
-            $parent,
-            'currentBranch',
-            self::integer($parent, 'branch', self::integer($parent, 'defaultBranch', 0)),
-        );
-
-        return array_map(
-            static function (Element $child, int $index) use ($selected): Element {
-                $page = Column::make($child)->property(
-                    PropKey::Value,
-                    'pam:message-branch-page:'.$index,
-                );
-
-                return $index === $selected ? $page : $page->visible(false);
-            },
-            $children,
-            array_keys($children),
-        );
-    }
-
-    /**
-     * Builds each text part as one intrinsic native Markdown view and keeps
-     * file parts on PAM's native image pipeline.
-     *
-     * @param array<string, mixed> $props
-     * @param list<Element> $children
-     * @return list<Element>
-     */
-    private static function messageResponseChildren(
-        string $part,
-        array $props,
-        array $children,
-    ): array {
-        if ($part !== 'MessageResponse') {
-            return $children;
-        }
-        if ($children !== []) {
-            $text = [];
-            foreach ($children as $child) {
-                $value = $child->properties()[PropKey::Text->value] ?? null;
-                if ($child->kind() !== NodeKind::Text || !is_string($value)) {
-                    return $children;
-                }
-                $text[] = $value;
-            }
-
-            return [self::markdownView(implode("\n", $text), $props)];
-        }
-
-        $message = is_array($props['message'] ?? null)
-            ? $props['message']
-            : [];
-        $parts = is_array($message['parts'] ?? null)
-            ? $message['parts']
-            : null;
-        if ($parts === null) {
-            $source = self::text(
-                $props,
-                'text',
-                is_scalar($message['content'] ?? null)
-                    ? (string) $message['content']
-                    : '',
-            );
-
-            return [self::markdownView($source, $props)];
-        }
-
-        $rendered = [];
-        foreach ($parts as $messagePart) {
-            if (!is_array($messagePart)) {
-                continue;
-            }
-            if (
-                ($messagePart['type'] ?? null) === 'text'
-                && is_scalar($messagePart['text'] ?? null)
-            ) {
-                $rendered[] = self::markdownView(
-                    (string) $messagePart['text'],
-                    $props,
-                );
-                continue;
-            }
-            if (($messagePart['type'] ?? null) !== 'file') {
-                continue;
-            }
-            $uri = is_string($messagePart['url'] ?? null)
-                ? $messagePart['url']
-                : '';
-            if (
-                $uri === ''
-                && is_string($messagePart['data'] ?? null)
-                && is_string($messagePart['mimeType'] ?? null)
-            ) {
-                $uri = 'data:'.$messagePart['mimeType'].';base64,'
-                    .$messagePart['data'];
-            }
-            if ($uri === '') {
-                continue;
-            }
-            $label = is_string($messagePart['filename'] ?? null)
-                ? $messagePart['filename']
-                : 'Message attachment';
-            $rendered[] = Image::make($uri)
-                ->fit(ImageFit::Cover)
-                ->accessibilityLabel($label)
-                ->accessibilityRole(AccessibilityRole::Image);
-        }
-
-        return $rendered === []
-            ? [Text::make(self::text($props, 'pendingText', 'Thinking...'))]
-            : $rendered;
-    }
-
-    /** @param array<string, mixed> $props */
-    private static function markdownView(string $source, array $props): Element
-    {
-        $theme = ThemeManager::current();
-
-        return CustomView::make(
-            'pam.mobile_ui.markdown',
-            [
-                'source' => $source,
-                'foregroundColor' => $theme->color(ColorToken::Foreground),
-                'mutedColor' => $theme->color(ColorToken::MutedForeground),
-                'linkColor' => $theme->color(ColorToken::Primary),
-                'codeBackgroundColor' => $theme->color(ColorToken::Muted),
-                'codeForegroundColor' => $theme->color(ColorToken::Foreground),
-                'selectable' => self::flag($props, 'selectable', true),
-            ],
+    private static function materialDataTableSelectionCell(
+        bool $selected,
+        float $height,
+        string $label,
+        ?Closure $handler,
+    ): Element {
+        $cell = Pressable::make(
+            self::themedText($selected ? '☑' : '☐')->style(new Style(
+                width: 24.0,
+                fontSize: 20.0,
+                lineHeight: 24.0,
+                textAlign: TextAlignment::Center,
+            )),
         )
-            ->property(PropKey::WidthPercent, 100.0)
-            ->property(
-                PropKey::MinHeight,
-                self::markdownIntrinsicHeight($source),
+            ->style(new Style(
+                width: 48.0,
+                height: $height,
+                minWidth: 48.0,
+                minHeight: $height,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))
+            ->accessibilityRole(AccessibilityRole::Checkbox)
+            ->accessibilityLabel($label)
+            ->accessibilityChecked(
+                $selected
+                    ? AccessibilityCheckedState::Checked
+                    : AccessibilityCheckedState::Unchecked,
             );
+        if ($handler !== null) {
+            $cell = $cell->on(EventKind::Press, $handler);
+        }
+
+        return $cell;
     }
 
-    private static function markdownIntrinsicHeight(string $source): float
-    {
-        $height = 0.0;
-        $lines = preg_split('/\R/u', trim($source)) ?: [''];
+    private static function materialDataTableStateRow(
+        string $message,
+        float $height,
+        bool $loading,
+    ): Element {
+        $children = $loading
+            ? [
+                ActivityIndicator::make()->color(
+                    ThemeManager::current()->color(ColorToken::Primary),
+                ),
+                self::themedText($message),
+            ]
+            : [self::themedText($message)];
+        $content = Row::make(...$children)
+            ->style(new Style(
+                widthPercent: 100.0,
+                minHeight: $height,
+                gap: 12.0,
+                paddingHorizontal: 16.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))
+            ->accessibilityRole(
+                $loading
+                    ? AccessibilityRole::ProgressBar
+                    : AccessibilityRole::Summary,
+            )
+            ->accessibilityLabel($message);
 
-        foreach ($lines as $line) {
-            $plain = (string) preg_replace(
-                '/\[([^\]]*)\]\([^)]*\)/u',
-                '$1',
-                $line,
-            );
-            $plain = trim((string) preg_replace(
-                '/[*_~`>#-]/u',
-                '',
-                $plain,
-            ));
-            if ($plain === '') {
-                $height += 8.0;
-                continue;
-            }
-
-            $characters = function_exists('mb_strlen')
-                ? mb_strlen($plain)
-                : strlen($plain);
-            $wrappedLines = max(1, (int) ceil($characters / 32));
-            $lineHeight = str_starts_with(ltrim($line), '#')
-                ? 38.0
-                : 28.0;
-            $height += $wrappedLines * $lineHeight;
-        }
-
-        return max(56.0, $height + 4.0);
-    }
-
-    /**
-     * A link originates in the intrinsic Markdown child, not in its optional
-     * multi-part container.
-     *
-     * @param array<int, Closure> $events
-     * @param list<Element> $children
-     * @return list<Element>
-     */
-    private static function messageResponseEventChildren(
-        string $part,
-        array $events,
-        array $children,
-    ): array {
-        $handler = $events[EventKind::Native->value] ?? null;
-        if ($part !== 'MessageResponse' || $handler === null) {
-            return $children;
-        }
-
-        foreach ($children as $index => $child) {
-            if (
-                $child->kind() === NodeKind::CustomView
-                && ($child->properties()[PropKey::HostName->value] ?? null)
-                    === 'pam.mobile_ui.markdown'
-            ) {
-                $children[$index] = $child->on(EventKind::Native, $handler);
-            }
-        }
-
-        return $children;
-    }
-
-    /** @param array<string, mixed> $props */
-    private static function messageHasNoText(array $props): bool
-    {
-        if (array_key_exists('hasText', $props)) {
-            return !self::flag($props, 'hasText');
-        }
-        $message = $props['message'] ?? null;
-        if (!is_array($message)) {
-            return false;
-        }
-        $parts = $message['parts'] ?? null;
-        if (!is_array($parts)) {
-            $content = $message['content'] ?? null;
-
-            return is_scalar($content) && trim((string) $content) === '';
-        }
-        foreach ($parts as $messagePart) {
-            if (
-                is_array($messagePart)
-                && ($messagePart['type'] ?? null) === 'text'
-                && is_scalar($messagePart['text'] ?? null)
-                && trim((string) $messagePart['text']) !== ''
-            ) {
-                return false;
-            }
-        }
-
-        return true;
+        return self::render(
+            'TableRow',
+            ['columns' => 1],
+            [$content],
+            [],
+            new Style(
+                widthPercent: 100.0,
+                minHeight: $height,
+                backgroundColor: ThemeManager::current()->color(
+                    ColorToken::Surface,
+                ),
+            ),
+            null,
+        );
     }
 
     /**
@@ -7181,145 +6935,6 @@ final class ComponentRenderer
                     paddingLeft: 24.0,
                 ))
                 ->property(PropKey::Value, 'pam:file-tree-content'),
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $props
-     * @return list<Element>
-     */
-    private static function attachmentPreviewChildren(array $props): array
-    {
-        $parent = is_array($props['__parentVariants'] ?? null)
-            ? $props['__parentVariants']
-            : [];
-        $data = $props['data'] ?? $parent['data'] ?? [];
-        if (!is_array($data)) {
-            $data = [];
-        }
-        $url = is_string($data['url'] ?? null) ? $data['url'] : '';
-        $mediaType = is_string($data['mediaType'] ?? null)
-            ? $data['mediaType']
-            : '';
-        $filename = is_string($data['filename'] ?? null)
-            ? $data['filename']
-            : 'Attachment';
-        if ($url !== '' && str_starts_with($mediaType, 'image/')) {
-            return [
-                Image::make($url)
-                    ->fit(ImageFit::Cover)
-                    ->accessibilityLabel($filename)
-                    ->accessibilityRole(AccessibilityRole::Image),
-            ];
-        }
-        $icon = match (true) {
-            ($data['type'] ?? null) === 'source-document' => 'GlobeIcon',
-            str_starts_with($mediaType, 'video/') => 'PlayIcon',
-            str_starts_with($mediaType, 'application/'),
-            str_starts_with($mediaType, 'text/') => 'PaperclipIcon',
-            default => 'PaperclipIcon',
-        };
-        if (!isset(ComponentMap::IDS[$icon])) {
-            $icon = 'PaperclipIcon';
-        }
-
-        return [
-            CustomView::make(
-                'pam.mobile_ui.icon',
-                self::iconProperties($icon, []),
-            )->accessibilityLabel($filename),
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $props
-     * @param list<Element> $children
-     * @return list<Element>
-     */
-    private static function imageViewerChildren(
-        string $part,
-        array $props,
-        array $children,
-    ): array {
-        if ($part !== 'ImageViewerContent') {
-            return $children;
-        }
-        $parent = is_array($props['__parentVariants'] ?? null)
-            ? $props['__parentVariants']
-            : [];
-        $images = $props['images'] ?? $parent['images'] ?? [];
-        if (!is_array($images)) {
-            return $children;
-        }
-        $generated = [];
-        foreach (array_values($images) as $index => $image) {
-            $url = is_string($image)
-                ? $image
-                : (is_array($image) && is_string($image['url'] ?? null)
-                    ? $image['url']
-                    : null);
-            if ($url === null || $url === '') {
-                continue;
-            }
-            $alt = is_array($image) && is_string($image['alt'] ?? null)
-                ? $image['alt']
-                : 'Image '.($index + 1);
-            $generated[] = Image::make($url)
-                ->fit(ImageFit::Contain)
-                ->property(PropKey::Value, 'pam:image-viewer-image:'.$index)
-                ->property(PropKey::PositionType, PositionType::Absolute->value)
-                ->property(PropKey::Left, 0.0)
-                ->property(PropKey::Top, 0.0)
-                ->property(PropKey::WidthPercent, 100.0)
-                ->property(PropKey::HeightPercent, 100.0)
-                ->accessibilityLabel($alt)
-                ->accessibilityRole(AccessibilityRole::Image);
-        }
-
-        return $generated === [] ? $children : [...$generated, ...$children];
-    }
-
-    /** @return list<Element> */
-    private static function imageViewerNavigationChildren(): array
-    {
-        $component = ComponentMap::IDS['ImageViewerNavigation'];
-        $control = static function (
-            ImageViewerControlAction $action,
-            string $label,
-            string $glyph,
-        ) use ($component): Element {
-            return CustomView::make(
-                'pam.mobile_ui.host',
-                [
-                    'part' => $component,
-                    'component' => $component,
-                    'behavior' => NativeBehavior::ImageViewerControl->value,
-                    'navigationAction' => $action->value,
-                ],
-                Text::make($glyph),
-            )
-                ->style(new Style(
-                    width: 48.0,
-                    height: 48.0,
-                    borderRadius: 24.0,
-                    alignItems: \Pam\Native\Align::Center,
-                    justifyContent: \Pam\Native\Justify::Center,
-                ))
-                ->accessibilityLabel($label)
-                ->accessibilityRole(AccessibilityRole::Button);
-        };
-
-        return [
-            $control(
-                ImageViewerControlAction::Previous,
-                'Previous image',
-                '‹',
-            ),
-            $control(
-                ImageViewerControlAction::Next,
-                'Next image',
-                '›',
-            ),
         ];
     }
 
@@ -7646,69 +7261,16 @@ final class ComponentRenderer
     }
 
     /** @param array<string, mixed> $props */
-    private static function skeletonDurationMillis(string $part, array $props): int
+    private static function skeletonDurationMillis(array $props): int
     {
         $speed = self::integer($props, 'speed', 3);
 
         return match ($speed) {
             1 => 750,
-            2 => $part === 'SkeletonText' ? 1_000 : 100,
+            2 => 100,
             4 => 2_000,
             default => 1_500,
         };
-    }
-
-    /**
-     * @param array<string, mixed> $props
-     */
-    private static function skeletonText(
-        array $props,
-        Style $style,
-        ?Style $styleOverride,
-        ?int $nativeBackground,
-    ): Element {
-        $lines = min(
-            100,
-            max(
-                2,
-                self::integer(
-                    $props,
-                    '_lines',
-                    self::integer($props, 'lines', 2),
-                ),
-            ),
-        );
-        $color = $nativeBackground
-            ?? ThemeManager::current()->color(ColorToken::Muted);
-        $lineStyle = new Style(
-            minHeight: 16.0,
-            backgroundColor: $color,
-            borderRadius: 4.0,
-        );
-        $children = [];
-        for ($line = 0; $line < $lines; $line++) {
-            $children[] = View::make()
-                ->style($lineStyle)
-                ->property(PropKey::WidthPercent, $line === $lines - 1 ? 80.0 : 100.0);
-        }
-        $host = CustomView::make(
-            'pam.mobile_ui.host',
-            self::nativeProperties(
-                'SkeletonText',
-                NativeBehavior::Skeleton,
-                $props,
-                $children,
-                $nativeBackground,
-            ),
-            ...$children,
-        )
-            ->style($style)
-            ->property(
-                PropKey::Gap,
-                max(0.0, (float) self::integer($props, 'gap', 2) * 4.0),
-            );
-
-        return $styleOverride === null ? $host : $host->style($styleOverride);
     }
 
     /** @param array<string, mixed> $props */

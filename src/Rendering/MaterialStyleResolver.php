@@ -15,6 +15,7 @@ use Pam\Native\Align;
 use Pam\Native\FlexDirection;
 use Pam\Native\Justify;
 use Pam\Native\Overflow;
+use Pam\Native\PositionType;
 use Pam\Native\Style;
 use Pam\Native\TextAlignment;
 
@@ -64,136 +65,6 @@ final class MaterialStyleResolver
             ? ($buttonPart ? 0.26 : MaterialTokens::STATE_OPACITY[6])
             : 1.0;
         $height = MaterialTokens::fieldHeight($density);
-
-        if (in_array($part, [
-            'PCardTitle', 'PCardSubtitle', 'PCardText',
-        ], true)) {
-            $title = $part === 'PCardTitle';
-            $subtitle = $part === 'PCardSubtitle';
-
-            return new Style(
-                paddingHorizontal: 16.0,
-                paddingTop: $title ? 16.0 : ($subtitle ? 0.0 : 16.0),
-                paddingBottom: $title ? 4.0 : ($subtitle ? 16.0 : 16.0),
-                textColor: $subtitle
-                    ? $theme->color(ColorToken::MutedForeground)
-                    : $theme->color(ColorToken::OnSurface),
-                fontSize: $title ? 20.0 : 14.0,
-                opacity: $opacity,
-                textAlign: TextAlignment::Start,
-                fontWeight: $title ? 400 : 400,
-                letterSpacing: $title ? 0.0 : (0.25 / 14.0),
-                lineHeight: match ($part) {
-                    'PCardTitle' => match ($density) {
-                        MaterialDensity::Compact => 24.8,
-                        default => 28.0,
-                    },
-                    'PCardSubtitle' => match ($density) {
-                        MaterialDensity::Comfortable => 18.0,
-                        MaterialDensity::Compact => 16.0,
-                        default => 20.0,
-                    },
-                    default => match ($density) {
-                        MaterialDensity::Comfortable => 19.2,
-                        MaterialDensity::Compact => 18.4,
-                        default => 20.0,
-                    },
-                },
-            );
-        }
-
-        if (in_array($part, ['PAppBarTitle', 'PToolbarTitle'], true)) {
-            return new Style(
-                textColor: $theme->color(ColorToken::OnSurface),
-                fontSize: 20.0,
-                opacity: $opacity,
-                textAlign: TextAlignment::Start,
-                fontWeight: 400,
-                letterSpacing: 0.0,
-                lineHeight: 28.0,
-                flexShrink: 1.0,
-            );
-        }
-
-        if ($part === 'PAlertTitle') {
-            return new Style(
-                textColor: $theme->color(ColorToken::OnSurface),
-                fontSize: 24.0,
-                opacity: $opacity,
-                textAlign: TextAlignment::Start,
-                fontWeight: 400,
-                letterSpacing: 0.0,
-                lineHeight: 28.0,
-            );
-        }
-
-        if ($part === 'PBannerText') {
-            $requestedLines = $props['lines'] ?? 3;
-            $lines = is_numeric($requestedLines) ? (int) $requestedLines : 3;
-
-            return new Style(
-                paddingRight: 0.0,
-                textColor: $theme->color(ColorToken::OnSurface),
-                fontSize: 14.0,
-                opacity: $opacity,
-                textAlign: TextAlignment::Start,
-                fontWeight: 400,
-                letterSpacing: 0.25 / 14.0,
-                lineHeight: 20.0,
-                numberOfLines: max(1, min(3, $lines)),
-            );
-        }
-
-        if ($part === 'PField') {
-            $focused = ($props['focused'] ?? $props['active'] ?? false) === true;
-            $error = ($props['error'] ?? false) === true
-                || ($props['errorMessages'] ?? []) !== [];
-            $disabled = ($props['disabled'] ?? false) === true;
-            $outlined = $variant === MaterialVariant::Outlined;
-            $underlined = $variant === MaterialVariant::Underlined;
-            $plain = $variant === MaterialVariant::Plain;
-            $solo = in_array($variant, [
-                MaterialVariant::Solo,
-                MaterialVariant::SoloInverted,
-                MaterialVariant::SoloFilled,
-            ], true);
-            $borderColor = $error
-                ? $theme->color(ColorToken::Destructive)
-                : ($focused
-                    ? $theme->color(ColorToken::Primary)
-                    : $theme->color(ColorToken::Border));
-
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: MaterialTokens::fieldHeight($density),
-                paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
-                gap: 8.0,
-                alignItems: Align::Center,
-                backgroundColor: match ($variant) {
-                    MaterialVariant::Outlined,
-                    MaterialVariant::Underlined,
-                    MaterialVariant::Plain => $transparent,
-                    MaterialVariant::Solo => $theme->color(ColorToken::Surface),
-                    MaterialVariant::SoloInverted => $focused
-                        ? $theme->color(ColorToken::Surface)
-                        : $theme->color(ColorToken::Muted),
-                    default => $theme->color(ColorToken::SurfaceSunken),
-                },
-                borderColor: $borderColor,
-                borderWidth: $outlined ? ($focused || $error ? 2.0 : 1.0) : 0.0,
-                borderBottomWidth: $outlined || $solo || $plain
-                    ? null
-                    : ($focused || $error ? 2.0 : 1.0),
-                borderRadius: $underlined || $plain ? 0.0 : 4.0,
-                elevation: in_array($variant, [
-                    MaterialVariant::Solo,
-                    MaterialVariant::SoloInverted,
-                ], true) ? 1.0 : 0.0,
-                opacity: $disabled ? 0.38 : 1.0,
-                animationDurationMs: 150,
-                animateChanges: true,
-            );
-        }
 
         if ($part === 'PAlert') {
             $semanticBackground = self::semanticColor($props, $theme, false);
@@ -428,22 +299,6 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PCalendarHeader') {
-            return new Style(
-                widthPercent: 100.0,
-                height: 56.0,
-                minHeight: 56.0,
-                paddingHorizontal: 4.0,
-                borderWidth: 1.0,
-                borderRadius: 0.0,
-                borderColor: $theme->color(ColorToken::Border),
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: $opacity,
-            );
-        }
-
         if ($part === 'PCalendarDay') {
             $outside = ($props['outside'] ?? false) === true;
 
@@ -460,22 +315,6 @@ final class MaterialStyleResolver
                 fontSize: 12.0,
                 lineHeight: 20.0,
                 opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-            );
-        }
-
-        if ($part === 'PCalendarInterval') {
-            return new Style(
-                minWidth: 50.0,
-                minHeight: 20.0,
-                paddingRight: 8.0,
-                borderWidth: 1.0,
-                borderRadius: 0.0,
-                borderColor: $theme->color(ColorToken::Border),
-                fontSize: 10.0,
-                lineHeight: 20.0,
-                textAlign: TextAlignment::End,
-                backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: $opacity,
             );
         }
 
@@ -498,48 +337,10 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PFileUpload') {
-            $inset = ($props['inset'] ?? false) === true;
-
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: $inset ? 88.0 : 144.0,
-                paddingHorizontal: 16.0,
-                paddingVertical: $inset ? 12.0 : 24.0,
-                gap: 12.0,
-                borderWidth: 2.0,
-                borderRadius: 4.0,
-                borderColor: $theme->color(ColorToken::Border),
-                alignItems: Align::Center,
-                justifyContent: Justify::Center,
-                backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-            );
-        }
-
-        if ($part === 'PFileUploadItem') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 64.0,
-                marginTop: 16.0,
-                marginBottom: 16.0,
-                padding: 16.0,
-                gap: 12.0,
-                borderWidth: 1.0,
-                borderRadius: 4.0,
-                borderColor: $theme->color(ColorToken::Border),
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-            );
-        }
-
         if (in_array($part, [
             'PAutocomplete',
             'PCombobox',
             'PSelect',
-            'PFileInput',
             'PNumberInput',
             'PDateInput',
             'PColorInput',
@@ -580,22 +381,6 @@ final class MaterialStyleResolver
                 animateChanges: true,
             );
         }
-
-
-
-        if ($part === 'PParallax') {
-            $height = self::number($props['height'] ?? null);
-
-            return new Style(
-                widthPercent: 100.0,
-                height: $height > 0.0 ? $height : 500.0,
-                minHeight: $height > 0.0 ? $height : 500.0,
-                overflow: Overflow::Hidden,
-                backgroundColor: $theme->color(ColorToken::SurfaceSunken),
-                opacity: $opacity,
-            );
-        }
-
         if ($part === 'PSparkline') {
             $height = self::number($props['height'] ?? null);
 
@@ -722,9 +507,7 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PSelectionControl',
             'PCheckbox',
-            'PCheckboxBtn',
             'PRadio',
             'PSwitch',
         ], true)) {
@@ -754,7 +537,6 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PSelectionControlGroup',
             'PCheckboxGroup',
             'PRadioGroup',
         ], true)) {
@@ -766,26 +548,6 @@ final class MaterialStyleResolver
                 flexDirection: $inline ? FlexDirection::Row : FlexDirection::Column,
                 alignItems: $inline ? Align::Center : Align::Stretch,
                 opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-            );
-        }
-
-        if ($part === 'PPicker') {
-            return new Style(
-                borderRadius: 4.0,
-                elevation: 0,
-                backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PPickerTitle') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 48.0,
-                paddingHorizontal: 12.0,
-                paddingVertical: 8.0,
-                fontWeight: 400,
-                opacity: $opacity,
             );
         }
 
@@ -804,50 +566,6 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PDatePickerHeader') {
-            return new Style(
-                widthPercent: 100.0,
-                height: 70.0,
-                minHeight: 70.0,
-                paddingHorizontal: 12.0,
-                paddingVertical: 4.0,
-                alignItems: Align::Center,
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PDatePickerMonth') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 288.0,
-                paddingHorizontal: 12.0,
-                paddingBottom: 8.0,
-                gap: 4.0,
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PDatePickerMonths') {
-            return new Style(
-                widthPercent: 100.0,
-                height: 288.0,
-                minHeight: 288.0,
-                paddingHorizontal: 12.0,
-                gap: 24.0,
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PDatePickerYears') {
-            return new Style(
-                widthPercent: 100.0,
-                height: 288.0,
-                minHeight: 288.0,
-                paddingHorizontal: 32.0,
-                opacity: $opacity,
-            );
-        }
-
         if ($part === 'PTimePicker') {
             return new Style(
                 width: 328.0,
@@ -856,91 +574,6 @@ final class MaterialStyleResolver
                 borderRadius: 4.0,
                 elevation: self::resolvedElevation($props, 0.0),
                 backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PTimePickerControls') {
-            return new Style(
-                widthPercent: 100.0,
-                height: 80.0,
-                minHeight: 80.0,
-                gap: 0.0,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                justifyContent: Justify::Center,
-                fontSize: 56.0,
-                lineHeight: 74.0,
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PTimePickerClock') {
-            return new Style(
-                width: 290.0,
-                height: 290.0,
-                minWidth: 290.0,
-                minHeight: 290.0,
-                padding: 10.0,
-                borderRadius: 9999.0,
-                backgroundColor: $theme->color(ColorToken::SurfaceSunken),
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PColorPicker') {
-            return new Style(
-                width: 300.0,
-                minWidth: 300.0,
-                borderRadius: 4.0,
-                elevation: self::resolvedElevation($props, 1.0),
-                backgroundColor: $theme->color(ColorToken::Surface),
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PColorPickerCanvas') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 150.0,
-                borderRadius: 0.0,
-                opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-            );
-        }
-
-        if ($part === 'PColorPickerPreview') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 46.0,
-                padding: 16.0,
-                gap: 8.0,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PColorPickerEdit') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 64.0,
-                marginTop: 24.0,
-                marginBottom: 8.0,
-                paddingHorizontal: 16.0,
-                gap: 8.0,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-                opacity: $opacity,
-            );
-        }
-
-        if ($part === 'PColorPickerSwatches') {
-            return new Style(
-                widthPercent: 100.0,
-                paddingHorizontal: 16.0,
-                paddingBottom: 10.0,
-                gap: 4.0,
-                borderRadius: 8.0,
                 opacity: $opacity,
             );
         }
@@ -1215,6 +848,7 @@ final class MaterialStyleResolver
         if ($part === 'PSkeletonLoader') {
             $skeletonType = $props['type'] ?? 'text';
             $boilerplate = ($props['boilerplate'] ?? false) === true;
+            $reduceMotion = ($props['reduceMotion'] ?? false) === true;
             $skeletonHeight = match ($skeletonType) {
                 'avatar', 'button' => 40.0,
                 'chip' => 32.0,
@@ -1243,8 +877,10 @@ final class MaterialStyleResolver
                 },
                 elevation: self::resolvedElevation($props, 0.0),
                 opacity: $boilerplate ? $opacity * 0.72 : $opacity,
-                animationDurationMs: 1500,
-                animateChanges: !$boilerplate,
+                animationDurationMs: $boilerplate || $reduceMotion
+                    ? null
+                    : 1500,
+                animateChanges: !$boilerplate && !$reduceMotion,
             );
         }
 
@@ -1252,19 +888,26 @@ final class MaterialStyleResolver
             return new Style(
                 widthPercent: 100.0,
                 heightPercent: 100.0,
-                backgroundColor: Color::rgb(0, 0, 0, 82)->argb,
+                backgroundColor: $transparent,
                 opacity: 1.0,
             );
         }
 
         if ($part === 'PDialog') {
             $fullscreen = ($props['fullscreen'] ?? false) === true;
+            $requestedWidth = is_numeric($props['width'] ?? null)
+                ? max(280.0, (float) $props['width'])
+                : null;
+            $requestedMaxWidth = is_numeric($props['maxWidth'] ?? null)
+                ? max(280.0, (float) $props['maxWidth'])
+                : 560.0;
 
             return new Style(
                 margin: $fullscreen ? 0.0 : 24.0,
-                widthPercent: 100.0,
+                width: $fullscreen ? null : $requestedWidth,
+                widthPercent: $requestedWidth === null ? 100.0 : null,
                 heightPercent: $fullscreen ? 100.0 : null,
-                maxWidth: $fullscreen ? null : 560.0,
+                maxWidth: $fullscreen ? null : $requestedMaxWidth,
                 minHeight: 140.0,
                 paddingHorizontal: 24.0,
                 paddingVertical: 24.0,
@@ -1290,8 +933,19 @@ final class MaterialStyleResolver
         }
 
         if ($part === 'PSnackbar') {
+            $location = strtolower(trim(
+                is_string($props['location'] ?? null)
+                    ? $props['location']
+                    : 'bottom',
+            ));
+            $atTop = str_contains($location, 'top');
+            $atEnd = str_contains($location, 'right')
+                || str_contains($location, 'end');
+            $atStart = str_contains($location, 'left')
+                || str_contains($location, 'start');
+            $vertical = ($props['vertical'] ?? false) === true;
+
             return new Style(
-                widthPercent: 100.0,
                 minHeight: 48.0,
                 maxWidth: 672.0,
                 paddingHorizontal: 16.0,
@@ -1302,26 +956,17 @@ final class MaterialStyleResolver
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
                 elevation: self::resolvedElevation($props, 6.0),
                 opacity: $opacity,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-            );
-        }
-
-        if ($part === 'PSnackbarQueue') {
-            return new Style(
-                widthPercent: 100.0,
-                minHeight: 48.0,
-                maxWidth: 672.0,
-                paddingHorizontal: 16.0,
-                paddingVertical: 8.0,
-                gap: 12.0,
-                backgroundColor: 0xFF1B2A3C,
-                textColor: 0xFFF7FAFF,
-                borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
-                elevation: self::resolvedElevation($props, 6.0),
-                opacity: $opacity,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
+                flexDirection: $vertical
+                    ? FlexDirection::Column
+                    : FlexDirection::Row,
+                alignItems: $vertical ? Align::Start : Align::Center,
+                zIndex: 1000,
+                positionType: PositionType::Absolute,
+                left: $atEnd ? null : 8.0,
+                top: $atTop ? 8.0 : null,
+                right: $atStart ? null : 8.0,
+                bottom: $atTop ? null : 8.0,
+                safeAreaBottom: !$atTop,
             );
         }
 
@@ -1346,29 +991,6 @@ final class MaterialStyleResolver
                 backgroundColor: 0x00000000,
                 elevation: 0.0,
                 opacity: $opacity,
-            );
-        }
-
-        if (self::textPart($part)) {
-            [$size, $line, $weight, $tracking] =
-                MaterialTokens::TYPE_SCALE[self::typeScale($part, $props)];
-
-            return new Style(
-                textColor: self::textColor($props, $theme),
-                fontSize: $size,
-                lineHeight: $line,
-                fontWeight: (int) $weight,
-                letterSpacing: $tracking / $size,
-                paddingHorizontal: in_array($part, [
-                    'PCardTitle', 'PCardSubtitle', 'PCardText',
-                ], true) ? 16.0 : null,
-                paddingVertical: match ($part) {
-                    'PCardTitle' => 8.0,
-                    'PCardText' => 16.0,
-                    default => null,
-                },
-                opacity: $opacity,
-                textAlign: TextAlignment::Start,
             );
         }
 
@@ -1466,8 +1088,8 @@ final class MaterialStyleResolver
             );
         }
 
-        if (in_array($part, ['PCard', 'PSheet', 'PEmptyState', 'PPicker'], true)) {
-            $contentContainer = in_array($part, ['PEmptyState', 'PPicker'], true);
+        if (in_array($part, ['PCard', 'PSheet', 'PEmptyState'], true)) {
+            $contentContainer = $part === 'PEmptyState';
             $semanticBackground = self::semanticColor($props, $theme, false);
             $semanticForeground = self::semanticColor($props, $theme, true);
             $horizontal = $part === 'PCard'
@@ -1505,8 +1127,8 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PInput', 'PTextField', 'PTextarea', 'PNumberInput', 'POtpInput',
-            'PColorInput', 'PDateInput', 'PFileInput', 'PSelect',
+            'PTextField', 'PTextarea', 'PNumberInput', 'POtpInput',
+            'PColorInput', 'PDateInput', 'PSelect',
             'PAutocomplete', 'PCombobox',
         ], true)) {
             $focused = ($props['focused'] ?? $props['active'] ?? false) === true;
@@ -1611,16 +1233,6 @@ final class MaterialStyleResolver
             );
         }
 
-        if ($part === 'PCardItem') {
-            return new Style(
-                paddingHorizontal: 16.0,
-                paddingVertical: 10.0,
-                gap: 8.0,
-                flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
-            );
-        }
-
         if ($part === 'PCardActions') {
             return new Style(
                 minHeight: 52.0,
@@ -1664,10 +1276,8 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PCardItem', 'PCardActions', 'PBannerActions',
-            'PToolbarItems', 'PStepperActions', 'PStepperVerticalActions',
-            'PDatePickerControls', 'PTimePickerControls',
-            'PColorPickerPreview', 'PColorPickerEdit',
+            'PCardActions', 'PBannerActions',
+            'PStepperActions', 'PStepperVerticalActions',
         ], true)) {
             return new Style(
                 widthPercent: 100.0,
@@ -1708,8 +1318,7 @@ final class MaterialStyleResolver
 
 
         if (in_array($part, [
-            'PAlert', 'PBanner', 'PSnackbar', 'PFileUpload',
-            'PConfirmEdit',
+            'PAlert', 'PBanner', 'PSnackbar',
         ], true)) {
             $semanticColor = self::semanticColor($props, $theme, false);
 
@@ -1722,7 +1331,6 @@ final class MaterialStyleResolver
                     'PSnackbar' => 14.0,
                     'PAlert' => 16.0,
                     'PBanner' => 8.0,
-                    default => 12.0,
                 },
                 gap: 12.0,
                 backgroundColor: $semanticColor
@@ -1756,7 +1364,6 @@ final class MaterialStyleResolver
 
         if (in_array($part, [
             'PDialog', 'PMenu', 'PBottomSheet', 'POverlay', 'PTooltip',
-            'PSnackbarQueue',
         ], true)) {
             return new Style(
                 paddingHorizontal: match ($part) {
@@ -1797,7 +1404,7 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PList', 'PListGroup', 'PDataTable',
+            'PList', 'PDataTable',
             'PDataTableVirtual', 'PTreeview',
             'PInfiniteScroll',
         ], true)) {
@@ -1805,7 +1412,7 @@ final class MaterialStyleResolver
                 widthPercent: 100.0,
                 gap: 0.0,
                 paddingVertical: in_array($part, [
-                    'PList', 'PListGroup', 'PTreeview',
+                    'PList', 'PTreeview',
                 ], true) ? 8.0 : null,
                 backgroundColor: $theme->color(ColorToken::Surface),
                 borderColor: $theme->color(ColorToken::Border),
@@ -1817,20 +1424,9 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PListItem', 'PTreeviewItem', 'PFileUploadItem',
+            'PListItem', 'PTreeviewItem',
             'PDataTableRow', 'PItem', 'PSlideGroupItem',
         ], true)) {
-            $itemHeight = $part === 'PDataTableRow'
-                ? match ($density) {
-                    MaterialDensity::Default => 52.0,
-                    MaterialDensity::Comfortable => 48.0,
-                    MaterialDensity::Compact => 44.0,
-                }
-                : match ($density) {
-                    MaterialDensity::Default => 48.0,
-                    MaterialDensity::Comfortable => 46.0,
-                    MaterialDensity::Compact => 44.0,
-                };
             $requestedLines = $props['lines'] ?? 1;
             $lines = is_numeric($requestedLines) ? (int) $requestedLines : 1;
 
@@ -1862,13 +1458,11 @@ final class MaterialStyleResolver
         }
 
         if (in_array($part, [
-            'PCheckbox', 'PCheckboxBtn', 'PRadio', 'PSwitch',
-            'PSelectionControl', 'PSelectionControlGroup', 'PRadioGroup',
+            'PCheckbox', 'PRadio', 'PSwitch', 'PRadioGroup',
             'PItemGroup', 'PChipGroup', 'PBtnToggle', 'PBtnGroup',
         ], true)) {
             $selectionControl = in_array($part, [
-                'PCheckbox', 'PCheckboxBtn', 'PRadio', 'PSwitch',
-                'PSelectionControl',
+                'PCheckbox', 'PRadio', 'PSwitch',
             ], true);
             $selectionBaseSize = match ($density) {
                 MaterialDensity::Comfortable => 36.0,
@@ -1881,7 +1475,7 @@ final class MaterialStyleResolver
             );
 
             return new Style(
-                minWidth: in_array($part, ['PCheckbox', 'PCheckboxBtn', 'PRadio'], true)
+                minWidth: in_array($part, ['PCheckbox', 'PRadio'], true)
                     ? $selectionSize
                     : null,
                 minHeight: $selectionControl ? $selectionSize : 40.0,
@@ -1927,7 +1521,7 @@ final class MaterialStyleResolver
 
         if (in_array($part, [
             'PTabs', 'PSlideGroup', 
-            'PStepperHeader', 'PCalendarHeader',
+            'PStepperHeader',
         ], true)) {
             $verticalTabs = in_array($part, ['PTabs', 'PSlideGroup'], true)
                 && (
@@ -2001,7 +1595,7 @@ final class MaterialStyleResolver
         if (in_array($part, [
             'PStepper', 'PStepperVertical', 'PExpansionPanels',
             'PTimeline', 'PCarousel', 'PDatePicker', 'PTimePicker',
-            'PColorPicker', 'PCalendar',
+            'PCalendar',
         ], true)) {
             $bareContainer = in_array($part, [
                 'PStepper', 'PStepperVertical', 'PExpansionPanels',
@@ -2029,10 +1623,8 @@ final class MaterialStyleResolver
         if (in_array($part, [
             'PStepperItem', 'PStepperVerticalItem', 'PExpansionPanel',
             'PExpansionPanelTitle', 'PExpansionPanelText', 'PTimelineItem',
-            'PCarouselItem', 'PDatePickerHeader', 'PDatePickerMonth',
-            'PDatePickerMonths', 'PDatePickerYears', 'PTimePickerClock',
-            'PColorPickerCanvas', 'PColorPickerSwatches', 'PCalendarDay',
-            'PCalendarInterval',
+            'PCarouselItem',
+            'PCalendarDay',
         ], true)) {
             $expansionTitle = $part === 'PExpansionPanelTitle';
             $expansionText = $part === 'PExpansionPanelText';
@@ -2073,7 +1665,7 @@ final class MaterialStyleResolver
                     ? 2.0
                     : (in_array(
                         $part,
-                        ['PExpansionPanelTitle', 'PCalendarInterval'],
+                        ['PExpansionPanelTitle'],
                         true,
                     ) ? 1.0 : 0.0),
                 borderRadius: MaterialTokens::radius(MaterialShape::ExtraSmall),
@@ -2189,73 +1781,6 @@ final class MaterialStyleResolver
         return new Style(opacity: $opacity);
     }
 
-    private static function textPart(string $part): bool
-    {
-        return in_array($part, [
-            'PCardTitle', 'PCardSubtitle', 'PCardText',
-            'PListItemTitle', 'PListItemSubtitle', 'PLabel', 'PMessages',
-            'PCounter', 'PAlertTitle', 'PAppBarTitle',
-            'PBannerText', 
-            'PFieldLabel', 'PListSubheader', 'PPickerTitle', 'PToolbarTitle',
-        ], true);
-    }
-
-    /** @param array<string, mixed> $props */
-    private static function typeScale(string $part, array $props): int
-    {
-        $parent = self::stringKeyedArray($props['__parentVariants'] ?? null);
-        $parentComponent = $parent['__pamParentComponent'] ?? null;
-        if ($part === 'PText') {
-            $parentScale = match ($parentComponent) {
-                'PBtn', 'PFab' => 14,
-                'PChip' => 17,
-                'PBadge' => 15,
-                'PSnackbar', 'PBanner' => 14,
-                default => null,
-            };
-            if ($parentScale !== null) {
-                return $parentScale;
-            }
-        }
-
-        return match ($part) {
-            'PCardTitle', 'PAppBarTitle', 'PToolbarTitle', 'PPickerTitle' => 7,
-            'PAlertTitle' => 6,
-            'PCardText', 'PCardSubtitle', 'PListItemSubtitle',
-            'PBannerText', 'PListSubheader' => 12,
-            'PListItemTitle' => 11,
-            'PLabel', 'PFieldLabel' => 14,
-            'PMessages', 'PCounter' => 13,
-            default => match ($props['typography'] ?? $props['size'] ?? null) {
-                'display' => 3,
-                'headline' => 5,
-                'title' => 8,
-                'body' => 11,
-                'label' => 14,
-                'display-large' => 1,
-                'display-medium' => 2,
-                'display-small' => 3,
-                'headline-large' => 4,
-                'headline-medium' => 5,
-                'headline-small' => 6,
-                'title-large' => 7,
-                'title-medium' => 8,
-                'title-small' => 9,
-                '3xl' => 3,
-                '2xl' => 4,
-                'xl' => 6,
-                'lg' => 7,
-                'base' => 11,
-                'sm' => 12,
-                'xs' => 16,
-                'body-small' => 13,
-                'label-large' => 14,
-                'label-small' => 16,
-                default => 11,
-            },
-        };
-    }
-
     private static function number(mixed $value): float
     {
         if (is_float($value)) {
@@ -2263,55 +1788,6 @@ final class MaterialStyleResolver
         }
 
         return is_int($value) ? (float) $value : 0.0;
-    }
-
-    /** @param array<string, mixed> $props */
-    private static function textColor(array $props, Theme $theme): int
-    {
-        if (is_int($props['color'] ?? null)) {
-            return $props['color'];
-        }
-
-        $parentValue = $props['__parentVariants'] ?? null;
-        $parent = self::stringKeyedArray($parentValue);
-        $parentComponent = $parent['__pamParentComponent'] ?? null;
-        $parentVariant = $parent['variant'] ?? null;
-
-        if (in_array($parentComponent, ['PBtn', 'PFab'], true)) {
-            $semanticBackground = self::semanticColor($parent, $theme, false);
-            $semanticForeground = self::semanticColor($parent, $theme, true);
-
-            return match ($parentVariant) {
-                MaterialVariant::Tonal->value, 'tonal' =>
-                    $semanticForeground
-                        ?? $theme->color(ColorToken::SecondaryForeground),
-                MaterialVariant::Outlined->value, 'outlined', 'outline',
-                MaterialVariant::Text->value, 'text',
-                MaterialVariant::Plain->value, 'plain' =>
-                    $semanticBackground ?? $theme->color(ColorToken::Primary),
-                default => $semanticForeground
-                    ?? $theme->color(ColorToken::PrimaryForeground),
-            };
-        }
-
-        if (in_array($parentComponent, [
-            'PAlert', 'PAvatar', 'PBanner', 'PCard', 'PSheet',
-        ], true)) {
-            return self::semanticColor($parent, $theme, true)
-                ?? ($parentComponent === 'PAvatar'
-                    ? $theme->color(ColorToken::SecondaryForeground)
-                    : $theme->color(ColorToken::OnSurface));
-        }
-
-        if (in_array($parentComponent, ['PChip', 'PBadge'], true)) {
-            return self::semanticColor(
-                $parent,
-                $theme,
-                true,
-            ) ?? $theme->color(ColorToken::SecondaryForeground);
-        }
-
-        return $theme->color(ColorToken::OnSurface);
     }
 
     /** @param array<string, mixed> $props */

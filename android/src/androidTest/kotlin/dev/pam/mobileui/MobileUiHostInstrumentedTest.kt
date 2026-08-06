@@ -34,6 +34,66 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
     @Test
+    fun abstractSelectionItemUsesButtonSemanticsWithoutCheckboxChrome() {
+        onMain {
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(9),
+                    "abstractSelectionItem" to WireValue.Flag(true),
+                    "checked" to WireValue.Flag(true),
+                    "accessibilityLabel" to WireValue.Text("Grid view"),
+                ),
+            )
+            val info = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(info)
+            assertEquals("android.widget.Button", info.className)
+            assertTrue(info.isSelected)
+            assertTrue(!info.isCheckable)
+            info.recycle()
+            host.release()
+        }
+    }
+
+    @Test
+    fun listItemMeasurementFollowsMaterialLinesAndDensity() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val host = MobileUiHost(context) { _, _ -> Unit }
+            host.addView(TextView(context).apply { text = "Title" })
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(37),
+                    "lines" to WireValue.Integer(1),
+                    "density" to WireValue.Text("compact"),
+                ),
+            )
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(dp(host, 320f), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(dp(host, 200f), View.MeasureSpec.AT_MOST),
+            )
+            assertEquals(dp(host, 40f), host.measuredHeight)
+
+            host.addView(TextView(context).apply { text = "Subtitle" })
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(37),
+                    "lines" to WireValue.Integer(2),
+                    "density" to WireValue.Text("comfortable"),
+                ),
+            )
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(dp(host, 320f), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(dp(host, 200f), View.MeasureSpec.AT_MOST),
+            )
+            assertEquals(dp(host, 60f), host.measuredHeight)
+            host.release()
+        }
+    }
+
+    @Test
     fun gridMeasuresSpansAndExposesCollectionSemantics() {
         onMain {
             val context = ApplicationProvider.getApplicationContext<android.content.Context>()
@@ -229,7 +289,7 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(10),
+                    "behavior" to WireValue.Integer(9),
                     "defaultIsChecked" to WireValue.Flag(false),
                     "isReadOnly" to WireValue.Flag(true),
                 ),
@@ -268,7 +328,7 @@ class MobileUiHostInstrumentedTest {
 
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(10),
+                    "behavior" to WireValue.Integer(9),
                     "isIndeterminate" to WireValue.Flag(true),
                 ),
             )
@@ -407,7 +467,7 @@ class MobileUiHostInstrumentedTest {
             val progress = MobileUiHost(context) { _, _ -> }
             progress.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(15),
+                    "behavior" to WireValue.Integer(12),
                     "value" to WireValue.Decimal(25.0),
                     "min" to WireValue.Decimal(0.0),
                     "max" to WireValue.Decimal(100.0),
@@ -447,7 +507,7 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(27),
+                    "behavior" to WireValue.Integer(22),
                     "defaultValue" to WireValue.Flag(true),
                     "trackOffColor" to WireValue.Integer(0xffd4d4d4),
                     "trackOnColor" to WireValue.Integer(0xff525252),
@@ -478,7 +538,7 @@ class MobileUiHostInstrumentedTest {
 
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(27),
+                    "behavior" to WireValue.Integer(22),
                     "checked" to WireValue.Flag(true),
                     "isDisabled" to WireValue.Flag(true),
                     "isInvalid" to WireValue.Flag(true),
@@ -732,6 +792,39 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun carouselShowsOnlyTheSelectedNativePage() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            val overview = tabTrigger(host, "overview", selected = true)
+            val details = tabTrigger(host, "details")
+            host.addView(overview)
+            host.addView(details)
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(6),
+                    "navigationKind" to WireValue.Integer(1),
+                    "value" to WireValue.Text("overview"),
+                    "continuous" to WireValue.Flag(true),
+                ),
+            )
+
+            assertEquals(View.VISIBLE, overview.visibility)
+            assertEquals(View.GONE, details.visibility)
+            assertTrue(details.performClick())
+            assertEquals(View.GONE, overview.visibility)
+            assertEquals(View.VISIBLE, details.visibility)
+            assertEquals(listOf("details"), payloads.map(ByteArray::decodeToString))
+
+            host.release()
+        }
+    }
+
+    @Test
     fun nonDismissibleSheetNeverAnimatesAwayOrEmitsDismissal() {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()
@@ -918,7 +1011,7 @@ class MobileUiHostInstrumentedTest {
             }
             selectItem.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(29),
+                    "behavior" to WireValue.Integer(24),
                     "component" to WireValue.Integer(GeneratedComponents.SELECT_ITEM.toLong()),
                     "checked" to WireValue.Flag(true),
                 ),
@@ -940,25 +1033,7 @@ class MobileUiHostInstrumentedTest {
             assertTrue(itemInfo.isChecked)
             assertEquals("android.widget.CheckedTextView", itemInfo.className)
 
-            dismissals.clear()
-            val actionItem = MobileUiHost(sheet.context) { kind, payload ->
-                if (kind == NativeViewEventKind.PRESS) presses += payload
-            }
-            actionItem.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(29),
-                    "component" to WireValue.Integer(
-                        GeneratedComponents.ACTIONSHEET_ITEM.toLong(),
-                    ),
-                ),
-            )
-            content.addView(actionItem)
-            assertTrue(actionItem.performClick())
-            assertEquals(2, presses.size)
-            assertTrue(dismissals.isEmpty())
-
             selectItem.release()
-            actionItem.release()
             sheet.release()
             sheetInfo.recycle()
             itemInfo.recycle()
@@ -976,7 +1051,7 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(19),
+                    "behavior" to WireValue.Integer(14),
                     "defaultIsOpen" to WireValue.Flag(false),
                     "placement" to WireValue.Integer(4),
                 ),
@@ -995,7 +1070,7 @@ class MobileUiHostInstrumentedTest {
             val close = MobileUiHost(host.context) { kind, payload ->
                 if (kind == NativeViewEventKind.PRESS) closePresses += payload
             }
-            close.update(mapOf("behavior" to WireValue.Integer(31)))
+            close.update(mapOf("behavior" to WireValue.Integer(26)))
             content.addView(close)
             host.addView(trigger)
             host.addView(content)
@@ -1045,6 +1120,44 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun controlledAnchoredOverlayEmitsOpenRequestFromItsTrigger() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { kind, payload ->
+                if (kind == NativeViewEventKind.NATIVE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(15),
+                    "open" to WireValue.Flag(false),
+                    "openOnClick" to WireValue.Flag(true),
+                ),
+            )
+            val trigger = View(host.context).apply {
+                tag = "pam:overlay-trigger"
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:overlay-content"
+            }
+            host.addView(trigger)
+            host.addView(content)
+            host.layout(0, 0, 400, 600)
+            trigger.layout(40, 40, 240, 120)
+            content.layout(40, 120, 320, 360)
+
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 100f, 80f)))
+            assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 100f, 80f)))
+            assertEquals(1, payloads.size)
+            val request = WireMap.decode(payloads.single())
+            assertEquals(3L, (request["action"] as WireValue.Integer).value)
+            assertTrue((request["open"] as WireValue.Flag).value)
+            host.release()
+        }
+    }
+
+    @Test
     fun menuCoordinatesSelectionKeyboardAndCollectionSemanticsOnTheUiThread() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = launchTestHostActivity()
@@ -1059,7 +1172,7 @@ class MobileUiHostInstrumentedTest {
             }
             menu.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(20),
+                    "behavior" to WireValue.Integer(15),
                     "defaultIsOpen" to WireValue.Flag(true),
                     "selectionMode" to WireValue.Integer(2),
                     "closeOnSelect" to WireValue.Flag(false),
@@ -1073,7 +1186,7 @@ class MobileUiHostInstrumentedTest {
             }
             first.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(30),
+                    "behavior" to WireValue.Integer(25),
                     "selectionMode" to WireValue.Integer(2),
                     "selected" to WireValue.Flag(false),
                     "closeOnSelect" to WireValue.Flag(false),
@@ -1085,7 +1198,7 @@ class MobileUiHostInstrumentedTest {
             }
             second.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(30),
+                    "behavior" to WireValue.Integer(25),
                     "selectionMode" to WireValue.Integer(2),
                     "selected" to WireValue.Flag(true),
                     "closeOnSelect" to WireValue.Flag(false),
@@ -1156,7 +1269,7 @@ class MobileUiHostInstrumentedTest {
             host = MobileUiHost(activity) { _, _ -> }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(19),
+                    "behavior" to WireValue.Integer(14),
                     "isOpen" to WireValue.Flag(true),
                     "placement" to WireValue.Integer(4),
                     "shouldFlip" to WireValue.Flag(true),
@@ -1207,7 +1320,7 @@ class MobileUiHostInstrumentedTest {
             val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
                 if (kind == NativeViewEventKind.NATIVE) payloads += payload
             }
-            host.update(mapOf("behavior" to WireValue.Integer(17)))
+            host.update(mapOf("behavior" to WireValue.Integer(13)))
             val wrapper = FrameLayout(host.context)
             val content = View(host.context)
             wrapper.addView(content)
@@ -1450,7 +1563,7 @@ class MobileUiHostInstrumentedTest {
             val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
                 if (kind == NativeViewEventKind.NATIVE) payloads += payload
             }
-            host.update(mapOf("behavior" to WireValue.Integer(17)))
+            host.update(mapOf("behavior" to WireValue.Integer(13)))
 
             val info = AccessibilityNodeInfo.obtain()
             host.onInitializeAccessibilityNodeInfo(info)
@@ -1475,7 +1588,7 @@ class MobileUiHostInstrumentedTest {
             val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(22),
+                    "behavior" to WireValue.Integer(17),
                     "mode" to WireValue.Integer(5),
                     "value" to WireValue.Text("14:35"),
                     "timeZoneOffsetInMinutes" to WireValue.Integer(-180),
@@ -1526,7 +1639,7 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(22),
+                    "behavior" to WireValue.Integer(17),
                     "mode" to WireValue.Integer(4),
                     "value" to WireValue.Text("2026-07-23"),
                     "minimumDate" to WireValue.Text("2026-07-01"),
@@ -1566,7 +1679,7 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(22),
+                    "behavior" to WireValue.Integer(17),
                     "mode" to WireValue.Integer(4),
                     "value" to WireValue.Text("2026-07-23"),
                 ),
@@ -1675,7 +1788,7 @@ class MobileUiHostInstrumentedTest {
             }
             group.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(24),
+                    "behavior" to WireValue.Integer(19),
                     "type" to WireValue.Integer(1),
                     "isCollapsible" to WireValue.Flag(false),
                 ),
@@ -1739,7 +1852,7 @@ class MobileUiHostInstrumentedTest {
             }
             host.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(11),
+                    "behavior" to WireValue.Integer(10),
                     "checked" to WireValue.Flag(false),
                 ),
             )
@@ -1756,14 +1869,14 @@ class MobileUiHostInstrumentedTest {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()
             val group = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
-            group.update(mapOf("behavior" to WireValue.Integer(26)))
+            group.update(mapOf("behavior" to WireValue.Integer(21)))
             val wrapper = FrameLayout(group.context)
             val first = MobileUiHost(group.context) { kind, payload ->
                 if (kind == NativeViewEventKind.TOGGLE) payloads += payload
             }
             first.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(11),
+                    "behavior" to WireValue.Integer(10),
                     "checked" to WireValue.Flag(true),
                 ),
             )
@@ -1772,7 +1885,7 @@ class MobileUiHostInstrumentedTest {
             }
             second.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(11),
+                    "behavior" to WireValue.Integer(10),
                     "checked" to WireValue.Flag(false),
                 ),
             )
@@ -1827,7 +1940,7 @@ class MobileUiHostInstrumentedTest {
             inputGroup = MobileUiHost(context) { _, _ -> }
             inputGroup.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(32),
+                    "behavior" to WireValue.Integer(27),
                     "focusColor" to WireValue.Integer(0xff2563eb),
                     "invalidColor" to WireValue.Integer(0xffdc2626),
                 ),
@@ -1839,14 +1952,14 @@ class MobileUiHostInstrumentedTest {
             clear = MobileUiHost(context) { kind, _ -> inputEvents += kind }
             clear.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(33),
+                    "behavior" to WireValue.Integer(28),
                     "slotAction" to WireValue.Integer(2),
                 ),
             )
             password = MobileUiHost(context) { kind, _ -> inputEvents += kind }
             password.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(33),
+                    "behavior" to WireValue.Integer(28),
                     "slotAction" to WireValue.Integer(3),
                 ),
             )
@@ -1876,7 +1989,7 @@ class MobileUiHostInstrumentedTest {
 
             inputGroup.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(32),
+                    "behavior" to WireValue.Integer(27),
                     "readOnly" to WireValue.Flag(true),
                 ),
             )
@@ -1887,7 +2000,7 @@ class MobileUiHostInstrumentedTest {
             form = MobileUiHost(context) { _, _ -> }
             form.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(34),
+                    "behavior" to WireValue.Integer(29),
                     "required" to WireValue.Flag(true),
                     "invalid" to WireValue.Flag(true),
                 ),
@@ -1951,12 +2064,12 @@ class MobileUiHostInstrumentedTest {
         onMain {
             val context = ApplicationProvider.getApplicationContext<android.content.Context>()
             val table = MobileUiHost(context) { _, _ -> }
-            table.update(mapOf("behavior" to WireValue.Integer(35)))
+            table.update(mapOf("behavior" to WireValue.Integer(30)))
             val headerWrapper = FrameLayout(context)
             val header = MobileUiHost(context) { _, _ -> }
             header.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(36),
+                    "behavior" to WireValue.Integer(31),
                     "isHeaderRow" to WireValue.Flag(true),
                 ),
             )
@@ -1968,7 +2081,7 @@ class MobileUiHostInstrumentedTest {
 
             val bodyWrapper = FrameLayout(context)
             val body = MobileUiHost(context) { _, _ -> }
-            body.update(mapOf("behavior" to WireValue.Integer(36)))
+            body.update(mapOf("behavior" to WireValue.Integer(31)))
             val packageCell = TextView(context).apply { text = "pushinbr/pam-mobile-ui" }
             val runtimeCell = TextView(context).apply { text = "Android" }
             body.addView(packageCell)
@@ -2016,7 +2129,7 @@ class MobileUiHostInstrumentedTest {
                 mapOf(
                     "behavior" to WireValue.Integer(8),
                     "component" to WireValue.Integer(
-                        GeneratedComponents.SKELETON_TEXT.toLong(),
+                        GeneratedComponents.SKELETON.toLong(),
                     ),
                     "pulseDuration" to WireValue.Integer(2_000),
                     "lines" to WireValue.Integer(3),
@@ -2025,7 +2138,7 @@ class MobileUiHostInstrumentedTest {
             toast = MobileUiHost(context) { _, _ -> }
             toast.update(
                 mapOf(
-                    "behavior" to WireValue.Integer(12),
+                    "behavior" to WireValue.Integer(11),
                     "action" to WireValue.Integer(4),
                     "persistent" to WireValue.Flag(true),
                 ),
@@ -2059,313 +2172,6 @@ class MobileUiHostInstrumentedTest {
         }
     }
 
-    @Test
-    fun imageViewerCoordinatesGalleryNavigationAndDismissalOnTheUiThread() {
-        onMain {
-            val events = CopyOnWriteArrayList<NativeViewEventKind>()
-            val payloads = CopyOnWriteArrayList<ByteArray>()
-            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-            val viewer = MobileUiHost(context) { kind, payload ->
-                events += kind
-                payloads += payload
-            }
-            viewer.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(13),
-                    "initialIndex" to WireValue.Integer(0),
-                ),
-            )
-            val first = View(context).apply {
-                tag = "pam:image-viewer-image:0"
-                contentDescription = "Mountain"
-            }
-            val second = View(context).apply {
-                tag = "pam:image-viewer-image:1"
-                contentDescription = "Ocean"
-            }
-            val third = View(context).apply {
-                tag = "pam:image-viewer-image:2"
-                contentDescription = "Desert"
-            }
-            val counter = TextView(context).apply {
-                tag = "pam:image-viewer-counter"
-            }
-            val previous = MobileUiHost(context) { _, _ -> }
-            previous.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(37),
-                    "navigationAction" to WireValue.Integer(1),
-                ),
-            )
-            val next = MobileUiHost(context) { _, _ -> }
-            next.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(37),
-                    "navigationAction" to WireValue.Integer(2),
-                ),
-            )
-            val close = MobileUiHost(context) { _, _ -> }
-            close.update(mapOf("behavior" to WireValue.Integer(31)))
-            viewer.addView(first)
-            viewer.addView(second)
-            viewer.addView(third)
-            viewer.addView(counter)
-            viewer.addView(previous)
-            viewer.addView(next)
-            viewer.addView(close)
-            viewer.layout(0, 0, 1_080, 2_000)
-
-            assertEquals(View.VISIBLE, first.visibility)
-            assertEquals(View.GONE, second.visibility)
-            assertEquals(View.INVISIBLE, previous.visibility)
-            assertEquals(View.VISIBLE, next.visibility)
-            assertEquals("1 / 3", counter.text.toString())
-
-            assertTrue(
-                viewer.performAccessibilityAction(
-                    AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
-                    null,
-                ),
-            )
-            assertEquals(View.GONE, first.visibility)
-            assertEquals(View.VISIBLE, second.visibility)
-            assertEquals("2 / 3", counter.text.toString())
-            assertEquals(NativeViewEventKind.CHANGE, events[0])
-            assertEquals("1", payloads[0].decodeToString())
-
-            assertTrue(previous.performClick())
-            assertEquals(View.VISIBLE, first.visibility)
-            assertEquals("0", payloads[1].decodeToString())
-            assertTrue(close.performClick())
-            val dismissal = WireMap.decode(payloads.last())
-            assertEquals(NativeViewEventKind.NATIVE, events.last())
-            assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
-            assertTrue((dismissal["dismissed"] as WireValue.Flag).value)
-
-            val info = AccessibilityNodeInfo.obtain()
-            viewer.onInitializeAccessibilityNodeInfo(info)
-            assertEquals("android.widget.Gallery", info.className)
-            assertEquals(3, info.collectionInfo?.columnCount)
-
-            info.recycle()
-            previous.release()
-            next.release()
-            close.release()
-            viewer.release()
-        }
-    }
-
-    @Test
-    fun chatAiCoordinatesBranchesPromptSubmissionAndScrollControlsNatively() {
-        onMain {
-            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-            val branchEvents = CopyOnWriteArrayList<NativeViewEventKind>()
-            val branchPayloads = CopyOnWriteArrayList<ByteArray>()
-            val branch = MobileUiHost(context) { kind, payload ->
-                branchEvents += kind
-                branchPayloads += payload
-            }
-            branch.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(38),
-                    "defaultBranch" to WireValue.Integer(0),
-                    "loop" to WireValue.Flag(false),
-                ),
-            )
-            val first = View(context).apply {
-                tag = "pam:message-branch-page:0"
-            }
-            val second = View(context).apply {
-                tag = "pam:message-branch-page:1"
-            }
-            val selector = FrameLayout(context).apply {
-                tag = "pam:message-branch-selector"
-            }
-            val previous = MobileUiHost(context) { _, _ -> }
-            previous.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(39),
-                    "navigationAction" to WireValue.Integer(1),
-                ),
-            )
-            val page = TextView(context).apply {
-                tag = "pam:message-branch-counter"
-            }
-            val next = MobileUiHost(context) { _, _ -> }
-            next.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(39),
-                    "navigationAction" to WireValue.Integer(2),
-                ),
-            )
-            selector.addView(previous)
-            selector.addView(page)
-            selector.addView(next)
-            branch.addView(first)
-            branch.addView(second)
-            branch.addView(selector)
-            branch.layout(0, 0, 1_080, 800)
-
-            assertEquals(View.VISIBLE, first.visibility)
-            assertEquals(View.GONE, second.visibility)
-            assertTrue(!previous.isEnabled)
-            assertTrue(next.isEnabled)
-            assertEquals("1 of 2", page.text.toString())
-            assertTrue(next.performClick())
-            assertEquals(View.GONE, first.visibility)
-            assertEquals(View.VISIBLE, second.visibility)
-            assertEquals("2 of 2", page.text.toString())
-            assertEquals(NativeViewEventKind.CHANGE, branchEvents.single())
-            assertEquals("1", branchPayloads.single().decodeToString())
-
-            val branchInfo = AccessibilityNodeInfo.obtain()
-            branch.onInitializeAccessibilityNodeInfo(branchInfo)
-            assertEquals("androidx.viewpager.widget.ViewPager", branchInfo.className)
-            assertEquals(2, branchInfo.collectionInfo?.columnCount)
-
-            val promptEvents = CopyOnWriteArrayList<NativeViewEventKind>()
-            val promptPayloads = CopyOnWriteArrayList<ByteArray>()
-            val prompt = MobileUiHost(context) { kind, payload ->
-                promptEvents += kind
-                promptPayloads += payload
-            }
-            prompt.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(40),
-                    "clearOnSubmit" to WireValue.Flag(true),
-                    "trimOnSubmit" to WireValue.Flag(true),
-                ),
-            )
-            val input = EditText(context)
-            val submit = MobileUiHost(context) { _, _ -> }
-            submit.update(mapOf("behavior" to WireValue.Integer(41)))
-            prompt.addView(input)
-            prompt.addView(submit)
-            prompt.layout(0, 0, 1_080, 240)
-
-            assertTrue(!submit.isEnabled)
-            input.setText("  Build PAM  ")
-            assertTrue(submit.isEnabled)
-            assertTrue(submit.performClick())
-            assertEquals(NativeViewEventKind.SUBMIT, promptEvents.single())
-            assertEquals("Build PAM", promptPayloads.single().decodeToString())
-            assertEquals("", input.text.toString())
-            assertTrue(!submit.isEnabled)
-            assertEquals("Send prompt", submit.contentDescription)
-
-            prompt.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(40),
-                    "clearOnSubmit" to WireValue.Flag(true),
-                    "trimOnSubmit" to WireValue.Flag(true),
-                    "attachmentCount" to WireValue.Integer(1),
-                ),
-            )
-            assertTrue(submit.isEnabled)
-            assertTrue(submit.performClick())
-            assertEquals(2, promptEvents.size)
-            assertEquals("", promptPayloads.last().decodeToString())
-
-            val conversation = MobileUiHost(context) { _, _ -> }
-            conversation.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(14),
-                    "autoScroll" to WireValue.Flag(true),
-                ),
-            )
-            val scrollButton = MobileUiHost(context) { _, _ -> }
-            scrollButton.update(mapOf("behavior" to WireValue.Integer(42)))
-            conversation.addView(scrollButton)
-            conversation.layout(0, 0, 1_080, 800)
-            val conversationInfo = AccessibilityNodeInfo.obtain()
-            conversation.onInitializeAccessibilityNodeInfo(conversationInfo)
-            assertEquals("android.widget.ListView", conversationInfo.className)
-            assertEquals("Scroll to latest message", scrollButton.contentDescription)
-
-            val treeEvents = CopyOnWriteArrayList<NativeViewEventKind>()
-            val treePayloads = CopyOnWriteArrayList<ByteArray>()
-            val tree = MobileUiHost(context) { kind, payload ->
-                treeEvents += kind
-                treePayloads += payload
-            }
-            tree.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(43),
-                    "expandedPaths" to WireValue.Text("/src"),
-                    "selectedPath" to WireValue.Text("/src/App.php"),
-                ),
-            )
-            val folder = MobileUiHost(context) { _, _ -> }
-            folder.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(44),
-                    "path" to WireValue.Text("/src"),
-                ),
-            )
-            val header = FrameLayout(context)
-            val name = TextView(context).apply {
-                tag = "pam:file-tree-name"
-                text = "src"
-            }
-            header.addView(name)
-            val content = FrameLayout(context).apply {
-                tag = "pam:file-tree-content"
-            }
-            val file = MobileUiHost(context) { _, _ -> }
-            file.update(
-                mapOf(
-                    "behavior" to WireValue.Integer(45),
-                    "path" to WireValue.Text("/src/App.php"),
-                ),
-            )
-            content.addView(file)
-            folder.addView(header)
-            folder.addView(content)
-            tree.addView(folder)
-            tree.layout(0, 0, 1_080, 800)
-
-            assertEquals(View.VISIBLE, content.visibility)
-            assertTrue(file.isSelected)
-            assertTrue(folder.performClick())
-            assertEquals(View.GONE, content.visibility)
-            assertTrue(folder.isSelected)
-            assertEquals(NativeViewEventKind.CHANGE, treeEvents[0])
-            assertEquals("/src", treePayloads[0].decodeToString())
-            assertEquals(NativeViewEventKind.NATIVE, treeEvents[1])
-            val expandedEvent = WireMap.decode(treePayloads[1])
-            assertEquals(
-                1L,
-                (expandedEvent["action"] as WireValue.Integer).value,
-            )
-            assertEquals(
-                false,
-                (expandedEvent["expanded"] as WireValue.Flag).value,
-            )
-            assertEquals(
-                "/src",
-                (expandedEvent["path"] as WireValue.Text).value,
-            )
-            val folderInfo = AccessibilityNodeInfo.obtain()
-            folder.onInitializeAccessibilityNodeInfo(folderInfo)
-            assertEquals("android.widget.Button", folderInfo.className)
-            assertEquals("src", folderInfo.contentDescription)
-
-            folderInfo.recycle()
-            conversationInfo.recycle()
-            branchInfo.recycle()
-            file.release()
-            folder.release()
-            tree.release()
-            scrollButton.release()
-            conversation.release()
-            submit.release()
-            prompt.release()
-            previous.release()
-            next.release()
-            branch.release()
-        }
-    }
-
     private fun dp(view: View, value: Float): Int =
         (value * view.resources.displayMetrics.density + 0.5f).toInt()
 
@@ -2378,7 +2184,7 @@ class MobileUiHostInstrumentedTest {
         MobileUiHost(parent.context) { _, _ -> }.apply {
             update(
                 mapOf(
-                    "behavior" to WireValue.Integer(28),
+                    "behavior" to WireValue.Integer(23),
                     "value" to WireValue.Text(value),
                     "selected" to WireValue.Flag(selected),
                     "disabled" to WireValue.Flag(disabled),

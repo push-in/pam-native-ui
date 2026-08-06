@@ -42,9 +42,15 @@ The following Vuetify concepts do not justify a mobile component API:
 | `p-window` | Routers, tabs, carousels and steppers already own mobile screen transitions. |
 | `p-data-iterator` | Data orchestration belongs to application state and repositories. |
 | `p-data-table-server` | Server pagination and sorting are data-source concerns; `p-data-table` receives the resulting rows. |
+| `p-field`, `p-input` | Low-level field shells are replaced by complete mobile controls such as `p-text-field`, `p-textarea`, `p-number-input` and `p-date-input`. |
+| `p-card-item`, text/title/subtitle wrappers | PAM Native `Row`, `Column` and `Text` already provide composition and typography without a second component layer. |
+| `p-list-group` | It did not provide disclosure anatomy; nested disclosure uses the operational `p-expansion-panels` family. |
+| Date/time picker anatomy parts | Mobile date/time controls own their complete native surface; fake `controls`, `header`, `month`, `years` and `clock` aliases were removed. |
 
-`p-file-upload` remains public, but it launches native documents, media,
-camera or share flows. Drop zones and drag-to-upload variants are not exposed.
+File picking and uploads are not UI components. Applications use PAM Native
+document, media, camera or share capabilities and render progress with the
+existing progress, list and feedback components. `p-file-input`,
+`p-file-upload` and `p-file-upload-item` are not part of PAM UI.
 
 ## Retention rule
 

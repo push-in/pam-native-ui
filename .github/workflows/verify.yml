@@ -14,11 +14,13 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: d420837613669483679ebafc50607a8952b6761b
+  PAM_NATIVE_COMMIT: 8d8a09591b449737ede32acd03ee506cfb6612cd
 
 jobs:
   php:
     name: PHP 8.4
+    needs:
+      - ios
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -53,6 +55,7 @@ jobs:
       - name: Verify generated API, styles and PHP
         env:
           PAM_NATIVE_ROOT: ${{ github.workspace }}/pam-native
+          PAM_CI_VERIFIED_GATES: ios
         run: composer run verify
 
       - name: Run composition benchmark

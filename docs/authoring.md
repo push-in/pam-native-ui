@@ -12,17 +12,13 @@ developers:
 ```xml
 <SafeAreaView class="ui-bg">
     <VStack class="p-6 gap-4">
-        <p-heading size="2xl">Create account</p-heading>
-        <p-input>
-            <p-input-field
-                value="{{ $email }}"
-                keyboardType="email"
-                on:change="setEmail"
-            />
-        </p-input>
-        <p-button on:press="submit">
-            <p-button-text>Continue</p-button-text>
-        </p-button>
+        <Text size="2xl">Create account</Text>
+        <p-text-field
+            value="{{ $email }}"
+            keyboardType="email"
+            on:change="setEmail"
+        />
+        <p-btn on:press="submit"><Text>Continue</Text></p-btn>
     </VStack>
 </SafeAreaView>
 ```
@@ -37,32 +33,27 @@ Use facades when IDE completion, refactoring and enum props matter more than
 template terseness:
 
 ```php
-use Pam\MobileUi\Component\Button;
-use Pam\MobileUi\Component\ButtonText;
-use Pam\MobileUi\Component\Card;
-use Pam\MobileUi\Component\Heading;
-use Pam\MobileUi\Component\VStack;
-use Pam\MobileUi\Enum\ButtonVariant;
-use Pam\MobileUi\Enum\ComponentSize;
+use Pam\MobileUi\Material\PBtn;
+use Pam\MobileUi\Material\PCard;
+use Pam\Native\UI\Column;
+use Pam\Native\UI\Text;
 use Pam\Native\Style;
 
-$screen = Card::make(
-    null,
-    VStack::make(
-        ['space' => 'md'],
-        Heading::make('Checkout')->size(ComponentSize::ExtraLarge),
-        Button::make(
-            null,
-            ButtonText::make('Pay now'),
-        )
-            ->variant(ButtonVariant::Default)
-            ->onPress($pay),
-    ),
+$screen = PCard::make(
+    [],
+    Column::make(
+        Text::make('Checkout')->style(new Style(
+            fontSize: 24.0,
+            fontWeight: 600,
+        )),
+        PBtn::make(['text' => 'Pay now'])->onPress($pay),
+    )->style(new Style(gap: 16.0)),
 )->style(new Style(padding: 24.0));
 ```
 
-Every public tag has a facade under `Pam\MobileUi\Component`; `Switch` is named
-`SwitchControl` in PHP because `switch` is reserved.
+Every public `p-*` tag has a typed facade under `Pam\MobileUi\Material`.
+Low-level text and layout use PAM Native primitives rather than duplicate PAM
+UI components.
 
 ## A typed component used as a tag
 
@@ -113,8 +104,8 @@ are compiled in PHP; Android receives resolved integer colors.
 You are not required to follow a component-class structure:
 
 - use `Pam\Native\UI` primitives directly for low-level layout;
-- use `Pam\MobileUi\Component\UiNode` for a component selected dynamically by
-  tag name;
+- resolve dynamic public tags through
+  `Pam\MobileUi\Generated\MaterialComponentMap::TAGS`;
 - register application tags through `TemplateRegistry`;
 - install a PAM plugin that exposes Kotlin/Java Android views;
 - use `CustomView::make()` for an application-owned generated native view.

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App;
 
-use Pam\MobileUi\Component\AccordionIcon;
-use Pam\MobileUi\Component\ChevronDownIcon;
 use Pam\MobileUi\Component\UiComponent;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Generated\MaterialComponentMap;
@@ -59,7 +57,7 @@ final class ComponentRoute extends Component
             $previewProps = $this->sampleProps($variation['props']);
             if ($this->belongsTo([
                 'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
-                'p-field', 'p-file-input', 'p-input', 'p-number-input',
+                'p-number-input',
                 'p-otp-input', 'p-range-slider', 'p-rating', 'p-select',
                 'p-slider', 'p-text-field', 'p-textarea',
             ])) {
@@ -69,8 +67,8 @@ final class ComponentRoute extends Component
             }
             if (
                 $this->belongsTo([
-                    'p-checkbox', 'p-checkbox-btn', 'p-radio',
-                    'p-selection-control', 'p-switch',
+                    'p-checkbox', 'p-radio',
+                    'p-switch',
                 ])
                 && array_key_exists($index, $this->sampleValues)
             ) {
@@ -399,8 +397,6 @@ final class ComponentRoute extends Component
                 $slides[] = $item::make(
                         [
                             'value' => 'overview',
-                            'active' => $currentSlide === 'overview',
-                            'selected' => $currentSlide === 'overview',
                         ],
                         Column::make(
                             Text::make('Native by design')->style(new Style(
@@ -429,8 +425,6 @@ final class ComponentRoute extends Component
                 $slides[] = $item::make(
                     [
                         'value' => 'details',
-                        'active' => $currentSlide === 'details',
-                        'selected' => $currentSlide === 'details',
                     ],
                     Column::make(
                         Text::make('Composable')->style(new Style(
@@ -459,8 +453,6 @@ final class ComponentRoute extends Component
                 $slides[] = $item::make(
                     [
                         'value' => 'activity',
-                        'active' => $currentSlide === 'activity',
-                        'selected' => $currentSlide === 'activity',
                     ],
                     Column::make(
                         Text::make('Accessible')->style(new Style(
@@ -619,7 +611,7 @@ final class ComponentRoute extends Component
                     minHeight: 72.0,
                     gap: 12.0,
                 ));
-            } elseif ($this->belongsTo(['p-snackbar', 'p-snackbar-queue'])) {
+            } elseif ($this->tag === 'p-snackbar') {
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 unset($previewProps['open']);
                 $preview = $component::make(
@@ -629,9 +621,7 @@ final class ComponentRoute extends Component
                         'accessibilityLabel' => $this->title.' notification',
                     ],
                     Text::make(
-                        $this->tag === 'p-snackbar-queue'
-                            ? '3 updates synced and ready.'
-                            : 'Your changes were saved.',
+                        'Your changes were saved.',
                     )->style(new Style(
                         textColor: 0xFFF7FAFF,
                         fontSize: 14.0,
@@ -641,7 +631,7 @@ final class ComponentRoute extends Component
                     )),
                     $button::make(
                         ['variant' => 'text', 'color' => 'primary', 'size' => 'small'],
-                        Text::make($this->tag === 'p-snackbar-queue' ? 'View' : 'Undo')
+                        Text::make('Undo')
                             ->style(new Style(
                                 textColor: 0xFF7DD3FC,
                                 fontSize: 14.0,
@@ -852,7 +842,6 @@ final class ComponentRoute extends Component
                     ),
                 );
             } elseif ($this->belongsTo(['p-app-bar', 'p-toolbar'])) {
-                $toolbarTitle = MaterialComponentMap::TAGS['p-toolbar-title'];
                 $button = MaterialComponentMap::TAGS['p-icon-btn'];
                 $barChildren = [];
                 if ($this->tag === 'p-app-bar') {
@@ -864,9 +853,8 @@ final class ComponentRoute extends Component
                         ],
                     );
                 }
-                $barChildren[] = $toolbarTitle::make(
-                    [],
-                    Text::make('PAM Workspace'),
+                $barChildren[] = Text::make('PAM Workspace')->style(
+                    new Style(fontSize: 20.0, fontWeight: 500, flexGrow: 1.0),
                 );
                 $barChildren[] = $button::make(
                     [
@@ -877,34 +865,31 @@ final class ComponentRoute extends Component
                 $preview = $component::make($previewProps, ...$barChildren);
             } elseif ($this->tag === 'p-list') {
                 $listItem = MaterialComponentMap::TAGS['p-list-item'];
-                $listTitle = MaterialComponentMap::TAGS['p-list-item-title'];
-                $listSubtitle = MaterialComponentMap::TAGS['p-list-item-subtitle'];
                 $preview = $component::make(
                     $previewProps,
                     $listItem::make(
                         ['value' => 'design'],
-                        $listTitle::make([], Text::make('Design system')),
-                        $listSubtitle::make([], Text::make('Tokens and components')),
+                        Text::make('Design system'),
+                        Text::make('Tokens and components'),
                     ),
                     $listItem::make(
                         ['value' => 'native'],
-                        $listTitle::make([], Text::make('Native runtime')),
-                        $listSubtitle::make([], Text::make('Android and iOS')),
+                        Text::make('Native runtime'),
+                        Text::make('Android and iOS'),
                     ),
                     $listItem::make(
                         ['value' => 'release'],
-                        $listTitle::make([], Text::make('Release')),
-                        $listSubtitle::make([], Text::make('Validated packages')),
+                        Text::make('Release'),
+                        Text::make('Validated packages'),
                     ),
                 );
             } elseif ($this->tag === 'p-infinite-scroll') {
                 $listItem = MaterialComponentMap::TAGS['p-list-item'];
-                $listTitle = MaterialComponentMap::TAGS['p-list-item-title'];
                 $infiniteItems = [];
                 foreach (['Design', 'Engineering', 'Product', 'Research'] as $team) {
                     $infiniteItems[] = $listItem::make(
                         ['value' => strtolower($team)],
-                        $listTitle::make([], Text::make($team)),
+                        Text::make($team),
                     );
                 }
                 $infiniteItems[] = Column::make(
@@ -952,12 +937,10 @@ final class ComponentRoute extends Component
                     $item::make([], Text::make('Release')),
                 );
             } elseif ($this->tag === 'p-list-item') {
-                $title = MaterialComponentMap::TAGS['p-list-item-title'];
-                $subtitle = MaterialComponentMap::TAGS['p-list-item-subtitle'];
                 $preview = $component::make(
                     $previewProps,
-                    $title::make([], Text::make('Primary label')),
-                    $subtitle::make([], Text::make('Supporting text')),
+                    Text::make('Primary label'),
+                    Text::make('Supporting text'),
                 );
             } elseif ($this->tag === 'p-chip-group') {
                 $chip = MaterialComponentMap::TAGS['p-chip'];
@@ -980,23 +963,16 @@ final class ComponentRoute extends Component
             } elseif ($this->belongsTo([
                 'p-alert', 'p-banner',
             ])) {
-                $titleTag = $this->tag === 'p-alert'
-                    ? 'p-alert-title'
-                    : 'p-banner-text';
                 $actionsTag = $this->tag === 'p-alert'
                     ? null
                     : 'p-banner-actions';
-                $title = MaterialComponentMap::TAGS[$titleTag];
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $copy = Column::make(
-                    $title::make(
-                        [],
-                        Text::make(
-                            $this->tag === 'p-alert'
-                                ? 'Your workspace is ready'
-                                : 'A new native release is available',
-                        ),
-                    ),
+                    Text::make(
+                        $this->tag === 'p-alert'
+                            ? 'Your workspace is ready'
+                            : 'A new native release is available',
+                    )->style(new Style(fontSize: 20.0, fontWeight: 600)),
                     Text::make(
                         'The same tokens, spacing and interactions are shared by Android and iOS.',
                     ),
@@ -1030,12 +1006,12 @@ final class ComponentRoute extends Component
                     $button::make(['variant' => 'outlined'], Text::make('Month')),
                 )->style(new Style(widthPercent: 100.0, gap: 0.0));
             } elseif ($this->belongsTo([
-                'p-radio-group', 'p-selection-control-group', 'p-item-group',
+                'p-radio-group', 'p-item-group',
             ])) {
                 $itemTag = match ($this->tag) {
                     'p-radio-group' => 'p-radio',
                     'p-item-group' => 'p-item',
-                    default => 'p-selection-control',
+                    default => 'p-checkbox',
                 };
                 $item = MaterialComponentMap::TAGS[$itemTag];
                 $preview = $component::make(
@@ -1055,43 +1031,11 @@ final class ComponentRoute extends Component
                         ['value' => 'product', 'label' => 'Product'],
                     ),
                 );
-            } elseif ($this->tag === 'p-field') {
-                $preview = $component::make(
-                    $previewProps,
-                    Column::make(
-                        Text::make($this->title)->style(new Style(
-                            fontSize: 12.0,
-                            lineHeight: 16.0,
-                            textColor: $theme->color(ColorToken::MutedForeground),
-                        )),
-                        Text::make('Native field value')->style(new Style(
-                            fontSize: 16.0,
-                            lineHeight: 24.0,
-                            textColor: $theme->color(ColorToken::OnSurface),
-                        )),
-                    )->style(new Style(
-                        widthPercent: 100.0,
-                        gap: 2.0,
-                    )),
-                );
             } elseif ($this->belongsTo([
-                'p-card-item', 'p-card-title', 'p-card-subtitle',
-                'p-card-text', 'p-card-actions',
+                'p-card-actions',
             ])) {
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $children = match ($this->tag) {
-                    'p-card-item' => [
-                        Text::make('Native workspace')->style(new Style(
-                            fontSize: 18.0,
-                            fontWeight: 700,
-                        )),
-                        Text::make('Updated a moment ago'),
-                    ],
-                    'p-card-title' => [Text::make('Native workspace')],
-                    'p-card-subtitle' => [Text::make('Updated a moment ago')],
-                    'p-card-text' => [Text::make(
-                        'Focused content with the same rhythm as the complete card.',
-                    )],
                     default => [
                         $button::make(
                             ['variant' => 'text', 'size' => 'small'],
@@ -1105,194 +1049,24 @@ final class ComponentRoute extends Component
                 };
                 $preview = $component::make($previewProps, ...$children);
             } elseif ($this->belongsTo([
-                'p-checkbox', 'p-checkbox-btn', 'p-radio',
-                'p-selection-control', 'p-switch',
+                'p-checkbox', 'p-radio',
+                'p-switch',
             ])) {
                 $preview = $component::make($previewProps);
-            } elseif ($this->tag === 'p-color-picker') {
-                $canvas = MaterialComponentMap::TAGS['p-color-picker-canvas'];
-                $pickerPreview = MaterialComponentMap::TAGS['p-color-picker-preview'];
-                $edit = MaterialComponentMap::TAGS['p-color-picker-edit'];
-                $swatches = MaterialComponentMap::TAGS['p-color-picker-swatches'];
-                $color = 0xFF5CBBF6;
-                $swatch = static fn (int $value): View => View::make()->style(
-                    new Style(
-                        width: 32.0,
-                        height: 32.0,
-                        borderRadius: 16.0,
-                        backgroundColor: $value,
-                    ),
-                );
-                $preview = $component::make(
-                    $previewProps,
-                    $canvas::make(
-                        $previewProps,
-                        View::make()->style(new Style(
-                            widthPercent: 100.0,
-                            minHeight: 150.0,
-                            backgroundColor: $color,
-                        )),
-                    ),
-                    $pickerPreview::make(
-                        $previewProps,
-                        $swatch($color),
-                        Text::make('#5CBBF6')->style(new Style(
-                            fontSize: 16.0,
-                            fontWeight: 600,
-                        )),
-                    ),
-                    $edit::make(
-                        $previewProps,
-                        Text::make('HEX'),
-                        Text::make('#5CBBF6')->style(new Style(
-                            fontSize: 16.0,
-                            fontWeight: 500,
-                        )),
-                    ),
-                    $swatches::make(
-                        $previewProps,
-                        Row::make(
-                            $swatch(0xFF1867C0),
-                            $swatch(0xFF4CAF50),
-                            $swatch(0xFFFFC107),
-                            $swatch(0xFFF44336),
-                            $swatch(0xFF9C27B0),
-                        )->style(new Style(gap: 12.0)),
-                    ),
-                );
             } elseif ($this->tag === 'p-time-picker') {
-                $controls = MaterialComponentMap::TAGS['p-time-picker-controls'];
-                $clock = MaterialComponentMap::TAGS['p-time-picker-clock'];
-                $hour = static fn (string $value, bool $active = false): Text =>
-                    Text::make($value)->style(new Style(
-                        width: 40.0,
-                        height: 40.0,
-                        borderRadius: 20.0,
-                        backgroundColor: $active ? 0xFF1867C0 : 0x00000000,
-                        textColor: $active ? 0xFFFFFFFF : 0xFF212121,
-                        fontSize: 14.0,
-                        lineHeight: 40.0,
-                        textAlign: \Pam\Native\TextAlignment::Center,
-                    ));
-                $preview = $component::make(
-                    $previewProps,
-                    $controls::make(
-                        $previewProps,
-                        Text::make('14 : 35')->style(new Style(
-                            fontSize: 48.0,
-                            lineHeight: 64.0,
-                            fontWeight: 500,
-                            textColor: 0xFF212121,
-                        )),
-                    ),
-                    $clock::make(
-                        $previewProps,
-                        Row::make(
-                            $hour('12'),
-                            $hour('1'),
-                            $hour('2'),
-                            $hour('3'),
-                        )->style(new Style(
-                            widthPercent: 100.0,
-                            justifyContent: Justify::SpaceBetween,
-                        )),
-                        Row::make(
-                            $hour('11'),
-                            $hour('14', true),
-                            $hour('4'),
-                        )->style(new Style(
-                            widthPercent: 100.0,
-                            justifyContent: Justify::SpaceBetween,
-                        )),
-                        Row::make(
-                            $hour('10'),
-                            $hour('9'),
-                            $hour('8'),
-                            $hour('7'),
-                        )->style(new Style(
-                            widthPercent: 100.0,
-                            justifyContent: Justify::SpaceBetween,
-                        )),
-                    ),
-                );
-            } elseif ($this->tag === 'p-confirm-edit') {
-                $button = MaterialComponentMap::TAGS['p-btn'];
-                $preview = $component::make(
-                    $previewProps,
-                    Column::make(
-                        Text::make('Selected value')->style(new Style(
-                            fontSize: 12.0,
-                            lineHeight: 16.0,
-                            textColor: $theme->color(ColorToken::MutedForeground),
-                        )),
-                        Text::make('July 15, 2026')->style(new Style(
-                            fontSize: 16.0,
-                            lineHeight: 24.0,
-                            fontWeight: 500,
-                            textColor: $theme->color(ColorToken::OnSurface),
-                        )),
-                        Row::make(
-                            $button::make(
-                                ['variant' => 'text', 'size' => 'small'],
-                                Text::make('Cancel'),
-                            ),
-                            $button::make(
-                                [
-                                    'variant' => 'flat',
-                                    'size' => 'small',
-                                    'color' => 'primary',
-                                ],
-                                Text::make('Save'),
-                            ),
-                        )->style(new Style(
-                            widthPercent: 100.0,
-                            gap: 8.0,
-                            justifyContent: Justify::End,
-                        )),
-                    )->style(new Style(
-                        widthPercent: 100.0,
-                        gap: 8.0,
-                    )),
-                );
+                $preview = $component::make($previewProps);
             } elseif ($this->belongsTo([
-                'p-color-picker-canvas', 'p-color-picker-edit',
-                'p-color-picker-preview', 'p-color-picker-swatches',
-            ])) {
-                $preview = $component::make($previewProps)->style(new Style(
-                    widthPercent: 100.0,
-                    minHeight: $this->tag === 'p-color-picker-canvas' ? 220.0 : 64.0,
-                ));
-            } elseif ($this->belongsTo([
-                'p-date-picker-controls', 'p-date-picker-header',
-                'p-date-picker-month', 'p-date-picker-months',
-                'p-date-picker-years', 'p-calendar-day',
-                'p-calendar-header', 'p-calendar-interval',
-                'p-picker', 'p-picker-title', 'p-confirm-edit',
-                'p-time-picker-clock', 'p-time-picker-controls',
+                'p-calendar-day',
             ])) {
                 $preview = $component::make(
                     $previewProps,
                     Text::make(match ($this->tag) {
-                        'p-date-picker-header' => 'Tuesday, July 15',
-                        'p-date-picker-controls' => 'July 2026',
-                        'p-date-picker-month' => '15',
-                        'p-date-picker-months' => 'July',
-                        'p-date-picker-years' => '2026',
                         'p-calendar-day' => '15',
-                        'p-calendar-header' => 'July 2026',
-                        'p-calendar-interval' => '14:00',
-                        'p-picker-title' => 'Choose a value',
-                        'p-confirm-edit' => 'Confirm selection',
-                        'p-time-picker-clock' => '14:35',
-                        'p-time-picker-controls' => '14 : 35',
                         default => 'Native picker surface',
                     }),
                 )->style(new Style(
                     widthPercent: 100.0,
-                    minHeight: $this->belongsTo([
-                        'p-date-picker-month', 'p-date-picker-months',
-                        'p-date-picker-years', 'p-time-picker-clock',
-                    ]) ? 240.0 : 56.0,
+                    minHeight: 56.0,
                 ));
             } elseif ($this->tag === 'p-expansion-panel') {
                 $title = MaterialComponentMap::TAGS['p-expansion-panel-title'];
@@ -1362,41 +1136,6 @@ final class ComponentRoute extends Component
                             : $theme->color(ColorToken::OnSurface),
                     )),
                 );
-            } elseif ($this->belongsTo([
-                'p-file-upload', 'p-file-upload-item',
-            ])) {
-                $button = MaterialComponentMap::TAGS['p-btn'];
-                $preview = $component::make(
-                    $previewProps,
-                    Column::make(
-                        Text::make(
-                            $this->tag === 'p-file-upload'
-                                ? 'Choose files'
-                                : 'brand-guidelines.pdf',
-                        )->style(new Style(fontSize: 16.0, fontWeight: 600)),
-                        Text::make(
-                            $this->tag === 'p-file-upload'
-                                ? 'Device, camera or gallery'
-                                : '2.4 MB · Ready',
-                        )->style(new Style(
-                            fontSize: 13.0,
-                            textColor: $theme->color(ColorToken::MutedForeground),
-                        )),
-                        $button::make(
-                            ['variant' => 'tonal', 'size' => 'small'],
-                            Text::make(
-                                $this->tag === 'p-file-upload'
-                                    ? 'Open picker'
-                                    : 'Remove',
-                            ),
-                        ),
-                    )->style(new Style(
-                        widthPercent: 100.0,
-                        padding: 0.0,
-                        gap: 8.0,
-                        alignItems: Align::Center,
-                    )),
-                );
             } elseif ($this->tag === 'p-form') {
                 $field = MaterialComponentMap::TAGS['p-text-field'];
                 $button = MaterialComponentMap::TAGS['p-btn'];
@@ -1419,7 +1158,7 @@ final class ComponentRoute extends Component
                     ),
                 )->style(new Style(widthPercent: 100.0, gap: 16.0));
             } elseif ($this->belongsTo([
-                
+
             ])) {
                 $tile = static fn (string $label, int $color): View => View::make(
                     Text::make($label)->style(new Style(
@@ -1473,19 +1212,6 @@ final class ComponentRoute extends Component
                 $preview = $component::make(
                     $previewProps,
                     Text::make($this->title),
-                );
-            } elseif ($this->belongsTo([
-                'p-list-group', 'p-list-subheader', 'p-list-item-title',
-                'p-list-item-subtitle',
-            ])) {
-                $preview = $component::make(
-                    $previewProps,
-                    Text::make(match ($this->tag) {
-                        'p-list-group' => 'Workspace',
-                        'p-list-subheader' => 'Recent projects',
-                        'p-list-item-title' => 'Aurora',
-                        default => 'Updated a moment ago',
-                    }),
                 );
             } elseif ($this->tag === 'p-sheet') {
                 $preview = $component::make(
@@ -1555,35 +1281,6 @@ final class ComponentRoute extends Component
                         textAlign: \Pam\Native\TextAlignment::Center,
                     )),
                 );
-            } elseif ($this->belongsTo([
-                'p-alert-title', 'p-app-bar-title',
-                'p-banner-text', 
-                'p-field-label', 'p-label',
-                'p-messages', 'p-counter', 'p-picker-title',
-                'p-toolbar-title',
-            ])) {
-                $preview = $component::make(
-                    $previewProps,
-                    Text::make($this->previewText()),
-                );
-            } elseif ($this->tag === 'p-transition') {
-                $preview = $component::make(
-                    [...$previewProps, 'show' => true],
-                    View::make(
-                        Text::make('Animated native content')->style(new Style(
-                            textColor: 0xFFFFFFFF,
-                            fontWeight: 700,
-                        )),
-                    )->style(new Style(
-                        widthPercent: 100.0,
-                        minHeight: 96.0,
-                        padding: 20.0,
-                        borderRadius: 12.0,
-                        backgroundColor: 0xFF0E6FA5,
-                        alignItems: Align::Center,
-                        justifyContent: Justify::Center,
-                    )),
-                );
             } elseif ($this->tag === 'p-treeview-item') {
                 $preview = $component::make(
                     [...$previewProps, 'open' => true, 'selected' => true],
@@ -1601,7 +1298,7 @@ final class ComponentRoute extends Component
             }
             if ($this->belongsTo([
                 'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
-                'p-field', 'p-file-input', 'p-input', 'p-number-input',
+                'p-number-input',
                 'p-otp-input', 'p-range-slider', 'p-rating', 'p-select',
                 'p-slider', 'p-text-field', 'p-textarea',
             ])) {
@@ -1618,8 +1315,8 @@ final class ComponentRoute extends Component
             if (
                 $preview instanceof UiComponent
                 && $this->belongsTo([
-                    'p-checkbox', 'p-checkbox-btn', 'p-radio',
-                    'p-selection-control', 'p-switch',
+                    'p-checkbox', 'p-radio',
+                    'p-switch',
                 ])
             ) {
                 $preview = $preview->onToggle(
@@ -1635,9 +1332,9 @@ final class ComponentRoute extends Component
                 );
             }
             $intrinsicPreview = $this->belongsTo([
-                'p-avatar', 'p-badge', 'p-btn', 'p-checkbox', 'p-checkbox-btn',
+                'p-avatar', 'p-badge', 'p-btn', 'p-checkbox',
                 'p-chip', 'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
-                'p-radio', 'p-rating', 'p-selection-control', 'p-switch',
+                'p-radio', 'p-rating', 'p-switch',
             ]);
             $samples[] = Column::make($caption, $preview)
                 ->style(new Style(
@@ -1797,9 +1494,9 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-avatar', 'p-badge', 'p-btn', 'p-checkbox', 'p-checkbox-btn',
+            'p-avatar', 'p-badge', 'p-btn', 'p-checkbox',
             'p-chip', 'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
-            'p-radio', 'p-rating', 'p-selection-control', 'p-switch',
+            'p-radio', 'p-rating', 'p-switch',
         ])) {
             $variations = array_merge($variations, [
                 ['label' => 'X Small', 'props' => ['size' => 'x-small']],
@@ -1811,10 +1508,10 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo([
             'p-alert', 'p-autocomplete', 'p-btn', 'p-checkbox', 'p-chip',
-            'p-combobox', 'p-data-table', 
-            'p-data-table-virtual', 'p-field', 'p-file-input', 'p-input',
+            'p-combobox', 'p-data-table',
+            'p-data-table-virtual',
             'p-list', 'p-list-item', 'p-number-input', 'p-radio', 'p-select',
-            'p-selection-control', 'p-slider', 'p-switch', 'p-tab', 'p-tabs',
+            'p-slider', 'p-switch', 'p-tab', 'p-tabs',
             'p-text-field', 'p-textarea',
         ])) {
             $variations = array_merge($variations, [
@@ -1837,7 +1534,7 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo([
             'p-autocomplete', 'p-btn', 'p-chip', 'p-color-input',
-            'p-combobox', 'p-date-input', 'p-file-input', 'p-number-input',
+            'p-combobox', 'p-date-input', 'p-number-input',
             'p-otp-input', 'p-select', 'p-text-field', 'p-textarea',
         ])) {
             $variations[] = ['label' => 'Disabled', 'props' => ['disabled' => true]];
@@ -1845,14 +1542,14 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo([
             'p-autocomplete', 'p-btn', 'p-color-input', 'p-combobox',
-            'p-date-input', 'p-file-input', 'p-otp-input', 'p-select',
+            'p-date-input', 'p-otp-input', 'p-select',
         ])) {
             $variations[] = ['label' => 'Loading', 'props' => ['loading' => true]];
         }
 
         if ($this->belongsTo([
             'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
-            'p-file-input', 'p-number-input', 'p-otp-input', 'p-select',
+            'p-number-input', 'p-otp-input', 'p-select',
             'p-text-field', 'p-textarea',
         ])) {
             $variations[] = ['label' => 'Read Only', 'props' => ['readonly' => true]];
@@ -1864,7 +1561,7 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo([
             'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
-            'p-field', 'p-file-input', 'p-input', 'p-number-input', 'p-select',
+            'p-number-input', 'p-select',
             'p-text-field', 'p-textarea',
         ])) {
             $variations = array_merge($variations, [
@@ -1887,7 +1584,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-autocomplete', 'p-combobox', 'p-input', 'p-select',
+            'p-autocomplete', 'p-combobox', 'p-select',
             'p-text-field', 'p-textarea',
         ])) {
             $variations[] = [
@@ -1900,7 +1597,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-input', 'p-text-field', 'p-textarea',
+            'p-text-field', 'p-textarea',
         ])) {
             $variations[] = [
                 'label' => 'Prefix and suffix',
@@ -1912,7 +1609,7 @@ final class ComponentRoute extends Component
             ];
         }
 
-        if ($this->belongsTo(['p-input', 'p-text-field', 'p-textarea'])) {
+        if ($this->belongsTo(['p-text-field', 'p-textarea'])) {
             $variations[] = [
                 'label' => 'Counter',
                 'props' => [
@@ -1924,7 +1621,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-checkbox', 'p-radio', 'p-selection-control', 'p-switch',
+            'p-checkbox', 'p-radio', 'p-switch',
         ])) {
             $variations = array_merge($variations, [
                 ['label' => 'Off', 'props' => ['checked' => false]],
@@ -1933,7 +1630,7 @@ final class ComponentRoute extends Component
             ]);
         }
 
-        if ($this->belongsTo(['p-checkbox', 'p-checkbox-btn'])) {
+        if ($this->belongsTo(['p-checkbox'])) {
             $variations[] = [
                 'label' => 'Indeterminate',
                 'props' => ['checked' => false, 'indeterminate' => true],
@@ -1995,8 +1692,7 @@ final class ComponentRoute extends Component
         };
 
         if ($this->belongsTo([
-            'p-app-bar', 'p-app-bar-title', 'p-toolbar', 'p-toolbar-title',
-            'p-toolbar-items',
+            'p-app-bar', 'p-toolbar',
         ])) {
             $add($variations, 'Prominent', ['prominent' => true]);
             $add($variations, 'Compact', ['density' => 'compact']);
@@ -2012,7 +1708,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-alert', 'p-alert-title', 'p-banner', 'p-banner-text',
+            'p-alert', 'p-banner',
             'p-banner-actions', 'p-empty-state',
         ])) {
             $add($variations, 'Success', ['type' => 'success', 'color' => 'success']);
@@ -2057,8 +1753,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-card', 'p-card-item', 'p-card-title', 'p-card-subtitle',
-            'p-card-text', 'p-card-actions', 'p-sheet',
+            'p-card', 'p-card-actions', 'p-sheet',
         ])) {
             $add($variations, 'Bordered', ['border' => true, 'variant' => 'outlined']);
             $add($variations, 'Loading', ['loading' => true]);
@@ -2078,8 +1773,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-checkbox', 'p-checkbox-btn', 'p-radio', 'p-switch',
-            'p-selection-control',
+            'p-checkbox', 'p-radio', 'p-switch',
         ])) {
             $add($variations, 'Read Only', ['checked' => true, 'readonly' => true]);
             $add($variations, 'Error', ['error' => true, 'errorMessage' => 'Invalid choice']);
@@ -2091,7 +1785,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-radio-group', 'p-selection-control-group', 'p-item-group',
+            'p-radio-group', 'p-item-group',
             'p-chip-group',
         ])) {
             $add($variations, 'Mandatory', ['mandatory' => true]);
@@ -2109,11 +1803,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Column', ['column' => true]);
         }
 
-        if ($this->belongsTo([
-            'p-color-input', 'p-color-picker', 'p-color-picker-canvas',
-            'p-color-picker-edit', 'p-color-picker-preview',
-            'p-color-picker-swatches',
-        ])) {
+        if ($this->tag === 'p-color-input') {
             $add($variations, 'HEX', ['mode' => 'hex']);
             $add($variations, 'RGB', ['mode' => 'rgb']);
             $add($variations, 'HSL', ['mode' => 'hsl']);
@@ -2136,10 +1826,8 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-date-input', 'p-date-picker', 'p-date-picker-controls',
-            'p-date-picker-header', 'p-date-picker-month',
-            'p-date-picker-months', 'p-date-picker-years', 'p-calendar',
-            'p-calendar-day', 'p-calendar-header', 'p-calendar-interval',
+            'p-date-input', 'p-date-picker', 'p-calendar',
+            'p-calendar-day',
         ])) {
             $add($variations, 'Multiple', ['multiple' => true]);
             $add($variations, 'Range', ['multiple' => 'range']);
@@ -2155,9 +1843,7 @@ final class ComponentRoute extends Component
         ])) {
             $add($variations, 'Persistent', ['persistent' => true]);
             $add($variations, 'No Scrim', ['scrim' => false]);
-            $add($variations, 'Scrollable', ['scrollable' => true]);
             $add($variations, 'Fullscreen', ['fullscreen' => true]);
-            $add($variations, 'Contained', ['contained' => true]);
             $add($variations, 'Width Small', ['width' => 320]);
             $add($variations, 'Width Large', ['width' => 560]);
         }
@@ -2194,8 +1880,8 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-field', 'p-field-label', 'p-input', 'p-label', 'p-messages',
-            'p-counter', 'p-form',
+
+            'p-form',
         ])) {
             $add($variations, 'Focused', ['focused' => true]);
             $add($variations, 'Required', ['required' => true]);
@@ -2216,7 +1902,7 @@ final class ComponentRoute extends Component
             $add($variations, 'No Data', ['items' => []]);
         }
 
-        if ($this->belongsTo(['p-text-field', 'p-input', 'p-textarea'])) {
+        if ($this->belongsTo(['p-text-field', 'p-textarea'])) {
             $add($variations, 'Prepend Icon', ['prependIcon' => 'SearchIcon']);
             $add($variations, 'Append Icon', ['appendIcon' => 'SettingsIcon']);
             $add($variations, 'Persistent Placeholder', ['persistentPlaceholder' => true]);
@@ -2247,18 +1933,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-file-input', 'p-file-upload', 'p-file-upload-item',
-        ])) {
-            $add($variations, 'Multiple', ['multiple' => true]);
-            $add($variations, 'Chips', ['chips' => true]);
-            $add($variations, 'Counter', ['counter' => true]);
-            $add($variations, 'Show Size', ['showSize' => true]);
-            $add($variations, 'Clearable', ['clearable' => true]);
-            $add($variations, 'Disabled', ['disabled' => true]);
-        }
 
-        if ($this->belongsTo([
-            
         ])) {
             $add($variations, 'Compact Gap', ['gap' => 4]);
             $add($variations, 'Default Gap', ['gap' => 12]);
@@ -2302,8 +1977,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo([
-            'p-list', 'p-list-item', 'p-list-group', 'p-list-subheader',
-            'p-list-item-title', 'p-list-item-subtitle',
+            'p-list', 'p-list-item',
         ])) {
             $add($variations, 'One Line', ['lines' => 'one']);
             $add($variations, 'Two Lines', ['lines' => 'two']);
@@ -2331,13 +2005,6 @@ final class ComponentRoute extends Component
         }
 
 
-
-        if ($this->belongsTo(['p-picker', 'p-picker-title', 'p-confirm-edit'])) {
-            $add($variations, 'Landscape', ['landscape' => true]);
-            $add($variations, 'Hide Header', ['hideHeader' => true]);
-            $add($variations, 'Primary', ['color' => 'primary']);
-            $add($variations, 'Disabled', ['disabled' => true]);
-        }
 
         if ($this->belongsTo(['p-progress-circular', 'p-progress-linear'])) {
             $add($variations, 'Reverse', ['reverse' => true]);
@@ -2391,7 +2058,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Disabled', ['disabled' => true]);
         }
 
-        if ($this->belongsTo(['p-snackbar', 'p-snackbar-queue'])) {
+        if ($this->tag === 'p-snackbar') {
             $add($variations, 'Top', ['location' => 'top']);
             $add($variations, 'Bottom', ['location' => 'bottom']);
             $add($variations, 'Multi Line', ['multiLine' => true]);
@@ -2416,7 +2083,6 @@ final class ComponentRoute extends Component
                 $add($variations, 'Direction '.ucfirst($location), ['direction' => $location]);
             }
             $add($variations, 'Scale Transition', ['transition' => 'scale']);
-            $add($variations, 'Slide Transition', ['transition' => 'slide']);
             $add($variations, 'Persistent', ['persistent' => true]);
         }
 
@@ -2446,24 +2112,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Hide Slider', ['hideSlider' => true]);
         }
 
-        if ($this->belongsTo([
-            'p-card-title', 'p-card-subtitle', 'p-card-text',
-            'p-list-item-title', 'p-list-item-subtitle', 'p-label',
-            'p-messages', 'p-counter',
-        ])) {
-            $add($variations, 'Display', ['typography' => 'display']);
-            $add($variations, 'Headline', ['typography' => 'headline']);
-            $add($variations, 'Title', ['typography' => 'title']);
-            $add($variations, 'Body', ['typography' => 'body']);
-            $add($variations, 'Label', ['typography' => 'label']);
-            $add($variations, 'Primary', ['color' => 'primary']);
-            $add($variations, 'Muted', ['color' => 'muted']);
-            $add($variations, 'Truncate', ['truncate' => true, 'maxLines' => 1]);
-        }
-
-        if ($this->belongsTo([
-            'p-time-picker', 'p-time-picker-clock', 'p-time-picker-controls',
-        ])) {
+        if ($this->tag === 'p-time-picker') {
             $add($variations, '24 Hour', ['format' => '24hr']);
             $add($variations, 'AM PM', ['format' => 'ampm']);
             $add($variations, 'Seconds', ['useSeconds' => true]);
@@ -2482,36 +2131,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo(['p-treeview', 'p-treeview-item'])) {
-            $add($variations, 'Activatable', ['activatable' => true]);
-            $add($variations, 'Selectable', ['selectable' => true]);
-            $add($variations, 'Independent', ['selectStrategy' => 'independent']);
-            $add($variations, 'Classic', ['selectStrategy' => 'classic']);
-            $add($variations, 'Open All', ['openAll' => true]);
             $add($variations, 'Compact', ['density' => 'compact']);
-            $add($variations, 'Lines', ['lines' => true]);
-        }
-
-        if ($this->tag === 'p-transition') {
-            foreach (['fade', 'scale', 'slide-x', 'slide-y', 'expand'] as $name) {
-                $add(
-                    $variations,
-                    ucwords(str_replace('-', ' ', $name)),
-                    ['name' => $name, 'transition' => $name],
-                );
-            }
-            $add($variations, 'Fast', ['duration' => 120]);
-            $add($variations, 'Slow', ['duration' => 500]);
-            $add($variations, 'Disabled Motion', ['disabled' => true]);
-        }
-
-        if ($this->belongsTo([
-            'p-defaults-provider', 'p-theme-provider', 'p-locale-provider',
-        ])) {
-            $add($variations, 'Light', ['theme' => 'light']);
-            $add($variations, 'Dark', ['theme' => 'dark']);
-            $add($variations, 'RTL', ['rtl' => true, 'locale' => 'ar']);
-            $add($variations, 'Portuguese', ['locale' => 'pt-BR']);
-            $add($variations, 'Scoped', ['scoped' => true]);
         }
 
         return $variations;
@@ -2529,17 +2149,17 @@ final class ComponentRoute extends Component
         ];
 
         if ($this->belongsTo([
-            'p-autocomplete', 'p-checkbox', 'p-checkbox-btn', 'p-color-input',
-            'p-combobox', 'p-date-input', 'p-field', 'p-file-input', 'p-input',
+            'p-autocomplete', 'p-checkbox', 'p-color-input',
+            'p-combobox', 'p-date-input',
             'p-number-input', 'p-otp-input', 'p-radio', 'p-select',
-            'p-selection-control', 'p-slider', 'p-switch', 'p-text-field',
+            'p-slider', 'p-switch', 'p-text-field',
             'p-textarea',
         ])) {
             $defaults['label'] = $this->title;
         }
 
         if ($this->belongsTo([
-            'p-checkbox', 'p-checkbox-btn', 'p-radio', 'p-selection-control',
+            'p-checkbox', 'p-radio',
             'p-switch',
         ])) {
             $defaults['checked'] = true;
@@ -2554,7 +2174,7 @@ final class ComponentRoute extends Component
         if ($this->belongsTo([
             'p-btn-toggle', 'p-carousel',
             'p-expansion-panels', 'p-slide-group', 'p-stepper',
-            'p-stepper-vertical', 'p-tab', 'p-tabs', 
+            'p-stepper-vertical', 'p-tab', 'p-tabs',
         ])) {
             $defaults['active'] = true;
         }
@@ -2594,14 +2214,6 @@ final class ComponentRoute extends Component
             'p-calendar', 'p-date-picker', 'p-date-input' => [
                 'locale' => 'pt-BR',
                 'modelValue' => '2026-07-15',
-                'visibleDate' => '2026-07-01',
-            ],
-            'p-date-picker-month', 'p-date-picker-months' => [
-                'modelValue' => 7,
-                'visibleDate' => '2026-07-01',
-            ],
-            'p-date-picker-years' => [
-                'modelValue' => 2026,
                 'visibleDate' => '2026-07-01',
             ],
             'p-data-table', 'p-data-table-virtual' => [
@@ -2683,27 +2295,18 @@ final class ComponentRoute extends Component
                 'fill' => true,
                 'lineWidth' => 3,
             ],
-            'p-color-input', 'p-color-picker' => ['modelValue' => '#5CBBF6'],
+            'p-color-input' => ['modelValue' => '#5CBBF6'],
             'p-time-picker' => ['modelValue' => '14:35'],
             'p-text-field' => [
                 'modelValue' => 'Native field',
                 'placeholder' => 'Type here',
                 'helper' => 'Rendered by the platform',
             ],
-            'p-field', 'p-input' => [
-                'modelValue' => 'Native input',
-                'placeholder' => 'Type here',
-                'helper' => 'Aligned label, value and details',
-            ],
             'p-textarea' => [
                 'modelValue' => 'Built for Android and iOS.',
                 'placeholder' => 'Write a message',
                 'helper' => 'Up to 280 characters',
                 'rows' => 3,
-            ],
-            'p-file-input', 'p-file-upload' => [
-                'placeholder' => 'Select a file',
-                'helper' => 'PDF, PNG or JPG',
             ],
             'p-switch' => [
                 'checked' => true,
@@ -2747,21 +2350,15 @@ final class ComponentRoute extends Component
             'p-autocomplete',
             'p-calendar',
             'p-color-input',
-            'p-color-picker',
             'p-combobox',
             'p-carousel',
             'p-data-table',
             'p-data-table-virtual',
             'p-date-input',
             'p-date-picker',
-            'p-date-picker-month',
-            'p-date-picker-months',
-            'p-date-picker-years',
-            'p-field',
-            'p-file-input',
-            'p-file-upload',
-            'p-expansion-panels',
-            'p-input',
+
+                                    'p-expansion-panels',
+
             'p-number-input',
             'p-otp-input',
             'p-progress-circular',
