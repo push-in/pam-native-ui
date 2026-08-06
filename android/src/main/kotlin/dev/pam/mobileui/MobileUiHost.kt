@@ -4261,6 +4261,11 @@ internal class MobileUiHost(
 
     private fun menuItems(root: ViewGroup = this): List<MobileUiHost> =
         buildList {
+            if (root === this@MobileUiHost) {
+                (anchoredPortalContent as? ViewGroup)
+                    ?.takeIf { it.parent !== root }
+                    ?.let { addAll(menuItems(it)) }
+            }
             repeat(root.childCount) { index ->
                 val child = root.getChildAt(index)
                 if (child is MobileUiHost && child.behavior == Behavior.MENU_ITEM) {

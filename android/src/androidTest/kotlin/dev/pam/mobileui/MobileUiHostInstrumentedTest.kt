@@ -1109,7 +1109,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals(1, closePresses.size)
             assertEquals(4, payloads.size)
             assertEquals(
-                3L,
+                2L,
                 (WireMap.decode(payloads[2])["action"] as WireValue.Integer).value,
             )
             assertEquals(
