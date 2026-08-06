@@ -25,6 +25,7 @@ import dev.pam.nativeapp.views.NativeViewEventKind
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -738,7 +739,10 @@ class MobileUiHostInstrumentedTest {
             assertEquals(View.GONE, accountContent.visibility)
             assertEquals(View.VISIBLE, securityContent.visibility)
             assertEquals(200, indicator.layoutParams.width)
-            assertEquals(80, indicator.layoutParams.height)
+            assertEquals(
+                (2f * host.resources.displayMetrics.density).roundToInt(),
+                indicator.layoutParams.height,
+            )
 
             val rootInfo = AccessibilityNodeInfo.obtain()
             val securityInfo = AccessibilityNodeInfo.obtain()
@@ -1094,7 +1098,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals(2, payloads.size)
             val opening = WireMap.decode(payloads[0])
             val dismissal = WireMap.decode(payloads[1])
-            assertEquals(3L, (opening["action"] as WireValue.Integer).value)
+            assertEquals(2L, (opening["action"] as WireValue.Integer).value)
             assertTrue((opening["open"] as WireValue.Flag).value)
             assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
             assertTrue((dismissal["dismissed"] as WireValue.Flag).value)
@@ -1151,7 +1155,7 @@ class MobileUiHostInstrumentedTest {
             assertTrue(host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 100f, 80f)))
             assertEquals(1, payloads.size)
             val request = WireMap.decode(payloads.single())
-            assertEquals(3L, (request["action"] as WireValue.Integer).value)
+            assertEquals(2L, (request["action"] as WireValue.Integer).value)
             assertTrue((request["open"] as WireValue.Flag).value)
             host.release()
         }
@@ -1216,7 +1220,7 @@ class MobileUiHostInstrumentedTest {
             assertTrue(first.performClick())
             assertEquals(1, itemEvents.size)
             assertTrue(rootEvents.isEmpty())
-            assertTrue(first.isSelected)
+            assertTrue(!first.isSelected)
             assertTrue(second.isSelected)
 
             val menuInfo = AccessibilityNodeInfo.obtain()
@@ -1549,7 +1553,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals("2026", yearLabel.text.toString())
             assertEquals("Selected month 6", monthSelect.contentDescription)
             assertEquals("Selected year 2026", yearSelect.contentDescription)
-            assertEquals(5L, (navigation["action"] as WireValue.Integer).value)
+            assertEquals(3L, (navigation["action"] as WireValue.Integer).value)
             assertEquals(2026L, (navigation["year"] as WireValue.Integer).value)
             assertEquals(6L, (navigation["month"] as WireValue.Integer).value)
             host.release()

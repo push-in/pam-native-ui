@@ -49,6 +49,13 @@ jobs:
           --no-progress
           --prefer-dist
 
+      - name: Install package dependencies
+        run: >-
+          composer install
+          --no-interaction
+          --no-progress
+          --prefer-dist
+
       - name: Validate package
         run: composer validate --strict --no-check-publish
 
