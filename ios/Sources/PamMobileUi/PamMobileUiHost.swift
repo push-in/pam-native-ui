@@ -1226,8 +1226,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         toastDismissWorkItem = nil
         layer.removeAllAnimations()
         if animationsEnabled {
-            let entersFromTop = properties["location"]?.pamText
-                ?.lowercased()
+            let entersFromTop = properties["location"]?.pamText?
+                .lowercased()
                 .contains("top") ?? false
             alpha = 0
             transform = CGAffineTransform(
