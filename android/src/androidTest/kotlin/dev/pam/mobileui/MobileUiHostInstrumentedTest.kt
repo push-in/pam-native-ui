@@ -1220,7 +1220,7 @@ class MobileUiHostInstrumentedTest {
             assertTrue(first.performClick())
             assertEquals(1, itemEvents.size)
             assertTrue(rootEvents.isEmpty())
-            assertTrue(!first.isSelected)
+            assertTrue(first.isSelected)
             assertTrue(second.isSelected)
 
             val menuInfo = AccessibilityNodeInfo.obtain()
@@ -1235,7 +1235,7 @@ class MobileUiHostInstrumentedTest {
             )
             assertEquals("android.widget.CheckedTextView", firstInfo.className)
             assertTrue(firstInfo.isCheckable)
-            assertTrue(!firstInfo.isChecked)
+            assertTrue(firstInfo.isChecked)
             assertEquals(0, firstInfo.collectionItemInfo?.rowIndex)
             assertEquals("Settings", first.contentDescription)
 

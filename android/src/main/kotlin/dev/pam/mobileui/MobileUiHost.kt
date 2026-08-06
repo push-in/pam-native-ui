@@ -2286,7 +2286,8 @@ internal class MobileUiHost(
             behavior == Behavior.MENU_ITEM
             && isEnabled
             && event.action == KeyEvent.ACTION_DOWN
-            && menuAncestor()?.handleMenuKey(this, event) == true
+            && (menuAncestor() ?: menuCollectionOwner)
+                ?.handleMenuKey(this, event) == true
         ) {
             return true
         }
@@ -2461,7 +2462,7 @@ internal class MobileUiHost(
         } else if (behavior == Behavior.MENU_ITEM) {
             setOnClickListener {
                 if (isEnabled) {
-                    val menu = menuAncestor()
+                    val menu = menuAncestor() ?: menuCollectionOwner
                     if (menu != null) {
                         menu.activateMenuItem(this)
                     } else {
