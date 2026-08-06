@@ -235,6 +235,7 @@ internal class MobileUiHost(
     private var closeSheetItemOnPress = false
     private var closeMenuItemOnPress = true
     private var menuSelectionMode = MENU_SELECTION_NONE
+    private var menuCollectionOwner: MobileUiHost? = null
     private var anchoredTriggerTouchActive = false
     private var menuTypeaheadPrefix = ""
     private var menuTypeaheadAtMillis = 0L
@@ -1875,6 +1876,7 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.MENU) {
             val items = menuItems()
+            items.forEach { it.menuCollectionOwner = this }
             info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
                 items.size,
                 1,
@@ -1924,7 +1926,8 @@ internal class MobileUiHost(
             } else {
                 info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
             }
-            menuAncestor()?.menuCollectionItemInfo(this)?.let { item ->
+            (menuAncestor() ?: menuCollectionOwner)
+                ?.menuCollectionItemInfo(this)?.let { item ->
                 info.collectionItemInfo = item
             }
         }
