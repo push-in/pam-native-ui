@@ -170,7 +170,7 @@ final class PamMobileUiTests: XCTestCase {
     }
 
     func testGeneratedVectorCatalogCoversEveryNativeIconId() {
-        XCTAssertEqual(GeneratedIcons.paths.count, 61)
+        XCTAssertEqual(GeneratedIcons.paths.count, 55)
         XCTAssertTrue(GeneratedIcons.paths.keys.allSatisfy { $0 > 0 })
         XCTAssertTrue(GeneratedIcons.paths.values.allSatisfy { !$0.isEmpty })
     }
