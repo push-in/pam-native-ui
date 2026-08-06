@@ -1227,7 +1227,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         layer.removeAllAnimations()
         if animationsEnabled {
             let entersFromTop = properties["location"]?.pamText
-                .lowercased()
+                ?.lowercased()
                 .contains("top") ?? false
             alpha = 0
             transform = CGAffineTransform(
