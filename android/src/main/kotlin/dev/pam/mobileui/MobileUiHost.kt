@@ -6895,6 +6895,11 @@ internal class MobileUiHost(
             anchoredPortalParent = parent
             anchoredPortalIndex = parent.indexOfChild(content)
             anchoredPortalLayoutParams = content.layoutParams
+            if (behavior == Behavior.MENU && content is ViewGroup) {
+                menuItems(content).forEach { item ->
+                    item.menuCollectionOwner = this
+                }
+            }
             parent.removeView(content)
             content.translationX = 0f
             content.translationY = 0f
