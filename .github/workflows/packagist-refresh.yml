@@ -1,0 +1,48 @@
+name: Refresh ecosystem package on Packagist
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Public ecosystem mirror to refresh
+        required: true
+        type: choice
+        options:
+          - pam-mobile-ui-php
+          - pam-native-media
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  refresh:
+    name: Refresh verified public metadata
+    if: github.repository == 'push-in/pam-mobile-ui'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Refresh the allowlisted package
+        env:
+          PACKAGE: ${{ inputs.package }}
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          case "${PACKAGE}" in
+            pam-mobile-ui-php|pam-native-media) ;;
+            *) exit 64 ;;
+          esac
+          test -n "${PACKAGIST_USERNAME}"
+          test -n "${PACKAGIST_TOKEN}"
+          repository="https://github.com/push-in/${PACKAGE}"
+          payload=$(jq -cn --arg url "${repository}" '{repository: {url: $url}}')
+          encoded_username=$(jq -rn --arg value "${PACKAGIST_USERNAME}" '$value|@uri')
+          encoded_token=$(jq -rn --arg value "${PACKAGIST_TOKEN}" '$value|@uri')
+          curl --proto '=https' --tlsv1.2 \
+            --fail --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data "${payload}" \
+            "https://packagist.org/api/update-package?username=${encoded_username}&apiToken=${encoded_token}"
