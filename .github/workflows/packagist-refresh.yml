@@ -8,8 +8,14 @@ on:
         required: true
         type: choice
         options:
+          - pam-api
+          - pam-core-api
           - pam-mobile-ui-php
           - pam-native-media
+          - pam-psr-bridge
+          - pam-skeleton
+          - pam-socket
+          - pam-testing
 
 permissions:
   contents: read
@@ -31,7 +37,7 @@ jobs:
           PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
         run: |
           case "${PACKAGE}" in
-            pam-mobile-ui-php|pam-native-media) ;;
+            pam-api|pam-core-api|pam-mobile-ui-php|pam-native-media|pam-psr-bridge|pam-skeleton|pam-socket|pam-testing) ;;
             *) exit 64 ;;
           esac
           test -n "${PACKAGIST_USERNAME}"
