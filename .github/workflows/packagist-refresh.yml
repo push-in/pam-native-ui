@@ -63,10 +63,19 @@ jobs:
               exit 1
               ;;
           esac
-          curl --proto '=https' --tlsv1.2 \
-            --fail --silent --show-error \
+          response_file="${RUNNER_TEMP}/packagist-response.json"
+          response_status=$(curl --proto '=https' --tlsv1.2 \
+            --silent --show-error \
+            --output "${response_file}" --write-out '%{http_code}' \
             --request POST \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${PACKAGIST_USERNAME}:${PACKAGIST_TOKEN}" \
             --data "${payload}" \
-            "https://packagist.org/api/${endpoint}"
+            "https://packagist.org/api/${endpoint}")
+          if [[ ${response_status} != 2* ]]; then
+            printf 'Packagist %s failed for %s with HTTP %s: ' \
+              "${endpoint}" "${composer_package}" "${response_status}" >&2
+            jq -c '.' "${response_file}" >&2 || head -c 1000 "${response_file}" >&2
+            exit 1
+          fi
+          jq -e '.status == "success"' "${response_file}" >/dev/null
