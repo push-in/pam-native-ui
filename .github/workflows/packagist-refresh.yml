@@ -37,14 +37,14 @@ jobs:
           PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
         run: |
           case "${PACKAGE}" in
-            pam-api) composer_package='pam/api' ;;
-            pam-core-api) composer_package='pam/core-api' ;;
+            pam-api) composer_package='pushinbr/pam-api' ;;
+            pam-core-api) composer_package='pushinbr/pam-core-api' ;;
             pam-mobile-ui-php) composer_package='pushinbr/pam-mobile-ui' ;;
             pam-native-media) composer_package='pushinbr/pam-native-media' ;;
-            pam-psr-bridge) composer_package='pam/psr-bridge' ;;
-            pam-skeleton) composer_package='pam/skeleton' ;;
-            pam-socket) composer_package='pam/socket' ;;
-            pam-testing) composer_package='pam/testing' ;;
+            pam-psr-bridge) composer_package='pushinbr/pam-psr-bridge' ;;
+            pam-skeleton) composer_package='pushinbr/pam-skeleton' ;;
+            pam-socket) composer_package='pushinbr/pam-socket' ;;
+            pam-testing) composer_package='pushinbr/pam-testing' ;;
             *) exit 64 ;;
           esac
           test -n "${PACKAGIST_USERNAME}"
