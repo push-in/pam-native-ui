@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.4.1
+
+- Publish the current Apache-2.0 community distribution.
+- Require the supported PAM Native 0.6 release line.
+- Include the latest Android portal menu ownership and interaction fixes.
+
 ## 0.4.0
 
 - Ship the curated mobile-first Material component system with 127 public
