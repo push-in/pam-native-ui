@@ -37,18 +37,36 @@ jobs:
           PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
         run: |
           case "${PACKAGE}" in
-            pam-api|pam-core-api|pam-mobile-ui-php|pam-native-media|pam-psr-bridge|pam-skeleton|pam-socket|pam-testing) ;;
+            pam-api) composer_package='pam/api' ;;
+            pam-core-api) composer_package='pam/core-api' ;;
+            pam-mobile-ui-php) composer_package='pushinbr/pam-mobile-ui' ;;
+            pam-native-media) composer_package='pushinbr/pam-native-media' ;;
+            pam-psr-bridge) composer_package='pam/psr-bridge' ;;
+            pam-skeleton) composer_package='pam/skeleton' ;;
+            pam-socket) composer_package='pam/socket' ;;
+            pam-testing) composer_package='pam/testing' ;;
             *) exit 64 ;;
           esac
           test -n "${PACKAGIST_USERNAME}"
           test -n "${PACKAGIST_TOKEN}"
           repository="https://github.com/push-in/${PACKAGE}"
-          payload=$(jq -cn --arg url "${repository}" '{repository: {url: $url}}')
-          encoded_username=$(jq -rn --arg value "${PACKAGIST_USERNAME}" '$value|@uri')
-          encoded_token=$(jq -rn --arg value "${PACKAGIST_TOKEN}" '$value|@uri')
+          payload=$(jq -cn --arg url "${repository}" '{repository: $url}')
+          status=$(curl --proto '=https' --tlsv1.2 \
+            --silent --output /dev/null --write-out '%{http_code}' \
+            "https://repo.packagist.org/p2/${composer_package}.json")
+          case "${status}" in
+            200) endpoint='update-package' ;;
+            404) endpoint='create-package' ;;
+            *)
+              printf 'Unexpected Packagist metadata response for %s: HTTP %s\n' \
+                "${composer_package}" "${status}" >&2
+              exit 1
+              ;;
+          esac
           curl --proto '=https' --tlsv1.2 \
             --fail --silent --show-error \
             --request POST \
             --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer ${PACKAGIST_USERNAME}:${PACKAGIST_TOKEN}" \
             --data "${payload}" \
-            "https://packagist.org/api/update-package?username=${encoded_username}&apiToken=${encoded_token}"
+            "https://packagist.org/api/${endpoint}"
