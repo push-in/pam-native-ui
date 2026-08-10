@@ -104,6 +104,21 @@ jobs:
         run: |
           tools/distribution-package.sh validate-tag "${RELEASE_TAG}"
           composer install \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --dry-run
+          composer install \
+            --working-dir=tools/phpstan \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --dry-run
+          composer install \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist
+          composer install \
             --working-dir=tools/phpstan \
             --no-interaction \
             --no-progress \
