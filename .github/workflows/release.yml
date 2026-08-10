@@ -97,6 +97,7 @@ jobs:
         with:
           php-version: '8.4'
           tools: composer:v2
+          coverage: none
       - name: Validate release version and package
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
