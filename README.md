@@ -10,7 +10,7 @@ CSS engines, and metadata-generated imitations.**
 
 [![Documentation](https://img.shields.io/badge/docs-component%20catalog-5b50d6?style=flat-square)](docs/catalog.md)
 ![Material](https://img.shields.io/badge/Material%20Design-3-6750A4?style=flat-square)
-![Components](https://img.shields.io/badge/components-124-22c55e?style=flat-square)
+![Components](https://img.shields.io/badge/components-84-22c55e?style=flat-square)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-2563eb?style=flat-square)
 ![License](https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square)
 
@@ -25,7 +25,7 @@ CSS engines, and metadata-generated imitations.**
 ---
 
 PAM Mobile UI is a retained native Material Design 3 component library for
-PAM Native. It exposes 124 mobile `p-*` component parts across 73 manually authored
+PAM Native. It exposes 84 mobile `p-*` component parts across 62 manually authored
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
 
@@ -162,8 +162,8 @@ composer release:check
 `resources/material-parity.json` is the release gate for the new generation.
 It is generated from the manual specification and requires:
 
-- 73 sequential modules;
-- 124 mobile `p-*` components with sequential component IDs;
+- 62 sequential modules;
+- 84 mobile `p-*` components with sequential component IDs;
 - Android and iOS targets;
 - `metadataImport=false`;
 - exact equality with `MaterialComponentMap`.
