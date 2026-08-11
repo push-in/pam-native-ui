@@ -13,7 +13,7 @@ tree:
 - Overview, Orders, Activity and Profile demonstrate product states,
   persistent tab navigation, typed forms and branded light/dark themes.
 - Studio keeps the complete component laboratory and pairs with the live
-  `pam mobile devtools .` overlay.
+  `pam mobile devtools` overlay.
 
 ## Run from this workspace
 
@@ -22,7 +22,7 @@ Keep `pam-mobile-ui` and `pam-native` as sibling directories, then run:
 ```bash
 cd pam-mobile-ui/examples/kitchen-sink
 composer update
-PAM_NATIVE_HOME=../../../pam-native pam mobile run .
+PAM_NATIVE_HOME=../../../pam-native pam mobile run
 ```
 
 During PAM development, build the PAM CLI repository first if it is not already
@@ -39,7 +39,7 @@ published packages instead:
 ```bash
 composer require pushinbr/pam-native:^0.2 pushinbr/pam-mobile-ui:^0.2
 pam mobile codegen
-pam mobile run .
+pam mobile run
 ```
 
 ## Where to start

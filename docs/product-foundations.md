@@ -54,7 +54,7 @@ retained. Configure a branded bar with `appearance()` using ARGB integers.
 ## Generate a complete flow
 
 ```bash
-pam mobile make:flow Checkout .
+pam mobile make:flow Checkout
 php tests/CheckoutFlowTest.php
 ```
 
@@ -68,7 +68,7 @@ The premium showcase includes a PAM Studio destination containing the complete
 component laboratory. Toggle live Android metrics with:
 
 ```bash
-pam mobile devtools .
+pam mobile devtools
 ```
 
 UIKit hosts can add `PamDevToolsOverlay`, forward `PamRuntime`'s
