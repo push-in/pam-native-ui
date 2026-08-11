@@ -8,16 +8,16 @@
 for Android and iOS, retained by design, and free from WebViews, JavaScript,
 CSS engines, and metadata-generated imitations.**
 
-[![Documentation](https://img.shields.io/badge/docs-component%20catalog-5b50d6?style=flat-square)](https://push-in.github.io/pam-docs/mobile-ui/overview/)
+[![Documentation](https://img.shields.io/badge/docs-component%20catalog-5b50d6?style=flat-square)](docs/catalog.md)
 ![Material](https://img.shields.io/badge/Material%20Design-3-6750A4?style=flat-square)
 ![Components](https://img.shields.io/badge/components-124-22c55e?style=flat-square)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-2563eb?style=flat-square)
 ![License](https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square)
 
-**[Documentation](https://push-in.github.io/pam-docs/mobile-ui/overview/) ·
-[Component catalog](https://push-in.github.io/pam-docs/mobile-ui/components/) ·
-[Themes](https://push-in.github.io/pam-docs/mobile-ui/themes/) ·
-[Performance](https://push-in.github.io/pam-docs/mobile-ui/performance/) ·
+**[Documentation](docs/authoring.md) ·
+[Component catalog](docs/catalog.md) ·
+[Product foundations](docs/product-foundations.md) ·
+[Performance](docs/performance.md) ·
 [Contributing](CONTRIBUTING.md)**
 
 </div>
@@ -37,7 +37,7 @@ JavaScript runtime, CSS engine, or Vuetify metadata importer.
   high-performance offline-first data for native applications.
 - [PAM Native documentation](https://push-in.github.io/pam-docs/native/overview/)
   — start here if you are new to native PHP applications.
-- [PAM Mobile UI documentation](https://push-in.github.io/pam-docs/mobile-ui/overview/)
+- [PAM Mobile UI documentation](docs/authoring.md)
   — components, themes, accessibility and performance.
 
 This library does not wrap a web design system and call it native. Its
