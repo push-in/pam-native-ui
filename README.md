@@ -76,11 +76,14 @@ and keyframe entrance motion are available through `NativeCapabilities`; see
 ## Installation
 
 ```bash
-composer require pushinbr/pam-mobile-ui
+pam add mobile-ui
+pam doctor
 ```
 
-PAM Native discovers `pam-native.plugin.json`, links the Android and iOS
-sources, and generates the native view registries during `pam mobile prepare`.
+`pam add mobile-ui` performs dependency compatibility preflight, updates the
+normal Composer manifest and lockfile, discovers `pam-native.plugin.json`, and
+refreshes the Android and iOS native view registries. Direct Composer commands
+are an advanced interoperability path; PAM is the supported application workflow.
 
 ## Quick start
 
