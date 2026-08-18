@@ -3646,14 +3646,23 @@ final class ComponentRenderer
     {
         $requested = $props['name'] ?? $props['icon'] ?? $part;
         $materialIds = \Pam\MobileUi\Generated\MaterialComponentMap::IDS;
-        $iconName = is_string($requested)
+        $requestedName = is_string($requested)
             ? self::nativeIconName($requested)
-            : $part;
-        $icon = $materialIds[$iconName]
-            ?? ComponentMap::IDS[$iconName]
+            : null;
+        $requestedIcon = $requestedName === null
+            ? null
+            : ($materialIds[$requestedName] ?? ComponentMap::IDS[$requestedName] ?? null);
+        if (is_string($requested) && $requestedIcon === null) {
+            throw new InvalidArgumentException(
+                "Unknown native icon {$requested}; use a name from resources/icons.json.",
+            );
+        }
+        $icon = $requestedIcon
             ?? $materialIds[$part]
             ?? ComponentMap::IDS[$part]
-            ?? 0;
+            ?? throw new InvalidArgumentException(
+                "Component {$part} does not resolve to a native icon.",
+            );
         $requestedColor = $props['color'] ?? $props['action'] ?? null;
         $theme = ThemeManager::current();
         $semanticColor = is_string($requestedColor)
@@ -3712,6 +3721,7 @@ final class ComponentRenderer
     {
         $normalized = strtolower(trim($requested));
         $aliases = [
+            'chat' => 'MessageCircleIcon',
             'favorite' => 'FavouriteIcon',
             'format-align-center' => 'GripVerticalIcon',
             'format-align-left' => 'ChevronsLeftIcon',
@@ -3720,8 +3730,10 @@ final class ComponentRenderer
             'inbox' => 'MailIcon',
             'more-horiz' => 'ThreeDotsIcon',
             'more-vert' => 'ThreeDotsIcon',
+            'notifications' => 'BellIcon',
             'palette' => 'SunIcon',
             'person' => 'CircleIcon',
+            'schedule' => 'ClockIcon',
             'widgets' => 'GripVerticalIcon',
         ];
         if (isset($aliases[$normalized])) {

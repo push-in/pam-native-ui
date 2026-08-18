@@ -1,21 +1,80 @@
-<AppScreen title="PAM UI" subtitle="Native component showcase">
-        <template #actions>
-            <p-btn variant="text" on:press="openDrawer" accessibilityLabel="Open component menu"><Text>Menu</Text></p-btn>
-        </template>
-        <Column class="gap-3 py-2">
-            <p-chip variant="tonal"><Text>Material for native</Text></p-chip>
-            <Text size="2xl">One system. Two platforms.</Text>
-            <Text>Explore every p-* component as real Android and UIKit views.</Text>
+<AppScreen title="PAM Studio" subtitle="Build native products with PHP">
+    <template #actions>
+        <p-icon-btn on:press="openDrawer" accessibilityLabel="Open component navigation">
+            <p-icon icon="menu" />
+        </p-icon-btn>
+    </template>
+
+    <p-card variant="tonal" class="p-5 rounded-3xl">
+        <Column class="gap-4">
+            <Row class="items-center justify-between gap-3">
+                <p-chip action="success" variant="subtle"><Text>RUNTIME LIVE</Text></p-chip>
+                <Text size="sm" class="ui-text-muted">Android · UIKit</Text>
+            </Row>
+            <Column class="gap-2">
+                <Text size="2xl">One language. Truly native.</Text>
+                <Text class="ui-text-muted">Compose polished products with typed PHP, platform controls and zero JavaScript runtime.</Text>
+            </Column>
+            <Row class="gap-3">
+                <Column class="flex-1 gap-1">
+                    <Text size="xl">84</Text>
+                    <Text size="sm" class="ui-text-muted">components</Text>
+                </Column>
+                <Column class="flex-1 gap-1">
+                    <Text size="xl">2</Text>
+                    <Text size="sm" class="ui-text-muted">platforms</Text>
+                </Column>
+                <Column class="flex-1 gap-1">
+                    <Text size="xl">0</Text>
+                    <Text size="sm" class="ui-text-muted">JS bridges</Text>
+                </Column>
+            </Row>
+            <p-btn block="true" on:press="goAll">
+                <p-icon icon="widgets" />
+                <Text>Open component workbench</Text>
+            </p-btn>
         </Column>
-        <Text size="xl">Browse by category</Text>
-        <p-list>
-            <p-list-item on:press="goActions"><Text>Actions</Text><Text>Buttons, chips and selection</Text></p-list-item>
-            <p-divider />
-            <p-list-item on:press="goForms"><Text>Forms</Text><Text>Inputs, pickers and validation</Text></p-list-item>
-            <p-divider />
-            <p-list-item on:press="goData"><Text>Data</Text><Text>Tables, lists and visualization</Text></p-list-item>
-            <p-divider />
-            <p-list-item on:press="goOverlays"><Text>Overlays</Text><Text>Dialogs, sheets and menus</Text></p-list-item>
-        </p-list>
-        <p-btn block="true" on:press="goAll"><Text>Explore all components</Text></p-btn>
+    </p-card>
+
+    <Column class="gap-3">
+        <Column class="gap-1">
+            <Text size="xl">Explore the system</Text>
+            <Text class="ui-text-muted">Every sample below is a real native interaction.</Text>
+        </Column>
+        <p-card class="rounded-2xl">
+            <p-list>
+                <p-list-item on:press="goActions">
+                    <p-icon icon="play" />
+                    <Column class="gap-1"><Text>Actions</Text><Text class="ui-text-muted">Buttons, chips and selection</Text></Column>
+                    <p-icon icon="chevron-right" />
+                </p-list-item>
+                <p-divider />
+                <p-list-item on:press="goForms">
+                    <p-icon icon="edit" />
+                    <Column class="gap-1"><Text>Forms</Text><Text class="ui-text-muted">Inputs, pickers and validation</Text></Column>
+                    <p-icon icon="chevron-right" />
+                </p-list-item>
+                <p-divider />
+                <p-list-item on:press="goData">
+                    <p-icon icon="calendar-days" />
+                    <Column class="gap-1"><Text>Data</Text><Text class="ui-text-muted">Tables, lists and visualization</Text></Column>
+                    <p-icon icon="chevron-right" />
+                </p-list-item>
+                <p-divider />
+                <p-list-item on:press="goOverlays">
+                    <p-icon icon="copy" />
+                    <Column class="gap-1"><Text>Overlays</Text><Text class="ui-text-muted">Dialogs, sheets and menus</Text></Column>
+                    <p-icon icon="chevron-right" />
+                </p-list-item>
+            </p-list>
+        </p-card>
+    </Column>
+
+    <p-alert action="info" variant="subtle" class="rounded-2xl">
+        <p-icon icon="info" />
+        <Column class="gap-1">
+            <Text>Accessibility is built in</Text>
+            <Text class="ui-text-muted">Dynamic text, reduced motion, screen readers and 48 dp targets ship as product contracts.</Text>
+        </Column>
+    </p-alert>
 </AppScreen>

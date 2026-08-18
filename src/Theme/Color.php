@@ -27,4 +27,38 @@ final readonly class Color
             | ($blue & 0xff),
         );
     }
+
+    public static function fromArgb(int $argb): self
+    {
+        if ($argb < 0 || $argb > 0xffffffff) {
+            throw new InvalidArgumentException('ARGB colors must be unsigned 32-bit integers.');
+        }
+
+        return new self($argb);
+    }
+
+    public function contrastRatio(self $other): float
+    {
+        $lighter = max($this->relativeLuminance(), $other->relativeLuminance());
+        $darker = min($this->relativeLuminance(), $other->relativeLuminance());
+
+        return ($lighter + 0.05) / ($darker + 0.05);
+    }
+
+    public function relativeLuminance(): float
+    {
+        $channel = static function (int $value): float {
+            $normalized = $value / 255;
+
+            return $normalized <= 0.04045
+                ? $normalized / 12.92
+                : (($normalized + 0.055) / 1.055) ** 2.4;
+        };
+
+        $red = $channel(($this->argb >> 16) & 0xff);
+        $green = $channel(($this->argb >> 8) & 0xff);
+        $blue = $channel($this->argb & 0xff);
+
+        return 0.2126 * $red + 0.7152 * $green + 0.0722 * $blue;
+    }
 }

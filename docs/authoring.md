@@ -87,10 +87,10 @@ use Pam\MobileUi\Theme\Color;
 use Pam\MobileUi\Theme\Themes;
 
 PamUI::theme(
-    Themes::light()->withColors([
+    Themes::pamLight()->withColors([
         ColorToken::Primary->value => Color::rgb(37, 99, 235),
     ]),
-    Themes::dark()->withColors([
+    Themes::pamDark()->withColors([
         ColorToken::Primary->value => Color::rgb(147, 197, 253),
     ]),
 );

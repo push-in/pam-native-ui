@@ -18,6 +18,38 @@ function expectTheme(bool $condition, string $message): void
 }
 
 ThemeManager::reset();
+
+$accessiblePairs = [
+    [ColorToken::Foreground, ColorToken::Background],
+    [ColorToken::OnSurface, ColorToken::Surface],
+    [ColorToken::PopoverForeground, ColorToken::Popover],
+    [ColorToken::PrimaryForeground, ColorToken::Primary],
+    [ColorToken::SecondaryForeground, ColorToken::Secondary],
+    [ColorToken::AccentForeground, ColorToken::Accent],
+    [ColorToken::DestructiveForeground, ColorToken::Destructive],
+    [ColorToken::SuccessForeground, ColorToken::Success],
+    [ColorToken::WarningForeground, ColorToken::Warning],
+    [ColorToken::InfoForeground, ColorToken::Info],
+];
+
+foreach ([Themes::pamLight(), Themes::pamDark()] as $theme) {
+    foreach ($accessiblePairs as [$foreground, $background]) {
+        expectTheme(
+            $theme->contrastRatio($foreground, $background) >= 4.5,
+            "PAM theme pair {$foreground->name}/{$background->name} must meet WCAG AA.",
+        );
+    }
+
+    expectTheme(
+        $theme->contrastRatio(ColorToken::MutedForeground, ColorToken::Background) >= 4.5,
+        'Muted PAM theme text must remain readable against the application background.',
+    );
+}
+
+expectTheme(
+    abs(Color::rgb(0, 0, 0)->contrastRatio(Color::rgb(255, 255, 255)) - 21.0) < 0.001,
+    'WCAG contrast calculation must preserve the canonical black/white ratio.',
+);
 ThemeManager::mode(ThemeMode::System);
 ThemeManager::systemDark(false);
 expectTheme(

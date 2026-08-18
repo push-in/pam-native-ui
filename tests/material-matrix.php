@@ -101,8 +101,10 @@ if (array_keys($moduleTags) !== array_keys($tags)) {
 }
 
 $themes = [
-    ['mode' => ThemeMode::Light, 'theme' => Themes::light()],
-    ['mode' => ThemeMode::Dark, 'theme' => Themes::dark()],
+    ['mode' => ThemeMode::Light, 'theme' => Themes::light(), 'name' => 'neutral-light'],
+    ['mode' => ThemeMode::Dark, 'theme' => Themes::dark(), 'name' => 'neutral-dark'],
+    ['mode' => ThemeMode::Light, 'theme' => Themes::pamLight(), 'name' => 'pam-light'],
+    ['mode' => ThemeMode::Dark, 'theme' => Themes::pamDark(), 'name' => 'pam-dark'],
 ];
 $variants = ['elevated', 'flat', 'tonal', 'outlined', 'text', 'plain'];
 $densities = ['default', 'comfortable', 'compact'];
@@ -112,6 +114,14 @@ $states = [
     ['selected' => true],
     ['loading' => true],
 ];
+
+$iconClass = $tags['p-icon'];
+try {
+    $iconClass::make(['icon' => 'not-in-the-native-icon-catalog'])->toElement();
+    throw new RuntimeException('Unknown native icons must fail before reaching a blank view.');
+} catch (InvalidArgumentException) {
+    // Expected: silent blank icon rendering is not a valid product fallback.
+}
 
 $styleCases = 0;
 $renderCases = 0;
@@ -124,7 +134,8 @@ foreach ($tags as $tag => $class) {
         throw new RuntimeException("Missing Material ID for {$part}.");
     }
 
-    foreach ($themes as ['mode' => $mode, 'theme' => $theme]) {
+    foreach ($themes as ['mode' => $mode, 'theme' => $theme, 'name' => $themeName]) {
+        PamUI::theme($theme, $theme);
         PamUI::mode($mode);
         foreach ($variants as $variant) {
             foreach ($densities as $density) {
@@ -139,7 +150,7 @@ foreach ($tags as $tag => $class) {
                     $style = MaterialStyleResolver::resolve($props, $theme);
                     if (!$style instanceof Style) {
                         throw new RuntimeException(
-                            "Material style missing for {$part} ({$mode->name}/{$variant}/{$density}).",
+                            "Material style missing for {$part} ({$themeName}/{$variant}/{$density}).",
                         );
                     }
                     $styleCases++;

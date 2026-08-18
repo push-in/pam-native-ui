@@ -59,6 +59,6 @@ TypedCommunityCard::register();
 />
 ```
 
-`src/AppTheme.php` shows light/dark token overrides. Interaction, animation,
+`src/AppTheme.php` installs the contrast-gated PAM light/dark identity. Interaction, animation,
 focus, overlays, scrolling, images and transient input state remain native on
 Android in both authoring styles.

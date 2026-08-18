@@ -11,6 +11,13 @@ cover background, elevated and sunken surfaces, foregrounds, focus, overlays,
 success, warning and information. `DesignTokens` owns radius, typography,
 motion duration and density-aware spacing.
 
+`Themes::pamLight()` and `Themes::pamDark()` provide the official PAM visual
+identity: crisp slate surfaces, a restrained native depth scale and semantic
+green “run” accents. Every foreground/surface pair used by the system is gated
+at WCAG AA through the same ARGB values sent to Android and UIKit. Applications
+remain free to start from the neutral `light()`/`dark()` themes or override
+individual semantic tokens without introducing screen-level raw colors.
+
 Every coded state is an integer-backed enum. This includes `ThemeMode`,
 `InterfaceDensity`, `ActionStatus`, `AsyncStatus`, `FormStatus`,
 `MotionPreset`, `TabPresentation` and `HapticFeedback`.

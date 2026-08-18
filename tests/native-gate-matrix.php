@@ -7,6 +7,7 @@ use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\PamUI;
+use Pam\MobileUi\Theme\Themes;
 use Pam\Native\Internal\TreeEncoder;
 use Pam\Native\PropKey;
 
@@ -68,7 +69,12 @@ $catalogs = [
     'technical' => ComponentMap::TAGS,
     'material' => MaterialComponentMap::TAGS,
 ];
-$themes = [ThemeMode::Light, ThemeMode::Dark];
+$themes = [
+    [ThemeMode::Light, Themes::light()],
+    [ThemeMode::Dark, Themes::dark()],
+    [ThemeMode::Light, Themes::pamLight()],
+    [ThemeMode::Dark, Themes::pamDark()],
+];
 $states = [
     [],
     ['active' => true],
@@ -87,8 +93,9 @@ $largestFrameBytes = 0;
 $started = hrtime(true);
 
 foreach ($catalogs as $catalog => $components) {
-    foreach ($themes as $theme) {
-        PamUI::mode($theme);
+    foreach ($themes as [$mode, $theme]) {
+        PamUI::theme($theme, $theme);
+        PamUI::mode($mode);
         foreach ($components as $name => $class) {
             foreach ($states as $state) {
                 $label = "{$catalog}:{$name}";

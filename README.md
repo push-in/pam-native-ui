@@ -137,10 +137,10 @@ use Pam\MobileUi\Theme\Color;
 use Pam\MobileUi\Theme\Themes;
 
 PamUI::theme(
-    Themes::light()->withColors([
+    Themes::pamLight()->withColors([
         ColorToken::Primary->value => Color::rgb(0, 95, 184),
     ]),
-    Themes::dark()->withColors([
+    Themes::pamDark()->withColors([
         ColorToken::Primary->value => Color::rgb(167, 201, 255),
     ]),
 );
@@ -148,6 +148,8 @@ PamUI::theme(
 
 System, light, dark and custom themes resolve per provider subtree. Components
 consume semantic MD3 color, typography, shape, elevation and motion tokens.
+`pamLight()` and `pamDark()` ship the contrast-gated PAM identity; `light()` and
+`dark()` remain neutral foundations for fully custom brands.
 
 ## Verification
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add official PAM light/dark themes and executable WCAG contrast measurement.
+- Reject unknown native icon names instead of silently rendering blank glyphs.
+- Redesign the PAM Studio entry screen around the real component workbench.
+
 ## 0.4.1
 
 - Publish the current Apache-2.0 community distribution.

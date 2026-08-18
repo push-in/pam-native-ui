@@ -45,6 +45,8 @@ $assertRecipeSupported = static function (
 $themes = [
     [ThemeMode::Light, Themes::light()],
     [ThemeMode::Dark, Themes::dark()],
+    [ThemeMode::Light, Themes::pamLight()],
+    [ThemeMode::Dark, Themes::pamDark()],
 ];
 $stateCases = [
     ['active' => true],
@@ -72,6 +74,7 @@ $compoundCases = 0;
 $stateMatrixCases = 0;
 
 foreach ($themes as [$mode, $theme]) {
+    ThemeManager::customize(light: $theme, dark: $theme);
     ThemeManager::mode($mode);
 
     foreach (ComponentMap::TAGS as $part => $componentClass) {
@@ -123,7 +126,7 @@ foreach ($themes as [$mode, $theme]) {
     }
 }
 
-ThemeManager::mode(ThemeMode::System);
+ThemeManager::reset();
 
 echo json_encode(
     [

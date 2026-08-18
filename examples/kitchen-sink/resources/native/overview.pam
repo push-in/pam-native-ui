@@ -36,7 +36,7 @@
                 <Column class="gap-2">
                     <Text class="ui-text-muted">Orders</Text>
                     <Text size="xl">284</Text>
-                    <Text size="sm" class="text-blue-400" numberOfLines="1">+18 this week</Text>
+                    <p-badge action="success" variant="subtle"><Text size="xs">+18 this week</Text></p-badge>
                 </Column>
             </p-card>
         </Column>
@@ -45,7 +45,7 @@
                 <Column class="gap-2">
                     <Text class="ui-text-muted">Conversion</Text>
                     <Text size="xl">18.6%</Text>
-                    <Text size="sm" class="text-blue-400" numberOfLines="1">+2.1 points</Text>
+                    <p-badge action="success" variant="subtle"><Text size="xs">+2.1 points</Text></p-badge>
                 </Column>
             </p-card>
         </Column>

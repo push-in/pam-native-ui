@@ -15,6 +15,6 @@ final class AppTheme
 
     public static function install(): void
     {
-        PamUI::theme(Themes::light(), Themes::dark());
+        PamUI::theme(Themes::pamLight(), Themes::pamDark());
     }
 }

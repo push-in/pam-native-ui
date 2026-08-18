@@ -31,6 +31,12 @@ final readonly class Theme
         return $this->colors[$token->value];
     }
 
+    public function contrastRatio(ColorToken $foreground, ColorToken $background): float
+    {
+        return Color::fromArgb($this->color($foreground))
+            ->contrastRatio(Color::fromArgb($this->color($background)));
+    }
+
     /**
      * @param array<int, Color|int> $overrides
      */
