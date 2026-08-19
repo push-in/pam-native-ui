@@ -412,21 +412,7 @@ final class ComponentRenderer
             $height = isset($props['height']) && is_numeric($props['height'])
                 ? max(1.0, (float) $props['height'])
                 : 4.0;
-            $filledStyle = [
-                'widthPercent' => $progress,
-                'height' => $height,
-                'positionType' => \Pam\Native\PositionType::Absolute,
-                'top' => 0.0,
-                'backgroundColor' => self::materialSemanticColor($props),
-                'borderRadius' => 999.0,
-                'animationDurationMs' => $reduceMotion
-                    ? null
-                    : ($indeterminate ? 1100 : 250),
-                'animateChanges' => !$reduceMotion,
-            ];
-            $filledStyle[$reverse ? 'right' : 'left'] = $indeterminate
-                ? 12.0
-                : 0.0;
+            $filledOffset = $indeterminate ? 12.0 : 0.0;
             $children = [
                 View::make()
                     ->style(new Style(
@@ -444,7 +430,20 @@ final class ComponentRenderer
                     ))
                     ->property(PropKey::Value, 'pam:progress-buffer-track'),
                 View::make()
-                    ->style(new Style(...$filledStyle))
+                    ->style(new Style(
+                        widthPercent: $progress,
+                        height: $height,
+                        positionType: \Pam\Native\PositionType::Absolute,
+                        top: 0.0,
+                        left: $reverse ? null : $filledOffset,
+                        right: $reverse ? $filledOffset : null,
+                        backgroundColor: self::materialSemanticColor($props),
+                        borderRadius: 999.0,
+                        animationDurationMs: $reduceMotion
+                            ? null
+                            : ($indeterminate ? 1100 : 250),
+                        animateChanges: !$reduceMotion,
+                    ))
                     ->property(PropKey::Value, 'pam:progress-filled-track'),
             ];
         }
@@ -3484,7 +3483,8 @@ final class ComponentRenderer
         }
 
         $triggerMarked = false;
-        foreach ($children as $index => $child) {
+        $markedChildren = [];
+        foreach ($children as $child) {
             $tag = $child->properties()[PropKey::Value->value] ?? null;
             if (
                 $tag === 'pam:overlay-content'
@@ -3494,18 +3494,20 @@ final class ComponentRenderer
                     && str_starts_with($tag, 'pam:overlay-backdrop:')
                 )
             ) {
+                $markedChildren[] = $child;
                 continue;
             }
             if (!$triggerMarked) {
-                $children[$index] = $child->property(
+                $child = $child->property(
                     PropKey::Value,
                     'pam:overlay-trigger',
                 );
                 $triggerMarked = true;
             }
+            $markedChildren[] = $child;
         }
 
-        return $children;
+        return $markedChildren;
     }
 
     private static function usesNativeWindow(string $part): bool
@@ -4251,8 +4253,11 @@ final class ComponentRenderer
             return $children;
         }
 
-        foreach ($children as $index => $child) {
-            if ($child->kind() !== NodeKind::Input) {
+        $eventChildren = [];
+        $inputDecorated = false;
+        foreach ($children as $child) {
+            if ($inputDecorated || $child->kind() !== NodeKind::Input) {
+                $eventChildren[] = $child;
                 continue;
             }
             foreach ([
@@ -4270,11 +4275,11 @@ final class ComponentRenderer
                     $child = $child->on($kind, $handler);
                 }
             }
-            $children[$index] = $child;
-            break;
+            $eventChildren[] = $child;
+            $inputDecorated = true;
         }
 
-        return $children;
+        return $eventChildren;
     }
 
     /**

@@ -302,6 +302,45 @@ foreach ([
     );
 }
 
+$ecosystemGate = 'push-in/pam/.github/workflows/ecosystem-compatibility.yml@main';
+$publicationWorkflow = file_get_contents(
+    $root.'/.github/workflows/publication-compatibility.yml',
+);
+$releaseWorkflow = file_get_contents($root.'/.github/workflows/release.yml');
+$composerWorkflow = file_get_contents($root.'/.github/workflows/composer-package.yml');
+foreach ([
+    'publication compatibility' => $publicationWorkflow,
+    'native release' => $releaseWorkflow,
+    'Composer distribution' => $composerWorkflow,
+] as $workflowName => $workflow) {
+    $assert(is_string($workflow), "Cannot inspect {$workflowName} workflow.");
+    if (!is_string($workflow)) {
+        continue;
+    }
+    $assert(
+        str_contains($workflow, $ecosystemGate),
+        "{$workflowName} must invoke the central ecosystem gate.",
+    );
+    $assert(
+        str_contains($workflow, "tags:\n")
+            && (
+                str_contains($workflow, "- \"v*\"")
+                || str_contains($workflow, "- 'v*'")
+            ),
+        "{$workflowName} must certify version tags.",
+    );
+}
+$assert(
+    is_string($releaseWorkflow)
+        && substr_count($releaseWorkflow, 'needs: ecosystem-compatibility') >= 1,
+    'Native release jobs must wait for ecosystem compatibility.',
+);
+$assert(
+    is_string($composerWorkflow)
+        && str_contains($composerWorkflow, 'needs: ecosystem-compatibility'),
+    'Composer publication must wait for ecosystem compatibility.',
+);
+
 if ($failures !== []) {
     foreach ($failures as $failure) {
         fwrite(STDERR, "release-check: {$failure}\n");

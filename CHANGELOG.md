@@ -5,6 +5,8 @@
 - Add official PAM light/dark themes and executable WCAG contrast measurement.
 - Reject unknown native icon names instead of silently rendering blank glyphs.
 - Redesign the PAM Studio entry screen around the real component workbench.
+- Certify PHP 8.4/8.5 against both lowest and latest PAM Native dependency
+  graphs before any native or Composer publication.
 
 ## 0.4.1
 

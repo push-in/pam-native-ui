@@ -320,6 +320,7 @@ $firstCarouselHost =
     $firstCarouselItem?->properties()[PropKey::HostProperties->value] ?? null;
 if (
     !$carouselHost instanceof BinaryValue
+    || !$firstCarouselItem instanceof \Pam\Native\Element
     || !$firstCarouselHost instanceof BinaryValue
     || !$secondCarouselItem instanceof \Pam\Native\Element
 ) {

@@ -28,8 +28,13 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 jobs:
+  ecosystem-compatibility:
+    name: Certify the complete PAM Native ecosystem
+    uses: push-in/pam/.github/workflows/ecosystem-compatibility.yml@main
+
   publish:
     name: Publish Composer distribution
+    needs: ecosystem-compatibility
     if: >-
       github.repository == 'push-in/pam-mobile-ui' &&
       (github.event_name == 'push' || inputs.publish)

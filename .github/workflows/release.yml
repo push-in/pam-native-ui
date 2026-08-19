@@ -24,8 +24,13 @@ env:
   PAM_NATIVE_COMMIT: 26a768c9a7e0137bda9fa7de23f46c9308de2839
 
 jobs:
+  ecosystem-compatibility:
+    name: Certify the complete PAM Native ecosystem
+    uses: push-in/pam/.github/workflows/ecosystem-compatibility.yml@main
+
   ios:
     name: Build iOS release artifact
+    needs: ecosystem-compatibility
     runs-on: macos-15
     timeout-minutes: 25
     steps:
@@ -75,6 +80,7 @@ jobs:
   package:
     name: Build release artifacts
     needs:
+      - ecosystem-compatibility
       - ios
     runs-on: ubuntu-24.04
     timeout-minutes: 30
