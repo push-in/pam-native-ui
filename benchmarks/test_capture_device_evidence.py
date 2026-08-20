@@ -42,6 +42,9 @@ class CaptureDeviceEvidenceTests(unittest.TestCase):
         self.assertEqual(21, len(document["measurements"]))
         self.assertEqual({"passed": 2, "failed": 0}, document["functionalTests"])
         self.assertEqual(2, document["measurementCoverageCode"])
+        self.assertEqual(10_000, document["samplesPerOperation"])
+        self.assertEqual(2_000, document["measurements"]["calendarDraw"]["sampleCount"])
+        self.assertEqual(2_000, document["measurements"]["hostLifecycle"]["sampleCount"])
         subject.contract.verify(document, "captured")
 
     def test_android_producer_and_capture_inventory_remain_locked(self):
@@ -51,6 +54,7 @@ class CaptureDeviceEvidenceTests(unittest.TestCase):
         for name in subject.COUNTERS:
             self.assertIn(f'append("\\"{name}\\":', source)
         self.assertIn("JSONObject.quote", source)
+        self.assertIn('append("{\\"sampleCount\\":$sampleCount,")', source)
 
     def test_rejects_duplicate_or_partial_log_payload(self):
         original = self.logcat.read_text(encoding="utf-8")
@@ -61,6 +65,10 @@ class CaptureDeviceEvidenceTests(unittest.TestCase):
         raw.pop("update")
         self.logcat.write_text(f"PamMobileUiBench: {json.dumps(raw)}\n", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "missing or unknown"):
+            subject.parse_logcat(self.logcat)
+        raw["update"] = {"sampleCount": True, "p50Us": 1, "p95Us": 1, "p99Us": 1, "maxUs": 1}
+        self.logcat.write_text(f"PamMobileUiBench: {json.dumps(raw)}\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "expected integer"):
             subject.parse_logcat(self.logcat)
 
     def test_rejects_failed_missing_and_duplicate_junit_cases(self):

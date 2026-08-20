@@ -36,8 +36,9 @@
     "measurement": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["p99Us"],
+      "required": ["sampleCount", "p99Us"],
       "properties": {
+        "sampleCount": {"type": "integer", "minimum": 100, "maximum": 1000000},
         "p50Us": {"type": "integer", "minimum": 0, "maximum": 60000000},
         "p95Us": {"type": "integer", "minimum": 0, "maximum": 60000000},
         "p99Us": {"type": "integer", "minimum": 0, "maximum": 60000000},

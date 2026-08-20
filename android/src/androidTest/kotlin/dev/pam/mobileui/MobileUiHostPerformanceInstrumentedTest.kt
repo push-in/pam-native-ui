@@ -899,6 +899,7 @@ class MobileUiHostPerformanceInstrumentedTest {
         }
         samples.sort()
         return Statistics(
+            sampleCount = samples.size,
             p50Nanos = samples.percentile(0.50),
             p95Nanos = samples.percentile(0.95),
             p99Nanos = samples.percentile(0.99),
@@ -917,6 +918,7 @@ class MobileUiHostPerformanceInstrumentedTest {
     }
 
     private data class Statistics(
+        val sampleCount: Int,
         val p50Nanos: Long,
         val p95Nanos: Long,
         val p99Nanos: Long,
@@ -926,7 +928,8 @@ class MobileUiHostPerformanceInstrumentedTest {
             get() = p99Nanos / NANOS_PER_MICROSECOND
 
         fun json(): String = buildString {
-            append("{\"p50Us\":${p50Nanos / NANOS_PER_MICROSECOND},")
+            append("{\"sampleCount\":$sampleCount,")
+            append("\"p50Us\":${p50Nanos / NANOS_PER_MICROSECOND},")
             append("\"p95Us\":${p95Nanos / NANOS_PER_MICROSECOND},")
             append("\"p99Us\":${p99Nanos / NANOS_PER_MICROSECOND},")
             append("\"maxUs\":${maxNanos / NANOS_PER_MICROSECOND}}")

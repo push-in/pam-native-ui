@@ -94,8 +94,9 @@ def parse_logcat(path: Path) -> dict[str, object]:
     measurements: dict[str, object] = {}
     for source, target in RAW_METRICS.items():
         value = raw[source]
-        if not isinstance(value, dict) or set(value) != {"p50Us", "p95Us", "p99Us", "maxUs"}:
+        if not isinstance(value, dict) or set(value) != {"sampleCount", "p50Us", "p95Us", "p99Us", "maxUs"}:
             raise ValueError(f"benchmark.{source} contains invalid quantiles")
+        contract.integer(value["sampleCount"], 100, 1_000_000, f"benchmark.{source}.sampleCount")
         measurements[target] = value
     return {
         "device": raw["device"],
@@ -148,7 +149,9 @@ def produce(logcat: Path, junit: Path, revision: str, captured_date: str) -> dic
         "functionalResultCode": 1,
         "measurementCoverageCode": 2,
         "functionalTests": parse_junit(junit),
-        "samplesPerOperation": 10_000,
+        "samplesPerOperation": max(
+            measurement["sampleCount"] for measurement in raw["measurements"].values()
+        ),
         "measurements": raw["measurements"],
         "resultCode": 1,
     }

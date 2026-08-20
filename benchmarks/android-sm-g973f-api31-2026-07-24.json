@@ -8,33 +8,108 @@
     "sourceRevision": "68f3bcca094b2aecd08797064a50384dfac0740c",
     "functionalResultCode": 1,
     "measurementCoverageCode": 1,
-    "functionalTests": { "passed": 39, "failed": 0 },
+    "functionalTests": {
+        "passed": 39,
+        "failed": 0
+    },
     "samplesPerOperation": 10000,
     "measurements": {
-        "hostUpdate": { "p99Us": 53 },
-        "sliderMove": { "p99Us": 33 },
-        "calendarDraw": { "p99Us": 805 },
-        "dateTimeUpdate": { "p99Us": 85 },
-        "accordionToggle": { "p99Us": 19 },
-        "checkboxToggle": { "p99Us": 3 },
-        "radioSelection": { "p99Us": 11 },
-        "progressUpdate": { "p99Us": 37 },
-        "switchToggle": { "p99Us": 84 },
-        "tabsSelection": { "p99Us": 25 },
-        "sheetSnap": { "p99Us": 479 },
-        "sheetItemPress": { "p99Us": 2 },
-        "anchoredPosition": { "p99Us": 12 },
-        "menuSelection": { "p99Us": 2 },
-        "inputState": { "p99Us": 34 },
-        "inputSlotPress": { "p99Us": 5 },
-        "feedbackUpdate": { "p99Us": 63 },
-        "imageNavigation": { "p99Us": 153 },
-        "branchNavigation": { "p99Us": 131 },
-        "promptSubmission": { "p99Us": 142 },
-        "fileTreeToggle": { "p99Us": 27 },
-        "markdownUpdate": { "p99Us": 151 },
-        "tableLayout": { "p99Us": 5 },
-        "hostLifecycle": { "p99Us": 320 }
+        "hostUpdate": {
+            "p99Us": 53,
+            "sampleCount": 10000
+        },
+        "sliderMove": {
+            "p99Us": 33,
+            "sampleCount": 10000
+        },
+        "calendarDraw": {
+            "p99Us": 805,
+            "sampleCount": 2000
+        },
+        "dateTimeUpdate": {
+            "p99Us": 85,
+            "sampleCount": 10000
+        },
+        "accordionToggle": {
+            "p99Us": 19,
+            "sampleCount": 10000
+        },
+        "checkboxToggle": {
+            "p99Us": 3,
+            "sampleCount": 10000
+        },
+        "radioSelection": {
+            "p99Us": 11,
+            "sampleCount": 10000
+        },
+        "progressUpdate": {
+            "p99Us": 37,
+            "sampleCount": 10000
+        },
+        "switchToggle": {
+            "p99Us": 84,
+            "sampleCount": 10000
+        },
+        "tabsSelection": {
+            "p99Us": 25,
+            "sampleCount": 10000
+        },
+        "sheetSnap": {
+            "p99Us": 479,
+            "sampleCount": 10000
+        },
+        "sheetItemPress": {
+            "p99Us": 2,
+            "sampleCount": 10000
+        },
+        "anchoredPosition": {
+            "p99Us": 12,
+            "sampleCount": 10000
+        },
+        "menuSelection": {
+            "p99Us": 2,
+            "sampleCount": 10000
+        },
+        "inputState": {
+            "p99Us": 34,
+            "sampleCount": 10000
+        },
+        "inputSlotPress": {
+            "p99Us": 5,
+            "sampleCount": 10000
+        },
+        "feedbackUpdate": {
+            "p99Us": 63,
+            "sampleCount": 10000
+        },
+        "imageNavigation": {
+            "p99Us": 153,
+            "sampleCount": 10000
+        },
+        "branchNavigation": {
+            "p99Us": 131,
+            "sampleCount": 10000
+        },
+        "promptSubmission": {
+            "p99Us": 142,
+            "sampleCount": 10000
+        },
+        "fileTreeToggle": {
+            "p99Us": 27,
+            "sampleCount": 10000
+        },
+        "markdownUpdate": {
+            "p99Us": 151,
+            "sampleCount": 10000
+        },
+        "tableLayout": {
+            "p99Us": 5,
+            "sampleCount": 10000
+        },
+        "hostLifecycle": {
+            "p99Us": 320,
+            "sampleCount": 2000
+        }
     },
     "resultCode": 1
 }

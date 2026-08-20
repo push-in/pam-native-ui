@@ -94,7 +94,7 @@ def verify(document: dict[str, object], label: str) -> None:
     if document["functionalResultCode"] != ResultCode.PASSED.value or document["resultCode"] != ResultCode.PASSED.value:
         raise ValueError(f"{label}: report or functional tests did not pass")
     coverage = integer(document["measurementCoverageCode"], 1, 2, f"{label}.measurementCoverageCode")
-    integer(document["samplesPerOperation"], MIN_SAMPLES, 1_000_000, f"{label}.samplesPerOperation")
+    maximum_samples = integer(document["samplesPerOperation"], MIN_SAMPLES, 1_000_000, f"{label}.samplesPerOperation")
     if not isinstance(document["capturedDate"], str) or re.fullmatch(r"\d{4}-\d{2}-\d{2}", document["capturedDate"]) is None:
         raise ValueError(f"{label}: invalid capture date")
     try:
@@ -115,12 +115,15 @@ def verify(document: dict[str, object], label: str) -> None:
     inventory = set(measurements) if isinstance(measurements, dict) else set()
     if inventory not in (REQUIRED_MEASUREMENTS, REQUIRED_MEASUREMENTS | HISTORICAL_MEASUREMENTS):
         raise ValueError(f"{label}: measurement inventory does not match the current or historical contract")
-    expected_keys = {"p99Us"} if coverage == MeasurementCoverageCode.P99_ONLY.value else {"p50Us", "p95Us", "p99Us", "maxUs"}
+    expected_keys = {"sampleCount", "p99Us"} if coverage == MeasurementCoverageCode.P99_ONLY.value else {"sampleCount", "p50Us", "p95Us", "p99Us", "maxUs"}
+    observed_samples: list[int] = []
     for name in sorted(inventory):
         measurement = measurements[name]
         if not isinstance(measurement, dict) or set(measurement) != expected_keys:
             raise ValueError(f"{label}.{name}: quantiles do not match coverage code")
-        for key in expected_keys:
+        sample_count = integer(measurement["sampleCount"], 100, 1_000_000, f"{label}.{name}.sampleCount")
+        observed_samples.append(sample_count)
+        for key in expected_keys - {"sampleCount"}:
             integer(measurement[key], 0, 60_000_000, f"{label}.{name}.{key}")
         if coverage == MeasurementCoverageCode.COMPLETE_QUANTILES.value:
             ordered = [measurement[key] for key in ("p50Us", "p95Us", "p99Us", "maxUs")]
@@ -128,6 +131,8 @@ def verify(document: dict[str, object], label: str) -> None:
                 raise ValueError(f"{label}.{name}: quantiles are not monotonic")
         if measurement["p99Us"] >= BUDGET_US[name]:
             raise ValueError(f"{label}.{name}: p99 exceeds the {BUDGET_US[name]} microsecond budget")
+    if max(observed_samples) != maximum_samples:
+        raise ValueError(f"{label}: samplesPerOperation must equal the largest metric sampleCount")
 
 
 def verify_reports(reports: list[tuple[str, dict[str, object]]]) -> None:

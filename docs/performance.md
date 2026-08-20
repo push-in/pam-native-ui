@@ -83,7 +83,10 @@ Platform `1` is Android; build types `1` and `2` are debug and release;
 measurement coverage `1` is historical p99-only and `2` is complete
 p50/p95/p99/max; result `1` is passed and `2` is failed. Each report binds its
 capture date and exact 40-character source revision without inventing missing
-historical quantiles.
+historical quantiles. Every measurement carries its own `sampleCount`;
+`samplesPerOperation` is retained as the largest count in the run and must
+equal the maximum of those exact per-metric values. This preserves the real
+2,000 calendar/lifecycle samples instead of presenting them as 10,000.
 
 CI and tagged releases run the dependency-free verifier against the current
 21-operation inventory. The three image-navigation, message-branch and prompt

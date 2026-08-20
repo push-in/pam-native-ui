@@ -61,6 +61,20 @@ class DeviceEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "expected integer"):
             subject.verify(document, "fixture")
 
+    def test_rejects_missing_or_inconsistent_metric_sample_counts(self):
+        document = copy.deepcopy(self.reference)
+        document["measurements"]["hostUpdate"].pop("sampleCount")
+        with self.assertRaisesRegex(ValueError, "quantiles do not match"):
+            subject.verify(document, "fixture")
+        document = copy.deepcopy(self.reference)
+        document["samplesPerOperation"] = 9_999
+        with self.assertRaisesRegex(ValueError, "largest metric sampleCount"):
+            subject.verify(document, "fixture")
+        document = copy.deepcopy(self.reference)
+        document["measurements"]["calendarDraw"]["sampleCount"] = True
+        with self.assertRaisesRegex(ValueError, "expected integer"):
+            subject.verify(document, "fixture")
+
     def test_rejects_coverage_mismatch_and_duplicate_identity(self):
         document = copy.deepcopy(self.reference)
         document["measurementCoverageCode"] = 1
@@ -77,7 +91,7 @@ class DeviceEvidenceTests(unittest.TestCase):
         for name in subject.HISTORICAL_MEASUREMENTS:
             document["measurements"].pop(name)
         subject.verify(document, "current")
-        document["measurements"]["imageNavigation"] = {"p50Us": 1, "p95Us": 1, "p99Us": 1, "maxUs": 1}
+        document["measurements"]["imageNavigation"] = {"sampleCount": 10_000, "p50Us": 1, "p95Us": 1, "p99Us": 1, "maxUs": 1}
         with self.assertRaisesRegex(ValueError, "measurement inventory"):
             subject.verify(document, "partial")
 
