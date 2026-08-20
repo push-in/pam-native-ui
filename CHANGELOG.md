@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add accessible product status banners for information, success, warning,
+  error and progress feedback.
+- Require byte-reproducible PHP, Android and iOS packages with attested,
+  machine-readable evidence before release publication.
 - Add official PAM light/dark themes and executable WCAG contrast measurement.
 - Reject unknown native icon names instead of silently rendering blank glyphs.
 - Redesign the PAM Studio entry screen around the real component workbench.

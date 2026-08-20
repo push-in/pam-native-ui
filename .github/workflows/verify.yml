@@ -65,6 +65,9 @@ jobs:
           PAM_CI_VERIFIED_GATES: ios
         run: composer run verify
 
+      - name: Test release reproducibility evidence
+        run: python3 -m unittest benchmarks/package/test_reproducibility.py
+
       - name: Run composition benchmark
         env:
           PAM_NATIVE_ROOT: ${{ github.workspace }}/pam-native

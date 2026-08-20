@@ -11,6 +11,15 @@ builds, and compares every pair byte for byte before checksums, provenance or
 publication. Cross-job archives expire after seven days; durable downloads live
 on the GitHub release.
 
+Each comparison also emits a bounded schema-1 JSON report with sequential
+integer artifact/result codes, byte count and SHA-256. The publish job streams
+the downloaded packages again and rejects missing, substituted, symlinked,
+oversized or malformed evidence before creating the release.
+
+Artifact codes are `1` for the iOS source ZIP, `2` for the Android AAR and `3`
+for the PHP source archive. Result code `1` means passed and `2` means a byte
+mismatch; the producer and verifier use the corresponding integer enums.
+
 The portable source-archive check is available locally:
 
 ```bash
