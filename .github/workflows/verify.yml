@@ -17,6 +17,68 @@ env:
   PAM_NATIVE_COMMIT: 26a768c9a7e0137bda9fa7de23f46c9308de2839
 
 jobs:
+  composer-compatibility:
+    name: PHP ${{ matrix.php }} / PAM Native ${{ matrix.graph }}
+    needs:
+      - ios
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '8.4'
+          - '8.5'
+        graph:
+          - lowest
+          - latest
+    steps:
+      - name: Checkout PAM Mobile UI
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Preflight dependency graph
+        run: |
+          arguments=(--no-interaction --no-progress --prefer-dist)
+          if [[ '${{ matrix.graph }}' == lowest ]]; then
+            arguments+=(--prefer-lowest --prefer-stable)
+          fi
+          composer update "${arguments[@]}" --dry-run
+          composer install \
+            --working-dir=tools/phpstan \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --dry-run
+
+      - name: Resolve dependency graph
+        run: |
+          arguments=(--no-interaction --no-progress --prefer-dist)
+          if [[ '${{ matrix.graph }}' == lowest ]]; then
+            arguments+=(--prefer-lowest --prefer-stable)
+          fi
+          composer update "${arguments[@]}"
+          composer install \
+            --working-dir=tools/phpstan \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist
+
+      - name: Verify installed PAM Native graph
+        env:
+          PAM_NATIVE_ROOT: ${{ github.workspace }}/vendor/pushinbr/pam-native
+          PAM_CI_VERIFIED_GATES: ios
+        run: |
+          composer validate --strict --no-check-publish
+          composer show pushinbr/pam-native --format=json
+          composer run verify
+
   php:
     name: PHP 8.4
     needs:

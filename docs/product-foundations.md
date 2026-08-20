@@ -121,3 +121,9 @@ Android Kotlin compilation and device benchmarks. Validate keyboard navigation,
 screen-reader labels, live-region announcements, reduced motion, light/dark
 themes, narrow phones and adaptive rail widths. iOS compilation belongs on a
 macOS CI runner when Swift is unavailable locally.
+
+Composer compatibility is a four-entry gate: PHP 8.4 and 8.5 each resolve both
+the lowest supported and latest available PAM Native 0.6 graph. Every entry
+performs a dry run before resolution and executes the complete PHP verification
+suite against the package under `vendor`, rather than the separately checked
+out development repository.

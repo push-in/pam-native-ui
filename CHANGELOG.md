@@ -11,7 +11,8 @@
 - Reject unknown native icon names instead of silently rendering blank glyphs.
 - Redesign the PAM Studio entry screen around the real component workbench.
 - Certify PHP 8.4/8.5 against both lowest and latest PAM Native dependency
-  graphs before any native or Composer publication.
+  graphs, executing the full suite against each resolved vendor package after
+  dependency dry-runs.
 
 ## 0.4.1
 
