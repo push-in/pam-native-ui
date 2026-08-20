@@ -132,3 +132,12 @@ The native source boundary is independently compiled and tested against both
 the immutable PAM Native `v0.6.1` minimum and the current certified commit on
 Android and UIKit. Emulator behavior remains pinned to the certified revision;
 source compatibility and device behavior are separate gates.
+
+Tag and manual release runs repeat the four Composer graphs and both minimum
+native builds. Package construction depends on those jobs and the ecosystem
+compatibility workflow, so publication cannot race ahead of compatibility
+evidence produced for the exact release ref.
+
+Compatibility jobs receive read-only repository tokens. OIDC and attestation
+rights are limited to package producers, while only the final hash-verifying
+job receives permission to write the GitHub Release.

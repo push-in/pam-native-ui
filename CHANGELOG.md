@@ -15,6 +15,10 @@
   dependency dry-runs.
 - Compile and test Android and UIKit sources against both the immutable PAM
   Native v0.6.1 minimum and the current certified revision.
+- Block tag publication until the exact release ref repeats every Composer
+  graph plus the minimum Android and UIKit builds.
+- Restrict release credentials to read-only compatibility jobs, attestation-only
+  producers and a single release-writing publisher.
 
 ## 0.4.1
 

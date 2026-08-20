@@ -12,9 +12,7 @@ on:
       - "v*"
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 
 defaults:
   run:
@@ -28,11 +26,76 @@ jobs:
     name: Certify the complete PAM Native ecosystem
     uses: push-in/pam/.github/workflows/ecosystem-compatibility.yml@main
 
+  android-minimum:
+    name: Android / PAM Native minimum
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: 3a94047c54632d3c3ff998bcd9ca75e70aec58b0
+          path: pam-native
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v4
+      - name: Compile, test and lint the minimum native boundary
+        run: >-
+          pam-native/android/gradlew
+          -p android
+          -PpamNativeRoot=${{ github.workspace }}/pam-native
+          testDebugUnitTest
+          lintDebug
+          assembleRelease
+
+  ios-minimum:
+    name: iOS / PAM Native minimum
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: 3a94047c54632d3c3ff998bcd9ca75e70aec58b0
+          path: pam-native
+      - name: Test and build against the minimum UIKit boundary
+        env:
+          PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
+        run: |
+          udid=$(
+            xcrun simctl list devices available |
+              awk -F '[()]' '/iPhone/ { print $2; exit }'
+          )
+          test -n "${udid}"
+          xcodebuild \
+            -scheme PamMobileUi \
+            -destination "platform=iOS Simulator,id=${udid}" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+          xcodebuild \
+            -scheme PamMobileUi \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
   ios:
     name: Build iOS release artifact
     needs: ecosystem-compatibility
     runs-on: macos-15
     timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -94,13 +157,76 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  composer-compatibility:
+    name: PHP ${{ matrix.php }} / PAM Native ${{ matrix.graph }}
+    needs:
+      - ios
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '8.4'
+          - '8.5'
+        graph:
+          - lowest
+          - latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+      - name: Preflight dependency graph
+        run: |
+          arguments=(--no-interaction --no-progress --prefer-dist)
+          if [[ '${{ matrix.graph }}' == lowest ]]; then
+            arguments+=(--prefer-lowest --prefer-stable)
+          fi
+          composer update "${arguments[@]}" --dry-run
+          composer install \
+            --working-dir=tools/phpstan \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --dry-run
+      - name: Resolve and verify dependency graph
+        env:
+          PAM_NATIVE_ROOT: ${{ github.workspace }}/vendor/pushinbr/pam-native
+          PAM_CI_VERIFIED_GATES: ios
+        run: |
+          arguments=(--no-interaction --no-progress --prefer-dist)
+          if [[ '${{ matrix.graph }}' == lowest ]]; then
+            arguments+=(--prefer-lowest --prefer-stable)
+          fi
+          composer update "${arguments[@]}"
+          composer install \
+            --working-dir=tools/phpstan \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist
+          composer validate --strict --no-check-publish
+          composer show pushinbr/pam-native --format=json
+          composer run verify
+
   package:
     name: Build release artifacts
     needs:
+      - android-minimum
+      - composer-compatibility
       - ecosystem-compatibility
       - ios
+      - ios-minimum
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -210,6 +336,8 @@ jobs:
       - ios
       - package
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
