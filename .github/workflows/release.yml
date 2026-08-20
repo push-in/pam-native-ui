@@ -61,21 +61,33 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
             build
-      - name: Create versioned iOS archive
+      - name: Create and verify reproducible iOS archive
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         run: |
           version=${RELEASE_TAG#v}
           mkdir -p dist
-          ditto -c -k --sequesterRsrc --keepParent ios \
-            "dist/pam-mobile-ui-ios-${version}.zip"
-          shasum -a 256 "dist/pam-mobile-ui-ios-${version}.zip" \
-            >"dist/pam-mobile-ui-ios-${version}.zip.sha256"
+          first="${RUNNER_TEMP}/pam-mobile-ui-ios-first.zip"
+          second="${RUNNER_TEMP}/pam-mobile-ui-ios-second.zip"
+          tools/reproducible-archive.sh zip HEAD ios ios/ "${first}"
+          tools/reproducible-archive.sh zip HEAD ios ios/ "${second}"
+          cmp "${first}" "${second}"
+          cp "${first}" "dist/pam-mobile-ui-ios-${version}.zip"
+          (
+            cd dist
+            sha256sum "pam-mobile-ui-ios-${version}.zip" \
+              >"pam-mobile-ui-ios-${version}.zip.sha256"
+          )
+      - uses: actions/attest-build-provenance@v4
+        if: github.event.repository.visibility == 'public'
+        with:
+          subject-path: dist/*.zip
       - uses: actions/upload-artifact@v7
         with:
           name: pam-mobile-ui-ios-release
           path: dist/pam-mobile-ui-ios-*
           if-no-files-found: error
+          retention-days: 7
 
   package:
     name: Build release artifacts
@@ -131,13 +143,22 @@ jobs:
             --no-progress \
             --prefer-dist
           PAM_NATIVE_ROOT="${GITHUB_WORKSPACE}/pam-native" composer run verify
-      - name: Build Android release AAR
-        run: >-
-          pam-native/android/gradlew
-          -p android
-          -PpamNativeRoot=${{ github.workspace }}/pam-native
-          assembleRelease
-      - name: Create reproducible release archives
+      - name: Build and verify reproducible Android AAR
+        run: |
+          first="${RUNNER_TEMP}/pam-mobile-ui-android-first.aar"
+          second="${RUNNER_TEMP}/pam-mobile-ui-android-second.aar"
+          pam-native/android/gradlew \
+            -p android \
+            -PpamNativeRoot="${GITHUB_WORKSPACE}/pam-native" \
+            clean assembleRelease
+          cp android/build/outputs/aar/pam-mobile-ui-release.aar "${first}"
+          pam-native/android/gradlew \
+            -p android \
+            -PpamNativeRoot="${GITHUB_WORKSPACE}/pam-native" \
+            clean assembleRelease
+          cp android/build/outputs/aar/pam-mobile-ui-release.aar "${second}"
+          cmp "${first}" "${second}"
+      - name: Create and verify reproducible PHP archive
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         run: |
@@ -145,12 +166,14 @@ jobs:
           mkdir -p dist
           cp android/build/outputs/aar/pam-mobile-ui-release.aar \
             "dist/pam-mobile-ui-android-${version}.aar"
-          git archive \
-            --format=tar \
-            --prefix="pam-mobile-ui-${version}/" \
-            --output="dist/pam-mobile-ui-php-${version}.tar" \
-            HEAD
-          gzip -n "dist/pam-mobile-ui-php-${version}.tar"
+          first="${RUNNER_TEMP}/pam-mobile-ui-php-first.tar.gz"
+          second="${RUNNER_TEMP}/pam-mobile-ui-php-second.tar.gz"
+          tools/reproducible-archive.sh tar.gz HEAD . \
+            "pam-mobile-ui-${version}/" "${first}"
+          tools/reproducible-archive.sh tar.gz HEAD . \
+            "pam-mobile-ui-${version}/" "${second}"
+          cmp "${first}" "${second}"
+          cp "${first}" "dist/pam-mobile-ui-php-${version}.tar.gz"
           (
             cd dist
             sha256sum \
@@ -169,6 +192,7 @@ jobs:
           name: pam-mobile-ui-release
           path: dist/*
           if-no-files-found: error
+          retention-days: 7
 
   publish:
     name: Publish GitHub release
@@ -185,6 +209,11 @@ jobs:
         with:
           name: pam-mobile-ui-ios-release
           path: dist
+      - name: Verify downloaded release artifacts
+        run: |
+          cd dist
+          sha256sum --check SHA256SUMS
+          sha256sum --check pam-mobile-ui-ios-*.zip.sha256
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}

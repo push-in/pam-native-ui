@@ -112,6 +112,7 @@ jobs:
             android/build/reports/lint-results-debug.html
             android/build/test-results/testDebugUnitTest/
           if-no-files-found: error
+          retention-days: 7
 
   ios:
     name: iOS UIKit package and tests
@@ -212,3 +213,4 @@ jobs:
             android/build/reports/androidTests/connected/
             android/build/outputs/androidTest-results/connected/
           if-no-files-found: warn
+          retention-days: 7

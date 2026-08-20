@@ -4,6 +4,19 @@ PAM Mobile UI keeps interaction progress inside Android and sends PHP only the
 semantic result. Benchmarks are split by layer so a fast PHP microbenchmark
 cannot be mistaken for smooth rendered frames.
 
+Release evidence also distinguishes source correctness from package
+reproducibility. The release workflow constructs the PHP and iOS source
+archives twice from the same immutable Git tree, performs two clean Android AAR
+builds, and compares every pair byte for byte before checksums, provenance or
+publication. Cross-job archives expire after seven days; durable downloads live
+on the GitHub release.
+
+The portable source-archive check is available locally:
+
+```bash
+tools/test-reproducible-archive.sh
+```
+
 The same boundary applies to UIKit. `p-ripple`, state layers, overlay motion,
 intersection, resize and mutation observation execute in native code. Only
 requested semantic events cross the bounded binary channel; listeners are
