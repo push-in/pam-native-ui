@@ -87,10 +87,74 @@ $states = [
     ['loading' => true],
     ['selected' => true],
 ];
+$materialRoleContract = [
+    'p-app-bar' => AccessibilityRole::Toolbar,
+    'p-app-bar-nav-icon' => AccessibilityRole::Button,
+    'p-alert' => AccessibilityRole::Alert,
+    'p-autocomplete' => AccessibilityRole::ComboBox,
+    'p-avatar' => AccessibilityRole::Image,
+    'p-banner' => AccessibilityRole::Alert,
+    'p-btn' => AccessibilityRole::Button,
+    'p-calendar' => AccessibilityRole::Grid,
+    'p-calendar-day' => AccessibilityRole::Button,
+    'p-carousel-item' => AccessibilityRole::Tab,
+    'p-checkbox' => AccessibilityRole::Checkbox,
+    'p-chip' => AccessibilityRole::Button,
+    'p-color-input' => AccessibilityRole::Input,
+    'p-combobox' => AccessibilityRole::ComboBox,
+    'p-data-table' => AccessibilityRole::Grid,
+    'p-data-table-virtual' => AccessibilityRole::Grid,
+    'p-date-input' => AccessibilityRole::Input,
+    'p-date-picker' => AccessibilityRole::Grid,
+    'p-empty-state' => AccessibilityRole::Summary,
+    'p-expansion-panel' => AccessibilityRole::Button,
+    'p-expansion-panel-title' => AccessibilityRole::ToggleButton,
+    'p-fab' => AccessibilityRole::Button,
+    'p-icon' => AccessibilityRole::Image,
+    'p-icon-btn' => AccessibilityRole::Button,
+    'p-img' => AccessibilityRole::Image,
+    'p-infinite-scroll' => AccessibilityRole::List,
+    'p-item' => AccessibilityRole::Button,
+    'p-list' => AccessibilityRole::List,
+    'p-list-item' => AccessibilityRole::ListItem,
+    'p-menu' => AccessibilityRole::Menu,
+    'p-number-input' => AccessibilityRole::SpinButton,
+    'p-otp-input' => AccessibilityRole::Input,
+    'p-progress-circular' => AccessibilityRole::ProgressBar,
+    'p-progress-linear' => AccessibilityRole::ProgressBar,
+    'p-radio' => AccessibilityRole::Radio,
+    'p-radio-group' => AccessibilityRole::RadioGroup,
+    'p-range-slider' => AccessibilityRole::Adjustable,
+    'p-rating' => AccessibilityRole::Adjustable,
+    'p-select' => AccessibilityRole::ComboBox,
+    'p-slide-group' => AccessibilityRole::TabList,
+    'p-slide-group-item' => AccessibilityRole::Tab,
+    'p-slider' => AccessibilityRole::Adjustable,
+    'p-snackbar' => AccessibilityRole::Alert,
+    'p-sparkline' => AccessibilityRole::Image,
+    'p-speed-dial' => AccessibilityRole::Button,
+    'p-stepper' => AccessibilityRole::List,
+    'p-stepper-header' => AccessibilityRole::TabList,
+    'p-stepper-item' => AccessibilityRole::Tab,
+    'p-stepper-vertical' => AccessibilityRole::List,
+    'p-stepper-vertical-item' => AccessibilityRole::ListItem,
+    'p-switch' => AccessibilityRole::Switch,
+    'p-tabs' => AccessibilityRole::TabList,
+    'p-tab' => AccessibilityRole::Tab,
+    'p-text-field' => AccessibilityRole::Input,
+    'p-textarea' => AccessibilityRole::Input,
+    'p-timeline' => AccessibilityRole::List,
+    'p-timeline-item' => AccessibilityRole::ListItem,
+    'p-toolbar' => AccessibilityRole::Toolbar,
+    'p-tooltip' => AccessibilityRole::Presentation,
+    'p-treeview' => AccessibilityRole::List,
+    'p-treeview-item' => AccessibilityRole::ListItem,
+];
 $renders = 0;
 $frames = 0;
 $accessibilityScenarios = 0;
 $accessibilityAssertions = 0;
+$semanticRoleAssertions = 0;
 $rtlAssertions = 0;
 $reducedMotionAssertions = 0;
 $largestFrameBytes = 0;
@@ -138,6 +202,20 @@ foreach ($catalogs as $catalog => $components) {
                     );
                 }
                 $accessibilityAssertions++;
+                $expectedRole = $catalog === 'material'
+                    ? ($materialRoleContract[$name] ?? null)
+                    : null;
+                if ($expectedRole !== null) {
+                    if ($role !== $expectedRole->value) {
+                        throw new RuntimeException(sprintf(
+                            '%s emitted role %s; expected %s.',
+                            $name,
+                            AccessibilityRole::tryFrom($role)?->name ?? 'invalid',
+                            $expectedRole->name,
+                        ));
+                    }
+                    $semanticRoleAssertions++;
+                }
                 if (!treeContainsProperty($element, PropKey::LayoutDirection, 2)) {
                     throw new RuntimeException(
                         "{$name} did not preserve right-to-left layout direction.",
@@ -230,6 +308,7 @@ echo json_encode(
         'nativeFrames' => $frames,
         'accessibilityScenarios' => $accessibilityScenarios,
         'accessibilityAssertions' => $accessibilityAssertions,
+        'semanticRoleAssertions' => $semanticRoleAssertions,
         'rtlAssertions' => $rtlAssertions,
         'reducedMotionAssertions' => $reducedMotionAssertions,
         'rendersPerSecond' => round($rendersPerSecond, 1),

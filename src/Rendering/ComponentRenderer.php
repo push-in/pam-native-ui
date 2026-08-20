@@ -2509,6 +2509,33 @@ final class ComponentRenderer
             return AccessibilityRole::Button;
         }
 
+        $materialRole = match ($props['__materialComponent'] ?? null) {
+            'PAppBar', 'PToolbar' => AccessibilityRole::Toolbar,
+            'PAutocomplete', 'PCombobox', 'PSelect' => AccessibilityRole::ComboBox,
+            'PBanner', 'PSnackbar' => AccessibilityRole::Alert,
+            'PCalendar', 'PDatePicker' => AccessibilityRole::Grid,
+            'PColorInput', 'PDateInput', 'POtpInput', 'PTextField', 'PTextarea' =>
+                AccessibilityRole::Input,
+            'PEmptyState' => AccessibilityRole::Summary,
+            'PList', 'PStepper', 'PStepperVertical', 'PTimeline', 'PTreeview' =>
+                AccessibilityRole::List,
+            'PListItem', 'PStepperVerticalItem', 'PTimelineItem', 'PTreeviewItem' =>
+                AccessibilityRole::ListItem,
+            'PNumberInput' => AccessibilityRole::SpinButton,
+            'PSlideGroup', 'PTabs' => AccessibilityRole::TabList,
+            'PSpeedDial' => AccessibilityRole::Button,
+            'PTooltip' => AccessibilityRole::Presentation,
+            'PAvatar', 'PIcon', 'PSparkline' =>
+                is_string($props['accessibilityLabel'] ?? null)
+                && $props['accessibilityLabel'] !== ''
+                    ? AccessibilityRole::Image
+                    : AccessibilityRole::Generic,
+            default => null,
+        };
+        if ($materialRole !== null) {
+            return $materialRole;
+        }
+
         $semanticRole = match ($part) {
             'Heading' => AccessibilityRole::Header,
             'Link' => AccessibilityRole::Link,

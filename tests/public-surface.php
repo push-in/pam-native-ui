@@ -78,6 +78,21 @@ if (($progressBanner->properties()[PropKey::AccessibilityBusy->value] ?? null) !
     throw new RuntimeException('Progress banners must expose their busy state.');
 }
 
+$iconClass = MaterialComponentMap::TAGS['p-icon'];
+$decorativeIcon = $iconClass::make(['icon' => 'check'])->toElement();
+if (array_key_exists(PropKey::AccessibilityRole->value, $decorativeIcon->properties())) {
+    throw new RuntimeException('Unlabeled icons must remain outside semantic image output.');
+}
+$labeledIcon = $iconClass::make([
+    'icon' => 'check',
+    'accessibilityLabel' => 'Completed',
+])->toElement();
+if (($labeledIcon->properties()[PropKey::AccessibilityRole->value] ?? null)
+    !== AccessibilityRole::Image->value
+) {
+    throw new RuntimeException('Labeled icons must expose the native image role.');
+}
+
 foreach (MaterialComponentMap::TAGS as $tag => $class) {
     if (TemplateRegistry::factory($tag) === null) {
         throw new RuntimeException("Public Material tag {$tag} is not registered.");

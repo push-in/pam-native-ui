@@ -141,6 +141,12 @@ retained subtree is inspected so reduced-motion requests cannot retain an
 enabled animation or a non-zero authored duration. These assertion totals are
 published separately from scenario and frame counts.
 
+The public Material surface also has an exact semantic-role contract. Controls,
+inputs, ranges, progress, tabs, lists, grids, alerts, toolbars and labeled
+imagery must resolve to their intended integer `AccessibilityRole`; emitting a
+valid but generic role is a release failure. Decorative icons, avatars and
+sparklines remain generic unless the author supplies an accessibility label.
+
 Tag and manual release runs repeat the four Composer graphs and both minimum
 native builds. Package construction depends on those jobs and the ecosystem
 compatibility workflow, so publication cannot race ahead of compatibility
