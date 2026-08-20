@@ -485,33 +485,35 @@ final class ComponentRenderer
             && in_array($materialComponent, ['PCard', 'PSheet'], true)
         ) {
             $theme = ThemeManager::current();
+            $loadingIndicator = View::make()->style(new Style(
+                widthPercent: 42.0,
+                height: 4.0,
+                borderRadius: 999.0,
+                backgroundColor: $theme->color(ColorToken::Primary),
+            ));
+            if (!self::flag($props, 'reduceMotion')) {
+                $loadingIndicator = Animated::make(
+                    $loadingIndicator->style(new Style(widthPercent: 100.0)),
+                    [
+                        new AnimationKeyframe(
+                            offset: 0.0,
+                            translationXPercent: -42.0,
+                        ),
+                        new AnimationKeyframe(
+                            offset: 1.0,
+                            translationXPercent: 100.0,
+                        ),
+                    ],
+                    durationMs: 1_250,
+                    easing: AnimationEasing::Linear,
+                )->iterations(0)->style(new Style(
+                    widthPercent: 42.0,
+                    height: 4.0,
+                ));
+            }
             array_unshift(
                 $children,
-                View::make(
-                    Animated::make(
-                        View::make()->style(new Style(
-                            widthPercent: 100.0,
-                            height: 4.0,
-                            borderRadius: 999.0,
-                            backgroundColor: $theme->color(ColorToken::Primary),
-                        )),
-                        [
-                            new AnimationKeyframe(
-                                offset: 0.0,
-                                translationXPercent: -42.0,
-                            ),
-                            new AnimationKeyframe(
-                                offset: 1.0,
-                                translationXPercent: 100.0,
-                            ),
-                        ],
-                        durationMs: 1_250,
-                        easing: AnimationEasing::Linear,
-                    )->iterations(0)->style(new Style(
-                        widthPercent: 42.0,
-                        height: 4.0,
-                    )),
-                )->style(new Style(
+                View::make($loadingIndicator)->style(new Style(
                     widthPercent: 100.0,
                     height: 4.0,
                     borderRadius: 999.0,
@@ -1066,6 +1068,11 @@ final class ComponentRenderer
             if ($styleOverride !== null) {
                 $field = $field->style($styleOverride);
             }
+            if (self::flag($props, 'reduceMotion')) {
+                $field = $field
+                    ->property(PropKey::AnimateChanges, false)
+                    ->property(PropKey::AnimationDurationMs, 0);
+            }
             $children = [$field];
             $errorMessage = self::text(
                 $props,
@@ -1270,6 +1277,11 @@ final class ComponentRenderer
 
         if ($styleOverride !== null && !$styleAppliedToContent) {
             $element = $element->style($styleOverride);
+        }
+        if (self::flag($runtimeProps, 'reduceMotion')) {
+            $element = $element
+                ->property(PropKey::AnimateChanges, false)
+                ->property(PropKey::AnimationDurationMs, 0);
         }
         if (array_key_exists('rtl', $props)) {
             $element = $element->property(
@@ -2649,6 +2661,18 @@ final class ComponentRenderer
         array $props,
         Element $element,
     ): Element {
+        if (array_key_exists('rtl', $props)) {
+            $element = $element->property(
+                PropKey::LayoutDirection,
+                self::flag($props, 'rtl') ? 2 : 1,
+            );
+        }
+        if (
+            self::flag($props, 'disabled', self::flag($props, 'isDisabled'))
+            || self::accessibilityStateBoolean($props, 'disabled') === true
+        ) {
+            $element = $element->enabled(false);
+        }
         $label = $props['accessibilityLabel'] ?? $props['ariaLabel'] ?? null;
         if (is_string($label) && $label !== '') {
             $element = $element->accessibilityLabel($label);
@@ -3812,6 +3836,17 @@ final class ComponentRenderer
             && !array_key_exists('value', $parentProps)
             && !array_key_exists('defaultValue', $parentProps)
         ) {
+            return $props;
+        }
+        $hasControlledParent = match ($part) {
+            'MenuItem' => array_key_exists('selectedKeys', $parentProps),
+            'SelectItem' => array_key_exists('selectedValue', $parentProps)
+                || array_key_exists('value', $parentProps),
+            'AccordionItem', 'TabsTrigger' => array_key_exists('value', $parentProps)
+                || array_key_exists('defaultValue', $parentProps),
+            default => true,
+        };
+        if (!$hasControlledParent) {
             return $props;
         }
 
@@ -6105,6 +6140,7 @@ final class ComponentRenderer
                 [
                     'icon' => 'check',
                     'accessibilityHidden' => true,
+                    'reduceMotion' => self::flag($props, 'reduceMotion'),
                 ],
                 [],
                 [],
@@ -6311,6 +6347,7 @@ final class ComponentRenderer
                             [
                                 'icon' => 'chevron-down',
                                 'accessibilityHidden' => true,
+                                'reduceMotion' => self::flag($props, 'reduceMotion'),
                             ],
                             [],
                             [],
@@ -6367,7 +6404,7 @@ final class ComponentRenderer
             || self::flag($props, 'vertical');
         $filled = self::render(
             'SliderFilledTrack',
-            [],
+            ['reduceMotion' => self::flag($props, 'reduceMotion')],
             [],
             [],
             new Style(
@@ -6380,7 +6417,7 @@ final class ComponentRenderer
         );
         $track = self::render(
             'SliderTrack',
-            [],
+            ['reduceMotion' => self::flag($props, 'reduceMotion')],
             [$filled],
             [],
             new Style(
@@ -6399,7 +6436,7 @@ final class ComponentRenderer
         );
         $thumb = self::render(
             'SliderThumb',
-            [],
+            ['reduceMotion' => self::flag($props, 'reduceMotion')],
             [],
             [],
             new Style(

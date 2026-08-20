@@ -13,7 +13,27 @@ use Pam\Native\AccessibilityRole;
 use Pam\Native\PropKey;
 use Pam\Native\TemplateRegistry;
 
-require dirname(__DIR__).'/vendor/autoload.php';
+$vendorAutoload = dirname(__DIR__).'/vendor/autoload.php';
+if (is_file($vendorAutoload)) {
+    require $vendorAutoload;
+} else {
+    $localRoots = [
+        'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',
+        'Pam\\Native\\' => dirname(__DIR__, 2).'/pam-native/packages/native/src/',
+    ];
+    spl_autoload_register(static function (string $class) use ($localRoots): void {
+        foreach ($localRoots as $prefix => $root) {
+            if (!str_starts_with($class, $prefix)) {
+                continue;
+            }
+            $path = $root.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
+            if (is_file($path)) {
+                require_once $path;
+            }
+        }
+    });
+    require_once dirname(__DIR__).'/src/Generated/MaterialComponentFacades.php';
+}
 
 TemplateRegistry::reset();
 (new MobileUiPluginProvider())->register();

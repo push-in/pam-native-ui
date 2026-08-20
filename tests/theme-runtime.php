@@ -8,7 +8,8 @@ use Pam\MobileUi\Theme\Color;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
 
-require dirname(__DIR__).'/vendor/autoload.php';
+$vendorAutoload = dirname(__DIR__).'/vendor/autoload.php';
+require is_file($vendorAutoload) ? $vendorAutoload : __DIR__.'/bootstrap.php';
 
 function expectTheme(bool $condition, string $message): void
 {

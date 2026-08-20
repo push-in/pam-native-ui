@@ -8,6 +8,9 @@ use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Theme\Themes;
+use Pam\Native\AccessibilityCheckedState;
+use Pam\Native\AccessibilityRole;
+use Pam\Native\Element;
 use Pam\Native\Internal\TreeEncoder;
 use Pam\Native\PropKey;
 
@@ -86,9 +89,10 @@ $states = [
 ];
 $renders = 0;
 $frames = 0;
-$accessibilityCases = 0;
-$rtlCases = 0;
-$motionCases = 0;
+$accessibilityScenarios = 0;
+$accessibilityAssertions = 0;
+$rtlAssertions = 0;
+$reducedMotionAssertions = 0;
 $largestFrameBytes = 0;
 $started = hrtime(true);
 
@@ -105,7 +109,7 @@ foreach ($catalogs as $catalog => $components) {
                     'accessibilityLabel' => $label,
                     'accessibilityHint' => 'Native gate matrix',
                     'rtl' => true,
-                    'reduceMotion' => false,
+                    'reduceMotion' => true,
                     ...$state,
                 ])->toElement();
                 $properties = $element->properties();
@@ -117,6 +121,69 @@ foreach ($catalogs as $catalog => $components) {
                         "{$name} did not preserve its native accessibility label.",
                     );
                 }
+                $accessibilityAssertions++;
+                if (
+                    ($properties[PropKey::AccessibilityHint->value] ?? null)
+                    !== 'Native gate matrix'
+                ) {
+                    throw new RuntimeException(
+                        "{$name} did not preserve its native accessibility hint.",
+                    );
+                }
+                $accessibilityAssertions++;
+                $role = $properties[PropKey::AccessibilityRole->value] ?? null;
+                if (!is_int($role) || AccessibilityRole::tryFrom($role) === null) {
+                    throw new RuntimeException(
+                        "{$name} did not emit an integer-backed native accessibility role.",
+                    );
+                }
+                $accessibilityAssertions++;
+                if (!treeContainsProperty($element, PropKey::LayoutDirection, 2)) {
+                    throw new RuntimeException(
+                        "{$name} did not preserve right-to-left layout direction.",
+                    );
+                }
+                $rtlAssertions++;
+                if (($state['disabled'] ?? false) === true) {
+                    if (($properties[PropKey::Enabled->value] ?? null) !== false) {
+                        throw new RuntimeException(
+                            "{$name} did not expose its disabled native state.",
+                        );
+                    }
+                    $accessibilityAssertions++;
+                }
+                if (($state['selected'] ?? false) === true) {
+                    if (($properties[PropKey::Selected->value] ?? null) !== true) {
+                        throw new RuntimeException(
+                            "{$name} did not expose its selected native state.",
+                        );
+                    }
+                    $accessibilityAssertions++;
+                }
+                if (($state['checked'] ?? false) === true) {
+                    if (
+                        ($properties[PropKey::AccessibilityCheckedState->value] ?? null)
+                        !== AccessibilityCheckedState::Checked->value
+                        || ($properties[PropKey::Checked->value] ?? null) !== true
+                    ) {
+                        throw new RuntimeException(
+                            "{$name} did not expose its checked native state.",
+                        );
+                    }
+                    $accessibilityAssertions += 2;
+                }
+                if (($state['loading'] ?? false) === true) {
+                    if (
+                        ($properties[PropKey::AccessibilityBusy->value] ?? null) !== true
+                        || ($properties[PropKey::Enabled->value] ?? null) !== false
+                    ) {
+                        throw new RuntimeException(
+                            "{$name} did not expose a busy, non-interactive loading state.",
+                        );
+                    }
+                    $accessibilityAssertions += 2;
+                }
+                assertReducedMotion($element, $name, $reducedMotionAssertions);
                 $encoded = (new TreeEncoder())->encode($element);
                 $frame = $encoded['frame'] ?? null;
                 if (!is_string($frame) || !str_starts_with($frame, 'PNT1')) {
@@ -127,9 +194,7 @@ foreach ($catalogs as $catalog => $components) {
                 $largestFrameBytes = max($largestFrameBytes, strlen($frame));
                 $renders++;
                 $frames++;
-                $accessibilityCases++;
-                $rtlCases++;
-                $motionCases++;
+                $accessibilityScenarios++;
             }
         }
     }
@@ -163,12 +228,59 @@ echo json_encode(
         'states' => count($states),
         'renders' => $renders,
         'nativeFrames' => $frames,
-        'accessibilityCases' => $accessibilityCases,
-        'rtlCases' => $rtlCases,
-        'motionCases' => $motionCases,
+        'accessibilityScenarios' => $accessibilityScenarios,
+        'accessibilityAssertions' => $accessibilityAssertions,
+        'rtlAssertions' => $rtlAssertions,
+        'reducedMotionAssertions' => $reducedMotionAssertions,
         'rendersPerSecond' => round($rendersPerSecond, 1),
         'largestFrameBytes' => $largestFrameBytes,
         'peakMemoryBytes' => $peakMemoryBytes,
     ],
     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
 )."\n";
+
+function assertReducedMotion(
+    Element $element,
+    string $name,
+    int &$assertions,
+): void {
+    $properties = $element->properties();
+    if (array_key_exists(PropKey::AnimateChanges->value, $properties)) {
+        if ($properties[PropKey::AnimateChanges->value] !== false) {
+            throw new RuntimeException(
+                "{$name} retained native animation while reduced motion was requested.",
+            );
+        }
+        $assertions++;
+    }
+    if (array_key_exists(PropKey::AnimationDurationMs->value, $properties)) {
+        if ($properties[PropKey::AnimationDurationMs->value] !== 0) {
+            throw new RuntimeException(
+                "{$name} retained a non-zero duration while reduced motion was requested.",
+            );
+        }
+        $assertions++;
+    }
+    foreach ($element->children() as $child) {
+        if ($child instanceof Element) {
+            assertReducedMotion($child, $name, $assertions);
+        }
+    }
+}
+
+function treeContainsProperty(
+    Element $element,
+    PropKey $property,
+    mixed $expected,
+): bool {
+    if (($element->properties()[$property->value] ?? null) === $expected) {
+        return true;
+    }
+    foreach ($element->children() as $child) {
+        if ($child instanceof Element && treeContainsProperty($child, $property, $expected)) {
+            return true;
+        }
+    }
+
+    return false;
+}
