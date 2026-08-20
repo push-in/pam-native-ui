@@ -20,6 +20,12 @@ Artifact codes are `1` for the iOS source ZIP, `2` for the Android AAR and `3`
 for the PHP source archive. Result code `1` means passed and `2` means a byte
 mismatch; the producer and verifier use the corresponding integer enums.
 
+The same artifact codes feed package-size budgets: 1 MiB for iOS source, 8 MiB
+for the Android AAR and 4 MiB for PHP source. These are release safety ceilings,
+not app download/install-size claims. Schema-1 reports bind actual bytes, limit,
+result code and SHA-256, are provenance-attested, and are recomputed from the
+downloaded artifacts immediately before publication.
+
 The portable source-archive check is available locally:
 
 ```bash

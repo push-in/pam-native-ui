@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "budgets": [
+    {"artifactCode": 1, "maximumBytes": 1048576},
+    {"artifactCode": 2, "maximumBytes": 8388608},
+    {"artifactCode": 3, "maximumBytes": 4194304}
+  ]
+}

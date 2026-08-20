@@ -81,7 +81,7 @@ class ReproducibilityTests(unittest.TestCase):
         self.assertEqual(2, len(re.findall(r'--output "dist/[^\"]+\.reproducibility\.json"', workflow)))
         publish = workflow.split("  publish:\n", 1)[1]
         self.assertLess(publish.index("Verify downloaded release artifacts"), publish.index("softprops/action-gh-release@v3"))
-        self.assertEqual(2, publish.count("--verify-report"))
+        self.assertEqual(2, publish.count('.reproducibility.json"'))
 
 
 if __name__ == "__main__":

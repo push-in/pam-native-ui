@@ -127,8 +127,8 @@ jobs:
           PAM_CI_VERIFIED_GATES: ios
         run: composer run verify
 
-      - name: Test release reproducibility evidence
-        run: python3 -m unittest benchmarks/package/test_reproducibility.py
+      - name: Test release package evidence
+        run: python3 -m unittest discover -s benchmarks/package -p 'test_*.py'
 
       - name: Run composition benchmark
         env:

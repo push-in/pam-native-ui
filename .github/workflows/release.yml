@@ -139,6 +139,9 @@ jobs:
           python3 benchmarks/package/reproducibility.py \
             --pair "1=${first}=${second}" \
             --output "dist/pam-mobile-ui-ios-${version}.reproducibility.json"
+          python3 benchmarks/package/gate.py \
+            --artifact "1=dist/pam-mobile-ui-ios-${version}.zip" \
+            --output "dist/pam-mobile-ui-ios-${version}.package-budget.json"
           (
             cd dist
             sha256sum "pam-mobile-ui-ios-${version}.zip" \
@@ -149,6 +152,7 @@ jobs:
         with:
           subject-path: |
             dist/*.zip
+            dist/*.package-budget.json
             dist/*.reproducibility.json
       - uses: actions/upload-artifact@v7
         with:
@@ -309,6 +313,10 @@ jobs:
             --pair "2=${RUNNER_TEMP}/pam-mobile-ui-android-first.aar=${RUNNER_TEMP}/pam-mobile-ui-android-second.aar" \
             --pair "3=${first}=${second}" \
             --output "dist/pam-mobile-ui-${version}.reproducibility.json"
+          python3 benchmarks/package/gate.py \
+            --artifact "2=dist/pam-mobile-ui-android-${version}.aar" \
+            --artifact "3=dist/pam-mobile-ui-php-${version}.tar.gz" \
+            --output "dist/pam-mobile-ui-${version}.package-budget.json"
           (
             cd dist
             sha256sum \
@@ -321,6 +329,7 @@ jobs:
         with:
           subject-path: |
             dist/*.aar
+            dist/*.package-budget.json
             dist/*.tar.gz
             dist/*.reproducibility.json
       - uses: actions/upload-artifact@v7
@@ -365,6 +374,13 @@ jobs:
             --artifact "2=dist/pam-mobile-ui-android-${version}.aar" \
             --artifact "3=dist/pam-mobile-ui-php-${version}.tar.gz" \
             --verify-report "dist/pam-mobile-ui-${version}.reproducibility.json"
+          python3 benchmarks/package/gate.py \
+            --artifact "1=dist/pam-mobile-ui-ios-${version}.zip" \
+            --verify-report "dist/pam-mobile-ui-ios-${version}.package-budget.json"
+          python3 benchmarks/package/gate.py \
+            --artifact "2=dist/pam-mobile-ui-android-${version}.aar" \
+            --artifact "3=dist/pam-mobile-ui-php-${version}.tar.gz" \
+            --verify-report "dist/pam-mobile-ui-${version}.package-budget.json"
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}

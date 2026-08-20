@@ -7,6 +7,8 @@
 - Add adaptive metric cards with semantic, non-color-only trend announcements.
 - Require byte-reproducible PHP, Android and iOS packages with attested,
   machine-readable evidence before release publication.
+- Enforce separate iOS, Android and PHP release-size ceilings with attested
+  reports reverified from downloaded artifacts before publication.
 - Add official PAM light/dark themes and executable WCAG contrast measurement.
 - Reject unknown native icon names instead of silently rendering blank glyphs.
 - Redesign the PAM Studio entry screen around the real component workbench.
