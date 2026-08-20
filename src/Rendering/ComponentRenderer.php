@@ -2748,6 +2748,11 @@ final class ComponentRenderer
             'PSnackbar' => AccessibilityLiveRegion::Polite,
             default => null,
         };
+        $liveRegion ??= match ($props['__materialComponent'] ?? null) {
+            'PAlert' => AccessibilityLiveRegion::Assertive,
+            'PBanner', 'PSnackbar' => AccessibilityLiveRegion::Polite,
+            default => null,
+        };
         if ($liveRegion !== null) {
             $element = $element->accessibilityLiveRegion($liveRegion);
         }
@@ -2973,6 +2978,54 @@ final class ComponentRenderer
     ): array {
         $value = $props['accessibilityValue'] ?? null;
         $range = is_array($value) ? $value : [];
+        $material = $props['__materialComponent'] ?? null;
+        if ($material === 'PRating') {
+            $maximum = (float) min(
+                20,
+                max(1, self::integer($props, 'length', 5)),
+            );
+            $current = $props['modelValue']
+                ?? $props['value']
+                ?? $props['defaultValue']
+                ?? 0;
+            $current = is_numeric($current)
+                ? min($maximum, max(0.0, (float) $current))
+                : 0.0;
+
+            return [
+                'min' => 0.0,
+                'max' => $maximum,
+                'now' => $current,
+                'text' => is_scalar($range['text'] ?? null)
+                    ? (string) $range['text']
+                    : null,
+            ];
+        }
+        if ($material === 'PRangeSlider') {
+            $model = $props['modelValue'] ?? $props['value'] ?? null;
+            $values = is_array($model)
+                ? array_values(array_filter($model, 'is_numeric'))
+                : [];
+            if ($values !== []) {
+                $lower = (float) $values[0];
+                $upper = (float) ($values[1] ?? $values[0]);
+                $minimum = is_numeric($props['min'] ?? null)
+                    ? (float) $props['min']
+                    : 0.0;
+                $maximum = is_numeric($props['max'] ?? null)
+                    ? (float) $props['max']
+                    : 100.0;
+
+                return [
+                    'min' => $minimum,
+                    'max' => $maximum,
+                    'now' => min($maximum, max($minimum, $upper)),
+                    'text' => is_scalar($range['text'] ?? null)
+                        ? (string) $range['text']
+                        : (string) $lower.' to '.(string) $upper,
+                ];
+            }
+        }
         if ($part === 'Progress' && self::flag($props, 'indeterminate')) {
             $text = $props['ariaValueText']
                 ?? $props['aria-valuetext']

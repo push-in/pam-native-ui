@@ -146,6 +146,10 @@ inputs, ranges, progress, tabs, lists, grids, alerts, toolbars and labeled
 imagery must resolve to their intended integer `AccessibilityRole`; emitting a
 valid but generic role is a release failure. Decorative icons, avatars and
 sparklines remain generic unless the author supplies an accessibility label.
+Alerts are assertive while banners and snackbars are polite live regions.
+Ratings announce the same bounded star range used by the native control, range
+sliders announce both endpoints, and indeterminate progress exposes busy text
+without moving accessibility focus.
 
 Tag and manual release runs repeat the four Composer graphs and both minimum
 native builds. Package construction depends on those jobs and the ecosystem

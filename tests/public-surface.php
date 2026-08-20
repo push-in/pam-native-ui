@@ -93,6 +93,50 @@ if (($labeledIcon->properties()[PropKey::AccessibilityRole->value] ?? null)
     throw new RuntimeException('Labeled icons must expose the native image role.');
 }
 
+foreach ([
+    'p-alert' => AccessibilityLiveRegion::Assertive,
+    'p-banner' => AccessibilityLiveRegion::Polite,
+    'p-snackbar' => AccessibilityLiveRegion::Polite,
+] as $tag => $expectedRegion) {
+    $class = MaterialComponentMap::TAGS[$tag];
+    $alert = $class::make([
+        'text' => 'Updated',
+        'accessibilityLabel' => 'Updated',
+    ])->toElement();
+    if (($alert->properties()[PropKey::AccessibilityLiveRegion->value] ?? null)
+        !== $expectedRegion->value
+    ) {
+        throw new RuntimeException("{$tag} must expose its default live region.");
+    }
+}
+
+$ratingClass = MaterialComponentMap::TAGS['p-rating'];
+$rating = $ratingClass::make(['value' => 3])->toElement()->properties();
+if (($rating[PropKey::AccessibilityValueMin->value] ?? null) !== 0.0
+    || ($rating[PropKey::AccessibilityValueMax->value] ?? null) !== 5.0
+    || ($rating[PropKey::AccessibilityValueNow->value] ?? null) !== 3.0
+) {
+    throw new RuntimeException('Rating accessibility range must match its five-star native range.');
+}
+
+$rangeClass = MaterialComponentMap::TAGS['p-range-slider'];
+$range = $rangeClass::make(['value' => [20, 80]])->toElement()->properties();
+if (($range[PropKey::AccessibilityValueMin->value] ?? null) !== 0.0
+    || ($range[PropKey::AccessibilityValueMax->value] ?? null) !== 100.0
+    || ($range[PropKey::AccessibilityValueNow->value] ?? null) !== 80.0
+    || ($range[PropKey::AccessibilityValueText->value] ?? null) !== '20 to 80'
+) {
+    throw new RuntimeException('Range slider must announce both native endpoints.');
+}
+
+$progressClass = MaterialComponentMap::TAGS['p-progress-linear'];
+$progress = $progressClass::make(['indeterminate' => true])->toElement()->properties();
+if (($progress[PropKey::AccessibilityBusy->value] ?? null) !== true
+    || ($progress[PropKey::AccessibilityValueText->value] ?? null) !== 'In progress'
+) {
+    throw new RuntimeException('Indeterminate progress must expose busy text semantics.');
+}
+
 foreach (MaterialComponentMap::TAGS as $tag => $class) {
     if (TemplateRegistry::factory($tag) === null) {
         throw new RuntimeException("Public Material tag {$tag} is not registered.");
