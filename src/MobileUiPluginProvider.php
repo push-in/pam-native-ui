@@ -16,6 +16,7 @@ use Pam\MobileUi\Product\AppScreen;
 use Pam\MobileUi\Product\AsyncButton;
 use Pam\MobileUi\Product\ContentState;
 use Pam\MobileUi\Product\FormField;
+use Pam\MobileUi\Product\MetricCard;
 use Pam\MobileUi\Product\StatusBanner;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
@@ -51,6 +52,11 @@ final class MobileUiPluginProvider implements PluginProvider
             'StatusBanner',
             static fn (array $props, array $children, ?object $_scope): StatusBanner =>
                 StatusBanner::fromTemplate($props, $children),
+        );
+        TemplateRegistry::component(
+            'MetricCard',
+            static fn (array $props, array $children, ?object $_scope): MetricCard =>
+                MetricCard::fromTemplate($props, $children),
         );
 
         foreach (MaterialComponentMap::TAGS as $tag => $component) {

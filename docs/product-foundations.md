@@ -34,6 +34,9 @@ Every coded state is an integer-backed enum. This includes `ThemeMode`,
   announces failures and focuses the first invalid field.
 - `StatusBanner` provides information, success, warning, error and progress
   feedback with accessible announcements, optional actions and 48 dp targets.
+- `MetricCard` presents dashboard values with optional supporting context and
+  neutral, positive, negative or warning trends. Screen readers receive the
+  trend meaning rather than relying on color.
 
 ```php
 StatusBanner::make('Draft saved', StatusTone::Success)
@@ -48,6 +51,16 @@ success, `3` warning, `4` error, `5` progress):
     title="Connection lost"
     message="Changes will sync when the network returns."
     tone="3"
+/>
+```
+
+```xml
+<MetricCard
+    label="Revenue"
+    value="R$ 128,450"
+    delta="+12.4%"
+    supporting="Versus last month"
+    trend="2"
 />
 ```
 

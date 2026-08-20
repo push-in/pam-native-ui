@@ -106,6 +106,8 @@ floats, booleans and bounded payloads rather than markup or style strings.
 Product feedback uses the typed `StatusBanner` instead of one-off alert
 layouts. Its integer-backed tones cover information, success, warning, error
 and progress, with screen-reader announcements and optional 48 dp actions.
+Dashboard values use `MetricCard`, whose adaptive layout and semantic trend
+labels remain understandable without color.
 
 ## Native directives
 

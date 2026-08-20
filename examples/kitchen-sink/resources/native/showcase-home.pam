@@ -15,20 +15,11 @@
                 <Text size="2xl">One language. Truly native.</Text>
                 <Text class="ui-text-muted">Compose polished products with typed PHP, platform controls and zero JavaScript runtime.</Text>
             </Column>
-            <Row class="gap-3">
-                <Column class="flex-1 gap-1">
-                    <Text size="xl">84</Text>
-                    <Text size="sm" class="ui-text-muted">components</Text>
-                </Column>
-                <Column class="flex-1 gap-1">
-                    <Text size="xl">2</Text>
-                    <Text size="sm" class="ui-text-muted">platforms</Text>
-                </Column>
-                <Column class="flex-1 gap-1">
-                    <Text size="xl">0</Text>
-                    <Text size="sm" class="ui-text-muted">JS bridges</Text>
-                </Column>
-            </Row>
+            <Grid class="grid-cols-1 sm:grid-cols-3 gap-3">
+                <MetricCard label="Components" value="84" delta="+9" trend="2" />
+                <MetricCard label="Platforms" value="2" supporting="Android · UIKit" />
+                <MetricCard label="JS bridges" value="0" delta="Native" trend="1" />
+            </Grid>
             <p-btn block="true" on:press="goAll">
                 <p-icon icon="widgets" />
                 <Text>Open component workbench</Text>

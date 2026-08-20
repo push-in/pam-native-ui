@@ -4,6 +4,7 @@
 
 - Add accessible product status banners for information, success, warning,
   error and progress feedback.
+- Add adaptive metric cards with semantic, non-color-only trend announcements.
 - Require byte-reproducible PHP, Android and iOS packages with attested,
   machine-readable evidence before release publication.
 - Add official PAM light/dark themes and executable WCAG contrast measurement.

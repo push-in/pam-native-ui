@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\MobileUiPluginProvider;
+use Pam\MobileUi\Enum\MetricTrend;
 use Pam\MobileUi\Enum\StatusTone;
+use Pam\MobileUi\Product\MetricCard;
 use Pam\MobileUi\Product\StatusBanner;
 use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\AccessibilityRole;
@@ -18,6 +20,23 @@ TemplateRegistry::reset();
 
 if (TemplateRegistry::factory('StatusBanner') === null) {
     throw new RuntimeException('StatusBanner is not registered for templates.');
+}
+if (TemplateRegistry::factory('MetricCard') === null) {
+    throw new RuntimeException('MetricCard is not registered for templates.');
+}
+
+$metric = MetricCard::make('Revenue', 'R$ 128,450')
+    ->delta('+12.4%', MetricTrend::Positive)
+    ->supporting('Versus last month')
+    ->toElement();
+if (($metric->properties()[PropKey::AccessibilityRole->value] ?? null)
+    !== AccessibilityRole::Summary->value
+) {
+    throw new RuntimeException('Metric cards must expose a summary role.');
+}
+$metricLabel = $metric->properties()[PropKey::AccessibilityLabel->value] ?? null;
+if (!is_string($metricLabel) || !str_contains($metricLabel, 'Positive trend: +12.4%')) {
+    throw new RuntimeException('Metric cards must announce semantic trend context.');
 }
 
 $errorBanner = StatusBanner::make('Payment failed', StatusTone::Error)
