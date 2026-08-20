@@ -76,6 +76,31 @@ evidence is stored separately in
 [`benchmarks/android-sm-g973f-api31-2026-07-24.json`](../benchmarks/android-sm-g973f-api31-2026-07-24.json);
 it is not mixed into the Galaxy S23 reference baseline.
 
+Both checked-in results now implement the versioned
+[`device-evidence.schema.json`](../benchmarks/device-evidence.schema.json)
+contract and are executable release inputs rather than free-form examples.
+Platform `1` is Android; build types `1` and `2` are debug and release;
+measurement coverage `1` is historical p99-only and `2` is complete
+p50/p95/p99/max; result `1` is passed and `2` is failed. Each report binds its
+capture date and exact 40-character source revision without inventing missing
+historical quantiles.
+
+CI and tagged releases run the dependency-free verifier against the exact
+24-operation inventory. It rejects unknown/missing fields, string codes,
+failed functional tests, duplicate device/API/date evidence, incomplete
+quantiles, non-monotonic samples, symlinks, oversized reports, and p99 at or
+above 4 ms (8 ms for lifecycle). Reproduce the evidence gate without building
+the app:
+
+```bash
+python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
+python3 -m unittest benchmarks/test_device_evidence.py
+```
+
+This gate proves the integrity and stated budget of recorded runs. It cannot
+prove that an old JSON was captured on the named hardware; future device jobs
+must attach signed runner/device provenance before that stronger claim is made.
+
 The 10,000 slider moves emitted zero per-move bridge callbacks and one final
 semantic `CHANGE` event. This is a 10,000:1 reduction versus an implementation
 that sends every sampled movement across the language boundary; it is not a

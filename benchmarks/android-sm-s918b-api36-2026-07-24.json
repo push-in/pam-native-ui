@@ -1,7 +1,13 @@
 {
+    "schemaVersion": 1,
+    "platformCode": 1,
     "device": "samsung SM-S918B",
-    "android": 36,
-    "build": "debug",
+    "apiLevel": 36,
+    "buildTypeCode": 1,
+    "capturedDate": "2026-07-24",
+    "sourceRevision": "5225e6215cefc9fbcd5bf42e13a2224cfc0c509e",
+    "functionalResultCode": 1,
+    "measurementCoverageCode": 2,
     "samplesPerOperation": 10000,
     "measurements": {
         "hostUpdate": { "p50Us": 32, "p95Us": 58, "p99Us": 130, "maxUs": 223 },
@@ -29,5 +35,5 @@
         "tableLayout": { "p50Us": 2, "p95Us": 2, "p99Us": 2, "maxUs": 23 },
         "hostLifecycle": { "p50Us": 152, "p95Us": 186, "p99Us": 219, "maxUs": 3597 }
     },
-    "result": "passed"
+    "resultCode": 1
 }

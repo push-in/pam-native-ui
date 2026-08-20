@@ -127,8 +127,12 @@ jobs:
           PAM_CI_VERIFIED_GATES: ios
         run: composer run verify
 
-      - name: Test release package evidence
-        run: python3 -m unittest discover -s benchmarks/package -p 'test_*.py'
+      - name: Test release evidence
+        run: |
+          python3 -m unittest discover -s benchmarks/package -p 'test_*.py'
+          python3 -m unittest benchmarks/test_device_evidence.py
+          python3 -m json.tool benchmarks/device-evidence.schema.json >/dev/null
+          python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
 
       - name: Run composition benchmark
         env:

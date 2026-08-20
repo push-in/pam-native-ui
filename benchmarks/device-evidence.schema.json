@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pam.dev/schemas/mobile-ui-device-evidence-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "platformCode", "device", "apiLevel", "buildTypeCode", "capturedDate", "sourceRevision", "functionalResultCode", "measurementCoverageCode", "samplesPerOperation", "measurements", "resultCode"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "platformCode": {"const": 1},
+    "device": {"type": "string", "minLength": 3, "maxLength": 128},
+    "apiLevel": {"type": "integer", "minimum": 26, "maximum": 100},
+    "buildTypeCode": {"type": "integer", "enum": [1, 2]},
+    "capturedDate": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "functionalResultCode": {"const": 1},
+    "measurementCoverageCode": {"type": "integer", "enum": [1, 2]},
+    "functionalTests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failed"],
+      "properties": {
+        "passed": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "failed": {"const": 0}
+      }
+    },
+    "samplesPerOperation": {"type": "integer", "minimum": 1000, "maximum": 1000000},
+    "measurements": {
+      "type": "object",
+      "minProperties": 24,
+      "maxProperties": 24,
+      "additionalProperties": {"$ref": "#/$defs/measurement"}
+    },
+    "resultCode": {"const": 1}
+  },
+  "$defs": {
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p99Us"],
+      "properties": {
+        "p50Us": {"type": "integer", "minimum": 0, "maximum": 60000000},
+        "p95Us": {"type": "integer", "minimum": 0, "maximum": 60000000},
+        "p99Us": {"type": "integer", "minimum": 0, "maximum": 60000000},
+        "maxUs": {"type": "integer", "minimum": 0, "maximum": 60000000}
+      }
+    }
+  }
+}
