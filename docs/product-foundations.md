@@ -133,6 +133,11 @@ the immutable PAM Native `v0.6.1` minimum and the current certified commit on
 Android and UIKit. Emulator behavior remains pinned to the certified revision;
 source compatibility and device behavior are separate gates.
 
+Android text hosted by widgets and text drawn directly into the calendar and
+slider canvas follows the system font scale. Canvas typography is expressed in
+`sp`, recalculated after configuration changes and covered by an instrumented
+large-text assertion; layout dimensions remain density-independent `dp`.
+
 The native matrix reports assertions rather than treating a render as proof of
 accessibility. Every catalog/theme/state scenario verifies label, hint and an
 integer-backed role; relevant scenarios additionally verify disabled, selected,

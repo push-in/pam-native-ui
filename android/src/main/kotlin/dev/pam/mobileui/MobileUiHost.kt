@@ -13,6 +13,7 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
@@ -30,6 +31,7 @@ import android.text.Editable
 import android.text.method.PasswordTransformationMethod
 import android.text.method.TransformationMethod
 import android.text.method.KeyListener
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
@@ -156,7 +158,7 @@ internal class MobileUiHost(
     private val calendarTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(23, 23, 23)
         textAlign = Paint.Align.CENTER
-        textSize = 14f * density
+        textSize = scaledTextSizePx(context, 14f)
     }
     private val selectionGlyphPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
@@ -438,6 +440,12 @@ internal class MobileUiHost(
         progressAnimator?.cancel()
         progressAnimator = null
         super.onDetachedFromWindow()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        calendarTextPaint.textSize = scaledTextSizePx(context, 14f)
+        invalidate()
     }
 
     override fun onAttachedToWindow() {
@@ -3536,7 +3544,7 @@ internal class MobileUiHost(
             val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = fillPaint.color
                 textAlign = Paint.Align.CENTER
-                textSize = 12f * density
+                textSize = scaledTextSizePx(context, 12f)
                 typeface = android.graphics.Typeface.create(
                     android.graphics.Typeface.DEFAULT,
                     android.graphics.Typeface.BOLD,
@@ -7414,3 +7422,10 @@ internal fun clampedArrowCenter(
         safeContentExtent / 2f
     }
 }
+
+internal fun scaledTextSizePx(context: Context, scaleIndependentPixels: Float): Float =
+    TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_SP,
+        scaleIndependentPixels,
+        context.resources.displayMetrics,
+    )

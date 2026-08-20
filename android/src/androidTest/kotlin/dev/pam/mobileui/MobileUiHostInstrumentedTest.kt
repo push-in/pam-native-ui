@@ -1,6 +1,7 @@
 package dev.pam.mobileui
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Looper
 import android.text.Spanned
@@ -34,6 +35,22 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
+    @Test
+    fun canvasTypographyFollowsTheSystemFontScale() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val normal = context.createConfigurationContext(
+            Configuration(context.resources.configuration).apply { fontScale = 1f },
+        )
+        val enlarged = context.createConfigurationContext(
+            Configuration(context.resources.configuration).apply { fontScale = 2f },
+        )
+
+        val normalPixels = scaledTextSizePx(normal, 14f)
+        val enlargedPixels = scaledTextSizePx(enlarged, 14f)
+        assertTrue(normalPixels > 0f)
+        assertTrue(enlargedPixels > normalPixels)
+    }
+
     @Test
     fun abstractSelectionItemUsesButtonSemanticsWithoutCheckboxChrome() {
         onMain {
