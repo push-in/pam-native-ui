@@ -103,6 +103,10 @@ are an advanced interoperability path; PAM is the supported application workflow
 Templates are compiled once. Android and iOS receive resolved integers,
 floats, booleans and bounded payloads rather than markup or style strings.
 
+Product feedback uses the typed `StatusBanner` instead of one-off alert
+layouts. Its integer-backed tones cover information, success, warning, error
+and progress, with screen-reader announcements and optional 48 dp actions.
+
 ## Native directives
 
 ```xml

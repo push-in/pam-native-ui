@@ -32,6 +32,24 @@ Every coded state is an integer-backed enum. This includes `ThemeMode`,
   duplicate submission.
 - `FormField` binds a `NativeForm`, validates on blur, exposes server errors,
   announces failures and focuses the first invalid field.
+- `StatusBanner` provides information, success, warning, error and progress
+  feedback with accessible announcements, optional actions and 48 dp targets.
+
+```php
+StatusBanner::make('Draft saved', StatusTone::Success)
+    ->message('Your changes are available on every device.');
+```
+
+Templates transmit the tone as a sequential integer (`1` information, `2`
+success, `3` warning, `4` error, `5` progress):
+
+```xml
+<StatusBanner
+    title="Connection lost"
+    message="Changes will sync when the network returns."
+    tone="3"
+/>
+```
 
 ## Typed forms
 

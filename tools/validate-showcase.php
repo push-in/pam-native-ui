@@ -44,6 +44,7 @@ TypedCommunityCard::register();
 $allowedApplicationTags = [
     'AppScreen' => true,
     'ContentState' => true,
+    'StatusBanner' => true,
     'DrawerLayoutAndroid' => true,
     'Column' => true,
     'Row' => true,

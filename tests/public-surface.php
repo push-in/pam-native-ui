@@ -4,12 +4,40 @@ declare(strict_types=1);
 
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\MobileUiPluginProvider;
+use Pam\MobileUi\Enum\StatusTone;
+use Pam\MobileUi\Product\StatusBanner;
+use Pam\Native\AccessibilityLiveRegion;
+use Pam\Native\AccessibilityRole;
+use Pam\Native\PropKey;
 use Pam\Native\TemplateRegistry;
 
 require dirname(__DIR__).'/vendor/autoload.php';
 
 TemplateRegistry::reset();
 (new MobileUiPluginProvider())->register();
+
+if (TemplateRegistry::factory('StatusBanner') === null) {
+    throw new RuntimeException('StatusBanner is not registered for templates.');
+}
+
+$errorBanner = StatusBanner::make('Payment failed', StatusTone::Error)
+    ->message('Review the card details.')
+    ->toElement();
+if (($errorBanner->properties()[PropKey::AccessibilityRole->value] ?? null)
+    !== AccessibilityRole::Alert->value
+) {
+    throw new RuntimeException('Error banners must expose the alert role.');
+}
+if (($errorBanner->properties()[PropKey::AccessibilityLiveRegion->value] ?? null)
+    !== AccessibilityLiveRegion::Assertive->value
+) {
+    throw new RuntimeException('Error banners must be announced assertively.');
+}
+
+$progressBanner = StatusBanner::make('Publishing', StatusTone::Progress)->toElement();
+if (($progressBanner->properties()[PropKey::AccessibilityBusy->value] ?? null) !== true) {
+    throw new RuntimeException('Progress banners must expose their busy state.');
+}
 
 foreach (MaterialComponentMap::TAGS as $tag => $class) {
     if (TemplateRegistry::factory($tag) === null) {

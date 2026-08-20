@@ -36,6 +36,12 @@
         </Column>
     </p-card>
 
+    <StatusBanner
+        title="Native preview connected"
+        message="Edits stream to Android and UIKit with product-safe feedback."
+        tone="2"
+    />
+
     <Column class="gap-3">
         <Column class="gap-1">
             <Text size="xl">Explore the system</Text>
