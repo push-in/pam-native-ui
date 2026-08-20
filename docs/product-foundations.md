@@ -127,3 +127,8 @@ the lowest supported and latest available PAM Native 0.6 graph. Every entry
 performs a dry run before resolution and executes the complete PHP verification
 suite against the package under `vendor`, rather than the separately checked
 out development repository.
+
+The native source boundary is independently compiled and tested against both
+the immutable PAM Native `v0.6.1` minimum and the current certified commit on
+Android and UIKit. Emulator behavior remains pinned to the certified revision;
+source compatibility and device behavior are separate gates.

@@ -136,9 +136,17 @@ jobs:
         run: composer run benchmark
 
   android:
-    name: Android unit, lint and AAR
+    name: Android / PAM Native ${{ matrix.native.label }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        native:
+          - label: minimum
+            commit: 3a94047c54632d3c3ff998bcd9ca75e70aec58b0
+          - label: current
+            commit: 26a768c9a7e0137bda9fa7de23f46c9308de2839
     steps:
       - name: Checkout PAM Mobile UI
         uses: actions/checkout@v7
@@ -147,7 +155,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: ${{ env.PAM_NATIVE_COMMIT }}
+          ref: ${{ matrix.native.commit }}
           path: pam-native
 
       - name: Set up Java
@@ -171,7 +179,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: pam-mobile-ui-android
+          name: pam-mobile-ui-android-${{ matrix.native.label }}
           path: |
             android/build/outputs/aar/pam-mobile-ui-release.aar
             android/build/reports/lint-results-debug.html
@@ -180,9 +188,17 @@ jobs:
           retention-days: 7
 
   ios:
-    name: iOS UIKit package and tests
+    name: iOS / PAM Native ${{ matrix.native.label }}
     runs-on: macos-15
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        native:
+          - label: minimum
+            commit: 3a94047c54632d3c3ff998bcd9ca75e70aec58b0
+          - label: current
+            commit: 26a768c9a7e0137bda9fa7de23f46c9308de2839
     steps:
       - name: Checkout PAM Mobile UI
         uses: actions/checkout@v7
@@ -191,7 +207,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: ${{ env.PAM_NATIVE_COMMIT }}
+          ref: ${{ matrix.native.commit }}
           path: pam-native
 
       - name: Test PAM Mobile UI on an iOS Simulator
