@@ -16,6 +16,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.pam.nativeapp.protocol.WireValue
 import dev.pam.nativeapp.views.NativeViewEventKind
 import kotlin.math.roundToLong
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -704,7 +705,7 @@ class MobileUiHostPerformanceInstrumentedTest {
                 BENCHMARK_TAG,
                 buildString {
                     append('{')
-                    append("\"device\":\"${Build.MANUFACTURER} ${Build.MODEL}\",")
+                    append("\"device\":${JSONObject.quote("${Build.MANUFACTURER} ${Build.MODEL}")},")
                     append("\"android\":${Build.VERSION.SDK_INT},")
                     append("\"build\":\"debug\",")
                     append("\"update\":${update.json()},")

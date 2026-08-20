@@ -26,7 +26,7 @@
     "samplesPerOperation": {"type": "integer", "minimum": 1000, "maximum": 1000000},
     "measurements": {
       "type": "object",
-      "minProperties": 24,
+      "minProperties": 21,
       "maxProperties": 24,
       "additionalProperties": {"$ref": "#/$defs/measurement"}
     },

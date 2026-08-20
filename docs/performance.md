@@ -85,8 +85,11 @@ p50/p95/p99/max; result `1` is passed and `2` is failed. Each report binds its
 capture date and exact 40-character source revision without inventing missing
 historical quantiles.
 
-CI and tagged releases run the dependency-free verifier against the exact
-24-operation inventory. It rejects unknown/missing fields, string codes,
+CI and tagged releases run the dependency-free verifier against the current
+21-operation inventory. The three image-navigation, message-branch and prompt
+measurements remain accepted only as one complete historical extension because
+those hosts were consolidated after the July capture; partial mixtures fail.
+The verifier rejects unknown/missing fields, string codes,
 failed functional tests, duplicate device/API/date evidence, incomplete
 quantiles, non-monotonic samples, symlinks, oversized reports, and p99 at or
 above 4 ms (8 ms for lifecycle). Reproduce the evidence gate without building
@@ -94,7 +97,7 @@ the app:
 
 ```bash
 python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
-python3 -m unittest benchmarks/test_device_evidence.py
+python3 -m unittest discover -s benchmarks -p 'test_*device_evidence.py'
 ```
 
 This gate proves the integrity and stated budget of recorded runs. It cannot
@@ -125,7 +128,23 @@ exceeds 4 ms, or lifecycle p99 exceeds 8 ms. Run it on a connected device:
   -Pandroid.testInstrumentationRunnerArguments.class=dev.pam.mobileui.MobileUiHostPerformanceInstrumentedTest
 ```
 
-The JSON result is logged under `PamMobileUiBench`.
+The raw JSON result is logged under `PamMobileUiBench`. Do not copy that line by
+hand. From a clean committed checkout with exactly one authorized physical
+device, capture the full instrumented suite and turn its log plus JUnit results
+into a new canonical report with:
+
+```bash
+tools/capture-android-device-evidence.sh \
+  benchmarks/android-device-apiNN-YYYY-MM-DD.json
+```
+
+The command refuses dirty worktrees, existing output files, multiple devices,
+missing/duplicate benchmark payloads, partial quantiles, and any failed,
+errored or skipped instrumentation case. It binds the current Git revision and
+date, then immediately reruns the independent verifier. Gradle's user and
+project caches are redirected into `.pam-device-capture`; the command removes
+that directory and the regenerable `android/build` output on every exit so a
+physical capture does not leave another unbounded build cache behind.
 
 The current benchmark source additionally gates 10,000 native sheet snap
 changes and 10,000 sheet-item activations at p99 below 4 ms, with exactly one

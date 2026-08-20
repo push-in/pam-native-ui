@@ -72,6 +72,15 @@ class DeviceEvidenceTests(unittest.TestCase):
                 ("duplicate", copy.deepcopy(self.reference)),
             ])
 
+    def test_accepts_current_inventory_but_rejects_partial_historical_extension(self):
+        document = copy.deepcopy(self.reference)
+        for name in subject.HISTORICAL_MEASUREMENTS:
+            document["measurements"].pop(name)
+        subject.verify(document, "current")
+        document["measurements"]["imageNavigation"] = {"p50Us": 1, "p95Us": 1, "p99Us": 1, "maxUs": 1}
+        with self.assertRaisesRegex(ValueError, "measurement inventory"):
+            subject.verify(document, "partial")
+
     def test_reader_rejects_symlink_and_oversized_report(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

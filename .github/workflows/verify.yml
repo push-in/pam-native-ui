@@ -130,7 +130,7 @@ jobs:
       - name: Test release evidence
         run: |
           python3 -m unittest discover -s benchmarks/package -p 'test_*.py'
-          python3 -m unittest benchmarks/test_device_evidence.py
+          python3 -m unittest discover -s benchmarks -p 'test_*device_evidence.py'
           python3 -m json.tool benchmarks/device-evidence.schema.json >/dev/null
           python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
 

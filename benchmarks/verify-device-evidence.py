@@ -17,10 +17,10 @@ REQUIRED_MEASUREMENTS = {
     "accordionToggle", "checkboxToggle", "radioSelection", "progressUpdate",
     "switchToggle", "tabsSelection", "sheetSnap", "sheetItemPress",
     "anchoredPosition", "menuSelection", "inputState", "inputSlotPress",
-    "feedbackUpdate", "imageNavigation", "branchNavigation", "promptSubmission",
-    "fileTreeToggle", "markdownUpdate", "tableLayout", "hostLifecycle",
+    "feedbackUpdate", "fileTreeToggle", "markdownUpdate", "tableLayout", "hostLifecycle",
 }
-BUDGET_US = {name: 4_000 for name in REQUIRED_MEASUREMENTS}
+HISTORICAL_MEASUREMENTS = {"imageNavigation", "branchNavigation", "promptSubmission"}
+BUDGET_US = {name: 4_000 for name in REQUIRED_MEASUREMENTS | HISTORICAL_MEASUREMENTS}
 BUDGET_US["hostLifecycle"] = 8_000
 
 
@@ -112,10 +112,11 @@ def verify(document: dict[str, object], label: str) -> None:
         if functional["failed"] != 0:
             raise ValueError(f"{label}: functional test failure recorded")
     measurements = document["measurements"]
-    if not isinstance(measurements, dict) or set(measurements) != REQUIRED_MEASUREMENTS:
-        raise ValueError(f"{label}: measurement inventory does not match the 24-operation contract")
+    inventory = set(measurements) if isinstance(measurements, dict) else set()
+    if inventory not in (REQUIRED_MEASUREMENTS, REQUIRED_MEASUREMENTS | HISTORICAL_MEASUREMENTS):
+        raise ValueError(f"{label}: measurement inventory does not match the current or historical contract")
     expected_keys = {"p99Us"} if coverage == MeasurementCoverageCode.P99_ONLY.value else {"p50Us", "p95Us", "p99Us", "maxUs"}
-    for name in sorted(REQUIRED_MEASUREMENTS):
+    for name in sorted(inventory):
         measurement = measurements[name]
         if not isinstance(measurement, dict) or set(measurement) != expected_keys:
             raise ValueError(f"{label}.{name}: quantiles do not match coverage code")

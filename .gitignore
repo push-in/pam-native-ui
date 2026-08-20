@@ -11,6 +11,7 @@
 /.vscode/
 /.pam-native/
 **/.pam-native/
+/.pam-device-capture/
 /composer.lock
 local.properties
 *.iml

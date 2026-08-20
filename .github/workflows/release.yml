@@ -280,7 +280,7 @@ jobs:
           PAM_NATIVE_ROOT="${GITHUB_WORKSPACE}/pam-native" composer run verify
       - name: Verify checked-in physical-device evidence
         run: |
-          python3 -m unittest benchmarks/test_device_evidence.py
+          python3 -m unittest discover -s benchmarks -p 'test_*device_evidence.py'
           python3 -m json.tool benchmarks/device-evidence.schema.json >/dev/null
           python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
       - name: Build and verify reproducible Android AAR
