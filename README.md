@@ -1,6 +1,6 @@
 <div align="center">
 
-# PAM Mobile UI
+# PAM Native UI
 
 ### Material Design 3, rebuilt for a truly native PHP stack.
 
@@ -24,10 +24,28 @@ CSS engines, and metadata-generated imitations.**
 
 ---
 
-PAM Mobile UI is a retained native Material Design 3 component library for
+PAM Native UI is a retained native Material Design 3 component library for
 PAM Native. It exposes 84 mobile `p-*` component parts across 62 manually authored
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
+
+## Start here
+
+PAM Native UI depends on both the PAM Runtime and `pushinbr/pam-native`. Install
+PAM before adding the UI package:
+
+```bash
+curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
+    --connect-timeout 15 --max-time 60 --max-filesize 1048576 -fsSL \
+    https://github.com/push-in/pam/releases/latest/download/install.sh | sh
+
+pam doctor
+pam init my-app --template native-ui
+cd my-app
+pam composer require pushinbr/pam-native-ui
+pam doctor --fix
+pam dev
+```
 
 ## Part of the PAM ecosystem
 
@@ -37,7 +55,7 @@ JavaScript runtime, CSS engine, or Vuetify metadata importer.
   high-performance offline-first data for native applications.
 - [PAM Native documentation](https://push-in.github.io/pam-docs/native/overview/)
   — start here if you are new to native PHP applications.
-- [PAM Mobile UI documentation](docs/authoring.md)
+- [PAM Native UI documentation](docs/authoring.md)
   — components, themes, accessibility and performance.
 
 This library does not wrap a web design system and call it native. Its
