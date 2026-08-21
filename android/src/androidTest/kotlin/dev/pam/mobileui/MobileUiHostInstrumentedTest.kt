@@ -2103,7 +2103,7 @@ class MobileUiHostInstrumentedTest {
             val bodyWrapper = FrameLayout(context)
             val body = MobileUiHost(context) { _, _ -> }
             body.update(mapOf("behavior" to WireValue.Integer(31)))
-            val packageCell = TextView(context).apply { text = "pushinbr/pam-mobile-ui" }
+            val packageCell = TextView(context).apply { text = "pushinbr/pam-native-ui" }
             val runtimeCell = TextView(context).apply { text = "Android" }
             body.addView(packageCell)
             body.addView(runtimeCell)

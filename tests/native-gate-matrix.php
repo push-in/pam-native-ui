@@ -210,7 +210,7 @@ foreach ($catalogs as $catalog => $components) {
                         throw new RuntimeException(sprintf(
                             '%s emitted role %s; expected %s.',
                             $name,
-                            AccessibilityRole::tryFrom($role)?->name ?? 'invalid',
+                            AccessibilityRole::from($role)->name,
                             $expectedRole->name,
                         ));
                     }
@@ -341,9 +341,7 @@ function assertReducedMotion(
         $assertions++;
     }
     foreach ($element->children() as $child) {
-        if ($child instanceof Element) {
-            assertReducedMotion($child, $name, $assertions);
-        }
+        assertReducedMotion($child, $name, $assertions);
     }
 }
 
@@ -356,7 +354,7 @@ function treeContainsProperty(
         return true;
     }
     foreach ($element->children() as $child) {
-        if ($child instanceof Element && treeContainsProperty($child, $property, $expected)) {
+        if (treeContainsProperty($child, $property, $expected)) {
             return true;
         }
     }

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-package_name=pushinbr/pam-mobile-ui
+package_name=pushinbr/pam-native-ui
 
 fail() {
     printf 'distribution-package: %s\n' "$*" >&2

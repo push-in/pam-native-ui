@@ -329,7 +329,7 @@
         <p-list>
             <Text>Native packages</Text>
             <p-list-item>
-                <Text>pushinbr/pam-mobile-ui</Text>
+                <Text>pushinbr/pam-native-ui</Text>
                 <Text>Material components</Text>
             </p-list-item>
             <p-list-item>

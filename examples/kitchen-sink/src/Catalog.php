@@ -26,7 +26,7 @@ final class Catalog extends Component
     /** @var list<string> */
     private array $nativePackages = [
         'pushinbr/pam-native',
-        'pushinbr/pam-mobile-ui',
+        'pushinbr/pam-native-ui',
         'pushinbr/pam-plugin-api',
         'pushinbr/pam-cli',
     ];

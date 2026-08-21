@@ -51,8 +51,8 @@ if (getenv('CI') === 'true') {
 }
 
 $assert(
-    ($composer['name'] ?? null) === 'pushinbr/pam-mobile-ui',
-    'The package must be named pushinbr/pam-mobile-ui.',
+    ($composer['name'] ?? null) === 'pushinbr/pam-native-ui',
+    'The package must be named pushinbr/pam-native-ui.',
 );
 $assert(
     ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.6.1',
@@ -73,7 +73,7 @@ $assert(
     'The plugin must support the PAM Native 0.6.x line.',
 );
 $assert(
-    ($exampleComposer['require']['pushinbr/pam-mobile-ui'] ?? null) === '0.6.x-dev'
+    ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === '0.6.x-dev'
         && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.6.x-dev',
     'The kitchen sink must exercise both public 0.6.x package lines.',
 );
@@ -296,7 +296,7 @@ foreach ([
     }
     $assert(
         !str_contains($contents, 'pam/pam-native')
-            && !str_contains($contents, 'pam/pam-mobile-ui')
+            && !str_contains($contents, 'pam/pam-native-ui')
             && !str_contains($contents, 'composer require pam/'),
         "Legacy Composer package name found in {$publicFile}.",
     );

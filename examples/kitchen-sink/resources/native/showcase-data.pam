@@ -6,7 +6,7 @@
         <p-list>
             <Text>Packages</Text>
             <p-list-item>
-                <Text>pam-mobile-ui</Text>
+                <Text>pam-native-ui</Text>
                 <Text>Material components</Text>
             </p-list-item>
             <p-list-item>

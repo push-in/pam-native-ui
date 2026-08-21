@@ -17,10 +17,10 @@ tree:
 
 ## Run from this workspace
 
-Keep `pam-mobile-ui` and `pam-native` as sibling directories, then run:
+Keep `pam-native-ui` and `pam-native` as sibling directories, then run:
 
 ```bash
-cd pam-mobile-ui/examples/kitchen-sink
+cd pam-native-ui/examples/kitchen-sink
 composer update
 PAM_NATIVE_HOME=../../../pam-native pam mobile run
 ```
@@ -37,7 +37,7 @@ For a normal application, remove the `repositories` section and install the
 published packages instead:
 
 ```bash
-composer require pushinbr/pam-native:^0.2 pushinbr/pam-mobile-ui:^0.2
+composer require pushinbr/pam-native:^0.2 pushinbr/pam-native-ui:^0.2
 pam mobile codegen
 pam mobile run
 ```

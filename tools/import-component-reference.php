@@ -113,7 +113,7 @@ foreach ($directories as $directory) {
     ];
 }
 
-$repository = $argv[2] ?? 'https://github.com/push-in/pam-mobile-ui-php';
+$repository = $argv[2] ?? 'https://github.com/push-in/pam-native-ui';
 $licensePath = $argv[3] ?? 'LICENSE';
 $packageVersion = $argv[4] ?? 'development';
 if (

@@ -1,11 +1,11 @@
 {
-    "name": "pushinbr/pam-mobile-ui-kitchen-sink",
+    "name": "pushinbr/pam-native-ui-kitchen-sink",
     "description": "PAM Mobile UI native component catalog.",
     "type": "project",
     "license": "Apache-2.0",
     "require": {
         "php": "^8.4",
-    "pushinbr/pam-mobile-ui": "0.6.x-dev",
+    "pushinbr/pam-native-ui": "0.6.x-dev",
     "pushinbr/pam-native": "0.6.x-dev"
     },
     "repositories": [
@@ -15,7 +15,7 @@
             "options": {
                 "symlink": false,
                 "versions": {
-          "pushinbr/pam-mobile-ui": "0.6.x-dev"
+          "pushinbr/pam-native-ui": "0.6.x-dev"
                 }
             }
         },

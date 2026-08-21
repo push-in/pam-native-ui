@@ -1,5 +1,5 @@
 {
-    "name": "pushinbr/pam-mobile-ui",
+    "name": "pushinbr/pam-native-ui",
     "description": "Official accessible native UI component library for PAM Native.",
     "type": "pam-native-plugin",
     "license": "Apache-2.0",
@@ -12,10 +12,10 @@
         "php",
         "ui"
     ],
-    "homepage": "https://github.com/push-in/pam-mobile-ui-php",
+    "homepage": "https://github.com/push-in/pam-native-ui",
     "support": {
-        "issues": "https://github.com/push-in/pam-mobile-ui-php/issues",
-        "source": "https://github.com/push-in/pam-mobile-ui-php"
+        "issues": "https://github.com/push-in/pam-native-ui/issues",
+        "source": "https://github.com/push-in/pam-native-ui"
     },
     "require": {
         "php": "^8.4",

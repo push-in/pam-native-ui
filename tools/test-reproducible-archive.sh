@@ -15,7 +15,7 @@ expect_failure() {
 
 for copy in one two; do
     "${repository_root}/tools/reproducible-archive.sh" \
-        tar.gz HEAD . pam-mobile-ui-test/ \
+        tar.gz HEAD . pam-native-ui-test/ \
         "${temporary_directory}/php-${copy}.tar.gz"
     "${repository_root}/tools/reproducible-archive.sh" \
         zip HEAD ios ios/ \
@@ -26,7 +26,7 @@ cmp "${temporary_directory}/php-one.tar.gz" "${temporary_directory}/php-two.tar.
 cmp "${temporary_directory}/ios-one.zip" "${temporary_directory}/ios-two.zip"
 tar -tzf "${temporary_directory}/php-one.tar.gz" >"${temporary_directory}/php-files.txt"
 unzip -Z1 "${temporary_directory}/ios-one.zip" >"${temporary_directory}/ios-files.txt"
-grep -Fqx 'pam-mobile-ui-test/composer.json' "${temporary_directory}/php-files.txt"
+grep -Fqx 'pam-native-ui-test/composer.json' "${temporary_directory}/php-files.txt"
 grep -Fqx 'ios/Sources/PamMobileUi/PamMobileUiHost.swift' "${temporary_directory}/ios-files.txt"
 
 expect_failure "${repository_root}/tools/reproducible-archive.sh" \

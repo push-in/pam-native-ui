@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pam-mobile-ui"
+rootProject.name = "pam-native-ui"
 
 val pamNativeRoot = providers.gradleProperty("pamNativeRoot")
     .orElse(providers.environmentVariable("PAM_NATIVE_ROOT"))
