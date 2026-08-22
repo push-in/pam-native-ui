@@ -182,7 +182,7 @@ def write(path: Path, document: dict[str, object]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Capture canonical PAM Mobile UI device evidence")
+    parser = argparse.ArgumentParser(description="Capture canonical PAM Native UI device evidence")
     parser.add_argument("--logcat", type=Path, required=True)
     parser.add_argument("--junit", type=Path, required=True)
     parser.add_argument("--source-revision", required=True)

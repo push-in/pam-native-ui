@@ -1,6 +1,6 @@
 # Product foundations
 
-PAM Mobile UI 0.3 turns the component catalog into a product layer. The
+PAM Native UI 0.3 turns the component catalog into a product layer. The
 foundations are shared by template tags and typed PHP, resolve to integer native
 properties, and do not introduce JavaScript or a WebView.
 

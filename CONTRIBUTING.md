@@ -1,6 +1,6 @@
-# Contributing to PAM Mobile UI
+# Contributing to PAM Native UI
 
-PAM Mobile UI welcomes components, themes, accessibility fixes, native
+PAM Native UI welcomes components, themes, accessibility fixes, native
 behaviors, documentation and performance evidence. Public Composer packages use
 the `pushinbr/pam-*` namespace.
 

@@ -2,7 +2,7 @@
 
 ## Goals
 
-PAM Mobile UI has three execution layers:
+PAM Native UI has three execution layers:
 
 1. **PHP composition** creates immutable element trees and resolves semantic
    tokens, variants, sizes and class overrides once per changed subtree.
@@ -226,7 +226,7 @@ detached when no PHP handler exists.
 
 ## Utility class pipeline
 
-PAM's template registry accepts lazy class resolvers from plugins. PAM Mobile UI
+PAM's template registry accepts lazy class resolvers from plugins. PAM Native UI
 uses that extension to compile application classes with the same
 `TailwindStyleCompiler` used for upstream recipes. The result is validated
 against `PropKey` and applied to the immutable element:

@@ -191,7 +191,7 @@ def write(path: Path, document: dict[str, object]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Produce or verify PAM Mobile UI reproducibility evidence"
+        description="Produce or verify PAM Native UI reproducibility evidence"
     )
     parser.add_argument("--pair", action="append", type=pair, default=[])
     parser.add_argument("--artifact", action="append", type=artifact, default=[])

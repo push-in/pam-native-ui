@@ -1,4 +1,4 @@
-# PAM Mobile UI premium showcase
+# PAM Native UI premium showcase
 
 This executable example is both a polished five-destination product and PAM
 Studio. It demonstrates the three supported authoring styles in one native

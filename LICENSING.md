@@ -1,9 +1,9 @@
-# PAM Mobile UI licensing
+# PAM Native UI licensing
 
-PAM Mobile UI is free and open-source software under the Apache License 2.0
+PAM Native UI is free and open-source software under the Apache License 2.0
 (`Apache-2.0`). The complete terms are in [`LICENSE`](LICENSE).
 
-You may use, copy, modify, fork, and distribute PAM Mobile UI for any purpose,
+You may use, copy, modify, fork, and distribute PAM Native UI for any purpose,
 including proprietary applications, commercial services, and competing UI
 frameworks, subject to the license terms. There are no royalties, revenue
 limits, or field-of-use restrictions.

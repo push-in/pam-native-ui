@@ -1,6 +1,6 @@
 # Performance evidence
 
-PAM Mobile UI keeps interaction progress inside Android and sends PHP only the
+PAM Native UI keeps interaction progress inside Android and sends PHP only the
 semantic result. Benchmarks are split by layer so a fast PHP microbenchmark
 cannot be mistaken for smooth rendered frames.
 

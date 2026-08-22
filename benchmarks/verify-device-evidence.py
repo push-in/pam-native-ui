@@ -146,7 +146,7 @@ def verify_reports(reports: list[tuple[str, dict[str, object]]]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Verify PAM Mobile UI physical-device evidence")
+    parser = argparse.ArgumentParser(description="Verify PAM Native UI physical-device evidence")
     parser.add_argument("reports", type=Path, nargs="+")
     options = parser.parse_args()
     if len(options.reports) > 32:
@@ -155,7 +155,7 @@ def main() -> int:
     for path in options.reports:
         reports.append((str(path), read_report(path)))
     verify_reports(reports)
-    print(f"Verified {len(options.reports)} PAM Mobile UI physical-device evidence report(s).")
+    print(f"Verified {len(options.reports)} PAM Native UI physical-device evidence report(s).")
     return 0
 
 

@@ -2,7 +2,7 @@
 
 ## Upstream component reference
 
-PAM Mobile UI tracks the public anatomy, variants, examples, accessibility
+PAM Native UI tracks the public anatomy, variants, examples, accessibility
 expectations, and user-visible behavior of an MIT-licensed upstream component
 reference.
 
@@ -13,6 +13,6 @@ reference.
 - Captured surface: 61 technical modules and 404 public exports
 
 The upstream React/NativeWind implementation is used as a compatibility
-reference. PAM Mobile UI adapts that surface to PHP composition, PAM's binary
+reference. PAM Native UI adapts that surface to PHP composition, PAM's binary
 tree protocol, and native Android hosts. The original MIT notice is reproduced
 in [`licenses/upstream-reference-MIT.txt`](licenses/upstream-reference-MIT.txt).

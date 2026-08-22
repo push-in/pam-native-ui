@@ -1,4 +1,4 @@
-# Native capabilities in PAM Mobile UI
+# Native capabilities in PAM Native UI
 
 `NativeCapabilities` composes the capability-backed primitives shipped by
 `pushinbr/pam-native` without adding a second renderer or lifecycle.
@@ -33,4 +33,4 @@ renderer.
 For typed permission states, push receive/open events, continuous sensor/device
 observation, lifecycle recovery and production security limits, follow Pam
 Native's `docs/production-capabilities.md`. These APIs stay below the visual
-component layer, so PAM Mobile UI does not duplicate their lifecycle.
+component layer, so PAM Native UI does not duplicate their lifecycle.

@@ -1,7 +1,7 @@
 {
     "version": 1,
     "applicationId": "dev.pam.mobileui.catalog",
-    "name": "PAM Mobile UI",
+    "name": "PAM Native UI",
     "entry": "index.php",
     "android": {
         "minSdk": 26,

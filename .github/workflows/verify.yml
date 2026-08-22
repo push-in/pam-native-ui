@@ -33,7 +33,7 @@ jobs:
           - lowest
           - latest
     steps:
-      - name: Checkout PAM Mobile UI
+      - name: Checkout PAM Native UI
         uses: actions/checkout@v7
 
       - name: Set up PHP
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Checkout PAM Mobile UI
+      - name: Checkout PAM Native UI
         uses: actions/checkout@v7
 
       - name: Checkout the certified PAM Native revision
@@ -152,7 +152,7 @@ jobs:
           - label: current
             commit: 26a768c9a7e0137bda9fa7de23f46c9308de2839
     steps:
-      - name: Checkout PAM Mobile UI
+      - name: Checkout PAM Native UI
         uses: actions/checkout@v7
 
       - name: Checkout the certified PAM Native revision
@@ -204,7 +204,7 @@ jobs:
           - label: current
             commit: 26a768c9a7e0137bda9fa7de23f46c9308de2839
     steps:
-      - name: Checkout PAM Mobile UI
+      - name: Checkout PAM Native UI
         uses: actions/checkout@v7
 
       - name: Checkout the certified PAM Native revision
@@ -214,7 +214,7 @@ jobs:
           ref: ${{ matrix.native.commit }}
           path: pam-native
 
-      - name: Test PAM Mobile UI on an iOS Simulator
+      - name: Test PAM Native UI on an iOS Simulator
         env:
           PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
         run: |
@@ -229,7 +229,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             test
 
-      - name: Build PAM Mobile UI for the iOS Simulator
+      - name: Build PAM Native UI for the iOS Simulator
         env:
           PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios
         run: >-
@@ -250,7 +250,7 @@ jobs:
           - 26
           - 36
     steps:
-      - name: Checkout PAM Mobile UI
+      - name: Checkout PAM Native UI
         uses: actions/checkout@v7
 
       - name: Checkout the certified PAM Native revision

@@ -89,7 +89,7 @@ def evaluate(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Enforce PAM Mobile UI release package size budgets"
+        description="Enforce PAM Native UI release package size budgets"
     )
     parser.add_argument(
         "--budgets", type=Path, default=Path(__file__).with_name("budgets.json")

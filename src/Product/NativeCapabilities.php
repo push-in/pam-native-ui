@@ -15,7 +15,7 @@ use Pam\Native\UI\MediaPlayer;
 use Pam\Native\UI\WebView;
 
 /**
- * Stable PAM Mobile UI entry points for capability-backed native surfaces.
+ * Stable PAM Native UI entry points for capability-backed native surfaces.
  *
  * These factories deliberately return Pam Native primitives, so product
  * components can compose them without creating a parallel renderer.

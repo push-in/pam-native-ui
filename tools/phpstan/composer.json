@@ -1,6 +1,6 @@
 {
     "name": "pushinbr/pam-native-ui-analysis-tools",
-    "description": "Isolated static-analysis toolchain for PAM Mobile UI.",
+    "description": "Isolated static-analysis toolchain for PAM Native UI.",
     "type": "project",
     "license": "Apache-2.0",
     "require": {

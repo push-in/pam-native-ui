@@ -416,7 +416,7 @@ internal class MobileUiHost(
 
     init {
         require(Looper.myLooper() == Looper.getMainLooper()) {
-            "PAM Mobile UI views must be created on Android's UI thread"
+            "PAM Native UI views must be created on Android's UI thread"
         }
         clipChildren = false
         clipToPadding = false
@@ -455,7 +455,7 @@ internal class MobileUiHost(
 
     fun update(properties: Map<String, WireValue>) {
         require(Looper.myLooper() == Looper.getMainLooper()) {
-            "PAM Mobile UI updates must run on Android's UI thread"
+            "PAM Native UI updates must run on Android's UI thread"
         }
         val previousBehavior = behavior
         val previousExpanded = expanded

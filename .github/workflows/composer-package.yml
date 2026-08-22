@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing PAM Mobile UI tag to publish
+        description: Existing PAM Native UI tag to publish
         required: true
         type: string
       publish:

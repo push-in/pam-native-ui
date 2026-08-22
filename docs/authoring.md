@@ -1,6 +1,6 @@
 # Authoring applications
 
-PAM Mobile UI has one renderer and three authoring styles. Tags, typed PHP and
+PAM Native UI has one renderer and three authoring styles. Tags, typed PHP and
 raw/native extensions all produce the same retained PAM element tree; choosing
 one does not add a WebView, JavaScript runtime or second bridge.
 
@@ -73,7 +73,7 @@ TemplateRegistry::component(
 <OrderSummary orderId="{{ $order.id }}" />
 ```
 
-The component may return PAM Mobile UI facades, PAM core primitives, another
+The component may return PAM Native UI facades, PAM core primitives, another
 template or a combination of them.
 
 ## Theme tokens

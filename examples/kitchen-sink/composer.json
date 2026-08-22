@@ -1,6 +1,6 @@
 {
     "name": "pushinbr/pam-native-ui-kitchen-sink",
-    "description": "PAM Mobile UI native component catalog.",
+    "description": "PAM Native UI native component catalog.",
     "type": "project",
     "license": "Apache-2.0",
     "require": {

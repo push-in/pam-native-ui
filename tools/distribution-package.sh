@@ -34,7 +34,7 @@ create_distribution_commit() {
     source_tree=$(git -C "${repository_root}" rev-parse "${source_ref}^{tree}")
     source_date=$(git -C "${repository_root}" show -s --format=%aI "${source_commit}")
 
-    printf 'PAM Mobile UI distribution %s\n' "${release_tag}" |
+    printf 'PAM Native UI distribution %s\n' "${release_tag}" |
         GIT_AUTHOR_NAME='PAM Release Automation' \
         GIT_AUTHOR_EMAIL='release@pam.dev' \
         GIT_AUTHOR_DATE="${source_date}" \

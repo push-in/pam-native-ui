@@ -128,7 +128,7 @@ final class ComponentRenderer
         ?string $elementKey,
     ): Element {
         if (!isset(ComponentMap::IDS[$part]) && !isset(MaterialComponentMap::IDS[$part])) {
-            throw new InvalidArgumentException("Unknown PAM Mobile UI component {$part}.");
+            throw new InvalidArgumentException("Unknown PAM Native UI component {$part}.");
         }
 
         if (
