@@ -27,7 +27,6 @@ jobs:
       fail-fast: false
       matrix:
         php:
-          - '8.4'
           - '8.5'
         graph:
           - lowest
@@ -80,7 +79,7 @@ jobs:
           composer run verify
 
   php:
-    name: PHP 8.4
+    name: PHP 8.5
     needs:
       - ios
     runs-on: ubuntu-24.04
@@ -99,7 +98,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: "8.5"
           coverage: none
           tools: composer:v2
 

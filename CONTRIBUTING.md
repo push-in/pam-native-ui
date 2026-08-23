@@ -6,7 +6,7 @@ the `pushinbr/pam-*` namespace.
 
 ## Local setup
 
-Keep `pam-native` and `pam-native-ui` as sibling directories. PHP 8.4, Java 21
+Keep `pam-native` and `pam-native-ui` as sibling directories. PHP 8.5, Java 21
 and an Android SDK are required.
 
 Install the isolated PHPStan toolchain:
