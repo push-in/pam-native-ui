@@ -73,9 +73,9 @@ $assert(
     'The plugin must support the PAM Native 0.8.x line.',
 );
 $assert(
-    ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === '0.8.x-dev'
-        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.8.x-dev',
-    'The kitchen sink must exercise both public 0.8.x package lines.',
+    ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === '0.8.0'
+        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.8.5',
+    'The kitchen sink must exercise the immutable public 0.8 release pair.',
 );
 
 $reference = $parity['reference'] ?? null;
