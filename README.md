@@ -1,51 +1,57 @@
+<!-- pam:product-page:start -->
 <div align="center">
 
 # PAM Native UI
 
-### Material Design 3, rebuilt for a truly native PHP stack.
+**A complete retained-native component system designed for sustained frame rates.**
 
-**The official accessible component system for PAM Native: manually authored
-for Android and iOS, retained by design, and free from WebViews, JavaScript,
-CSS engines, and metadata-generated imitations.**
+Compose accessible Android Views and UIKit controls with tokens, themes, responsive layouts, gestures, and UI-thread animation.
 
-[![Documentation](https://img.shields.io/badge/docs-component%20catalog-5b50d6?style=flat-square)](docs/catalog.md)
-![Material](https://img.shields.io/badge/Material%20Design-3-6750A4?style=flat-square)
-![Components](https://img.shields.io/badge/components-84-22c55e?style=flat-square)
-![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-2563eb?style=flat-square)
-![License](https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square)
+[![Latest version](https://img.shields.io/packagist/v/pushinbr/pam-native-ui?style=flat-square&label=stable)](https://packagist.org/packages/pushinbr/pam-native-ui)
+[![CI](https://img.shields.io/github/actions/workflow/status/push-in/pam-native-ui/verify.yml?branch=main&style=flat-square&label=CI)](https://github.com/push-in/pam-native-ui/actions)
+![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?style=flat-square&logo=php&logoColor=white)
+![Android](https://img.shields.io/badge/Android-API%2026%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-15%2B-000000?style=flat-square&logo=apple&logoColor=white)
 
-**[Documentation](docs/authoring.md) ·
-[Component catalog](docs/catalog.md) ·
-[Product foundations](docs/product-foundations.md) ·
-[Performance](docs/performance.md) ·
-[Contributing](CONTRIBUTING.md)**
+**[Documentation](https://push-in.github.io/pam-docs/native/overview/) · [Quick start](#quick-start) · [What you can build](#what-you-can-build) · [PAM ecosystem](https://push-in.github.io/pam-docs/ecosystem/) · [Issues](https://github.com/push-in/pam-native-ui/issues)**
 
 </div>
 
 ---
 
+## Why PAM Native UI
+
+Compose accessible Android Views and UIKit controls with tokens, themes, responsive layouts, gestures, and UI-thread animation. The public API is strictly typed for PHP 8.5; expensive or frame-sensitive work stays in Rust or the platform SDK instead of crossing the application boundary every frame.
+
+| | |
+| --- | --- |
+| **Best for** | A focused capability you can add to any PAM Native application |
+| **Native path** | Android Views · UIKit · Rust layout/reconciliation |
+| **Application model** | Composer package + generated native integration |
+| **Design rule** | Independent module; no feed, vertical, or application template bundled |
+
+## What you can build
+
+- Production mobile design systems
+- Responsive phone, tablet, foldable, and TV interfaces
+- Accessible components with native focus and input behavior
+
+## Quick start
+
+Already have a PAM Native project? Add only this capability:
+
+```bash
+pam composer require pushinbr/pam-native-ui
+pam doctor --fix
+```
+
+New to PAM? Follow the **[five-minute PAM Native setup](https://push-in.github.io/pam-docs/native/overview/)** once, then return here. Your application stays a normal Composer project with a committed lockfile.
+<!-- pam:product-page:end -->
+
 PAM Native UI is a retained native Material Design 3 component library for
 PAM Native. It exposes 84 mobile `p-*` component parts across 62 manually authored
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
-
-## Start here
-
-PAM Native UI depends on both the PAM Runtime and `pushinbr/pam-native`. Install
-PAM before adding the UI package:
-
-```bash
-curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
-    --connect-timeout 15 --max-time 60 --max-filesize 1048576 -fsSL \
-    https://github.com/push-in/pam/releases/latest/download/install.sh | sh
-
-pam doctor
-pam init my-app --template native-ui
-cd my-app
-pam composer require pushinbr/pam-native-ui
-pam doctor --fix
-pam dev
-```
 
 ## Part of the PAM ecosystem
 
