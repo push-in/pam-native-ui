@@ -36,7 +36,7 @@ jobs:
     name: Publish Composer distribution
     needs: ecosystem-compatibility
     if: >-
-      github.repository == 'push-in/pam-mobile-ui' &&
+      github.repository == 'push-in/pam-native-ui' &&
       (github.event_name == 'push' || inputs.publish)
     runs-on: ubuntu-24.04
     steps:
