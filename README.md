@@ -154,6 +154,17 @@ shutdown. Ripple and motion do not cross the PHP boundary.
 
 ## Themes
 
+Language 2 templates use PHP-free Vue-style bindings. Interpolate text with
+`{{ $value }}`, bind properties with `:prop="$value"`, dispatch actions with
+`@press="action"`, and bind form state in both directions with
+`p-model="$field"`:
+
+```xml
+<p-text-field p-model="$query" label="Search" />
+<p-img :source="$channel->logo" :accessibilityLabel="$channel->name" />
+<p-btn @press="play">Play {{ $channel->name }}</p-btn>
+```
+
 ```php
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\PamUI;

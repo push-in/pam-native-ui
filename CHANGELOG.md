@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.8.0
+
+- Adopt PAM Native's declarative Language 2 syntax with `{{ }}`, bound
+  `:properties`, `@events` and two-way `p-model` fields.
+- Follow the real Android and iOS system appearance through PAM Native while
+  preserving explicit light, dark and custom theme overrides.
+- Require PAM Native 0.8.5 so every UI application receives deterministic
+  first-frame defaults and durable Android runtime installation.
+
 - Add accessible product status banners for information, success, warning,
   error and progress feedback.
 - Add adaptive metric cards with semantic, non-color-only trend announcements.
@@ -16,7 +25,7 @@
   graphs, executing the full suite against each resolved vendor package after
   dependency dry-runs.
 - Compile and test Android and UIKit sources against both the immutable PAM
-  Native v0.6.1 minimum and the current certified revision.
+  Native v0.8.5 minimum and the current certified revision.
 - Block tag publication until the exact release ref repeats every Composer
   graph plus the minimum Android and UIKit builds.
 - Restrict release credentials to read-only compatibility jobs, attestation-only
