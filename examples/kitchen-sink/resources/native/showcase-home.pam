@@ -9,11 +9,11 @@
         <Column class="gap-4">
             <Row class="items-center justify-between gap-3">
                 <p-chip action="success" variant="subtle"><Text>RUNTIME LIVE</Text></p-chip>
-                <Text size="sm" class="ui-text-muted">Android · UIKit</Text>
+                <Text size="sm" class="text-white">Android · UIKit</Text>
             </Row>
             <Column class="gap-2">
-                <Text size="2xl">One language. Truly native.</Text>
-                <Text class="ui-text-muted">Compose polished products with typed PHP, platform controls and zero JavaScript runtime.</Text>
+                <Text size="2xl" class="text-white">One language. Truly native.</Text>
+                <Text class="text-white">Compose polished products with typed PHP, platform controls and zero JavaScript runtime.</Text>
             </Column>
             <Grid class="grid-cols-1 sm:grid-cols-3 gap-3">
                 <MetricCard label="Components" value="84" delta="+9" trend="2" />

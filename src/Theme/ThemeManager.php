@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pam\MobileUi\Theme;
 
 use Pam\MobileUi\Enum\ThemeMode;
+use Pam\Native\App;
+use Pam\Native\UserInterfaceAppearance;
 
 final class ThemeManager
 {
@@ -99,9 +101,6 @@ final class ThemeManager
             return self::$systemDark;
         }
 
-        $value = getenv('PAM_SYSTEM_DARK');
-
-        return $value !== false
-            && in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+        return App::appearance() === UserInterfaceAppearance::Dark;
     }
 }

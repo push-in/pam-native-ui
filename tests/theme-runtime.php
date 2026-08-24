@@ -7,6 +7,12 @@ use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Theme\Color;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
+use Pam\Native\App;
+use Pam\Native\EventKind;
+use Pam\Native\Internal\Runtime;
+use Pam\Native\Internal\Wire;
+use Pam\Native\UI\Text;
+use Pam\Native\UserInterfaceAppearance;
 
 $vendorAutoload = dirname(__DIR__).'/vendor/autoload.php';
 require is_file($vendorAutoload) ? $vendorAutoload : __DIR__.'/bootstrap.php';
@@ -18,6 +24,20 @@ function expectTheme(bool $condition, string $message): void
     }
 }
 
+ThemeManager::reset();
+
+App::run(Text::make('System appearance probe'));
+Runtime::dispatchEvent(0, EventKind::Dimensions->value, Wire::map([
+    'width' => 412.0,
+    'height' => 915.0,
+    'density' => 3.0,
+    'appearance' => UserInterfaceAppearance::Dark->value,
+]));
+expectTheme(
+    ThemeManager::resolvedMode() === ThemeMode::Dark,
+    'The UI theme must follow the native system appearance without an environment bridge.',
+);
+Runtime::shutdown();
 ThemeManager::reset();
 
 $accessiblePairs = [
