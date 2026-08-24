@@ -27,7 +27,7 @@ defaults:
 jobs:
   refresh:
     name: Refresh verified public metadata
-    if: github.repository == 'push-in/pam-mobile-ui'
+    if: github.repository == 'push-in/pam-native-ui'
     runs-on: ubuntu-24.04
     steps:
       - name: Refresh the allowlisted package
@@ -39,7 +39,7 @@ jobs:
           case "${PACKAGE}" in
             pam-api) composer_package='pushinbr/pam-api' ;;
             pam-core-api) composer_package='pushinbr/pam-core-api' ;;
-            pam-mobile-ui-php) composer_package='pushinbr/pam-mobile-ui' ;;
+            pam-mobile-ui-php) composer_package='pushinbr/pam-native-ui' ;;
             pam-native-media) composer_package='pushinbr/pam-native-media' ;;
             pam-psr-bridge) composer_package='pushinbr/pam-psr-bridge' ;;
             pam-skeleton) composer_package='pushinbr/pam-skeleton' ;;
