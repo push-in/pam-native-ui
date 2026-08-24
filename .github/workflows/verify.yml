@@ -184,7 +184,7 @@ jobs:
         with:
           name: pam-mobile-ui-android-${{ matrix.native.label }}
           path: |
-            android/build/outputs/aar/pam-mobile-ui-release.aar
+            android/build/outputs/aar/pam-native-ui-release.aar
             android/build/reports/lint-results-debug.html
             android/build/test-results/testDebugUnitTest/
           if-no-files-found: error

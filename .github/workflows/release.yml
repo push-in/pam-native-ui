@@ -290,12 +290,12 @@ jobs:
             -p android \
             -PpamNativeRoot="${GITHUB_WORKSPACE}/pam-native" \
             clean assembleRelease
-          cp android/build/outputs/aar/pam-mobile-ui-release.aar "${first}"
+          cp android/build/outputs/aar/pam-native-ui-release.aar "${first}"
           pam-native/android/gradlew \
             -p android \
             -PpamNativeRoot="${GITHUB_WORKSPACE}/pam-native" \
             clean assembleRelease
-          cp android/build/outputs/aar/pam-mobile-ui-release.aar "${second}"
+          cp android/build/outputs/aar/pam-native-ui-release.aar "${second}"
           cmp "${first}" "${second}"
       - name: Create and verify reproducible PHP archive
         env:
@@ -303,7 +303,7 @@ jobs:
         run: |
           version=${RELEASE_TAG#v}
           mkdir -p dist
-          cp android/build/outputs/aar/pam-mobile-ui-release.aar \
+          cp android/build/outputs/aar/pam-native-ui-release.aar \
             "dist/pam-mobile-ui-android-${version}.aar"
           first="${RUNNER_TEMP}/pam-mobile-ui-php-first.tar.gz"
           second="${RUNNER_TEMP}/pam-mobile-ui-php-second.tar.gz"
