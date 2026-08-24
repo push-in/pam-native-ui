@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2383c38f18edf7acce21b8da3a7658d2",
+    "content-hash": "202f0d98c6a675913f94424b179efb82",
     "packages": [
         {
             "name": "pushinbr/pam-native",
@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../pam-native/packages/native",
-                "reference": "1b4a1d9f6cc84751bfda1cfcae918b6efaa0cd66"
+                "reference": "1ecf944af3b5fd431411dd4462c557b2060df50d"
             },
             "require": {
                 "php": "^8.5"
@@ -278,6 +278,13 @@
                             ],
                             "description": "Certify, sign and package a PAM Native release"
                         },
+                        "production:certify": {
+                            "bin": "bin/pam-native",
+                            "arguments": [
+                                "production:certify"
+                            ],
+                            "description": "Run strict PAM Native production certification"
+                        },
                         "sign": {
                             "bin": "bin/pam-native",
                             "arguments": [
@@ -378,11 +385,11 @@
         },
         {
             "name": "pushinbr/pam-native-ui",
-            "version": "0.8.0",
+            "version": "0.8.2",
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "75815d9686b477ca16c1f280c6151cf5f84a9eba"
+                "reference": "de20fa1b854e3da1540577e1c441badcb51c1833"
             },
             "require": {
                 "php": "^8.5",
@@ -428,7 +435,7 @@
                     "php tools/audit-styles.php --strict"
                 ],
                 "analyse": [
-                    "vendor/bin/phpstan analyse --level=9 --no-progress --debug"
+                    "vendor/bin/phpstan analyse --level=9 --no-progress --debug --memory-limit=1G"
                 ],
                 "benchmark": [
                     "php benchmarks/php.php"
@@ -505,5 +512,5 @@
         "php": "^8.5"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
