@@ -53,7 +53,7 @@
             "@generate:material"
         ],
         "audit:styles": "php tools/audit-styles.php --strict",
-        "analyse": "vendor/bin/phpstan analyse --level=9 --no-progress --debug",
+        "analyse": "vendor/bin/phpstan analyse --level=9 --no-progress --debug --memory-limit=1G",
         "benchmark": "php benchmarks/php.php",
         "benchmark:material": "php benchmarks/material.php",
         "release:check": "php tools/release-check.php",
