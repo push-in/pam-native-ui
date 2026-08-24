@@ -35,6 +35,7 @@ $json = static function (string $path): array {
 $composer = $json($root.'/composer.json');
 $plugin = $json($root.'/pam-native.plugin.json');
 $exampleComposer = $json($root.'/examples/kitchen-sink/composer.json');
+$version = trim((string) file_get_contents($root.'/VERSION'));
 $parity = $json($root.'/resources/parity.json');
 $materialParity = $json($root.'/resources/material-parity.json');
 $ciVerifiedGates = [];
@@ -73,9 +74,9 @@ $assert(
     'The plugin must support the PAM Native 0.8.x line.',
 );
 $assert(
-    ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === '0.8.0'
+    ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === $version
         && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.8.5',
-    'The kitchen sink must exercise the immutable public 0.8 release pair.',
+    'The kitchen sink must exercise the current immutable UI release and PAM Native 0.8.5.',
 );
 
 $reference = $parity['reference'] ?? null;

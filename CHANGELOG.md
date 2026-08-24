@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.8.2
+
+- Publish the complete Quantum UI release from a version-consistent source
+  archive so Composer, Android and iOS artifacts share the same immutable
+  version.
+- Keep the product-focused documentation and the certified PHP 8.5, Android
+  and UIKit compatibility matrix introduced after 0.8.0.
+
 ## 0.8.0
 
 - Adopt PAM Native's declarative Language 2 syntax with `{{ }}`, bound
