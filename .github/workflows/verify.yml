@@ -14,7 +14,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: cde29febd6f1ffbeff10e3b16f0a20e094ee3476
+  PAM_NATIVE_COMMIT: 4997e3912329b3c2e4b4e6df1eecfc04eeee8189
 
 jobs:
   composer-compatibility:
@@ -35,6 +35,13 @@ jobs:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
 
+      - name: Checkout the PAM Native 1.0 candidate
+        uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: ${{ env.PAM_NATIVE_COMMIT }}
+          path: pam-native
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -44,6 +51,8 @@ jobs:
 
       - name: Preflight dependency graph
         run: |
+          composer config repositories.pam-native-candidate \
+            '{"type":"path","url":"pam-native/packages/native","options":{"symlink":false,"versions":{"pushinbr/pam-native":"1.0.0"}}}'
           arguments=(--no-interaction --no-progress --prefer-dist)
           if [[ '${{ matrix.graph }}' == lowest ]]; then
             arguments+=(--prefer-lowest --prefer-stable)
@@ -111,11 +120,10 @@ jobs:
           --prefer-dist
 
       - name: Install package dependencies
-        run: >-
-          composer install
-          --no-interaction
-          --no-progress
-          --prefer-dist
+        run: |
+          composer config repositories.pam-native-candidate \
+            '{"type":"path","url":"pam-native/packages/native","options":{"symlink":false,"versions":{"pushinbr/pam-native":"1.0.0"}}}'
+          composer install --no-interaction --no-progress --prefer-dist
 
       - name: Validate package
         run: composer validate --strict --no-check-publish
@@ -147,9 +155,9 @@ jobs:
       matrix:
         native:
           - label: minimum
-            commit: cde29febd6f1ffbeff10e3b16f0a20e094ee3476
+            commit: 4997e3912329b3c2e4b4e6df1eecfc04eeee8189
           - label: current
-            commit: cde29febd6f1ffbeff10e3b16f0a20e094ee3476
+            commit: 4997e3912329b3c2e4b4e6df1eecfc04eeee8189
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
