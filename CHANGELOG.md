@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.10.0
+
+- Certify Quantum UI against PAM Native 0.10.0 and its dependency-granular,
+  high-refresh-rate renderer without changing the public component API.
+
 ## 0.9.0
 
 - Require and certify PAM Native 0.9.1 so Quantum UI applications use the
