@@ -343,11 +343,52 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  community-first-run:
+    name: Create and run every clean community starter
+    needs:
+      - package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: push-in/pam
+          ref: main
+          path: pam-cli
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - name: Install the public PAM runtime and toolchain manager
+        run: |
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
+            --connect-timeout 15 --max-time 120 --max-filesize 1048576 \
+            -fsSL https://github.com/push-in/pam/releases/latest/download/install.sh | sh
+          test -x "${HOME}/.local/bin/pam"
+          printf 'PAM_BIN=%s\n' "${HOME}/.local/bin/pam" >>"${GITHUB_ENV}"
+      - name: Prove every documented pam init and pam dev journey
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          PAM_MOBILE_UI_PACKAGE_PATH: ${{ github.workspace }}
+          PAM_COMMUNITY_GATE_TIMEOUT_SECONDS: '1200'
+        with:
+          api-level: 36
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: pam-cli/scripts/community-experience-gate.sh all
+
   publish:
     name: Publish GitHub release
     needs:
       - ios
       - package
+      - community-first-run
     runs-on: ubuntu-24.04
     permissions:
       contents: write
