@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.0
+
+- Certify the complete accessible component system against the stable PAM
+  Native 1.x ABI, retained renderer, CSS-to-native compiler and capability
+  boundary.
+- Make clean `pam init --template native-ui` plus Android launch a release gate.
+- Keep UI independent from every sibling plugin and from any backend package.
+
 ## 0.10.1
 
 - Certify Quantum UI against PAM Native 0.10.0 and its dependency-granular,
