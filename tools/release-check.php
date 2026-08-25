@@ -56,8 +56,8 @@ $assert(
     'The package must be named pushinbr/pam-native-ui.',
 );
 $assert(
-    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.8.5',
-    'The package must require pushinbr/pam-native:^0.8.5.',
+    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.9',
+    'The package must require pushinbr/pam-native:^0.9.',
 );
 $assert(
     ($composer['type'] ?? null) === 'pam-native-plugin',
@@ -69,14 +69,14 @@ $assert(
     'The plugin schema must resolve through the pushinbr/pam-native package.',
 );
 $assert(
-    ($plugin['pamNative']['minimum'] ?? null) === '0.8.5'
+    ($plugin['pamNative']['minimum'] ?? null) === '0.9.1'
         && ($plugin['pamNative']['maximumExclusive'] ?? null) === '1.0.0',
-    'The plugin must support the PAM Native 0.8.x line.',
+    'The plugin must support the PAM Native 0.9.x line.',
 );
 $assert(
     ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === $version
-        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.8.5',
-    'The kitchen sink must exercise the current immutable UI release and PAM Native 0.8.5.',
+        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.9.1',
+    'The kitchen sink must exercise the current immutable UI release and PAM Native 0.9.1.',
 );
 
 $reference = $parity['reference'] ?? null;
