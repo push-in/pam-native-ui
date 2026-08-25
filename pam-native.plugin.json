@@ -6,6 +6,14 @@
         "minimum": "0.10.0",
         "maximumExclusive": "1.0.0"
     },
+    "capabilities": {
+        "required": [
+            "renderer.incremental.v1",
+            "runtime.modules.v1",
+            "wire.binary.v1"
+        ],
+        "optional": []
+    },
     "php": {
         "provider": "Pam\\MobileUi\\MobileUiPluginProvider"
     },
