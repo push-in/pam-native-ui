@@ -56,8 +56,17 @@ $assert(
     'The package must be named pushinbr/pam-native-ui.',
 );
 $assert(
-    ($composer['require']['pushinbr/pam-native'] ?? null) === '^0.10',
-    'The package must require pushinbr/pam-native:^0.10.',
+    ($composer['require']['pushinbr/pam-native'] ?? null) === '^1.0',
+    'The package must require the stable pushinbr/pam-native:^1.0 contract.',
+);
+$siblingDependencies = array_filter(
+    array_keys((array) ($composer['require'] ?? [])),
+    static fn (string $dependency): bool => str_starts_with($dependency, 'pushinbr/pam-native-')
+        && $dependency !== 'pushinbr/pam-native',
+);
+$assert(
+    $siblingDependencies === [],
+    'PAM Native UI cannot depend on sibling plugins; use public runtime capabilities.',
 );
 $assert(
     ($composer['type'] ?? null) === 'pam-native-plugin',
@@ -69,14 +78,22 @@ $assert(
     'The plugin schema must resolve through the pushinbr/pam-native package.',
 );
 $assert(
-    ($plugin['pamNative']['minimum'] ?? null) === '0.10.0'
-        && ($plugin['pamNative']['maximumExclusive'] ?? null) === '1.0.0',
-    'The plugin must support the PAM Native 0.10.x line.',
+    ($plugin['pamNative']['minimum'] ?? null) === '1.0.0'
+        && ($plugin['pamNative']['maximumExclusive'] ?? null) === '2.0.0',
+    'The plugin must support the stable PAM Native 1.x line.',
+);
+$assert(
+    ($plugin['capabilities']['required'] ?? null) === [
+        'renderer.incremental.v1',
+        'runtime.modules.v1',
+        'wire.binary.v1',
+    ] && ($plugin['capabilities']['optional'] ?? null) === [],
+    'The plugin must negotiate only the minimal public renderer contract.',
 );
 $assert(
     ($exampleComposer['require']['pushinbr/pam-native-ui'] ?? null) === $version
-        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '0.10.0',
-    'The kitchen sink must exercise the current immutable UI release and PAM Native 0.10.0.',
+        && ($exampleComposer['require']['pushinbr/pam-native'] ?? null) === '1.0.0',
+    'The kitchen sink must exercise immutable PAM Native UI and core 1.0.0 releases.',
 );
 
 $reference = $parity['reference'] ?? null;
