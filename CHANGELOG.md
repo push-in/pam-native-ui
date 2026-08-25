@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.9.0
+
+- Require and certify PAM Native 0.9.1 so Quantum UI applications use the
+  matching Style Engine protocol, Android renderer and UIKit host.
+- Align the Composer graph, plugin contract, kitchen-sink fixture and all
+  Android/iOS release boundaries to one immutable PAM Native revision.
+
 ## 0.8.2
 
 - Publish the complete Quantum UI release from a version-consistent source
