@@ -14,7 +14,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 4997e3912329b3c2e4b4e6df1eecfc04eeee8189
+  PAM_NATIVE_COMMIT: 4d9283862303214f12433732c674949bfbe41b2b
 
 jobs:
   composer-compatibility:
@@ -155,9 +155,9 @@ jobs:
       matrix:
         native:
           - label: minimum
-            commit: 4997e3912329b3c2e4b4e6df1eecfc04eeee8189
+            commit: 4d9283862303214f12433732c674949bfbe41b2b
           - label: current
-            commit: 4997e3912329b3c2e4b4e6df1eecfc04eeee8189
+            commit: 4d9283862303214f12433732c674949bfbe41b2b
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
