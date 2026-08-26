@@ -86,6 +86,9 @@ jobs:
           composer validate --strict --no-check-publish
           composer show pushinbr/pam-native --format=json
           composer run verify
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   php:
     name: PHP 8.5
@@ -145,6 +148,9 @@ jobs:
         env:
           PAM_NATIVE_ROOT: ${{ github.workspace }}/pam-native
         run: composer run benchmark
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   android:
     name: Android / PAM Native ${{ matrix.native.label }}
@@ -197,6 +203,9 @@ jobs:
             android/build/test-results/testDebugUnitTest/
           if-no-files-found: error
           retention-days: 7
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   ios:
     name: iOS / PAM Native ${{ matrix.native.label }}
@@ -232,6 +241,7 @@ jobs:
           test -n "${udid}"
           xcodebuild \
             -scheme PamMobileUi \
+            -derivedDataPath "${GITHUB_WORKSPACE}/.build/DerivedData" \
             -destination "platform=iOS Simulator,id=${udid}" \
             CODE_SIGNING_ALLOWED=NO \
             test
@@ -242,9 +252,13 @@ jobs:
         run: >-
           xcodebuild
           -scheme PamMobileUi
+          -derivedDataPath '${{ github.workspace }}/.build/DerivedData'
           -destination 'generic/platform=iOS Simulator'
           CODE_SIGNING_ALLOWED=NO
           build
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   instrumented:
     name: Android API ${{ matrix.api-level }} behavior
@@ -306,3 +320,6 @@ jobs:
             android/build/outputs/androidTest-results/connected/
           if-no-files-found: warn
           retention-days: 7
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh

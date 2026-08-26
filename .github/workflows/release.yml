@@ -53,6 +53,9 @@ jobs:
           testDebugUnitTest
           lintDebug
           assembleRelease
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   ios-minimum:
     name: iOS / PAM Native minimum
@@ -78,14 +81,19 @@ jobs:
           test -n "${udid}"
           xcodebuild \
             -scheme PamMobileUi \
+            -derivedDataPath "${GITHUB_WORKSPACE}/.build/DerivedData" \
             -destination "platform=iOS Simulator,id=${udid}" \
             CODE_SIGNING_ALLOWED=NO \
             test
           xcodebuild \
             -scheme PamMobileUi \
+            -derivedDataPath "${GITHUB_WORKSPACE}/.build/DerivedData" \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
             build
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   ios:
     name: Build iOS release artifact
@@ -116,11 +124,13 @@ jobs:
           test -n "${udid}"
           xcodebuild \
             -scheme PamMobileUi \
+            -derivedDataPath "${GITHUB_WORKSPACE}/.build/DerivedData" \
             -destination "platform=iOS Simulator,id=${udid}" \
             CODE_SIGNING_ALLOWED=NO \
             test
           xcodebuild \
             -scheme PamMobileUi \
+            -derivedDataPath "${GITHUB_WORKSPACE}/.build/DerivedData" \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
             build
@@ -160,6 +170,9 @@ jobs:
           path: dist/pam-mobile-ui-ios-*
           if-no-files-found: error
           retention-days: 7
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   composer-compatibility:
     name: PHP ${{ matrix.php }} / PAM Native ${{ matrix.graph }}
@@ -215,6 +228,9 @@ jobs:
           composer validate --strict --no-check-publish
           composer show pushinbr/pam-native --format=json
           composer run verify
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   package:
     name: Build release artifacts
@@ -342,6 +358,9 @@ jobs:
           path: dist/*
           if-no-files-found: error
           retention-days: 7
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   community-first-run:
     name: Create and run every clean community starter
@@ -428,6 +447,9 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: pam-cli/scripts/community-experience-gate.sh all
+      - name: Remove regenerable build artifacts
+        if: always()
+        run: scripts/cleanup-build-artifacts.sh
 
   publish:
     name: Publish GitHub release
