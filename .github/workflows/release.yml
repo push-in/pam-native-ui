@@ -19,7 +19,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: cfe7147945500c8f24426dc698065cdabde4debd
+  PAM_NATIVE_COMMIT: ac578def374982eef83c7081862cb79777053ba1
 
 jobs:
   ecosystem-compatibility:
