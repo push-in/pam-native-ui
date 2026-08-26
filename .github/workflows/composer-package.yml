@@ -122,7 +122,9 @@ jobs:
         run: |
           test -n "${PACKAGIST_USERNAME}"
           test -n "${PACKAGIST_TOKEN}"
-          payload='{"repository":{"url":"https://github.com/push-in/pam-native-ui-php"}}'
+          # Packagist must expose the public product repository. The
+          # pam-native-ui-php repository is only the immutable Composer split.
+          payload='{"repository":{"url":"https://github.com/push-in/pam-native-ui"}}'
           encoded_username=$(php -r 'echo rawurlencode((string) getenv("PACKAGIST_USERNAME"));')
           encoded_token=$(php -r 'echo rawurlencode((string) getenv("PACKAGIST_TOKEN"));')
           if ! curl --proto '=https' --tlsv1.2 \

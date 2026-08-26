@@ -10,7 +10,7 @@ on:
         options:
           - pam-api
           - pam-core-api
-          - pam-native-ui-php
+          - pam-native-ui
           - pam-native-media
           - pam-psr-bridge
           - pam-skeleton
@@ -39,7 +39,7 @@ jobs:
           case "${PACKAGE}" in
             pam-api) composer_package='pushinbr/pam-api' ;;
             pam-core-api) composer_package='pushinbr/pam-core-api' ;;
-            pam-native-ui-php) composer_package='pushinbr/pam-native-ui' ;;
+            pam-native-ui) composer_package='pushinbr/pam-native-ui' ;;
             pam-native-media) composer_package='pushinbr/pam-native-media' ;;
             pam-psr-bridge) composer_package='pushinbr/pam-psr-bridge' ;;
             pam-skeleton) composer_package='pushinbr/pam-skeleton' ;;
