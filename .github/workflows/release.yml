@@ -366,9 +366,17 @@ jobs:
       - uses: android-actions/setup-android@v4
       - name: Install the public PAM runtime and toolchain manager
         run: |
+          installer="${RUNNER_TEMP}/pam-install.sh"
           curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
             --connect-timeout 15 --max-time 120 --max-filesize 1048576 \
-            -fsSL https://github.com/push-in/pam/releases/latest/download/install.sh | sh
+            --retry 5 --retry-delay 3 --retry-max-time 180 \
+            --retry-all-errors \
+            -fsSL \
+            --output "${installer}" \
+            https://github.com/push-in/pam/releases/latest/download/install.sh
+          test -s "${installer}"
+          sh -n "${installer}"
+          sh "${installer}"
           test -x "${HOME}/.local/bin/pam"
           printf 'PAM_BIN=%s\n' "${HOME}/.local/bin/pam" >>"${GITHUB_ENV}"
       - name: Prove every documented pam init and pam dev journey
