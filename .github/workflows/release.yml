@@ -359,12 +359,23 @@ jobs:
           ref: main
           path: pam-cli
           persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: 4c7d0174a3c4cb368fcaf3e3a33357816c9c5b90
+          path: pam-native-candidate
+          persist-credentials: false
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v4
-      - name: Install the public PAM runtime and toolchain manager
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - uses: dtolnay/rust-toolchain@1.88.0
+      - name: Assemble the candidate PAM entrypoint and public runtime payload
         run: |
           installer="${RUNNER_TEMP}/pam-install.sh"
           curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
@@ -378,10 +389,31 @@ jobs:
           sh -n "${installer}"
           sh "${installer}"
           test -x "${HOME}/.local/bin/pam"
-          printf 'PAM_BIN=%s\n' "${HOME}/.local/bin/pam" >>"${GITHUB_ENV}"
+          pam_launcher=$(readlink -f "${HOME}/.local/bin/pam")
+          pam_install_root=$(cd "$(dirname "${pam_launcher}")/.." && pwd)
+          pam_home="${pam_install_root}/share/pam"
+          test -f "${pam_home}/runtime/catalog.json"
+          PHP_CONFIG=$(command -v php-config) cargo build --locked --release \
+            --manifest-path pam-cli/Cargo.toml --bin pam
+          cargo build --locked --release \
+            --manifest-path pam-native-candidate/Cargo.toml \
+            --package pam-native-cli
+          test -x pam-cli/target/release/pam
+          test -x pam-native-candidate/target/release/pam-native
+          printf 'PAM_BIN=%s\n' "${GITHUB_WORKSPACE}/pam-cli/target/release/pam" >>"${GITHUB_ENV}"
+          printf 'PAM_HOME=%s\n' "${pam_home}" >>"${GITHUB_ENV}"
+          printf 'PAM_NATIVE_HOME=%s\n' "${GITHUB_WORKSPACE}/pam-native-candidate" >>"${GITHUB_ENV}"
+          printf 'PAM_NATIVE_PACKAGE_PATH=%s\n' \
+            "${GITHUB_WORKSPACE}/pam-native-candidate/packages/native" >>"${GITHUB_ENV}"
+          printf 'PAM_NATIVE_CLI=%s\n' \
+            "${GITHUB_WORKSPACE}/pam-native-candidate/target/release/pam-native" >>"${GITHUB_ENV}"
       - name: Prove every documented pam init and pam dev journey
         uses: reactivecircus/android-emulator-runner@v2
         env:
+          PAM_HOME: ${{ env.PAM_HOME }}
+          PAM_NATIVE_HOME: ${{ env.PAM_NATIVE_HOME }}
+          PAM_NATIVE_PACKAGE_PATH: ${{ env.PAM_NATIVE_PACKAGE_PATH }}
+          PAM_NATIVE_CLI: ${{ env.PAM_NATIVE_CLI }}
           PAM_MOBILE_UI_PACKAGE_PATH: ${{ github.workspace }}
           PAM_COMMUNITY_GATE_TIMEOUT_SECONDS: '1200'
         with:
