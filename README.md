@@ -38,6 +38,10 @@ Compose accessible Android Views and UIKit controls with tokens, themes, respons
 
 ## Quick start
 
+All builds follow the mandatory [build hygiene contract](docs/build-hygiene.md):
+final deliverables remain in `dist`, while regenerable native build outputs are
+removed on exit.
+
 Already have a PAM Native project? Add only this capability:
 
 ```bash
