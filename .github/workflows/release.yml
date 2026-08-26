@@ -355,6 +355,12 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
       - uses: actions/checkout@v7
         with:
+          repository: push-in/pam-native-ui
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+          path: pam-native-ui-candidate
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
           repository: push-in/pam
           ref: main
           path: pam-cli
@@ -414,7 +420,7 @@ jobs:
           PAM_NATIVE_HOME: ${{ env.PAM_NATIVE_HOME }}
           PAM_NATIVE_PACKAGE_PATH: ${{ env.PAM_NATIVE_PACKAGE_PATH }}
           PAM_NATIVE_CLI: ${{ env.PAM_NATIVE_CLI }}
-          PAM_MOBILE_UI_PACKAGE_PATH: ${{ github.workspace }}
+          PAM_MOBILE_UI_PACKAGE_PATH: ${{ github.workspace }}/pam-native-ui-candidate
           PAM_COMMUNITY_GATE_TIMEOUT_SECONDS: '1200'
         with:
           api-level: 36
