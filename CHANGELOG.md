@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.7
+
+- Normalize ZIP entry timestamps and Unix metadata from the source commit so
+  subtree archives remain byte-for-byte reproducible across clock seconds.
+
 ## 1.0.6
 
 - Make the GitHub Release publisher depend directly on the central ecosystem

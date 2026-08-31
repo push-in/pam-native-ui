@@ -13,14 +13,19 @@ expect_failure() {
     fi
 }
 
-for copy in one two; do
-    "${repository_root}/tools/reproducible-archive.sh" \
-        tar.gz HEAD . pam-native-ui-test/ \
-        "${temporary_directory}/php-${copy}.tar.gz"
-    "${repository_root}/tools/reproducible-archive.sh" \
-        zip HEAD ios ios/ \
-        "${temporary_directory}/ios-${copy}.zip"
-done
+"${repository_root}/tools/reproducible-archive.sh" \
+    tar.gz HEAD . pam-native-ui-test/ \
+    "${temporary_directory}/php-one.tar.gz"
+"${repository_root}/tools/reproducible-archive.sh" \
+    zip HEAD ios ios/ \
+    "${temporary_directory}/ios-one.zip"
+sleep 2
+"${repository_root}/tools/reproducible-archive.sh" \
+    tar.gz HEAD . pam-native-ui-test/ \
+    "${temporary_directory}/php-two.tar.gz"
+"${repository_root}/tools/reproducible-archive.sh" \
+    zip HEAD ios ios/ \
+    "${temporary_directory}/ios-two.zip"
 
 cmp "${temporary_directory}/php-one.tar.gz" "${temporary_directory}/php-two.tar.gz"
 cmp "${temporary_directory}/ios-one.zip" "${temporary_directory}/ios-two.zip"
