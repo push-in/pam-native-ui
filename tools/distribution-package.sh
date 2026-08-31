@@ -23,16 +23,26 @@ validate_tag() {
         fail "CHANGELOG.md does not contain ${version}"
 }
 
-create_distribution_commit() {
+create_distribution_commit() (
     local source_ref=$1
     local release_tag=$2
     local source_commit
     local source_tree
     local source_date
+    local temporary_directory
+    local temporary_index
 
     source_commit=$(git -C "${repository_root}" rev-parse "${source_ref}^{commit}")
     source_tree=$(git -C "${repository_root}" rev-parse "${source_ref}^{tree}")
     source_date=$(git -C "${repository_root}" show -s --format=%aI "${source_commit}")
+
+    temporary_directory=$(mktemp -d)
+    temporary_index=${temporary_directory}/index
+    trap 'find "${temporary_directory}" -depth -delete' EXIT
+    GIT_INDEX_FILE=${temporary_index} git -C "${repository_root}" read-tree "${source_tree}"
+    GIT_INDEX_FILE=${temporary_index} git -C "${repository_root}" rm \
+        -r --cached --quiet --ignore-unmatch docs/assets
+    source_tree=$(GIT_INDEX_FILE=${temporary_index} git -C "${repository_root}" write-tree)
 
     printf 'PAM Native UI distribution %s\n' "${release_tag}" |
         GIT_AUTHOR_NAME='PAM Release Automation' \
@@ -42,7 +52,7 @@ create_distribution_commit() {
         GIT_COMMITTER_EMAIL='release@pam.dev' \
         GIT_COMMITTER_DATE="${source_date}" \
         git -C "${repository_root}" commit-tree "${source_tree}"
-}
+)
 
 verify_distribution() (
     local distribution_ref=$1
@@ -59,6 +69,8 @@ verify_distribution() (
         fail "distribution is missing pam-native.plugin.json"
     [[ -f ${temporary_directory}/LICENSE ]] ||
         fail "distribution is missing LICENSE"
+    [[ ! -e ${temporary_directory}/docs/assets ]] ||
+        fail "distribution contains documentation evidence assets"
     [[ $(jq -er '.name' "${temporary_directory}/composer.json") == "${package_name}" ]] ||
         fail "distribution declares the wrong Composer package"
 

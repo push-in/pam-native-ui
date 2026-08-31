@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.4
+
+- Keep Android screenshot and GIF evidence in the source repository and public
+  documentation while excluding those assets from Composer distributions.
+- Sequence release publication before Composer/Packagist publication so tag
+  workflows cannot compete for the shared ecosystem compatibility gate.
+
 ## 1.0.3
 
 - Publish the complete Android showcase with verified screenshots for all 84
