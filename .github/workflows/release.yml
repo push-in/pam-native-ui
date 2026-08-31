@@ -454,6 +454,7 @@ jobs:
   publish:
     name: Publish GitHub release
     needs:
+      - ecosystem-compatibility
       - ios
       - package
       - community-first-run

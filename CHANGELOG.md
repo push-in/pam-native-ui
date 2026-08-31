@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.6
+
+- Make the GitHub Release publisher depend directly on the central ecosystem
+  compatibility gate, in addition to its transitive artifact dependencies.
+
 ## 1.0.5
 
 - Make the native release workflow the single authoritative tag compatibility

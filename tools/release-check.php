@@ -355,8 +355,11 @@ $assert(
 );
 $assert(
     is_string($releaseWorkflow)
-        && substr_count($releaseWorkflow, 'needs: ecosystem-compatibility') >= 1,
-    'Native release jobs must wait for ecosystem compatibility.',
+        && str_contains(
+            $releaseWorkflow,
+            "  publish:\n    name: Publish GitHub release\n    needs:\n      - ecosystem-compatibility\n",
+        ),
+    'Native release publisher must wait directly for ecosystem compatibility.',
 );
 $assert(
     is_string($composerWorkflow)
