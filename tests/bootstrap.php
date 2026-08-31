@@ -2,19 +2,28 @@
 
 declare(strict_types=1);
 
-$pamNativeRoot = getenv('PAM_NATIVE_ROOT');
-if (!is_string($pamNativeRoot) || $pamNativeRoot === '') {
-    $pamNativeRoot = dirname(__DIR__, 2).'/pam-native';
+$configuredRoot = getenv('PAM_NATIVE_ROOT');
+$candidateRoots = [];
+if (is_string($configuredRoot) && $configuredRoot !== '') {
+    $candidateRoots[] = $configuredRoot;
 }
-$standaloneSource = $pamNativeRoot.'/src/';
-$monorepoSource = $pamNativeRoot.'/packages/native/src/';
-$pamNativeSource = is_file($standaloneSource.'App.php')
-    ? $standaloneSource
-    : $monorepoSource;
+$candidateRoots[] = dirname(__DIR__).'/vendor/pushinbr/pam-native';
+$candidateRoots[] = dirname(__DIR__, 2).'/pam-native';
+$candidateRoots[] = dirname(__DIR__, 2).'/pam-native-candidate';
 
-if (!is_file($pamNativeSource.'App.php')) {
+$pamNativeSource = null;
+foreach ($candidateRoots as $candidateRoot) {
+    foreach ([$candidateRoot.'/src/', $candidateRoot.'/packages/native/src/'] as $candidateSource) {
+        if (is_file($candidateSource.'App.php')) {
+            $pamNativeSource = $candidateSource;
+            break 2;
+        }
+    }
+}
+
+if ($pamNativeSource === null) {
     throw new RuntimeException(
-        "Cannot locate the PAM Native PHP SDK below {$pamNativeRoot}.",
+        'Cannot locate the PAM Native PHP SDK in any supported project or Composer layout.',
     );
 }
 
