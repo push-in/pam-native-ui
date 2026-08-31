@@ -358,8 +358,11 @@ $assert(
         && str_contains(
             $releaseWorkflow,
             "  publish:\n    name: Publish GitHub release\n    needs:\n      - ecosystem-compatibility\n",
-        ),
-    'Native release publisher must wait directly for ecosystem compatibility.',
+        )
+        && str_contains($releaseWorkflow, 'actions: write')
+        && str_contains($releaseWorkflow, 'gh workflow run composer-package.yml')
+        && str_contains($releaseWorkflow, '-f publish=true'),
+    'Native release publisher must wait for certification and dispatch Composer publication.',
 );
 $assert(
     is_string($composerWorkflow)
