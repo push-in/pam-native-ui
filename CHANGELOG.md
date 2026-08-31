@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.0.3
+
+- Publish the complete Android showcase with verified screenshots for all 84
+  public components and interaction recordings for representative flows.
+- Fix Android layout, contrast, touch-target, virtualized-table and expansion
+  panel behavior found during API 26 and API 36 emulator validation.
+- Add reproducible visual-audit tooling and support Composer-installed PAM
+  Native SDK layouts in the analysis bootstrap.
+
 ## 1.0.0
 
 - Certify the complete accessible component system against the stable PAM
