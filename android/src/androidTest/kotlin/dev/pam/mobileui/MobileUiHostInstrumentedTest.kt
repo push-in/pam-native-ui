@@ -112,6 +112,49 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun listItemPlacesLeadingBodyAndTrailingContentOnOneRow() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val host = MobileUiHost(context) { _, _ -> Unit }
+            val inset = dp(host, 16f)
+            host.setPadding(inset, 0, inset, 0)
+            val leading = View(context).apply {
+                layoutParams = ViewGroup.LayoutParams(dp(host, 24f), dp(host, 24f))
+            }
+            val title = TextView(context).apply { text = "Actions" }
+            val subtitle = TextView(context).apply { text = "Buttons and chips" }
+            val trailing = View(context).apply {
+                layoutParams = ViewGroup.LayoutParams(dp(host, 24f), dp(host, 24f))
+            }
+            host.addView(leading)
+            host.addView(title)
+            host.addView(subtitle)
+            host.addView(trailing)
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(37),
+                    "lines" to WireValue.Integer(2),
+                ),
+            )
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(dp(host, 320f), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(dp(host, 200f), View.MeasureSpec.AT_MOST),
+            )
+            host.layout(0, 0, host.measuredWidth, host.measuredHeight)
+
+            assertEquals(inset, leading.left)
+            assertTrue(title.left > leading.right)
+            assertEquals(title.left, subtitle.left)
+            assertTrue(title.right < trailing.left)
+            assertTrue(subtitle.right < trailing.left)
+            assertTrue(subtitle.top >= title.bottom)
+            assertEquals(host.measuredWidth - inset, trailing.right)
+            assertEquals(leading.top, trailing.top)
+            host.release()
+        }
+    }
+
+    @Test
     fun gridMeasuresSpansAndExposesCollectionSemantics() {
         onMain {
             val context = ApplicationProvider.getApplicationContext<android.content.Context>()
@@ -1713,6 +1756,90 @@ class MobileUiHostInstrumentedTest {
         instrumentation.waitForIdleSync()
         assertTrue(payloads.isEmpty())
         onMain { activity.finish() }
+    }
+
+    @Test
+    fun accordionAppliesInitialCollapsedStateWhenBehaviorIsInstalled() {
+        onMain {
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { _, _ -> }
+            val trigger = FrameLayout(host.context).apply {
+                tag = "pam:accordion-trigger"
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:accordion-content"
+                visibility = View.VISIBLE
+                alpha = 1f
+                scaleY = 1f
+            }
+            host.addView(trigger)
+            host.addView(content)
+
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(2),
+                    "expanded" to WireValue.Flag(false),
+                ),
+            )
+
+            assertEquals(View.VISIBLE, trigger.visibility)
+            assertEquals(View.GONE, content.visibility)
+            assertEquals(0f, content.alpha, 0f)
+            assertEquals(0.98f, content.scaleY, 0f)
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
+                content.importantForAccessibility,
+            )
+            host.release()
+        }
+    }
+
+    @Test
+    fun accordionReconcilesCollapsedContentAfterIncrementalMount() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        lateinit var host: MobileUiHost
+        lateinit var content: FrameLayout
+
+        onMain {
+            host = MobileUiHost(activity) { _, _ -> }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(2),
+                    "expanded" to WireValue.Flag(false),
+                ),
+            )
+            activity.setContentView(host)
+        }
+        instrumentation.waitForIdleSync()
+
+        onMain {
+            host.addView(FrameLayout(host.context).apply {
+                tag = "pam:accordion-trigger"
+            })
+            content = FrameLayout(host.context).apply {
+                tag = "pam:accordion-content"
+            }
+            host.addView(content)
+
+            // Simulate the renderer applying the child's own properties after
+            // the parent receives onViewAdded during incremental mounting.
+            content.visibility = View.VISIBLE
+            content.alpha = 1f
+            content.scaleY = 1f
+        }
+        instrumentation.waitForIdleSync()
+
+        onMain {
+            assertEquals(View.GONE, content.visibility)
+            assertEquals(0f, content.alpha, 0f)
+            assertEquals(0.98f, content.scaleY, 0f)
+            assertEquals(
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
+                content.importantForAccessibility,
+            )
+            host.release()
+            activity.finish()
+        }
     }
 
     @Test

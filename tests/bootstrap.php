@@ -6,9 +6,17 @@ $pamNativeRoot = getenv('PAM_NATIVE_ROOT');
 if (!is_string($pamNativeRoot) || $pamNativeRoot === '') {
     $pamNativeRoot = dirname(__DIR__, 2).'/pam-native';
 }
-$pamNativeSource = is_dir($pamNativeRoot.'/src')
-    ? $pamNativeRoot.'/src/'
-    : $pamNativeRoot.'/packages/native/src/';
+$standaloneSource = $pamNativeRoot.'/src/';
+$monorepoSource = $pamNativeRoot.'/packages/native/src/';
+$pamNativeSource = is_file($standaloneSource.'App.php')
+    ? $standaloneSource
+    : $monorepoSource;
+
+if (!is_file($pamNativeSource.'App.php')) {
+    throw new RuntimeException(
+        "Cannot locate the PAM Native PHP SDK below {$pamNativeRoot}.",
+    );
+}
 
 $roots = [
     'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',

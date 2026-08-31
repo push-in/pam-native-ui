@@ -407,10 +407,15 @@ final class MaterialStyleResolver
                 MaterialDensity::Compact => 36.0,
                 default => 52.0,
             };
+            $configuredHeight = self::number($props['height'] ?? null);
+            $virtualViewportHeight = $part === 'PDataTableVirtual'
+                ? ($configuredHeight > 0.0 ? $configuredHeight : $rowHeight * 6.0)
+                : null;
 
             return new Style(
                 widthPercent: 100.0,
-                minHeight: $rowHeight,
+                height: $virtualViewportHeight,
+                minHeight: $virtualViewportHeight ?? $rowHeight,
                 paddingHorizontal: 0.0,
                 borderWidth: 0.0,
                 borderRadius: 8.0,
@@ -570,11 +575,17 @@ final class MaterialStyleResolver
             return new Style(
                 width: 328.0,
                 minWidth: 328.0,
-                padding: 24.0,
+                height: 56.0,
+                minHeight: 56.0,
+                paddingHorizontal: 16.0,
                 borderRadius: 4.0,
                 elevation: self::resolvedElevation($props, 0.0),
-                backgroundColor: $theme->color(ColorToken::Surface),
+                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                borderColor: $theme->color(ColorToken::Border),
+                borderWidth: 1.0,
                 opacity: $opacity,
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
             );
         }
 
@@ -735,13 +746,22 @@ final class MaterialStyleResolver
                 'x-large' => 32.0,
                 default => is_numeric($props['size'] ?? null) ? (float) $props['size'] : 24.0,
             };
+            $requestedColor = is_int($props['color'] ?? null)
+                ? $props['color']
+                : null;
 
             return new Style(
                 width: $size,
                 height: $size,
                 minWidth: $size,
                 minHeight: $size,
+                textColor: $requestedColor
+                    ?? self::semanticColor($props, $theme, false)
+                    ?? $theme->color(ColorToken::OnSurface),
+                backgroundColor: $transparent,
                 opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
             );
         }
 
@@ -1109,7 +1129,11 @@ final class MaterialStyleResolver
                         : $theme->color(ColorToken::Surface)
                 ),
                 textColor: $semanticForeground
-                    ?? $theme->color(ColorToken::OnSurface),
+                    ?? $theme->color(
+                        $variant === MaterialVariant::Tonal
+                            ? ColorToken::SecondaryForeground
+                            : ColorToken::OnSurface,
+                    ),
                 borderColor: $semanticBackground ?? $theme->color(ColorToken::Border),
                 borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
                 borderRadius: ($props['tile'] ?? false) === true
@@ -1216,6 +1240,11 @@ final class MaterialStyleResolver
                 height: $chipHeight,
                 paddingHorizontal: max(4.0, ($chipHeight - 8.0) / 2.0),
                 gap: 6.0,
+                textColor: $variant === MaterialVariant::Outlined
+                    ? ($semanticBackground
+                        ?? $theme->color(ColorToken::Primary))
+                    : (self::semanticColor($props, $theme, true)
+                        ?? $theme->color(ColorToken::SecondaryForeground)),
                 backgroundColor: $variant === MaterialVariant::Outlined
                     ? $transparent
                     : ($semanticBackground
@@ -1429,9 +1458,11 @@ final class MaterialStyleResolver
         ], true)) {
             $requestedLines = $props['lines'] ?? 1;
             $lines = is_numeric($requestedLines) ? (int) $requestedLines : 1;
+            $slideGroupItem = $part === 'PSlideGroupItem';
 
             return new Style(
-                widthPercent: 100.0,
+                widthPercent: $slideGroupItem ? null : 100.0,
+                minWidth: $slideGroupItem ? 96.0 : null,
                 minHeight: match ($lines) {
                     2 => 64.0,
                     3 => 88.0,
@@ -1448,9 +1479,21 @@ final class MaterialStyleResolver
                     default => 4.0,
                 },
                 gap: 12.0,
+                textColor: ($props['selected'] ?? false)
+                    ? $theme->color(ColorToken::SecondaryForeground)
+                    : $theme->color(
+                        $slideGroupItem
+                            ? ColorToken::MutedForeground
+                            : ColorToken::OnSurface,
+                    ),
                 backgroundColor: ($props['selected'] ?? false)
                     ? $theme->color(ColorToken::Secondary)
-                    : $transparent,
+                    : ($slideGroupItem
+                        ? $theme->color(ColorToken::Muted)
+                        : $transparent),
+                borderRadius: $slideGroupItem
+                    ? MaterialTokens::radius(MaterialShape::Full)
+                    : 0.0,
                 opacity: $opacity,
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
@@ -1796,7 +1839,11 @@ final class MaterialStyleResolver
         Theme $theme,
         bool $foreground,
     ): ?int {
-        $token = match ($props['action'] ?? $props['color'] ?? null) {
+        $requested = $props['action'] ?? $props['color'] ?? null;
+        if (is_int($requested) && ($requested > 0xFF || $requested < 0)) {
+            return $requested;
+        }
+        $token = match ($requested) {
             'primary' => $foreground
                 ? ColorToken::PrimaryForeground
                 : ColorToken::Primary,

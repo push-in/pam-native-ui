@@ -32,6 +32,9 @@ final class ComponentRoute extends Component
     /** @var array<int, mixed> */
     private array $sampleValues = [];
 
+    /** @var array<int, string> */
+    private array $expandedPanels = [];
+
     /**
      * @param class-string<UiComponent> $component
      */
@@ -55,6 +58,12 @@ final class ComponentRoute extends Component
             ));
             $component = $this->component;
             $previewProps = $this->sampleProps($variation['props']);
+            if ($this->tag === 'p-data-table-virtual') {
+                // The catalog places bounded virtual tables inside its own
+                // documentation scroller. Keep boundary rows mounted so the
+                // nested viewport never presents a half-painted sample.
+                $previewProps['removeClippedSubviews'] = false;
+            }
             if ($this->belongsTo([
                 'p-autocomplete', 'p-color-input', 'p-combobox', 'p-date-input',
                 'p-number-input',
@@ -183,11 +192,24 @@ final class ComponentRoute extends Component
                 $title = MaterialComponentMap::TAGS['p-expansion-panel-title'];
                 $text = MaterialComponentMap::TAGS['p-expansion-panel-text'];
                 $icon = MaterialComponentMap::TAGS['p-icon'];
+                $expandedPanel = $this->expandedPanels[$index] ?? 'details';
+                $detailsExpanded = $expandedPanel === 'details';
+                $deliveryExpanded = $expandedPanel === 'delivery';
+                $supportExpanded = $expandedPanel === 'support';
+                $previewProps['value'] = $expandedPanel;
+                $previewProps['modelValue'] = $expandedPanel;
                 $preview = $component::make(
                     $previewProps,
                     $panel::make(
-                        ['value' => 'details', 'open' => true, 'expanded' => true],
-                        $title::make(['active' => true, 'expanded' => true], Row::make(
+                        [
+                            'value' => 'details',
+                            'open' => $detailsExpanded,
+                            'expanded' => $detailsExpanded,
+                        ],
+                        $title::make([
+                            'active' => $detailsExpanded,
+                            'expanded' => $detailsExpanded,
+                        ], Row::make(
                             Text::make('Product details'),
                             $icon::make([
                                 'icon' => 'chevron-down',
@@ -198,7 +220,7 @@ final class ComponentRoute extends Component
                                 minWidth: 24.0,
                                 minHeight: 24.0,
                                 textColor: $theme->color(ColorToken::MutedForeground),
-                                rotation: 180.0,
+                                rotation: $detailsExpanded ? 180.0 : 0.0,
                                 alignItems: Align::Center,
                                 justifyContent: Justify::Center,
                             )),
@@ -208,13 +230,29 @@ final class ComponentRoute extends Component
                             alignItems: Align::Center,
                             justifyContent: Justify::SpaceBetween,
                         ))),
-                        $text::make(['active' => true, 'expanded' => true], Text::make(
+                        $text::make([
+                            'active' => $detailsExpanded,
+                            'expanded' => $detailsExpanded,
+                        ], Text::make(
                             'Native components share the same tokens on Android and iOS.',
                         )),
-                    ),
+                    )->onToggle(function (mixed $value) use ($index): bool {
+                        $this->expandedPanels[$index] = $this->isEnabledValue($value)
+                            ? 'details'
+                            : '';
+
+                        return true;
+                    }),
                     $panel::make(
-                        ['value' => 'delivery', 'open' => false],
-                        $title::make([], Row::make(
+                        [
+                            'value' => 'delivery',
+                            'open' => $deliveryExpanded,
+                            'expanded' => $deliveryExpanded,
+                        ],
+                        $title::make([
+                            'active' => $deliveryExpanded,
+                            'expanded' => $deliveryExpanded,
+                        ], Row::make(
                             Text::make('Delivery'),
                             $icon::make([
                                 'icon' => 'chevron-down',
@@ -225,7 +263,7 @@ final class ComponentRoute extends Component
                                 minWidth: 24.0,
                                 minHeight: 24.0,
                                 textColor: $theme->color(ColorToken::MutedForeground),
-                                rotation: 0.0,
+                                rotation: $deliveryExpanded ? 180.0 : 0.0,
                                 alignItems: Align::Center,
                                 justifyContent: Justify::Center,
                             )),
@@ -235,11 +273,30 @@ final class ComponentRoute extends Component
                             alignItems: Align::Center,
                             justifyContent: Justify::SpaceBetween,
                         ))),
-                        $text::make([], Text::make('Fast, predictable native rendering.')),
-                    ),
+                        $text::make(
+                            [
+                                'active' => $deliveryExpanded,
+                                'expanded' => $deliveryExpanded,
+                            ],
+                            Text::make('Fast, predictable native rendering.'),
+                        ),
+                    )->onToggle(function (mixed $value) use ($index): bool {
+                        $this->expandedPanels[$index] = $this->isEnabledValue($value)
+                            ? 'delivery'
+                            : '';
+
+                        return true;
+                    }),
                     $panel::make(
-                        ['value' => 'support', 'open' => false],
-                        $title::make([], Row::make(
+                        [
+                            'value' => 'support',
+                            'open' => $supportExpanded,
+                            'expanded' => $supportExpanded,
+                        ],
+                        $title::make([
+                            'active' => $supportExpanded,
+                            'expanded' => $supportExpanded,
+                        ], Row::make(
                             Text::make('Support'),
                             $icon::make([
                                 'icon' => 'chevron-down',
@@ -250,7 +307,7 @@ final class ComponentRoute extends Component
                                 minWidth: 24.0,
                                 minHeight: 24.0,
                                 textColor: $theme->color(ColorToken::MutedForeground),
-                                rotation: 0.0,
+                                rotation: $supportExpanded ? 180.0 : 0.0,
                                 alignItems: Align::Center,
                                 justifyContent: Justify::Center,
                             )),
@@ -260,8 +317,20 @@ final class ComponentRoute extends Component
                             alignItems: Align::Center,
                             justifyContent: Justify::SpaceBetween,
                         ))),
-                        $text::make([], Text::make('Accessible states and keyboard navigation.')),
-                    ),
+                        $text::make(
+                            [
+                                'active' => $supportExpanded,
+                                'expanded' => $supportExpanded,
+                            ],
+                            Text::make('Accessible states and keyboard navigation.'),
+                        ),
+                    )->onToggle(function (mixed $value) use ($index): bool {
+                        $this->expandedPanels[$index] = $this->isEnabledValue($value)
+                            ? 'support'
+                            : '';
+
+                        return true;
+                    }),
                 );
             } elseif ($this->tag === 'p-carousel') {
                 $item = MaterialComponentMap::TAGS['p-carousel-item'];
@@ -630,7 +699,11 @@ final class ComponentRoute extends Component
                         flexShrink: 1.0,
                     )),
                     $button::make(
-                        ['variant' => 'text', 'color' => 'primary', 'size' => 'small'],
+                        [
+                            'variant' => 'text',
+                            'color' => 0xFF7DD3FC,
+                            'size' => 'small',
+                        ],
                         Text::make('Undo')
                             ->style(new Style(
                                 textColor: 0xFF7DD3FC,
@@ -1331,6 +1404,17 @@ final class ComponentRoute extends Component
                     },
                 );
             }
+            if ($this->tag === 'p-snackbar') {
+                $preview = View::make($preview)->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: ($previewProps['vertical'] ?? false) === true
+                        ? 112.0
+                        : (($previewProps['multiLine'] ?? false) === true
+                            ? 88.0
+                            : 72.0),
+                    positionType: PositionType::Relative,
+                ));
+            }
             $intrinsicPreview = $this->belongsTo([
                 'p-avatar', 'p-badge', 'p-btn', 'p-checkbox',
                 'p-chip', 'p-fab', 'p-icon', 'p-icon-btn', 'p-progress-circular',
@@ -1360,9 +1444,9 @@ final class ComponentRoute extends Component
             })
             ->style(new Style(
                 minWidth: 64.0,
-                minHeight: 36.0,
+                minHeight: 48.0,
                 paddingHorizontal: 12.0,
-                borderRadius: 18.0,
+                borderRadius: 24.0,
                 backgroundColor: $theme->color(ColorToken::Primary),
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
@@ -1818,7 +1902,7 @@ final class ComponentRoute extends Component
         ])) {
             $add($variations, 'Compact', ['density' => 'compact']);
             $add($variations, 'Comfortable', ['density' => 'comfortable']);
-            $add($variations, 'Fixed Header', ['fixedHeader' => true, 'height' => 280]);
+            $add($variations, 'Fixed Header', ['fixedHeader' => true, 'height' => 260]);
             $add($variations, 'Striped', ['striped' => true]);
             $add($variations, 'Loading', ['loading' => true]);
             $add($variations, 'Selectable', ['showSelect' => true]);
@@ -2344,6 +2428,11 @@ final class ComponentRoute extends Component
         };
     }
 
+    private function isEnabledValue(mixed $value): bool
+    {
+        return in_array($value, [true, 1, '1'], true);
+    }
+
     private function generatesNativeAnatomy(): bool
     {
         return $this->belongsTo([
@@ -2356,9 +2445,7 @@ final class ComponentRoute extends Component
             'p-data-table-virtual',
             'p-date-input',
             'p-date-picker',
-
-                                    'p-expansion-panels',
-
+            'p-expansion-panels',
             'p-number-input',
             'p-otp-input',
             'p-progress-circular',

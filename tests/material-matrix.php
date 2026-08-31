@@ -122,6 +122,38 @@ try {
 } catch (InvalidArgumentException) {
     // Expected: silent blank icon rendering is not a valid product fallback.
 }
+$iconTheme = Themes::pamLight();
+PamUI::theme($iconTheme, $iconTheme);
+PamUI::mode(ThemeMode::Light);
+$semanticIconStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PIcon',
+    'color' => 'secondary',
+], $iconTheme);
+$customIconColor = 0xFF7DD3FC;
+$customIconStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PIcon',
+    'color' => $customIconColor,
+], $iconTheme);
+$secondaryIcon = $iconClass::make([
+    'name' => 'StarIcon',
+    'color' => 'secondary',
+])->toElement();
+$secondaryIconHost =
+    $secondaryIcon->properties()[PropKey::HostProperties->value] ?? null;
+if (
+    !$semanticIconStyle instanceof Style
+    || !$customIconStyle instanceof Style
+    || !$secondaryIconHost instanceof BinaryValue
+    || $semanticIconStyle->textColor
+        !== $iconTheme->color(ColorToken::Secondary)
+    || $customIconStyle->textColor !== $customIconColor
+    || (Wire::decodeMap($secondaryIconHost->bytes)['color'] ?? null)
+        !== $iconTheme->color(ColorToken::Secondary)
+) {
+    throw new RuntimeException(
+        'p-icon must resolve semantic and custom colors into a visible native tint.',
+    );
+}
 
 $styleCases = 0;
 $renderCases = 0;
@@ -229,10 +261,75 @@ if (($compactItem->properties()[PropKey::Height->value] ?? null) !== 40.0) {
 }
 
 $chipClass = $tags['p-chip'];
+PamUI::theme(Themes::pamLight(), Themes::pamDark());
+PamUI::mode(ThemeMode::Light);
 $passiveChip = $chipClass::make(['text' => 'Stable'])->toElement();
-if ($passiveChip->kind() !== NodeKind::Row) {
+$passiveChipLabel = $passiveChip->children()[0] ?? null;
+if (
+    $passiveChip->kind() !== NodeKind::Row
+    || !$passiveChipLabel instanceof \Pam\Native\Element
+    || ($passiveChipLabel->properties()[PropKey::TextColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
+) {
     throw new RuntimeException(
-        'A passive p-chip must not expose button semantics.',
+        'A passive p-chip must stay passive and use its contrasting foreground.',
+    );
+}
+$avatarClass = $tags['p-avatar'];
+$avatar = $avatarClass::make([], Text::make('PA'))->toElement();
+$avatarLabel = $avatar->children()[0] ?? null;
+if (
+    !$avatarLabel instanceof \Pam\Native\Element
+    || ($avatarLabel->properties()[PropKey::TextColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
+) {
+    throw new RuntimeException(
+        'p-avatar content must inherit a foreground that contrasts its surface.',
+    );
+}
+$itemClass = $tags['p-item'];
+$selectedItem = $itemClass::make(
+    ['selected' => true],
+    Text::make('Design'),
+)->toElement();
+$selectedItemLabel = $selectedItem->children()[0] ?? null;
+if (
+    !$selectedItemLabel instanceof \Pam\Native\Element
+    || ($selectedItemLabel->properties()[PropKey::TextColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
+) {
+    throw new RuntimeException(
+        'Selected p-item content must contrast its selected surface.',
+    );
+}
+$slideGroupItemStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PSlideGroupItem',
+    'selected' => true,
+], Themes::pamLight());
+if (
+    !$slideGroupItemStyle instanceof Style
+    || $slideGroupItemStyle->widthPercent !== null
+    || $slideGroupItemStyle->minWidth !== 96.0
+    || $slideGroupItemStyle->textColor
+        !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
+) {
+    throw new RuntimeException(
+        'p-slide-group-item must render as a compact, contrasting horizontal pill.',
+    );
+}
+$tonalSheetStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PSheet',
+    'variant' => 'tonal',
+], Themes::pamLight());
+if (
+    !$tonalSheetStyle instanceof Style
+    || $tonalSheetStyle->backgroundColor
+        !== Themes::pamLight()->color(ColorToken::Secondary)
+    || $tonalSheetStyle->textColor
+        !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
+) {
+    throw new RuntimeException(
+        'Tonal sheets must pair their secondary surface with its foreground token.',
     );
 }
 $chipClosed = false;
@@ -411,12 +508,16 @@ foreach (['p-time-picker'] as $timePickerTag) {
     ])->toElement();
     $timePickerHost =
         $timePicker->properties()[PropKey::HostProperties->value] ?? null;
+    $timePickerDisplay = $timePicker->children()[0] ?? null;
     if (
         $timePicker->kind() !== NodeKind::CustomView
         || !$timePickerHost instanceof BinaryValue
+        || !$timePickerDisplay instanceof \Pam\Native\Element
+        || ($timePickerDisplay->properties()[PropKey::Text->value] ?? null)
+            !== 'Select time'
     ) {
         throw new RuntimeException(
-            "{$timePickerTag} must use the native date/time picker host.",
+            "{$timePickerTag} must use the native host with a visible value.",
         );
     }
     $timePickerProperties = Wire::decodeMap($timePickerHost->bytes);
@@ -1114,6 +1215,30 @@ if ($selectedRows !== [1, 2]) {
     );
 }
 
+$virtualTableClass = $tags['p-data-table-virtual'];
+$virtualTable = $virtualTableClass::make([
+    'headers' => [
+        ['title' => 'Name', 'key' => 'name'],
+    ],
+    'items' => [
+        ['id' => 1, 'name' => 'Ada'],
+        ['id' => 2, 'name' => 'Grace'],
+    ],
+])->toElement();
+$virtualRows = $virtualTable->children()[0] ?? null;
+if (
+    ($virtualTable->properties()[PropKey::Height->value] ?? null) !== 312.0
+    || !$virtualRows instanceof \Pam\Native\Element
+    || $virtualRows->kind() !== NodeKind::VirtualList
+    || ($virtualRows->properties()[PropKey::WidthPercent->value] ?? null) !== 100.0
+    || ($virtualRows->properties()[PropKey::FlexGrow->value] ?? null) !== 1.0
+    || ($virtualRows->properties()[PropKey::FlexShrink->value] ?? null) !== 1.0
+) {
+    throw new RuntimeException(
+        'p-data-table-virtual must expose a bounded viewport filled by its native list.',
+    );
+}
+
 $emptyTable = $dataTableClass::make([
     'headers' => [
         ['title' => 'Name', 'key' => 'name'],
@@ -1636,8 +1761,13 @@ $assertGeometry('PDatePicker', [], [
 ]);
 $assertGeometry('PTimePicker', [], [
     'width' => 328.0,
-    'padding' => 24.0,
+    'height' => 56.0,
+    'minHeight' => 56.0,
+    'paddingHorizontal' => 16.0,
+    'borderWidth' => 1.0,
     'borderRadius' => 4.0,
+    'flexDirection' => FlexDirection::Row,
+    'alignItems' => Align::Center,
 ]);
 $assertGeometry('PSlider', [], [
     'widthPercent' => 100.0,
@@ -1670,7 +1800,12 @@ $assertGeometry('PDataTable', ['density' => 'comfortable'], [
     'minHeight' => 44.0,
 ]);
 $assertGeometry('PDataTableVirtual', ['density' => 'compact'], [
-    'minHeight' => 36.0,
+    'height' => 216.0,
+    'minHeight' => 216.0,
+]);
+$assertGeometry('PDataTableVirtual', ['height' => 280], [
+    'height' => 280.0,
+    'minHeight' => 280.0,
 ]);
 $assertGeometry('PTreeview', [], [
     'widthPercent' => 100.0,

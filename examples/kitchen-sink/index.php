@@ -11,6 +11,7 @@ use App\Orders;
 use App\Overview;
 use App\Profile;
 use App\ShowcaseRoute;
+use App\ShowcaseApp;
 use App\TypedCommunityCard;
 use Pam\MobileUi\Material\PIcon;
 use Pam\MobileUi\PamUI;
@@ -46,6 +47,7 @@ $drawer = Router::drawer('overview')
     ->route('overlays', 'Overlays', fn () => $showcaseRoutes['showcase-overlays'])
     ->route('all', 'All components', fn () => $gallery);
 $componentRoutes = [];
+$componentDeepLinks = [];
 $catalogInternalParts = [
     'p-app-bar-nav-icon',
     'p-banner-actions',
@@ -93,12 +95,36 @@ foreach (MaterialComponentMap::TAGS as $tag => $component) {
     $title = ucwords(str_replace('-', ' ', substr($tag, 2)));
     $route = new ComponentRoute($tag, $title, $component);
     $componentRoutes[] = $route;
+    $componentDeepLinks[$tag] = 'catalog-'.$tag;
     $drawer = $drawer->route(
         'catalog-'.$tag,
         $title,
         fn () => $route,
         group: $catalogGroup($tag),
     );
+}
+$componentParents = [
+    'p-app-bar-nav-icon' => 'p-app-bar',
+    'p-banner-actions' => 'p-banner',
+    'p-calendar-day' => 'p-calendar',
+    'p-card-actions' => 'p-card',
+    'p-carousel-item' => 'p-carousel',
+    'p-expansion-panel-text' => 'p-expansion-panel',
+    'p-expansion-panel-title' => 'p-expansion-panel',
+    'p-item' => 'p-item-group',
+    'p-slide-group-item' => 'p-slide-group',
+    'p-stepper-actions' => 'p-stepper',
+    'p-stepper-header' => 'p-stepper',
+    'p-stepper-item' => 'p-stepper',
+    'p-stepper-vertical-actions' => 'p-stepper-vertical',
+    'p-stepper-vertical-item' => 'p-stepper-vertical',
+    'p-stepper-window' => 'p-stepper',
+    'p-stepper-window-item' => 'p-stepper',
+    'p-timeline-item' => 'p-timeline',
+    'p-treeview-item' => 'p-treeview',
+];
+foreach ($componentParents as $part => $parent) {
+    $componentDeepLinks[$part] = 'catalog-'.$parent;
 }
 $showcase = $drawer
     ->presentation(DrawerType::Front)
@@ -137,4 +163,4 @@ $tabs = Router::tabs('overview')
     ->appearance(0xFF091526, 0xFF4C8DFF, 0xFF7F93B0, 0xFF253952)
     ->persistence('premium-showcase')
     ->build();
-App::run($showcase);
+App::run(new ShowcaseApp($showcase, $componentDeepLinks));

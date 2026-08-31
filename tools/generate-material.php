@@ -154,10 +154,15 @@ $catalogMarkdown .= sprintf(
     count($modules),
     count($tags),
 );
+$catalogMarkdown .= "Every component below links to a screenshot captured from ";
+$catalogMarkdown .= "the verified Android showcase. See the ";
+$catalogMarkdown .= "[visual showcase](android-showcase.md) for complete screens, ";
+$catalogMarkdown .= "interaction GIFs and capture metadata.\n\n";
 foreach ($modules as $module => $moduleTags) {
     $catalogMarkdown .= '## `'.$module."`\n\n";
     foreach ($moduleTags as $tag) {
-        $catalogMarkdown .= '- `<'.$tag." />`\n";
+        $catalogMarkdown .= '- `<'.$tag.' />` · [Android screenshot]';
+        $catalogMarkdown .= '(assets/android/components/'.$tag.".png)\n";
     }
     $catalogMarkdown .= "\n";
 }
