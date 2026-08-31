@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.5
+
+- Make the native release workflow the single authoritative tag compatibility
+  gate, with Composer publication following the published GitHub release.
+
 ## 1.0.4
 
 - Keep Android screenshot and GIF evidence in the source repository and public
