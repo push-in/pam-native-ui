@@ -29,6 +29,7 @@ output=$5
 
 repository_root=$(git rev-parse --show-toplevel)
 commit=$(git -C "${repository_root}" rev-parse --verify "${git_ref}^{commit}")
+commit_epoch=$(git -C "${repository_root}" show -s --format=%ct "${commit}")
 treeish=${commit}
 if [[ ${subtree} != . ]]; then
     treeish=${commit}:${subtree}
@@ -44,10 +45,11 @@ trap 'find "${temporary}" -depth -delete 2>/dev/null || true' EXIT
 case ${format} in
     zip)
         git -C "${repository_root}" archive \
-            --format=zip \
+            --format=tar \
             --prefix="${prefix}" \
-            --output="${temporary}" \
-            "${treeish}"
+            "${treeish}" |
+            python3 "${repository_root}/tools/reproducible-zip.py" \
+                "${commit_epoch}" "${temporary}"
         ;;
     tar.gz)
         git -C "${repository_root}" archive \
