@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.8
+
+- Dispatch the certified Composer distribution explicitly after GitHub Release
+  publication, avoiding GitHub token event-recursion suppression.
+
 ## 1.0.7
 
 - Normalize ZIP entry timestamps and Unix metadata from the source commit so

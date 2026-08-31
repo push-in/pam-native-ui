@@ -460,6 +460,7 @@ jobs:
       - community-first-run
     runs-on: ubuntu-24.04
     permissions:
+      actions: write
       contents: write
     steps:
       - uses: actions/checkout@v7
@@ -501,3 +502,13 @@ jobs:
           files: dist/*
           generate_release_notes: true
           overwrite_files: true
+      - name: Dispatch the certified Composer distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+        run: >-
+          gh workflow run composer-package.yml
+          --repo "${GITHUB_REPOSITORY}"
+          --ref main
+          -f release_tag="${RELEASE_TAG}"
+          -f publish=true

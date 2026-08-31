@@ -5,7 +5,7 @@
     "license": "Apache-2.0",
     "require": {
         "php": "^8.5",
-        "pushinbr/pam-native-ui": "1.0.7",
+        "pushinbr/pam-native-ui": "1.0.8",
         "pushinbr/pam-native": "1.0.0"
     },
     "repositories": [
@@ -15,7 +15,7 @@
             "options": {
                 "symlink": false,
                 "versions": {
-                    "pushinbr/pam-native-ui": "1.0.7"
+                    "pushinbr/pam-native-ui": "1.0.8"
                 }
             }
         },
