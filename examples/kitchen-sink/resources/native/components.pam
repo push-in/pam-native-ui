@@ -19,14 +19,14 @@
         </p-card-actions>
     </p-card>
 
-    <p-slide-group>
-        <p-slide-group-item value="actions"><p-chip variant="tonal"><Text>Actions</Text></p-chip></p-slide-group-item>
-        <p-slide-group-item value="forms"><p-chip><Text>Forms</Text></p-chip></p-slide-group-item>
-        <p-slide-group-item value="navigation"><p-chip><Text>Navigation</Text></p-chip></p-slide-group-item>
-        <p-slide-group-item value="data"><p-chip><Text>Data</Text></p-chip></p-slide-group-item>
-        <p-slide-group-item value="feedback"><p-chip><Text>Feedback</Text></p-chip></p-slide-group-item>
-        <p-slide-group-item value="overlays"><p-chip><Text>Overlays</Text></p-chip></p-slide-group-item>
-        <p-slide-group-item value="layout"><p-chip><Text>Layout</Text></p-chip></p-slide-group-item>
+    <p-slide-group value="actions">
+        <p-slide-group-item value="actions"><Text>Actions</Text></p-slide-group-item>
+        <p-slide-group-item value="forms"><Text>Forms</Text></p-slide-group-item>
+        <p-slide-group-item value="navigation"><Text>Navigation</Text></p-slide-group-item>
+        <p-slide-group-item value="data"><Text>Data</Text></p-slide-group-item>
+        <p-slide-group-item value="feedback"><Text>Feedback</Text></p-slide-group-item>
+        <p-slide-group-item value="overlays"><Text>Overlays</Text></p-slide-group-item>
+        <p-slide-group-item value="layout"><Text>Layout</Text></p-slide-group-item>
     </p-slide-group>
 
     <p-banner class="rounded-2xl">

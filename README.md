@@ -74,6 +74,21 @@ behavior, and platform contracts are designed for the PAM renderer itself.
 The public API stays expressive and familiar; the work underneath stays close
 to the operating system.
 
+## Android showcase
+
+The bundled catalog exercises all 84 public component parts through the real
+Android renderer. Its 90 full-device captures pass route, viewport, blank-screen
+and text-overlap validation before they are accepted as documentation evidence.
+
+<p align="center">
+  <img src="docs/assets/android/components/overview.png" width="31%" alt="PAM Studio Android showcase home" />
+  <img src="docs/assets/android/components/screen-all.png" width="31%" alt="Complete PAM Native UI component workbench" />
+  <img src="docs/assets/android/components/screen-overlays.png" width="31%" alt="PAM Native UI overlays showcase" />
+</p>
+
+See the **[Android visual showcase](docs/android-showcase.md)** for every
+component screenshot, capture metadata and real interaction GIFs.
+
 ## What we are building
 
 | Promise | Implementation |

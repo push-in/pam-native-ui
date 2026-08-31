@@ -6,6 +6,7 @@ use App\Activity;
 use App\AppTheme;
 use App\Catalog;
 use App\ComponentGallery;
+use App\ComponentRoute;
 use App\Orders;
 use App\Overview;
 use App\Profile;
@@ -14,6 +15,7 @@ use App\TypedCommunityCard;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\MobileUiPluginProvider;
 use Pam\MobileUi\PamUI;
+use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\Native\App;
 
 $root = dirname(__DIR__);
@@ -124,11 +126,19 @@ foreach ($showcaseRoutes as $view) {
     (new ShowcaseRoute($view))->toElement();
 }
 
+$componentRouteCount = 0;
+foreach (MaterialComponentMap::TAGS as $tag => $component) {
+    $title = ucwords(str_replace('-', ' ', substr($tag, 2)));
+    (new ComponentRoute($tag, $title, $component))->toElement();
+    $componentRouteCount++;
+}
+
 fwrite(
     STDOUT,
     sprintf(
-        "Validated %d p-* showcase screens and %d/%d material components through the production template renderer.\n",
+        "Validated %d showcase screens, %d component routes and %d/%d material components through the production renderer.\n",
         count($screens) + count($showcaseRoutes),
+        $componentRouteCount,
         count($expectedMaterialTags),
         count($expectedMaterialTags),
     ),

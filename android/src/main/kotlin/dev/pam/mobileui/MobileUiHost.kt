@@ -297,6 +297,12 @@ internal class MobileUiHost(
     private var collapsible = true
     private var calendarLocale = Locale.getDefault()
     private var calendarSelectedTextColor = Color.WHITE
+    private var cachedCalendarYear = Int.MIN_VALUE
+    private var cachedCalendarMonth = Int.MIN_VALUE
+    private var cachedCalendarFirstDayOfWeek = Int.MIN_VALUE
+    private var cachedCalendarFixedWeeks = false
+    private var cachedCalendarDates = emptyArray<LocalDate>()
+    private var cachedCalendarLabels = emptyArray<String>()
     private val selectedDates = LinkedHashSet<LocalDate>()
     private val disabledCalendarDates = HashSet<LocalDate>()
     private var rangeFrom: LocalDate? = null
@@ -879,7 +885,9 @@ internal class MobileUiHost(
                 restoreFocus()
             }
         }
-        if (previousExpanded != expanded) {
+        if (behavior == Behavior.ACCORDION && previousBehavior != behavior) {
+            applyAccordionState(animate = false)
+        } else if (previousExpanded != expanded) {
             animateExpanded()
         }
         if (behavior == Behavior.SWITCH) {
@@ -1032,6 +1040,7 @@ internal class MobileUiHost(
             -> applyRangeVisualState()
             Behavior.CALENDAR -> updateCalendarTitle()
             Behavior.TABS -> applyTabsState(animate = false)
+            Behavior.ACCORDION -> applyAccordionState(animate = false)
             Behavior.INPUT_GROUP -> applyInputGroupState()
             Behavior.FORM_CONTROL -> applyFormControlSemantics()
             Behavior.TABLE -> applyTableSemantics()
@@ -1138,14 +1147,37 @@ internal class MobileUiHost(
         }
         if (behavior == Behavior.LIST_ITEM && childCount > 0) {
             val width = MeasureSpec.getSize(widthMeasureSpec)
-            val availableWidth = (width - paddingLeft - paddingRight - 32f * density)
-                .roundToInt()
-                .coerceAtLeast(0)
-            repeat(childCount) { index ->
-                getChildAt(index).measure(
-                    MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST),
-                    MeasureSpec.makeMeasureSpec((48f * density).roundToInt(), MeasureSpec.AT_MOST),
+            val availableWidth = (width - paddingLeft - paddingRight).coerceAtLeast(0)
+            val maxChildHeight = (48f * density).roundToInt()
+            if (childCount >= 3) {
+                val accessoryWidth = (40f * density).roundToInt()
+                val gap = (12f * density).roundToInt()
+                val leading = getChildAt(0)
+                val trailing = getChildAt(childCount - 1)
+                leading.measure(
+                    MeasureSpec.makeMeasureSpec(accessoryWidth, MeasureSpec.AT_MOST),
+                    MeasureSpec.makeMeasureSpec(maxChildHeight, MeasureSpec.AT_MOST),
                 )
+                trailing.measure(
+                    MeasureSpec.makeMeasureSpec(accessoryWidth, MeasureSpec.AT_MOST),
+                    MeasureSpec.makeMeasureSpec(maxChildHeight, MeasureSpec.AT_MOST),
+                )
+                val bodyWidth = (
+                    availableWidth - leading.measuredWidth - trailing.measuredWidth - gap * 2
+                ).coerceAtLeast(0)
+                for (index in 1 until childCount - 1) {
+                    getChildAt(index).measure(
+                        MeasureSpec.makeMeasureSpec(bodyWidth, MeasureSpec.AT_MOST),
+                        MeasureSpec.makeMeasureSpec(maxChildHeight, MeasureSpec.AT_MOST),
+                    )
+                }
+            } else {
+                repeat(childCount) { index ->
+                    getChildAt(index).measure(
+                        MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST),
+                        MeasureSpec.makeMeasureSpec(maxChildHeight, MeasureSpec.AT_MOST),
+                    )
+                }
             }
             val lines = nativeProperties
                 .integer("lines", if (childCount > 1) 2L else 1L)
@@ -1343,20 +1375,80 @@ internal class MobileUiHost(
             val visible = (0 until childCount)
                 .map(::getChildAt)
                 .filter { it.visibility != GONE }
-            val start = paddingLeft + (16f * density).roundToInt()
-            val contentHeight = visible.sumOf { it.measuredHeight }
-            var y = ((height - contentHeight) / 2).coerceAtLeast(paddingTop)
-            visible.forEach { child ->
-                val childWidth = child.measuredWidth.coerceAtMost(
-                    width - start - paddingRight - (16f * density).roundToInt(),
-                )
-                val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
-                    width - start - childWidth
+            if (visible.size >= 3) {
+                val gap = (12f * density).roundToInt()
+                val leading = visible.first()
+                val trailing = visible.last()
+                val leadingLeft = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    width - paddingRight - leading.measuredWidth
                 } else {
-                    start
+                    paddingLeft
                 }
-                child.layout(x, y, x + childWidth, y + child.measuredHeight)
-                y += child.measuredHeight
+                val trailingLeft = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    paddingLeft
+                } else {
+                    width - paddingRight - trailing.measuredWidth
+                }
+                val centerY: (View) -> Int = { child ->
+                    ((height - child.measuredHeight) / 2).coerceAtLeast(paddingTop)
+                }
+                leading.layout(
+                    leadingLeft,
+                    centerY(leading),
+                    leadingLeft + leading.measuredWidth,
+                    centerY(leading) + leading.measuredHeight,
+                )
+                trailing.layout(
+                    trailingLeft,
+                    centerY(trailing),
+                    trailingLeft + trailing.measuredWidth,
+                    centerY(trailing) + trailing.measuredHeight,
+                )
+                val bodyStart = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    trailingLeft + trailing.measuredWidth + gap
+                } else {
+                    leadingLeft + leading.measuredWidth + gap
+                }
+                val bodyEnd = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                    leadingLeft - gap
+                } else {
+                    trailingLeft - gap
+                }
+                val body = visible.subList(1, visible.size - 1)
+                var bodyY = ((height - body.sumOf { it.measuredHeight }) / 2)
+                    .coerceAtLeast(paddingTop)
+                body.forEach { child ->
+                    val childWidth = child.measuredWidth.coerceAtMost(
+                        (bodyEnd - bodyStart).coerceAtLeast(0),
+                    )
+                    val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                        bodyEnd - childWidth
+                    } else {
+                        bodyStart
+                    }
+                    child.layout(
+                        x,
+                        bodyY,
+                        x + childWidth,
+                        bodyY + child.measuredHeight,
+                    )
+                    bodyY += child.measuredHeight
+                }
+            } else {
+                val contentHeight = visible.sumOf { it.measuredHeight }
+                var y = ((height - contentHeight) / 2).coerceAtLeast(paddingTop)
+                visible.forEach { child ->
+                    val childWidth = child.measuredWidth.coerceAtMost(
+                        width - paddingLeft - paddingRight,
+                    )
+                    val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                        width - paddingRight - childWidth
+                    } else {
+                        paddingLeft
+                    }
+                    child.layout(x, y, x + childWidth, y + child.measuredHeight)
+                    y += child.measuredHeight
+                }
             }
         }
         if (behavior == Behavior.CHIP_GROUP && childCount > 0) {
@@ -5894,7 +5986,11 @@ internal class MobileUiHost(
         val cellHeight = bounds.height() / rows
         val radius = minOf(cellWidth, cellHeight) * 0.38f
         val today = LocalDate.now()
-        val firstVisibleDate = calendarFirstDate().minusDays(calendarStartOffset().toLong())
+        val dates = visibleCalendarDates(rows)
+        val labels = cachedCalendarLabels
+        val baselineOffset = -(
+            calendarTextPaint.ascent() + calendarTextPaint.descent()
+        ) / 2f
         val originalFillAlpha = fillPaint.alpha
         val originalTrackAlpha = trackPaint.alpha
         val originalTrackStyle = trackPaint.style
@@ -5905,7 +6001,7 @@ internal class MobileUiHost(
         if (showWeekNumbers) {
             val weekFields = java.time.temporal.WeekFields.of(calendarLocale)
             repeat(rows) { row ->
-                val date = firstVisibleDate.plusDays((row * DAYS_PER_WEEK).toLong())
+                val date = dates[row * DAYS_PER_WEEK]
                 val week = date.get(weekFields.weekOfWeekBasedYear())
                 val column = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
                     columns - 1
@@ -5914,16 +6010,14 @@ internal class MobileUiHost(
                 }
                 val centerX = bounds.left + (column + 0.5f) * cellWidth
                 val centerY = bounds.top + (row + 0.5f) * cellHeight
-                val baseline = centerY - (
-                    calendarTextPaint.ascent() + calendarTextPaint.descent()
-                ) / 2f
+                val baseline = centerY + baselineOffset
                 calendarTextPaint.alpha = OUTSIDE_MONTH_ALPHA
                 canvas.drawText(week.toString(), centerX, baseline, calendarTextPaint)
             }
         }
 
         repeat(rows * DAYS_PER_WEEK) { index ->
-            val date = firstVisibleDate.plusDays(index.toLong())
+            val date = dates[index]
             val outside = date.monthValue != calendarMonth
             val disabled = calendarDateDisabled(date)
             val selectedDate = calendarDateSelected(date)
@@ -5972,10 +6066,8 @@ internal class MobileUiHost(
                 if (selectedDate) {
                     calendarTextPaint.color = calendarSelectedTextColor
                 }
-                val baseline = centerY - (
-                    calendarTextPaint.ascent() + calendarTextPaint.descent()
-                ) / 2f
-                canvas.drawText(date.dayOfMonth.toString(), centerX, baseline, calendarTextPaint)
+                val baseline = centerY + baselineOffset
+                canvas.drawText(labels[index], centerX, baseline, calendarTextPaint)
                 if (selectedDate) {
                     calendarTextPaint.color = originalTextColor
                 }
@@ -5988,6 +6080,30 @@ internal class MobileUiHost(
         trackPaint.strokeWidth = originalTrackWidth
         calendarTextPaint.alpha = originalTextAlpha
         calendarTextPaint.color = originalTextColor
+    }
+
+    private fun visibleCalendarDates(rows: Int): Array<LocalDate> {
+        val size = rows * DAYS_PER_WEEK
+        if (
+            cachedCalendarYear == calendarYear
+            && cachedCalendarMonth == calendarMonth
+            && cachedCalendarFirstDayOfWeek == firstDayOfWeek
+            && cachedCalendarFixedWeeks == fixedWeeks
+            && cachedCalendarDates.size == size
+        ) {
+            return cachedCalendarDates
+        }
+        val first = calendarFirstDate().minusDays(calendarStartOffset().toLong())
+        cachedCalendarDates = Array(size) { index -> first.plusDays(index.toLong()) }
+        cachedCalendarLabels = Array(size) { index ->
+            cachedCalendarDates[index].dayOfMonth.toString()
+        }
+        cachedCalendarYear = calendarYear
+        cachedCalendarMonth = calendarMonth
+        cachedCalendarFirstDayOfWeek = firstDayOfWeek
+        cachedCalendarFixedWeeks = fixedWeeks
+
+        return cachedCalendarDates
     }
 
     private fun children(): Sequence<View> =
@@ -7299,6 +7415,7 @@ internal class MobileUiHost(
             Behavior.PROGRESS,
             Behavior.CALENDAR,
             Behavior.TABS,
+            Behavior.ACCORDION,
             Behavior.INPUT_GROUP,
             Behavior.FORM_CONTROL,
             Behavior.TABLE,

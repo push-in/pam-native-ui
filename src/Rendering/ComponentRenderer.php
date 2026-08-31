@@ -288,7 +288,12 @@ final class ComponentRenderer
                 )
                 ->showsIndicator(
                     self::flag($props, 'showsScrollIndicator', true),
-                );
+                )
+                ->style(new Style(
+                    widthPercent: 100.0,
+                    flexGrow: 1.0,
+                    flexShrink: 1.0,
+                ));
             $endReached = $events[EventKind::EndReached->value] ?? null;
             if ($endReached !== null) {
                 $virtualRows = $virtualRows->onEndReached(
@@ -576,20 +581,27 @@ final class ComponentRenderer
         }
         if (
             isset($props['__materialComponent'])
-            && in_array($props['__materialComponent'], ['PBadge', 'PChip'], true)
+            && in_array(
+                $props['__materialComponent'],
+                [
+                    'PAvatar', 'PBadge', 'PChip', 'PItem',
+                    'PSlideGroupItem',
+                ],
+                true,
+            )
         ) {
             $foregroundProps = $props['__materialComponent'] === 'PBadge'
                 ? $props + ['color' => 'error']
                 : $props;
-            $semanticForeground = MaterialStyleResolver::semanticForeground(
-                $foregroundProps,
-                ThemeManager::current(),
-            );
-            if ($semanticForeground !== null) {
+            $foreground = $style->textColor
+                ?? MaterialStyleResolver::semanticForeground(
+                    $foregroundProps,
+                    ThemeManager::current(),
+                );
+            if ($foreground !== null) {
                 $children = array_map(
-                    static fn (Element $child): Element => $child->style(
-                        new Style(textColor: $semanticForeground),
-                    ),
+                    static fn (Element $child): Element =>
+                        self::applyButtonForeground($child, $foreground),
                     $children,
                 );
             }
@@ -3774,7 +3786,7 @@ final class ComponentRenderer
         $semanticColor = is_string($requestedColor)
             ? match (strtolower($requestedColor)) {
                 'primary' => ColorToken::Primary,
-                'secondary' => ColorToken::SecondaryForeground,
+                'secondary' => ColorToken::Secondary,
                 'success' => ColorToken::Success,
                 'info', 'information' => ColorToken::Info,
                 'warning' => ColorToken::Warning,
@@ -5948,6 +5960,30 @@ final class ComponentRenderer
             )
         ) {
             return [self::themedText(self::text($props, 'text'))];
+        }
+
+        if (
+            $part === 'DateTimePicker'
+            && ($props['__materialComponent'] ?? null) === 'PTimePicker'
+        ) {
+            $theme = ThemeManager::current();
+            $value = self::text(
+                $props,
+                'modelValue',
+                self::text($props, 'value', 'Select time'),
+            );
+
+            return [
+                Text::make($value === '' ? 'Select time' : $value)->style(
+                    new Style(
+                        widthPercent: 100.0,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                        fontSize: 20.0,
+                        lineHeight: 28.0,
+                        fontWeight: 600,
+                    ),
+                ),
+            ];
         }
 
         if (in_array($part, ['Input', 'Textarea'], true)) {
