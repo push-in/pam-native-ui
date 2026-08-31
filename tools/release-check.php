@@ -321,13 +321,10 @@ foreach ([
 }
 
 $ecosystemGate = 'push-in/pam/.github/workflows/ecosystem-compatibility.yml@main';
-$publicationWorkflow = file_get_contents(
-    $root.'/.github/workflows/publication-compatibility.yml',
-);
+$publicationWorkflowPath = $root.'/.github/workflows/publication-compatibility.yml';
 $releaseWorkflow = file_get_contents($root.'/.github/workflows/release.yml');
 $composerWorkflow = file_get_contents($root.'/.github/workflows/composer-package.yml');
 foreach ([
-    'publication compatibility' => $publicationWorkflow,
     'native release' => $releaseWorkflow,
     'Composer distribution' => $composerWorkflow,
 ] as $workflowName => $workflow) {
@@ -353,10 +350,8 @@ $assert(
     'Composer distribution must run only after a GitHub release is published.',
 );
 $assert(
-    is_string($publicationWorkflow)
-        && str_contains($publicationWorkflow, "workflow_dispatch:\n")
-        && !str_contains($publicationWorkflow, "tags:\n"),
-    'Standalone publication compatibility must remain an explicit manual audit.',
+    !is_file($publicationWorkflowPath),
+    'Native release must remain the single authoritative tag publication workflow.',
 );
 $assert(
     is_string($releaseWorkflow)
