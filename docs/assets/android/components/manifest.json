@@ -1,7 +1,7 @@
 {
   "device": "sdk_gphone64_x86_64",
   "api": 36,
-  "package": "dev.pam.mobileui.catalog.debug",
+  "package": "dev.pam.mobileui.catalog",
   "componentCount": 84,
-  "capturedAt": "2026-08-31T17:59:13Z"
+  "capturedAt": "2026-09-06T21:30:51Z"
 }
