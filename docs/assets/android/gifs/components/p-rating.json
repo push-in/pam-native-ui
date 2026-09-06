@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "component": "p-rating",
   "candidateOnly": true,
-  "sourceReportSha256": "d3c2622b0da7cb38153d29087ee53dc6e353e57f836760561039b4e4981bca4e",
-  "baselineSha256": "fd9d2165eed3abb4e2c0f2cb10bff148b7478614b55a5ff651ef57640097de41",
-  "interactedSha256": "b321cb8e26b178018e1c00e2d9997f922706e40128adb037e2003250c3c43eb0",
+  "sourceReportSha256": "cb546867d405682a5e23efb7c9c0f7b6169d56143dec56c06741105c3b9e440a",
+  "baselineSha256": "98030f4982c583fab7acbd2ed8e5afd8fb89c9306f279fce90f6f7dc3f172dee",
+  "interactedSha256": "5a28e9a8ddf9885ebb2167e4930d2beac02bb727c053a99d09b5d17c3a91841a",
   "gif": "p-rating.gif",
-  "gifSha256": "a320e8806b3df6bf96750faf47d92b4956fa6050fe32a2ec63c0ba53b22a06d9",
+  "gifSha256": "34f50c5de92e540ceb31d66c70698a000a2464f4c63a32587a649d3a03e63049",
   "width": 360,
   "derivedFromRealInteraction": true
 }

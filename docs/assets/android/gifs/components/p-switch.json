@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "component": "p-switch",
   "candidateOnly": true,
-  "sourceReportSha256": "ca9b3e6cc1239b39df49a1b6f7a39ac6d44ef0f8cbe431846fcd1690157b8b9c",
-  "baselineSha256": "9334cb0fe96b3a76660a1be84396d5269a627c10e52b23fdb7bad459e837a6eb",
-  "interactedSha256": "b1062491f0b65b96e398d0791e6b9eec8f31ec566300e39615ab3722515555c1",
+  "sourceReportSha256": "3aabe178f0cfcf7caea69192f4827579fe9f21b73d03b2daa0cf574777d26dc6",
+  "baselineSha256": "a749bbaf41451c3b3228a6205becf00b7687c2c431d7a35594c68334de1c6787",
+  "interactedSha256": "9cac5b77b3320aae6a71fb20cb60a015fabe03b82ab67905ec3b83114c478086",
   "gif": "p-switch.gif",
-  "gifSha256": "693e66a9c5e7cdc5f4c81824e1982709b00410808dbc7f1a4d5fa02c7ee8dcdd",
+  "gifSha256": "025fb991d152c6d787f6b747ef03d1ca2d1322d07c177394e7454343d142bfee",
   "width": 360,
   "derivedFromRealInteraction": true
 }
