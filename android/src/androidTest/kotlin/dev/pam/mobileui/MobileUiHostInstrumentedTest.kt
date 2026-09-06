@@ -339,14 +339,22 @@ class MobileUiHostInstrumentedTest {
             )
             host.layout(0, 0, width, height)
 
-            val search = (0 until content.childCount)
+            fun childSummary(): String = (0 until content.childCount)
+                .joinToString { index ->
+                    val child = content.getChildAt(index)
+                    "${child.javaClass.simpleName}:${(child as? TextView)?.text}"
+                }
+            val searches = (0 until content.childCount)
                 .map(content::getChildAt)
                 .filterIsInstance<EditText>()
-                .single()
-            val message = (0 until content.childCount)
+            assertEquals(childSummary(), 1, searches.size)
+            val search = searches.single()
+            val messages = (0 until content.childCount)
                 .map(content::getChildAt)
                 .filterIsInstance<TextView>()
-                .single { it.text?.toString() == "Nothing matches" }
+                .filter { it.text?.toString() == "Nothing matches" }
+            assertEquals(childSummary(), 1, messages.size)
+            val message = messages.single()
 
             assertEquals(View.VISIBLE, message.visibility)
             assertEquals(dp(host, 48f), search.height)
@@ -374,10 +382,12 @@ class MobileUiHostInstrumentedTest {
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
             )
             host.layout(0, 0, width, height)
-            val customAction = (0 until content.childCount)
+            val customActions = (0 until content.childCount)
                 .map(content::getChildAt)
                 .filterIsInstance<TextView>()
-                .single { it.text?.toString() == "Use \"custom\"" }
+                .filter { it.text?.toString() == "Use \"custom\"" }
+            assertEquals(childSummary(), 1, customActions.size)
+            val customAction = customActions.single()
             assertEquals(View.VISIBLE, customAction.visibility)
             assertEquals(dp(host, 56f), customAction.height)
             assertTrue(customAction.top >= search.bottom + dp(host, 8f))
