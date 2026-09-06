@@ -8107,8 +8107,14 @@ internal class MobileUiHost(
                         // the sheet. Queue the relayout for the next frame so
                         // the parent PamContainer never starts a nested second
                         // layout pass from inside its active layout traversal.
-                        root.postOnAnimation {
-                            if (root.isAttachedToWindow) root.requestLayout()
+                        if (root.isAttachedToWindow) {
+                            root.postOnAnimation { root.requestLayout() }
+                        } else {
+                            // Detached hosts are used by first-frame
+                            // composition and instrumentation. Mark them dirty
+                            // synchronously so the caller's next measure/layout
+                            // observes the current query and supplementary row.
+                            root.requestLayout()
                         }
                     }
 

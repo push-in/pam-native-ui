@@ -132,6 +132,9 @@ jobs:
       - name: Validate package
         run: composer validate --strict --no-check-publish
 
+      - name: Install Android audit dependencies
+        run: python3 -m pip install --disable-pip-version-check -r tools/requirements-audit.txt
+
       - name: Verify generated API, styles and PHP
         env:
           PAM_NATIVE_ROOT: ${{ github.workspace }}/pam-native
