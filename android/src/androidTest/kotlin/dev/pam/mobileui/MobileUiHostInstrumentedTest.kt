@@ -640,7 +640,9 @@ class MobileUiHostInstrumentedTest {
             val rendered = Bitmap.createBitmap(240, 64, Bitmap.Config.ARGB_8888)
             host.draw(Canvas(rendered))
             assertEquals(Color.WHITE, label.currentTextColor)
-            assertEquals(Color.BLUE, rendered.getPixel(1, 1))
+            // The Material medium shape deliberately leaves the extreme
+            // corner transparent; sample inside the selected container.
+            assertEquals(Color.BLUE, rendered.getPixel(16, 16))
             host.release()
         }
     }

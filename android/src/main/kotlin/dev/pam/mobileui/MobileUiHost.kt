@@ -1022,8 +1022,8 @@ internal class MobileUiHost(
         showWeekNumbers = properties.flag("showWeek", false)
         fixedWeeks = properties.flag("fixedWeeks", false)
         calendarRtl = properties.flag("rtl", false)
-        readOnly = properties.flag("interactionDisabled", readOnly) ||
-            properties.flag("readOnly", properties.flag("isReadOnly", readOnly))
+        readOnly = properties.flag("interactionDisabled", false) ||
+            properties.flag("readOnly", properties.flag("isReadOnly", false))
         invalid = properties.flag("invalid", properties.flag("isInvalid", false))
         required = properties.flag("required", properties.flag("isRequired", false))
         inputFocusColor = properties.integer(
@@ -7561,7 +7561,11 @@ internal class MobileUiHost(
         }
         val selectionSheet = component == GeneratedComponents.SELECT_PORTAL
         if (content is ViewGroup) {
-            if (isInLayout && sheetStructureNeedsSync(content)) {
+            if (
+                isInLayout
+                && isAttachedToWindow
+                && sheetStructureNeedsSync(content)
+            ) {
                 if (!sheetStructureSyncScheduled) {
                     sheetStructureSyncScheduled = true
                     post {
@@ -7572,7 +7576,7 @@ internal class MobileUiHost(
                         }
                     }
                 }
-            } else if (!isInLayout) {
+            } else if (!isInLayout || !isAttachedToWindow) {
                 ensureSheetSearchInput(content)
             }
         }
