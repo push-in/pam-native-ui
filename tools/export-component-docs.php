@@ -47,6 +47,40 @@ foreach ($families as $family => $tags) {
     }
 }
 
+// Some showcase routes delegate stateful rendering to focused preview
+// components. Keep their real public props here so documentation never exposes
+// the preview-only *Profile switches or produces an empty API table.
+$delegatedProps = [
+    'p-chip' => [
+        'text' => 'View release', 'variant' => 'tonal', 'filter' => true,
+        'selected' => true, 'closable' => true, 'closeLabel' => 'Remove filter',
+        'disabled' => true, 'icon' => 'arrow-right',
+    ],
+    'p-chip-group' => [
+        'value' => 'android', 'multiple' => true,
+        'direction' => 'horizontal', 'disabled' => true,
+    ],
+    'p-color-input' => [
+        'label' => 'HEX value', 'modelValue' => '#6750A4', 'mode' => 'hex',
+        'variant' => 'outlined', 'disabled' => true, 'error' => true,
+        'errorMessage' => 'Enter a valid HEX color', 'helper' => 'Six-digit hexadecimal color',
+    ],
+    'p-data-table' => [
+        'headers' => [], 'items' => [], 'itemValue' => 'id', 'modelValue' => [],
+        'showSelect' => true, 'density' => 'compact', 'striped' => true,
+        'loading' => true, 'loadingText' => 'Syncing inventory',
+        'noDataText' => 'No products found', 'mobile' => true,
+    ],
+    'p-data-table-virtual' => [
+        'headers' => [], 'items' => [], 'itemValue' => 'id', 'modelValue' => [],
+        'showSelect' => true, 'density' => 'compact', 'fixedHeader' => true,
+        'striped' => true, 'loading' => true, 'loadingText' => 'Refreshing builds',
+        'noDataText' => 'No builds found', 'mobile' => true, 'height' => 280,
+        'prefetch' => 6, 'removeClippedSubviews' => true,
+        'showsScrollIndicator' => true, 'endReachedThreshold' => 0.25,
+    ],
+];
+
 $variationMethod = new ReflectionMethod(ComponentRoute::class, 'variations');
 $entries = [];
 foreach (MaterialComponentMap::TAGS as $tag => $class) {
@@ -75,6 +109,23 @@ foreach (MaterialComponentMap::TAGS as $tag => $class) {
                 if (is_string($encoded)) {
                     $props[$name]['examples'][$encoded] = true;
                 }
+            }
+        }
+    }
+    foreach ($delegatedProps[$tag] ?? [] as $name => $value) {
+        $type = match (true) {
+            is_bool($value) => 'bool',
+            is_int($value) => 'int',
+            is_float($value) => 'float',
+            is_array($value) => 'array',
+            is_string($value) => 'string',
+            default => 'mixed',
+        };
+        $props[$name]['types'][$type] = true;
+        if (is_scalar($value)) {
+            $encoded = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if (is_string($encoded)) {
+                $props[$name]['examples'][$encoded] = true;
             }
         }
     }
