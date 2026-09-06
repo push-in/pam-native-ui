@@ -15,11 +15,15 @@ use App\ShowcaseApp;
 use App\TypedCommunityCard;
 use Pam\MobileUi\Material\PIcon;
 use Pam\MobileUi\PamUI;
+use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Generated\MaterialComponentMap;
+use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\App;
 use Pam\Native\Navigation\Router;
 use Pam\Native\Navigation\DrawerType;
+use Pam\Native\UserInterfaceAppearance;
+use Pam\Native\WindowMetrics;
 
 require __DIR__.'/vendor/autoload.php';
 
@@ -28,7 +32,7 @@ App::views(
     __DIR__.'/.pam-native/views',
 );
 AppTheme::install();
-PamUI::mode(ThemeMode::Light);
+PamUI::mode(ThemeMode::System);
 TypedCommunityCard::register();
 $catalog = new Catalog();
 $gallery = new ComponentGallery();
@@ -114,6 +118,18 @@ $showcase = $drawer
     )
     ->persistence('pam-component-drawer-v2')
     ->build();
+$applyDrawerTheme = static function () use ($showcase): void {
+    $theme = ThemeManager::current();
+    $showcase->appearance(
+        $theme->color(ColorToken::Surface),
+        $theme->color(ColorToken::Primary),
+        $theme->color(ColorToken::MutedForeground),
+        $theme->color(ColorToken::Accent),
+        $theme->color(ColorToken::Overlay),
+        $theme->color(ColorToken::OutlineVariant),
+    );
+};
+$applyDrawerTheme();
 $studio = Router::stack('studio')
     ->route('studio', fn () => $catalog)
     ->route('components', fn () => $showcase)
@@ -131,7 +147,14 @@ foreach ($componentRoutes as $componentRoute) {
 // Forward window changes explicitly; otherwise the Android view adapts to a
 // permanent drawer while the PHP navigation state still believes it is a
 // compact front drawer, leaving redundant toggle controls on expanded screens.
-App::onDimensions($showcase->dimensions(...));
+App::onDimensions(static function (WindowMetrics $metrics) use (
+    $showcase,
+    $applyDrawerTheme,
+): void {
+    PamUI::systemDark($metrics->appearance === UserInterfaceAppearance::Dark);
+    $applyDrawerTheme();
+    $showcase->dimensions($metrics);
+});
 
 $tabs = Router::tabs('overview')
     ->tab('overview', 'Overview', new Overview(), PIcon::make(['icon' => 'star']))

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App;
 
+use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\ThemeMode;
+use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\Component;
 use Pam\Native\Navigation\DrawerNavigator;
 use Pam\Native\Renderable;
@@ -36,11 +39,14 @@ final class ShowcaseApp extends Component
 
     public function render(): Renderable
     {
-        // The catalog deliberately uses a light theme regardless of the
-        // device theme. Author its system bar explicitly so a phone in dark
-        // mode never renders white icons over the light showcase surface.
+        $theme = ThemeManager::current();
+        $dark = ThemeManager::resolvedMode() === ThemeMode::Dark;
+
         return Screen::make(
-            StatusBar::make(0xFFF8FAFC, StatusBarAppearance::Dark),
+            StatusBar::make(
+                $theme->color(ColorToken::Background),
+                $dark ? StatusBarAppearance::Light : StatusBarAppearance::Dark,
+            ),
             $this->drawer->toElement()->style(new Style(
                 widthPercent: 100.0,
                 heightPercent: 100.0,
@@ -50,7 +56,7 @@ final class ShowcaseApp extends Component
             widthPercent: 100.0,
             heightPercent: 100.0,
             flexGrow: 1.0,
-            backgroundColor: 0xFFF8FAFC,
+            backgroundColor: $theme->color(ColorToken::Background),
         ));
     }
 
