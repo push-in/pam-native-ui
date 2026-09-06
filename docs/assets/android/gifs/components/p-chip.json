@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-chip",
+  "candidateOnly": true,
+  "sourceReportSha256": "ea6cd7fd298e7d94efc791b511267792e24270fe374a295b5a7eb40ec1fe8a5c",
+  "baselineSha256": "a1edcf815d20944bf2b109c12fdf323876f2163dc4f1489a8a2cf1ac46bac80e",
+  "interactedSha256": "681bb0753f1344f7efe3eca9f0e2daa4c02f43a035763a12f97b89cf3381676d",
+  "gif": "p-chip.gif",
+  "gifSha256": "c78ff02114bb918e5d3537803d55c51b159e2cbaa6d8e3c36e4503fc9995c007",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

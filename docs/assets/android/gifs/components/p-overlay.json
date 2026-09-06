@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-overlay",
+  "candidateOnly": true,
+  "sourceReportSha256": "d180631356a0b207eb72fce2ee1d7867405b3f6dc7d31192320edcbe4be1cc85",
+  "baselineSha256": "4011a96078812dc26de416490cb5aab40aadfd73120c6f07e6671290714e10ed",
+  "interactedSha256": "a94b414e9ee32b1ddf9be4c47f5f8ea851c9367693b9fd0dc858f606cc9680a3",
+  "gif": "p-overlay.gif",
+  "gifSha256": "a163f4985ff575f1b640b024fa31fed08572741a165d2ecb268f1618df8c84fc",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

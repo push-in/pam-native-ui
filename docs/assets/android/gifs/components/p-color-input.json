@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-color-input",
+  "candidateOnly": true,
+  "sourceReportSha256": "db4ceab33e16f20ae3acb92df0dac82ccb3e41cf9157267a4c4fcdc50b69d034",
+  "baselineSha256": "68b3860e44077add62f3d188c7796eccacc6757910d1061f073c8b3d2a03bb55",
+  "interactedSha256": "c65e15d72ad6467f756077412703820422c9fb0652e421ee062e24ba5c5f9c18",
+  "gif": "p-color-input.gif",
+  "gifSha256": "b456d17bccbfe23f848c8df0db8d206e404826d06ecf5587b8dbf74b591a0c49",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-radio-group",
+  "candidateOnly": true,
+  "sourceReportSha256": "84368ad9a567b60b49203f618cd17483a0ec71683d34e46d0f1f9386b190bf62",
+  "baselineSha256": "97273defb9130cf7c9fd7327dec68be1b871903db247eb3658a8e1e0d0f06589",
+  "interactedSha256": "a58f6f11027ef5f92da7b0c2ca9f68966afcbac450847e911ec45329e6465786",
+  "gif": "p-radio-group.gif",
+  "gifSha256": "0b21e668e1b8c156e4f23baaa8d6ef46eec1a2dc420e47fa1afc99c40caabc5f",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

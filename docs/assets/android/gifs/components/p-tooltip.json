@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-tooltip",
+  "candidateOnly": true,
+  "sourceReportSha256": "be7a95d65bb53d3e1e433f4b165f8b064442b05aef99fa372618f1d83dd11883",
+  "baselineSha256": "afc7d8a925057d7e603f29e4b54c0017f2ab192c26a4886a422bdd423ed94210",
+  "interactedSha256": "1ccdb987d8080907a01b42bc7578b94a37941417c9b2975a3cf94fbaf42fbad0",
+  "gif": "p-tooltip.gif",
+  "gifSha256": "a38e78b232f3222b1504b9b1bc9ca6b67b42a16046340968f522cf4d2ddfa76c",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -51,7 +51,7 @@ def validate_screen(
         sample = image.resize((135, 300))
         deviation = sum(ImageStat.Stat(sample).stddev) / 3
         colors = sample.getcolors(maxcolors=135 * 300) or []
-        if width < 720 or height < 1280:
+        if min(width, height) < 720 or max(width, height) < 1280:
             failures.append(f"unexpected resolution {width}x{height}")
         if deviation < 8 or len(colors) < 24:
             failures.append(
@@ -78,7 +78,18 @@ def validate_screen(
         if bounds is None:
             continue
         left, top, right, bottom = bounds
-        if left < 0 or top < 0 or right > width or bottom > height:
+        if right < left or bottom < top:
+            failures.append(f"node has inverted bounds: {bounds}")
+        if (
+            left < 0
+            or top < 0
+            or right > width
+            or bottom > height
+            or left > width
+            or top > height
+            or right < 0
+            or bottom < 0
+        ):
             failures.append(f"node outside viewport: {bounds}")
         text = node.attrib.get("text", "").strip()
         if text and node.attrib.get("class") == "android.widget.TextView":

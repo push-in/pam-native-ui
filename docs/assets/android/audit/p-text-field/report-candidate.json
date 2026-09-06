@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "resultStatus": 1,
+  "approvalStatus": 1,
+  "component": "p-text-field",
+  "candidateOnly": true,
+  "buildSha256": "230f7008194e65e6d86ce6bf54cb913de83fec0f7ab8968c765deef335c4bf30",
+  "device": {
+    "serial": "emulator-5556",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "androidVersion": "16",
+    "api": 36,
+    "viewport": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "buildSha256": "230f7008194e65e6d86ce6bf54cb913de83fec0f7ab8968c765deef335c4bf30"
+  },
+  "sourceReport": "/tmp/pam-release-missing-gifs.json",
+  "passes": [
+    {
+      "repetition": 1,
+      "interactionKind": 4,
+      "stateChanged": true,
+      "elapsedMs": 9491,
+      "evidencePrefix": "pass-01-p-text-field"
+    },
+    {
+      "repetition": 2,
+      "interactionKind": 4,
+      "stateChanged": true,
+      "elapsedMs": 9489,
+      "evidencePrefix": "pass-02-p-text-field"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "baseline-candidate.png",
+      "sha256": "cceb1e808a434589da429208fb8f701374b17a7a2f721ace103b46360ff57135"
+    },
+    {
+      "file": "interacted-candidate.png",
+      "sha256": "f597389dbeb4b523a6d824d970c0062a9b939e9509e81865b64be6e92de484e0"
+    }
+  ],
+  "checks": {
+    "twoConsecutivePasses": true,
+    "runtimeLog": true,
+    "routeIdentity": true,
+    "realInteraction": true,
+    "requiresManualVisualReview": true,
+    "requiresPhysicalApproval": true
+  }
+}

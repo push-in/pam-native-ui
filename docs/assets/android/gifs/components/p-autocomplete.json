@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-autocomplete",
+  "candidateOnly": true,
+  "sourceReportSha256": "c324de3bca3518204b2e3fe3bf9f90b1657a8e192d3b825eb34c4376a0b739b3",
+  "baselineSha256": "1d2930eab1a306b0c12d9869c4d93275686ba1bd869cb3d9d446fa35306c190c",
+  "interactedSha256": "11a3b257f6f4e8b6681c4a344c1883c975e0c306b8c30765b44ef6d9cffe4781",
+  "gif": "p-autocomplete.gif",
+  "gifSha256": "ce863d0b5386b7a4975dc96c38b5ed987e508760ad692da6fb5beda89afaf008",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

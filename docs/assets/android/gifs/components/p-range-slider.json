@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-range-slider",
+  "candidateOnly": true,
+  "sourceReportSha256": "b52d51f21b144cd65fbf28179e7066931cdcea6347568263760eebd81ad18e22",
+  "baselineSha256": "fefaf0aed00c3fdbbc75a1938fc3459349e101ee03a8dc50c28405dcd9cc7088",
+  "interactedSha256": "72f8ccab26737c4b86b6d60e41eaadbcb3bffd4991b52c0761d6ee7cbabd04ee",
+  "gif": "p-range-slider.gif",
+  "gifSha256": "426ce5579cf1d326f158678ee702a00df4665e5011cf5a7dfa0dc501736202a7",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

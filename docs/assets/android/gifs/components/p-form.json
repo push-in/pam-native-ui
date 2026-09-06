@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-form",
+  "candidateOnly": true,
+  "sourceReportSha256": "42d887d46f33eae93ff1eefe5e08d9b6d96579a061b01968451f34df22e6eaff",
+  "baselineSha256": "85eac0a744d4c9fdf626c0fc9cb5da00c77e6e345039a33f5996f4b7a9eb58aa",
+  "interactedSha256": "8f593205a167846fd31457ac939b8151b646df24b347400d83368ff49a6ebfbc",
+  "gif": "p-form.gif",
+  "gifSha256": "1bd319da808e07a8c00b4713097a3bde51931890635a674dc2b417a8af22c22b",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-combobox",
+  "candidateOnly": true,
+  "sourceReportSha256": "12afaf99f2aeac89cf6fb2e4400b0e50640a4769a958d9a1e4727916ad311ff2",
+  "baselineSha256": "4e981a61696c803be4ec162ab36f8d27eb31715ec1ca1895cf608624157e5959",
+  "interactedSha256": "2ac96c5411a513256774e4093da8024d0b156877557d9931d8f336a7279f9cf1",
+  "gif": "p-combobox.gif",
+  "gifSha256": "6aeb9d69e64fc79cc5dbac5992cb0c70d158ae5c48e18f3e9dbc64ef2fad504b",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

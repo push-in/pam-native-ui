@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-select",
+  "candidateOnly": true,
+  "sourceReportSha256": "9d56fbafeec46ce9a12055cefa89991e9032db3021f673be7b8649c18d354ced",
+  "baselineSha256": "f13817774e2ea19f1fc43c51b70b477ff8aa2866078db998a30066e429fff694",
+  "interactedSha256": "cfe065d44073c1c4f34e9eca28cc161690c4f73cfffc1370b0747ed3c5464636",
+  "gif": "p-select.gif",
+  "gifSha256": "e3024dbc269913624cbe447c4787cff3ab104c6fbec40fe9076b02d46fd8afa8",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-calendar-day",
+  "candidateOnly": true,
+  "sourceReportSha256": "fa5bd7efd6a74fb5f8f846eddc8904318daa692940b4bbaff44259f2204ed9cb",
+  "baselineSha256": "50522512edc5163f7f9219f91b6f0c64f9e6ef28d5523c49d1c414f9e5f7cdf8",
+  "interactedSha256": "88d52fb2bace918c2e9e401a7fb34edc343021942bb27ef9721c9362ffbed883",
+  "gif": "p-calendar-day.gif",
+  "gifSha256": "c9356fa91fac2056e3c724c36722166d381bde47101caca5362f8a660d7127bd",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

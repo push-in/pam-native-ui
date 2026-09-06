@@ -15,6 +15,7 @@ use Pam\MobileUi\Enum\MaterialShape;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Generated\ComponentMap;
+use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\AccessibilityCheckedState;
@@ -63,7 +64,7 @@ abstract class UiComponent implements Renderable
      */
     final protected function __construct(array $props = [], array $children = [])
     {
-        $this->props = ValueNormalizer::props($props);
+        $this->props = self::normalizeComponentProps(static::COMPONENT, $props);
         $this->children = $children;
     }
 
@@ -142,7 +143,7 @@ abstract class UiComponent implements Renderable
             $component->eventContexts[$source] = [
                 'props' => ComponentRenderer::withDefaults(
                     $source,
-                    ValueNormalizer::props($contextProps),
+                    self::normalizeComponentProps($source, $contextProps),
                 ),
                 'events' => $events,
             ];
@@ -154,9 +155,52 @@ abstract class UiComponent implements Renderable
     final public function prop(string $name, mixed $value): static
     {
         $copy = clone $this;
-        $copy->props[$name] = ValueNormalizer::value($name, $value);
+        $copy->props[$name] = self::normalizeComponentValue(
+            static::COMPONENT,
+            $name,
+            $value,
+        );
 
         return $copy;
+    }
+
+    /**
+     * Material variants retain their canonical names so legacy numeric recipe
+     * codes cannot collide with the MaterialVariant enum values.
+     *
+     * @param array<string, mixed> $props
+     * @return array<string, mixed>
+     */
+    private static function normalizeComponentProps(
+        string $component,
+        array $props,
+    ): array {
+        $normalized = [];
+        foreach ($props as $name => $value) {
+            $normalized[$name] = self::normalizeComponentValue(
+                $component,
+                $name,
+                $value,
+            );
+        }
+
+        return $normalized;
+    }
+
+    private static function normalizeComponentValue(
+        string $component,
+        string $name,
+        mixed $value,
+    ): mixed {
+        if (
+            $name === 'variant'
+            && isset(MaterialComponentMap::IDS[$component])
+            && is_string($value)
+        ) {
+            return $value;
+        }
+
+        return ValueNormalizer::value($name, $value);
     }
 
     final public function variant(BackedEnum $variant): static
@@ -453,6 +497,10 @@ abstract class UiComponent implements Renderable
      */
     final public function onChangeEnd(Closure $handler): static
     {
+        if (static::COMPONENT === 'PRangeSlider') {
+            return $this->on(EventKind::Native, $handler);
+        }
+
         return $this->on(
             EventKind::Native,
             static function (string $payload) use ($handler): void {

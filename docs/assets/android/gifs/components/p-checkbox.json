@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-checkbox",
+  "candidateOnly": true,
+  "sourceReportSha256": "58059a092585d6998dfdb9de12cd88cc39c943068ed9382a27f2c9522a846a5e",
+  "baselineSha256": "f22c7d28c0e3873173c75cf5977fad40f3b18e327c9926b9cdbf3b9b18651440",
+  "interactedSha256": "bff4da3266522001460a4342e598fe81cc5d4da6d81b44fb5ff6373a55b3d499",
+  "gif": "p-checkbox.gif",
+  "gifSha256": "9e990143f9205fa393c88dbaae5f9ea2dcf9dabfb2cf162a1fc0c0a27f8629fe",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "component": "p-slider",
+  "resultStatus": 1,
+  "verifiedAt": "2026-09-02",
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G973F",
+    "androidVersion": 12,
+    "api": 31,
+    "viewport": "1080x2280@420dpi"
+  },
+  "buildSha256": "c4501eb5f34c50fe54418f522e50ebe51be1eecade21fd7848fcab3f3cb2a229",
+  "harness": "tools/audit-slider-android.py",
+  "passes": [
+    {
+      "index": 1,
+      "resultStatus": 1,
+      "rawReportSha256": "5d187bf1831192844ea215ffdfb480d93cc29ba611f3c85447f1ecd9671b6b73",
+      "screensChecked": 9,
+      "geometryFailureCount": 0
+    },
+    {
+      "index": 2,
+      "resultStatus": 1,
+      "rawReportSha256": "15dc712c830060e53751a64ae81c45fca038f668bcb52171ac8696f52ad99179",
+      "screensChecked": 9,
+      "geometryFailureCount": 0
+    }
+  ],
+  "checks": {
+    "materialTouchTarget": true,
+    "expressiveMaterialGeometry": true,
+    "nativeSinglePassRendering": true,
+    "realDrag": true,
+    "instanceIsolation": true,
+    "disabled": true,
+    "stepSnapping": true,
+    "persistentTicks": true,
+    "persistentThumbLabel": true,
+    "reversed": true,
+    "reversedRealDrag": true,
+    "bottomSafeArea": true,
+    "rotation": true,
+    "landscapeSafeArea": true,
+    "adaptiveNavigation": true,
+    "runtimeLog": true,
+    "twoConsecutivePhysicalPasses": true,
+    "manualVisualReview": true,
+    "realInteractionRecording": true
+  },
+  "documentation": {
+    "recording": "interaction.mp4",
+    "recordingSha256": "3af3ea689ae2af8c4dd167f714abf865254967bb755baca046756079a2ce34c3",
+    "gif": "interaction.gif",
+    "gifSha256": "a7e1ec02ac2d9d209929e08f85b304dd291fd3886511dd117f5d7f89adbf3c15",
+    "before": "baseline.png",
+    "during": "dragged.png",
+    "after": "portrait-restored.png",
+    "additionalScreenshots": [
+      "disabled.png",
+      "step-baseline.png",
+      "step-snapped.png",
+      "reversed.png",
+      "reversed-dragged.png",
+      "landscape.png"
+    ]
+  }
+}

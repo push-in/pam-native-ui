@@ -92,7 +92,21 @@ final class StyleResolver
         }
 
         if (in_array($part, self::TEXT_PARTS, true) || str_ends_with($part, 'Text')) {
-            $fontSize = match ($size) {
+            $requestedSize = $props['size'] ?? null;
+            $fontSize = is_string($requestedSize) ? match ($requestedSize) {
+                '2xs' => 10.0,
+                'xs' => 12.0,
+                'sm' => 14.0,
+                'base', 'md' => 16.0,
+                'lg' => 18.0,
+                'xl' => 20.0,
+                '2xl' => 24.0,
+                '3xl' => 30.0,
+                '4xl' => 36.0,
+                '5xl' => 45.0,
+                '6xl' => 57.0,
+                default => 14.0,
+            } : match ($size) {
                 1, 2 => 12.0,
                 4 => 16.0,
                 5 => 18.0,
@@ -102,7 +116,7 @@ final class StyleResolver
                 default => 14.0,
             };
 
-            if ($part === 'Heading') {
+            if ($part === 'Heading' && !is_string($requestedSize)) {
                 $fontSize = match ($size) {
                     1 => 12.0,
                     2 => 14.0,
@@ -122,7 +136,19 @@ final class StyleResolver
                 opacity: $disabled ? 0.4 : 1.0,
                 textAlign: TextAlignment::Start,
                 fontWeight: self::fontWeight($part, $props),
-                lineHeight: max(16.0, $fontSize * 1.4),
+                lineHeight: match (true) {
+                    $fontSize <= 10.0 => 14.0,
+                    $fontSize <= 12.0 => 16.0,
+                    $fontSize <= 14.0 => 20.0,
+                    $fontSize <= 16.0 => 24.0,
+                    $fontSize <= 18.0 => 24.0,
+                    $fontSize <= 20.0 => 28.0,
+                    $fontSize <= 24.0 => 32.0,
+                    $fontSize <= 30.0 => 36.0,
+                    $fontSize <= 36.0 => 44.0,
+                    $fontSize <= 45.0 => 52.0,
+                    default => 64.0,
+                },
             );
         }
 

@@ -8,10 +8,16 @@ use Pam\MobileUi\Enum\ComponentMode;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Generated\MaterialComponentMap;
+use Pam\MobileUi\Material\PAlert;
+use Pam\MobileUi\Material\PBtn;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Rendering\MaterialStyleResolver;
+use Pam\MobileUi\Rendering\StyleResolver;
+use Pam\MobileUi\Theme\MaterialTokens;
+use Pam\MobileUi\Theme\ThemeManager;
 use Pam\MobileUi\Theme\Themes;
 use Pam\Native\AccessibilityCheckedState;
+use Pam\Native\AccessibilityImportance;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\Internal\BinaryValue;
 use Pam\Native\Internal\Wire;
@@ -19,6 +25,7 @@ use Pam\Native\EventKind;
 use Pam\Native\ImageErrorEvent;
 use Pam\Native\Align;
 use Pam\Native\FlexDirection;
+use Pam\Native\KeyboardType;
 use Pam\Native\ModalAnimationType;
 use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
@@ -29,9 +36,378 @@ use Pam\Native\UI\Text;
 
 require __DIR__.'/bootstrap.php';
 
+$layoutTokens = [
+    MaterialTokens::SPACE_EXTRA_SMALL,
+    MaterialTokens::SPACE_SMALL,
+    MaterialTokens::SPACE_MEDIUM,
+    MaterialTokens::SPACE_LARGE,
+    MaterialTokens::SPACE_EXTRA_LARGE,
+    MaterialTokens::SPACE_DOUBLE_EXTRA_LARGE,
+    MaterialTokens::COMPACT_WINDOW_GUTTER,
+    MaterialTokens::MEDIUM_WINDOW_GUTTER,
+    MaterialTokens::EXPANDED_WINDOW_GUTTER,
+];
+foreach ($layoutTokens as $spacing) {
+    if (fmod($spacing, MaterialTokens::GRID) !== 0.0) {
+        throw new RuntimeException('Material layout spacing must stay on the 4 dp grid.');
+    }
+}
+$displayTextStyle = StyleResolver::resolve(
+    'Text',
+    ['size' => '2xl'],
+    Themes::pamLight(),
+);
+if ($displayTextStyle->fontSize !== 24.0 || $displayTextStyle->lineHeight !== 32.0) {
+    throw new RuntimeException(
+        'String typography sizes must resolve to the intended Material type metrics.',
+    );
+}
+$defaultTextareaStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PTextarea',
+    'rows' => 3,
+], Themes::pamLight());
+$fourRowTextareaStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PTextarea',
+    'rows' => 4,
+], Themes::pamLight());
+$grownTextareaStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PTextarea',
+    'autoGrow' => true,
+    'rows' => 2,
+    'modelValue' => "One\nTwo\nThree\nFour\nFive",
+], Themes::pamLight());
+if (
+    !$defaultTextareaStyle instanceof Style
+    || $defaultTextareaStyle->height !== 112.0
+    || !$fourRowTextareaStyle instanceof Style
+    || $fourRowTextareaStyle->height !== 136.0
+    || !$grownTextareaStyle instanceof Style
+    || $grownTextareaStyle->height !== 160.0
+) {
+    throw new RuntimeException(
+        'p-textarea rows and auto-grow must produce deterministic 24 dp line growth.',
+    );
+}
+$tonalAlert = PAlert::make(
+    ['action' => 'info', 'variant' => 'subtle'],
+    Text::make('Tonal alert'),
+)->toElement();
+$tonalAlertProperties = $tonalAlert->properties();
+$tonalAlertTextProperties = $tonalAlert->children()[1]->properties();
+$activeTheme = ThemeManager::current();
+if (
+    ($tonalAlertProperties[PropKey::BackgroundColor->value] ?? null)
+        === $activeTheme->color(ColorToken::Info)
+) {
+    throw new RuntimeException(
+        'Material subtle variants must retain their canonical name and render as tonal surfaces.',
+    );
+}
+if (
+    ($tonalAlertTextProperties[PropKey::TextColor->value] ?? null)
+        !== $activeTheme->color(ColorToken::Foreground)
+) {
+    throw new RuntimeException(
+        'Tonal alert descendants must inherit an accessible foreground color.',
+    );
+}
+$alertClosed = false;
+$closableAlert = PAlert::make(
+    ['type' => 'success', 'color' => 'success', 'closable' => true],
+    Text::make('Changes saved'),
+)->onClose(static function () use (&$alertClosed): void {
+    $alertClosed = true;
+})->toElement();
+$alertStatus = $closableAlert->children()[0] ?? null;
+$alertClose = $closableAlert->children()[2] ?? null;
+if (
+    !$alertStatus instanceof \Pam\Native\Element
+    || ($alertStatus->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:preserve-foreground:alert-status'
+    || !$alertClose instanceof \Pam\Native\Element
+    || $alertClose->kind() !== NodeKind::Pressable
+    || ($alertClose->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Close alert'
+    || ($alertClose->properties()[PropKey::MinWidth->value] ?? null) !== 40.0
+    || ($alertClose->properties()[PropKey::MinHeight->value] ?? null) !== 40.0
+    || ($alertClose->properties()[PropKey::HitSlopLeft->value] ?? null) !== 4.0
+    || !isset($alertClose->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'Closable alerts must expose a semantic status icon and labelled 48 dp close target.',
+    );
+}
+$alertClose->events()[EventKind::Press->value]();
+if (!$alertClosed) {
+    throw new RuntimeException('p-alert close must emit its close callback.');
+}
+$plainAlertStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PAlert',
+    'variant' => 'plain',
+], Themes::pamLight());
+$neutralTonalAlertStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PAlert',
+    'variant' => 'tonal',
+], Themes::pamLight());
+if (
+    !$plainAlertStyle instanceof Style
+    || $plainAlertStyle->paddingHorizontal !== 0.0
+    || $plainAlertStyle->paddingVertical !== 0.0
+    || !$neutralTonalAlertStyle instanceof Style
+    || $neutralTonalAlertStyle->backgroundColor
+        === Themes::pamLight()->color(ColorToken::Secondary)
+    || $neutralTonalAlertStyle->backgroundColor
+        === Themes::pamLight()->color(ColorToken::Surface)
+    || $neutralTonalAlertStyle->textColor
+        !== Themes::pamLight()->color(ColorToken::Foreground)
+) {
+    throw new RuntimeException(
+        'Plain and tonal alerts must preserve distinct, meaningful visual contracts.',
+    );
+}
+$hiddenBanner = \Pam\MobileUi\Material\PBanner::make(
+    ['visible' => false],
+    Text::make('Hidden update'),
+)->toElement();
+$visibleBanner = \Pam\MobileUi\Material\PBanner::make(
+    [],
+    Text::make('Available update'),
+)->toElement();
+if (
+    ($hiddenBanner->properties()[PropKey::Visible->value] ?? null) !== false
+    || array_key_exists(PropKey::Visible->value, $visibleBanner->properties())
+    || ($visibleBanner->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::Alert->value
+    || ($visibleBanner->properties()[PropKey::AccessibilityLiveRegion->value] ?? null)
+        !== \Pam\Native\AccessibilityLiveRegion::Polite->value
+) {
+    throw new RuntimeException(
+        'p-banner must honor visibility while preserving alert and polite-live semantics.',
+    );
+}
+$successBannerStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PBanner',
+    'color' => 'success',
+], Themes::pamLight());
+if (
+    !$successBannerStyle instanceof Style
+    || $successBannerStyle->backgroundColor
+        === Themes::pamLight()->color(ColorToken::Surface)
+    || $successBannerStyle->backgroundColor
+        === Themes::pamLight()->color(ColorToken::Success)
+) {
+    throw new RuntimeException(
+        'Semantic banners must use a readable tonal surface instead of ignoring or flooding the requested color.',
+    );
+}
+$textButton = PBtn::make(
+    ['variant' => 'text'],
+    Text::make('Text action'),
+)->toElement();
+$textButtonProperties = $textButton->properties();
+$extraSmallButtonProperties = PBtn::make(
+    ['variant' => 'text', 'size' => 'x-small'],
+    Text::make('Compact action'),
+)->toElement()->properties();
+$largeButtonProperties = PBtn::make(
+    ['variant' => 'text', 'size' => 'large'],
+    Text::make('Large action'),
+)->toElement()->properties();
+if (
+    ($textButtonProperties[PropKey::BackgroundColor->value] ?? null) !== 0x00000000
+    || ($textButtonProperties[PropKey::Elevation->value] ?? null) !== 0.0
+    || ($textButtonProperties[PropKey::BorderWidth->value] ?? null) !== 0.0
+    || ($textButtonProperties[PropKey::HitSlopLeft->value] ?? null) !== 4.0
+    || ($textButtonProperties[PropKey::HitSlopTop->value] ?? null) !== 4.0
+    || ($extraSmallButtonProperties[PropKey::HitSlopLeft->value] ?? null) !== 8.0
+    || ($largeButtonProperties[PropKey::HitSlopLeft->value] ?? null) !== 0.0
+) {
+    throw new RuntimeException(
+        'Text buttons must stay containerless while expanding only to an exact 48 dp target.',
+    );
+}
+
 $tags = MaterialComponentMap::TAGS;
 $ids = MaterialComponentMap::IDS;
 $modules = MaterialComponentMap::MODULES;
+$buttonGroupValue = 'unchanged';
+$buttonGroup = $tags['p-btn-group']::make(
+    ['modelValue' => 'week'],
+    $tags['p-btn']::make(['value' => 'day'], Text::make('Day')),
+    $tags['p-btn']::make(['value' => 'week'], Text::make('Week')),
+    $tags['p-btn']::make(['value' => 'month'], Text::make('Month')),
+)->onChange(static function (mixed $value) use (&$buttonGroupValue): void {
+    $buttonGroupValue = $value;
+})->toElement();
+$buttonGroupProperties = $buttonGroup->properties();
+$buttonGroupChildren = $buttonGroup->children();
+$buttonGroupSelected = $buttonGroupChildren[1]->properties();
+if (
+    $buttonGroup->kind() !== NodeKind::Row
+    || ($buttonGroupProperties[PropKey::Gap->value] ?? null) !== 8.0
+    || ($buttonGroupProperties[PropKey::MinHeight->value] ?? null) !== 48.0
+    || count($buttonGroupChildren) !== 3
+    || $buttonGroupChildren[0]->kind() !== NodeKind::Pressable
+    || ($buttonGroupChildren[0]->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::ToggleButton->value
+    || ($buttonGroupChildren[0]->properties()[PropKey::HitSlopLeft->value] ?? null)
+        !== 0.0
+    || ($buttonGroupChildren[0]->properties()[PropKey::HitSlopTop->value] ?? null)
+        !== 4.0
+    || ($buttonGroupChildren[0]->properties()[PropKey::Selected->value] ?? null) !== false
+    || ($buttonGroupSelected[PropKey::Selected->value] ?? null) !== true
+    || ($buttonGroupSelected[PropKey::BackgroundColor->value] ?? null)
+        !== ThemeManager::current()->color(ColorToken::Primary)
+    || !isset($buttonGroupChildren[1]->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'p-btn-group must expose three independent 48 dp toggle targets with a visible selected state.',
+    );
+}
+$buttonGroupChildren[1]->events()[EventKind::Press->value]();
+if ($buttonGroupValue !== null) {
+    throw new RuntimeException(
+        'A non-mandatory p-btn-group must allow its selected item to be cleared.',
+    );
+}
+
+$connectedValue = null;
+$connectedButtonGroup = $tags['p-btn-group']::make(
+    [
+        'modelValue' => 'center',
+        'connected' => true,
+        'block' => true,
+        'mandatory' => true,
+    ],
+    $tags['p-btn']::make(['value' => 'left'], Text::make('Left')),
+    $tags['p-btn']::make(['value' => 'center'], Text::make('Center')),
+    $tags['p-btn']::make(['value' => 'right'], Text::make('Right')),
+)->onChange(static function (mixed $value) use (&$connectedValue): void {
+    $connectedValue = $value;
+})->toElement();
+$connectedProperties = $connectedButtonGroup->properties();
+$connectedChildren = $connectedButtonGroup->children();
+$connectedLeading = $connectedChildren[0]->properties();
+$connectedSelected = $connectedChildren[1]->properties();
+$connectedTrailing = $connectedChildren[2]->properties();
+if (
+    ($connectedProperties[PropKey::Gap->value] ?? null) !== 2.0
+    || ($connectedProperties[PropKey::WidthPercent->value] ?? null) !== 100.0
+    || ($connectedLeading[PropKey::FlexGrow->value] ?? null) !== 1.0
+    || ($connectedLeading[PropKey::MinWidth->value] ?? null) !== 0.0
+    || ($connectedLeading[PropKey::BorderTopLeftRadius->value] ?? null) !== 20.0
+    || ($connectedLeading[PropKey::BorderTopRightRadius->value] ?? null) !== 8.0
+    || ($connectedSelected[PropKey::BorderTopLeftRadius->value] ?? null) !== 20.0
+    || ($connectedSelected[PropKey::BorderTopRightRadius->value] ?? null) !== 20.0
+    || ($connectedTrailing[PropKey::BorderTopLeftRadius->value] ?? null) !== 8.0
+    || ($connectedTrailing[PropKey::BorderTopRightRadius->value] ?? null) !== 20.0
+) {
+    throw new RuntimeException(
+        'Connected p-btn-group items must fill the row with asymmetric outer shapes and a selected pill.',
+    );
+}
+$connectedChildren[1]->events()[EventKind::Press->value]();
+if ($connectedValue !== 'center') {
+    throw new RuntimeException(
+        'A mandatory p-btn-group must retain its selected scalar value.',
+    );
+}
+
+$rtlButtonGroup = $tags['p-btn-group']::make(
+    [
+        'modelValue' => 'week',
+        'connected' => true,
+        'block' => true,
+        'mandatory' => true,
+        'rtl' => true,
+    ],
+    $tags['p-btn']::make(['value' => 'day'], Text::make('Day')),
+    $tags['p-btn']::make(['value' => 'week'], Text::make('Week')),
+    $tags['p-btn']::make(['value' => 'month'], Text::make('Month')),
+)->toElement();
+$rtlProperties = $rtlButtonGroup->properties();
+$rtlChildren = $rtlButtonGroup->children();
+$rtlLogicalFirst = $rtlChildren[0]->properties();
+$rtlLogicalLast = $rtlChildren[2]->properties();
+if (
+    ($rtlProperties[PropKey::FlexDirection->value] ?? null)
+        !== FlexDirection::RowReverse->value
+    || ($rtlProperties[PropKey::LayoutDirection->value] ?? null) !== 2
+    || ($rtlLogicalFirst[PropKey::BorderTopLeftRadius->value] ?? null) !== 8.0
+    || ($rtlLogicalFirst[PropKey::BorderTopRightRadius->value] ?? null) !== 20.0
+    || ($rtlLogicalLast[PropKey::BorderTopLeftRadius->value] ?? null) !== 20.0
+    || ($rtlLogicalLast[PropKey::BorderTopRightRadius->value] ?? null) !== 8.0
+) {
+    throw new RuntimeException(
+        'RTL connected p-btn-group must reverse visual order and preserve logical outer shapes.',
+    );
+}
+
+$multipleValue = null;
+$multipleButtonGroup = $tags['p-btn-group']::make(
+    ['modelValue' => ['bold'], 'multiple' => true, 'mandatory' => true],
+    $tags['p-btn']::make(['value' => 'bold'], Text::make('Bold')),
+    $tags['p-btn']::make(['value' => 'italic'], Text::make('Italic')),
+)->onChange(static function (mixed $value) use (&$multipleValue): void {
+    $multipleValue = $value;
+})->toElement();
+$multipleButtonGroup->children()[0]->events()[EventKind::Press->value]();
+if ($multipleValue !== ['bold']) {
+    throw new RuntimeException(
+        'A mandatory multiple p-btn-group must never clear its final selection.',
+    );
+}
+
+$disabledButtonGroup = $tags['p-btn-group']::make(
+    ['disabled' => true, 'density' => 'compact', 'modelValue' => 'read'],
+    $tags['p-btn']::make(['value' => 'read'], Text::make('Read')),
+    $tags['p-btn']::make(['value' => 'write'], Text::make('Write')),
+)->toElement();
+if (($disabledButtonGroup->properties()[PropKey::Opacity->value] ?? null) !== 1.0) {
+    throw new RuntimeException(
+        'Disabled p-btn-group must not compound the state alpha already applied to its children.',
+    );
+}
+$disabledGroupChildren = $disabledButtonGroup->children();
+if (
+    ($disabledGroupChildren[0]->properties()[PropKey::Selected->value] ?? null) !== true
+    || ($disabledGroupChildren[0]->properties()[PropKey::BackgroundColor->value] ?? 0)
+        === 0x00000000
+    || ($disabledGroupChildren[1]->properties()[PropKey::BackgroundColor->value] ?? null)
+        !== 0x00000000
+) {
+    throw new RuntimeException(
+        'Disabled p-btn-group must preserve a visible distinction between selected and unselected items.',
+    );
+}
+foreach ($disabledButtonGroup->children() as $disabledButton) {
+    $disabledProperties = $disabledButton->properties();
+    if (
+        ($disabledProperties[PropKey::Enabled->value] ?? null) !== false
+        || ($disabledProperties[PropKey::Height->value] ?? null) !== 32.0
+        || ($disabledProperties[PropKey::HitSlopTop->value] ?? null) !== 8.0
+    ) {
+        throw new RuntimeException(
+            'p-btn-group density and disabled state must propagate to every child target.',
+        );
+    }
+}
+$findByValue = static function (
+    \Pam\Native\Element $root,
+    string $value,
+) use (&$findByValue): ?\Pam\Native\Element {
+    if (($root->properties()[PropKey::Value->value] ?? null) === $value) {
+        return $root;
+    }
+    foreach ($root->children() as $child) {
+        $match = $findByValue($child, $value);
+        if ($match instanceof \Pam\Native\Element) {
+            return $match;
+        }
+    }
+
+    return null;
+};
 $parity = json_decode(
     file_get_contents(dirname(__DIR__).'/resources/material-parity.json')
         ?: throw new RuntimeException('Unable to read the Material parity contract.'),
@@ -106,6 +482,26 @@ $themes = [
     ['mode' => ThemeMode::Light, 'theme' => Themes::pamLight(), 'name' => 'pam-light'],
     ['mode' => ThemeMode::Dark, 'theme' => Themes::pamDark(), 'name' => 'pam-dark'],
 ];
+$semanticContrastPairs = [
+    [ColorToken::PrimaryForeground, ColorToken::Primary],
+    [ColorToken::SecondaryForeground, ColorToken::Secondary],
+    [ColorToken::SuccessForeground, ColorToken::Success],
+    [ColorToken::WarningForeground, ColorToken::Warning],
+    [ColorToken::InfoForeground, ColorToken::Info],
+    [ColorToken::DestructiveForeground, ColorToken::Destructive],
+];
+foreach ($themes as ['theme' => $theme, 'name' => $themeName]) {
+    if ($theme->contrastRatio(ColorToken::Outline, ColorToken::Surface) < 3.0) {
+        throw new RuntimeException("{$themeName} outline must retain 3:1 non-text contrast.");
+    }
+    foreach ($semanticContrastPairs as [$foreground, $background]) {
+        if ($theme->contrastRatio($foreground, $background) < 4.5) {
+            throw new RuntimeException(
+                "{$themeName} {$foreground->name}/{$background->name} must retain 4.5:1 contrast.",
+            );
+        }
+    }
+}
 $variants = ['elevated', 'flat', 'tonal', 'outlined', 'text', 'plain'];
 $densities = ['default', 'comfortable', 'compact'];
 $states = [
@@ -152,6 +548,44 @@ if (
 ) {
     throw new RuntimeException(
         'p-icon must resolve semantic and custom colors into a visible native tint.',
+    );
+}
+
+$switchClass = $tags['p-switch'];
+$errorSwitch = $switchClass::make([
+    'label' => 'Error state',
+    'checked' => true,
+    'color' => 'error',
+])->toElement();
+$errorSwitchHost = $errorSwitch->properties()[PropKey::HostProperties->value] ?? null;
+if (!$errorSwitchHost instanceof BinaryValue) {
+    throw new RuntimeException('p-switch must expose its native Material color contract.');
+}
+$errorSwitchNative = Wire::decodeMap($errorSwitchHost->bytes);
+if (
+    ($errorSwitchNative['trackOnColor'] ?? null)
+        !== $iconTheme->color(ColorToken::Destructive)
+    || ($errorSwitchNative['activeThumbColor'] ?? null)
+        !== $iconTheme->color(ColorToken::DestructiveForeground)
+) {
+    throw new RuntimeException(
+        'p-switch semantic variants must reach the native track and selected thumb.',
+    );
+}
+
+$readOnlySwitch = $switchClass::make([
+    'label' => 'Read only state',
+    'checked' => true,
+    'readonly' => true,
+])->toElement();
+$readOnlySwitchHost = $readOnlySwitch->properties()[PropKey::HostProperties->value] ?? null;
+if (
+    !$readOnlySwitchHost instanceof BinaryValue
+    || (Wire::decodeMap($readOnlySwitchHost->bytes)['readOnly'] ?? null) !== true
+    || (Wire::decodeMap($readOnlySwitchHost->bytes)['interactionDisabled'] ?? null) !== true
+) {
+    throw new RuntimeException(
+        'p-switch must forward its readonly alias to the native interaction guard.',
     );
 }
 
@@ -227,6 +661,41 @@ if ($calendarDay->kind() !== NodeKind::Pressable) {
         'p-calendar-day must render an interactive native pressable.',
     );
 }
+$selectedCalendarDay = $calendarDayClass::make(
+    [
+        'selected' => true,
+        'state' => 'selected',
+        'accessibilityLabel' => 'July 15, 2026',
+    ],
+    Text::make('15'),
+)->toElement();
+$calendarDayIndicator = $selectedCalendarDay->children()[0] ?? null;
+if (
+    !$calendarDayIndicator instanceof \Pam\Native\Element
+    || ($calendarDayIndicator->properties()[PropKey::Width->value] ?? null) !== 40.0
+    || ($calendarDayIndicator->properties()[PropKey::Height->value] ?? null) !== 40.0
+    || ($calendarDayIndicator->properties()[PropKey::BorderRadius->value] ?? null) !== 20.0
+) {
+    throw new RuntimeException(
+        'p-calendar-day must place its state inside a 40dp circular indicator.',
+    );
+}
+$rangeStartDay = $calendarDayClass::make(
+    ['state' => 'range-start', 'selected' => true],
+    Text::make('12'),
+)->toElement();
+$rangeStartTrack = $rangeStartDay->children()[0] ?? null;
+if (
+    !$rangeStartTrack instanceof \Pam\Native\Element
+    || ($rangeStartTrack->properties()[PropKey::Left->value] ?? null) !== 24.0
+    || ($rangeStartTrack->properties()[PropKey::Top->value] ?? null) !== 4.0
+    || ($rangeStartTrack->properties()[PropKey::Width->value] ?? null) !== 24.0
+    || ($rangeStartTrack->properties()[PropKey::Height->value] ?? null) !== 40.0
+) {
+    throw new RuntimeException(
+        'p-calendar-day range start must fill only its trailing 40dp half-track.',
+    );
+}
 
 $listClass = $tags['p-list'];
 $list = $listClass::make([
@@ -244,9 +713,18 @@ $twoLineItem = $twoLineItemClass::make(
     Text::make('Account'),
     Text::make('Profile and security'),
 )->toElement();
-if (($twoLineItem->properties()[PropKey::Height->value] ?? null) !== 64.0) {
+if (($twoLineItem->properties()[PropKey::Height->value] ?? null) !== 72.0) {
     throw new RuntimeException(
-        'p-list-item must infer the 64dp two-line Material height.',
+        'p-list-item must infer the 72dp two-line Material height.',
+    );
+}
+$namedThreeLineItem = $twoLineItemClass::make([
+    'lines' => 'three',
+    'text' => 'Release notes',
+])->toElement();
+if (($namedThreeLineItem->properties()[PropKey::Height->value] ?? null) !== 88.0) {
+    throw new RuntimeException(
+        'p-list-item must normalize the public named three-line profile to 88dp.',
     );
 }
 $compactItem = $twoLineItemClass::make([
@@ -254,9 +732,258 @@ $compactItem = $twoLineItemClass::make([
     'lines' => 1,
     'text' => 'Account',
 ])->toElement();
-if (($compactItem->properties()[PropKey::Height->value] ?? null) !== 40.0) {
+if (($compactItem->properties()[PropKey::Height->value] ?? null) !== 48.0) {
     throw new RuntimeException(
-        'Compact one-line p-list-item must use a 40dp visual height.',
+        'Compact one-line p-list-item must use a 48dp visual height.',
+    );
+}
+$iconClass = $tags['p-icon'];
+$oneLineNavigationItem = $twoLineItemClass::make(
+    ['accessibilityLabel' => 'Open settings'],
+    $iconClass::make(['icon' => 'settings']),
+    Text::make('Settings'),
+    $iconClass::make(['icon' => 'chevron-right']),
+)->toElement();
+if (($oneLineNavigationItem->properties()[PropKey::Height->value] ?? null) !== 56.0) {
+    throw new RuntimeException(
+        'Icon + label + trailing icon p-list-item anatomy must remain one line (56dp).',
+    );
+}
+
+$textFieldClass = $tags['p-text-field'];
+$filledTextField = $textFieldClass::make([
+    'label' => 'Email',
+    'modelValue' => 'team@pam.dev',
+    'error' => true,
+])->toElement();
+$filledTextFieldHost = $filledTextField->properties()[PropKey::HostProperties->value] ?? null;
+$outlinedTextField = $textFieldClass::make([
+    'label' => 'Email',
+    'variant' => 'outlined',
+    'error' => true,
+])->toElement();
+$outlinedTextFieldHost = $outlinedTextField->properties()[PropKey::HostProperties->value] ?? null;
+$filledTextFieldInput = null;
+$filledTextFieldStack = [$filledTextField];
+while ($filledTextFieldStack !== []) {
+    $candidate = array_pop($filledTextFieldStack);
+    if ($candidate->kind() === NodeKind::Input) {
+        $filledTextFieldInput = $candidate;
+        break;
+    }
+    array_push($filledTextFieldStack, ...$candidate->children());
+}
+if (
+    !$filledTextFieldHost instanceof BinaryValue
+    || !$outlinedTextFieldHost instanceof BinaryValue
+    || !$filledTextFieldInput instanceof \Pam\Native\Element
+    || ($filledTextFieldInput->properties()[
+        PropKey::AccessibilityLabel->value
+    ] ?? null) !== 'Email'
+    || (Wire::decodeMap($filledTextFieldHost->bytes)['indicatorOnly'] ?? null) !== true
+    || (Wire::decodeMap($outlinedTextFieldHost->bytes)['indicatorOnly'] ?? null) !== false
+    || (Wire::decodeMap($filledTextFieldHost->bytes)['outlineWidth'] ?? null) !== 2.0
+    || (Wire::decodeMap($outlinedTextFieldHost->bytes)['outlineWidth'] ?? null) !== 2.0
+) {
+    throw new RuntimeException(
+        'Material fields must use a 2dp focused/error indicator while outlined fields retain a full outline.',
+    );
+}
+
+$sliderClass = $tags['p-slider'];
+$slider = $sliderClass::make(['value' => 40])->toElement();
+$sliderHost = $slider->properties()[PropKey::HostProperties->value] ?? null;
+$sliderTrack = $findByValue($slider, 'pam:slider-track');
+$sliderThumb = $findByValue($slider, 'pam:slider-thumb');
+if (
+    !$sliderHost instanceof BinaryValue
+    || !$sliderTrack instanceof \Pam\Native\Element
+    || !$sliderThumb instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException(
+        'p-slider must expose its native host, track and handle anatomy.',
+    );
+}
+$sliderNative = Wire::decodeMap($sliderHost->bytes);
+if (
+    ($sliderNative['trackThickness'] ?? null) !== 16.0
+    || ($sliderNative['thumbWidth'] ?? null) !== 4.0
+    || ($sliderNative['thumbHeight'] ?? null) !== 44.0
+    || ($sliderNative['thumbTrackGap'] ?? null) !== 6.0
+    || ($sliderNative['stateLayerSize'] ?? null) !== 40.0
+    || ($sliderNative['stopIndicatorSize'] ?? null) !== 4.0
+    || ($sliderNative['tickSize'] ?? null) !== 4.0
+    || ($sliderTrack->properties()[PropKey::Height->value] ?? null) !== 16.0
+    || ($sliderThumb->properties()[PropKey::Width->value] ?? null) !== 4.0
+    || ($sliderThumb->properties()[PropKey::Height->value] ?? null) !== 44.0
+) {
+    throw new RuntimeException(
+        'p-slider must preserve the PAM Material track, pill handle and state-layer metrics at the native boundary.',
+    );
+}
+
+$rangeSliderClass = $tags['p-range-slider'];
+$labelledRangeSlider = $rangeSliderClass::make([
+    'modelValue' => [20, 80],
+    'thumbLabel' => 'always',
+])->toElement();
+$labelledRangeTrack = $findByValue($labelledRangeSlider, 'pam:slider-track');
+if (
+    !$labelledRangeTrack instanceof \Pam\Native\Element
+    || ($labelledRangeSlider->properties()[PropKey::MinHeight->value] ?? null) !== 80.0
+    || ($labelledRangeTrack->properties()[PropKey::MarginTop->value] ?? null) !== 48.0
+) {
+    throw new RuntimeException(
+        'A labelled range slider must reserve an 80dp value-indicator lane and place its track below the label.',
+    );
+}
+$tickLabelledRangeSlider = $rangeSliderClass::make([
+    'modelValue' => [20, 80],
+    'step' => 25,
+    'tickLabels' => ['0', '25', '50', '75', '100'],
+])->toElement();
+$tickLabelledRangeHost = $tickLabelledRangeSlider
+    ->properties()[PropKey::HostProperties->value] ?? null;
+$tickLabelledRangeNative = $tickLabelledRangeHost instanceof BinaryValue
+    ? Wire::decodeMap($tickLabelledRangeHost->bytes)
+    : [];
+if (
+    !$tickLabelledRangeHost instanceof BinaryValue
+    || ($tickLabelledRangeSlider->properties()[PropKey::MinHeight->value] ?? null) !== 72.0
+    || ($tickLabelledRangeNative['tickLabels'] ?? null)
+        !== '["0","25","50","75","100"]'
+    || ($tickLabelledRangeNative['showTicks'] ?? null) !== true
+    || ($tickLabelledRangeNative['alwaysShowTicks'] ?? null) !== true
+    || !is_int($tickLabelledRangeNative['tickLabelColor'] ?? null)
+) {
+    throw new RuntimeException(
+        'Range-slider tick labels must reserve their own lane and reach the native host as visible labels.',
+    );
+}
+$fullyLabelledRangeSlider = $rangeSliderClass::make([
+    'modelValue' => [20, 80],
+    'thumbLabel' => 'always',
+    'tickLabels' => ['Low', 'High'],
+])->toElement();
+if (
+    ($fullyLabelledRangeSlider->properties()[PropKey::MinHeight->value] ?? null)
+        !== 104.0
+) {
+    throw new RuntimeException(
+        'Value labels and tick labels must use separate non-overlapping slider lanes.',
+    );
+}
+$verticalLabelledRangeSlider = $rangeSliderClass::make([
+    'modelValue' => [20, 80],
+    'orientation' => 2,
+    'thumbLabel' => 'always',
+])->toElement();
+$verticalLabelledRangeTrack = $findByValue(
+    $verticalLabelledRangeSlider,
+    'pam:slider-track',
+);
+if (
+    !$verticalLabelledRangeTrack instanceof \Pam\Native\Element
+    || ($verticalLabelledRangeSlider->properties()[PropKey::Width->value] ?? null)
+        !== 112.0
+    || ($verticalLabelledRangeTrack->properties()[PropKey::MarginLeft->value] ?? null)
+        !== 16.0
+) {
+    throw new RuntimeException(
+        'Vertical orientation aliases must center the track and reserve an unclipped value-label lane: '
+        .json_encode([
+            'width' => $verticalLabelledRangeSlider
+                ->properties()[PropKey::Width->value] ?? null,
+            'trackMarginLeft' => $verticalLabelledRangeTrack instanceof \Pam\Native\Element
+                ? ($verticalLabelledRangeTrack
+                    ->properties()[PropKey::MarginLeft->value] ?? null)
+                : null,
+        ], JSON_THROW_ON_ERROR),
+    );
+}
+$normalizedRangeSlider = $rangeSliderClass::make([
+    'modelValue' => [83, 17],
+    'minValue' => 0,
+    'maxValue' => 100,
+    'step' => 10,
+])->toElement();
+$normalizedRangeHost = $normalizedRangeSlider
+    ->properties()[PropKey::HostProperties->value] ?? null;
+$normalizedRangeNative = $normalizedRangeHost instanceof BinaryValue
+    ? Wire::decodeMap($normalizedRangeHost->bytes)
+    : [];
+if (
+    ($normalizedRangeNative['lowerValue'] ?? null) !== 20.0
+    || ($normalizedRangeNative['upperValue'] ?? null) !== 80.0
+    || ($normalizedRangeNative['value'] ?? null) !== 80.0
+) {
+    throw new RuntimeException(
+        'Range-slider endpoints must clamp, snap and sort before crossing the native boundary.',
+    );
+}
+
+$tabsClass = $tags['p-tabs'];
+$tabClass = $tags['p-tab'];
+$tabs = $tabsClass::make(
+    ['value' => 'one'],
+    $tabClass::make(['value' => 'one', 'text' => 'One']),
+    $tabClass::make(['value' => 'two', 'text' => 'Two']),
+)->toElement();
+$tabsIndicator = $findByValue($tabs, 'pam:tabs-indicator');
+if (
+    !$tabsIndicator instanceof \Pam\Native\Element
+    || ($tabsIndicator->properties()[PropKey::Height->value] ?? null) !== 3.0
+) {
+    throw new RuntimeException('p-tabs must render the 3dp Material active indicator.');
+}
+$selectedTabElement = $tabClass::make([
+    'value' => 'one',
+    'text' => 'One',
+    'selected' => true,
+])->toElement();
+$selectedTabHost = $selectedTabElement
+    ->properties()[PropKey::HostProperties->value] ?? null;
+$selectedTabNative = $selectedTabHost instanceof BinaryValue
+    ? Wire::decodeMap($selectedTabHost->bytes)
+    : [];
+if (
+    ($selectedTabNative['selectedForegroundColor'] ?? null)
+        !== ThemeManager::current()->color(ColorToken::Primary)
+    || ($selectedTabNative['foregroundColor'] ?? null)
+        !== ThemeManager::current()->color(ColorToken::MutedForeground)
+) {
+    throw new RuntimeException(
+        'p-tab must keep selected text visible on the transparent Material tab surface.',
+    );
+}
+
+$circularProgressClass = $tags['p-progress-circular'];
+$circularProgress = $circularProgressClass::make(['value' => 50])->toElement();
+$circularProgressHost = $circularProgress
+    ->properties()[PropKey::HostProperties->value] ?? null;
+if (!$circularProgressHost instanceof BinaryValue) {
+    throw new RuntimeException('p-progress-circular must render a native progress host.');
+}
+$circularProgressNative = Wire::decodeMap($circularProgressHost->bytes);
+if (($circularProgressNative['thickness'] ?? null) !== 4.0) {
+    throw new RuntimeException(
+        'p-progress-circular must preserve the 4dp Material stroke at the native boundary.',
+    );
+}
+
+$bottomSheetClass = $tags['p-bottom-sheet'];
+$bottomSheet = $bottomSheetClass::make(
+    ['open' => true],
+    Text::make('Sheet content'),
+)->toElement();
+$dragHandle = $findByValue($bottomSheet, 'pam:sheet-drag-indicator');
+if (
+    !$dragHandle instanceof \Pam\Native\Element
+    || ($dragHandle->properties()[PropKey::Width->value] ?? null) !== 32.0
+    || ($dragHandle->properties()[PropKey::Height->value] ?? null) !== 4.0
+) {
+    throw new RuntimeException(
+        'p-bottom-sheet must render the Material 32x4dp drag handle.',
     );
 }
 
@@ -287,6 +1014,27 @@ if (
         'p-avatar content must inherit a foreground that contrasts its surface.',
     );
 }
+$tonalAvatar = $avatarClass::make(
+    ['variant' => 'tonal'],
+    Text::make('PA'),
+)->toElement();
+$borderedAvatar = $avatarClass::make(
+    ['border' => true],
+    Text::make('PA'),
+)->toElement();
+if (
+    ($tonalAvatar->properties()[PropKey::BackgroundColor->value] ?? null)
+        === Themes::pamLight()->color(ColorToken::Secondary)
+    || (($tonalAvatar->children()[0] ?? null)?->properties()[PropKey::TextColor->value]
+        ?? null) !== Themes::pamLight()->color(ColorToken::Secondary)
+    || ($borderedAvatar->properties()[PropKey::BorderWidth->value] ?? null) !== 2.0
+    || ($borderedAvatar->properties()[PropKey::BorderColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::Surface)
+) {
+    throw new RuntimeException(
+        'Tonal and bordered avatars must retain distinct, contrasting visual contracts.',
+    );
+}
 $itemClass = $tags['p-item'];
 $selectedItem = $itemClass::make(
     ['selected' => true],
@@ -296,7 +1044,7 @@ $selectedItemLabel = $selectedItem->children()[0] ?? null;
 if (
     !$selectedItemLabel instanceof \Pam\Native\Element
     || ($selectedItemLabel->properties()[PropKey::TextColor->value] ?? null)
-        !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
+        !== Themes::pamLight()->color(ColorToken::AccentForeground)
 ) {
     throw new RuntimeException(
         'Selected p-item content must contrast its selected surface.',
@@ -309,7 +1057,7 @@ $slideGroupItemStyle = MaterialStyleResolver::resolve([
 if (
     !$slideGroupItemStyle instanceof Style
     || $slideGroupItemStyle->widthPercent !== null
-    || $slideGroupItemStyle->minWidth !== 96.0
+    || $slideGroupItemStyle->minWidth !== 48.0
     || $slideGroupItemStyle->textColor
         !== Themes::pamLight()->color(ColorToken::SecondaryForeground)
 ) {
@@ -505,6 +1253,7 @@ foreach (['p-time-picker'] as $timePickerTag) {
     $timePickerClass = $tags[$timePickerTag];
     $timePicker = $timePickerClass::make([
         'accessibilityLabel' => 'Select time',
+        'format' => '24hr',
     ])->toElement();
     $timePickerHost =
         $timePicker->properties()[PropKey::HostProperties->value] ?? null;
@@ -525,6 +1274,7 @@ foreach (['p-time-picker'] as $timePickerTag) {
         ($timePickerProperties['behavior'] ?? null)
             !== NativeBehavior::DateTimePicker->value
         || ($timePickerProperties['mode'] ?? null) !== ComponentMode::Time->value
+        || ($timePickerProperties['is24Hour'] ?? null) !== true
     ) {
         throw new RuntimeException(
             "{$timePickerTag} must open a native time picker, not calendar behavior.",
@@ -535,8 +1285,10 @@ foreach (['p-time-picker'] as $timePickerTag) {
 $dateInputClass = $tags['p-date-input'];
 $dateInput = $dateInputClass::make([
     'modelValue' => '2026-07-28',
+    'format' => 'DD/MM/YYYY',
     'minimumDate' => '2026-07-01',
     'maximumDate' => '2026-07-31',
+    'readonly' => true,
     'accessibilityLabel' => 'Select date',
 ])->toElement();
 $dateInputHost = $dateInput->properties()[PropKey::HostProperties->value] ?? null;
@@ -551,9 +1303,29 @@ if (
     || ($dateInputNative['mode'] ?? null) !== ComponentMode::Date->value
     || ($dateInputNative['minimumDate'] ?? null) !== '2026-07-01'
     || ($dateInputNative['maximumDate'] ?? null) !== '2026-07-31'
+    || ($dateInputNative['readOnly'] ?? null) !== true
+    || ($dateInput->properties()[PropKey::Enabled->value] ?? null) !== false
 ) {
     throw new RuntimeException(
         'p-date-input must open a bounded native date selector instead of a plain text field.',
+    );
+}
+$dateInputText = null;
+$dateInputQueue = [$dateInput];
+while ($dateInputQueue !== []) {
+    $candidate = array_shift($dateInputQueue);
+    $candidateText = $candidate->properties()[PropKey::Text->value]
+        ?? $candidate->properties()[PropKey::Value->value]
+        ?? null;
+    if ($candidateText === '28/07/2026') {
+        $dateInputText = $candidateText;
+        break;
+    }
+    array_push($dateInputQueue, ...$candidate->children());
+}
+if ($dateInputText !== '28/07/2026') {
+    throw new RuntimeException(
+        'p-date-input must format controlled modelValue for display without changing its ISO value.',
     );
 }
 
@@ -637,6 +1409,10 @@ $itemProperties = Wire::decodeMap($itemHost->bytes);
 if (
     ($itemProperties['abstractSelectionItem'] ?? null) !== true
     || ($itemProperties['checked'] ?? null) !== true
+    || !isset($itemProperties['foregroundColor'])
+    || !isset($itemProperties['selectedForegroundColor'])
+    || !isset($itemProperties['selectedContainerColor'])
+    || $itemProperties['foregroundColor'] === $itemProperties['selectedForegroundColor']
     || ($item->properties()[PropKey::AccessibilityRole->value] ?? null)
         !== AccessibilityRole::Button->value
     || count($item->children()) !== 1
@@ -660,6 +1436,16 @@ $itemGroup = $itemGroupClass::make(
     },
 )->toElement();
 $groupItem = $itemGroup->children()[0] ?? null;
+$itemGroupStyle = $itemGroup->properties();
+if (
+    ($itemGroupStyle[PropKey::FlexDirection->value] ?? null)
+        !== FlexDirection::Column->value
+    || ($itemGroupStyle[PropKey::WidthPercent->value] ?? null) !== 100.0
+) {
+    throw new RuntimeException(
+        'p-item-group must stack full-width items vertically by default.',
+    );
+}
 $groupToggle = $groupItem?->events()[EventKind::Toggle->value] ?? null;
 if (!$groupToggle instanceof Closure) {
     throw new RuntimeException(
@@ -727,15 +1513,51 @@ $buttonToggleClass = $tags['p-btn-toggle'];
 $buttonClass = $tags['p-btn'];
 $selectedButton = null;
 $buttonToggle = $buttonToggleClass::make(
-    ['value' => 'left'],
+    ['value' => 'left', 'block' => true],
     $buttonClass::make(['text' => 'Left', 'value' => 'left']),
+    $buttonClass::make(['text' => 'Center', 'value' => 'center']),
     $buttonClass::make(['text' => 'Right', 'value' => 'right']),
 )->onChange(
     static function (string $value) use (&$selectedButton): void {
         $selectedButton = $value;
     },
 )->toElement();
-$rightButtonPress = ($buttonToggle->children()[1] ?? null)?->events()[
+$toggleProperties = $buttonToggle->properties();
+$toggleChildren = $buttonToggle->children();
+$toggleLeading = $toggleChildren[0]->properties();
+$toggleMiddle = $toggleChildren[1]->properties();
+$toggleTrailing = $toggleChildren[2]->properties();
+if (
+    $buttonToggle->kind() !== NodeKind::Row
+    || ($toggleProperties[PropKey::Gap->value] ?? null) !== 0.0
+    || ($toggleProperties[PropKey::MinHeight->value] ?? null) !== 48.0
+    || ($toggleProperties[PropKey::WidthPercent->value] ?? null) !== 100.0
+    || ($toggleLeading[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::ToggleButton->value
+    || ($toggleLeading[PropKey::HitSlopLeft->value] ?? null) !== 0.0
+    || ($toggleLeading[PropKey::HitSlopTop->value] ?? null) !== 4.0
+    || ($toggleLeading[PropKey::Selected->value] ?? null) !== true
+    || ($toggleLeading[PropKey::BackgroundColor->value] ?? null)
+        !== ThemeManager::current()->color(ColorToken::Secondary)
+    || ($toggleLeading[PropKey::FlexGrow->value] ?? null) !== 1.0
+    || ($toggleLeading[PropKey::BorderWidth->value] ?? null) !== 1.0
+    || ($toggleLeading[PropKey::MarginLeft->value] ?? null) !== 0.0
+    || ($toggleLeading[PropKey::BorderTopLeftRadius->value] ?? null) !== 20.0
+    || ($toggleLeading[PropKey::BorderTopRightRadius->value] ?? null) !== 0.0
+    || ($toggleMiddle[PropKey::BorderWidth->value] ?? null) !== 1.0
+    || ($toggleMiddle[PropKey::MarginLeft->value] ?? null) !== -1.0
+    || ($toggleMiddle[PropKey::BorderTopLeftRadius->value] ?? null) !== 0.0
+    || ($toggleMiddle[PropKey::BorderTopRightRadius->value] ?? null) !== 0.0
+    || ($toggleTrailing[PropKey::BorderWidth->value] ?? null) !== 1.0
+    || ($toggleTrailing[PropKey::MarginLeft->value] ?? null) !== -1.0
+    || ($toggleTrailing[PropKey::BorderTopLeftRadius->value] ?? null) !== 0.0
+    || ($toggleTrailing[PropKey::BorderTopRightRadius->value] ?? null) !== 20.0
+) {
+    throw new RuntimeException(
+        'p-btn-toggle must render a connected 48 dp segmented control with one shared outline and a visible selected state.',
+    );
+}
+$rightButtonPress = ($toggleChildren[2] ?? null)?->events()[
     EventKind::Press->value
 ] ?? null;
 if (!$rightButtonPress instanceof Closure) {
@@ -747,6 +1569,22 @@ $rightButtonPress();
 if ($selectedButton !== 'right') {
     throw new RuntimeException(
         'Single p-btn-toggle selection must emit the selected button value.',
+    );
+}
+
+$optionalButton = 'unchanged';
+$optionalToggle = $buttonToggleClass::make(
+    ['value' => 'left'],
+    $buttonClass::make(['text' => 'Left', 'value' => 'left']),
+)->onChange(
+    static function (mixed $value) use (&$optionalButton): void {
+        $optionalButton = $value;
+    },
+)->toElement();
+$optionalToggle->children()[0]->events()[EventKind::Press->value]();
+if ($optionalButton !== null) {
+    throw new RuntimeException(
+        'A non-mandatory p-btn-toggle must allow its selected item to be cleared.',
     );
 }
 
@@ -772,6 +1610,65 @@ if ($mandatoryButtons !== ['left']) {
     throw new RuntimeException(
         'Mandatory p-btn-toggle must not deselect its final active button.',
     );
+}
+
+
+$rtlToggle = $buttonToggleClass::make(
+    ['value' => 'center', 'rtl' => true, 'block' => true],
+    $buttonClass::make(['text' => 'Left', 'value' => 'left']),
+    $buttonClass::make(['text' => 'Center', 'value' => 'center']),
+    $buttonClass::make(['text' => 'Right', 'value' => 'right']),
+)->toElement();
+$rtlToggleProperties = $rtlToggle->properties();
+$rtlToggleChildren = $rtlToggle->children();
+$rtlToggleLogicalFirst = $rtlToggleChildren[0]->properties();
+$rtlToggleLogicalLast = $rtlToggleChildren[2]->properties();
+if (
+    ($rtlToggleProperties[PropKey::FlexDirection->value] ?? null)
+        !== FlexDirection::RowReverse->value
+    || ($rtlToggleProperties[PropKey::LayoutDirection->value] ?? null) !== 2
+    || ($rtlToggleLogicalFirst[PropKey::MarginLeft->value] ?? null) !== -1.0
+    || ($rtlToggleLogicalFirst[PropKey::BorderTopLeftRadius->value] ?? null) !== 0.0
+    || ($rtlToggleLogicalFirst[PropKey::BorderTopRightRadius->value] ?? null) !== 20.0
+    || ($rtlToggleLogicalLast[PropKey::MarginLeft->value] ?? null) !== 0.0
+    || ($rtlToggleLogicalLast[PropKey::BorderTopLeftRadius->value] ?? null) !== 20.0
+    || ($rtlToggleLogicalLast[PropKey::BorderTopRightRadius->value] ?? null) !== 0.0
+) {
+    throw new RuntimeException(
+        'RTL p-btn-toggle must reverse visual order while preserving its physical outer corners and single outline.',
+    );
+}
+
+$disabledToggle = $buttonToggleClass::make(
+    ['value' => 'read', 'disabled' => true, 'density' => 'compact'],
+    $buttonClass::make(['text' => 'Read', 'value' => 'read']),
+    $buttonClass::make(['text' => 'Write', 'value' => 'write']),
+)->toElement();
+$disabledToggleChildren = $disabledToggle->children();
+if (
+    ($disabledToggle->properties()[PropKey::Opacity->value] ?? null) !== 1.0
+    || ($disabledToggleChildren[0]->properties()[PropKey::Selected->value] ?? null) !== true
+    || ($disabledToggleChildren[0]->properties()[PropKey::BackgroundColor->value] ?? 0)
+        === 0x00000000
+    || ($disabledToggleChildren[1]->properties()[PropKey::BackgroundColor->value] ?? null)
+        !== 0x00000000
+) {
+    throw new RuntimeException(
+        'Disabled p-btn-toggle must keep selected and unselected segments visually distinct without compounded opacity.',
+    );
+}
+foreach ($disabledToggleChildren as $disabledToggleChild) {
+    $disabledToggleProperties = $disabledToggleChild->properties();
+    if (
+        ($disabledToggleProperties[PropKey::Enabled->value] ?? null) !== false
+        || ($disabledToggleProperties[PropKey::Height->value] ?? null) !== 32.0
+        || ($disabledToggleProperties[PropKey::HitSlopLeft->value] ?? null) !== 0.0
+        || ($disabledToggleProperties[PropKey::HitSlopTop->value] ?? null) !== 8.0
+    ) {
+        throw new RuntimeException(
+            'p-btn-toggle density and disabled state must propagate to each non-overlapping segment target.',
+        );
+    }
 }
 
 $tabsClass = $tags['p-tabs'];
@@ -808,12 +1705,18 @@ $slideGroup = $slideGroupClass::make(
         $selectedSlide = $value;
     },
 )->toElement();
-$slidePress = ($slideGroup->children()[0] ?? null)?->events()[
+$slideHost = $slideGroup->children()[0] ?? null;
+$slidePress = ($slideHost?->children()[0] ?? null)?->events()[
     EventKind::Press->value
 ] ?? null;
-if (!$slidePress instanceof Closure) {
+if (
+    $slideGroup->kind() !== NodeKind::Scroll
+    || ($slideGroup->properties()[PropKey::Height->value] ?? null) !== 48.0
+    || $slideHost?->kind() !== NodeKind::CustomView
+    || !$slidePress instanceof Closure
+) {
     throw new RuntimeException(
-        'p-slide-group must bind press handling to p-slide-group-item.',
+        'p-slide-group must provide a native horizontal viewport and bind press handling to p-slide-group-item.',
     );
 }
 $slidePress();
@@ -862,15 +1765,42 @@ foreach ([
     ])->toElement();
     $stack = [$selection];
     $hasTrigger = false;
+    $triggerWidthPercent = null;
+    $triggerMinHeight = null;
+    $triggerKind = null;
     $hasInput = false;
+    $selectDragHandleWidth = null;
+    $selectDragHandleHeight = null;
     $sheetProperties = null;
+    $portalPresentation = null;
     while ($stack !== []) {
         $candidate = array_pop($stack);
+        if ($candidate->kind() === NodeKind::Modal) {
+            $portalPresentation = $candidate->properties()[
+                PropKey::ModalPresentation->value
+            ] ?? null;
+        }
         $marker = $candidate->properties()[PropKey::Value->value] ?? null;
-        $hasTrigger = $hasTrigger || (
+        if ($marker === 'pam:sheet-drag-indicator') {
+            $selectDragHandleWidth = $candidate->properties()[PropKey::Width->value]
+                ?? null;
+            $selectDragHandleHeight = $candidate->properties()[PropKey::Height->value]
+                ?? null;
+        }
+        $isTrigger = (
             is_string($marker)
             && str_starts_with($marker, 'pam:local-modal-trigger:')
         );
+        $hasTrigger = $hasTrigger || $isTrigger;
+        if ($isTrigger) {
+            $triggerWidthPercent = $candidate->properties()[
+                PropKey::WidthPercent->value
+            ] ?? null;
+            $triggerMinHeight = $candidate->properties()[
+                PropKey::MinHeight->value
+            ] ?? null;
+            $triggerKind = $candidate->kind();
+        }
         $hasInput = $hasInput || $candidate->kind() === NodeKind::Input;
         $host = $candidate->properties()[PropKey::HostProperties->value] ?? null;
         if ($host instanceof BinaryValue) {
@@ -888,14 +1818,253 @@ foreach ([
     }
     if (
         !$hasTrigger
+        || $triggerWidthPercent !== 100.0
+        || $triggerMinHeight !== 64.0
+        || $triggerKind !== NodeKind::Pressable
         || $hasInput
+        || $selectDragHandleWidth !== MaterialTokens::BOTTOM_SHEET_HANDLE_WIDTH
+        || $selectDragHandleHeight !== MaterialTokens::BOTTOM_SHEET_HANDLE_HEIGHT
+        || $portalPresentation !== ModalPresentation::FullScreen->value
+        || $sheetProperties['enableDynamicSizing'] !== true
         || $sheetProperties['searchable'] !== $searchable
         || $sheetProperties['allowCustomValue'] !== $allowCustomValue
     ) {
         throw new RuntimeException(
-            "{$selectionTag} must open a platform-neutral searchable mobile sheet.",
+            "{$selectionTag} must use one full-screen portal around one native searchable sheet.",
         );
     }
+}
+
+$multipleAutocompleteValue = null;
+$multipleAutocomplete = $tags['p-autocomplete']::make([
+    'label' => 'Team',
+    'items' => ['Design', 'Engineering', 'Product'],
+    'modelValue' => ['Design', 'Product'],
+    'multiple' => true,
+    'chips' => true,
+])->onChange(static function (mixed $value) use (&$multipleAutocompleteValue): void {
+    $multipleAutocompleteValue = $value;
+})->toElement();
+$stack = [$multipleAutocomplete];
+$engineeringPress = null;
+$multipleDisplay = false;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    $label = $candidate->properties()[PropKey::AccessibilityLabel->value] ?? null;
+    if ($label === 'Engineering') {
+        $engineeringPress = $candidate->events()[EventKind::Press->value] ?? null;
+    }
+    if (
+        $candidate->kind() === NodeKind::Text
+        && ($candidate->properties()[PropKey::Text->value] ?? null) === 'Design, Product'
+    ) {
+        $multipleDisplay = true;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (!$engineeringPress instanceof Closure || !$multipleDisplay) {
+    throw new RuntimeException(
+        'Multiple autocomplete must expose every selected value and selectable rows.',
+    );
+}
+$engineeringPress();
+if ($multipleAutocompleteValue !== ['Design', 'Product', 'Engineering']) {
+    throw new RuntimeException(
+        'Multiple autocomplete must emit the complete updated selection.',
+    );
+}
+
+$autocompleteError = $tags['p-autocomplete']::make([
+    'label' => 'Team',
+    'items' => ['Design', 'Engineering'],
+    'modelValue' => 'Design',
+    'error' => true,
+])->toElement();
+$autocompleteField = $autocompleteError->children()[0] ?? null;
+if (
+    !$autocompleteField instanceof \Pam\Native\Element
+    || ($autocompleteField->properties()[PropKey::BorderWidth->value] ?? null) !== 0.0
+    || ($autocompleteField->properties()[PropKey::BorderBottomWidth->value] ?? null) !== 2.0
+) {
+    throw new RuntimeException(
+        'Filled autocomplete errors must use an error indicator, not a full outline.',
+    );
+}
+
+$modalMarker = static function (\Pam\Native\Element $root): ?string {
+    $stack = [$root];
+    while ($stack !== []) {
+        $candidate = array_pop($stack);
+        $marker = $candidate->properties()[PropKey::Value->value] ?? null;
+        if (is_string($marker) && str_starts_with($marker, 'pam:local-modal:')) {
+            return $marker;
+        }
+        array_push($stack, ...$candidate->children());
+    }
+
+    return null;
+};
+$firstAutocomplete = $tags['p-autocomplete']::make([
+    'id' => 'team-primary',
+    'label' => 'Team',
+    'items' => ['Design', 'Engineering'],
+])->toElement();
+$secondAutocomplete = $tags['p-autocomplete']::make([
+    'id' => 'team-secondary',
+    'label' => 'Team',
+    'items' => ['Design', 'Engineering'],
+])->toElement();
+if ($modalMarker($firstAutocomplete) === $modalMarker($secondAutocomplete)) {
+    throw new RuntimeException(
+        'Repeated autocomplete instances must keep independent modal identities.',
+    );
+}
+$autocompleteChanges = [];
+$interactiveAutocomplete = $tags['p-autocomplete']::make([
+    'id' => 'team-interactive',
+    'label' => 'Team',
+    'items' => ['Design', 'Engineering'],
+    'modelValue' => 'Design',
+])->onChange(
+    static function (mixed $value) use (&$autocompleteChanges): void {
+        $autocompleteChanges[] = $value;
+    },
+)->toElement();
+$stack = [$interactiveAutocomplete];
+$engineeringPress = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if (($candidate->properties()[PropKey::Value->value] ?? null) === 'Engineering') {
+        $engineeringPress = $candidate->events()[EventKind::Press->value] ?? null;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (!$engineeringPress instanceof Closure) {
+    throw new RuntimeException('Autocomplete options must expose a press callback.');
+}
+$engineeringPress();
+if ($autocompleteChanges !== ['Engineering']) {
+    throw new RuntimeException(
+        'Autocomplete selection must publish the selected option value exactly once.',
+    );
+}
+$readOnlyAutocomplete = $tags['p-autocomplete']::make([
+    'id' => 'team-readonly',
+    'label' => 'Team',
+    'items' => ['Design', 'Engineering'],
+    'modelValue' => 'Design',
+    'readonly' => true,
+])->onChange(static fn (mixed $value): mixed => $value)->toElement();
+$stack = [$readOnlyAutocomplete];
+$readOnlyTrigger = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    $marker = $candidate->properties()[PropKey::Value->value] ?? null;
+    if (is_string($marker) && str_starts_with($marker, 'pam:readonly-select-trigger:')) {
+        $readOnlyTrigger = $candidate;
+        break;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (
+    !$readOnlyTrigger instanceof \Pam\Native\Element
+    || isset($readOnlyTrigger->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'Read-only autocomplete must expose its value without an opening action.',
+    );
+}
+$readOnlyTextField = $tags['p-text-field']::make([
+    'label' => 'Name',
+    'modelValue' => 'Ada',
+    'readonly' => true,
+])->toElement();
+$stack = [$readOnlyTextField];
+$readOnlyNativeInput = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if ($candidate->kind() === NodeKind::Input) {
+        $readOnlyNativeInput = $candidate;
+        break;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (
+    !$readOnlyNativeInput instanceof \Pam\Native\Element
+    || ($readOnlyNativeInput->properties()[PropKey::InputEditable->value] ?? true)
+        !== false
+    || ($readOnlyNativeInput->properties()[
+        PropKey::InputDisableFullscreenUi->value
+    ] ?? false) !== true
+) {
+    throw new RuntimeException(
+        'Material text inputs must be readonly-aware and remain inline in landscape.',
+    );
+}
+
+$textareaAffixes = $tags['p-textarea']::make([
+    'label' => 'Message',
+    'modelValue' => 'Hello',
+    'prefix' => '@',
+    'suffix' => 'note',
+    'clearable' => true,
+])->onChange(static fn (mixed $value): mixed => $value)->toElement();
+$stack = [$textareaAffixes];
+$textareaPrefix = null;
+$textareaSuffix = null;
+$textareaClear = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    $candidateValue = $candidate->properties()[PropKey::Text->value] ?? null;
+    $candidateLabel = $candidate->properties()[PropKey::AccessibilityLabel->value]
+        ?? null;
+    if ($candidateValue === '@') {
+        $textareaPrefix = $candidate;
+    } elseif ($candidateValue === 'note') {
+        $textareaSuffix = $candidate;
+    } elseif ($candidateLabel === 'Clear Message') {
+        $textareaClear = $candidate;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (
+    !$textareaPrefix instanceof \Pam\Native\Element
+    || ($textareaPrefix->properties()[PropKey::Top->value] ?? null) !== 13.0
+    || isset($textareaPrefix->properties()[PropKey::Bottom->value])
+    || !$textareaSuffix instanceof \Pam\Native\Element
+    || ($textareaSuffix->properties()[PropKey::Top->value] ?? null) !== 13.0
+    || isset($textareaSuffix->properties()[PropKey::Bottom->value])
+    || !$textareaClear instanceof \Pam\Native\Element
+    || ($textareaClear->properties()[PropKey::Top->value] ?? null) !== 20.0
+    || isset($textareaClear->properties()[PropKey::Bottom->value])
+) {
+    throw new RuntimeException(
+        'Textarea affixes and actions must align with the first editable line.',
+    );
+}
+
+$extractUiTextField = $tags['p-text-field']::make([
+    'disableFullscreenUI' => false,
+])->toElement();
+$stack = [$extractUiTextField];
+$extractUiNativeInput = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if ($candidate->kind() === NodeKind::Input) {
+        $extractUiNativeInput = $candidate;
+        break;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (
+    !$extractUiNativeInput instanceof \Pam\Native\Element
+    || ($extractUiNativeInput->properties()[
+        PropKey::InputDisableFullscreenUi->value
+    ] ?? true) !== false
+) {
+    throw new RuntimeException(
+        'Material text inputs must preserve the explicit Android extract-UI opt-in.',
+    );
 }
 
 $numberClass = $tags['p-number-input'];
@@ -913,6 +2082,7 @@ $numberInput = $numberClass::make([
 $stack = [$numberInput];
 $nativeNumberInput = null;
 $disabledNumberButtons = 0;
+$numberButtons = [];
 while ($stack !== []) {
     $candidate = array_pop($stack);
     if ($candidate->kind() === NodeKind::Input) {
@@ -920,9 +2090,11 @@ while ($stack !== []) {
     }
     if (
         $candidate->kind() === NodeKind::Pressable
-        && ($candidate->properties()[PropKey::Enabled->value] ?? true) === false
     ) {
-        $disabledNumberButtons++;
+        $numberButtons[] = $candidate;
+        if (($candidate->properties()[PropKey::Enabled->value] ?? true) === false) {
+            $disabledNumberButtons++;
+        }
     }
     array_push($stack, ...$candidate->children());
 }
@@ -934,9 +2106,310 @@ if (!$numberChange instanceof Closure) {
 }
 $numberChange('13');
 $numberChange('3.1');
-if ($numberChanges !== ['10', '4'] || $disabledNumberButtons !== 1) {
+if (
+    $numberChanges !== ['10', '4']
+    || $disabledNumberButtons !== 1
+    || count($numberButtons) !== 2
+    || array_any(
+        $numberButtons,
+        static fn (\Pam\Native\Element $button): bool =>
+            ($button->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+            || ($button->properties()[PropKey::MinHeight->value] ?? null) !== 48.0,
+    )
+) {
     throw new RuntimeException(
-        'p-number-input must clamp, snap and disable controls at numeric limits.',
+        'p-number-input must clamp, snap and expose 48dp controls at numeric limits.',
+    );
+}
+$precisionNumberInput = $numberClass::make([
+    'modelValue' => 4.5,
+    'step' => 0.25,
+    'precision' => 2,
+])->toElement();
+$stack = [$precisionNumberInput];
+$precisionNativeInput = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if ($candidate->kind() === NodeKind::Input) {
+        $precisionNativeInput = $candidate;
+        break;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (
+    !$precisionNativeInput instanceof \Pam\Native\Element
+    || ($precisionNativeInput->properties()[PropKey::Value->value] ?? null)
+        !== '4.50'
+) {
+    throw new RuntimeException(
+        'p-number-input precision must format the controlled native value.',
+    );
+}
+$readOnlyNumberInput = $numberClass::make([
+    'modelValue' => 8,
+    'readonly' => true,
+])->onChange(static fn (string $value): string => $value)->toElement();
+$stack = [$readOnlyNumberInput];
+$readOnlyNumberControls = [];
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if ($candidate->kind() === NodeKind::Pressable) {
+        $readOnlyNumberControls[] = $candidate;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (
+    count($readOnlyNumberControls) !== 2
+    || array_any(
+        $readOnlyNumberControls,
+        static fn (\Pam\Native\Element $button): bool =>
+            ($button->properties()[PropKey::Enabled->value] ?? true) !== false
+            || isset($button->events()[EventKind::Press->value])
+            || ($button->properties()[PropKey::Opacity->value] ?? null) !== 0.38,
+    )
+) {
+    throw new RuntimeException(
+        'Read-only number inputs must disable and visually mute both step controls.',
+    );
+}
+$stackedNumberInput = $numberClass::make([
+    'modelValue' => 8,
+    'controlVariant' => 'stacked',
+])->toElement();
+$stack = [$stackedNumberInput];
+$stackedControlGroup = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    $properties = $candidate->properties();
+    if (
+        ($properties[PropKey::Width->value] ?? null) === 48.0
+        && ($properties[PropKey::Height->value] ?? null) === 96.0
+        && ($properties[PropKey::BorderLeftWidth->value] ?? null) === 1.0
+    ) {
+        $stackedControlGroup = $candidate;
+        break;
+    }
+    array_push($stack, ...$candidate->children());
+}
+$stackedFirstControl = $stackedControlGroup?->children()[0] ?? null;
+if (
+    !$stackedControlGroup instanceof \Pam\Native\Element
+    || !$stackedFirstControl instanceof \Pam\Native\Element
+    || ($stackedFirstControl->properties()[
+        PropKey::BorderBottomWidth->value
+    ] ?? null) !== 1.0
+) {
+    throw new RuntimeException(
+        'Stacked number controls must use one continuous edge and one centered divider.',
+    );
+}
+$stackedNumberStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PNumberInput',
+    'controlVariant' => 'stacked',
+], Themes::pamLight());
+$defaultNumberStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PNumberInput',
+], Themes::pamLight());
+if (
+    !$stackedNumberStyle instanceof Style
+    || $stackedNumberStyle->height !== 112.0
+    || !$defaultNumberStyle instanceof Style
+    || $defaultNumberStyle->height !== 64.0
+) {
+    throw new RuntimeException(
+        'Number input variants must reserve their complete 48dp control geometry.',
+    );
+}
+
+$otpClass = $tags['p-otp-input'];
+$otpHost = $otpClass::make([
+    'modelValue' => '482915',
+    'focused' => true,
+])->toElement()->properties()[PropKey::HostProperties->value] ?? null;
+if (
+    !$otpHost instanceof BinaryValue
+    || (Wire::decodeMap($otpHost->bytes)['outlineWidth'] ?? null) !== 0.0
+) {
+    throw new RuntimeException(
+        'OTP must suppress the compound input outline because its slots own focus and error borders.',
+    );
+}
+$otpNodes = static function (\Pam\Native\Element $root): array {
+    $nodes = [];
+    $visit = static function (\Pam\Native\Element $node) use (&$visit, &$nodes): void {
+        $nodes[] = $node;
+        foreach ($node->children() as $child) {
+            $visit($child);
+        }
+    };
+    $visit($root);
+
+    return $nodes;
+};
+$maskedOtp = $otpClass::make([
+    'modelValue' => '482915',
+    'length' => 6,
+    'masked' => true,
+])->toElement();
+$maskedOtpNodes = $otpNodes($maskedOtp);
+$maskedOtpInput = null;
+$maskedOtpCells = [];
+$maskedOtpGlyphs = [];
+$otpVisualRow = null;
+foreach ($maskedOtpNodes as $candidate) {
+    $properties = $candidate->properties();
+    if ($candidate->kind() === NodeKind::Input) {
+        $maskedOtpInput = $candidate;
+    }
+    if (
+        ($properties[PropKey::Width->value] ?? null) === 40.0
+        && ($properties[PropKey::Height->value] ?? null) === 48.0
+    ) {
+        $maskedOtpCells[] = $candidate;
+    }
+    if ($candidate->kind() === NodeKind::Text) {
+        $maskedOtpGlyphs[] = $properties[PropKey::Text->value] ?? '';
+    }
+    if (
+        ($properties[PropKey::AccessibilityImportance->value] ?? null)
+            === AccessibilityImportance::NoHideDescendants->value
+    ) {
+        $otpVisualRow = $candidate;
+    }
+}
+if (
+    !$maskedOtpInput instanceof \Pam\Native\Element
+    || count($maskedOtpCells) !== 6
+    || count(array_filter($maskedOtpGlyphs, static fn (mixed $glyph): bool => $glyph === '•')) !== 6
+    || array_intersect(
+        array_values(array_filter($maskedOtpGlyphs, 'is_string')),
+        ['4', '8', '2', '9', '1', '5'],
+    ) !== []
+    || ($maskedOtpInput->properties()[PropKey::Secure->value] ?? false) !== true
+    || ($maskedOtpInput->properties()[PropKey::MaxLength->value] ?? null) !== 6
+    || ($maskedOtpInput->properties()[PropKey::InputCaretHidden->value] ?? false) !== true
+    || ($maskedOtpInput->properties()[PropKey::InputUnderlineColor->value] ?? null) !== 0x00000000
+    || ($maskedOtpInput->properties()[PropKey::KeyboardType->value] ?? null)
+        !== KeyboardType::Number->value
+    || ($maskedOtpInput->properties()[PropKey::Top->value] ?? null) !== 8.0
+    || ($maskedOtpInput->properties()[PropKey::Height->value] ?? null) !== 48.0
+    || ($maskedOtpInput->properties()[PropKey::TextColor->value] ?? null) !== 0x00000000
+    || ($maskedOtpInput->properties()[PropKey::Opacity->value] ?? null) !== 0.01
+    || ($maskedOtpInput->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'One-time password'
+    || !$otpVisualRow instanceof \Pam\Native\Element
+    || array_any(
+        $maskedOtpCells,
+        static fn (\Pam\Native\Element $cell): bool =>
+            ($cell->properties()[PropKey::BorderWidth->value] ?? null) !== 1.0,
+    )
+) {
+    throw new RuntimeException(
+        'OTP masking must hide every glyph while preserving one accessible 48dp native editor.',
+    );
+}
+$focusedOtpCells = array_values(array_filter(
+    $otpNodes($otpClass::make([
+        'modelValue' => '482915',
+        'length' => 6,
+        'focused' => true,
+    ])->toElement()),
+    static fn (\Pam\Native\Element $candidate): bool =>
+        ($candidate->properties()[PropKey::Width->value] ?? null) === 40.0
+        && ($candidate->properties()[PropKey::Height->value] ?? null) === 48.0,
+));
+if (
+    count($focusedOtpCells) !== 6
+    || ($focusedOtpCells[5]->properties()[PropKey::BorderWidth->value] ?? null) !== 2.0
+    || ($focusedOtpCells[5]->properties()[PropKey::BorderColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::Primary)
+) {
+    throw new RuntimeException(
+        'OTP must highlight only the controlled active slot while focused.',
+    );
+}
+$errorOtpCells = array_values(array_filter(
+    $otpNodes($otpClass::make([
+        'modelValue' => '482915',
+        'length' => 6,
+        'error' => true,
+        'helper' => 'Invalid code',
+    ])->toElement()),
+    static fn (\Pam\Native\Element $candidate): bool =>
+        ($candidate->properties()[PropKey::Width->value] ?? null) === 40.0
+        && ($candidate->properties()[PropKey::Height->value] ?? null) === 48.0,
+));
+if (
+    count($errorOtpCells) !== 6
+    || array_any(
+        $errorOtpCells,
+        static fn (\Pam\Native\Element $cell): bool =>
+            ($cell->properties()[PropKey::BorderColor->value] ?? null)
+                !== Themes::pamLight()->color(ColorToken::Destructive),
+    )
+) {
+    throw new RuntimeException('OTP error state must reach every visual slot.');
+}
+$dividerOtp = $otpClass::make([
+    'modelValue' => '482915',
+    'divider' => '−',
+])->toElement();
+$dividerGlyphs = array_filter(
+    $otpNodes($dividerOtp),
+    static fn (\Pam\Native\Element $candidate): bool =>
+        $candidate->kind() === NodeKind::Text
+        && ($candidate->properties()[PropKey::Text->value] ?? null) === '−',
+);
+$dividerOtpStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'POtpInput',
+    'divider' => '−',
+], Themes::pamLight());
+if (count($dividerGlyphs) !== 5 || $dividerOtpStyle?->width !== 360.0) {
+    throw new RuntimeException('OTP divider must render between all slots without overflow.');
+}
+$mergedOtpNodes = $otpNodes($otpClass::make([
+    'modelValue' => '482915',
+    'merged' => true,
+])->toElement());
+$mergedOtpCells = array_values(array_filter(
+    $mergedOtpNodes,
+    static fn (\Pam\Native\Element $candidate): bool =>
+        ($candidate->properties()[PropKey::Width->value] ?? null) === 40.0
+        && ($candidate->properties()[PropKey::Height->value] ?? null) === 48.0,
+));
+$mergedOtpRows = array_filter(
+    $mergedOtpNodes,
+    static fn (\Pam\Native\Element $candidate): bool =>
+        ($candidate->properties()[PropKey::Gap->value] ?? null) === 0.0,
+);
+if (
+    count($mergedOtpCells) !== 6
+    || ($mergedOtpCells[1]->properties()[PropKey::BorderLeftWidth->value] ?? null) !== 0.0
+    || $mergedOtpRows === []
+) {
+    throw new RuntimeException('Merged OTP slots must form one continuous field group.');
+}
+$loadingOtpNodes = $otpNodes($otpClass::make([
+    'modelValue' => '482915',
+    'loading' => true,
+])->toElement());
+$loadingOtpInput = null;
+$loadingOtpIndicator = null;
+foreach ($loadingOtpNodes as $candidate) {
+    if ($candidate->kind() === NodeKind::Input) {
+        $loadingOtpInput = $candidate;
+    } elseif ($candidate->kind() === NodeKind::ActivityIndicator) {
+        $loadingOtpIndicator = $candidate;
+    }
+}
+if (
+    !$loadingOtpInput instanceof \Pam\Native\Element
+    || !$loadingOtpIndicator instanceof \Pam\Native\Element
+    || ($loadingOtpInput->properties()[PropKey::AccessibilityBusy->value] ?? false)
+        !== true
+) {
+    throw new RuntimeException(
+        'Loading OTP must render a native indicator and announce its busy state.',
     );
 }
 
@@ -999,9 +2472,75 @@ if (
     || $persistentDialog->properties()[
         PropKey::ModalAllowSwipeDismissal->value
     ] !== false
+    || $persistentDialog->properties()[
+        PropKey::BottomSheetDismissible->value
+    ] !== false
 ) {
     throw new RuntimeException(
         'p-dialog persistent, fullscreen and scrim semantics must reach the native window.',
+    );
+}
+
+$bottomSheetClass = $tags['p-bottom-sheet'];
+$persistentBottomSheet = $bottomSheetClass::make([
+    'open' => true,
+    'persistent' => true,
+    'scrim' => false,
+    'snapPoints' => [34, 68],
+    'hideDragIndicator' => true,
+], Text::make('Sheet content'))->toElement();
+$bottomSheetHostNode = $persistentBottomSheet->children()[0] ?? null;
+$bottomSheetHost = $bottomSheetHostNode?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$bottomSheetBackdrop = $bottomSheetHostNode?->children()[0] ?? null;
+if (!$bottomSheetHost instanceof BinaryValue) {
+    throw new RuntimeException('p-bottom-sheet must retain its native sheet host.');
+}
+$bottomSheetProperties = Wire::decodeMap($bottomSheetHost->bytes);
+if (
+    $persistentBottomSheet->kind() !== NodeKind::Modal
+    || $persistentBottomSheet->properties()[PropKey::ModalPresentation->value]
+        !== ModalPresentation::FullScreen->value
+    || $persistentBottomSheet->properties()[
+        PropKey::BottomSheetDismissible->value
+    ] !== false
+    || ($bottomSheetProperties['snapPoints'] ?? null) !== "34\n68"
+    || ($bottomSheetProperties['backdropOpacity'] ?? null) !== 1.0
+    || ($bottomSheetProperties['dismissible'] ?? null) !== false
+    || ($bottomSheetProperties['enablePanDownToClose'] ?? null) !== false
+    || ($bottomSheetBackdrop?->properties()[PropKey::BackgroundColor->value] ?? null)
+        !== 0x00000000
+) {
+    throw new RuntimeException(
+        'Persistent p-bottom-sheet must keep native detents, transparent opt-out and every dismissal guard.',
+    );
+}
+
+$materialBottomSheet = $bottomSheetClass::make([
+    'open' => true,
+    'snapPoints' => [34],
+], Text::make('Sheet content'))->toElement();
+$materialBottomSheetHostNode = $materialBottomSheet->children()[0] ?? null;
+$materialBottomSheetHost = $materialBottomSheetHostNode?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$materialBottomSheetBackdrop = $materialBottomSheetHostNode?->children()[0] ?? null;
+if (!$materialBottomSheetHost instanceof BinaryValue) {
+    throw new RuntimeException('p-bottom-sheet default host properties are missing.');
+}
+$materialBottomSheetProperties = Wire::decodeMap($materialBottomSheetHost->bytes);
+if (
+    ($materialBottomSheet->properties()[
+        PropKey::BottomSheetDismissible->value
+    ] ?? null) !== true
+    ||
+    ($materialBottomSheetProperties['backdropOpacity'] ?? null) !== 1.0
+    || ($materialBottomSheetBackdrop?->properties()[PropKey::BackgroundColor->value] ?? null)
+        !== 0x66000000
+) {
+    throw new RuntimeException(
+        'p-bottom-sheet must render one undiluted 40% Material scrim.',
     );
 }
 
@@ -1040,16 +2579,131 @@ if (
 }
 
 $navIconClass = $tags['p-app-bar-nav-icon'];
-$navIcon = $navIconClass::make(['icon' => 'menu'])->toElement();
+$navPressed = false;
+$navIcon = $navIconClass::make(['icon' => 'menu'])->onPress(
+    static function () use (&$navPressed): void {
+        $navPressed = true;
+    },
+)->toElement();
 if (
     $navIcon->kind() !== NodeKind::Pressable
     || ($navIcon->properties()[PropKey::AccessibilityLabel->value] ?? null)
         !== 'Open navigation'
     || ($navIcon->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
     || ($navIcon->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
+    || ($navIcon->properties()[PropKey::Width->value] ?? null) !== 48.0
+    || ($navIcon->properties()[PropKey::Height->value] ?? null) !== 48.0
+    || ($navIcon->properties()[PropKey::PaddingHorizontal->value] ?? null) !== 0.0
+    || ($navIcon->properties()[PropKey::BorderRadius->value] ?? null) !== 9999.0
+    || ($navIcon->properties()[PropKey::HitSlopLeft->value] ?? null) !== 0.0
+    || ($navIcon->properties()[PropKey::HitSlopTop->value] ?? null) !== 0.0
+    || ($navIcon->properties()[PropKey::HitSlopRight->value] ?? null) !== 0.0
+    || ($navIcon->properties()[PropKey::HitSlopBottom->value] ?? null) !== 0.0
+    || ($navIcon->properties()[PropKey::RippleBorderless->value] ?? null) !== true
+    || ($navIcon->properties()[PropKey::RippleRadius->value] ?? null) !== 20.0
+    || ($navIcon->properties()[PropKey::RippleAlpha->value] ?? null) !== 0.12
+    || (($navIcon->children()[0] ?? null)?->properties()[PropKey::Width->value] ?? null)
+        !== 24.0
+    || !isset($navIcon->events()[EventKind::Press->value])
 ) {
     throw new RuntimeException(
         'p-app-bar-nav-icon must be an accessible 48dp navigation action.',
+    );
+}
+$navIcon->events()[EventKind::Press->value]();
+if (!$navPressed) {
+    throw new RuntimeException('p-app-bar-nav-icon must publish its press callback.');
+}
+$smallNavIcon = $navIconClass::make(['icon' => 'menu', 'size' => 'small'])
+    ->toElement();
+$largeNavIcon = $navIconClass::make(['icon' => 'menu', 'size' => 'large'])
+    ->toElement();
+if (
+    (($smallNavIcon->children()[0] ?? null)?->properties()[PropKey::Width->value] ?? null)
+        !== 20.0
+    || (($largeNavIcon->children()[0] ?? null)?->properties()[PropKey::Width->value] ?? null)
+        !== 28.0
+    || ($smallNavIcon->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+    || ($largeNavIcon->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+    || ($smallNavIcon->properties()[PropKey::Width->value] ?? null) !== 48.0
+    || ($largeNavIcon->properties()[PropKey::Width->value] ?? null) !== 48.0
+) {
+    throw new RuntimeException(
+        'Navigation icon sizes must change only the glyph while preserving the centered 48dp target.',
+    );
+}
+$appBarClass = $tags['p-app-bar'];
+$iconButtonClass = $tags['p-icon-btn'];
+$appBarActionPressed = false;
+$primaryAppBar = $appBarClass::make(
+    ['color' => 'primary'],
+    Text::make('PAM Workspace'),
+    $iconButtonClass::make([
+        'icon' => 'more-vert',
+        'variant' => 'text',
+        'accessibilityLabel' => 'More options',
+    ])->onPress(static function () use (&$appBarActionPressed): void {
+        $appBarActionPressed = true;
+    }),
+)->toElement();
+$primaryAppBarTitle = $primaryAppBar->children()[0] ?? null;
+$primaryAppBarAction = $primaryAppBar->children()[1] ?? null;
+$primaryAppBarActionIcon = $primaryAppBarAction?->children()[0] ?? null;
+$primaryAppBarActionHost = $primaryAppBarActionIcon?->properties()[
+    PropKey::HostProperties->value
+] ?? null;
+$primaryAppBarActionNative = $primaryAppBarActionHost instanceof BinaryValue
+    ? Wire::decodeMap($primaryAppBarActionHost->bytes)
+    : null;
+if (
+    ($primaryAppBar->properties()[PropKey::BackgroundColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::Primary)
+    || !$primaryAppBarTitle instanceof \Pam\Native\Element
+    || ($primaryAppBarTitle->properties()[PropKey::TextColor->value] ?? null)
+        !== Themes::pamLight()->color(ColorToken::PrimaryForeground)
+    || !$primaryAppBarAction instanceof \Pam\Native\Element
+    || ($primaryAppBarAction->properties()[PropKey::BackgroundColor->value] ?? null)
+        !== 0x00000000
+    || !is_array($primaryAppBarActionNative)
+    || ($primaryAppBarActionNative['color'] ?? null)
+        !== Themes::pamLight()->color(ColorToken::PrimaryForeground)
+    || !isset($primaryAppBarAction->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'Primary app bars must propagate contrast and expose transparent 48dp actions.',
+    );
+}
+$primaryAppBarAction->events()[EventKind::Press->value]();
+if (!$appBarActionPressed) {
+    throw new RuntimeException('App bar actions must publish their press callback.');
+}
+$prominentAppBar = $appBarClass::make(
+    ['prominent' => true],
+    $navIconClass::make(['icon' => 'menu']),
+    Text::make('PAM Workspace'),
+    $iconButtonClass::make(['icon' => 'more-vert', 'variant' => 'text']),
+)->toElement();
+$prominentNavigation = $prominentAppBar->children()[0] ?? null;
+$prominentTitle = $prominentAppBar->children()[1] ?? null;
+$prominentAction = $prominentAppBar->children()[2] ?? null;
+if (
+    ($prominentAppBar->properties()[PropKey::MinHeight->value] ?? null) !== 128.0
+    || ($prominentAppBar->properties()[PropKey::PositionType->value] ?? null)
+        !== PositionType::Relative->value
+    || !$prominentTitle instanceof \Pam\Native\Element
+    || ($prominentTitle->properties()[PropKey::PositionType->value] ?? null)
+        !== PositionType::Absolute->value
+    || ($prominentTitle->properties()[PropKey::Left->value] ?? null) !== 16.0
+    || ($prominentTitle->properties()[PropKey::Bottom->value] ?? null) !== 16.0
+    || ($prominentTitle->properties()[PropKey::FontSize->value] ?? null) !== 32.0
+    || ($prominentTitle->properties()[PropKey::LineHeight->value] ?? null) !== 40.0
+    || ($prominentNavigation?->properties()[PropKey::Left->value] ?? null) !== 0.0
+    || ($prominentNavigation?->properties()[PropKey::Top->value] ?? null) !== 4.0
+    || ($prominentAction?->properties()[PropKey::Right->value] ?? null) !== 0.0
+    || ($prominentAction?->properties()[PropKey::Top->value] ?? null) !== 4.0
+) {
+    throw new RuntimeException(
+        'Prominent app bars must reserve the upper action row and bottom-anchor a large headline.',
     );
 }
 
@@ -1058,7 +2712,12 @@ $calendar = $calendarClass::make([
     'modelValue' => '2026-07-28',
 ])->toElement();
 $calendarHeader = $calendar->children()[0] ?? null;
+$calendarWeekdays = $calendar->children()[1] ?? null;
+$calendarGrid = $calendar->children()[2] ?? null;
 $previousMonth = $calendarHeader?->children()[0] ?? null;
+$calendarSelectors = $calendarHeader?->children()[1] ?? null;
+$calendarMonth = $calendarSelectors?->children()[0] ?? null;
+$calendarYear = $calendarSelectors?->children()[1] ?? null;
 $nextMonth = $calendarHeader?->children()[2] ?? null;
 if (
     !$previousMonth instanceof \Pam\Native\Element
@@ -1069,9 +2728,133 @@ if (
     || ($nextMonth->properties()[PropKey::AccessibilityLabel->value] ?? null)
         !== 'Next month'
     || ($nextMonth->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+    || count($calendar->children()) !== 3
+    || !$calendarWeekdays instanceof \Pam\Native\Element
+    || count($calendarWeekdays->children()) !== 7
+    || ($calendarWeekdays->properties()[PropKey::Height->value] ?? null) !== 32.0
+    || ($calendarWeekdays->properties()[PropKey::AccessibilityImportance->value] ?? null)
+        !== AccessibilityImportance::NoHideDescendants->value
+    || !$calendarGrid instanceof \Pam\Native\Element
+    || ($calendarGrid->properties()[PropKey::Height->value] ?? null) !== 240.0
+    || ($calendarMonth?->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:calendar-month-select'
+    || ($calendarMonth?->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
+    || ($calendarYear?->properties()[PropKey::Value->value] ?? null)
+        !== 'pam:calendar-year-select'
+    || ($calendarYear?->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
+    || ($previousMonth->children()[0] ?? null)?->kind() !== NodeKind::CustomView
+    || ($nextMonth->children()[0] ?? null)?->kind() !== NodeKind::CustomView
 ) {
     throw new RuntimeException(
-        'p-calendar month navigation must expose labelled 48dp actions.',
+        'p-calendar must expose Material header selectors, weekday labels, native icons and a 48dp day grid.',
+    );
+}
+
+$fixedWeekCalendar = $calendarClass::make([
+    'modelValue' => '2026-07-28',
+    'fixedWeeks' => true,
+    'showWeek' => true,
+    'firstDayOfWeek' => 1,
+    'locale' => 'pt-BR',
+])->toElement();
+$fixedWeekLabels = $fixedWeekCalendar->children()[1] ?? null;
+$fixedWeekGrid = $fixedWeekCalendar->children()[2] ?? null;
+if (
+    !$fixedWeekLabels instanceof \Pam\Native\Element
+    || count($fixedWeekLabels->children()) !== 8
+    || ($fixedWeekLabels->children()[1]->properties()[PropKey::Text->value] ?? null) !== 'S'
+    || !$fixedWeekGrid instanceof \Pam\Native\Element
+    || ($fixedWeekGrid->properties()[PropKey::Height->value] ?? null) !== 288.0
+    || ($fixedWeekCalendar->properties()[PropKey::MinHeight->value] ?? null) !== 376.0
+) {
+    throw new RuntimeException(
+        'p-calendar fixed weeks, week numbers and localized first-day labels must preserve 48dp row geometry.',
+    );
+}
+
+$fourWeekCalendar = $calendarClass::make([
+    'modelValue' => '2026-02-15',
+    'visibleDate' => '2026-02-01',
+    'fixedWeeks' => false,
+])->toElement();
+$fourWeekGrid = $fourWeekCalendar->children()[2] ?? null;
+if (
+    !$fourWeekGrid instanceof \Pam\Native\Element
+    || ($fourWeekGrid->properties()[PropKey::Height->value] ?? null) !== 192.0
+    || ($fourWeekCalendar->properties()[PropKey::MinHeight->value] ?? null) !== 280.0
+) {
+    throw new RuntimeException(
+        'p-calendar dynamic months must shrink to the exact number of 48dp weeks without leaving a blank row.',
+    );
+}
+
+$multipleDates = null;
+$multipleCalendar = $calendarClass::make([
+    'modelValue' => ['2026-07-08', '2026-07-15'],
+    'visibleDate' => '2026-07-01',
+    'multiple' => true,
+])->onChange(static function (array $value) use (&$multipleDates): void {
+    $multipleDates = $value;
+})->toElement();
+$multipleCalendarHost = $multipleCalendar
+    ->properties()[PropKey::HostProperties->value] ?? null;
+$multipleChange = $multipleCalendar->events()[EventKind::Change->value] ?? null;
+$multipleChange?->__invoke("M\n2026-07-08\n2026-07-22");
+$multipleNative = $multipleCalendarHost instanceof BinaryValue
+    ? Wire::decodeMap($multipleCalendarHost->bytes)
+    : [];
+if (
+    ($multipleNative['mode'] ?? null) !== 2
+    || ($multipleNative['selectedValues'] ?? null) !== "2026-07-08\n2026-07-15"
+    || $multipleDates !== ['2026-07-08', '2026-07-22']
+) {
+    throw new RuntimeException(
+        'p-calendar multiple mode must cross the native boundary and decode its semantic selection.',
+    );
+}
+
+$rangeDates = null;
+$rangeCalendar = $calendarClass::make([
+    'modelValue' => ['from' => '2026-07-10', 'to' => '2026-07-18'],
+    'visibleDate' => '2026-07-01',
+    'multiple' => 'range',
+])->onChange(static function (array $value) use (&$rangeDates): void {
+    $rangeDates = $value;
+})->toElement();
+$rangeCalendarHost = $rangeCalendar
+    ->properties()[PropKey::HostProperties->value] ?? null;
+$rangeChange = $rangeCalendar->events()[EventKind::Change->value] ?? null;
+$rangeChange?->__invoke("R\n2026-07-12\n2026-07-20");
+$rangeNative = $rangeCalendarHost instanceof BinaryValue
+    ? Wire::decodeMap($rangeCalendarHost->bytes)
+    : [];
+if (
+    ($rangeNative['mode'] ?? null) !== 3
+    || ($rangeNative['rangeFrom'] ?? null) !== '2026-07-10'
+    || ($rangeNative['rangeTo'] ?? null) !== '2026-07-18'
+    || $rangeDates !== ['from' => '2026-07-12', 'to' => '2026-07-20']
+) {
+    throw new RuntimeException(
+        'p-calendar range mode must cross the native boundary and decode both endpoints.',
+    );
+}
+
+$listRangeCalendar = $calendarClass::make([
+    'modelValue' => ['2026-07-12', '2026-07-18'],
+    'visibleDate' => '2026-07-01',
+    'multiple' => 'range',
+])->toElement();
+$listRangeHost = $listRangeCalendar
+    ->properties()[PropKey::HostProperties->value] ?? null;
+$listRangeNative = $listRangeHost instanceof BinaryValue
+    ? Wire::decodeMap($listRangeHost->bytes)
+    : [];
+if (
+    ($listRangeNative['rangeFrom'] ?? null) !== '2026-07-12'
+    || ($listRangeNative['rangeTo'] ?? null) !== '2026-07-18'
+) {
+    throw new RuntimeException(
+        'p-calendar range mode must normalize a two-date list into native range endpoints.',
     );
 }
 
@@ -1096,6 +2879,21 @@ $tree = $treeClass::make([
 )->toElement();
 $treeFolder = $tree->children()[0] ?? null;
 $treeFile = ($treeFolder?->children()[1] ?? null)?->children()[0] ?? null;
+$treeFolderHost = $treeFolder?->properties()[PropKey::HostProperties->value] ?? null;
+$treeFolderNative = $treeFolderHost instanceof BinaryValue
+    ? Wire::decodeMap($treeFolderHost->bytes)
+    : [];
+if (
+    !isset($treeFolderNative['foregroundColor'])
+    || !isset($treeFolderNative['selectedForegroundColor'])
+    || !isset($treeFolderNative['selectedContainerColor'])
+    || $treeFolderNative['foregroundColor']
+        === $treeFolderNative['selectedForegroundColor']
+) {
+    throw new RuntimeException(
+        'p-treeview-item must expose contrasting native selection colors.',
+    );
+}
 $treeFilePress = $treeFile?->events()[EventKind::Press->value] ?? null;
 if (!$treeFilePress instanceof Closure) {
     throw new RuntimeException(
@@ -1334,16 +3132,26 @@ $assertGeometry = static function (
 
 $assertGeometry('PBtn', [], [
     'minWidth' => 64.0,
-    'minHeight' => 36.0,
+    'minHeight' => 40.0,
 ]);
 $assertGeometry('PBtn', ['density' => 'comfortable'], [
-    'minHeight' => 32.0,
+    'minHeight' => 36.0,
 ]);
 $assertGeometry('PBtn', ['density' => 'compact'], [
-    'minHeight' => 28.0,
+    'minHeight' => 32.0,
+]);
+$assertGeometry('PAlert', ['density' => 'compact'], [
+    'paddingVertical' => 12.0,
 ]);
 $assertGeometry('PBtn', ['disabled' => true], [
-    'opacity' => 0.26,
+    'opacity' => 1.0,
+    'textColor' => 0x61000000 | (
+        $themes[0]['theme']->color(ColorToken::OnSurface) & 0x00ffffff
+    ),
+    'backgroundColor' => 0x1F000000 | (
+        $themes[0]['theme']->color(ColorToken::OnSurface) & 0x00ffffff
+    ),
+    'elevation' => 0.0,
 ]);
 $assertGeometry('PBtn', ['block' => true], [
     'widthPercent' => 100.0,
@@ -1364,82 +3172,115 @@ $assertGeometry('PBtn', ['variant' => 'outlined', 'color' => 'error'], [
     'textColor' => $themes[0]['theme']->color(ColorToken::Destructive),
 ]);
 $assertGeometry('PIconBtn', [], [
-    'width' => 36.0,
-    'height' => 36.0,
+    'width' => 40.0,
+    'height' => 40.0,
 ]);
 $assertGeometry('PIconBtn', ['size' => 'x-small'], [
-    'width' => 20.0,
-    'height' => 20.0,
-]);
-$assertGeometry('PIconBtn', ['size' => 'small'], [
-    'width' => 28.0,
-    'height' => 28.0,
-]);
-$assertGeometry('PIconBtn', ['size' => 'large'], [
-    'width' => 44.0,
-    'height' => 44.0,
-]);
-$assertGeometry('PIconBtn', ['size' => 'x-large'], [
-    'width' => 52.0,
-    'height' => 52.0,
-]);
-$assertGeometry('PIconBtn', ['density' => 'comfortable'], [
     'width' => 32.0,
     'height' => 32.0,
 ]);
+$assertGeometry('PIconBtn', ['size' => 'small'], [
+    'width' => 40.0,
+    'height' => 40.0,
+]);
+$assertGeometry('PIconBtn', ['size' => 'large'], [
+    'width' => 96.0,
+    'height' => 96.0,
+]);
+$assertGeometry('PIconBtn', ['size' => 'x-large'], [
+    'width' => 136.0,
+    'height' => 136.0,
+]);
+$assertGeometry('PIconBtn', ['density' => 'comfortable'], [
+    'width' => 36.0,
+    'height' => 36.0,
+]);
 $assertGeometry('PIconBtn', ['density' => 'compact'], [
-    'width' => 28.0,
-    'height' => 28.0,
+    'width' => 32.0,
+    'height' => 32.0,
 ]);
 $assertGeometry('PCard', [], [
     'padding' => 0.0,
-    'borderRadius' => 4.0,
+    'borderRadius' => 12.0,
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceContainerLow),
+    'borderWidth' => 0.0,
+    'elevation' => 1.0,
 ]);
+$assertGeometry('PCard', ['variant' => 'filled'], [
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceContainerHighest),
+    'borderWidth' => 0.0,
+    'elevation' => 0.0,
+]);
+$assertGeometry('PCard', ['variant' => 'outlined'], [
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::Surface),
+    'borderColor' => $themes[0]['theme']->color(ColorToken::OutlineVariant),
+    'borderWidth' => 1.0,
+    'elevation' => 0.0,
+]);
+$assertGeometry('PCard', ['horizontal' => true], [
+    'flexDirection' => \Pam\Native\FlexDirection::Row,
+]);
+$assertGeometry('PCard', ['disabled' => true], [
+    'elevation' => 0.0,
+    'opacity' => 0.38,
+]);
+$disabledCardPresses = 0;
+$disabledCard = \Pam\MobileUi\Material\PCard::make(['disabled' => true])
+    ->onPress(static function () use (&$disabledCardPresses): void {
+        ++$disabledCardPresses;
+    })
+    ->toElement();
+if (isset($disabledCard->events()[EventKind::Press->value])) {
+    throw new RuntimeException('Disabled cards must not retain native press listeners.');
+}
+if ($disabledCardPresses !== 0) {
+    throw new RuntimeException('Disabled-card regression test dispatched a callback.');
+}
 $assertGeometry('PChip', [], [
     'minHeight' => 32.0,
-    'paddingHorizontal' => 12.0,
-    'borderRadius' => 9999.0,
+    'paddingHorizontal' => 16.0,
+    'borderRadius' => 8.0,
 ]);
 $assertGeometry('PChip', ['density' => 'comfortable'], [
     'minHeight' => 28.0,
-    'paddingHorizontal' => 10.0,
+    'paddingHorizontal' => 16.0,
 ]);
 $assertGeometry('PChip', ['density' => 'compact'], [
     'minHeight' => 24.0,
-    'paddingHorizontal' => 8.0,
+    'paddingHorizontal' => 16.0,
 ]);
 $assertGeometry('PList', [], [
     'paddingVertical' => 8.0,
     'borderRadius' => 0.0,
 ]);
 $assertGeometry('PListItem', [], [
-    'minHeight' => 48.0,
+    'minHeight' => 56.0,
 ]);
 $assertGeometry('PListItem', ['density' => 'comfortable'], [
-    'minHeight' => 44.0,
+    'minHeight' => 52.0,
 ]);
 $assertGeometry('PListItem', ['density' => 'compact'], [
-    'minHeight' => 40.0,
+    'minHeight' => 48.0,
 ]);
 $assertGeometry('PListItem', ['lines' => 2], [
-    'minHeight' => 64.0,
+    'minHeight' => 72.0,
     'paddingHorizontal' => 16.0,
-    'paddingVertical' => 12.0,
+    'paddingVertical' => 10.0,
 ]);
 $assertGeometry('PListItem', ['lines' => 3], [
     'minHeight' => 88.0,
     'paddingHorizontal' => 16.0,
-    'paddingVertical' => 16.0,
+    'paddingVertical' => 10.0,
 ]);
 $assertGeometry('PTab', [], [
     'minWidth' => 90.0,
     'minHeight' => 48.0,
 ]);
 $assertGeometry('PTab', ['density' => 'comfortable'], [
-    'minHeight' => 44.0,
+    'minHeight' => 48.0,
 ]);
 $assertGeometry('PTab', ['density' => 'compact'], [
-    'minHeight' => 36.0,
+    'minHeight' => 48.0,
 ]);
 $assertGeometry('PTextField', [], [
     'height' => 56.0,
@@ -1500,8 +3341,8 @@ $assertGeometry('PDialog', ['width' => 320], [
     'maxWidth' => 560.0,
 ]);
 $assertGeometry('PProgressCircular', [], [
-    'width' => 32.0,
-    'height' => 32.0,
+    'width' => 40.0,
+    'height' => 40.0,
     'animationDurationMs' => 1400,
 ]);
 $assertGeometry('PProgressCircular', ['size' => 'x-small'], [
@@ -1548,38 +3389,64 @@ $assertGeometry('PToolbar', ['density' => 'compact'], [
     'minHeight' => 48.0,
 ]);
 $assertGeometry('PAlert', [], [
+    'minHeight' => 80.0,
     'paddingHorizontal' => 16.0,
-    'paddingVertical' => 16.0,
-    'gap' => 16.0,
-    'borderRadius' => 4.0,
+    'paddingVertical' => 12.0,
+    'gap' => 12.0,
+    'borderRadius' => 12.0,
     'elevation' => 1.0,
+    'alignItems' => Align::Start,
 ]);
 $assertGeometry('PAlert', ['border' => 'start'], [
-    'paddingLeft' => 24.0,
-    'borderLeftWidth' => 8.0,
+    'paddingLeft' => 20.0,
+    'borderLeftWidth' => 4.0,
 ]);
 $assertGeometry('PAlert', ['border' => 'start', 'rtl' => true], [
-    'paddingRight' => 24.0,
-    'borderRightWidth' => 8.0,
+    'paddingRight' => 20.0,
+    'borderRightWidth' => 4.0,
 ]);
 $assertGeometry('PAlert', ['border' => 'top'], [
-    'paddingTop' => 24.0,
-    'borderTopWidth' => 8.0,
+    'paddingTop' => 16.0,
+    'borderTopWidth' => 4.0,
 ]);
 $assertGeometry('PBanner', [], [
     'paddingLeft' => 16.0,
     'paddingRight' => 8.0,
     'paddingTop' => 16.0,
-    'paddingBottom' => 16.0,
+    'paddingBottom' => 8.0,
+    'gap' => 0.0,
     'borderRadius' => 0.0,
+    'borderBottomWidth' => 0.0,
+    'elevation' => 1.0,
+    'animationDurationMs' => 250,
+    'animateChanges' => true,
+]);
+$assertGeometry('PBanner', ['density' => 'comfortable'], [
+    'paddingTop' => 12.0,
+    'paddingBottom' => 8.0,
+]);
+$assertGeometry('PBanner', ['density' => 'compact'], [
+    'paddingTop' => 8.0,
+    'paddingBottom' => 4.0,
+]);
+$assertGeometry('PBanner', ['flat' => true, 'elevation' => 4], [
+    'elevation' => 0.0,
+]);
+$assertGeometry('PBanner', ['reduceMotion' => true], [
+    'animationDurationMs' => null,
+    'animateChanges' => false,
 ]);
 $assertGeometry('PBannerActions', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 48.0,
     'gap' => 8.0,
-    'marginTop' => 20.0,
+    'marginTop' => 4.0,
+    'alignItems' => Align::Center,
+    'justifyContent' => \Pam\Native\Justify::End,
 ]);
 $assertGeometry('PBadge', [], [
-    'minWidth' => 20.0,
-    'minHeight' => 20.0,
+    'minWidth' => 16.0,
+    'minHeight' => 16.0,
     'borderRadius' => 9999.0,
     'borderWidth' => 0.0,
 ]);
@@ -1588,20 +3455,29 @@ $assertGeometry('PBadge', ['bordered' => true], [
 ]);
 $assertGeometry('PBottomSheet', [], [
     'widthPercent' => 100.0,
-    'borderRadius' => 28.0,
+    'paddingTop' => 12.0,
+    'borderRadius' => 0.0,
+    'borderTopLeftRadius' => 28.0,
+    'borderTopRightRadius' => 28.0,
+    'borderBottomRightRadius' => 0.0,
+    'borderBottomLeftRadius' => 0.0,
     'elevation' => 6.0,
 ]);
 $assertGeometry('PCardActions', [], [
-    'minHeight' => 52.0,
+    'widthPercent' => 100.0,
+    'minHeight' => 56.0,
     'padding' => 8.0,
     'gap' => 8.0,
+    'flexWrap' => \Pam\Native\FlexWrap::Wrap,
+    'alignItems' => Align::Center,
+    'justifyContent' => \Pam\Native\Justify::End,
 ]);
 $assertGeometry('PExpansionPanelTitle', [], [
-    'minHeight' => 48.0,
-    'paddingHorizontal' => 24.0,
+    'minHeight' => 56.0,
+    'paddingHorizontal' => 16.0,
 ]);
 $assertGeometry('PExpansionPanel', ['active' => true], [
-    'marginVertical' => 16.0,
+    'marginVertical' => 0.0,
 ]);
 $assertGeometry('PExpansionPanel', ['disabled' => true], [
     'opacity' => 0.26,
@@ -1610,9 +3486,9 @@ $assertGeometry('PExpansionPanelTitle', ['active' => true], [
     'minHeight' => 64.0,
 ]);
 $assertGeometry('PExpansionPanelText', [], [
-    'paddingHorizontal' => 24.0,
-    'paddingTop' => 8.0,
-    'paddingBottom' => 16.0,
+    'paddingHorizontal' => 16.0,
+    'paddingTop' => 12.0,
+    'paddingBottom' => 20.0,
 ]);
 $assertGeometry('PSnackbar', [], [
     'minHeight' => 48.0,
@@ -1633,6 +3509,7 @@ $assertGeometry('PSnackbar', ['location' => 'top end'], [
     'right' => 8.0,
 ]);
 $assertGeometry('PSnackbar', ['vertical' => true], [
+    'minHeight' => 68.0,
     'flexDirection' => FlexDirection::Column,
     'alignItems' => Align::Start,
 ]);
@@ -1675,6 +3552,8 @@ $assertGeometry('POverlay', [], [
     'opacity' => 1.0,
 ]);
 $assertGeometry('PMenu', [], [
+    'minWidth' => 112.0,
+    'maxWidth' => 280.0,
     'borderRadius' => 4.0,
     'elevation' => 3.0,
 ]);
@@ -1703,31 +3582,45 @@ $assertGeometry('PIcon', ['size' => 'x-large'], [
 $assertGeometry('PFab', ['size' => 'x-small'], [
     'width' => 40.0,
     'height' => 40.0,
-    'borderRadius' => 9999.0,
+    'borderRadius' => 16.0,
     'elevation' => 3.0,
 ]);
+$assertGeometry('PFab', [], [
+    'width' => 56.0,
+    'height' => 56.0,
+    'borderRadius' => 16.0,
+]);
+$assertGeometry('PFab', ['extended' => true], [
+    'width' => null,
+    'height' => 56.0,
+    'minWidth' => 64.0,
+    'paddingHorizontal' => 16.0,
+    'borderRadius' => 16.0,
+]);
 $assertGeometry('PFab', ['size' => 'large'], [
-    'width' => 72.0,
-    'height' => 72.0,
+    'width' => 96.0,
+    'height' => 96.0,
+    'borderRadius' => 28.0,
 ]);
 $assertGeometry('PFab', ['size' => 'x-large'], [
     'width' => 96.0,
     'height' => 96.0,
 ]);
 $assertGeometry('PBadge', [], [
-    'height' => 20.0,
-    'minWidth' => 20.0,
+    'height' => 16.0,
+    'minWidth' => 16.0,
     'borderRadius' => 9999.0,
     'borderWidth' => 0.0,
 ]);
 $assertGeometry('PBadge', ['dot' => true], [
-    'width' => 9.0,
-    'height' => 9.0,
+    'width' => 6.0,
+    'height' => 6.0,
     'borderWidth' => 0.0,
 ]);
 $assertGeometry('PCarousel', [], [
-    'height' => 500.0,
-    'minHeight' => 500.0,
+    'height' => 240.0,
+    'minHeight' => 240.0,
+    'borderRadius' => 24.0,
     'animationDurationMs' => 300,
 ]);
 $assertGeometry('PCarousel', ['height' => 320], [
@@ -1740,8 +3633,8 @@ $assertGeometry('PCarouselItem', [], [
     'animationDurationMs' => 300,
 ]);
 $assertGeometry('PRating', [], [
-    'height' => 40.0,
-    'minHeight' => 40.0,
+    'height' => 48.0,
+    'minHeight' => 48.0,
     'animationDurationMs' => 150,
 ]);
 $assertGeometry('PTimeline', [], [
@@ -1749,10 +3642,21 @@ $assertGeometry('PTimeline', [], [
     'gap' => 0.0,
 ]);
 $assertGeometry('PTimelineItem', [], [
-    'minHeight' => 86.0,
-    'padding' => 24.0,
-    'gap' => 24.0,
-    'borderWidth' => 2.0,
+    'minHeight' => 72.0,
+    'paddingHorizontal' => 0.0,
+    'paddingVertical' => 8.0,
+    'gap' => 12.0,
+    'borderWidth' => 0.0,
+]);
+$assertGeometry('PSpeedDial', ['direction' => 'top'], [
+    'minWidth' => 56.0,
+    'minHeight' => 56.0,
+    'flexDirection' => FlexDirection::Column,
+]);
+$assertGeometry('PSpeedDial', ['direction' => 'end'], [
+    'minWidth' => 56.0,
+    'minHeight' => 56.0,
+    'flexDirection' => FlexDirection::Row,
 ]);
 $assertGeometry('PDatePicker', [], [
     'width' => 328.0,
@@ -1771,25 +3675,48 @@ $assertGeometry('PTimePicker', [], [
 ]);
 $assertGeometry('PSlider', [], [
     'widthPercent' => 100.0,
-    'minHeight' => 32.0,
+    'minHeight' => 48.0,
+    'paddingHorizontal' => 8.0,
+    'borderRadius' => 6.0,
+    'animationDurationMs' => 300,
+]);
+$assertGeometry('PRangeSlider', ['thumbLabel' => 'always'], [
+    'widthPercent' => 100.0,
+    'minHeight' => 80.0,
     'paddingHorizontal' => 8.0,
     'borderRadius' => 6.0,
     'animationDurationMs' => 300,
 ]);
 $assertGeometry('PRangeSlider', ['vertical' => true], [
-    'width' => 32.0,
+    'width' => 48.0,
     'minHeight' => 300.0,
     'marginTop' => 12.0,
     'marginBottom' => 12.0,
 ]);
+$assertGeometry('PRangeSlider', ['orientation' => 2], [
+    'width' => 48.0,
+    'minWidth' => 48.0,
+    'minHeight' => 300.0,
+]);
+$assertGeometry('PRangeSlider', ['tickLabels' => ['Low', 'High']], [
+    'widthPercent' => 100.0,
+    'minHeight' => 72.0,
+]);
+$assertGeometry('PRangeSlider', [
+    'thumbLabel' => 'always',
+    'tickLabels' => ['Low', 'High'],
+], [
+    'widthPercent' => 100.0,
+    'minHeight' => 104.0,
+]);
 $assertGeometry('PSwitch', [], [
-    'minHeight' => 40.0,
-    'minWidth' => 40.0,
+    'minHeight' => 48.0,
+    'minWidth' => 52.0,
     'gap' => 10.0,
     'animationDurationMs' => 200,
 ]);
 $assertGeometry('PCheckbox', ['disabled' => true], [
-    'minHeight' => 40.0,
+    'minHeight' => 48.0,
     'opacity' => 0.38,
 ]);
 $assertGeometry('PRadioGroup', ['inline' => true], [
@@ -1816,6 +3743,10 @@ $assertGeometry('PTreeviewItem', ['level' => 2], [
     'paddingLeft' => 64.0,
     'paddingRight' => 16.0,
 ]);
+$assertGeometry('PTreeviewItem', ['active' => false, 'selected' => true], [
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::Accent),
+    'textColor' => $themes[0]['theme']->color(ColorToken::AccentForeground),
+]);
 $assertGeometry('PEmptyState', [], [
     'minHeight' => 240.0,
     'padding' => 16.0,
@@ -1833,15 +3764,15 @@ $assertGeometry('POtpInput', ['divided' => true], [
     'width' => 360.0,
 ]);
 $assertGeometry('PAutocomplete', [], [
-    'height' => 56.0,
-    'minHeight' => 56.0,
+    'height' => 64.0,
+    'minHeight' => 64.0,
     'animationDurationMs' => 200,
 ]);
 $assertGeometry('PAutocomplete', ['chips' => true], [
     'height' => 64.0,
 ]);
 $assertGeometry('PSelect', ['density' => 'compact'], [
-    'height' => 40.0,
+    'height' => 64.0,
 ]);
 $assertGeometry('PImg', ['cardMedia' => true], [
     'minHeight' => 200.0,
@@ -1853,14 +3784,17 @@ $assertGeometry('PSparkline', [], [
     'animationDurationMs' => 300,
 ]);
 $assertGeometry('PCalendar', [], [
-    'minHeight' => 344.0,
-    'borderWidth' => 1.0,
+    'minHeight' => 328.0,
+    'borderWidth' => 0.0,
     'borderRadius' => 0.0,
 ]);
 $assertGeometry('PCalendarDay', [], [
-    'minHeight' => 56.0,
-    'paddingTop' => 4.0,
-    'fontSize' => 12.0,
+    'width' => 48.0,
+    'height' => 48.0,
+    'minWidth' => 48.0,
+    'minHeight' => 48.0,
+    'borderWidth' => 0.0,
+    'fontSize' => 14.0,
     'lineHeight' => 20.0,
 ]);
 

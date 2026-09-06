@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "resultStatus": 1,
+  "approvalStatus": 1,
+  "component": "p-calendar",
+  "candidateOnly": true,
+  "buildSha256": "230f7008194e65e6d86ce6bf54cb913de83fec0f7ab8968c765deef335c4bf30",
+  "device": {
+    "serial": "emulator-5556",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "androidVersion": "16",
+    "api": 36,
+    "viewport": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "buildSha256": "230f7008194e65e6d86ce6bf54cb913de83fec0f7ab8968c765deef335c4bf30"
+  },
+  "sourceReport": "/tmp/pam-release-missing-gifs.json",
+  "passes": [
+    {
+      "repetition": 1,
+      "interactionKind": 7,
+      "stateChanged": true,
+      "elapsedMs": 7698,
+      "evidencePrefix": "pass-01-p-calendar"
+    },
+    {
+      "repetition": 2,
+      "interactionKind": 7,
+      "stateChanged": true,
+      "elapsedMs": 7629,
+      "evidencePrefix": "pass-02-p-calendar"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "baseline-candidate.png",
+      "sha256": "054c24abafaa5d51de8eb3478bbcb7baecc179f224c219fd34657b5a6f1ad004"
+    },
+    {
+      "file": "interacted-candidate.png",
+      "sha256": "a4f0612886f9cfbf4ad7e980a4f1a3e021d10e3e6bf157ca510238a325f62f93"
+    }
+  ],
+  "checks": {
+    "twoConsecutivePasses": true,
+    "runtimeLog": true,
+    "routeIdentity": true,
+    "realInteraction": true,
+    "requiresManualVisualReview": true,
+    "requiresPhysicalApproval": true
+  }
+}

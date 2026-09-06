@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-timeline-item",
+  "candidateOnly": true,
+  "sourceReportSha256": "ccb101b914ae2465f6da77f385b2431cf761544b6091cc3d832a8ec81864772f",
+  "baselineSha256": "2ffba030efa38bae1dfb537967ed83322f6b8dce5ccba9aaf9cef8eaf9c601c1",
+  "interactedSha256": "9c7f931eabeca6318faada49f537fd14531fdc9f8657137d232e4266e18c49ac",
+  "gif": "p-timeline-item.gif",
+  "gifSha256": "5c683370f16a32fa06eda891179d735989cf9a4abb2f3220e5ea173d62c74373",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

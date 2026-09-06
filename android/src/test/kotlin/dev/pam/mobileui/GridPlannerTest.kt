@@ -46,4 +46,26 @@ class GridPlannerTest {
         assertEquals(132, plan.height)
         assertEquals(3, plan.items[3].span)
     }
+
+    @Test
+    fun distributesFractionalPixelsWithoutLeavingATrailingSeam() {
+        val plan = GridPlanner.plan(
+            width = 1_100,
+            columns = 4,
+            columnGap = 22,
+            rowGap = 33,
+            spans = listOf(1, 2, 1),
+            heights = listOf(132, 154, 132),
+            direction = GridDirection.ROW,
+        )
+
+        assertEquals(0, plan.items[0].bounds.left)
+        assertEquals(259, plan.items[0].bounds.right)
+        assertEquals(281, plan.items[1].bounds.left)
+        assertEquals(820, plan.items[1].bounds.right)
+        assertEquals(842, plan.items[2].bounds.left)
+        assertEquals(1_100, plan.items[2].bounds.right)
+        assertEquals(22, plan.items[1].bounds.left - plan.items[0].bounds.right)
+        assertEquals(22, plan.items[2].bounds.left - plan.items[1].bounds.right)
+    }
 }

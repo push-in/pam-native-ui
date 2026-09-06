@@ -1,0 +1,328 @@
+{
+  "schemaVersion": 2,
+  "component": "p-calendar",
+  "device": "emulator-5554",
+  "package": "dev.pam.mobileui.catalog",
+  "resultStatus": 1,
+  "checks": {
+    "allTwelveVariations": true,
+    "singleSelection": true,
+    "multipleToggleSelection": true,
+    "rangeEndpointSelection": true,
+    "continuousRangeTrack": true,
+    "monthNavigation": true,
+    "monthSelectorDialog": true,
+    "yearSelectorDialog": true,
+    "minimumMaximumAndDisabledDates": true,
+    "adjacentDatesHidden": true,
+    "weekNumberColumnNonInteractive": true,
+    "mondayFirst": true,
+    "dynamicFourWeekHeight": true,
+    "disabledAndReadOnly": true,
+    "rtlLayoutAndHitTesting": true,
+    "accessibleHeaderAndDateNodes": true,
+    "exact48DpDateRows": true,
+    "selectedCircle40Dp": true,
+    "fontScale130": true,
+    "landscapeSafeAreaAndInteraction": true,
+    "rapidTwelveTapStress": true,
+    "frameP99AtMost17Ms": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "density": 2.75,
+    "geometry": {
+      "Single date": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Multiple dates": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Date range": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Limits and unavailable dates": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Adjacent dates hidden": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 31
+      },
+      "Week numbers": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 8,
+        "dateNodes": 42
+      },
+      "Monday first": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Dynamic four-week month": {
+        "heightDp": 280.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 28
+      },
+      "Disabled": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Read only": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "RTL": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      },
+      "Success color": {
+        "heightDp": 376.0,
+        "captionGapDp": 8.0,
+        "headerTargetDp": 48,
+        "weekdayLaneDp": 32,
+        "dateRowDp": 48,
+        "columns": 7,
+        "dateNodes": 42
+      }
+    },
+    "selectedVisual": {
+      "diameterDp": 40.0,
+      "containerRgb": [
+        22,
+        101,
+        52
+      ]
+    },
+    "rangeVisual": {
+      "backgroundRgb": [
+        248,
+        250,
+        252
+      ],
+      "trackRgb": [
+        211,
+        226,
+        219
+      ],
+      "filledDelta": {
+        "middle": 55.08,
+        "startTrailing": 55.08,
+        "endLeading": 55.08
+      },
+      "emptyDelta": {
+        "startLeading": 0.0,
+        "endTrailing": 0.0
+      }
+    },
+    "rapidTap": {
+      "warmupTaps": 4,
+      "measuredTaps": 12,
+      "renderedFrames": 36,
+      "legacyJankyFrames": 0,
+      "legacyJankyPercent": 0.0,
+      "frameP99Ms": 16
+    }
+  },
+  "evidence": [
+    {
+      "name": "baseline",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/baseline.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "geometry-01",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/geometry-01.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "geometry-03",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/geometry-03.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "geometry-06",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/geometry-06.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "geometry-08",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/geometry-08.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "geometry-12",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/geometry-12.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "single-baseline",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/single-baseline.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "single-selected-22",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/single-selected-22.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "single-next-month",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/single-next-month.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "month-dialog",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/month-dialog.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "year-dialog",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/year-dialog.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "multiple-final",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/multiple-final.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "range-final",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/range-final.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "rtl-selected-22",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/rtl-selected-22.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "font-scale-130-bottom",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/font-scale-130-bottom.png",
+      "size": [
+        1080,
+        2340
+      ]
+    },
+    {
+      "name": "landscape-top",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/landscape-top.png",
+      "size": [
+        2340,
+        1080
+      ]
+    },
+    {
+      "name": "landscape-selected",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/landscape-selected.png",
+      "size": [
+        2340,
+        1080
+      ]
+    },
+    {
+      "name": "stress-result",
+      "path": "/tmp/pam-calendar-v4-pass1b.v2Iz6k/stress-result.png",
+      "size": [
+        1080,
+        2340
+      ]
+    }
+  ]
+}

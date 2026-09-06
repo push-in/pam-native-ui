@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pam\MobileUi\Product;
 
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Theme\MaterialTokens;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\KeyboardAvoidingBehavior;
@@ -121,20 +122,24 @@ final readonly class AppScreen implements Renderable
             Column::make(...$titles)->style(new Style(flexGrow: 1, gap: 4.0)),
             ...$this->actions,
         )->style(new Style(
-            minHeight: 64.0,
-            paddingLeft: 16.0,
+            minHeight: MaterialTokens::TOP_APP_BAR_SMALL_HEIGHT,
+            paddingLeft: MaterialTokens::COMPACT_WINDOW_GUTTER,
             paddingTop: 10.0,
-            paddingRight: 16.0,
+            paddingRight: MaterialTokens::COMPACT_WINDOW_GUTTER,
             paddingBottom: 8.0,
-            gap: 8.0,
+            gap: MaterialTokens::SPACE_SMALL,
+            backgroundColor: $theme->color(ColorToken::Background),
+            zIndex: 1,
             alignItems: \Pam\Native\Align::Center,
         ));
         $content = Column::make(...$this->content)->style(new Style(
             flexGrow: 1.0,
-            paddingHorizontal: 16.0,
-            paddingTop: 8.0,
-            paddingBottom: $this->bottom === [] ? 16.0 : 12.0,
-            gap: 12.0,
+            paddingHorizontal: MaterialTokens::COMPACT_WINDOW_GUTTER,
+            paddingTop: MaterialTokens::SPACE_SMALL,
+            paddingBottom: $this->bottom === []
+                ? MaterialTokens::SPACE_LARGE
+                : MaterialTokens::SPACE_MEDIUM,
+            gap: MaterialTokens::SPACE_MEDIUM,
             backgroundColor: $theme->color(ColorToken::Background),
         ));
         $body = ($this->scrollable

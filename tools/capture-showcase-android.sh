@@ -7,7 +7,7 @@ output=${1:-"${root}/docs/assets/android/components"}
 package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog.debug}
 activity=${PAM_SHOWCASE_ACTIVITY:-dev.pam.nativeapp.PamActivity}
 serial=${ANDROID_SERIAL:-}
-settle_seconds=${PAM_SHOWCASE_SETTLE_SECONDS:-1}
+settle_seconds=${PAM_SHOWCASE_SETTLE_SECONDS:-2}
 
 command -v adb >/dev/null || {
   echo 'adb is required to capture the Android showcase.' >&2
@@ -107,12 +107,22 @@ capture() {
         xmllint --xpath \
           "//*[contains(@text, '${expected}') or contains(@content-desc, '${expected}')]" \
           "${hierarchy}" >/dev/null 2>&1; then
-        if [[ -z ${route_tag} ]] || \
-          xmllint --xpath "//*[@text='${route_tag}']" \
-            "${hierarchy}" >/dev/null 2>&1; then
-          dumped=true
-          break 2
+        if [[ -n ${route_tag} ]]; then
+          route_bounds=$(xmllint --xpath \
+            "string(//*[@text='${route_tag}']/@bounds)" \
+            "${hierarchy}" 2>/dev/null || true)
+          route_left=$(sed -nE 's/^\[([0-9]+),.*/\1/p' <<<"${route_bounds}")
+          # Component routes use a 16dp page inset. A route identifier at the
+          # physical edge means navigation was captured mid-transition even
+          # if its text happened to be discoverable in the hierarchy.
+          if [[ -z ${route_left} || ${route_left} -lt 24 ]]; then
+            dump_output="route ${route_tag} is not stably inset: ${route_bounds:-missing bounds}"
+            sleep 1
+            continue
+          fi
         fi
+        dumped=true
+        break 2
       fi
       sleep 1
     done
@@ -125,36 +135,15 @@ capture() {
   timeout 10s "${adb[@]}" pull "${remote}" "${output}/${name}.png" >/dev/null
 }
 
-capture overview pam-showcase://screen/overview 'PAM Studio'
+capture overview pam-showcase://screen/overview 'PAM Native UI'
 for screen in actions forms data overlays all; do
   label=$(tr '[:lower:]' '[:upper:]' <<<"${screen:0:1}")${screen:1}
   [[ ${screen} == all ]] && label='Components'
   capture "screen-${screen}" "pam-showcase://screen/${screen}" "${label}"
 done
 
-declare -A component_parent=(
-  [p-app-bar-nav-icon]=p-app-bar
-  [p-banner-actions]=p-banner
-  [p-calendar-day]=p-calendar
-  [p-card-actions]=p-card
-  [p-carousel-item]=p-carousel
-  [p-expansion-panel-text]=p-expansion-panel
-  [p-expansion-panel-title]=p-expansion-panel
-  [p-item]=p-item-group
-  [p-slide-group-item]=p-slide-group
-  [p-stepper-actions]=p-stepper
-  [p-stepper-header]=p-stepper
-  [p-stepper-item]=p-stepper
-  [p-stepper-vertical-actions]=p-stepper-vertical
-  [p-stepper-vertical-item]=p-stepper-vertical
-  [p-stepper-window]=p-stepper
-  [p-stepper-window-item]=p-stepper
-  [p-timeline-item]=p-timeline
-  [p-treeview-item]=p-treeview
-)
 for tag in "${tags[@]}"; do
-  route_tag=${component_parent[${tag}]:-${tag}}
-  capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${route_tag}"
+  capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${tag}"
 done
 
 density=$("${adb[@]}" shell wm density | awk '/Physical density/ { print $3 }')

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pam\MobileUi\Rendering;
 
 use BackedEnum;
+use Pam\MobileUi\Enum\CalendarDayState;
+use Pam\MobileUi\Enum\MaterialVariant;
 
 final class ValueNormalizer
 {
@@ -28,23 +30,21 @@ final class ValueNormalizer
             'none' => 14,
         ],
         'variant' => [
-            'default' => 1,
-            'destructive' => 2,
-            'outline' => 3,
-            'secondary' => 4,
-            'ghost' => 5,
-            'link' => 6,
-            'solid' => 7,
-            'subtle' => 8,
-            'accent' => 9,
-            'filled' => 10,
-            'rounded' => 11,
-            'sharp' => 12,
-            'underlined' => 13,
-            'circular' => 14,
-            'grid' => 15,
-            'inline' => 16,
-            'list' => 17,
+            'default' => MaterialVariant::Elevated->value,
+            'elevated' => MaterialVariant::Elevated->value,
+            'flat' => MaterialVariant::Flat->value,
+            'tonal' => MaterialVariant::Tonal->value,
+            'subtle' => MaterialVariant::Tonal->value,
+            'outlined' => MaterialVariant::Outlined->value,
+            'outline' => MaterialVariant::Outlined->value,
+            'text' => MaterialVariant::Text->value,
+            'plain' => MaterialVariant::Plain->value,
+            'underlined' => MaterialVariant::Underlined->value,
+            'filled' => MaterialVariant::Filled->value,
+            'solid' => MaterialVariant::Filled->value,
+            'solo' => MaterialVariant::Solo->value,
+            'solo-inverted' => MaterialVariant::SoloInverted->value,
+            'solo-filled' => MaterialVariant::SoloFilled->value,
         ],
         'role' => [
             'user' => 1,
@@ -108,15 +108,15 @@ final class ValueNormalizer
             'bottom' => 4,
         ],
         'state' => [
-            'default' => 1,
-            'selected' => 2,
-            'disabled' => 3,
-            'outside' => 4,
-            'today' => 5,
-            'outside-month' => 4,
-            'range-start' => 6,
-            'range-middle' => 7,
-            'range-end' => 8,
+            'default' => CalendarDayState::Default->value,
+            'selected' => CalendarDayState::Selected->value,
+            'disabled' => CalendarDayState::Disabled->value,
+            'outside' => CalendarDayState::OutsideMonth->value,
+            'today' => CalendarDayState::Today->value,
+            'outside-month' => CalendarDayState::OutsideMonth->value,
+            'range-start' => CalendarDayState::RangeStart->value,
+            'range-middle' => CalendarDayState::RangeMiddle->value,
+            'range-end' => CalendarDayState::RangeEnd->value,
         ],
         'type' => [
             'single' => 1,

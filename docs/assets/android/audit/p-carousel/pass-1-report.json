@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "component": "p-carousel",
+  "device": "emulator-5554",
+  "checks": {
+    "rounded24DpClip": true,
+    "horizontalSwipeAndIndicators": true,
+    "continuousWrap": true,
+    "delimiterTap": true,
+    "arrowControls": true,
+    "verticalGesture": true,
+    "boundedEdges": true,
+    "reverseDirection": true,
+    "hiddenDelimiters": true,
+    "automaticCycle": true,
+    "fontScale130": true,
+    "adaptiveLandscape": true,
+    "twelveGestureStress": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "density": 2.625,
+    "heightDp": 240.0,
+    "stressP99Ms": 16,
+    "stressMissedVsync": 0,
+    "stressSlowUiThreadFrames": 0
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-carousel-v7-final-pass1-420/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-slide-2",
+      "path": "/tmp/pam-carousel-v7-final-pass1-420/01-slide-2.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-delimiter-tap",
+      "path": "/tmp/pam-carousel-v7-final-pass1-420/04-delimiter-tap.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-arrow-result",
+      "path": "/tmp/pam-carousel-v7-final-pass1-420/05-arrow-result.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "11-font-scale-130",
+      "path": "/tmp/pam-carousel-v7-final-pass1-420/11-font-scale-130.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "12-landscape",
+      "path": "/tmp/pam-carousel-v7-final-pass1-420/12-landscape.png",
+      "size": [
+        2400,
+        1080
+      ]
+    }
+  ]
+}

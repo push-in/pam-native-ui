@@ -71,6 +71,34 @@ PY
   "${adb[@]}" shell input tap "${x}" "${y}"
 }
 
+tap_first_class() {
+  local class_name=$1
+  local remote=/sdcard/pam-showcase-interaction.xml
+  local hierarchy=${temporary}/interaction.xml
+  "${adb[@]}" shell uiautomator dump --compressed "${remote}" >/dev/null
+  "${adb[@]}" pull "${remote}" "${hierarchy}" >/dev/null
+  local coordinates
+  coordinates=$(python3 - "${hierarchy}" "${class_name}" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+path, class_name = sys.argv[1:]
+node = next(
+    candidate for candidate in ET.parse(path).iter('node')
+    if candidate.attrib.get('class') == class_name
+    and candidate.attrib.get('enabled') == 'true'
+)
+left, top, right, bottom = [
+    int(value) for value in re.findall(r'\d+', node.attrib['bounds'])
+]
+print((left + right) // 2, (top + bottom) // 2)
+PY
+  )
+  read -r x y <<<"${coordinates}"
+  "${adb[@]}" shell input tap "${x}" "${y}"
+}
+
 swipe_first_slider() {
   local remote=/sdcard/pam-showcase-slider.xml
   local hierarchy=${temporary}/slider.xml
@@ -93,6 +121,47 @@ PY
   )
   read -r start_x y end_x _ <<<"${coordinates}"
   "${adb[@]}" shell input swipe "${start_x}" "${y}" "${end_x}" "${y}" 900
+}
+
+swipe_first_range_slider() {
+  local remote=/sdcard/pam-showcase-range-slider.xml
+  local hierarchy=${temporary}/range-slider.xml
+  "${adb[@]}" shell uiautomator dump --compressed "${remote}" >/dev/null
+  "${adb[@]}" pull "${remote}" "${hierarchy}" >/dev/null
+  local density
+  density=$("${adb[@]}" shell wm density | awk '/Override density/ { value=$3 } END { print value }')
+  if [[ -z ${density} ]]; then
+    density=$("${adb[@]}" shell wm density | awk '/Physical density/ { value=$3 } END { print value }')
+  fi
+  local coordinates
+  coordinates=$(python3 - "${hierarchy}" "${density}" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+node = next(
+    candidate for candidate in ET.parse(sys.argv[1]).iter('node')
+    if candidate.attrib.get('class') == 'android.widget.SeekBar'
+)
+left, top, right, bottom = [int(value) for value in re.findall(r'\d+', node.attrib['bounds'])]
+density = int(sys.argv[2]) / 160.0
+track_start = left + round(16 * density)
+track_end = right - round(16 * density)
+extent = track_end - track_start
+y = (top + bottom) // 2
+print(
+    round(track_start + extent * 0.24), y,
+    round(track_start + extent * 0.36), y,
+    round(track_start + extent * 0.76), y,
+    round(track_start + extent * 0.66), y,
+)
+PY
+  )
+  local lower_x lower_y lower_target _ upper_x upper_y upper_target __
+  read -r lower_x lower_y lower_target _ upper_x upper_y upper_target __ <<<"${coordinates}"
+  "${adb[@]}" shell input swipe "${lower_x}" "${lower_y}" "${lower_target}" "${lower_y}" 700
+  sleep 1
+  "${adb[@]}" shell input swipe "${upper_x}" "${upper_y}" "${upper_target}" "${upper_y}" 700
 }
 
 interact() {
@@ -125,10 +194,66 @@ interact() {
     slider)
       swipe_first_slider
       ;;
+    range-slider)
+      swipe_first_range_slider
+      ;;
     time-picker)
       tap_text '14:35'
       sleep 2
       "${adb[@]}" shell input keyevent BACK
+      ;;
+    otp-input)
+      tap_first_class 'android.widget.EditText'
+      sleep 1
+      for _ in 1 2 3 4 5 6 7 8; do
+        "${adb[@]}" shell input keyevent DEL
+      done
+      "${adb[@]}" shell input text 738204
+      sleep 1
+      "${adb[@]}" shell input keyevent DEL
+      sleep 1
+      "${adb[@]}" shell input text 4
+      sleep 1
+      "${adb[@]}" shell input keyevent BACK
+      ;;
+    autocomplete)
+      tap_first_class 'android.widget.Spinner'
+      sleep 1
+      tap_first_class 'android.widget.EditText'
+      "${adb[@]}" shell input text eng
+      sleep 1
+      tap_text 'Engineering'
+      sleep 1
+      tap_first_class 'android.widget.Spinner'
+      sleep 1
+      tap_first_class 'android.widget.EditText'
+      "${adb[@]}" shell input text pro
+      sleep 1
+      tap_text 'Product'
+      ;;
+    combobox)
+      tap_first_class 'android.widget.Spinner'
+      sleep 1
+      tap_first_class 'android.widget.EditText'
+      "${adb[@]}" shell input text Strategy
+      sleep 1
+      tap_text 'Use Strategy'
+      sleep 1
+      tap_first_class 'android.widget.Spinner'
+      sleep 1
+      tap_first_class 'android.widget.EditText'
+      "${adb[@]}" shell input text eng
+      sleep 1
+      tap_text 'Engineering'
+      ;;
+    select)
+      tap_first_class 'android.widget.Spinner'
+      sleep 1
+      tap_text 'Engineering'
+      sleep 1
+      tap_first_class 'android.widget.Spinner'
+      sleep 1
+      tap_text 'Research'
       ;;
     *)
       echo "Unknown interaction $1" >&2
@@ -141,14 +266,22 @@ record() {
   local name=$1
   local url=$2
   local remote=/sdcard/pam-showcase-${name}.mp4
-  local video=${temporary}/${name}.mp4
+  local video=${output}/${name}.mp4
+  local time_limit=7
+  if [[ ${name} == otp-input ]]; then
+    time_limit=10
+  elif [[ ${name} == autocomplete || ${name} == combobox ]]; then
+    time_limit=30
+  elif [[ ${name} == select || ${name} == range-slider ]]; then
+    time_limit=8
+  fi
 
   "${adb[@]}" shell am start -W -S \
     -n "${package}/${activity}" -d "${url}" >/dev/null
   sleep 1
   "${adb[@]}" shell rm -f "${remote}"
   "${adb[@]}" shell screenrecord \
-    --size 540x1200 --bit-rate 4000000 --time-limit 7 "${remote}" &
+    --bit-rate 4000000 --time-limit "${time_limit}" "${remote}" &
   local recorder=$!
   sleep 1
   interact "${name}"
@@ -160,11 +293,15 @@ record() {
     "${output}/${name}.gif"
 }
 
-captures=${PAM_SHOWCASE_GIFS:-'navigation expansion-panels dialog menu tabs slider time-picker'}
+captures=${PAM_SHOWCASE_GIFS:-'navigation expansion-panels dialog menu tabs slider range-slider time-picker otp-input autocomplete combobox select'}
 captured=0
 for name in ${captures}; do
   case ${name} in
     navigation) url=pam-showcase://screen/overview ;;
+    otp-input) url='pam-showcase://audit/p-otp-input' ;;
+    autocomplete) url='pam-showcase://audit/p-autocomplete' ;;
+    combobox) url='pam-showcase://audit/p-combobox' ;;
+    select) url='pam-showcase://audit/p-select' ;;
     *) url="pam-showcase://component/p-${name}" ;;
   esac
   record "${name}" "${url}"

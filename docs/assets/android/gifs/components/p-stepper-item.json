@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-stepper-item",
+  "candidateOnly": true,
+  "sourceReportSha256": "78ed82fd1866ef8ea0e604de6197d9ac292cd968ade36cc6bcb7798e2d820a96",
+  "baselineSha256": "19021c5e4f8c3e42f9cbde5c9c73271a20b13b95fe127a2379a7f7b158f7069b",
+  "interactedSha256": "8b7be202bfa84eaad621e4b8a875672230c844195ee3c5c3448b24070edde5ae",
+  "gif": "p-stepper-item.gif",
+  "gifSha256": "db852bfe1677179eeffebeede4b06402e8e2368007497a0afd4c13b2566567ac",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-calendar",
+  "candidateOnly": true,
+  "sourceReportSha256": "d268cdf74cea4d2879217b3a3d2d9f80496b5228c451d1297d76a4b8b782524b",
+  "baselineSha256": "054c24abafaa5d51de8eb3478bbcb7baecc179f224c219fd34657b5a6f1ad004",
+  "interactedSha256": "a4f0612886f9cfbf4ad7e980a4f1a3e021d10e3e6bf157ca510238a325f62f93",
+  "gif": "p-calendar.gif",
+  "gifSha256": "f7b9adaf7361029240e34d9f139e259ed574d631756d11326863655bfadeb57a",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

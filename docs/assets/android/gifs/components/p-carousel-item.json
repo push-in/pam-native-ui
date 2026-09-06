@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-carousel-item",
+  "candidateOnly": true,
+  "sourceReportSha256": "e68e529df711dc18070f418d90df7f67186287053564b4f03e1957f69d93d1d0",
+  "baselineSha256": "1be89b67b5d2f93751e73bb227f7a25ad7d8a957e7edba2235ef7a6e0b8e1c6e",
+  "interactedSha256": "5ab1a929c1feaf057c169f0470bad9fb37718e8d5ae5d6200e7b83dc3ec93c81",
+  "gif": "p-carousel-item.gif",
+  "gifSha256": "74e0bb26214dfa00e0b2105c63ae1c1b5da60cf54fc6de2389a9d9b4329db151",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

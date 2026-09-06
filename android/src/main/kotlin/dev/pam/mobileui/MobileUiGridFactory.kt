@@ -10,6 +10,7 @@ import dev.pam.nativeapp.views.NativeViewEmitter
 import dev.pam.nativeapp.views.NativeViewFactoryV2
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class MobileUiGridFactory(
     @Suppress("UNUSED_PARAMETER") context: Context,
@@ -295,10 +296,16 @@ internal object GridPlanner {
         spans.indices.forEach { index ->
             val requestedSpan = spans[index].coerceIn(1, safeColumns)
             if (column > 0 && column + requestedSpan > safeColumns) flushRow()
-            val itemWidth = (
-                requestedSpan * columnWidth + (requestedSpan - 1) * safeGap
-            ).toInt().coerceAtLeast(0)
-            val naturalLeft = (column * (columnWidth + safeGap)).toInt()
+            // Round absolute boundaries instead of truncating every cell.
+            // This distributes fractional pixels across the row, preserves
+            // authored gaps and makes the final column land exactly on the
+            // available edge at non-integer display densities.
+            val naturalLeft = (column * (columnWidth + safeGap)).roundToInt()
+            val naturalRight = (
+                (column + requestedSpan) * columnWidth
+                    + (column + requestedSpan - 1) * safeGap
+            ).roundToInt()
+            val itemWidth = (naturalRight - naturalLeft).coerceAtLeast(0)
             val left = if (direction == GridDirection.ROW_REVERSE) {
                 width.coerceAtLeast(0) - naturalLeft - itemWidth
             } else {

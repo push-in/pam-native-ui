@@ -18,6 +18,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.RectF
@@ -38,8 +39,12 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.view.ViewTreeObserver
+import android.view.ViewConfiguration
 import android.view.VelocityTracker
+import android.view.WindowInsets
+import android.view.inputmethod.BaseInputConnection
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityNodeInfo
@@ -64,11 +69,102 @@ import java.time.format.DateTimeParseException
 import java.time.format.DateTimeFormatter
 import java.util.LinkedHashSet
 import java.util.Locale
+import org.json.JSONArray
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.round
 import kotlin.math.roundToInt
+
+internal fun selectionSheetContentHeightPx(
+    viewportHeight: Int,
+    density: Float,
+    visibleItemCount: Int,
+    searchable: Boolean,
+    supplementaryRow: Boolean,
+    dragHandle: Boolean = false,
+): Int {
+    val safeDensity = density.coerceAtLeast(0.1f)
+    val topInsetDp = 12f
+    val dragHandleBlockDp = if (dragHandle) 20f else 0f
+    val searchBlockDp = if (searchable) 60f else 0f
+    val bottomInsetDp = 24f
+    // A filtered/empty result still renders one informative row. Measuring
+    // that row explicitly keeps the sheet useful without imposing a large
+    // portrait-oriented minimum in landscape.
+    val rows = (
+        visibleItemCount.coerceAtLeast(0) + if (supplementaryRow) 1 else 0
+    ).coerceAtLeast(1)
+    val desired = (
+        topInsetDp + dragHandleBlockDp + searchBlockDp + bottomInsetDp + rows * 56f
+    ) * safeDensity
+    val maximum = viewportHeight.coerceAtLeast(1) * 0.9f
+
+    return desired.coerceAtMost(maximum).roundToInt().coerceAtLeast(1)
+}
+
+internal fun adaptiveBottomSheetHeightsPx(
+    viewportHeight: Int,
+    maximumSnapPercent: Float,
+    selectedSnapPercent: Float,
+    requiredContentHeight: Int,
+    fontScale: Float = 1f,
+    density: Float = 1f,
+    snapPointCount: Int = 1,
+): Pair<Int, Int> {
+    val viewport = viewportHeight.coerceAtLeast(1)
+    val cap = (viewport * 0.9f).roundToInt().coerceAtLeast(1)
+    val accessibilityScale = fontScale.coerceIn(1f, 2f)
+    val requestedMaximum = (
+        viewport * maximumSnapPercent.coerceIn(1f, 100f)
+            * accessibilityScale / 100f
+    ).roundToInt()
+    val requestedSelected = (
+        viewport * selectedSnapPercent.coerceIn(1f, 100f)
+            * accessibilityScale / 100f
+    ).roundToInt()
+    // Fixed percentage detents become extremely shallow on a landscape phone.
+    // Keep enough physical space for heading, supporting content, 48dp actions,
+    // and system-safe breathing room even when the protocol layout was already
+    // measured against (and clipped by) that shallow parent.
+    val minimumUsableHeight = if (snapPointCount <= 1) {
+        (272f * density.coerceAtLeast(0.1f)).roundToInt()
+    } else {
+        1
+    }
+    val required = max(requiredContentHeight, minimumUsableHeight).coerceIn(1, cap)
+    val layoutHeight = max(requestedMaximum, required).coerceAtMost(cap)
+    val visibleHeight = max(requestedSelected, required).coerceAtMost(layoutHeight)
+
+    return layoutHeight to visibleHeight
+}
+
+internal fun bottomSheetTranslationPx(
+    maximumHeight: Int,
+    selectedHeight: Int,
+    snapPointCount: Int,
+): Float = if (snapPointCount <= 1) {
+    // A single detent that had to grow for accessibility or a short viewport
+    // has no smaller state to hide below the viewport. Translating the grown
+    // surface would clip its actions at the system navigation edge.
+    0f
+} else {
+    (maximumHeight - selectedHeight).coerceAtLeast(0).toFloat()
+}
+
+internal fun descendantContentBottomPx(group: ViewGroup): Int =
+    (0 until group.childCount).maxOfOrNull { index ->
+        val child = group.getChildAt(index)
+        val ownExtent = maxOf(child.height, child.measuredHeight)
+        val descendantExtent = (child as? ViewGroup)
+            ?.let(::descendantContentBottomPx)
+            ?: 0
+        child.top + child.translationY.roundToInt() + maxOf(
+            ownExtent,
+            descendantExtent,
+        )
+    } ?: 0
 
 @SuppressLint("ViewConstructor")
 internal class MobileUiHost(
@@ -155,6 +251,33 @@ internal class MobileUiHost(
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(23, 23, 23)
     }
+    private val sliderThumbPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val sliderTickPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val sliderStateLayerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val sliderDrawBounds = RectF()
+    private val sliderGeometryBounds = RectF()
+    private val sliderHitBounds = RectF()
+    private val sliderLabelBounds = RectF()
+    private val sliderThumbBounds = RectF()
+    private val sliderDescendantRect = Rect()
+    private val sliderVisibleRect = Rect()
+    private val sliderGlobalOffset = Point()
+    private val sliderLabelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = scaledTextSizePx(context, 12f)
+        typeface = android.graphics.Typeface.create(
+            android.graphics.Typeface.DEFAULT,
+            android.graphics.Typeface.BOLD,
+        )
+    }
+    private val sliderTickLabelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = scaledTextSizePx(context, 12f)
+        typeface = android.graphics.Typeface.create(
+            "sans-serif-medium",
+            android.graphics.Typeface.NORMAL,
+        )
+    }
     private val calendarTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(23, 23, 23)
         textAlign = Paint.Align.CENTER
@@ -166,6 +289,12 @@ internal class MobileUiHost(
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
+    private val abstractSelectionPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var abstractSelectionForegroundColor = Color.rgb(23, 23, 23)
+    private var abstractSelectionSelectedForegroundColor = Color.rgb(23, 23, 23)
+    private var fileTreeForegroundColor = Color.rgb(23, 23, 23)
+    private var fileTreeSelectedForegroundColor = Color.rgb(23, 23, 23)
+    private var fileTreeSelectedContainerColor = Color.TRANSPARENT
     private val switchTrackPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val switchThumbPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         setShadowLayer(1.5f * density, 0f, density, 0x55000000)
@@ -188,8 +317,19 @@ internal class MobileUiHost(
     private var minimum = 0.0
     private var maximum = 100.0
     private var step = 1.0
-    private var trackThickness = 6.0
-    private var sliderThumbSize = 16.0
+    private var trackThickness = 4.0
+    private var sliderThumbWidth = 20.0
+    private var sliderThumbHeight = 20.0
+    private var sliderThumbTrackGap = 6.0
+    private var sliderStateLayerSize = 40.0
+    private var sliderStopIndicatorSize = 4.0
+    private var sliderTickSize = 4.0
+    private var sliderThumbColor = Color.rgb(23, 23, 23)
+    private var sliderActiveTickColor = Color.WHITE
+    private var sliderInactiveTickColor = Color.rgb(23, 23, 23)
+    private var sliderThumbLabelTextColor = Color.WHITE
+    private var sliderTickLabelColor = Color.rgb(82, 82, 82)
+    private var sliderTickLabels: List<String> = emptyList()
     private var orientation = 1
     private var reversed = false
     private var rangeEnabled = false
@@ -234,6 +374,7 @@ internal class MobileUiHost(
     private var sheetBackdropBaseAlpha: Float? = null
     private var sheetScrimOpacity = 0.5f
     private var sheetVelocityTracker: VelocityTracker? = null
+    private var sheetKeyboardInset = 0
     private var closeSheetItemOnPress = false
     private var closeMenuItemOnPress = true
     private var menuSelectionMode = MENU_SELECTION_NONE
@@ -259,6 +400,7 @@ internal class MobileUiHost(
     private var showOutsideDays = true
     private var showWeekNumbers = false
     private var fixedWeeks = false
+    private var calendarRtl = false
     private var readOnly = false
     private var invalid = false
     private var required = false
@@ -266,6 +408,7 @@ internal class MobileUiHost(
     private var inputInvalidColor = Color.rgb(220, 38, 38)
     private var inputOutlineRadius = 6f
     private var inputOutlineWidth = 1f
+    private var inputIndicatorOnly = false
     private var inputFocused = false
     private var inputSlotAction = INPUT_SLOT_ACTION_FOCUS
     private var inputSlotFocusOnPress = true
@@ -291,6 +434,7 @@ internal class MobileUiHost(
     }
     private var switchTrackOffColor = Color.rgb(212, 212, 212)
     private var switchTrackOnColor = Color.rgb(82, 82, 82)
+    private var switchTrackOutlineColor = Color.rgb(117, 117, 117)
     private var switchThumbColor = Color.rgb(250, 250, 250)
     private var switchActiveThumbColor = Color.rgb(250, 250, 250)
     private var switchVisualProgress = 0f
@@ -308,6 +452,12 @@ internal class MobileUiHost(
     private var rangeFrom: LocalDate? = null
     private var rangeTo: LocalDate? = null
     private var pressedCalendarTarget = CALENDAR_TARGET_NONE
+    private var calendarTouchDownRawX = 0f
+    private var calendarTouchDownRawY = 0f
+    private var calendarTouchMoved = false
+    private val calendarTouchSlop by lazy {
+        ViewConfiguration.get(context).scaledTouchSlop.toFloat()
+    }
     private var accessibilityFocusedCalendarCell = CALENDAR_TARGET_NONE
     private val accessibilityManager by lazy {
         context.getSystemService(AccessibilityManager::class.java)
@@ -322,7 +472,9 @@ internal class MobileUiHost(
                 }
             }
 
-            return calendarVirtualNode(virtualViewId)
+            return calendarHeaderVirtualNode(virtualViewId)
+                ?: calendarWeekVirtualNode(virtualViewId)
+                ?: calendarVirtualNode(virtualViewId)
         }
 
         override fun performAction(
@@ -334,24 +486,37 @@ internal class MobileUiHost(
             if (virtualViewId == HOST_VIEW_ID) {
                 return this@MobileUiHost.performAccessibilityAction(action, arguments)
             }
-            if (virtualViewId !in calendarCellRange()) return false
+            val headerTarget = calendarHeaderTarget(virtualViewId)
+            val isCalendarCell = virtualViewId in calendarCellRange()
+            val isWeekNumber = calendarWeekRow(virtualViewId) != null
+            if (headerTarget == CALENDAR_TARGET_NONE && !isCalendarCell && !isWeekNumber) return false
 
             return when (action) {
                 AccessibilityNodeInfo.ACTION_CLICK -> {
-                    val selected = selectCalendarDate(calendarDateAt(virtualViewId))
-                    if (selected) {
+                    val activated = when (headerTarget) {
+                        CALENDAR_TARGET_PREVIOUS -> navigateCalendar(-1)
+                        CALENDAR_TARGET_NEXT -> navigateCalendar(1)
+                        CALENDAR_TARGET_MONTH -> showCalendarSelector(true)
+                        CALENDAR_TARGET_YEAR -> showCalendarSelector(false)
+                        else -> if (isCalendarCell) {
+                            selectCalendarDate(calendarDateAt(virtualViewId))
+                        } else {
+                            false
+                        }
+                    }
+                    if (activated) {
                         sendCalendarVirtualEvent(
                             virtualViewId,
                             AccessibilityEvent.TYPE_VIEW_CLICKED,
                         )
                     }
-                    selected
+                    activated
                 }
                 AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS -> {
                     if (accessibilityFocusedCalendarCell == virtualViewId) return true
                     val previous = accessibilityFocusedCalendarCell
                     accessibilityFocusedCalendarCell = virtualViewId
-                    if (previous >= 0) {
+                    if (previous != CALENDAR_TARGET_NONE) {
                         sendCalendarVirtualEvent(
                             previous,
                             AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
@@ -415,9 +580,22 @@ internal class MobileUiHost(
     private var carouselTouchDownY = 0f
     private var carouselTouchActive = false
     private var treeReconciliationScheduled = false
+    private var fileTreeSelectionVisualScheduled = false
+    private var sheetInsetsLayoutScheduled = false
+    private var sheetWindowVisible = false
     private val treeReconciliation = Runnable {
         treeReconciliationScheduled = false
         reconcileChildState()
+    }
+    private val fileTreeSelectionVisual = Runnable {
+        fileTreeSelectionVisualScheduled = false
+        applyFileTreeSelectionVisual(isSelected)
+    }
+    private val sheetInsetsLayout = Runnable {
+        sheetInsetsLayoutScheduled = false
+        if (behavior == Behavior.BOTTOM_SHEET && isAttachedToWindow) {
+            requestLayout()
+        }
     }
 
     init {
@@ -429,6 +607,34 @@ internal class MobileUiHost(
         isClickable = true
         isFocusable = true
         setWillNotDraw(false)
+        setOnApplyWindowInsetsListener { _, insets ->
+            val nextInset = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val ime = insets.getInsets(WindowInsets.Type.ime()).bottom
+                val navigation = insets.getInsets(
+                    WindowInsets.Type.navigationBars(),
+                ).bottom
+                if (insets.isVisible(WindowInsets.Type.ime())) {
+                    (ime - navigation).coerceAtLeast(0)
+                } else {
+                    0
+                }
+            } else {
+                val visibleFrame = Rect()
+                getWindowVisibleDisplayFrame(visibleFrame)
+                (rootView.height - visibleFrame.bottom).coerceAtLeast(0)
+            }
+            if (sheetKeyboardInset != nextInset) {
+                sheetKeyboardInset = nextInset
+                if (
+                    behavior == Behavior.BOTTOM_SHEET
+                    && !sheetInsetsLayoutScheduled
+                ) {
+                    sheetInsetsLayoutScheduled = true
+                    post(sheetInsetsLayout)
+                }
+            }
+            insets
+        }
     }
 
     override fun onDetachedFromWindow() {
@@ -445,17 +651,41 @@ internal class MobileUiHost(
         }
         progressAnimator?.cancel()
         progressAnimator = null
+        removeCallbacks(sheetInsetsLayout)
+        removeCallbacks(fileTreeSelectionVisual)
+        sheetInsetsLayoutScheduled = false
+        fileTreeSelectionVisualScheduled = false
+        sheetWindowVisible = false
         super.onDetachedFromWindow()
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        handleSheetWindowVisibilityChanged(visibility)
+    }
+
+    internal fun handleSheetWindowVisibilityChanged(visibility: Int) {
+        val wasVisible = sheetWindowVisible
+        sheetWindowVisible = visibility == VISIBLE
+        if (
+            behavior == Behavior.BOTTOM_SHEET
+            && wasVisible
+            && !sheetWindowVisible
+        ) {
+            clearSheetSearch()
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        sheetSearchInput?.text?.let(BaseInputConnection::removeComposingSpans)
         calendarTextPaint.textSize = scaledTextSizePx(context, 14f)
         invalidate()
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        sheetWindowVisible = windowVisibility == VISIBLE
         updateProgressAnimation()
     }
 
@@ -660,34 +890,70 @@ internal class MobileUiHost(
                 properties.decimal("maxValue", maximum),
             ),
         )
-        step = properties.decimal("step", step).coerceAtLeast(0.000_001)
+        // Configuration props are snapshots, not patches. Reusing a native
+        // host after a stepped slider must not leak step=10 into a slider that
+        // omitted the prop and expects the canonical step=1 default.
+        step = properties.decimal("step", 1.0).coerceAtLeast(0.000_001)
         value = snapped(value)
-        rangeEnabled = properties.flag("range", rangeEnabled)
-        lowerValue = snapped(properties.decimal("lowerValue", lowerValue))
-        upperValue = snapped(properties.decimal("upperValue", upperValue))
+        rangeEnabled = properties.flag("range", false)
+        val requestedLowerValue = snapped(properties.decimal("lowerValue", minimum))
+        val requestedUpperValue = snapped(properties.decimal("upperValue", maximum))
+        lowerValue = requestedLowerValue
+        upperValue = requestedUpperValue
         if (rangeEnabled) {
-            lowerValue = minOf(lowerValue, upperValue)
-            upperValue = maxOf(lowerValue, upperValue)
+            lowerValue = minOf(requestedLowerValue, requestedUpperValue)
+            upperValue = maxOf(requestedLowerValue, requestedUpperValue)
             value = upperValue
         }
-        trackThickness = properties.decimal(
-            "trackThickness",
-            properties.decimal("sliderTrackHeight", trackThickness),
+        trackThickness = if (behavior == Behavior.PROGRESS) {
+            properties.decimal("thickness", 4.0)
+        } else {
+            properties.decimal(
+                "trackThickness",
+                properties.decimal("sliderTrackHeight", trackThickness),
+            )
+        }.coerceAtLeast(1.0)
+        val legacyThumbSize = properties.decimal("thumbSize", 0.0)
+        sliderThumbWidth = properties.decimal(
+            "thumbWidth",
+            if (legacyThumbSize > 0.0) legacyThumbSize else sliderThumbWidth,
         ).coerceAtLeast(1.0)
-        sliderThumbSize = properties.decimal("thumbSize", sliderThumbSize)
-            .coerceAtLeast(1.0)
-        orientation = properties.integer("orientation", orientation.toLong()).toInt()
-        reversed = properties.flag("isReversed", properties.flag("reversed", reversed))
-        showSliderTicks = properties.flag("showTicks", showSliderTicks)
+        sliderThumbHeight = properties.decimal(
+            "thumbHeight",
+            if (legacyThumbSize > 0.0) legacyThumbSize else sliderThumbHeight,
+        ).coerceAtLeast(1.0)
+        sliderThumbTrackGap = properties.decimal(
+            "thumbTrackGap",
+            sliderThumbTrackGap,
+        ).coerceAtLeast(0.0)
+        sliderStateLayerSize = properties.decimal(
+            "stateLayerSize",
+            sliderStateLayerSize,
+        ).coerceAtLeast(0.0)
+        sliderStopIndicatorSize = properties.decimal(
+            "stopIndicatorSize",
+            sliderStopIndicatorSize,
+        ).coerceAtLeast(0.0)
+        sliderTickSize = properties.decimal(
+            "tickSize",
+            sliderTickSize,
+        ).coerceAtLeast(0.0)
+        orientation = properties.integer("orientation", 1L).toInt()
+        reversed = properties.flag(
+            "isReversed",
+            properties.flag("reversed", properties.flag("reverse", false)),
+        )
+        showSliderTicks = properties.flag("showTicks", false)
         alwaysShowSliderTicks = properties.flag(
             "alwaysShowTicks",
-            alwaysShowSliderTicks,
+            false,
         )
-        showThumbLabel = properties.flag("showThumbLabel", showThumbLabel)
+        showThumbLabel = properties.flag("showThumbLabel", false)
         alwaysShowThumbLabel = properties.flag(
             "alwaysShowThumbLabel",
-            alwaysShowThumbLabel,
+            false,
         )
+        sliderTickLabels = decodeSliderTickLabels(properties.text("tickLabels"))
         anchor = properties.integer("anchor", anchor.toLong()).toInt()
         placement = properties.integer("placement", placement.toLong()).toInt().coerceIn(1, 13)
         resolvedPlacement = placement
@@ -755,7 +1021,9 @@ internal class MobileUiHost(
         showOutsideDays = properties.flag("showOutsideDays", true)
         showWeekNumbers = properties.flag("showWeek", false)
         fixedWeeks = properties.flag("fixedWeeks", false)
-        readOnly = properties.flag("readOnly", properties.flag("isReadOnly", false))
+        calendarRtl = properties.flag("rtl", false)
+        readOnly = properties.flag("interactionDisabled", false) ||
+            properties.flag("readOnly", properties.flag("isReadOnly", false))
         invalid = properties.flag("invalid", properties.flag("isInvalid", false))
         required = properties.flag("required", properties.flag("isRequired", false))
         inputFocusColor = properties.integer(
@@ -773,7 +1041,8 @@ internal class MobileUiHost(
         inputOutlineWidth = properties.decimal(
             "outlineWidth",
             inputOutlineWidth.toDouble(),
-        ).toFloat().coerceAtLeast(1f)
+        ).toFloat().coerceAtLeast(0f)
+        inputIndicatorOnly = properties.flag("indicatorOnly", false)
         inputSlotAction = properties.integer(
             "slotAction",
             if (previousBehavior == behavior) {
@@ -813,6 +1082,10 @@ internal class MobileUiHost(
             "trackOnColor",
             switchTrackOnColor.toLong(),
         ).toInt()
+        switchTrackOutlineColor = properties.integer(
+            "trackOutlineColor",
+            switchTrackOutlineColor.toLong(),
+        ).toInt()
         switchThumbColor = properties.integer(
             "thumbColor",
             switchThumbColor.toLong(),
@@ -845,6 +1118,26 @@ internal class MobileUiHost(
         tooltipText = properties.text("accessibilityHint")
         trackPaint.color = properties.integer("trackColor", trackPaint.color.toLong()).toInt()
         fillPaint.color = properties.integer("fillColor", fillPaint.color.toLong()).toInt()
+        sliderThumbColor = properties.integer(
+            "thumbColor",
+            sliderThumbColor.toLong(),
+        ).toInt()
+        sliderActiveTickColor = properties.integer(
+            "activeTickColor",
+            sliderActiveTickColor.toLong(),
+        ).toInt()
+        sliderInactiveTickColor = properties.integer(
+            "inactiveTickColor",
+            sliderInactiveTickColor.toLong(),
+        ).toInt()
+        sliderThumbLabelTextColor = properties.integer(
+            "thumbLabelTextColor",
+            sliderThumbLabelTextColor.toLong(),
+        ).toInt()
+        sliderTickLabelColor = properties.integer(
+            "tickLabelColor",
+            sliderTickLabelColor.toLong(),
+        ).toInt()
         calendarTextPaint.color = properties.integer(
             "foregroundColor",
             calendarTextPaint.color.toLong(),
@@ -854,6 +1147,35 @@ internal class MobileUiHost(
             calendarSelectedTextColor.toLong(),
         ).toInt()
         selectionGlyphPaint.color = calendarSelectedTextColor
+        abstractSelectionForegroundColor = properties.integer(
+            "foregroundColor",
+            abstractSelectionForegroundColor.toLong(),
+        ).toInt()
+        abstractSelectionSelectedForegroundColor = properties.integer(
+            "selectedForegroundColor",
+            abstractSelectionSelectedForegroundColor.toLong(),
+        ).toInt()
+        abstractSelectionPaint.color = properties.integer(
+            "selectedContainerColor",
+            Color.TRANSPARENT.toLong(),
+        ).toInt()
+        if (
+            behavior == Behavior.FILE_TREE_FOLDER
+            || behavior == Behavior.FILE_TREE_FILE
+        ) {
+            fileTreeForegroundColor = properties.integer(
+                "foregroundColor",
+                fileTreeForegroundColor.toLong(),
+            ).toInt()
+            fileTreeSelectedForegroundColor = properties.integer(
+                "selectedForegroundColor",
+                fileTreeSelectedForegroundColor.toLong(),
+            ).toInt()
+            fileTreeSelectedContainerColor = properties.integer(
+                "selectedContainerColor",
+                Color.TRANSPARENT.toLong(),
+            ).toInt()
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             customStateDescription = properties.text("stateDescription")
             stateDescription = customStateDescription
@@ -941,10 +1263,15 @@ internal class MobileUiHost(
             applyTableSemantics()
         } else if (behavior == Behavior.FILE_TREE) {
             applyFileTreeState(announce = false)
-        } else if (
-            behavior == Behavior.FILE_TREE_FOLDER
-            || behavior == Behavior.FILE_TREE_FILE
-        ) {
+        } else if (behavior == Behavior.FILE_TREE_FOLDER) {
+            applyFileTreeFolderState(
+                expanded = expanded,
+                selected = selected,
+                animate = previousBehavior == Behavior.FILE_TREE_FOLDER,
+            )
+        } else if (behavior == Behavior.FILE_TREE_FILE) {
+            isSelected = selected
+            applyFileTreeSelectionVisual(selected)
             updateFileTreeItemAccessibility()
         }
         scheduleAttachedTreeReconciliation()
@@ -956,6 +1283,17 @@ internal class MobileUiHost(
 
     override fun onViewAdded(child: View) {
         super.onViewAdded(child)
+        if (
+            behavior == Behavior.BOTTOM_SHEET
+            && child is ViewGroup
+            && child.tag == OVERLAY_CONTENT_TAG
+        ) {
+            // Selection portals are commonly configured before their native
+            // content is mounted. Build the owned search/empty-state rows as
+            // soon as that content arrives so the first composed frame is
+            // complete on every supported Android API level.
+            ensureSheetSearchInput(child)
+        }
         if (behavior == Behavior.TABLE) {
             tableSemanticsDirty = true
         } else if (behavior == Behavior.TABLE_ROW) {
@@ -982,7 +1320,14 @@ internal class MobileUiHost(
             applyTabsState(animate = false)
         }
         if (behavior == Behavior.BOTTOM_SHEET) {
-            post { applySheetLayout(animate = false) }
+            if (isAttachedToWindow) {
+                post { applySheetLayout(animate = false) }
+            } else {
+                // Protocol composition adds the sheet content before the host
+                // is attached. Build its native search/empty-state structure
+                // immediately so the first measure is complete on old APIs.
+                applySheetLayout(animate = false)
+            }
         }
         if (behavior == Behavior.MENU_ITEM) {
             updateMenuItemAccessibility()
@@ -1051,6 +1396,26 @@ internal class MobileUiHost(
     }
 
     override fun dispatchDraw(canvas: Canvas) {
+        val abstractSelection = behavior == Behavior.CHECKBOX
+            && nativeProperties.flag("abstractSelectionItem", false)
+        if (abstractSelection) {
+            // Renderer styles may be applied to the content row after it is
+            // attached. Normalize that surface per frame so native local
+            // selection is always visible before the next PHP reconciliation.
+            getChildAt(0)?.background = null
+            if (checked) {
+                val radius = 12f * density
+                canvas.drawRoundRect(
+                    0f,
+                    0f,
+                    width.toFloat(),
+                    height.toFloat(),
+                    radius,
+                    radius,
+                    abstractSelectionPaint,
+                )
+            }
+        }
         super.dispatchDraw(canvas)
         when (behavior) {
             Behavior.CHECKBOX -> if (
@@ -1069,6 +1434,7 @@ internal class MobileUiHost(
             Behavior.PROGRESS -> if (!circularProgress) {
                 drawLinearProgress(canvas)
             }
+            Behavior.SHEET_ITEM -> drawSheetItemSelection(canvas)
             Behavior.SKELETON -> drawSkeletonShimmer(canvas)
             else -> Unit
         }
@@ -1077,9 +1443,7 @@ internal class MobileUiHost(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         when (behavior) {
-            Behavior.CHECKBOX -> if (
-                !nativeProperties.flag("abstractSelectionItem", false)
-            ) {
+            Behavior.CHECKBOX -> if (!nativeProperties.flag("abstractSelectionItem", false)) {
                 drawSelectionIndicator(canvas, radio = false)
             }
             Behavior.RADIO -> drawSelectionIndicator(canvas, radio = true)
@@ -1094,20 +1458,29 @@ internal class MobileUiHost(
     private fun drawTimeline(canvas: Canvas) {
         if (childCount == 0) return
         val axis = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
-            width - 20f * density
+            width - TIMELINE_AXIS_INSET_DP * density
         } else {
-            20f * density
+            TIMELINE_AXIS_INSET_DP * density
         }
-        val first = 32f * density
-        val last = first + (childCount - 1) * 64f * density
+        val markerCenters = (0 until childCount).mapNotNull { index ->
+            getChildAt(index)
+                .takeIf { it.visibility == VISIBLE && it.height > 0 }
+                ?.let { child ->
+                    child.top + minOf(
+                        TIMELINE_MARKER_TOP_DP * density,
+                        child.height / 2f,
+                    )
+                }
+        }
+        if (markerCenters.isEmpty()) return
         val previousStyle = trackPaint.style
         val previousWidth = trackPaint.strokeWidth
         trackPaint.style = Paint.Style.STROKE
         trackPaint.strokeWidth = 2f * density
-        canvas.drawLine(axis, first, axis, last, trackPaint)
+        canvas.drawLine(axis, markerCenters.first(), axis, markerCenters.last(), trackPaint)
         fillPaint.style = Paint.Style.FILL
-        repeat(childCount) { index ->
-            canvas.drawCircle(axis, first + index * 64f * density, 6f * density, fillPaint)
+        markerCenters.forEach { centerY ->
+            canvas.drawCircle(axis, centerY, 6f * density, fillPaint)
         }
         trackPaint.style = previousStyle
         trackPaint.strokeWidth = previousWidth
@@ -1148,7 +1521,7 @@ internal class MobileUiHost(
         if (behavior == Behavior.LIST_ITEM && childCount > 0) {
             val width = MeasureSpec.getSize(widthMeasureSpec)
             val availableWidth = (width - paddingLeft - paddingRight).coerceAtLeast(0)
-            val maxChildHeight = (48f * density).roundToInt()
+            val maxChildHeight = (56f * density).roundToInt()
             if (childCount >= 3) {
                 val accessoryWidth = (40f * density).roundToInt()
                 val gap = (12f * density).roundToInt()
@@ -1189,9 +1562,9 @@ internal class MobileUiHost(
                 else -> 0f
             }
             val baseHeight = when (lines) {
-                2 -> 64f
+                2 -> 72f
                 3 -> 88f
-                else -> 48f
+                else -> 56f
             }
             val desiredHeight = ((baseHeight + densityOffset) * density).roundToInt()
             setMeasuredDimension(
@@ -1474,27 +1847,6 @@ internal class MobileUiHost(
                 logicalX += child.measuredWidth + gap
             }
         }
-        if (behavior == Behavior.TIMELINE && childCount > 0) {
-            val itemHeight = (64f * density).roundToInt()
-            repeat(childCount) { index ->
-                val child = getChildAt(index)
-                val y = paddingTop + index * itemHeight
-                child.layout(paddingLeft, y, width - paddingRight, minOf(height, y + itemHeight))
-            }
-        }
-        if (behavior == Behavior.TIMELINE_ITEM && childCount > 0) {
-            val inset = (40f * density).roundToInt()
-            repeat(childCount) { index ->
-                val child = getChildAt(index)
-                val childHeight = child.measuredHeight.coerceAtMost(height)
-                val y = (height - childHeight) / 2
-                if (layoutDirection == LAYOUT_DIRECTION_RTL) {
-                    child.layout(0, y, width - inset, y + childHeight)
-                } else {
-                    child.layout(inset, y, width, y + childHeight)
-                }
-            }
-        }
         applyRangeVisualState()
         if (behavior == Behavior.TABS) {
             applyTabsState(animate = false)
@@ -1601,7 +1953,7 @@ internal class MobileUiHost(
             sliderTouchActive = true
             return true
         }
-        if (behavior == Behavior.DATE_TIME_PICKER && isEnabled) {
+        if (behavior == Behavior.DATE_TIME_PICKER && isEnabled && !readOnly) {
             return true
         }
         if (
@@ -1621,10 +1973,18 @@ internal class MobileUiHost(
         ) {
             return true
         }
-        if (behavior == Behavior.FORM_CONTROL && isEnabled) {
+        if (
+            (behavior == Behavior.FORM_CONTROL || behavior == Behavior.INPUT_GROUP)
+            && isEnabled
+        ) {
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    formLabelTouchActive = formLabelBounds()
+                    val labelBounds = if (behavior == Behavior.FORM_CONTROL) {
+                        formLabelBounds()
+                    } else {
+                        inputGroupLabelBounds()
+                    }
+                    formLabelTouchActive = labelBounds
                         ?.contains(event.x, event.y) == true
                     if (formLabelTouchActive) return true
                 }
@@ -1746,13 +2106,21 @@ internal class MobileUiHost(
                 else -> true
             }
         }
-        if (behavior == Behavior.FORM_CONTROL && formLabelTouchActive) {
+        if (
+            (behavior == Behavior.FORM_CONTROL || behavior == Behavior.INPUT_GROUP)
+            && formLabelTouchActive
+        ) {
             return when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_MOVE,
                 -> true
                 MotionEvent.ACTION_UP -> {
-                    val activate = formLabelBounds()
+                    val labelBounds = if (behavior == Behavior.FORM_CONTROL) {
+                        formLabelBounds()
+                    } else {
+                        inputGroupLabelBounds()
+                    }
+                    val activate = labelBounds
                         ?.contains(event.x, event.y) == true
                     formLabelTouchActive = false
                     if (activate) {
@@ -1800,11 +2168,22 @@ internal class MobileUiHost(
             Behavior.TAB_TRIGGER ->
                 tabsAncestor()?.selectTab(this, emit = true) == true
             Behavior.FILE_TREE_FOLDER ->
-                fileTreeAncestor()?.toggleFileTreeFolder(this) == true
+                fileTreeAncestor()?.toggleFileTreeFolder(this)
+                    ?: super.performClick()
             Behavior.FILE_TREE_FILE ->
-                fileTreeAncestor()?.selectFileTreeItem(this) == true
+                fileTreeAncestor()?.selectFileTreeItem(this)
+                    ?: super.performClick()
             else -> super.performClick()
         }
+
+    override fun onFocusChanged(
+        gainFocus: Boolean,
+        direction: Int,
+        previouslyFocusedRect: Rect?,
+    ) {
+        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
+        if (behavior == Behavior.SLIDER) invalidate()
+    }
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
@@ -2141,6 +2520,32 @@ internal class MobileUiHost(
                     info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT)
                     info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT)
                 }
+                if (rangeEnabled) {
+                    info.addAction(
+                        AccessibilityNodeInfo.AccessibilityAction(
+                            R.id.pam_range_lower_decrease,
+                            "Decrease lower value",
+                        ),
+                    )
+                    info.addAction(
+                        AccessibilityNodeInfo.AccessibilityAction(
+                            R.id.pam_range_lower_increase,
+                            "Increase lower value",
+                        ),
+                    )
+                    info.addAction(
+                        AccessibilityNodeInfo.AccessibilityAction(
+                            R.id.pam_range_upper_decrease,
+                            "Decrease upper value",
+                        ),
+                    )
+                    info.addAction(
+                        AccessibilityNodeInfo.AccessibilityAction(
+                            R.id.pam_range_upper_increase,
+                            "Increase upper value",
+                        ),
+                    )
+                }
             }
         }
         if (behavior == Behavior.PROGRESS) {
@@ -2154,9 +2559,18 @@ internal class MobileUiHost(
             info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT)
             info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
                 calendarRowCount(),
-                DAYS_PER_WEEK,
+                DAYS_PER_WEEK + if (showWeekNumbers) 1 else 0,
                 false,
             )
+            info.addChild(this, CALENDAR_VIRTUAL_PREVIOUS)
+            info.addChild(this, CALENDAR_VIRTUAL_MONTH)
+            info.addChild(this, CALENDAR_VIRTUAL_YEAR)
+            info.addChild(this, CALENDAR_VIRTUAL_NEXT)
+            if (showWeekNumbers) {
+                repeat(calendarRowCount()) { row ->
+                    info.addChild(this, CALENDAR_VIRTUAL_WEEK_BASE + row)
+                }
+            }
             calendarCellRange().forEach { index ->
                 val date = calendarDateAt(index)
                 if (showOutsideDays || date.monthValue == calendarMonth) {
@@ -2214,9 +2628,11 @@ internal class MobileUiHost(
             } else {
                 "android.widget.DatePicker"
             }
-            info.isClickable = isEnabled
-            if (isEnabled) {
+            info.isClickable = isEnabled && !readOnly
+            if (isEnabled && !readOnly) {
                 info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 stateDescription = dateTimeValue
@@ -2234,6 +2650,30 @@ internal class MobileUiHost(
     }
 
     override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
+        if (
+            behavior == Behavior.SLIDER
+            && rangeEnabled
+            && isEnabled
+            && !readOnly
+            && action in setOf(
+                R.id.pam_range_lower_decrease,
+                R.id.pam_range_lower_increase,
+                R.id.pam_range_upper_decrease,
+                R.id.pam_range_upper_increase,
+            )
+        ) {
+            val thumb = if (
+                action == R.id.pam_range_lower_decrease
+                || action == R.id.pam_range_lower_increase
+            ) {
+                0
+            } else {
+                1
+            }
+            val positive = action == R.id.pam_range_lower_increase
+                || action == R.id.pam_range_upper_increase
+            return adjustRangeThumb(thumb, if (positive) 1.0 else -1.0)
+        }
         val sliderActions = setOf(
             AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,
             AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,
@@ -2254,6 +2694,9 @@ internal class MobileUiHost(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id,
             )
             val direction = if (positive) 1.0 else -1.0
+            if (rangeEnabled) {
+                return adjustRangeThumb(1, direction)
+            }
             val requested = snapped(value + direction * step)
             if (requested == value) return false
             value = requested
@@ -2314,6 +2757,7 @@ internal class MobileUiHost(
             behavior == Behavior.DATE_TIME_PICKER
             && action == AccessibilityNodeInfo.ACTION_CLICK
             && isEnabled
+            && !readOnly
         ) {
             showDateTimePicker()
             return true
@@ -2435,6 +2879,9 @@ internal class MobileUiHost(
         ) {
             val positive = event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
                 || event.keyCode == KeyEvent.KEYCODE_DPAD_UP
+            if (rangeEnabled) {
+                return adjustRangeThumb(1, if (positive) 1.0 else -1.0)
+            }
             val requested = snapped(value + if (positive) step else -step)
             if (requested == value) return false
             value = requested
@@ -2445,6 +2892,29 @@ internal class MobileUiHost(
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun adjustRangeThumb(index: Int, direction: Double): Boolean {
+        if (!rangeEnabled || index !in 0..1) return false
+        val current = if (index == 0) lowerValue else upperValue
+        val requested = snapped(current + direction * step)
+        val next = if (index == 0) {
+            minOf(requested, upperValue)
+        } else {
+            maxOf(requested, lowerValue)
+        }
+        if (next == current) return false
+        activeRangeThumb = index
+        if (index == 0) {
+            lowerValue = next
+        } else {
+            upperValue = next
+            value = next
+        }
+        applyRangeVisualState()
+        emitSliderChangeAndEnd()
+        invalidate()
+        return true
     }
 
     fun release() {
@@ -2570,6 +3040,25 @@ internal class MobileUiHost(
                     }
                 }
             }
+        } else if (behavior == Behavior.LIST_ITEM) {
+            setOnClickListener {
+                if (isEnabled) {
+                    val menu = menuAncestor() ?: menuCollectionOwner
+                    if (menu != null) {
+                        menu.activateMenuItem(this)
+                    } else {
+                        emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+                        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    }
+                }
+            }
+        } else if (behavior == Behavior.TIMELINE_ITEM) {
+            setOnClickListener {
+                if (isEnabled) {
+                    emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                }
+            }
         } else if (behavior == Behavior.OVERLAY_DISMISS) {
             setOnClickListener {
                 if (isEnabled) {
@@ -2588,13 +3077,35 @@ internal class MobileUiHost(
         } else if (behavior == Behavior.FILE_TREE_FOLDER) {
             setOnClickListener {
                 if (isEnabled) {
-                    fileTreeAncestor()?.toggleFileTreeFolder(this)
+                    val tree = fileTreeAncestor()
+                    if (tree != null) {
+                        tree.toggleFileTreeFolder(this)
+                    } else {
+                        expanded = !expanded
+                        isActivated = expanded
+                        applyFileTreeFolderState(
+                            expanded = expanded,
+                            selected = selected,
+                            animate = true,
+                        )
+                        emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+                        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+                    }
                 }
             }
         } else if (behavior == Behavior.FILE_TREE_FILE) {
             setOnClickListener {
                 if (isEnabled) {
-                    fileTreeAncestor()?.selectFileTreeItem(this)
+                    val tree = fileTreeAncestor()
+                    if (tree != null) {
+                        tree.selectFileTreeItem(this)
+                    } else {
+                        selected = true
+                        isSelected = true
+                        applyFileTreeSelectionVisual(true)
+                        emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
+                        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+                    }
                 }
             }
         } else if (behavior == Behavior.ACCORDION) {
@@ -2604,7 +3115,9 @@ internal class MobileUiHost(
                 }
             }
         } else if (behavior == Behavior.DATE_TIME_PICKER) {
-            setOnClickListener { showDateTimePicker() }
+            setOnClickListener {
+                if (isEnabled && !readOnly) showDateTimePicker()
+            }
         } else {
             setOnClickListener(null)
         }
@@ -2636,6 +3149,7 @@ internal class MobileUiHost(
             Behavior.INPUT_SLOT,
             Behavior.FILE_TREE_FOLDER,
             Behavior.FILE_TREE_FILE,
+            Behavior.TIMELINE_ITEM,
             Behavior.CALENDAR,
             Behavior.DATE_TIME_PICKER,
         ) || component in setOf(
@@ -2656,7 +3170,6 @@ internal class MobileUiHost(
         }
         foreground = if (
             behavior in setOf(
-                Behavior.TAB_TRIGGER,
                 Behavior.SHEET_ITEM,
                 Behavior.MENU_ITEM,
                 Behavior.OVERLAY_DISMISS,
@@ -2714,6 +3227,30 @@ internal class MobileUiHost(
     }
 
     private fun applyMaterialSpecialization(previousBehavior: Behavior) {
+        val roundsCarousel = behavior == Behavior.TABS && navigationKind == 1
+        if (behavior == Behavior.SHEET_ITEM || roundsCarousel) {
+            val radius = if (roundsCarousel) {
+                nativeProperties.decimal("cornerRadius", 24.0).toFloat() * density
+            } else {
+                12f * density
+            }
+            clipToOutline = true
+            outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: android.graphics.Outline) {
+                    outline.setRoundRect(
+                        0,
+                        0,
+                        view.width,
+                        view.height,
+                        radius,
+                    )
+                }
+            }
+            invalidateOutline()
+        } else if (previousBehavior == Behavior.SHEET_ITEM || previousBehavior == Behavior.TABS) {
+            clipToOutline = false
+            outlineProvider = ViewOutlineProvider.BACKGROUND
+        }
         when (behavior) {
             Behavior.SPARKLINE -> {
                 if (
@@ -2754,23 +3291,68 @@ internal class MobileUiHost(
         val low = points.minOrNull() ?: return
         val high = points.maxOrNull() ?: return
         val spread = (high - low).takeIf { it > 0f } ?: 1f
+        val lineWidth = nativeProperties.decimal("lineWidth", 2.5).toFloat() * density
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = fillPaint.color
             style = Paint.Style.STROKE
-            strokeWidth = nativeProperties.decimal("lineWidth", 2.5).toFloat() * density
+            strokeWidth = lineWidth
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
-        val horizontal = width.toFloat() / (points.size - 1)
-        val path = android.graphics.Path()
-        points.forEachIndexed { index, point ->
-            val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
-                width - index * horizontal
-            } else {
-                index * horizontal
+        val inset = lineWidth / 2f
+        val drawableWidth = (width - lineWidth).coerceAtLeast(1f)
+        val drawableHeight = (height - lineWidth).coerceAtLeast(1f)
+        val horizontal = drawableWidth / (points.size - 1)
+        val coordinates = points.mapIndexed { index, point ->
+            val logicalX = inset + index * horizontal
+            val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - logicalX else logicalX
+            val y = inset + drawableHeight - ((point - low) / spread * drawableHeight)
+            x to y
+        }
+        val type = nativeProperties.text("type")?.lowercase().orEmpty()
+        if (type == "bar" || type == "bars") {
+            val barSlot = drawableWidth / points.size
+            val barWidth = (barSlot * 0.58f).coerceAtLeast(3f * density)
+            val radius = (barWidth / 2f).coerceAtMost(6f * density)
+            paint.style = Paint.Style.FILL
+            coordinates.forEachIndexed { index, (_, y) ->
+                val logicalX = inset + (index + 0.5f) * barSlot
+                val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - logicalX else logicalX
+                canvas.drawRoundRect(
+                    x - barWidth / 2f,
+                    y,
+                    x + barWidth / 2f,
+                    height - inset,
+                    radius,
+                    radius,
+                    paint,
+                )
             }
-            val y = height - ((point - low) / spread * height)
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            return
+        }
+        val path = android.graphics.Path()
+        val smooth = nativeProperties.flag("smooth", false)
+        coordinates.forEachIndexed { index, (x, y) ->
+            if (index == 0) {
+                path.moveTo(x, y)
+            } else if (smooth) {
+                val (previousX, previousY) = coordinates[index - 1]
+                val controlX = (previousX + x) / 2f
+                path.cubicTo(controlX, previousY, controlX, y, x, y)
+            } else {
+                path.lineTo(x, y)
+            }
+        }
+        if (nativeProperties.flag("fill", false)) {
+            val fillPath = android.graphics.Path(path)
+            fillPath.lineTo(coordinates.last().first, height - inset)
+            fillPath.lineTo(coordinates.first().first, height - inset)
+            fillPath.close()
+            val fill = Paint(paint).apply {
+                style = Paint.Style.FILL
+                alpha = 42
+            }
+            canvas.drawPath(fillPath, fill)
         }
         canvas.drawPath(path, paint)
     }
@@ -2860,7 +3442,15 @@ internal class MobileUiHost(
         }
         if (focused && !readOnly) {
             input.post {
+                if (!input.isAttachedToWindow || !input.hasFocus()) return@post
                 input.setSelection(input.text.length)
+                val keyboard = input.context.getSystemService(
+                    android.content.Context.INPUT_METHOD_SERVICE,
+                ) as? android.view.inputmethod.InputMethodManager
+                keyboard?.showSoftInput(
+                    input,
+                    android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT,
+                )
             }
         }
         return focused
@@ -2891,7 +3481,7 @@ internal class MobileUiHost(
     }
 
     private fun toggleInputPassword() {
-        if (!isEnabled) return
+        if (!isEnabled || readOnly) return
         val input = findFirstEditText(this) ?: return
         val cursor = input.selectionStart.coerceAtLeast(0)
         input.transformationMethod = if (
@@ -3049,19 +3639,81 @@ internal class MobileUiHost(
     private fun formLabelBounds(): RectF? =
         findTaggedDescendant(this, FORM_LABEL_TAG)?.let(::boundsInHost)
 
+    private fun inputGroupLabelBounds(): RectF? {
+        if (behavior != Behavior.INPUT_GROUP) return null
+        val input = findFirstEditText(this) ?: return null
+        val inputBounds = boundsInHost(input)
+        return inputLabelCandidate(this, inputBounds.top)?.let(::boundsInHost)
+    }
+
+    private fun inputLabelCandidate(root: ViewGroup, inputTop: Float): TextView? {
+        repeat(root.childCount) { index ->
+            val child = root.getChildAt(index)
+            if (child is TextView && child !is EditText) {
+                val bounds = boundsInHost(child)
+                if (bounds.height() > 0f && bounds.bottom <= inputTop + density) {
+                    return child
+                }
+            } else if (child is ViewGroup) {
+                inputLabelCandidate(child, inputTop)?.let { return it }
+            }
+        }
+        return null
+    }
+
     private fun drawInputOutline(canvas: Canvas) {
-        if ((!inputFocused && !invalid) || width <= 0 || height <= 0) return
+        if (
+            (!inputFocused && !invalid)
+            || inputOutlineWidth <= 0f
+            || width <= 0
+            || height <= 0
+        ) return
         inputOutlinePaint.color = if (invalid) inputInvalidColor else inputFocusColor
         inputOutlinePaint.strokeWidth = inputOutlineWidth * density
         val halfStroke = inputOutlinePaint.strokeWidth / 2f
+        val surface = inputSurfaceBounds()
+        if (
+            surface.width() <= inputOutlinePaint.strokeWidth
+            || surface.height() <= inputOutlinePaint.strokeWidth
+        ) return
         val bounds = RectF(
-            halfStroke,
-            halfStroke,
-            width - halfStroke,
-            height - halfStroke,
+            surface.left + halfStroke,
+            surface.top + halfStroke,
+            surface.right - halfStroke,
+            surface.bottom - halfStroke,
         )
-        val radius = inputOutlineRadius * density
-        canvas.drawRoundRect(bounds, radius, radius, inputOutlinePaint)
+        if (inputIndicatorOnly) {
+            canvas.drawLine(
+                bounds.left,
+                bounds.bottom,
+                bounds.right,
+                bounds.bottom,
+                inputOutlinePaint,
+            )
+        } else {
+            val radius = inputOutlineRadius * density
+            canvas.drawRoundRect(bounds, radius, radius, inputOutlinePaint)
+        }
+    }
+
+    /**
+     * Material helper/error/counter rows belong to the input group for state
+     * and accessibility, but they are not part of the field surface. Resolve
+     * the direct child containing the editor so focus/invalid outlines replace
+     * the field's authored border instead of being drawn below its details.
+     */
+    private fun inputSurfaceBounds(): RectF {
+        val input = findFirstEditText(this)
+            ?: return RectF(0f, 0f, width.toFloat(), height.toFloat())
+        var surface: View = input
+        while (surface.parent is View && surface.parent !== this) {
+            surface = surface.parent as View
+        }
+        return if (surface.parent === this) {
+            boundsInHost(surface)
+        } else {
+            RectF(0f, 0f, width.toFloat(), height.toFloat())
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -3425,6 +4077,22 @@ internal class MobileUiHost(
 
     private fun applySelectionVisualState() {
         if (behavior != Behavior.CHECKBOX && behavior != Behavior.RADIO) return
+        if (nativeProperties.flag("abstractSelectionItem", false)) {
+            getChildAt(0)?.apply {
+                setBackgroundColor(
+                    if (checked) abstractSelectionPaint.color else Color.TRANSPARENT,
+                )
+                invalidate()
+            }
+            val color = if (checked) {
+                abstractSelectionSelectedForegroundColor
+            } else {
+                abstractSelectionForegroundColor
+            }
+            descendantTextViews(this).forEach { it.setTextColor(color) }
+            invalidate()
+            return
+        }
         findTaggedDescendant(this, SELECTION_INDICATOR_TAG)?.apply {
             isClickable = false
             isLongClickable = false
@@ -3492,7 +4160,7 @@ internal class MobileUiHost(
             && filledParent.width > 0
             && filledParent.height > 0
         ) {
-            filled.alpha = if (rangeEnabled && behavior == Behavior.SLIDER) 0f else 1f
+            filled.alpha = if (behavior == Behavior.SLIDER) 0f else 1f
             filled.translationX = 0f
             filled.translationY = 0f
             filled.layout(0, 0, filledParent.width, filledParent.height)
@@ -3528,6 +4196,11 @@ internal class MobileUiHost(
         if (track != null) {
             track.importantForAccessibility =
                 IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            // The authored anatomy remains in the tree for layout and theme
+            // extraction. Android draws the complete slider in one pass so
+            // track gaps, ticks, state layers and both range handles remain
+            // pixel-aligned while dragging.
+            track.visibility = INVISIBLE
             if (orientation == 2 && track.width > 0) {
                 track.scaleX = (trackThickness * density / track.width).toFloat()
                 track.scaleY = 1f
@@ -3541,17 +4214,16 @@ internal class MobileUiHost(
         val thumb = findTaggedDescendant(this, SLIDER_THUMB_TAG) ?: return
         thumb.importantForAccessibility =
             IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        thumb.visibility = INVISIBLE
         thumb.translationX = 0f
         thumb.translationY = 0f
         if (thumb.width <= 0 || thumb.height <= 0) return
-        val authoredThumbSize = max(thumb.width, thumb.height).toFloat()
-        val thumbScale = (sliderThumbSize * density / authoredThumbSize).toFloat()
-        thumb.scaleX = thumbScale
-        thumb.scaleY = thumbScale
+        thumb.scaleX = (sliderThumbWidth * density / thumb.width).toFloat()
+        thumb.scaleY = (sliderThumbHeight * density / thumb.height).toFloat()
         thumb.pivotX = thumb.width / 2f
         thumb.pivotY = thumb.height / 2f
-        val trackBounds = sliderTrackBounds(includeHitSlop = false)
-        val thumbBounds = descendantBounds(thumb)
+        val trackBounds = sliderTrackBounds(sliderGeometryBounds, includeHitSlop = false)
+        val thumbBounds = descendantBounds(thumb, sliderThumbBounds)
         val position = if (reversed) 1f - progress else progress
         if (orientation == 2) {
             val targetY = trackBounds.bottom - trackBounds.height() * position
@@ -3574,112 +4246,403 @@ internal class MobileUiHost(
             .coerceIn(0.0, 1.0)
             .toFloat()
 
-    private fun sliderPoint(bounds: RectF, current: Double): android.graphics.PointF {
+    private fun sliderCoordinate(bounds: RectF, current: Double): Float {
         var progress = sliderProgress(current)
         if (reversed) progress = 1f - progress
         return if (orientation == 2) {
-            android.graphics.PointF(
-                bounds.centerX(),
-                bounds.bottom - bounds.height() * progress,
+            bounds.bottom - bounds.height() * progress
+        } else {
+            bounds.left + bounds.width() * progress
+        }
+    }
+
+    private fun drawSliderSegment(
+        canvas: Canvas,
+        bounds: RectF,
+        from: Float,
+        to: Float,
+        startInset: Float,
+        endInset: Float,
+        paint: Paint,
+    ) {
+        val delta = to - from
+        val length = abs(delta)
+        if (length <= startInset + endInset + density) return
+        val direction = if (delta < 0f) -1f else 1f
+        if (orientation == 2) {
+            val x = bounds.centerX()
+            canvas.drawLine(
+                x,
+                from + direction * startInset,
+                x,
+                to - direction * endInset,
+                paint,
             )
         } else {
-            android.graphics.PointF(
-                bounds.left + bounds.width() * progress,
-                bounds.centerY(),
+            val y = bounds.centerY()
+            canvas.drawLine(
+                from + direction * startInset,
+                y,
+                to - direction * endInset,
+                y,
+                paint,
             )
         }
     }
 
     private fun drawSliderDecorations(canvas: Canvas) {
         if (behavior != Behavior.SLIDER) return
-        val bounds = sliderTrackBounds(includeHitSlop = false)
+        val bounds = sliderTrackBounds(sliderDrawBounds, includeHitSlop = false)
         if (bounds.width() <= 0f || bounds.height() <= 0f) return
 
         val previousTrackStyle = trackPaint.style
         val previousTrackWidth = trackPaint.strokeWidth
+        val previousTrackCap = trackPaint.strokeCap
         val previousFillStyle = fillPaint.style
         val previousFillWidth = fillPaint.strokeWidth
         val previousFillCap = fillPaint.strokeCap
 
-        if (showSliderTicks || alwaysShowSliderTicks) {
-            val intervals = minOf(
-                100,
-                maxOf(1, round((maximum - minimum) / step).toInt()),
+        val strokeWidth = (trackThickness * density).toFloat()
+        trackPaint.style = Paint.Style.STROKE
+        trackPaint.strokeWidth = strokeWidth
+        trackPaint.strokeCap = Paint.Cap.BUTT
+        fillPaint.style = Paint.Style.STROKE
+        fillPaint.strokeWidth = strokeWidth
+        fillPaint.strokeCap = Paint.Cap.BUTT
+
+        val minimumCoordinate = sliderCoordinate(bounds, minimum)
+        val maximumCoordinate = sliderCoordinate(bounds, maximum)
+        val primaryCoordinate = sliderCoordinate(
+            bounds,
+            if (rangeEnabled) lowerValue else value,
+        )
+        val secondaryCoordinate = if (rangeEnabled) {
+            sliderCoordinate(bounds, upperValue)
+        } else {
+            primaryCoordinate
+        }
+        val halfHandleAlongTrack = (
+            if (orientation == 2) sliderThumbHeight else sliderThumbWidth
+        ).toFloat() * density / 2f
+        val handleGap = halfHandleAlongTrack +
+            sliderThumbTrackGap.toFloat() * density
+
+        val trackClip = canvas.save()
+        val gapAcrossTrack = strokeWidth / 2f + density
+        if (orientation == 2) {
+            val x = bounds.centerX()
+            canvas.clipOutRect(
+                x - gapAcrossTrack,
+                primaryCoordinate - handleGap,
+                x + gapAcrossTrack,
+                primaryCoordinate + handleGap,
             )
-            trackPaint.style = Paint.Style.FILL
-            for (index in 0..intervals) {
-                val tickValue = minimum + (maximum - minimum) * index / intervals
-                val point = sliderPoint(bounds, tickValue)
-                canvas.drawCircle(point.x, point.y, 1.5f * density, trackPaint)
+            if (rangeEnabled) {
+                canvas.clipOutRect(
+                    x - gapAcrossTrack,
+                    secondaryCoordinate - handleGap,
+                    x + gapAcrossTrack,
+                    secondaryCoordinate + handleGap,
+                )
+            }
+        } else {
+            val y = bounds.centerY()
+            canvas.clipOutRect(
+                primaryCoordinate - handleGap,
+                y - gapAcrossTrack,
+                primaryCoordinate + handleGap,
+                y + gapAcrossTrack,
+            )
+            if (rangeEnabled) {
+                canvas.clipOutRect(
+                    secondaryCoordinate - handleGap,
+                    y - gapAcrossTrack,
+                    secondaryCoordinate + handleGap,
+                    y + gapAcrossTrack,
+                )
             }
         }
 
         if (rangeEnabled) {
-            val lower = sliderPoint(bounds, lowerValue)
-            val upper = sliderPoint(bounds, upperValue)
-            fillPaint.style = Paint.Style.STROKE
-            fillPaint.strokeWidth = (trackThickness * density).toFloat()
-            fillPaint.strokeCap = Paint.Cap.ROUND
-            canvas.drawLine(lower.x, lower.y, upper.x, upper.y, fillPaint)
-
-            fillPaint.style = Paint.Style.FILL
-            val radius = (sliderThumbSize * density / 2.0).toFloat()
-            canvas.drawCircle(lower.x, lower.y, radius, fillPaint)
+            drawSliderSegment(
+                canvas, bounds, minimumCoordinate, primaryCoordinate, 0f, handleGap, trackPaint,
+            )
+            drawSliderSegment(
+                canvas, bounds, primaryCoordinate, secondaryCoordinate, handleGap, handleGap,
+                fillPaint,
+            )
+            drawSliderSegment(
+                canvas, bounds, secondaryCoordinate, maximumCoordinate, handleGap, 0f, trackPaint,
+            )
+        } else {
+            drawSliderSegment(
+                canvas, bounds, minimumCoordinate, primaryCoordinate, 0f, handleGap, fillPaint,
+            )
+            drawSliderSegment(
+                canvas, bounds, primaryCoordinate, maximumCoordinate, handleGap, 0f, trackPaint,
+            )
         }
 
-        if (showThumbLabel || alwaysShowThumbLabel) {
-            val values = if (rangeEnabled) {
-                listOf(lowerValue, upperValue)
+        // Round only the outer ends. Inner ends stay clipped to the authored
+        // handle gap, matching Material's separated active/inactive tracks.
+        sliderTickPaint.color = if (rangeEnabled || value <= minimum) {
+            trackPaint.color
+        } else {
+            fillPaint.color
+        }
+        sliderTickPaint.alpha = Color.alpha(sliderTickPaint.color)
+        if (orientation == 2) {
+            canvas.drawCircle(
+                bounds.centerX(), minimumCoordinate, strokeWidth / 2f, sliderTickPaint,
+            )
+        } else {
+            canvas.drawCircle(
+                minimumCoordinate, bounds.centerY(), strokeWidth / 2f, sliderTickPaint,
+            )
+        }
+        sliderTickPaint.color = trackPaint.color
+        sliderTickPaint.alpha = Color.alpha(trackPaint.color)
+        if (orientation == 2) {
+            canvas.drawCircle(
+                bounds.centerX(), maximumCoordinate, strokeWidth / 2f, sliderTickPaint,
+            )
+        } else {
+            canvas.drawCircle(
+                maximumCoordinate, bounds.centerY(), strokeWidth / 2f, sliderTickPaint,
+            )
+        }
+
+        val stopRadius = sliderStopIndicatorSize.toFloat() * density / 2f
+        if (
+            stopRadius > 0f
+            && abs(primaryCoordinate - maximumCoordinate) >= handleGap
+            && (!rangeEnabled || abs(secondaryCoordinate - maximumCoordinate) >= handleGap)
+        ) {
+            sliderTickPaint.color = fillPaint.color
+            sliderTickPaint.alpha = Color.alpha(fillPaint.color)
+            if (orientation == 2) {
+                canvas.drawCircle(
+                    bounds.centerX(), maximumCoordinate, stopRadius, sliderTickPaint,
+                )
             } else {
-                listOf(value)
-            }
-            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = fillPaint.color
-                textAlign = Paint.Align.CENTER
-                textSize = scaledTextSizePx(context, 12f)
-                typeface = android.graphics.Typeface.create(
-                    android.graphics.Typeface.DEFAULT,
-                    android.graphics.Typeface.BOLD,
+                canvas.drawCircle(
+                    maximumCoordinate, bounds.centerY(), stopRadius, sliderTickPaint,
                 )
             }
-            values.forEach { current ->
-                val point = sliderPoint(bounds, current)
+        }
+
+        if ((showSliderTicks || alwaysShowSliderTicks) && sliderTickSize > 0.0) {
+            val intervals = minOf(
+                100,
+                maxOf(1, round((maximum - minimum) / step).toInt()),
+            )
+            val tickRadius = sliderTickSize.toFloat() * density / 2f
+            for (index in 1 until intervals) {
+                val tickValue = minimum + (maximum - minimum) * index / intervals
+                val coordinate = sliderCoordinate(bounds, tickValue)
+                if (
+                    abs(primaryCoordinate - coordinate) < handleGap
+                    || (rangeEnabled && abs(secondaryCoordinate - coordinate) < handleGap)
+                ) {
+                    continue
+                }
+                val active = if (rangeEnabled) {
+                    tickValue in lowerValue..upperValue
+                } else {
+                    tickValue <= value
+                }
+                val color = if (active) sliderActiveTickColor else sliderInactiveTickColor
+                sliderTickPaint.color = color
+                sliderTickPaint.alpha = (
+                    Color.alpha(color) * if (active) 0.72f else 0.54f
+                ).roundToInt().coerceIn(0, 255)
+                if (orientation == 2) {
+                    canvas.drawCircle(bounds.centerX(), coordinate, tickRadius, sliderTickPaint)
+                } else {
+                    canvas.drawCircle(coordinate, bounds.centerY(), tickRadius, sliderTickPaint)
+                }
+            }
+        }
+        canvas.restoreToCount(trackClip)
+
+        if (sliderTickLabels.isNotEmpty()) {
+            sliderTickLabelTextPaint.color = sliderTickLabelColor
+            sliderTickLabelTextPaint.alpha = Color.alpha(sliderTickLabelColor)
+            val lastIndex = sliderTickLabels.lastIndex
+            sliderTickLabels.forEachIndexed { index, label ->
+                val progress = if (lastIndex == 0) {
+                    0.5
+                } else {
+                    index.toDouble() / lastIndex.toDouble()
+                }
+                val coordinate = sliderCoordinate(
+                    bounds,
+                    minimum + (maximum - minimum) * progress,
+                )
+                if (orientation == 2) {
+                    sliderTickLabelTextPaint.textAlign = Paint.Align.LEFT
+                    val x = bounds.centerX() +
+                        sliderThumbWidth.toFloat() * density / 2f +
+                        8f * density
+                    val baseline = coordinate -
+                        (
+                            sliderTickLabelTextPaint.ascent()
+                                + sliderTickLabelTextPaint.descent()
+                        ) / 2f
+                    canvas.drawText(label, x, baseline, sliderTickLabelTextPaint)
+                } else {
+                    sliderTickLabelTextPaint.textAlign = Paint.Align.CENTER
+                    val halfText = sliderTickLabelTextPaint.measureText(label) / 2f
+                    val x = coordinate.coerceIn(
+                        halfText,
+                        maxOf(halfText, width.toFloat() - halfText),
+                    )
+                    val baseline = bounds.centerY() +
+                        sliderThumbHeight.toFloat() * density / 2f +
+                        20f * density
+                    canvas.drawText(label, x, baseline, sliderTickLabelTextPaint)
+                }
+            }
+        }
+
+        if ((sliderTouchActive || hasFocus()) && sliderStateLayerSize > 0.0) {
+            val stateCoordinate = if (rangeEnabled && activeRangeThumb > 0) {
+                secondaryCoordinate
+            } else {
+                primaryCoordinate
+            }
+            sliderStateLayerPaint.color = sliderThumbColor
+            sliderStateLayerPaint.alpha = (
+                Color.alpha(sliderThumbColor) * 0.12f
+            ).roundToInt().coerceIn(0, 255)
+            if (orientation == 2) {
+                canvas.drawCircle(
+                    bounds.centerX(),
+                    stateCoordinate,
+                    sliderStateLayerSize.toFloat() * density / 2f,
+                    sliderStateLayerPaint,
+                )
+            } else {
+                canvas.drawCircle(
+                    stateCoordinate,
+                    bounds.centerY(),
+                    sliderStateLayerSize.toFloat() * density / 2f,
+                    sliderStateLayerPaint,
+                )
+            }
+        }
+
+        val halfWidth = sliderThumbWidth.toFloat() * density / 2f
+        val halfHeight = sliderThumbHeight.toFloat() * density / 2f
+        sliderThumbPaint.color = sliderThumbColor
+        sliderThumbPaint.alpha = Color.alpha(sliderThumbColor)
+        if (orientation == 2) {
+            canvas.drawRoundRect(
+                bounds.centerX() - halfWidth,
+                primaryCoordinate - halfHeight,
+                bounds.centerX() + halfWidth,
+                primaryCoordinate + halfHeight,
+                minOf(halfWidth, halfHeight),
+                minOf(halfWidth, halfHeight),
+                sliderThumbPaint,
+            )
+            if (rangeEnabled) {
+                canvas.drawRoundRect(
+                    bounds.centerX() - halfWidth,
+                    secondaryCoordinate - halfHeight,
+                    bounds.centerX() + halfWidth,
+                    secondaryCoordinate + halfHeight,
+                    minOf(halfWidth, halfHeight),
+                    minOf(halfWidth, halfHeight),
+                    sliderThumbPaint,
+                )
+            }
+        } else {
+            canvas.drawRoundRect(
+                primaryCoordinate - halfWidth,
+                bounds.centerY() - halfHeight,
+                primaryCoordinate + halfWidth,
+                bounds.centerY() + halfHeight,
+                minOf(halfWidth, halfHeight),
+                minOf(halfWidth, halfHeight),
+                sliderThumbPaint,
+            )
+            if (rangeEnabled) {
+                canvas.drawRoundRect(
+                    secondaryCoordinate - halfWidth,
+                    bounds.centerY() - halfHeight,
+                    secondaryCoordinate + halfWidth,
+                    bounds.centerY() + halfHeight,
+                    minOf(halfWidth, halfHeight),
+                    minOf(halfWidth, halfHeight),
+                    sliderThumbPaint,
+                )
+            }
+        }
+
+        if (
+            alwaysShowThumbLabel
+            || (showThumbLabel && (sliderTouchActive || hasFocus()))
+        ) {
+            sliderLabelTextPaint.color = sliderThumbLabelTextColor
+            fun drawLabel(current: Double) {
+                val coordinate = sliderCoordinate(bounds, current)
                 val label = formatRangeValue(current)
-                val bubbleWidth = maxOf(
-                    32f * density,
-                    textPaint.measureText(label) + 16f * density,
+                val bubbleWidth = minOf(
+                    width.toFloat().coerceAtLeast(1f),
+                    maxOf(
+                        32f * density,
+                        sliderLabelTextPaint.measureText(label) + 16f * density,
+                    ),
                 )
                 val bubbleHeight = 28f * density
-                val bubble = if (orientation == 2) {
-                    RectF(
-                        point.x + 16f * density,
-                        point.y - bubbleHeight / 2f,
-                        point.x + 16f * density + bubbleWidth,
-                        point.y + bubbleHeight / 2f,
+                if (orientation == 2) {
+                    val left = (bounds.centerX() + halfWidth + 8f * density)
+                        .coerceIn(0f, maxOf(0f, width - bubbleWidth))
+                    sliderLabelBounds.set(
+                        left,
+                        (coordinate - bubbleHeight / 2f)
+                            .coerceIn(0f, height - bubbleHeight),
+                        left + bubbleWidth,
+                        (coordinate + bubbleHeight / 2f)
+                            .coerceIn(bubbleHeight, height.toFloat()),
                     )
                 } else {
-                    RectF(
-                        point.x - bubbleWidth / 2f,
-                        point.y - 40f * density,
-                        point.x + bubbleWidth / 2f,
-                        point.y - 12f * density,
+                    val left = (coordinate - bubbleWidth / 2f)
+                        .coerceIn(0f, width - bubbleWidth)
+                    val bottom = (bounds.centerY() - halfHeight - 8f * density)
+                        .coerceAtLeast(bubbleHeight)
+                    sliderLabelBounds.set(
+                        left, bottom - bubbleHeight, left + bubbleWidth, bottom,
                     )
                 }
+                fillPaint.style = Paint.Style.FILL
                 canvas.drawRoundRect(
-                    bubble,
-                    6f * density,
-                    6f * density,
+                    sliderLabelBounds,
+                    8f * density,
+                    8f * density,
                     fillPaint,
                 )
-                textPaint.color = Color.WHITE
-                val baseline = bubble.centerY() -
-                    (textPaint.ascent() + textPaint.descent()) / 2f
-                canvas.drawText(label, bubble.centerX(), baseline, textPaint)
+                val baseline = sliderLabelBounds.centerY() -
+                    (sliderLabelTextPaint.ascent() + sliderLabelTextPaint.descent()) / 2f
+                canvas.drawText(
+                    label,
+                    sliderLabelBounds.centerX(),
+                    baseline,
+                    sliderLabelTextPaint,
+                )
+            }
+            if (rangeEnabled) {
+                drawLabel(lowerValue)
+                drawLabel(upperValue)
+            } else {
+                drawLabel(value)
             }
         }
 
         trackPaint.style = previousTrackStyle
         trackPaint.strokeWidth = previousTrackWidth
+        trackPaint.strokeCap = previousTrackCap
         fillPaint.style = previousFillStyle
         fillPaint.strokeWidth = previousFillWidth
         fillPaint.strokeCap = previousFillCap
@@ -3890,27 +4853,83 @@ internal class MobileUiHost(
             current.toString()
         }
 
-    private fun sliderTrackBounds(includeHitSlop: Boolean = true): RectF {
+    private fun decodeSliderTickLabels(payload: String?): List<String> {
+        if (payload.isNullOrBlank()) return emptyList()
+
+        return runCatching {
+            val labels = JSONArray(payload)
+            List(minOf(labels.length(), 101)) { index ->
+                labels.optString(index, "")
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun sliderTrackBounds(includeHitSlop: Boolean = true): RectF =
+        sliderTrackBounds(RectF(), includeHitSlop)
+
+    private fun sliderTrackBounds(out: RectF, includeHitSlop: Boolean = true): RectF {
         val track = findTaggedDescendant(this, SLIDER_TRACK_TAG)
-        val bounds = if (track == null || track.width <= 0 || track.height <= 0) {
-            RectF(0f, 0f, width.toFloat(), height.toFloat())
+        if (track == null || track.width <= 0 || track.height <= 0) {
+            out.set(0f, 0f, width.toFloat(), height.toFloat())
         } else {
-            descendantBounds(track)
+            descendantBounds(track, out)
+        }
+        // A percentage-authored track can briefly retain the previous
+        // viewport width while Android moves the host into an adaptive pane
+        // (for example portrait -> landscape with the permanent drawer).
+        // Never let that stale descendant geometry paint or map gestures
+        // outside this host. Preserve authored insets in the normal case and
+        // only introduce the minimum Material edge clearance when an axis
+        // actually overflows.
+        if (
+            behavior == Behavior.SLIDER
+            && width > 0
+            && height > 0
+        ) {
+            if (
+                orientation == 2
+                && (out.top < 0f || out.bottom > height.toFloat())
+            ) {
+                val edgeInset = (
+                    maxOf(trackThickness, sliderThumbHeight).toFloat() * density / 2f
+                ).coerceAtMost(height / 2f)
+                out.top = maxOf(out.top, edgeInset)
+                out.bottom = minOf(out.bottom, height - edgeInset)
+            } else if (
+                orientation != 2
+                && getGlobalVisibleRect(sliderVisibleRect, sliderGlobalOffset)
+                && (
+                    out.left < (sliderVisibleRect.left - sliderGlobalOffset.x).toFloat()
+                    || out.right > (sliderVisibleRect.right - sliderGlobalOffset.x).toFloat()
+                )
+            ) {
+                val visibleLeft = (sliderVisibleRect.left - sliderGlobalOffset.x).toFloat()
+                val visibleRight = (sliderVisibleRect.right - sliderGlobalOffset.x).toFloat()
+                val edgeInset = (
+                    maxOf(trackThickness, sliderThumbWidth).toFloat() * density / 2f
+                ).coerceAtMost((visibleRight - visibleLeft) / 2f)
+                out.left = maxOf(out.left, visibleLeft + edgeInset)
+                out.right = minOf(out.right, visibleRight - edgeInset)
+            }
         }
         if (includeHitSlop) {
             val minimumTarget = 48f * density
-            val horizontalInset = max(0f, (minimumTarget - bounds.width()) / 2f)
-            val verticalInset = max(0f, (minimumTarget - bounds.height()) / 2f)
-            bounds.inset(-horizontalInset, -verticalInset)
+            val horizontalInset = max(0f, (minimumTarget - out.width()) / 2f)
+            val verticalInset = max(0f, (minimumTarget - out.height()) / 2f)
+            out.inset(-horizontalInset, -verticalInset)
         }
 
-        return bounds
+        return out
     }
 
-    private fun descendantBounds(descendant: View): RectF {
-        val bounds = Rect(0, 0, descendant.width, descendant.height)
-        offsetDescendantRectToMyCoords(descendant, bounds)
-        return RectF(bounds)
+    private fun descendantBounds(descendant: View): RectF =
+        descendantBounds(descendant, RectF())
+
+    private fun descendantBounds(descendant: View, out: RectF): RectF {
+        sliderDescendantRect.set(0, 0, descendant.width, descendant.height)
+        offsetDescendantRectToMyCoords(descendant, sliderDescendantRect)
+        out.set(sliderDescendantRect)
+        return out
     }
 
     private fun drawSwitch(canvas: Canvas) {
@@ -3932,12 +4951,47 @@ internal class MobileUiHost(
             switchTrackOnColor,
             switchVisualProgress,
         )
+        switchTrackPaint.style = Paint.Style.FILL
         canvas.drawRoundRect(track, radius, radius, switchTrackPaint)
 
-        val inset = SWITCH_THUMB_INSET_DP * density
-        val thumbRadius = max(0f, (trackHeight - inset * 2f) / 2f)
-        val startX = track.left + inset + thumbRadius
-        val endX = track.right - inset - thumbRadius
+        if (switchVisualProgress < 1f) {
+            switchTrackPaint.style = Paint.Style.STROKE
+            switchTrackPaint.strokeWidth = 2f * density
+            switchTrackPaint.color = Color.argb(
+                (Color.alpha(switchTrackOutlineColor) * (1f - switchVisualProgress)).roundToInt(),
+                Color.red(switchTrackOutlineColor),
+                Color.green(switchTrackOutlineColor),
+                Color.blue(switchTrackOutlineColor),
+            )
+            val outlineInset = switchTrackPaint.strokeWidth / 2f
+            canvas.drawRoundRect(
+                RectF(track).apply { inset(outlineInset, outlineInset) },
+                radius,
+                radius,
+                switchTrackPaint,
+            )
+            switchTrackPaint.style = Paint.Style.FILL
+        }
+
+        val restingHandleSize = (
+            SWITCH_UNSELECTED_HANDLE_SIZE_DP
+                + (SWITCH_SELECTED_HANDLE_SIZE_DP - SWITCH_UNSELECTED_HANDLE_SIZE_DP) *
+                switchVisualProgress
+        )
+        val handleSize = if (isPressed) {
+            maxOf(restingHandleSize, SWITCH_PRESSED_HANDLE_SIZE_DP)
+        } else {
+            restingHandleSize
+        }
+        val thumbRadius = handleSize * density / 2f
+        val startX = track.left + maxOf(
+            SWITCH_UNSELECTED_HANDLE_SIZE_DP * density / 2f,
+            thumbRadius + SWITCH_THUMB_INSET_DP * density,
+        )
+        val endX = track.right - maxOf(
+            SWITCH_SELECTED_HANDLE_SIZE_DP * density / 2f,
+            thumbRadius + SWITCH_THUMB_INSET_DP * density,
+        )
         val centerX = startX + (endX - startX) * switchVisualProgress
         switchThumbPaint.color = blendColor(
             switchThumbColor,
@@ -4067,12 +5121,18 @@ internal class MobileUiHost(
             if (!isEnabled || readOnly || width <= 0 || height <= 0) {
                 return@OnTouchListener false
             }
-            val hitBounds = sliderTrackBounds()
-            val trackBounds = sliderTrackBounds(includeHitSlop = false)
+            val hitBounds = sliderTrackBounds(sliderHitBounds)
+            val trackBounds = sliderTrackBounds(sliderGeometryBounds, includeHitSlop = false)
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_MOVE,
                 -> {
+                    if (
+                        event.actionMasked == MotionEvent.ACTION_MOVE
+                        && !sliderTouchActive
+                    ) {
+                        return@OnTouchListener false
+                    }
                     if (
                         event.actionMasked == MotionEvent.ACTION_DOWN
                         && !hitBounds.contains(event.x, event.y)
@@ -4082,8 +5142,14 @@ internal class MobileUiHost(
                     }
                     sliderTouchActive = true
                     if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                        // A vertical slider commonly lives inside the route's
+                        // vertical ScrollView. Claim the gesture at DOWN so
+                        // the parent cannot steal MOVE and turn a value drag
+                        // into page scrolling halfway through the interaction.
+                        parent?.requestDisallowInterceptTouchEvent(true)
                         sliderTouchInitialValue = value
                         sliderTouchMoved = false
+                        invalidate()
                     } else {
                         sliderTouchMoved = true
                     }
@@ -4134,6 +5200,7 @@ internal class MobileUiHost(
                     true
                 }
                 MotionEvent.ACTION_UP -> {
+                    parent?.requestDisallowInterceptTouchEvent(false)
                     if (!sliderTouchActive) return@OnTouchListener false
                     sliderTouchActive = false
                     if (
@@ -4152,11 +5219,14 @@ internal class MobileUiHost(
                     flushSliderChange()
                     emitSliderChangeEnd()
                     performClick()
+                    invalidate()
                     true
                 }
                 MotionEvent.ACTION_CANCEL -> {
+                    parent?.requestDisallowInterceptTouchEvent(false)
                     val claimed = sliderTouchActive
                     sliderTouchActive = false
+                    invalidate()
                     claimed
                 }
                 else -> false
@@ -4372,7 +5442,13 @@ internal class MobileUiHost(
             }
             repeat(root.childCount) { index ->
                 val child = root.getChildAt(index)
-                if (child is MobileUiHost && child.behavior == Behavior.MENU_ITEM) {
+                if (
+                    child is MobileUiHost
+                    && child.behavior in setOf(
+                        Behavior.MENU_ITEM,
+                        Behavior.LIST_ITEM,
+                    )
+                ) {
                     add(child)
                 } else if (
                     child is MobileUiHost
@@ -4437,12 +5513,16 @@ internal class MobileUiHost(
             }
             else -> Unit
         }
+        // Close first: PRESS handlers can synchronously reconcile the PHP
+        // tree (for example by changing the trigger label). Keeping the menu
+        // open until after that reconciliation detaches this host and leaves
+        // the replacement overlay visible without its original anchor.
+        if (item.closeMenuItemOnPress) {
+            requestOverlayDismiss(animate = false)
+        }
         item.emitter.emit(NativeViewEventKind.PRESS, byteArrayOf())
         item.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         item.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
-        if (item.closeMenuItemOnPress) {
-            requestOverlayDismiss()
-        }
         return true
     }
 
@@ -4552,6 +5632,7 @@ internal class MobileUiHost(
 
     private fun dismissSheet() {
         if (behavior != Behavior.BOTTOM_SHEET || !dismissible) return
+        clearSheetSearch()
         val content = sheetContent()
         if (content != null) {
             val target = sheetDismissTranslation(content)
@@ -4674,10 +5755,11 @@ internal class MobileUiHost(
 
     private fun applyTabsState(animate: Boolean) {
         if (behavior != Behavior.TABS) return
+        val canChangeLayout = !isInLayout
         val triggers = tabTriggers()
         triggers.forEach { trigger ->
             val nextSelected = trigger.tabValue == tabValue
-            if (navigationKind == 1) {
+            if (navigationKind == 1 && canChangeLayout) {
                 trigger.visibility = if (nextSelected) VISIBLE else GONE
             }
             if (trigger.selected != nextSelected) {
@@ -4697,20 +5779,24 @@ internal class MobileUiHost(
         val selectedContent = contents.firstOrNull { content ->
             content.value == tabValue
         }
-        contents.forEach { content ->
-            content.view.visibility = if (
-                content.forceMounted || content.value == tabValue
-            ) {
-                VISIBLE
-            } else {
-                GONE
+        if (canChangeLayout) {
+            contents.forEach { content ->
+                content.view.visibility = if (
+                    content.forceMounted || content.value == tabValue
+                ) {
+                    VISIBLE
+                } else {
+                    GONE
+                }
             }
         }
         applyTabsIndicator(
             triggers.firstOrNull { trigger -> trigger.selected },
             animate,
         )
-        animateTabsContentHeight(selectedContent?.view, animate)
+        if (canChangeLayout) {
+            animateTabsContentHeight(selectedContent?.view, animate)
+        }
     }
 
     private fun scheduleCarouselAdvance() {
@@ -4816,6 +5902,7 @@ internal class MobileUiHost(
 
     private fun applyTabTextVisualState() {
         if (behavior != Behavior.TAB_TRIGGER) return
+        if (nativeProperties.flag("preserveChildForeground", false)) return
         descendantViews(this)
             .filterIsInstance<TextView>()
             .forEach { text ->
@@ -4854,11 +5941,20 @@ internal class MobileUiHost(
         indicator.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         tabsIndicatorAnimator?.cancel()
         val params = indicator.layoutParams
-        params.width = trigger.width
-        params.height = (2f * density).roundToInt().coerceAtLeast(1)
-        indicator.layoutParams = params
+        val nextWidth = trigger.width
+        val nextHeight = (2f * density).roundToInt().coerceAtLeast(1)
+        if (params.width != nextWidth || params.height != nextHeight) {
+            params.width = nextWidth
+            params.height = nextHeight
+            // Property reconciliation can run while the renderer is laying
+            // out its tree. Mutating the existing params is enough for the
+            // current geometry; request the next pass outside onLayout.
+            indicator.postOnAnimation {
+                if (indicator.isAttachedToWindow) indicator.requestLayout()
+            }
+        }
         val targetX = trigger.x - indicator.left
-        val targetY = trigger.y + trigger.height - params.height - indicator.top
+        val targetY = trigger.y + trigger.height - nextHeight - indicator.top
         if (animate && animationsEnabled()) {
             indicator.animate()
                 .translationX(targetX)
@@ -4892,7 +5988,9 @@ internal class MobileUiHost(
         if (!animate || !animationsEnabled() || currentHeight == targetHeight) {
             if (layout.height != targetHeight) {
                 layout.height = targetHeight
-                wrapper.layoutParams = layout
+                wrapper.postOnAnimation {
+                    if (wrapper.isAttachedToWindow) wrapper.requestLayout()
+                }
             }
             return
         }
@@ -4900,7 +5998,9 @@ internal class MobileUiHost(
             duration = TABS_CONTENT_ANIMATION_DURATION_MILLIS
             addUpdateListener { animation ->
                 layout.height = animation.animatedValue as Int
-                wrapper.layoutParams = layout
+                wrapper.postOnAnimation {
+                    if (wrapper.isAttachedToWindow) wrapper.requestLayout()
+                }
             }
             start()
         }
@@ -4913,17 +6013,33 @@ internal class MobileUiHost(
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     pressedCalendarTarget = target
+                    calendarTouchDownRawX = event.rawX
+                    calendarTouchDownRawY = event.rawY
+                    calendarTouchMoved = false
                     target != CALENDAR_TARGET_NONE
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (
+                        abs(event.rawX - calendarTouchDownRawX) > calendarTouchSlop
+                        || abs(event.rawY - calendarTouchDownRawY) > calendarTouchSlop
+                    ) {
+                        calendarTouchMoved = true
+                    }
+                    pressedCalendarTarget != CALENDAR_TARGET_NONE
                 }
                 MotionEvent.ACTION_UP -> {
                     if (
+                        calendarTouchMoved
+                        ||
                         target == CALENDAR_TARGET_NONE
                         || target != pressedCalendarTarget
                     ) {
                         pressedCalendarTarget = CALENDAR_TARGET_NONE
+                        calendarTouchMoved = false
                         return@OnTouchListener false
                     }
                     pressedCalendarTarget = CALENDAR_TARGET_NONE
+                    calendarTouchMoved = false
                     val handled = when (target) {
                         CALENDAR_TARGET_PREVIOUS -> navigateCalendar(-1)
                         CALENDAR_TARGET_NEXT -> navigateCalendar(1)
@@ -4944,6 +6060,7 @@ internal class MobileUiHost(
                 MotionEvent.ACTION_CANCEL -> {
                     val claimed = pressedCalendarTarget != CALENDAR_TARGET_NONE
                     pressedCalendarTarget = CALENDAR_TARGET_NONE
+                    calendarTouchMoved = false
                     claimed
                 }
                 else -> false
@@ -4951,7 +6068,7 @@ internal class MobileUiHost(
         }
 
     private fun showDateTimePicker() {
-        if (!isEnabled) return
+        if (!isEnabled || readOnly) return
         if (activePickerDialog?.isShowing == true) return
         val activity = context.findActivity() ?: return
         if (activity.isFinishing || activity.isDestroyed) return
@@ -5003,6 +6120,8 @@ internal class MobileUiHost(
         }
         activePickerDialog = dialog
         dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(fillPaint.color)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(fillPaint.color)
     }
 
     private fun showCalendarSelector(calendarMonthSelector: Boolean): Boolean {
@@ -5063,6 +6182,8 @@ internal class MobileUiHost(
             }
         activePickerDialog = dialog
         dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(fillPaint.color)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(fillPaint.color)
 
         return true
     }
@@ -5305,6 +6426,9 @@ internal class MobileUiHost(
     private fun calendarFirstDate(): LocalDate =
         LocalDate.of(calendarYear, calendarMonth, 1)
 
+    private fun calendarIsRtl(): Boolean =
+        calendarRtl || layoutDirection == LAYOUT_DIRECTION_RTL
+
     private fun calendarStartOffset(): Int {
         val firstDay = calendarFirstDate().dayOfWeek.value % DAYS_PER_WEEK
         return (firstDay - firstDayOfWeek + DAYS_PER_WEEK) % DAYS_PER_WEEK
@@ -5360,7 +6484,7 @@ internal class MobileUiHost(
             collectionItemInfo = AccessibilityNodeInfo.CollectionItemInfo.obtain(
                 index / DAYS_PER_WEEK,
                 1,
-                index % DAYS_PER_WEEK,
+                (index % DAYS_PER_WEEK) + if (showWeekNumbers && !calendarIsRtl()) 1 else 0,
                 1,
                 false,
                 selectedDate,
@@ -5376,13 +6500,147 @@ internal class MobileUiHost(
         }
     }
 
+    @Suppress("DEPRECATION")
+    private fun calendarWeekVirtualNode(index: Int): AccessibilityNodeInfo? {
+        val row = calendarWeekRow(index) ?: return null
+        if (!showWeekNumbers) return null
+        val bounds = calendarGridBounds()
+        val columns = DAYS_PER_WEEK + 1
+        val cellWidth = bounds.width() / columns
+        val cellHeight = bounds.height() / calendarRowCount()
+        val column = if (calendarIsRtl()) columns - 1 else 0
+        val cell = Rect(
+            (bounds.left + column * cellWidth).toInt(),
+            (bounds.top + row * cellHeight).toInt(),
+            (bounds.left + (column + 1) * cellWidth).toInt(),
+            (bounds.top + (row + 1) * cellHeight).toInt(),
+        )
+        val screen = IntArray(2)
+        getLocationOnScreen(screen)
+        val weekFields = java.time.temporal.WeekFields.of(calendarLocale)
+        val week = calendarDateAt(row * DAYS_PER_WEEK)
+            .get(weekFields.weekOfWeekBasedYear())
+
+        return AccessibilityNodeInfo.obtain().apply {
+            setSource(this@MobileUiHost, index)
+            setParent(this@MobileUiHost)
+            packageName = context.packageName
+            className = "android.widget.TextView"
+            text = week.toString()
+            contentDescription = "Week $week"
+            isEnabled = true
+            isClickable = false
+            isFocusable = true
+            isVisibleToUser = isShown
+            isAccessibilityFocused = accessibilityFocusedCalendarCell == index
+            setBoundsInParent(cell)
+            setBoundsInScreen(Rect(cell).apply { offset(screen[0], screen[1]) })
+            collectionItemInfo = AccessibilityNodeInfo.CollectionItemInfo.obtain(
+                row,
+                1,
+                column,
+                1,
+                true,
+                false,
+            )
+            if (isAccessibilityFocused) {
+                addAction(AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS)
+            } else {
+                addAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            }
+        }
+    }
+
+    private fun calendarWeekRow(index: Int): Int? =
+        (index - CALENDAR_VIRTUAL_WEEK_BASE)
+            .takeIf { showWeekNumbers && it in 0 until calendarRowCount() }
+
+    @Suppress("DEPRECATION")
+    private fun calendarHeaderVirtualNode(index: Int): AccessibilityNodeInfo? {
+        val target = calendarHeaderTarget(index)
+        if (target == CALENDAR_TARGET_NONE) return null
+        val tag = when (target) {
+            CALENDAR_TARGET_PREVIOUS -> "pam:calendar-prev"
+            CALENDAR_TARGET_NEXT -> "pam:calendar-next"
+            CALENDAR_TARGET_MONTH -> "pam:calendar-month-select"
+            CALENDAR_TARGET_YEAR -> "pam:calendar-year-select"
+            else -> return null
+        }
+        val view = findTaggedDescendant(this, tag) ?: return null
+        val bounds = boundsInHost(view)
+        if (bounds.width() <= 0f || bounds.height() <= 0f) return null
+        val parentBounds = Rect(
+            bounds.left.toInt(),
+            bounds.top.toInt(),
+            bounds.right.toInt(),
+            bounds.bottom.toInt(),
+        )
+        val screen = IntArray(2)
+        getLocationOnScreen(screen)
+        val screenBounds = Rect(parentBounds).apply {
+            offset(screen[0], screen[1])
+        }
+        val monthName = calendarFirstDate().format(
+            DateTimeFormatter.ofPattern("MMMM", calendarLocale),
+        )
+        val label = when (target) {
+            CALENDAR_TARGET_PREVIOUS -> "Previous month"
+            CALENDAR_TARGET_NEXT -> "Next month"
+            CALENDAR_TARGET_MONTH -> "Select month, $monthName"
+            CALENDAR_TARGET_YEAR -> "Select year, $calendarYear"
+            else -> return null
+        }
+        val enabled = isEnabled && !readOnly
+
+        return AccessibilityNodeInfo.obtain().apply {
+            setSource(this@MobileUiHost, index)
+            setParent(this@MobileUiHost)
+            packageName = context.packageName
+            className = "android.widget.Button"
+            contentDescription = label
+            isEnabled = enabled
+            isClickable = enabled
+            isFocusable = true
+            isVisibleToUser = isShown
+            isAccessibilityFocused = accessibilityFocusedCalendarCell == index
+            setBoundsInParent(parentBounds)
+            setBoundsInScreen(screenBounds)
+            if (enabled) addAction(AccessibilityNodeInfo.ACTION_CLICK)
+            if (isAccessibilityFocused) {
+                addAction(AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS)
+            } else {
+                addAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            }
+        }
+    }
+
+    private fun calendarHeaderTarget(index: Int): Int = when (index) {
+        CALENDAR_VIRTUAL_PREVIOUS -> CALENDAR_TARGET_PREVIOUS
+        CALENDAR_VIRTUAL_NEXT -> CALENDAR_TARGET_NEXT
+        CALENDAR_VIRTUAL_MONTH -> CALENDAR_TARGET_MONTH
+        CALENDAR_VIRTUAL_YEAR -> CALENDAR_TARGET_YEAR
+        else -> CALENDAR_TARGET_NONE
+    }
+
     private fun calendarCellBounds(index: Int): Rect {
         val bounds = calendarGridBounds()
         val rows = calendarRowCount()
         val columns = DAYS_PER_WEEK + if (showWeekNumbers) 1 else 0
         val cellWidth = bounds.width() / columns
         val cellHeight = bounds.height() / rows
-        val column = index % DAYS_PER_WEEK
+        val dayColumn = index % DAYS_PER_WEEK
+        val visualDayColumn = if (calendarIsRtl()) {
+            DAYS_PER_WEEK - 1 - dayColumn
+        } else {
+            dayColumn
+        }
+        val column = visualDayColumn + if (
+            showWeekNumbers && !calendarIsRtl()
+        ) {
+            1
+        } else {
+            0
+        }
         val row = index / DAYS_PER_WEEK
 
         return Rect(
@@ -5399,7 +6657,20 @@ internal class MobileUiHost(
             packageName = context.packageName
             className = "android.widget.Button"
             setSource(this@MobileUiHost, index)
-            text.add(calendarDateAt(index).dayOfMonth.toString())
+            text.add(
+                when (calendarHeaderTarget(index)) {
+                    CALENDAR_TARGET_PREVIOUS -> "Previous month"
+                    CALENDAR_TARGET_NEXT -> "Next month"
+                    CALENDAR_TARGET_MONTH -> calendarFirstDate().format(
+                        DateTimeFormatter.ofPattern("MMMM", calendarLocale),
+                    )
+                    CALENDAR_TARGET_YEAR -> calendarYear.toString()
+                    else -> calendarWeekRow(index)?.let { row ->
+                        val fields = java.time.temporal.WeekFields.of(calendarLocale)
+                        "Week ${calendarDateAt(row * DAYS_PER_WEEK).get(fields.weekOfWeekBasedYear())}"
+                    } ?: calendarDateAt(index).dayOfMonth.toString()
+                },
+            )
         }
         parent?.requestSendAccessibilityEvent(this, event)
     }
@@ -5422,9 +6693,30 @@ internal class MobileUiHost(
         if (!bounds.contains(x, y) || bounds.width() <= 0f || bounds.height() <= 0f) {
             return CALENDAR_TARGET_NONE
         }
-        val column = (
-            (x - bounds.left) / (bounds.width() / DAYS_PER_WEEK)
-        ).toInt().coerceIn(0, DAYS_PER_WEEK - 1)
+        val columns = DAYS_PER_WEEK + if (showWeekNumbers) 1 else 0
+        val visualColumn = (
+            (x - bounds.left) / (bounds.width() / columns)
+        ).toInt().coerceIn(0, columns - 1)
+        if (showWeekNumbers) {
+            val weekColumn = if (calendarIsRtl()) {
+                columns - 1
+            } else {
+                0
+            }
+            if (visualColumn == weekColumn) return CALENDAR_TARGET_NONE
+        }
+        val visualDayColumn = if (
+            showWeekNumbers && !calendarIsRtl()
+        ) {
+            visualColumn - 1
+        } else {
+            visualColumn
+        }
+        val column = if (calendarIsRtl()) {
+            DAYS_PER_WEEK - 1 - visualDayColumn
+        } else {
+            visualDayColumn
+        }
         val rows = calendarRowCount()
         val row = (
             (y - bounds.top) / (bounds.height() / rows)
@@ -5626,6 +6918,7 @@ internal class MobileUiHost(
                 )
             } else {
                 item.isSelected = selected
+                item.applyFileTreeSelectionVisual(selected)
                 item.updateFileTreeItemAccessibility()
             }
         }
@@ -5645,6 +6938,7 @@ internal class MobileUiHost(
         fileTreeFolderExpanded = expanded
         fileTreeFolderInitialized = true
         isSelected = selected
+        applyFileTreeSelectionVisual(selected)
         val content = findTaggedDescendant(this, FILE_TREE_CONTENT_TAG)
         if (content != null && changed) {
             content.animate().cancel()
@@ -5733,6 +7027,37 @@ internal class MobileUiHost(
             item.fileTreePath.encodeToByteArray(),
         )
         return true
+    }
+
+    private fun applyFileTreeSelectionVisual(selected: Boolean) {
+        if (
+            behavior != Behavior.FILE_TREE_FOLDER
+            && behavior != Behavior.FILE_TREE_FILE
+        ) {
+            return
+        }
+        if (isInLayout) {
+            if (!fileTreeSelectionVisualScheduled) {
+                fileTreeSelectionVisualScheduled = true
+                post(fileTreeSelectionVisual)
+            }
+            return
+        }
+        val target = findTaggedDescendant(this, FILE_TREE_HEADER_TAG) ?: this
+        target.setBackgroundColor(
+            if (selected) fileTreeSelectedContainerColor else Color.TRANSPARENT,
+        )
+        val foreground = if (selected) {
+            fileTreeSelectedForegroundColor
+        } else {
+            fileTreeForegroundColor
+        }
+        if (target is ViewGroup) {
+            descendantTextViews(target).forEach { text ->
+                text.setTextColor(foreground)
+            }
+        }
+        target.invalidate()
     }
 
     @Suppress("DEPRECATION")
@@ -5911,12 +7236,21 @@ internal class MobileUiHost(
             fillPaint.style = Paint.Style.FILL
             canvas.drawRoundRect(bounds, radius, radius, fillPaint)
         }
-        trackPaint.style = Paint.Style.STROKE
-        trackPaint.strokeWidth = 2f * density
-        canvas.drawRoundRect(bounds, radius, radius, trackPaint)
+        val outlinePaint = if (invalid && !checked && !indeterminate) {
+            fillPaint
+        } else {
+            trackPaint
+        }
+        val previousOutlineStyle = outlinePaint.style
+        val previousOutlineWidth = outlinePaint.strokeWidth
+        outlinePaint.style = Paint.Style.STROKE
+        outlinePaint.strokeWidth = 2f * density
+        canvas.drawRoundRect(bounds, radius, radius, outlinePaint)
 
         trackPaint.style = previousTrackStyle
         trackPaint.strokeWidth = previousTrackWidth
+        outlinePaint.style = previousOutlineStyle
+        outlinePaint.strokeWidth = previousOutlineWidth
         fillPaint.style = previousFillStyle
     }
 
@@ -5984,7 +7318,7 @@ internal class MobileUiHost(
         val columns = DAYS_PER_WEEK + if (showWeekNumbers) 1 else 0
         val cellWidth = bounds.width() / columns
         val cellHeight = bounds.height() / rows
-        val radius = minOf(cellWidth, cellHeight) * 0.38f
+        val radius = minOf(20f * density, minOf(cellWidth, cellHeight) / 2f)
         val today = LocalDate.now()
         val dates = visibleCalendarDates(rows)
         val labels = cachedCalendarLabels
@@ -6003,7 +7337,7 @@ internal class MobileUiHost(
             repeat(rows) { row ->
                 val date = dates[row * DAYS_PER_WEEK]
                 val week = date.get(weekFields.weekOfWeekBasedYear())
-                val column = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                val column = if (calendarIsRtl()) {
                     columns - 1
                 } else {
                     0
@@ -6024,12 +7358,14 @@ internal class MobileUiHost(
             val insideRange = rangeFrom?.let { start ->
                 rangeTo?.let { end -> date > start && date < end }
             } == true
+            val rangeStart = rangeTo != null && date == rangeFrom
+            val rangeEnd = rangeTo != null && date == rangeTo
             val dayColumn = index % DAYS_PER_WEEK
-            val visualColumn = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+            val visualColumn = if (calendarIsRtl()) {
                 DAYS_PER_WEEK - 1 - dayColumn
             } else {
                 dayColumn
-            } + if (showWeekNumbers && layoutDirection != LAYOUT_DIRECTION_RTL) {
+            } + if (showWeekNumbers && !calendarIsRtl()) {
                 1
             } else {
                 0
@@ -6037,12 +7373,28 @@ internal class MobileUiHost(
             val centerX = bounds.left + (visualColumn + 0.5f) * cellWidth
             val centerY = bounds.top + (index / DAYS_PER_WEEK + 0.5f) * cellHeight
 
-            if (insideRange) {
+            if (insideRange || rangeStart || rangeEnd) {
                 fillPaint.alpha = RANGE_BACKGROUND_ALPHA
+                val cellLeft = centerX - cellWidth / 2f
+                val cellRight = centerX + cellWidth / 2f
+                val rangeLeft = when {
+                    insideRange -> cellLeft
+                    rangeStart && calendarIsRtl() -> cellLeft
+                    rangeStart -> centerX
+                    rangeEnd && calendarIsRtl() -> centerX
+                    else -> cellLeft
+                }
+                val rangeRight = when {
+                    insideRange -> cellRight
+                    rangeStart && calendarIsRtl() -> centerX
+                    rangeStart -> cellRight
+                    rangeEnd && calendarIsRtl() -> cellRight
+                    else -> centerX
+                }
                 canvas.drawRect(
-                    centerX - cellWidth / 2f,
+                    rangeLeft,
                     centerY - radius,
-                    centerX + cellWidth / 2f,
+                    rangeRight,
                     centerY + radius,
                     fillPaint,
                 )
@@ -6146,6 +7498,16 @@ internal class MobileUiHost(
         return null
     }
 
+    private fun descendantTextViews(root: ViewGroup): List<TextView> =
+        buildList {
+            repeat(root.childCount) { index ->
+                when (val child = root.getChildAt(index)) {
+                    is TextView -> if (child !is EditText) add(child)
+                    is ViewGroup -> addAll(descendantTextViews(child))
+                }
+            }
+        }
+
     private fun descendantTexts(root: ViewGroup): List<String> =
         buildList {
             repeat(root.childCount) { index ->
@@ -6196,30 +7558,61 @@ internal class MobileUiHost(
         if (behavior != Behavior.BOTTOM_SHEET || dragging) return
         val content = sheetContent() ?: return
         val backdrop = sheetBackdrop()
-        val contentLayout = (content.layoutParams as? FrameLayout.LayoutParams)
+        val existingContentLayout = content.layoutParams
+        val contentLayout = (existingContentLayout as? FrameLayout.LayoutParams)
+            ?.let { existing -> FrameLayout.LayoutParams(existing) }
             ?: FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 content.layoutParams?.height ?: ViewGroup.LayoutParams.WRAP_CONTENT,
             )
-        contentLayout.width = ViewGroup.LayoutParams.MATCH_PARENT
-        contentLayout.gravity = Gravity.BOTTOM
-        content.layoutParams = contentLayout
+        var contentLayoutChanged = existingContentLayout !is FrameLayout.LayoutParams
+        if (contentLayout.width != ViewGroup.LayoutParams.MATCH_PARENT) {
+            contentLayout.width = ViewGroup.LayoutParams.MATCH_PARENT
+            contentLayoutChanged = true
+        }
+        if (contentLayout.gravity != Gravity.BOTTOM) {
+            contentLayout.gravity = Gravity.BOTTOM
+            contentLayoutChanged = true
+        }
+        if (contentLayoutChanged) {
+            applySheetLayoutParams(content, contentLayout)
+        }
+        val selectionSheet = component == GeneratedComponents.SELECT_PORTAL
         if (content is ViewGroup) {
-            ensureSheetSearchInput(content)
-            repeat(content.childCount) { index ->
-                val child = content.getChildAt(index)
-                val childLayout = child.layoutParams ?: return@repeat
-                if (childLayout.width != ViewGroup.LayoutParams.MATCH_PARENT) {
-                    childLayout.width = ViewGroup.LayoutParams.MATCH_PARENT
-                    child.layoutParams = childLayout
+            if (
+                isInLayout
+                && isAttachedToWindow
+                && sheetStructureNeedsSync(content)
+            ) {
+                if (!sheetStructureSyncScheduled) {
+                    sheetStructureSyncScheduled = true
+                    post {
+                        sheetStructureSyncScheduled = false
+                        if (isAttachedToWindow && behavior == Behavior.BOTTOM_SHEET) {
+                            ensureSheetSearchInput(content)
+                            applySheetLayout(animate = false)
+                        }
+                    }
                 }
+            } else if (!isInLayout || !isAttachedToWindow) {
+                ensureSheetSearchInput(content)
             }
         }
         if (backdrop != null) {
-            backdrop.layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            )
+            val backdropLayout = backdrop.layoutParams as? FrameLayout.LayoutParams
+            if (
+                backdropLayout == null
+                || backdropLayout.width != ViewGroup.LayoutParams.MATCH_PARENT
+                || backdropLayout.height != ViewGroup.LayoutParams.MATCH_PARENT
+            ) {
+                applySheetLayoutParams(
+                    backdrop,
+                    FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+            }
             (backdrop.tag as? String)
                 ?.substringAfter("$OVERLAY_BACKDROP_TAG:", "")
                 ?.toIntOrNull()
@@ -6238,6 +7631,8 @@ internal class MobileUiHost(
         }
         findTaggedDescendant(this, SHEET_DRAG_INDICATOR_TAG)
             ?.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        findTaggedDescendant(this, SHEET_DRAG_INDICATOR_WRAPPER_TAG)
+            ?.importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
 
         if (
             sheetSnapPoints.isNotEmpty()
@@ -6248,13 +7643,61 @@ internal class MobileUiHost(
                 height,
                 resources.displayMetrics.heightPixels,
             )
-            val maximumHeight = (
-                viewportHeight * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
-            ).roundToInt().coerceAtLeast(1)
+            val maximumHeight = adaptiveBottomSheetHeightsPx(
+                viewportHeight = viewportHeight,
+                maximumSnapPercent = sheetSnapPoints.maxOrNull() ?: 100f,
+                selectedSnapPercent = sheetSnapPoints[
+                    sheetSnapIndex.coerceIn(0, sheetSnapPoints.lastIndex)
+                ],
+                requiredContentHeight = sheetRequiredContentHeight(content),
+                fontScale = resources.configuration.fontScale,
+                density = density,
+                snapPointCount = sheetSnapPoints.size,
+            ).first
             val layout = content.layoutParams
             if (layout.height != maximumHeight) {
-                layout.height = maximumHeight
-                content.layoutParams = layout
+                val nextLayout = FrameLayout.LayoutParams(layout).apply {
+                    height = maximumHeight
+                }
+                applySheetLayoutParams(content, nextLayout)
+            }
+        } else if (selectionSheet && sheetEnableDynamicSizing && height > 0) {
+            val query = sheetSearchInput?.text?.toString()?.trim().orEmpty()
+            val items = sheetItems()
+            val visibleItems = items.filter { item ->
+                query.isEmpty() || item.contentDescription
+                    ?.toString()
+                    ?.contains(query, ignoreCase = true) == true
+            }
+            val hasExactMatch = visibleItems.any { item ->
+                item.contentDescription
+                    ?.toString()
+                    ?.equals(query, ignoreCase = true) == true
+            }
+            val supplementaryRow = query.isNotEmpty() && (
+                visibleItems.isEmpty() || sheetAllowCustomValue && !hasExactMatch
+            )
+            val layout = content.layoutParams
+            val visibleViewportHeight = (
+                minOf(height, resources.displayMetrics.heightPixels)
+                    - if (sheetSearchable) sheetKeyboardInset else 0
+            ).coerceAtLeast(1)
+            val dynamicHeight = selectionSheetContentHeightPx(
+                viewportHeight = visibleViewportHeight,
+                density = density,
+                visibleItemCount = visibleItems.size,
+                searchable = sheetSearchable,
+                supplementaryRow = supplementaryRow,
+                dragHandle = findTaggedDescendant(
+                    content,
+                    SHEET_DRAG_INDICATOR_WRAPPER_TAG,
+                ) != null,
+            )
+            if (layout.height != dynamicHeight) {
+                val nextLayout = FrameLayout.LayoutParams(layout).apply {
+                    height = dynamicHeight
+                }
+                applySheetLayoutParams(content, nextLayout)
             }
         }
 
@@ -6263,7 +7706,12 @@ internal class MobileUiHost(
         } else {
             sheetSnapIndex = 0
         }
-        val target = sheetSnapTranslation(sheetSnapIndex, content)
+        val keyboardTranslation = if (sheetSearchable) {
+            -sheetKeyboardInset.coerceAtLeast(0).toFloat()
+        } else {
+            0f
+        }
+        val target = sheetSnapTranslation(sheetSnapIndex, content) + keyboardTranslation
         if (animate && animationsEnabled()) {
             content.animate()
                 .translationY(target)
@@ -6282,7 +7730,24 @@ internal class MobileUiHost(
             }
         }
     
-        (content as? ViewGroup)?.let(::layoutNativeSheetItems)
+        if (selectionSheet) {
+            (content as? ViewGroup)?.let(::layoutNativeSheetItems)
+        }
+    }
+
+    private fun applySheetLayoutParams(
+        view: View,
+        layout: FrameLayout.LayoutParams,
+    ) {
+        if (isInLayout) {
+            view.post {
+                if (view.isAttachedToWindow) {
+                    view.layoutParams = layout
+                }
+            }
+        } else {
+            view.layoutParams = layout
+        }
     }
 
     /**
@@ -6296,19 +7761,54 @@ internal class MobileUiHost(
     private var sheetSearchInput: android.widget.EditText? = null
     private var sheetCustomAction: android.widget.TextView? = null
     private var sheetEmptyState: android.widget.TextView? = null
+    private var sheetStructureSyncScheduled = false
+    private var sheetSearchIconColor: Int? = null
+    private var sheetCustomActionColors: Pair<Int, Int>? = null
     private val sheetSearchBindings =
         java.util.WeakHashMap<android.widget.EditText, android.text.TextWatcher>()
 
-    private fun ensureSheetSearchInput(content: ViewGroup) {
+    private fun sheetStructureNeedsSync(content: ViewGroup): Boolean {
+        if (component != GeneratedComponents.SELECT_PORTAL) {
+            return sheetSearchInput != null
+                || sheetCustomAction != null
+                || sheetEmptyState != null
+        }
         if (!sheetSearchable) {
+            return sheetSearchInput != null
+                || sheetCustomAction != null
+                || sheetEmptyState?.parent !== content
+        }
+        return sheetSearchInput?.parent !== content
+            || sheetCustomAction?.parent !== content
+            || sheetEmptyState?.parent !== content
+    }
+
+    private fun ensureSheetSearchInput(content: ViewGroup) {
+        if (component != GeneratedComponents.SELECT_PORTAL) {
             sheetSearchInput?.let { input ->
+                sheetSearchBindings.remove(input)?.let(input::removeTextChangedListener)
                 (input.parent as? ViewGroup)?.removeView(input)
             }
             sheetSearchInput = null
+            sheetSearchIconColor = null
             sheetCustomAction?.let { (it.parent as? ViewGroup)?.removeView(it) }
-            sheetEmptyState?.let { (it.parent as? ViewGroup)?.removeView(it) }
             sheetCustomAction = null
+            sheetCustomActionColors = null
+            sheetEmptyState?.let { (it.parent as? ViewGroup)?.removeView(it) }
             sheetEmptyState = null
+            return
+        }
+        if (!sheetSearchable) {
+            sheetSearchInput?.let { input ->
+                sheetSearchBindings.remove(input)?.let(input::removeTextChangedListener)
+                (input.parent as? ViewGroup)?.removeView(input)
+            }
+            sheetSearchInput = null
+            sheetSearchIconColor = null
+            sheetCustomAction?.let { (it.parent as? ViewGroup)?.removeView(it) }
+            sheetCustomAction = null
+            sheetCustomActionColors = null
+            sheetEmptyState = ensureSheetEmptyState(content)
             return
         }
         val input = sheetSearchInput ?: android.widget.EditText(context).also { search ->
@@ -6322,7 +7822,7 @@ internal class MobileUiHost(
             )
             search.background = android.graphics.drawable.GradientDrawable().apply {
                 shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-                cornerRadius = 12f * resources.displayMetrics.density
+                cornerRadius = 16f * resources.displayMetrics.density
                 setColor(
                     nativeProperties.integer(
                         "searchBackgroundColor",
@@ -6352,17 +7852,34 @@ internal class MobileUiHost(
             search.contentDescription = sheetSearchPlaceholder
             search.minimumHeight = (48f * resources.displayMetrics.density).roundToInt()
             search.gravity = android.view.Gravity.CENTER_VERTICAL
-            search.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                android.R.drawable.ic_menu_search,
-                0,
-                0,
-                0,
-            )
+            search.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    BaseInputConnection.removeComposingSpans(search.text)
+                }
+            }
             search.compoundDrawablePadding =
                 (12f * resources.displayMetrics.density).roundToInt()
             sheetSearchInput = search
         }
-        input.hint = sheetSearchPlaceholder
+        if (input.hint?.toString() != sheetSearchPlaceholder) {
+            input.hint = sheetSearchPlaceholder
+        }
+        val searchIconColor = nativeProperties.integer(
+            "searchHintColor",
+            android.graphics.Color.GRAY.toLong(),
+        ).toInt()
+        if (sheetSearchIconColor != searchIconColor) {
+            input.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                SheetSearchIconDrawable(
+                    searchIconColor,
+                    resources.displayMetrics.density,
+                ),
+                null,
+                null,
+                null,
+            )
+            sheetSearchIconColor = searchIconColor
+        }
         if (input.parent !== content) {
             (input.parent as? ViewGroup)?.removeView(input)
             content.addView(input)
@@ -6370,17 +7887,15 @@ internal class MobileUiHost(
         val customAction = sheetCustomAction ?: android.widget.TextView(context).also { action ->
             action.gravity = android.view.Gravity.CENTER_VERTICAL
             action.textSize = 16f
+            action.typeface = android.graphics.Typeface.create(
+                "sans-serif-medium",
+                android.graphics.Typeface.NORMAL,
+            )
             action.setPadding(
                 (16f * resources.displayMetrics.density).roundToInt(),
                 0,
                 (16f * resources.displayMetrics.density).roundToInt(),
                 0,
-            )
-            action.setTextColor(
-                nativeProperties.integer(
-                    "searchTextColor",
-                    android.graphics.Color.BLACK.toLong(),
-                ).toInt(),
             )
             action.isClickable = true
             action.isFocusable = true
@@ -6393,13 +7908,59 @@ internal class MobileUiHost(
             }
             sheetCustomAction = action
         }
+        customAction.setTextColor(
+            nativeProperties.integer(
+                "customActionTextColor",
+                nativeProperties.integer(
+                    "searchTextColor",
+                    android.graphics.Color.BLACK.toLong(),
+                ),
+            ).toInt(),
+        )
+        val customActionBackgroundColor = nativeProperties.integer(
+            "customActionBackgroundColor",
+            android.graphics.Color.TRANSPARENT.toLong(),
+        ).toInt()
+        val customActionPressedBackgroundColor = nativeProperties.integer(
+            "customActionPressedBackgroundColor",
+            customActionBackgroundColor.toLong(),
+        ).toInt()
+        val customActionColors = customActionBackgroundColor to
+            customActionPressedBackgroundColor
+        if (sheetCustomActionColors != customActionColors) {
+            fun roundedActionBackground(color: Int) =
+                android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                    cornerRadius = 12f * resources.displayMetrics.density
+                    setColor(color)
+                }
+            customAction.background = android.graphics.drawable.StateListDrawable().apply {
+                addState(
+                    intArrayOf(android.R.attr.state_pressed),
+                    roundedActionBackground(customActionPressedBackgroundColor),
+                )
+                addState(
+                    intArrayOf(android.R.attr.state_focused),
+                    roundedActionBackground(customActionPressedBackgroundColor),
+                )
+                addState(
+                    intArrayOf(),
+                    roundedActionBackground(customActionBackgroundColor),
+                )
+            }
+            customAction.clipToOutline = true
+            sheetCustomActionColors = customActionColors
+        }
         if (customAction.parent !== content) {
             (customAction.parent as? ViewGroup)?.removeView(customAction)
             content.addView(customAction)
         }
+        ensureSheetEmptyState(content)
+    }
+
+    private fun ensureSheetEmptyState(content: ViewGroup): TextView {
         val emptyState = sheetEmptyState ?: android.widget.TextView(context).also { empty ->
             empty.gravity = android.view.Gravity.CENTER_VERTICAL
-            empty.text = nativeProperties.text("noDataText") ?: "No options available"
             empty.textSize = 14f
             empty.setPadding(
                 (16f * resources.displayMetrics.density).roundToInt(),
@@ -6420,10 +7981,22 @@ internal class MobileUiHost(
             (emptyState.parent as? ViewGroup)?.removeView(emptyState)
             content.addView(emptyState)
         }
+        val noDataText = nativeProperties.text("noDataText") ?: "No options available"
+        if (emptyState.text?.toString() != noDataText) {
+            emptyState.text = noDataText
+        }
+        return emptyState
     }
 
     private fun clearSheetSearch() {
-        sheetSearchInput?.text?.clear()
+        sheetSearchInput?.let { input ->
+            input.text?.clear()
+            input.clearFocus()
+            val keyboard = input.context.getSystemService(
+                android.content.Context.INPUT_METHOD_SERVICE,
+            ) as? android.view.inputmethod.InputMethodManager
+            keyboard?.hideSoftInputFromWindow(input.windowToken, 0)
+        }
     }
 
     private fun layoutNativeSheetItems(root: ViewGroup) {
@@ -6444,7 +8017,6 @@ internal class MobileUiHost(
         }
 
         collect(root)
-        if (items.isEmpty()) return
         val query = inputs.firstOrNull()?.text?.toString()?.trim().orEmpty()
         items.forEach { item ->
             item.visibility = if (
@@ -6463,20 +8035,57 @@ internal class MobileUiHost(
         val showCustomAction = sheetAllowCustomValue && query.isNotEmpty() && !hasExactMatch
         sheetCustomAction?.apply {
             visibility = if (showCustomAction) View.VISIBLE else View.GONE
-            text = context.getString(R.string.pam_use_custom_value, query)
-            contentDescription = text
+            val nextText = context.getString(R.string.pam_use_custom_value, query)
+            if (text?.toString() != nextText) {
+                text = nextText
+                contentDescription = nextText
+            }
         }
-        val showEmptyState = query.isNotEmpty() && visibleItems.isEmpty() && !showCustomAction
+        val showEmptyState = visibleItems.isEmpty() && !showCustomAction
         sheetEmptyState?.visibility = if (showEmptyState) View.VISIBLE else View.GONE
 
         val density = resources.displayMetrics.density
         val rowHeight = (56f * density).roundToInt()
         val searchHeight = (48f * density).roundToInt()
         val topInset = (12f * density).roundToInt()
+        val handleWrapper = findTaggedDescendant(
+            root,
+            SHEET_DRAG_INDICATOR_WRAPPER_TAG,
+        )
+        val handleIndicator = findTaggedDescendant(
+            root,
+            SHEET_DRAG_INDICATOR_TAG,
+        )
+        val handleBlock = if (handleWrapper == null) 0 else (20f * density).roundToInt()
+        val handleHeight = (24f * density).roundToInt()
+        val indicatorWidth = (32f * density).roundToInt()
+        val indicatorHeight = (4f * density).roundToInt()
         val horizontalInset = (16f * density).roundToInt()
         val availableWidth = (root.width - horizontalInset * 2).coerceAtLeast(0)
-        val inputOffset = if (inputs.isEmpty()) 0 else searchHeight + topInset
+        val searchTop = topInset + handleBlock
+        val firstRowTop = if (inputs.isEmpty()) {
+            searchTop
+        } else {
+            searchTop + searchHeight + topInset
+        }
         val supplementaryOffset = if (showCustomAction || showEmptyState) rowHeight else 0
+
+        handleWrapper?.let { wrapper ->
+            wrapper.measure(
+                MeasureSpec.makeMeasureSpec(root.width, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(handleHeight, MeasureSpec.EXACTLY),
+            )
+            wrapper.layout(0, 0, root.width, handleHeight)
+            handleIndicator?.let { indicator ->
+                indicator.measure(
+                    MeasureSpec.makeMeasureSpec(indicatorWidth, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(indicatorHeight, MeasureSpec.EXACTLY),
+                )
+                val left = (root.width - indicatorWidth) / 2
+                val top = (handleHeight - indicatorHeight) / 2
+                indicator.layout(left, top, left + indicatorWidth, top + indicatorHeight)
+            }
+        }
 
         inputs.firstOrNull()?.let { input ->
             if (!sheetSearchBindings.containsKey(input)) {
@@ -6494,7 +8103,19 @@ internal class MobileUiHost(
                         before: Int,
                         count: Int,
                     ) {
-                        root.requestLayout()
+                        // Text can be synchronized while Android is measuring
+                        // the sheet. Queue the relayout for the next frame so
+                        // the parent PamContainer never starts a nested second
+                        // layout pass from inside its active layout traversal.
+                        if (root.isAttachedToWindow) {
+                            root.postOnAnimation { root.requestLayout() }
+                        } else {
+                            // Detached hosts are used by first-frame
+                            // composition and instrumentation. Mark them dirty
+                            // synchronously so the caller's next measure/layout
+                            // observes the current query and supplementary row.
+                            root.requestLayout()
+                        }
                     }
 
                     override fun afterTextChanged(text: android.text.Editable?) = Unit
@@ -6508,26 +8129,13 @@ internal class MobileUiHost(
             )
             input.layout(
                 horizontalInset,
-                topInset,
+                searchTop,
                 horizontalInset + availableWidth,
-                topInset + searchHeight,
+                searchTop + searchHeight,
             )
-            if (!input.hasFocus()) {
-                input.post {
-                    if (!input.isAttachedToWindow) return@post
-                    input.requestFocus()
-                    val keyboard = input.context.getSystemService(
-                        android.content.Context.INPUT_METHOD_SERVICE,
-                    ) as? android.view.inputmethod.InputMethodManager
-                    keyboard?.showSoftInput(
-                        input,
-                        android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT,
-                    )
-                }
-            }
         }
         sheetCustomAction?.takeIf { it.visibility == View.VISIBLE }?.let { action ->
-            val top = topInset + inputOffset
+            val top = firstRowTop
             action.measure(
                 MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
@@ -6540,7 +8148,7 @@ internal class MobileUiHost(
             )
         }
         sheetEmptyState?.takeIf { it.visibility == View.VISIBLE }?.let { empty ->
-            val top = topInset + inputOffset
+            val top = firstRowTop
             empty.measure(
                 MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
@@ -6554,7 +8162,7 @@ internal class MobileUiHost(
         }
 
         visibleItems.forEachIndexed { index, item ->
-            val rootTop = topInset + inputOffset + supplementaryOffset + index * rowHeight
+            val rootTop = firstRowTop + supplementaryOffset + index * rowHeight
             val parent = item.parent as? ViewGroup ?: return@forEachIndexed
             var parentLeftInRoot = 0
             var parentTopInRoot = 0
@@ -6568,10 +8176,6 @@ internal class MobileUiHost(
             val left = horizontalInset - parentLeftInRoot
             val top = rootTop - parentTopInRoot
 
-            item.layoutParams = item.layoutParams.apply {
-                this.width = ViewGroup.LayoutParams.MATCH_PARENT
-                height = rowHeight
-            }
             item.measure(
                 MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(rowHeight, MeasureSpec.EXACTLY),
@@ -6580,16 +8184,102 @@ internal class MobileUiHost(
         }
     }
 
+    private fun drawSheetItemSelection(canvas: Canvas) {
+        if (!checked && !selected) return
+        val centerX = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+            24f * density
+        } else {
+            width - 24f * density
+        }
+        val centerY = height / 2f
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fillPaint.color
+            style = Paint.Style.STROKE
+            strokeWidth = 2.5f * density
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        val direction = if (layoutDirection == LAYOUT_DIRECTION_RTL) -1f else 1f
+        val path = android.graphics.Path().apply {
+            moveTo(centerX - 8f * density * direction, centerY)
+            lineTo(centerX - 2f * density * direction, centerY + 6f * density)
+            lineTo(centerX + 9f * density * direction, centerY - 7f * density)
+        }
+        canvas.drawPath(path, paint)
+    }
+
+    private class SheetSearchIconDrawable(
+        color: Int,
+        private val density: Float,
+    ) : Drawable() {
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            style = Paint.Style.STROKE
+            strokeWidth = 2f * density
+            strokeCap = Paint.Cap.ROUND
+        }
+
+        override fun draw(canvas: Canvas) {
+            val centerX = bounds.left + 10f * density
+            val centerY = bounds.top + 10f * density
+            canvas.drawCircle(centerX, centerY, 6f * density, paint)
+            canvas.drawLine(
+                centerX + 4.5f * density,
+                centerY + 4.5f * density,
+                bounds.left + 20f * density,
+                bounds.top + 20f * density,
+                paint,
+            )
+        }
+
+        override fun setAlpha(alpha: Int) {
+            paint.alpha = alpha
+        }
+
+        override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {
+            paint.colorFilter = colorFilter
+        }
+
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity(): Int = android.graphics.PixelFormat.TRANSLUCENT
+
+        override fun getIntrinsicWidth(): Int = (24f * density).roundToInt()
+
+        override fun getIntrinsicHeight(): Int = (24f * density).roundToInt()
+    }
+
 
     private fun sheetSnapTranslation(index: Int, content: View): Float {
         if (sheetSnapPoints.isEmpty() || height <= 0) return 0f
         val safeIndex = index.coerceIn(0, sheetSnapPoints.lastIndex)
         val viewportHeight = minOf(height, resources.displayMetrics.heightPixels)
-        val maximumHeight =
-            viewportHeight * (sheetSnapPoints.maxOrNull() ?: 100f) / 100f
-        val selectedHeight = viewportHeight * sheetSnapPoints[safeIndex] / 100f
-        return (maximumHeight - selectedHeight)
+        val (maximumHeight, selectedHeight) = adaptiveBottomSheetHeightsPx(
+            viewportHeight = viewportHeight,
+            maximumSnapPercent = sheetSnapPoints.maxOrNull() ?: 100f,
+            selectedSnapPercent = sheetSnapPoints[safeIndex],
+            requiredContentHeight = sheetRequiredContentHeight(content),
+            fontScale = resources.configuration.fontScale,
+            density = density,
+            snapPointCount = sheetSnapPoints.size,
+        )
+        return bottomSheetTranslationPx(
+            maximumHeight = maximumHeight,
+            selectedHeight = selectedHeight,
+            snapPointCount = sheetSnapPoints.size,
+        )
             .coerceIn(0f, sheetDismissTranslation(content))
+    }
+
+    private fun sheetRequiredContentHeight(content: View): Int {
+        val group = content as? ViewGroup
+            ?: return content.minimumHeight.coerceAtLeast(1)
+        val childBottom = descendantContentBottomPx(group)
+
+        return maxOf(
+            content.minimumHeight,
+            childBottom + group.paddingBottom,
+            1,
+        )
     }
 
     private fun sheetDismissTranslation(content: View): Float {
@@ -6809,17 +8499,21 @@ internal class MobileUiHost(
         }
     }
 
-    private fun setAnchoredOverlayOpen(requested: Boolean, emit: Boolean) {
+    private fun setAnchoredOverlayOpen(
+        requested: Boolean,
+        emit: Boolean,
+        animate: Boolean = true,
+    ) {
         if (!behavior.isAnchoredOverlay() || openControlled || open == requested) {
             return
         }
         open = requested
         requestLayout()
         if (requested) {
-            applyAnchoredOverlayState(animate = true)
+            applyAnchoredOverlayState(animate = animate)
             captureAndMoveFocus()
         } else {
-            applyAnchoredOverlayState(animate = true)
+            applyAnchoredOverlayState(animate = animate)
             restoreFocus()
         }
         if (emit) {
@@ -6888,10 +8582,10 @@ internal class MobileUiHost(
         }
     }
 
-    private fun requestOverlayDismiss() {
+    private fun requestOverlayDismiss(animate: Boolean = true) {
         if (!behavior.isOverlay() || !dismissible || !open) return
         if (behavior.isAnchoredOverlay() && !openControlled) {
-            setAnchoredOverlayOpen(false, emit = false)
+            setAnchoredOverlayOpen(false, emit = false, animate = animate)
         }
         emitDismiss()
     }
@@ -6973,6 +8667,25 @@ internal class MobileUiHost(
             available.top,
             max(available.top, available.bottom - content.height),
         )
+        val portal = anchoredTouchCatcher
+        if (portal != null && content.parent === portal) {
+            val portalLocation = IntArray(2)
+            portal.getLocationOnScreen(portalLocation)
+            val params = content.layoutParams as? FrameLayout.LayoutParams
+                ?: FrameLayout.LayoutParams(content.width, content.height)
+            params.leftMargin = (targetX - portalLocation[0]).roundToInt()
+            params.topMargin = (targetY - portalLocation[1]).roundToInt()
+            content.translationX = 0f
+            content.translationY = 0f
+            content.layoutParams = params
+            positionAnchoredArrow(
+                content,
+                triggerBounds,
+                targetX,
+                targetY,
+            )
+            return
+        }
         content.translationX = targetX - hostLocation[0] - content.left
         content.translationY = targetY - hostLocation[1] - content.top
         positionAnchoredArrow(
@@ -7430,6 +9143,11 @@ internal class MobileUiHost(
         const val CALENDAR_TARGET_NEXT = -3
         const val CALENDAR_TARGET_MONTH = -4
         const val CALENDAR_TARGET_YEAR = -5
+        const val CALENDAR_VIRTUAL_PREVIOUS = 1_000
+        const val CALENDAR_VIRTUAL_MONTH = 1_001
+        const val CALENDAR_VIRTUAL_YEAR = 1_002
+        const val CALENDAR_VIRTUAL_NEXT = 1_003
+        const val CALENDAR_VIRTUAL_WEEK_BASE = 1_100
         const val MONTHS_PER_YEAR = 12
         const val CALENDAR_YEAR_RANGE = 100
         const val DISABLED_ALPHA = 76
@@ -7447,6 +9165,8 @@ internal class MobileUiHost(
         const val SELECTION_ICON_TAG = "pam:selection-icon"
         const val SELECTION_FORCE_ICON_TAG = "pam:selection-icon-force"
         const val SWITCH_TRACK_TAG = "pam:switch-track"
+        const val TIMELINE_AXIS_INSET_DP = 14f
+        const val TIMELINE_MARKER_TOP_DP = 24f
         const val SLIDER_TRACK_TAG = "pam:slider-track"
         const val SLIDER_FILLED_TRACK_TAG = "pam:slider-filled-track"
         const val SLIDER_THUMB_TAG = "pam:slider-thumb"
@@ -7492,6 +9212,9 @@ internal class MobileUiHost(
         const val SWITCH_TRACK_WIDTH_DP = 52f
         const val SWITCH_TRACK_HEIGHT_DP = 32f
         const val SWITCH_THUMB_INSET_DP = 2f
+        const val SWITCH_UNSELECTED_HANDLE_SIZE_DP = 16f
+        const val SWITCH_SELECTED_HANDLE_SIZE_DP = 24f
+        const val SWITCH_PRESSED_HANDLE_SIZE_DP = 28f
         const val SWITCH_ANIMATION_DURATION_MILLIS = 160L
         const val TOAST_ACTION_MUTED = 1
         const val TOAST_ACTION_WARNING = 3

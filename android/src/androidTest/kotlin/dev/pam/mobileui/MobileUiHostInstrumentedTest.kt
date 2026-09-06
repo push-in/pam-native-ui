@@ -2,17 +2,24 @@ package dev.pam.mobileui
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.os.Build
+import android.os.Debug
 import android.os.Looper
 import android.text.Spanned
 import android.text.method.PasswordTransformationMethod
 import android.text.style.ClickableSpan
 import android.text.style.StyleSpan
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.Gravity
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
+import android.view.inputmethod.BaseInputConnection
 import android.widget.FrameLayout
 import android.widget.EditText
 import android.widget.TextView
@@ -28,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,6 +43,534 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
+    @Test
+    fun bottomSheetDetentsGrowOnlyWhenTheirContentWouldBeClipped() {
+        assertEquals(
+            1_632 to 816,
+            adaptiveBottomSheetHeightsPx(
+                viewportHeight = 2_400,
+                maximumSnapPercent = 68f,
+                selectedSnapPercent = 34f,
+                requiredContentHeight = 600,
+            ),
+        )
+        assertEquals(
+            600 to 600,
+            adaptiveBottomSheetHeightsPx(
+                viewportHeight = 1_080,
+                maximumSnapPercent = 34f,
+                selectedSnapPercent = 34f,
+                requiredContentHeight = 600,
+            ),
+        )
+        assertEquals(
+            972 to 972,
+            adaptiveBottomSheetHeightsPx(
+                viewportHeight = 1_080,
+                maximumSnapPercent = 34f,
+                selectedSnapPercent = 34f,
+                requiredContentHeight = 1_400,
+            ),
+        )
+        assertEquals(
+            1_061 to 1_061,
+            adaptiveBottomSheetHeightsPx(
+                viewportHeight = 2_400,
+                maximumSnapPercent = 34f,
+                selectedSnapPercent = 34f,
+                requiredContentHeight = 600,
+                fontScale = 1.3f,
+            ),
+        )
+        assertEquals(
+            748 to 748,
+            adaptiveBottomSheetHeightsPx(
+                viewportHeight = 1_080,
+                maximumSnapPercent = 34f,
+                selectedSnapPercent = 34f,
+                requiredContentHeight = 528,
+                density = 2.75f,
+            ),
+        )
+        assertEquals(
+            900 to 250,
+            adaptiveBottomSheetHeightsPx(
+                viewportHeight = 1_000,
+                maximumSnapPercent = 90f,
+                selectedSnapPercent = 25f,
+                requiredContentHeight = 48,
+                density = 2.75f,
+                snapPointCount = 3,
+            ),
+        )
+    }
+
+    @Test
+    fun adaptiveSingleDetentNeverHidesItsRequiredContentBelowTheViewport() {
+        assertEquals(
+            0f,
+            bottomSheetTranslationPx(
+                maximumHeight = 616,
+                selectedHeight = 528,
+                snapPointCount = 1,
+            ),
+            0f,
+        )
+        assertEquals(
+            88f,
+            bottomSheetTranslationPx(
+                maximumHeight = 616,
+                selectedHeight = 528,
+                snapPointCount = 2,
+            ),
+            0f,
+        )
+    }
+
+    @Test
+    fun bottomSheetHeightIncludesOverflowInsideNestedNativeContainers() {
+        onMain {
+            val root = FrameLayout(ApplicationProvider.getApplicationContext())
+            val nested = FrameLayout(root.context)
+            val action = View(root.context)
+            root.addView(nested)
+            nested.addView(action)
+            root.layout(0, 0, 300, 528)
+            nested.layout(0, 0, 300, 528)
+            action.layout(0, 484, 300, 616)
+
+            assertEquals(616, descendantContentBottomPx(root))
+        }
+    }
+
+    @Test
+    fun selectionSheetItemClipsFocusAndRippleToMaterialCorners() {
+        onMain {
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(24),
+                    "component" to WireValue.Integer(91),
+                ),
+            )
+            host.layout(0, 0, dp(host, 328f), dp(host, 56f))
+
+            assertTrue(host.clipToOutline)
+            assertTrue(host.outlineProvider !== ViewOutlineProvider.BACKGROUND)
+
+            host.release()
+        }
+    }
+
+    @Test
+    fun zeroWidthInputOutlineLeavesSlotOwnedFocusVisualsUntouched() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        onMain {
+            val host = MobileUiHost(activity) { _, _ -> }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(27),
+                    "focusColor" to WireValue.Integer(0xff15803d),
+                    "outlineWidth" to WireValue.Decimal(0.0),
+                ),
+            )
+            val input = EditText(activity).apply { background = null }
+            host.addView(input)
+            activity.setContentView(host)
+            host.layout(0, 0, 600, 120)
+            input.layout(0, 0, 600, 120)
+            assertTrue(input.requestFocus())
+
+            val rendered = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888)
+            host.draw(Canvas(rendered))
+            assertEquals(Color.TRANSPARENT, rendered.getPixel(300, 119))
+
+            host.release()
+            activity.finish()
+        }
+        instrumentation.waitForIdleSync()
+    }
+
+    @Test
+    fun inputFocusIndicatorStaysOnFieldSurfaceAboveHelperText() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        onMain {
+            val focusColor = Color.rgb(21, 128, 61)
+            val host = MobileUiHost(activity) { _, _ -> }
+            val properties = mapOf(
+                "behavior" to WireValue.Integer(27),
+                "focusColor" to WireValue.Integer(focusColor.toLong()),
+                "outlineWidth" to WireValue.Decimal(2.0),
+                "indicatorOnly" to WireValue.Flag(true),
+            )
+            host.update(properties)
+
+            val surface = FrameLayout(activity)
+            val input = EditText(activity).apply { background = null }
+            val helper = TextView(activity).apply { text = "Supporting text" }
+            surface.addView(input)
+            host.addView(surface)
+            host.addView(helper)
+            activity.setContentView(host)
+
+            host.layout(0, 0, 600, 180)
+            surface.layout(20, 0, 580, 120)
+            input.layout(16, 32, 544, 104)
+            helper.layout(36, 128, 564, 160)
+            assertTrue(input.requestFocus())
+            // Reconcile the aggregate input state after focus just as a native
+            // property frame does in production.
+            host.update(properties)
+
+            val rendered = Bitmap.createBitmap(600, 180, Bitmap.Config.ARGB_8888)
+            host.draw(Canvas(rendered))
+            assertEquals(focusColor, rendered.getPixel(300, 118))
+            assertEquals(Color.TRANSPARENT, rendered.getPixel(300, 179))
+
+            host.release()
+            activity.finish()
+        }
+        instrumentation.waitForIdleSync()
+    }
+
+    @Test
+    fun searchableSelectionSheetUsesBoundedContentHeight() {
+        assertEquals(
+            960,
+            selectionSheetContentHeightPx(
+                viewportHeight = 2_400,
+                density = 3f,
+                visibleItemCount = 4,
+                searchable = true,
+                supplementaryRow = false,
+            ),
+        )
+        assertEquals(
+            1_020,
+            selectionSheetContentHeightPx(
+                viewportHeight = 2_400,
+                density = 3f,
+                visibleItemCount = 4,
+                searchable = true,
+                supplementaryRow = false,
+                dragHandle = true,
+            ),
+        )
+        assertEquals(
+            456,
+            selectionSheetContentHeightPx(
+                viewportHeight = 2_400,
+                density = 3f,
+                visibleItemCount = 1,
+                searchable = true,
+                supplementaryRow = false,
+            ),
+        )
+        assertEquals(
+            456,
+            selectionSheetContentHeightPx(
+                viewportHeight = 1_080,
+                density = 3f,
+                visibleItemCount = 0,
+                searchable = true,
+                supplementaryRow = false,
+            ),
+        )
+        assertEquals(
+            2_160,
+            selectionSheetContentHeightPx(
+                viewportHeight = 2_400,
+                density = 3f,
+                visibleItemCount = 40,
+                searchable = true,
+                supplementaryRow = false,
+            ),
+        )
+    }
+
+    @Test
+    fun emptySearchableSheetSeparatesSearchAndNoDataMessage() {
+        onMain {
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.SELECT_PORTAL.toLong(),
+                    ),
+                    "open" to WireValue.Flag(true),
+                    "searchable" to WireValue.Flag(true),
+                    "allowCustomValue" to WireValue.Flag(true),
+                    "enableDynamicSizing" to WireValue.Flag(true),
+                    "noDataText" to WireValue.Text("Nothing matches"),
+                    "customActionTextColor" to WireValue.Integer(0xff166534),
+                    "customActionBackgroundColor" to WireValue.Integer(0xffdcfce7),
+                    "customActionPressedBackgroundColor" to WireValue.Integer(0xffbbf7d0),
+                ),
+            )
+            val backdrop = View(host.context).apply {
+                tag = "pam:overlay-backdrop"
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:overlay-content"
+            }
+            val handle = View(host.context).apply {
+                tag = "pam:sheet-drag-indicator"
+            }
+            val handleWrapper = FrameLayout(host.context).apply {
+                tag = "pam:sheet-drag-indicator-wrapper"
+                addView(handle)
+            }
+            content.addView(handleWrapper)
+            host.addView(backdrop)
+            host.addView(content)
+
+            val width = dp(host, 360f)
+            val height = dp(host, 800f)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+
+            fun childSummary(): String = (0 until content.childCount)
+                .joinToString { index ->
+                    val child = content.getChildAt(index)
+                    "${child.javaClass.simpleName}:${(child as? TextView)?.text}"
+                }
+            val searches = (0 until content.childCount)
+                .map(content::getChildAt)
+                .filterIsInstance<EditText>()
+            assertEquals(childSummary(), 1, searches.size)
+            val search = searches.single()
+            val messages = (0 until content.childCount)
+                .map(content::getChildAt)
+                .filterIsInstance<TextView>()
+                .filter { it.text?.toString() == "Nothing matches" }
+            assertEquals(childSummary(), 1, messages.size)
+            val message = messages.single()
+
+            assertEquals(View.VISIBLE, message.visibility)
+            assertEquals(dp(host, 48f), search.height)
+            assertEquals(dp(host, 56f), message.height)
+            assertTrue(message.top >= search.bottom + dp(host, 8f))
+            assertTrue(kotlin.math.abs(search.top - dp(host, 32f)) <= 1)
+            assertEquals(dp(host, 32f), handle.width)
+            assertEquals(dp(host, 4f), handle.height)
+            assertEquals((width - handle.width) / 2, handle.left)
+            assertEquals(dp(host, 16f), search.left)
+            assertEquals(width - dp(host, 16f), search.right)
+            assertEquals(search.left, message.left)
+            assertEquals(search.right, message.right)
+
+            assertTrue(search.requestFocus())
+            search.setText("pro")
+            BaseInputConnection.setComposingSpans(search.text)
+            assertTrue(BaseInputConnection.getComposingSpanStart(search.text) >= 0)
+            search.clearFocus()
+            assertEquals(-1, BaseInputConnection.getComposingSpanStart(search.text))
+
+            search.setText("custom")
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+            val customActions = (0 until content.childCount)
+                .map(content::getChildAt)
+                .filterIsInstance<TextView>()
+                .filter { it.text?.toString() == "Use custom" }
+            assertEquals(childSummary(), 1, customActions.size)
+            val customAction = customActions.single()
+            assertEquals(View.VISIBLE, customAction.visibility)
+            assertEquals(dp(host, 56f), customAction.height)
+            assertTrue(customAction.top >= search.bottom + dp(host, 8f))
+            assertEquals(0xff166534.toInt(), customAction.currentTextColor)
+            assertTrue(
+                customAction.background is android.graphics.drawable.StateListDrawable,
+            )
+
+            // Local selection portals reuse their Dialog and content tree. A
+            // dismissed window must not leak the previous query into the next
+            // opening, while configuration changes keep the active query.
+            host.handleSheetWindowVisibilityChanged(View.VISIBLE)
+            search.setText("stale query")
+            host.handleSheetWindowVisibilityChanged(View.INVISIBLE)
+            assertEquals("", search.text?.toString())
+
+            host.release()
+        }
+    }
+
+    @Test
+    fun emptyNonSearchableSelectionSheetOwnsOneMaterialRowBelowItsHandle() {
+        onMain {
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.SELECT_PORTAL.toLong(),
+                    ),
+                    "open" to WireValue.Flag(true),
+                    "searchable" to WireValue.Flag(false),
+                    "enableDynamicSizing" to WireValue.Flag(true),
+                    "noDataText" to WireValue.Text("No choices"),
+                ),
+            )
+            val backdrop = View(host.context).apply {
+                tag = "pam:overlay-backdrop"
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:overlay-content"
+            }
+            val indicator = View(host.context).apply {
+                tag = "pam:sheet-drag-indicator"
+            }
+            content.addView(FrameLayout(host.context).apply {
+                tag = "pam:sheet-drag-indicator-wrapper"
+                addView(indicator)
+            })
+            host.addView(backdrop)
+            host.addView(content)
+
+            val width = dp(host, 360f)
+            val height = dp(host, 800f)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+
+            assertTrue(
+                (0 until content.childCount)
+                    .map(content::getChildAt)
+                    .none { it is EditText },
+            )
+            val message = (0 until content.childCount)
+                .map(content::getChildAt)
+                .filterIsInstance<TextView>()
+                .single { it.text?.toString() == "No choices" }
+            assertEquals(View.VISIBLE, message.visibility)
+            assertEquals(dp(host, 56f), message.height)
+            assertTrue(kotlin.math.abs(message.top - dp(host, 32f)) <= 1)
+            assertEquals(dp(host, 16f), message.left)
+            assertEquals(width - dp(host, 16f), message.right)
+
+            host.release()
+        }
+    }
+
+    @Test
+    fun genericBottomSheetNeverInjectsASelectionEmptyState() {
+        onMain {
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.BOTTOM_SHEET_PORTAL.toLong(),
+                    ),
+                    "open" to WireValue.Flag(true),
+                    "searchable" to WireValue.Flag(false),
+                    "snapPoints" to WireValue.Text("28"),
+                    "enableDynamicSizing" to WireValue.Flag(false),
+                ),
+            )
+            val backdrop = View(host.context).apply {
+                tag = "pam:overlay-backdrop"
+            }
+            val content = FrameLayout(host.context).apply {
+                tag = "pam:overlay-content"
+            }
+            val title = TextView(host.context).apply {
+                text = "Choose an action"
+            }
+            content.addView(FrameLayout(host.context).apply {
+                tag = "pam:sheet-drag-indicator-wrapper"
+                addView(View(host.context).apply {
+                    tag = "pam:sheet-drag-indicator"
+                })
+            })
+            content.addView(title)
+            host.addView(backdrop)
+            host.addView(content)
+
+            val width = dp(host, 360f)
+            val height = dp(host, 800f)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+
+            val textChildren = (0 until content.childCount)
+                .map(content::getChildAt)
+                .filterIsInstance<TextView>()
+            assertEquals(listOf("Choose an action"), textChildren.map { it.text.toString() })
+            assertTrue(textChildren.single() === title)
+
+            host.release()
+        }
+    }
+
+    @Test
+    fun closedBottomSheetDoesNotStealFocusWhenItsHostBecomesVisible() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = launchTestHostActivity()
+        lateinit var outside: EditText
+        lateinit var host: MobileUiHost
+        lateinit var inside: TextView
+        onMain {
+            val root = FrameLayout(activity)
+            outside = EditText(activity).apply {
+                contentDescription = "Outside field"
+            }
+            host = MobileUiHost(activity) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(3),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.BOTTOM_SHEET_PORTAL.toLong(),
+                    ),
+                    "open" to WireValue.Flag(false),
+                ),
+            )
+            inside = TextView(activity).apply {
+                text = "Closed sheet action"
+                isFocusable = true
+                isFocusableInTouchMode = true
+            }
+            host.addView(FrameLayout(activity).apply {
+                tag = "pam:overlay-content"
+                addView(inside)
+            })
+            root.addView(outside)
+            root.addView(host)
+            activity.setContentView(root)
+            assertTrue(outside.requestFocus())
+            host.visibility = View.INVISIBLE
+            host.visibility = View.VISIBLE
+        }
+        instrumentation.waitForIdleSync()
+        onMain {
+            assertTrue(outside.hasFocus())
+            assertTrue(!inside.hasFocus())
+            host.release()
+            activity.finish()
+        }
+    }
+
     @Test
     fun canvasTypographyFollowsTheSystemFontScale() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
@@ -76,6 +612,52 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun abstractSelectionItemPaintsSelectedContainerAndForeground() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val host = MobileUiHost(context) { _, _ -> Unit }
+            val content = FrameLayout(context).apply {
+                setBackgroundColor(Color.RED)
+            }
+            val label = TextView(context).apply {
+                text = "Design"
+                setTextColor(Color.BLACK)
+            }
+            content.addView(label)
+            host.addView(
+                content,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                ),
+            )
+            val base = mapOf(
+                "behavior" to WireValue.Integer(9),
+                "abstractSelectionItem" to WireValue.Flag(true),
+                "foregroundColor" to WireValue.Integer(Color.BLACK.toLong()),
+                "selectedForegroundColor" to WireValue.Integer(Color.WHITE.toLong()),
+                "selectedContainerColor" to WireValue.Integer(Color.BLUE.toLong()),
+            )
+            host.update(base + ("checked" to WireValue.Flag(false)))
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(240, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(64, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, 240, 64)
+            assertEquals(Color.BLACK, label.currentTextColor)
+
+            host.update(base + ("checked" to WireValue.Flag(true)))
+            val rendered = Bitmap.createBitmap(240, 64, Bitmap.Config.ARGB_8888)
+            host.draw(Canvas(rendered))
+            assertEquals(Color.WHITE, label.currentTextColor)
+            // The Material medium shape deliberately leaves the extreme
+            // corner transparent; sample inside the selected container.
+            assertEquals(Color.BLUE, rendered.getPixel(120, 32))
+            host.release()
+        }
+    }
+
+    @Test
     fun listItemMeasurementFollowsMaterialLinesAndDensity() {
         onMain {
             val context = ApplicationProvider.getApplicationContext<android.content.Context>()
@@ -92,7 +674,7 @@ class MobileUiHostInstrumentedTest {
                 View.MeasureSpec.makeMeasureSpec(dp(host, 320f), View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(dp(host, 200f), View.MeasureSpec.AT_MOST),
             )
-            assertEquals(dp(host, 40f), host.measuredHeight)
+            assertEquals(dp(host, 48f), host.measuredHeight)
 
             host.addView(TextView(context).apply { text = "Subtitle" })
             host.update(
@@ -106,7 +688,7 @@ class MobileUiHostInstrumentedTest {
                 View.MeasureSpec.makeMeasureSpec(dp(host, 320f), View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(dp(host, 200f), View.MeasureSpec.AT_MOST),
             )
-            assertEquals(dp(host, 60f), host.measuredHeight)
+            assertEquals(dp(host, 68f), host.measuredHeight)
             host.release()
         }
     }
@@ -336,6 +918,447 @@ class MobileUiHostInstrumentedTest {
             assertTrue(host.minimumHeight >= dp(host, 48f))
             host.release()
             info.recycle()
+        }
+    }
+
+    @Test
+    fun sliderDrawsExpressiveTrackPillHandleAndMaterialGapInOneNativePass() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val host = MobileUiHost(context) { _, _ -> }
+            val primary = 0xff166534.toInt()
+            val inactive = 0xffdfe5e0.toInt()
+            val properties = mapOf(
+                "behavior" to WireValue.Integer(5),
+                "value" to WireValue.Decimal(50.0),
+                "min" to WireValue.Decimal(0.0),
+                "max" to WireValue.Decimal(100.0),
+                "trackThickness" to WireValue.Decimal(16.0),
+                "thumbWidth" to WireValue.Decimal(4.0),
+                "thumbHeight" to WireValue.Decimal(44.0),
+                "thumbTrackGap" to WireValue.Decimal(6.0),
+                "trackColor" to WireValue.Integer(inactive.toLong()),
+                "fillColor" to WireValue.Integer(primary.toLong()),
+                "thumbColor" to WireValue.Integer(primary.toLong()),
+            )
+            host.update(properties)
+
+            val width = dp(host, 320f)
+            val height = dp(host, 96f)
+            val trackHeight = dp(host, 16f)
+            val thumbWidth = dp(host, 4f)
+            val thumbHeight = dp(host, 44f)
+            val track = FrameLayout(context).apply {
+                tag = "pam:slider-track"
+                layoutParams = FrameLayout.LayoutParams(width, trackHeight).apply {
+                    topMargin = (height - trackHeight) / 2
+                }
+            }
+            track.addView(View(context).apply {
+                tag = "pam:slider-filled-track"
+                layoutParams = FrameLayout.LayoutParams(width, trackHeight)
+            })
+            val thumb = View(context).apply {
+                tag = "pam:slider-thumb"
+                layoutParams = FrameLayout.LayoutParams(thumbWidth, thumbHeight).apply {
+                    topMargin = (height - thumbHeight) / 2
+                }
+            }
+            host.addView(track)
+            host.addView(thumb)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+            host.update(properties)
+
+            val rendered = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            host.draw(Canvas(rendered))
+            val centerX = width / 2
+            val centerY = height / 2
+
+            assertEquals(View.INVISIBLE, track.visibility)
+            assertEquals(View.INVISIBLE, thumb.visibility)
+            assertEquals(primary, rendered.getPixel(width / 4, centerY))
+            assertEquals(inactive, rendered.getPixel(width * 3 / 4, centerY))
+            assertEquals(primary, rendered.getPixel(centerX, centerY))
+            assertEquals(primary, rendered.getPixel(centerX, centerY - dp(host, 18f)))
+            assertEquals(primary, rendered.getPixel(centerX, centerY + dp(host, 18f)))
+            val gapPixel = rendered.getPixel(centerX + dp(host, 5f), centerY)
+            assertEquals(Color.TRANSPARENT, gapPixel)
+
+            host.update(properties + mapOf(
+                "value" to WireValue.Decimal(20.0),
+                "step" to WireValue.Decimal(10.0),
+            ))
+            host.update(properties + mapOf(
+                "value" to WireValue.Decimal(25.0),
+                "reversed" to WireValue.Flag(true),
+            ))
+            rendered.eraseColor(Color.TRANSPARENT)
+            host.draw(Canvas(rendered))
+            val reversedHandleX = (width * 0.75f).roundToInt()
+            assertEquals(primary, rendered.getPixel(reversedHandleX, centerY))
+            assertEquals(
+                Color.TRANSPARENT,
+                rendered.getPixel(reversedHandleX - dp(host, 5f), centerY),
+            )
+
+            host.release()
+        }
+    }
+
+    @Test
+    fun rangeSliderKeepsBothEndpointsAndEmitsTypedPairPayloads() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val events = CopyOnWriteArrayList<NativeViewEventKind>()
+            val payloads = CopyOnWriteArrayList<String>()
+            val host = MobileUiHost(context) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE || kind == NativeViewEventKind.NATIVE) {
+                    events += kind
+                    payloads += payload.decodeToString()
+                }
+            }
+            val width = dp(host, 320f)
+            val height = dp(host, 48f)
+            val trackHeight = dp(host, 16f)
+            val properties = mapOf(
+                "behavior" to WireValue.Integer(5),
+                "range" to WireValue.Flag(true),
+                "lowerValue" to WireValue.Decimal(20.0),
+                "upperValue" to WireValue.Decimal(80.0),
+                "value" to WireValue.Decimal(80.0),
+                "min" to WireValue.Decimal(0.0),
+                "max" to WireValue.Decimal(100.0),
+                "trackThickness" to WireValue.Decimal(16.0),
+                "thumbWidth" to WireValue.Decimal(4.0),
+                "thumbHeight" to WireValue.Decimal(44.0),
+                "thumbTrackGap" to WireValue.Decimal(6.0),
+            )
+            host.update(properties)
+            val track = FrameLayout(context).apply {
+                tag = "pam:slider-track"
+                layoutParams = FrameLayout.LayoutParams(width, trackHeight).apply {
+                    topMargin = (height - trackHeight) / 2
+                }
+            }
+            track.addView(View(context).apply {
+                tag = "pam:slider-filled-track"
+                layoutParams = FrameLayout.LayoutParams(width, trackHeight)
+            })
+            host.addView(track)
+            host.addView(View(context).apply {
+                tag = "pam:slider-thumb"
+                layoutParams = FrameLayout.LayoutParams(dp(host, 4f), dp(host, 44f)).apply {
+                    topMargin = (height - dp(host, 44f)) / 2
+                }
+            })
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+            host.update(properties)
+
+            val parentInterceptRequests = CopyOnWriteArrayList<Boolean>()
+            val trackingParent = object : FrameLayout(context) {
+                override fun requestDisallowInterceptTouchEvent(
+                    disallowIntercept: Boolean,
+                ) {
+                    parentInterceptRequests += disallowIntercept
+                    super.requestDisallowInterceptTouchEvent(disallowIntercept)
+                }
+            }
+            trackingParent.addView(host)
+
+            host.update(properties + mapOf(
+                "lowerValue" to WireValue.Decimal(80.0),
+                "upperValue" to WireValue.Decimal(20.0),
+                "value" to WireValue.Decimal(20.0),
+            ))
+            assertStateDescription(host, "20 to 80")
+            host.update(properties)
+
+            val outsideTrackY = -1f
+            host.dispatchTouchEvent(
+                motion(MotionEvent.ACTION_DOWN, width * 0.20f, outsideTrackY),
+            )
+            host.dispatchTouchEvent(
+                motion(MotionEvent.ACTION_MOVE, width * 0.40f, outsideTrackY),
+            )
+            host.dispatchTouchEvent(
+                motion(MotionEvent.ACTION_UP, width * 0.40f, outsideTrackY),
+            )
+            assertTrue(events.isEmpty())
+            assertStateDescription(host, "20 to 80")
+            parentInterceptRequests.clear()
+
+            val y = height / 2f
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, width * 0.20f, y))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, width * 0.35f, y))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, width * 0.35f, y))
+
+            assertTrue(parentInterceptRequests.first())
+            assertTrue(!parentInterceptRequests.last())
+            assertEquals(
+                listOf(NativeViewEventKind.CHANGE, NativeViewEventKind.NATIVE),
+                events,
+            )
+            assertEquals(listOf("[35,80]", "[35,80]"), payloads)
+            assertStateDescription(host, "35 to 80")
+
+            val info = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(info)
+            val lowerIncrease = info.actionList.single {
+                it.label?.toString() == "Increase lower value"
+            }
+            val upperDecrease = info.actionList.single {
+                it.label?.toString() == "Decrease upper value"
+            }
+            assertTrue(host.performAccessibilityAction(lowerIncrease.id, null))
+            assertEquals("[36,80]", payloads.last())
+            assertTrue(host.performAccessibilityAction(upperDecrease.id, null))
+            assertEquals("[36,79]", payloads.last())
+            assertStateDescription(host, "36 to 79")
+
+            host.update(properties + mapOf(
+                "lowerValue" to WireValue.Decimal(35.0),
+                "upperValue" to WireValue.Decimal(65.0),
+                "value" to WireValue.Decimal(65.0),
+            ))
+            assertStateDescription(host, "35 to 65")
+            events.clear()
+            payloads.clear()
+            assertTrue(
+                host.dispatchKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT),
+                ),
+            )
+            assertEquals(
+                listOf(NativeViewEventKind.CHANGE, NativeViewEventKind.NATIVE),
+                events,
+            )
+            assertEquals(listOf("[35,66]", "[35,66]"), payloads)
+
+            events.clear()
+            payloads.clear()
+            host.update(properties + mapOf(
+                "lowerValue" to WireValue.Decimal(50.0),
+                "upperValue" to WireValue.Decimal(50.0),
+                "value" to WireValue.Decimal(50.0),
+            ))
+            assertStateDescription(host, "50 to 50")
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, width * 0.50f, y))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, width * 0.40f, y))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, width * 0.40f, y))
+            assertEquals(
+                listOf(NativeViewEventKind.CHANGE, NativeViewEventKind.NATIVE),
+                events,
+            )
+            assertEquals(listOf("[40,50]", "[40,50]"), payloads)
+            assertStateDescription(host, "40 to 50")
+
+            events.clear()
+            payloads.clear()
+            host.update(properties + ("readOnly" to WireValue.Flag(true)))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, width * 0.20f, y))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, width * 0.45f, y))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, width * 0.45f, y))
+            assertTrue(events.isEmpty())
+            assertStateDescription(host, "20 to 80")
+            val readOnlyInfo = AccessibilityNodeInfo.obtain()
+            host.onInitializeAccessibilityNodeInfo(readOnlyInfo)
+            assertTrue(
+                readOnlyInfo.actionList.none {
+                    it.id == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                        || it.label?.toString() == "Increase lower value"
+                        || it.label?.toString() == "Decrease upper value"
+                },
+            )
+            readOnlyInfo.recycle()
+
+            host.update(properties + mapOf(
+                "showTicks" to WireValue.Flag(true),
+                "alwaysShowTicks" to WireValue.Flag(true),
+                "tickLabels" to WireValue.Text("[\"0\",\"25\",\"50\",\"75\",\"100\"]"),
+                "tickLabelColor" to WireValue.Integer(0xff334155),
+            ))
+            val labelledHeight = dp(host, 72f)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(labelledHeight, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, labelledHeight)
+            val labelled = Bitmap.createBitmap(
+                width,
+                labelledHeight,
+                Bitmap.Config.ARGB_8888,
+            )
+            host.draw(Canvas(labelled))
+            var tickLabelPixels = 0
+            for (x in 0 until width) {
+                for (labelY in dp(host, 50f) until labelledHeight) {
+                    if (Color.alpha(labelled.getPixel(x, labelY)) > 0) {
+                        tickLabelPixels += 1
+                    }
+                }
+            }
+            assertTrue(tickLabelPixels > 40)
+
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(5),
+                    "range" to WireValue.Flag(true),
+                    "min" to WireValue.Decimal(0.0),
+                    "max" to WireValue.Decimal(100.0),
+                ),
+            )
+            assertStateDescription(host, "0 to 100")
+            info.recycle()
+            host.release()
+        }
+    }
+
+    @Test
+    fun rangeSliderClampsStaleTrackGeometryInsideAdaptiveHost() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val host = MobileUiHost(context) { _, _ -> Unit }
+            val width = dp(host, 320f)
+            val height = dp(host, 48f)
+            val trackHeight = dp(host, 16f)
+            val oversizedWidth = dp(host, 520f)
+            val properties = mapOf(
+                "behavior" to WireValue.Integer(5),
+                "range" to WireValue.Flag(true),
+                "lowerValue" to WireValue.Decimal(20.0),
+                "upperValue" to WireValue.Decimal(80.0),
+                "value" to WireValue.Decimal(80.0),
+                "min" to WireValue.Decimal(0.0),
+                "max" to WireValue.Decimal(100.0),
+                "trackThickness" to WireValue.Decimal(16.0),
+                "thumbWidth" to WireValue.Decimal(4.0),
+                "thumbHeight" to WireValue.Decimal(44.0),
+                "thumbTrackGap" to WireValue.Decimal(6.0),
+                "primaryColor" to WireValue.Integer(0xff146c2e),
+                "trackColor" to WireValue.Integer(0xffdce5dd),
+                "thumbColor" to WireValue.Integer(0xff146c2e),
+            )
+            host.update(properties)
+            val track = FrameLayout(context).apply {
+                tag = "pam:slider-track"
+                layoutParams = FrameLayout.LayoutParams(oversizedWidth, trackHeight).apply {
+                    leftMargin = -dp(host, 100f)
+                    topMargin = (height - trackHeight) / 2
+                }
+                addView(View(context).apply {
+                    tag = "pam:slider-filled-track"
+                    layoutParams = FrameLayout.LayoutParams(oversizedWidth, trackHeight)
+                })
+            }
+            host.addView(track)
+            host.addView(View(context).apply {
+                tag = "pam:slider-thumb"
+                layoutParams = FrameLayout.LayoutParams(dp(host, 4f), dp(host, 44f)).apply {
+                    topMargin = (height - dp(host, 44f)) / 2
+                }
+            })
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+            track.layout(
+                -dp(host, 100f),
+                (height - trackHeight) / 2,
+                width + dp(host, 100f),
+                (height + trackHeight) / 2,
+            )
+            host.update(properties)
+
+            val rendered = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            host.draw(Canvas(rendered))
+            val primary = 0xff146c2e.toInt()
+            val expectedInset = dp(host, 8f)
+            val usableWidth = width - expectedInset * 2
+            val lowerX = expectedInset + (usableWidth * 0.20f).roundToInt()
+            val upperX = expectedInset + (usableWidth * 0.80f).roundToInt()
+
+            assertEquals(primary, rendered.getPixel(lowerX, dp(host, 4f)))
+            assertEquals(primary, rendered.getPixel(upperX, dp(host, 4f)))
+            host.release()
+        }
+    }
+
+    @Test
+    fun rangeSliderHundredTickDrawPathDoesNotAllocatePerFrame() {
+        onMain {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val host = MobileUiHost(context) { _, _ -> Unit }
+            val width = dp(host, 320f)
+            val height = dp(host, 80f)
+            val trackHeight = dp(host, 16f)
+            val properties = mapOf(
+                "behavior" to WireValue.Integer(5),
+                "range" to WireValue.Flag(true),
+                "lowerValue" to WireValue.Decimal(20.0),
+                "upperValue" to WireValue.Decimal(80.0),
+                "value" to WireValue.Decimal(80.0),
+                "min" to WireValue.Decimal(0.0),
+                "max" to WireValue.Decimal(100.0),
+                "step" to WireValue.Decimal(1.0),
+                "showTicks" to WireValue.Flag(true),
+                "alwaysShowTicks" to WireValue.Flag(true),
+                "trackThickness" to WireValue.Decimal(16.0),
+                "thumbWidth" to WireValue.Decimal(4.0),
+                "thumbHeight" to WireValue.Decimal(44.0),
+                "thumbTrackGap" to WireValue.Decimal(6.0),
+            )
+            host.update(properties)
+            val track = FrameLayout(context).apply {
+                tag = "pam:slider-track"
+                layoutParams = FrameLayout.LayoutParams(width, trackHeight).apply {
+                    topMargin = (height - trackHeight) / 2
+                }
+            }
+            track.addView(View(context).apply {
+                tag = "pam:slider-filled-track"
+                layoutParams = FrameLayout.LayoutParams(width, trackHeight)
+            })
+            host.addView(track)
+            host.addView(View(context).apply {
+                tag = "pam:slider-thumb"
+                layoutParams = FrameLayout.LayoutParams(dp(host, 4f), dp(host, 44f)).apply {
+                    topMargin = (height - dp(host, 44f)) / 2
+                }
+            })
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+            host.update(properties)
+
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            repeat(12) { host.draw(canvas) }
+            Debug.startAllocCounting()
+            val allocationsBefore = Debug.getThreadAllocCount()
+            repeat(120) { host.draw(canvas) }
+            val allocations = Debug.getThreadAllocCount() - allocationsBefore
+            Debug.stopAllocCounting()
+            Log.i(
+                "PamMobileUiBench",
+                "rangeSliderDrawAllocations=$allocations frames=120 ticks=100",
+            )
+
+            assertTrue(
+                "Range Slider allocated $allocations objects while drawing 120 warmed frames",
+                allocations < 120,
+            )
+            host.release()
         }
     }
 
@@ -1105,6 +2128,63 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun selectedSheetItemDrawsItsIndicatorAtTheTrailingEdge() {
+        onMain {
+            val host = MobileUiHost(
+                ApplicationProvider.getApplicationContext(),
+            ) { _, _ -> Unit }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(24),
+                    "component" to WireValue.Integer(
+                        GeneratedComponents.SELECT_ITEM.toLong(),
+                    ),
+                    "checked" to WireValue.Flag(true),
+                    "fillColor" to WireValue.Integer(Color.MAGENTA.toLong()),
+                ),
+            )
+            val width = dp(host, 300f)
+            val height = dp(host, 56f)
+            host.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            host.layout(0, 0, width, height)
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            host.draw(Canvas(bitmap))
+
+            fun magentaPixels(left: Int, right: Int): Int {
+                var count = 0
+                for (x in left.coerceAtLeast(0) until right.coerceAtMost(width)) {
+                    for (y in 0 until height) {
+                        val pixel = bitmap.getPixel(x, y)
+                        if (
+                            Color.alpha(pixel) > 0
+                            && Color.red(pixel) > 180
+                            && Color.blue(pixel) > 180
+                            && Color.green(pixel) < 120
+                        ) {
+                            count++
+                        }
+                    }
+                }
+                return count
+            }
+
+            val trailing = magentaPixels(width - dp(host, 40f), width)
+            val center = magentaPixels(
+                width / 2 - dp(host, 24f),
+                width / 2 + dp(host, 24f),
+            )
+            assertTrue("selection indicator must be visible at trailing", trailing > 0)
+            assertEquals("selection indicator must not drift to center", 0, center)
+
+            bitmap.recycle()
+            host.release()
+        }
+    }
+
+    @Test
     fun anchoredOverlayOpensAndDismissesUncontrolledContentNatively() {
         onMain {
             var triggerPresses = 0
@@ -1459,6 +2539,40 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun calendarDragInsideOneCellNeverChangesSelection() {
+        onMain {
+            val payloads = CopyOnWriteArrayList<ByteArray>()
+            val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) payloads += payload
+            }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(7),
+                    "mode" to WireValue.Integer(2),
+                    "year" to WireValue.Integer(2026),
+                    "month" to WireValue.Integer(7),
+                    "fixedWeeks" to WireValue.Flag(true),
+                    "selectedValues" to WireValue.Text("2026-07-08\n2026-07-15"),
+                ),
+            )
+            val grid = View(host.context).apply { tag = "pam:calendar-grid" }
+            host.addView(grid)
+            host.layout(0, 0, 700, 700)
+            grid.layout(0, 100, 700, 700)
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 350f, 250f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 390f, 250f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 390f, 250f))
+            assertTrue(payloads.isEmpty())
+
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 350f, 250f))
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 350f, 250f))
+            assertEquals("M\n2026-07-15", payloads.single().decodeToString())
+            host.release()
+        }
+    }
+
+    @Test
     fun calendarExposesEveryVisibleDayAsATalkBackVirtualButton() {
         onMain {
             val payloads = CopyOnWriteArrayList<ByteArray>()
@@ -1478,13 +2592,34 @@ class MobileUiHostInstrumentedTest {
             val grid = View(host.context).apply {
                 tag = "pam:calendar-grid"
             }
+            val previous = View(host.context).apply { tag = "pam:calendar-prev" }
+            val month = View(host.context).apply { tag = "pam:calendar-month-select" }
+            val year = View(host.context).apply { tag = "pam:calendar-year-select" }
+            val next = View(host.context).apply { tag = "pam:calendar-next" }
+            host.addView(previous)
+            host.addView(month)
+            host.addView(year)
+            host.addView(next)
             host.addView(grid)
             host.layout(0, 0, 700, 700)
+            previous.layout(0, 0, 100, 100)
+            month.layout(100, 0, 300, 100)
+            year.layout(300, 0, 500, 100)
+            next.layout(600, 0, 700, 100)
             grid.layout(0, 100, 700, 700)
 
             val provider = host.accessibilityNodeProvider
+            val previousMonth = provider?.createAccessibilityNodeInfo(1_000)
+            val monthSelector = provider?.createAccessibilityNodeInfo(1_001)
+            val yearSelector = provider?.createAccessibilityNodeInfo(1_002)
+            val nextMonth = provider?.createAccessibilityNodeInfo(1_003)
             val july23 = provider?.createAccessibilityNodeInfo(25)
             val july24 = provider?.createAccessibilityNodeInfo(26)
+            assertEquals("android.widget.Button", previousMonth?.className)
+            assertEquals("Previous month", previousMonth?.contentDescription)
+            assertEquals("Select month, July", monthSelector?.contentDescription)
+            assertEquals("Select year, 2026", yearSelector?.contentDescription)
+            assertEquals("Next month", nextMonth?.contentDescription)
             assertEquals("android.widget.Button", july23?.className)
             assertEquals("23", july23?.text)
             assertEquals("Thursday, July 23, 2026", july23?.contentDescription)
@@ -1500,7 +2635,82 @@ class MobileUiHostInstrumentedTest {
             assertEquals("2026-07-23", payloads.single().decodeToString())
             july23?.recycle()
             july24?.recycle()
+            previousMonth?.recycle()
+            monthSelector?.recycle()
+            yearSelector?.recycle()
+            nextMonth?.recycle()
             host.release()
+        }
+    }
+
+    @Test
+    fun calendarWeekNumberColumnNeverStealsDaySelectionInLtrOrRtl() {
+        onMain {
+            fun calendar(layoutDirectionValue: Int): Pair<MobileUiHost, CopyOnWriteArrayList<ByteArray>> {
+                val payloads = CopyOnWriteArrayList<ByteArray>()
+                val host = MobileUiHost(ApplicationProvider.getApplicationContext()) { kind, payload ->
+                    if (kind == NativeViewEventKind.CHANGE) payloads += payload
+                }
+                host.update(
+                    mapOf(
+                        "behavior" to WireValue.Integer(7),
+                        "year" to WireValue.Integer(2026),
+                        "month" to WireValue.Integer(7),
+                        "fixedWeeks" to WireValue.Flag(true),
+                        "showWeek" to WireValue.Flag(true),
+                        "rtl" to WireValue.Flag(
+                            layoutDirectionValue == View.LAYOUT_DIRECTION_RTL,
+                        ),
+                    ),
+                )
+                host.addView(View(host.context).apply { tag = "pam:calendar-grid" })
+                host.layout(0, 0, 800, 700)
+                host.getChildAt(0).layout(0, 100, 800, 700)
+                return host to payloads
+            }
+
+            val (ltr, ltrPayloads) = calendar(View.LAYOUT_DIRECTION_LTR)
+            val ltrProvider = ltr.accessibilityNodeProvider
+            val ltrFirstDay = ltrProvider?.createAccessibilityNodeInfo(0)
+            val ltrWeek = ltrProvider?.createAccessibilityNodeInfo(1_100)
+            val ltrBounds = android.graphics.Rect()
+            ltrFirstDay?.getBoundsInParent(ltrBounds)
+            assertEquals(100, ltrBounds.left)
+            assertEquals(200, ltrBounds.right)
+            assertEquals("android.widget.TextView", ltrWeek?.className)
+            assertEquals("Week 27", ltrWeek?.contentDescription)
+            assertTrue(ltrWeek?.isClickable == false)
+            ltr.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 50f, 150f))
+            ltr.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 50f, 150f))
+            assertTrue(ltrPayloads.isEmpty())
+            ltr.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 150f, 150f))
+            ltr.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 150f, 150f))
+            assertEquals("2026-06-28", ltrPayloads.single().decodeToString())
+            ltrFirstDay?.recycle()
+            ltrWeek?.recycle()
+            ltr.release()
+
+            val (rtl, rtlPayloads) = calendar(View.LAYOUT_DIRECTION_RTL)
+            val rtlProvider = rtl.accessibilityNodeProvider
+            val rtlFirstDay = rtlProvider?.createAccessibilityNodeInfo(0)
+            val rtlWeek = rtlProvider?.createAccessibilityNodeInfo(1_100)
+            val rtlBounds = android.graphics.Rect()
+            rtlFirstDay?.getBoundsInParent(rtlBounds)
+            assertEquals(600, rtlBounds.left)
+            assertEquals(700, rtlBounds.right)
+            val rtlWeekBounds = android.graphics.Rect()
+            rtlWeek?.getBoundsInParent(rtlWeekBounds)
+            assertEquals(700, rtlWeekBounds.left)
+            assertEquals(800, rtlWeekBounds.right)
+            rtl.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 750f, 150f))
+            rtl.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 750f, 150f))
+            assertTrue(rtlPayloads.isEmpty())
+            rtl.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 650f, 150f))
+            rtl.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 650f, 150f))
+            assertEquals("2026-06-28", rtlPayloads.single().decodeToString())
+            rtlFirstDay?.recycle()
+            rtlWeek?.recycle()
+            rtl.release()
         }
     }
 
@@ -1727,6 +2937,30 @@ class MobileUiHostInstrumentedTest {
         assertEquals(1L, (dismissal["action"] as WireValue.Integer).value)
         assertTrue((dismissal["dismissed"] as WireValue.Flag).value)
         onMain {
+            host.release()
+            activity.finish()
+        }
+    }
+
+    @Test
+    fun readOnlyDateTimePickerDoesNotOpenTheSystemDialog() {
+        val activity = launchTestHostActivity()
+        lateinit var host: MobileUiHost
+        onMain {
+            host = MobileUiHost(activity) { _, _ -> }
+            host.update(
+                mapOf(
+                    "behavior" to WireValue.Integer(17),
+                    "mode" to WireValue.Integer(4),
+                    "value" to WireValue.Text("2026-07-23"),
+                    "readOnly" to WireValue.Flag(true),
+                ),
+            )
+            activity.setContentView(host)
+
+            host.performClick()
+
+            assertFalse("read-only picker opened a system dialog", host.cancelActivePicker())
             host.release()
             activity.finish()
         }
@@ -2076,6 +3310,7 @@ class MobileUiHostInstrumentedTest {
         val inputEvents = CopyOnWriteArrayList<NativeViewEventKind>()
         lateinit var root: FrameLayout
         lateinit var inputGroup: MobileUiHost
+        lateinit var inputLabel: TextView
         lateinit var input: EditText
         lateinit var clear: MobileUiHost
         lateinit var password: MobileUiHost
@@ -2097,6 +3332,7 @@ class MobileUiHostInstrumentedTest {
                 setText("secret")
                 transformationMethod = PasswordTransformationMethod.getInstance()
             }
+            inputLabel = TextView(context).apply { text = "Password" }
             clear = MobileUiHost(context) { kind, _ -> inputEvents += kind }
             clear.update(
                 mapOf(
@@ -2111,6 +3347,7 @@ class MobileUiHostInstrumentedTest {
                     "slotAction" to WireValue.Integer(3),
                 ),
             )
+            inputGroup.addView(inputLabel)
             inputGroup.addView(input)
             inputGroup.addView(clear)
             inputGroup.addView(password)
@@ -2121,8 +3358,16 @@ class MobileUiHostInstrumentedTest {
         onMain {
             val context = activity
             inputGroup.layout(0, 0, 600, 120)
+            inputLabel.layout(0, 0, 600, 40)
+            input.layout(0, 40, 600, 100)
+            clear.layout(500, 40, 550, 100)
+            password.layout(550, 40, 600, 100)
 
             assertTrue(inputGroup.performClick())
+            assertTrue(input.hasFocus())
+            input.clearFocus()
+            inputGroup.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 20f, 20f))
+            inputGroup.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 20f, 20f))
             assertTrue(input.hasFocus())
             assertTrue(clear.performClick())
             assertEquals("", input.text.toString())

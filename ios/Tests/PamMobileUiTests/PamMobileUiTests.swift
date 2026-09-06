@@ -147,6 +147,34 @@ final class PamMobileUiTests: XCTestCase {
         factory.close()
     }
 
+    func testListItemKeepsMaterialLeadingBodyAndTrailingInsets() {
+        let factory = MobileUiHostFactory()
+        let view = factory.create(context: nil) { _ in }
+        view.frame = CGRect(x: 0, y: 0, width: 390, height: 72)
+        let leading = UIView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
+        let title = UILabel(frame: CGRect(x: 0, y: 0, width: 180, height: 24))
+        let subtitle = UILabel(frame: CGRect(x: 0, y: 0, width: 180, height: 20))
+        let trailing = UIView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
+        [leading, title, subtitle, trailing].forEach { view.addSubview($0) }
+
+        factory.update(
+            view: view,
+            properties: ["behavior": .integer(37)]
+        )
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+
+        XCTAssertEqual(leading.frame.minX, 16)
+        XCTAssertEqual(title.frame.minX, leading.frame.maxX + 12)
+        XCTAssertEqual(subtitle.frame.minX, title.frame.minX)
+        XCTAssertEqual(subtitle.frame.minY, title.frame.maxY)
+        XCTAssertEqual(trailing.frame.maxX, 374)
+        XCTAssertGreaterThanOrEqual(trailing.frame.minX, title.frame.maxX + 12)
+
+        factory.release(view: view)
+        factory.close()
+    }
+
     func testAbstractSelectionItemUsesButtonSemanticsWithoutCheckboxValue() {
         let factory = MobileUiHostFactory()
         let view = factory.create(context: nil) { _ in }

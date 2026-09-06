@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-date-input",
+  "candidateOnly": true,
+  "sourceReportSha256": "e13a3dbfae62edecaf4c71c6502768d5ec0a707520b0511e8f5dfc3f4ba4b28d",
+  "baselineSha256": "04d47e303981dc0cda1a18d05faf774c20625fd6804c8f2fd6e38bd00a95be02",
+  "interactedSha256": "09cff10981dd0ebcce7658a8bc8bec5aed1c95bf5d6a93d63a2850441235ba62",
+  "gif": "p-date-input.gif",
+  "gifSha256": "102d54804c2d52322910570f0d229b52d0abffaf400eaa7d83b27a379670a1fa",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

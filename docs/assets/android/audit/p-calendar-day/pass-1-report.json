@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 2,
+  "component": "p-calendar-day",
+  "device": "emulator-5556",
+  "package": "dev.pam.mobileui.catalog",
+  "resultStatus": 1,
+  "checks": {
+    "allSevenVariations": true,
+    "exact48DpTouchTarget": true,
+    "exact40DpSelectionCircle": true,
+    "realSelectionAndDeselection": true,
+    "lowerTrailingEdgeHitTarget": true,
+    "instanceIsolation": true,
+    "todayTonalIndicator": true,
+    "disabledBehavior": true,
+    "outsideMonthState": true,
+    "continuousRangeTrack": true,
+    "rangeAccessibilityState": true,
+    "semanticSuccessColor": true,
+    "fontScale130": true,
+    "adaptiveLandscape": true,
+    "rapidTwentyTapStress": true,
+    "frameP99AtMost17Ms": true,
+    "zeroMissedVsync": true,
+    "zeroSlowUiThreadFrames": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "targetDp": 48.0,
+    "selectedCircleDp": 40.0,
+    "successCircleDp": 40.0,
+    "todayIndicatorDp": 40.0,
+    "range": {
+      "middlePixelDelta": 40.36,
+      "leftJoinPixelDelta": 40.36,
+      "rightJoinPixelDelta": 40.36,
+      "beforeStartPixelDelta": 0.0,
+      "afterEndPixelDelta": 0.0
+    },
+    "stressFrames": 66,
+    "stressJankyFrames": 20,
+    "stressP99Ms": 16,
+    "stressMissedVsync": 0,
+    "stressSlowUiThreadFrames": 0,
+    "fontScaleViewport": "1080x2400"
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-default-selected",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/01-default-selected.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-default-deselected",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/02-default-deselected.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-today",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/03-today.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-outside-month",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/05-outside-month.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-range",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/06-range.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-success",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/07-success.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "08-font-scale-130",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/08-font-scale-130.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "09-landscape",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/09-landscape.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "12-stress-result",
+      "path": "/tmp/pam-calendar-day-v6-pass1.hoLjnA/12-stress-result.png",
+      "size": [
+        1080,
+        2400
+      ]
+    }
+  ]
+}

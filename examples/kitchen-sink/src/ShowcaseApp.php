@@ -7,7 +7,11 @@ namespace App;
 use Pam\Native\Component;
 use Pam\Native\Navigation\DrawerNavigator;
 use Pam\Native\Renderable;
+use Pam\Native\StatusBarAppearance;
+use Pam\Native\Style;
 use Pam\Native\System\Linking;
+use Pam\Native\UI\Screen;
+use Pam\Native\UI\StatusBar;
 
 /**
  * Root for the public component catalog.
@@ -19,16 +23,35 @@ final class ShowcaseApp extends Component
 {
     private ?int $linkSubscription = null;
 
-    /** @param array<string, string> $componentRoutes */
+    /**
+     * @param array<string, string> $componentRoutes
+     * @param array<string, ComponentRoute> $componentAuditRoutes
+     */
     public function __construct(
         private readonly DrawerNavigator $drawer,
         private readonly array $componentRoutes,
+        private readonly array $componentAuditRoutes,
     ) {
     }
 
     public function render(): Renderable
     {
-        return $this->drawer;
+        // The catalog deliberately uses a light theme regardless of the
+        // device theme. Author its system bar explicitly so a phone in dark
+        // mode never renders white icons over the light showcase surface.
+        return Screen::make(
+            StatusBar::make(0xFFF8FAFC, StatusBarAppearance::Dark),
+            $this->drawer->toElement()->style(new Style(
+                widthPercent: 100.0,
+                heightPercent: 100.0,
+                flexGrow: 1.0,
+            )),
+        )->style(new Style(
+            widthPercent: 100.0,
+            heightPercent: 100.0,
+            flexGrow: 1.0,
+            backgroundColor: 0xFFF8FAFC,
+        ));
     }
 
     public function mount(): void
@@ -61,8 +84,13 @@ final class ShowcaseApp extends Component
         }
         $kind = $parts['host'] ?? '';
         $target = rawurldecode(ltrim((string) ($parts['path'] ?? ''), '/'));
+        $query = [];
+        parse_str((string) ($parts['query'] ?? ''), $query);
+        $auditScenario = is_string($query['scenario'] ?? null)
+            ? (string) $query['scenario']
+            : 'interactive';
         $route = match ($kind) {
-            'component' => $this->componentRoutes[$target] ?? null,
+            'component', 'audit' => $this->componentRoutes[$target] ?? null,
             'screen' => match ($target) {
                 'overview' => 'overview',
                 'actions' => 'actions',
@@ -76,6 +104,12 @@ final class ShowcaseApp extends Component
         };
         if (!is_string($route)) {
             return false;
+        }
+        $componentRoute = $this->componentAuditRoutes[$target] ?? null;
+        if ($componentRoute instanceof ComponentRoute) {
+            $componentRoute->useAuditScenario(
+                $kind === 'audit' ? $auditScenario : null,
+            );
         }
         $this->drawer->navigate($route);
 

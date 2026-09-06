@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-06T09:13:00-03:00",
+  "candidateOnly": true,
+  "buildSha256": "230f7008194e65e6d86ce6bf54cb913de83fec0f7ab8968c765deef335c4bf30",
+  "package": "dev.pam.mobileui.catalog",
+  "device": {
+    "serial": "emulator-5556",
+    "model": "sdk_gphone64_x86_64",
+    "androidVersion": 16,
+    "api": 36,
+    "viewport": "1080x2400@420dpi",
+    "renderer": "lavapipe"
+  },
+  "scenario": {
+    "route": "p-data-table-virtual",
+    "coldStartMs": 213,
+    "gestureCount": 24,
+    "frameCount": 424
+  },
+  "frameMetrics": {
+    "jankyFrameCount": 7,
+    "jankyFramePercent": 1.65,
+    "legacyJankyFrameCount": 2,
+    "legacyJankyFramePercent": 0.47,
+    "p50Ms": 16,
+    "p90Ms": 16,
+    "p95Ms": 16,
+    "p99Ms": 18,
+    "missedVsyncCount": 0,
+    "slowUiThreadCount": 0,
+    "slowBitmapUploadCount": 0
+  },
+  "notes": [
+    "Measured after warm-up and gfxinfo reset on the release APK.",
+    "ADB-injected gesture latency is excluded from app frame quality conclusions.",
+    "Emulator evidence is not a substitute for the pending physical-device approvals."
+  ]
+}

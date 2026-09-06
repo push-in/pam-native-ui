@@ -109,7 +109,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var reversed = false
     private var showSliderTicks = false
     private var showThumbLabel = false
-    private var sliderThumbSize: CGFloat = 20
+    private var sliderThumbWidth: CGFloat = 20
+    private var sliderThumbHeight: CGFloat = 20
     private var sliderTrackThickness: CGFloat = 4
     private var snapPoints: [CGFloat] = []
     private var snapIndex = 0
@@ -124,6 +125,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var stateLayerColor = UIColor.label
     private var fillColor = UIColor.tintColor
     private var trackColor = UIColor.secondarySystemFill
+    private var switchTrackOutlineColor = UIColor.separator
+    private var switchThumbColor = UIColor.secondaryLabel
+    private var switchActiveThumbColor = UIColor.white
     private var selectedForegroundColor = UIColor.white
     private var pressAnimator: UIViewPropertyAnimator?
     private var shimmerLayer: CAGradientLayer?
@@ -242,7 +246,19 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             || next["alwaysShowTicks"]?.pamFlag == true
         showThumbLabel = next["showThumbLabel"]?.pamFlag == true
             || next["alwaysShowThumbLabel"]?.pamFlag == true
-        sliderThumbSize = max(1, next["thumbSize"]?.pamDecimal ?? sliderThumbSize)
+        let legacyThumbSize = next["thumbSize"]?.pamDecimal
+        sliderThumbWidth = max(
+            1,
+            next["thumbWidth"]?.pamDecimal
+                ?? legacyThumbSize
+                ?? sliderThumbWidth
+        )
+        sliderThumbHeight = max(
+            1,
+            next["thumbHeight"]?.pamDecimal
+                ?? legacyThumbSize
+                ?? sliderThumbHeight
+        )
         sliderTrackThickness = max(
             1,
             next["trackThickness"]?.pamDecimal ?? sliderTrackThickness
@@ -267,6 +283,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? "Search options"
         fillColor = color(next["fillColor"]?.pamInteger, fallback: fillColor)
         trackColor = color(next["trackColor"]?.pamInteger, fallback: trackColor)
+        if behavior == .switchControl {
+            trackColor = color(next["trackOffColor"]?.pamInteger, fallback: trackColor)
+            fillColor = color(next["trackOnColor"]?.pamInteger, fallback: fillColor)
+            switchTrackOutlineColor = color(
+                next["trackOutlineColor"]?.pamInteger,
+                fallback: switchTrackOutlineColor
+            )
+            switchThumbColor = color(
+                next["thumbColor"]?.pamInteger,
+                fallback: switchThumbColor
+            )
+            switchActiveThumbColor = color(
+                next["activeThumbColor"]?.pamInteger,
+                fallback: switchActiveThumbColor
+            )
+        }
         stateLayerColor = color(
             next["foregroundColor"]?.pamInteger,
             fallback: stateLayerColor
@@ -379,9 +411,29 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             drawSparkline(context)
         case .timeline:
             drawTimeline(context)
+        case .sheetItem:
+            drawSheetItemSelection(context)
         default:
             break
         }
+    }
+
+    private func drawSheetItemSelection(_ context: CGContext) {
+        guard isChecked || isSelectedState else { return }
+        let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
+        let centerX: CGFloat = rtl ? 24 : bounds.width - 24
+        let centerY = bounds.midY
+        let direction: CGFloat = rtl ? -1 : 1
+        context.saveGState()
+        context.setStrokeColor(fillColor.cgColor)
+        context.setLineWidth(2.5)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+        context.move(to: CGPoint(x: centerX - 8 * direction, y: centerY))
+        context.addLine(to: CGPoint(x: centerX - 2 * direction, y: centerY + 6))
+        context.addLine(to: CGPoint(x: centerX + 9 * direction, y: centerY - 7))
+        context.strokePath()
+        context.restoreGState()
     }
 
     override func accessibilityIncrement() {
@@ -763,23 +815,35 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             translationX: 0,
             y: activeSheetHeight - selectedHeight
         )
+        let handleWrapper = descendant(tag: "pam:sheet-drag-indicator-wrapper")
+        let handleIndicator = descendant(tag: "pam:sheet-drag-indicator")
+        let handleBlock: CGFloat = handleWrapper == nil ? 0 : 24
+        if let handleWrapper {
+            handleWrapper.frame = CGRect(x: 0, y: 0, width: content.bounds.width, height: 24)
+            handleWrapper.isAccessibilityElement = false
+        }
+        if let handleIndicator {
+            handleIndicator.frame = CGRect(
+                x: (content.bounds.width - 32) / 2,
+                y: 10,
+                width: 32,
+                height: 4
+            )
+            handleIndicator.isAccessibilityElement = false
+        }
         let search = ensureSheetSearchField(in: content)
         let rowHeight: CGFloat = 56
         let inset: CGFloat = 8
+        let contentTop = inset + handleBlock
         if let search {
             search.frame = CGRect(
                 x: inset,
-                y: inset,
+                y: contentTop,
                 width: max(0, content.bounds.width - inset * 2),
                 height: rowHeight
             )
-            if !search.isFirstResponder, window != nil {
-                DispatchQueue.main.async { [weak search] in
-                    search?.becomeFirstResponder()
-                }
-            }
         }
-        let itemOffset = search == nil ? inset : rowHeight + inset * 2
+        let itemOffset = search == nil ? contentTop : contentTop + rowHeight + inset
         let items = sheetItems(in: content).filter { !$0.isHidden }
         let supplementary = sheetCustomAction?.isHidden == false
             ? sheetCustomAction
@@ -809,10 +873,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         guard sheetSearchable else {
             sheetSearchField?.removeFromSuperview()
             sheetCustomAction?.removeFromSuperview()
-            sheetEmptyState?.removeFromSuperview()
             sheetSearchField = nil
             sheetCustomAction = nil
-            sheetEmptyState = nil
+            _ = ensureSheetEmptyState(in: content)
+            updateSheetSupplementary(query: "", content: content)
             return nil
         }
         let field = sheetSearchField ?? {
@@ -853,8 +917,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         let customAction = sheetCustomAction ?? {
             let button = UIButton(type: .system)
             button.contentHorizontalAlignment = .leading
-            button.titleLabel?.font = .preferredFont(forTextStyle: .body)
+            button.titleLabel?.font = UIFontMetrics(forTextStyle: .body).scaledFont(
+                for: .systemFont(ofSize: 17, weight: .medium)
+            )
             button.titleLabel?.adjustsFontForContentSizeCategory = true
+            button.layer.cornerRadius = 12
+            button.layer.cornerCurve = .continuous
             button.addTarget(
                 self,
                 action: #selector(acceptCustomSheetValue),
@@ -863,10 +931,24 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             sheetCustomAction = button
             return button
         }()
+        customAction.setTitleColor(
+            color(properties["customActionTextColor"]?.pamInteger, fallback: .systemBlue),
+            for: .normal
+        )
+        customAction.backgroundColor = color(
+            properties["customActionBackgroundColor"]?.pamInteger,
+            fallback: .secondarySystemBackground
+        )
         if customAction.superview !== content {
             customAction.removeFromSuperview()
             content.addSubview(customAction)
         }
+        _ = ensureSheetEmptyState(in: content)
+        updateSheetSupplementary(query: field.text ?? "", content: content)
+        return field
+    }
+
+    private func ensureSheetEmptyState(in content: UIView) -> UILabel {
         let emptyState = sheetEmptyState ?? {
             let label = UILabel(frame: .zero)
             label.font = .preferredFont(forTextStyle: .subheadline)
@@ -881,8 +963,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             emptyState.removeFromSuperview()
             content.addSubview(emptyState)
         }
-        updateSheetSupplementary(query: field.text ?? "", content: content)
-        return field
+        emptyState.text = properties["noDataText"]?.pamText ?? "No options available"
+        return emptyState
     }
 
     @objc
@@ -910,7 +992,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         let showCustom = sheetAllowCustomValue && !query.isEmpty && !exact
         sheetCustomAction?.isHidden = !showCustom
         sheetCustomAction?.setTitle("Use \"\(query)\"", for: .normal)
-        sheetEmptyState?.isHidden = query.isEmpty || !visibleItems.isEmpty || showCustom
+        sheetEmptyState?.isHidden = !visibleItems.isEmpty || showCustom
     }
 
     @objc
@@ -925,6 +1007,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func clearSheetSearch() {
         sheetSearchField?.text = ""
+        sheetSearchField?.resignFirstResponder()
         if let content = overlayContent() {
             for item in sheetItems(in: content) {
                 item.isHidden = false
@@ -1035,13 +1118,54 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func layoutListItem() {
         let visible = subviews.filter { !$0.isHidden }
         guard !visible.isEmpty else { return }
+        let inset: CGFloat = 16
+        let gap: CGFloat = 12
+        let rightToLeft = effectiveUserInterfaceLayoutDirection == .rightToLeft
+
+        if visible.count >= 3 {
+            let leading = visible[0]
+            let trailing = visible[visible.count - 1]
+            let body = Array(visible[1..<(visible.count - 1)])
+            let leadingX = rightToLeft
+                ? bounds.width - inset - leading.bounds.width
+                : inset
+            let trailingX = rightToLeft
+                ? inset
+                : bounds.width - inset - trailing.bounds.width
+            let centeredY: (UIView) -> CGFloat = { child in
+                max(0, (self.bounds.height - child.bounds.height) / 2)
+            }
+            leading.frame.origin = CGPoint(x: leadingX, y: centeredY(leading))
+            trailing.frame.origin = CGPoint(x: trailingX, y: centeredY(trailing))
+
+            let bodyStart = rightToLeft
+                ? trailing.frame.maxX + gap
+                : leading.frame.maxX + gap
+            let bodyEnd = rightToLeft
+                ? leading.frame.minX - gap
+                : trailing.frame.minX - gap
+            let availableBodyWidth = max(0, bodyEnd - bodyStart)
+            let bodyHeight = body.reduce(CGFloat.zero) { $0 + $1.bounds.height }
+            var bodyY = max(0, (bounds.height - bodyHeight) / 2)
+            for child in body {
+                let childWidth = min(child.bounds.width, availableBodyWidth)
+                let x = rightToLeft ? bodyEnd - childWidth : bodyStart
+                child.frame = CGRect(
+                    x: x,
+                    y: bodyY,
+                    width: childWidth,
+                    height: child.bounds.height
+                )
+                bodyY += child.bounds.height
+            }
+            return
+        }
+
         let totalHeight = visible.reduce(CGFloat.zero) { $0 + $1.bounds.height }
         var y = max(0, (bounds.height - totalHeight) / 2)
-        let inset: CGFloat = 16
         for child in visible {
             let width = min(child.bounds.width, bounds.width - inset * 2)
-            let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
-                ? bounds.width - inset - width : inset
+            let x = rightToLeft ? bounds.width - inset - width : inset
             child.frame = CGRect(x: x, y: y, width: width, height: child.bounds.height)
             y += child.bounds.height
         }
@@ -1147,7 +1271,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 ? "\(field.text ?? ""), read only"
                 : field.text
         }
-        layer.borderWidth = invalid ? 2 : (properties["focused"]?.pamFlag == true ? 2 : 0)
+        let indicatorOnly = properties["indicatorOnly"]?.pamFlag ?? false
+        layer.borderWidth = indicatorOnly
+            ? 0
+            : (invalid ? 2 : (properties["focused"]?.pamFlag == true ? 2 : 0))
         layer.borderColor = color(
             invalid
                 ? properties["invalidColor"]?.pamInteger
@@ -1623,18 +1750,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             drawRating(context)
             return
         }
-        let trackInset = sliderThumbSize / 2
+        let trackInset = orientation == 2
+            ? sliderThumbHeight / 2
+            : sliderThumbWidth / 2
         let track = orientation == 2
             ? CGRect(
                 x: bounds.midX - sliderTrackThickness / 2,
                 y: trackInset,
                 width: sliderTrackThickness,
-                height: max(1, bounds.height - sliderThumbSize)
+                height: max(1, bounds.height - sliderThumbHeight)
             )
             : CGRect(
                 x: trackInset,
                 y: bounds.midY - sliderTrackThickness / 2,
-                width: max(1, bounds.width - sliderThumbSize),
+                width: max(1, bounds.width - sliderThumbWidth),
                 height: sliderTrackThickness
             )
         context.setFillColor(trackColor.cgColor)
@@ -1669,16 +1798,19 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
 
         context.setFillColor(fillColor.cgColor)
-        let radius = sliderThumbSize / 2
         let thumbValues = rangeEnabled ? [lowerValue, upperValue] : [value]
         for current in thumbValues {
             let point = sliderPoint(current, in: track)
-            context.fillEllipse(in: CGRect(
-                x: point.x - radius,
-                y: point.y - radius,
-                width: sliderThumbSize,
-                height: sliderThumbSize
-            ))
+            let thumb = CGRect(
+                x: point.x - sliderThumbWidth / 2,
+                y: point.y - sliderThumbHeight / 2,
+                width: sliderThumbWidth,
+                height: sliderThumbHeight
+            )
+            UIBezierPath(
+                roundedRect: thumb,
+                cornerRadius: min(sliderThumbWidth, sliderThumbHeight) / 2
+            ).fill()
             if showThumbLabel {
                 drawThumbLabel(formatted(current), at: point, context: context)
             }
@@ -1780,12 +1912,19 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         )
         context.setFillColor((isChecked ? fillColor : trackColor).cgColor)
         context.fillEllipse(in: track)
+        if !isChecked {
+            context.setStrokeColor(switchTrackOutlineColor.cgColor)
+            context.setLineWidth(2)
+            context.strokeEllipse(in: track.insetBy(dx: 1, dy: 1))
+        }
         let diameter: CGFloat = isChecked ? 24 : 16
-        let left = track.minX + 4
-        let right = track.maxX - diameter - 4
+        let left = track.minX
+        let right = track.maxX - diameter
         let checkedX = effectiveUserInterfaceLayoutDirection == .rightToLeft ? left : right
         let uncheckedX = effectiveUserInterfaceLayoutDirection == .rightToLeft ? right : left
-        context.setFillColor((isChecked ? UIColor.white : UIColor.secondaryLabel).cgColor)
+        context.setFillColor(
+            (isChecked ? switchActiveThumbColor : switchThumbColor).cgColor
+        )
         context.fillEllipse(in: CGRect(
             x: isChecked ? checkedX : uncheckedX,
             y: track.midY - diameter / 2,

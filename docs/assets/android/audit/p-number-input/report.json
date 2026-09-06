@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "component": "p-number-input",
+  "device": "emulator-5554",
+  "package": "dev.pam.mobileui.catalog.debug",
+  "result": "passed",
+  "checks": {
+    "48dpControls": true,
+    "incrementAndDecrement": true,
+    "realNumericKeyboardInput": true,
+    "instanceIsolation": true,
+    "systemBackPersistence": true,
+    "disabledAndReadOnly": true,
+    "errorMessage": true,
+    "minimumAndMaximum": true,
+    "decimalStepAndPrecision": true,
+    "insetSplitStackedReverseHidden": true,
+    "rotationWithIme": true,
+    "adaptiveNavigation": true,
+    "statusBarContrast": true,
+    "runtimeLog": true
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-number-input-official-3/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-decreased",
+      "path": "/tmp/pam-number-input-official-3/01-decreased.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-increased",
+      "path": "/tmp/pam-number-input-official-3/02-increased.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-typed-keyboard",
+      "path": "/tmp/pam-number-input-official-3/03-typed-keyboard.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "state-disabled",
+      "path": "/tmp/pam-number-input-official-3/state-disabled.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "state-read-only",
+      "path": "/tmp/pam-number-input-official-3/state-read-only.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-error",
+      "path": "/tmp/pam-number-input-official-3/05-error.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-minimum-increased",
+      "path": "/tmp/pam-number-input-official-3/06-minimum-increased.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-maximum-decreased",
+      "path": "/tmp/pam-number-input-official-3/07-maximum-decreased.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "08-decimal-step",
+      "path": "/tmp/pam-number-input-official-3/08-decimal-step.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "09-inset",
+      "path": "/tmp/pam-number-input-official-3/09-inset.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "10-split",
+      "path": "/tmp/pam-number-input-official-3/10-split.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "11-stacked",
+      "path": "/tmp/pam-number-input-official-3/11-stacked.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "12-reverse",
+      "path": "/tmp/pam-number-input-official-3/12-reverse.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "13-hidden-typed",
+      "path": "/tmp/pam-number-input-official-3/13-hidden-typed.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "14-landscape-keyboard",
+      "path": "/tmp/pam-number-input-official-3/14-landscape-keyboard.png",
+      "size": [
+        2400,
+        1080
+      ]
+    }
+  ]
+}

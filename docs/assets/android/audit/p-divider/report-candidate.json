@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "resultStatus": 1,
+  "approvalStatus": 1,
+  "component": "p-divider",
+  "candidateOnly": true,
+  "buildSha256": "5f7f1207ea276320d93abb4e236e70e38d3889e412c2831cdbfaa400b155457a",
+  "device": {
+    "serial": "emulator-5556",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "androidVersion": "16",
+    "api": 36,
+    "viewport": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "buildSha256": "5f7f1207ea276320d93abb4e236e70e38d3889e412c2831cdbfaa400b155457a"
+  },
+  "sourceReport": "/tmp/pam-divider-inset.json",
+  "passes": [
+    {
+      "repetition": 1,
+      "interactionKind": 1,
+      "stateChanged": false,
+      "elapsedMs": 6110,
+      "evidencePrefix": "pass-01-p-divider"
+    },
+    {
+      "repetition": 2,
+      "interactionKind": 1,
+      "stateChanged": false,
+      "elapsedMs": 5791,
+      "evidencePrefix": "pass-02-p-divider"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "baseline-candidate.png",
+      "sha256": "3177c1891b9f1d3cf8b279fe20c6ed08b705045616e25716a14f5d7f4372fa00"
+    }
+  ],
+  "checks": {
+    "twoConsecutivePasses": true,
+    "runtimeLog": true,
+    "routeIdentity": true,
+    "realInteraction": true,
+    "requiresManualVisualReview": true,
+    "requiresPhysicalApproval": true
+  }
+}

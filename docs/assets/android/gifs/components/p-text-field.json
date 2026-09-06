@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-text-field",
+  "candidateOnly": true,
+  "sourceReportSha256": "12f5336cc9bf6cbd99b2207f0b1c52b09672cf7a1e74beed76b4b4b3c5e2a6ef",
+  "baselineSha256": "cceb1e808a434589da429208fb8f701374b17a7a2f721ace103b46360ff57135",
+  "interactedSha256": "f597389dbeb4b523a6d824d970c0062a9b939e9509e81865b64be6e92de484e0",
+  "gif": "p-text-field.gif",
+  "gifSha256": "e7146771f144685e462b6a33f3fd5489f62a3e62a1c3c72470af831098c76c55",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

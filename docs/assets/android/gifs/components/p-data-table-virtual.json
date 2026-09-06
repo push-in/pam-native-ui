@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-data-table-virtual",
+  "candidateOnly": true,
+  "sourceReportSha256": "3c43bee984539918581d05b318d2a41d10be44c388d45d828ac8f535a9970657",
+  "baselineSha256": "af7e260c82f9de729635bc896ca903242fc2ffb4d14061a2d8fb03b78a74e120",
+  "interactedSha256": "d6462e55f53d36633339d9cd158d814fd5eae4f8e178e8e892e1352831fa531d",
+  "gif": "p-data-table-virtual.gif",
+  "gifSha256": "ed6dd8368a16d343834ba71eedf1ba9e60066ae2fe218bfa55148a84304bc21b",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

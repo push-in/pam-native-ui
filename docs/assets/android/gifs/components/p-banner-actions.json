@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-banner-actions",
+  "candidateOnly": true,
+  "sourceReportSha256": "97378e8fc7e28e4e9d57e00ca7bced5818923576bd6b35c594d1906563014d5f",
+  "baselineSha256": "e75a785d6ff4afdc7d0a8dab14eae90563a28905041ec405df28515340241c33",
+  "interactedSha256": "6018c3893816d0cdc0f0b3b36b393b761856b3a23bab84553e59aa0aa8d7bac8",
+  "gif": "p-banner-actions.gif",
+  "gifSha256": "81a7ef732a974d508edb48b7616a18cd400dce46119c6fe6b1e9c2b381ced61b",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

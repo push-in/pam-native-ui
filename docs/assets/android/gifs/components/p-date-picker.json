@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-date-picker",
+  "candidateOnly": true,
+  "sourceReportSha256": "9de44853ae8633a8edb9502d4b4e24905f2067037473e9549ee6d3bbcc43759c",
+  "baselineSha256": "776c318c0126ce791deb0efda1a2b6a1202d8c3344bb89a401d4f6915f73999c",
+  "interactedSha256": "e4d8ae235836514be250365ae7c51a1473837b3c2d75bb766a0124f30dd70241",
+  "gif": "p-date-picker.gif",
+  "gifSha256": "8f37b01f9982e4430f3598a43893ea620eabfc6de974e5902f87f2cc79844100",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

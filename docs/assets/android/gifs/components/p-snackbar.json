@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-snackbar",
+  "candidateOnly": true,
+  "sourceReportSha256": "851ba6db3383e04b2dcef4d6da76a93847570dec1bf59c80740221888e085dc2",
+  "baselineSha256": "506597ec1e717dcae57c5048ebe9ac747e4fcac7fcd3d503c7e9ed5932cae402",
+  "interactedSha256": "297313489f78545a748ced000dcc45d4fe5539c5b396bb6f2479f58d1abc4047",
+  "gif": "p-snackbar.gif",
+  "gifSha256": "c596c595245145d741e7d021446d68dbf578bc83e1c6e03346e20788ee19d66e",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 2,
+  "component": "p-card-actions",
+  "device": "emulator-5554",
+  "package": "dev.pam.mobileui.catalog",
+  "resultStatus": 1,
+  "checks": {
+    "allSixArrangements": true,
+    "directCanvasPresentation": true,
+    "materialEightDpInsetsAndGaps": true,
+    "fortyDpVisualButtons": true,
+    "fortyEightDpEffectiveTargets": true,
+    "endAlignment": true,
+    "independentCallbacks": true,
+    "disabledActionInert": true,
+    "semanticDestructiveAction": true,
+    "fontScale130": true,
+    "adaptiveLandscape": true,
+    "rapidTwentyTapStress": true,
+    "frameP99AtMost17Ms": true,
+    "zeroMissedVsync": true,
+    "zeroSlowUiThreadFrames": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "density": 2.625,
+    "geometry": {
+      "Action Pair": {
+        "widthDp": 379.43,
+        "heightDp": 56.0,
+        "wrapped": false,
+        "actionCount": 2,
+        "visualActionHeightDp": 40.0,
+        "effectiveTargetDp": 48,
+        "gapsDp": [
+          8.0
+        ],
+        "trailingDp": 8.0
+      },
+      "Single Action": {
+        "widthDp": 379.43,
+        "heightDp": 56.0,
+        "wrapped": false,
+        "actionCount": 1,
+        "visualActionHeightDp": 40.0,
+        "effectiveTargetDp": 48,
+        "gapsDp": [],
+        "trailingDp": 8.0
+      },
+      "Disabled Leading": {
+        "widthDp": 379.43,
+        "heightDp": 56.0,
+        "wrapped": false,
+        "actionCount": 2,
+        "visualActionHeightDp": 40.0,
+        "effectiveTargetDp": 48,
+        "gapsDp": [
+          8.0
+        ],
+        "trailingDp": 8.0
+      },
+      "Destructive Choice": {
+        "widthDp": 379.43,
+        "heightDp": 56.0,
+        "wrapped": false,
+        "actionCount": 2,
+        "visualActionHeightDp": 40.0,
+        "effectiveTargetDp": 48,
+        "gapsDp": [
+          8.0
+        ],
+        "trailingDp": 8.0
+      },
+      "Long Labels": {
+        "widthDp": 379.43,
+        "heightDp": 56.0,
+        "wrapped": false,
+        "actionCount": 2,
+        "visualActionHeightDp": 40.0,
+        "effectiveTargetDp": 48,
+        "gapsDp": [
+          8.0
+        ],
+        "trailingDp": 8.0
+      },
+      "Three Actions": {
+        "widthDp": 379.43,
+        "heightDp": 56.0,
+        "wrapped": false,
+        "actionCount": 3,
+        "visualActionHeightDp": 40.0,
+        "effectiveTargetDp": 48,
+        "gapsDp": [
+          8.0,
+          8.0
+        ],
+        "trailingDp": 8.0
+      }
+    },
+    "stressP99Ms": 16,
+    "stressMissedVsync": 0,
+    "stressSlowUiThreadFrames": 0
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-card-actions-v5-final2-pass1-420/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-interacted",
+      "path": "/tmp/pam-card-actions-v5-final2-pass1-420/01-interacted.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-font-scale-130",
+      "path": "/tmp/pam-card-actions-v5-final2-pass1-420/02-font-scale-130.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-landscape",
+      "path": "/tmp/pam-card-actions-v5-final2-pass1-420/03-landscape.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "04-stress-result",
+      "path": "/tmp/pam-card-actions-v5-final2-pass1-420/04-stress-result.png",
+      "size": [
+        1080,
+        2400
+      ]
+    }
+  ]
+}

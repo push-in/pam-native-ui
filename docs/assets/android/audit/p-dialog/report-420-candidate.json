@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 2,
+  "component": "p-dialog",
+  "device": "emulator-5556",
+  "checks": {
+    "sixProfiles": true,
+    "nativeDialogWindow": true,
+    "materialGeometry": true,
+    "explicitActions": true,
+    "backDismissal": true,
+    "outsideDismissal": true,
+    "persistentInertBackdrop": true,
+    "noScrim": true,
+    "fullscreenSafeArea": true,
+    "adaptiveWidths": true,
+    "fontScale130": true,
+    "landscape": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "density": 2.625,
+    "profiles": {
+      "default": [
+        86,
+        953,
+        994,
+        1446
+      ],
+      "persistent": [
+        86,
+        953,
+        994,
+        1446
+      ],
+      "noScrim": [
+        86,
+        953,
+        994,
+        1446
+      ],
+      "fullscreen": [
+        0,
+        0,
+        1080,
+        2400
+      ],
+      "compact": [
+        120,
+        953,
+        960,
+        1447
+      ],
+      "large": [
+        86,
+        953,
+        994,
+        1446
+      ]
+    }
+  },
+  "evidence": [
+    {
+      "name": "device-precondition",
+      "path": "/tmp/pam-dialog-audit-420-v8/device-precondition.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "00-default-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/00-default-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "00-default",
+      "path": "/tmp/pam-dialog-audit-420-v8/00-default.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-default-discard-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/01-default-discard-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-default-discard",
+      "path": "/tmp/pam-dialog-audit-420-v8/01-default-discard.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-default-back-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/02-default-back-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-default-back",
+      "path": "/tmp/pam-dialog-audit-420-v8/02-default-back.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-default-outside-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/03-default-outside-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-default-outside",
+      "path": "/tmp/pam-dialog-audit-420-v8/03-default-outside.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-persistent-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/04-persistent-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-persistent",
+      "path": "/tmp/pam-dialog-audit-420-v8/04-persistent.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-no-scrim-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/05-no-scrim-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-no-scrim",
+      "path": "/tmp/pam-dialog-audit-420-v8/05-no-scrim.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-fullscreen-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/06-fullscreen-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-fullscreen",
+      "path": "/tmp/pam-dialog-audit-420-v8/06-fullscreen.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-compact-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/07-compact-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-compact",
+      "path": "/tmp/pam-dialog-audit-420-v8/07-compact.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "08-large-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/08-large-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "08-large",
+      "path": "/tmp/pam-dialog-audit-420-v8/08-large.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "09-font-scale-130-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/09-font-scale-130-before.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "09-font-scale-130",
+      "path": "/tmp/pam-dialog-audit-420-v8/09-font-scale-130.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "10-landscape-before",
+      "path": "/tmp/pam-dialog-audit-420-v8/10-landscape-before.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "10-landscape",
+      "path": "/tmp/pam-dialog-audit-420-v8/10-landscape.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "10-landscape-verified",
+      "path": "/tmp/pam-dialog-audit-420-v8/10-landscape-verified.png",
+      "size": [
+        2400,
+        1080
+      ]
+    }
+  ]
+}
