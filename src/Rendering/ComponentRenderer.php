@@ -4699,11 +4699,16 @@ final class ComponentRenderer
         }
         $styled = self::applyButtonForeground($element, $foreground);
         $children = $styled->children();
-        if ($children === []) {
+        $replaceChildren = self::retainedTreeChildrenMethod();
+        if ($children === [] || !is_callable([$styled, $replaceChildren])) {
             return $styled;
         }
 
-        return $styled->domWithChildren(array_map(
+        // PAM Native added retained-tree replacement after the first
+        // supported runtime. Older runtimes still receive the correctly
+        // styled root instead of crashing while current runtimes propagate
+        // the foreground through nested content.
+        return $styled->{$replaceChildren}(array_map(
             static fn (Element $child): Element =>
                 self::applyForegroundTree($child, $foreground),
             $children,
@@ -4721,11 +4726,12 @@ final class ComponentRenderer
                 ->property(PropKey::Accessible, $enabled)
             : $element;
         $children = $updated->children();
-        if ($children === []) {
+        $replaceChildren = self::retainedTreeChildrenMethod();
+        if ($children === [] || !is_callable([$updated, $replaceChildren])) {
             return $updated;
         }
 
-        return $updated->domWithChildren(array_map(
+        return $updated->{$replaceChildren}(array_map(
             static fn (Element $child): Element =>
                 self::applyInputEnabledTree($child, $enabled),
             $children,
@@ -4764,6 +4770,11 @@ final class ComponentRenderer
         ));
 
         return $pascal.'Icon';
+    }
+
+    private static function retainedTreeChildrenMethod(): string
+    {
+        return 'domWithChildren';
     }
 
     private static function isPressable(string $part): bool

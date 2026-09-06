@@ -377,7 +377,7 @@ class MobileUiHostInstrumentedTest {
             val customAction = (0 until content.childCount)
                 .map(content::getChildAt)
                 .filterIsInstance<TextView>()
-                .single { it.text?.toString() == "Use custom" }
+                .single { it.text?.toString() == "Use \"custom\"" }
             assertEquals(View.VISIBLE, customAction.visibility)
             assertEquals(dp(host, 56f), customAction.height)
             assertTrue(customAction.top >= search.bottom + dp(host, 8f))
