@@ -29,6 +29,12 @@ def require(condition: bool, message: str, failures: list[str]) -> None:
         failures.append(message)
 
 
+def is_sha256(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(
+        character in "0123456789abcdef" for character in value
+    )
+
+
 def main() -> int:
     failures: list[str] = []
     gifs = sorted(GIF_DIRECTORY.glob("p-*.gif"))
@@ -72,7 +78,7 @@ def main() -> int:
             (baseline, "baselineSha256"),
             (interacted, "interactedSha256"),
         ):
-            require(source.is_file(), f"{component}: missing {source.name}", failures)
+            require(is_sha256(metadata.get(key)), f"{component}: invalid {key}", failures)
             if source.is_file():
                 require(metadata.get(key) == sha256(source), f"{component}: {key} mismatch", failures)
 
