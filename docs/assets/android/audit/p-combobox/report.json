@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 2,
+  "component": "p-combobox",
+  "resultStatus": 1,
+  "verifiedAt": "2026-09-01",
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G973F",
+    "androidVersion": 12,
+    "api": 31,
+    "viewport": "1080x2280@420dpi"
+  },
+  "package": "dev.pam.mobileui.catalog.debug",
+  "buildSha256": "0550ca094e67e6583f2ce0ca8e4629642eff3dc7a6acea74842e97eee015bb0a",
+  "harness": "tools/audit-combobox-android.py",
+  "passes": [
+    {
+      "index": 1,
+      "resultStatus": 1,
+      "rawReportSha256": "bdc7976e9c8b3accc4a01262732621c895856ad26c952aac1cb578cd844535c6",
+      "geometryReportSha256": "2b52e67cf022c8fd9ca12f05f441d1023756c3c38def1740ac04730537cba02f",
+      "screensChecked": 17,
+      "geometryFailureCount": 0
+    },
+    {
+      "index": 2,
+      "resultStatus": 1,
+      "rawReportSha256": "1be3d4c1d7e7b2983aadf68c97c2549cd1f67fc1a9bf6dec12b80b23f0a9e168",
+      "geometryReportSha256": "2b52e67cf022c8fd9ca12f05f441d1023756c3c38def1740ac04730537cba02f",
+      "screensChecked": 17,
+      "geometryFailureCount": 0
+    }
+  ],
+  "checks": {
+    "singleNativeSheet": true,
+    "materialTouchTarget": true,
+    "customValue": true,
+    "filterAndSelection": true,
+    "backdropPreservesValue": true,
+    "lastRowLowerEdgeHitTarget": true,
+    "bottomSafeArea": true,
+    "multipleInstanceIsolation": true,
+    "disabledAndReadOnly": true,
+    "uniqueSeparatedNoDataState": true,
+    "materialDragIndicator": true,
+    "keyboardBack": true,
+    "rotation": true,
+    "adaptiveNavigation": true,
+    "runtimeLog": true,
+    "twoConsecutivePhysicalPasses": true,
+    "manualVisualReview": true,
+    "realInteractionRecording": true
+  },
+  "documentation": {
+    "recording": "interaction.mp4",
+    "recordingSha256": "8a034b96fd1d1f361da2a3ff7bdba807264a0ceee99fc558c83bde2b6d148ebe",
+    "gif": "interaction.gif",
+    "gifSha256": "5b0a89bfe1f5b02c05f7fb012ef00240a8a6da64ecde2a2c58a3870e2714a8c8",
+    "before": "baseline.png",
+    "during": "custom-value.png",
+    "after": "custom-selected.png",
+    "additionalScreenshots": [
+      "open.png",
+      "filtered.png",
+      "selected.png",
+      "no-data.png",
+      "landscape.png"
+    ]
+  }
+}

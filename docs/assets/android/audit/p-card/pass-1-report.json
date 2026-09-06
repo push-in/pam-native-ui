@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 2,
+  "component": "p-card",
+  "device": "emulator-5556",
+  "package": "dev.pam.mobileui.catalog",
+  "resultStatus": 1,
+  "checks": {
+    "allEightVariations": true,
+    "materialElevatedFilledOutlined": true,
+    "surfaceTokenPixels": true,
+    "outlinedOneDpBorder": true,
+    "cardBodyCallback": true,
+    "independentActionCallbacks": true,
+    "disabledCardAndActions": true,
+    "loadingTrackFourDp": true,
+    "loadingHasNoRedundantActions": true,
+    "horizontalMedia112Dp": true,
+    "horizontalTextNoOverlap": true,
+    "materialActionGeometry": true,
+    "tileGeometry": true,
+    "fontScale130": true,
+    "adaptiveLandscape": true,
+    "rapidTwentyTapStress": true,
+    "frameP99AtMost17Ms": true,
+    "zeroMissedVsync": true,
+    "zeroSlowUiThreadFrames": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "density": 2.625,
+    "geometry": {
+      "Elevated": {
+        "widthDp": 379.43,
+        "heightDp": 160.0,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 40.0
+      },
+      "Filled": {
+        "widthDp": 379.43,
+        "heightDp": 104.0,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 0.0
+      },
+      "Outlined": {
+        "widthDp": 379.43,
+        "heightDp": 124.19,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 0.0
+      },
+      "Interactive": {
+        "widthDp": 379.43,
+        "heightDp": 160.0,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 40.0
+      },
+      "Horizontal": {
+        "widthDp": 379.43,
+        "heightDp": 187.81,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 0.0,
+        "mediaWidthDp": 112.0
+      },
+      "Loading": {
+        "widthDp": 379.43,
+        "heightDp": 108.19,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 0.0,
+        "trackHeightDp": 4.19
+      },
+      "Disabled": {
+        "widthDp": 379.43,
+        "heightDp": 160.0,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 40.0
+      },
+      "Tile": {
+        "widthDp": 379.43,
+        "heightDp": 104.0,
+        "captionGapDp": 8.0,
+        "actionHeightDp": 0.0
+      }
+    },
+    "visual": {
+      "Elevated": {
+        "surfaceColorDistance": 0.0,
+        "shadowPixelRatio": 0.5785
+      },
+      "Filled": {
+        "surfaceColorDistance": 0.0,
+        "shadowPixelRatio": 0.0
+      },
+      "Outlined": {
+        "surfaceColorDistance": 0.0,
+        "shadowPixelRatio": 0.0,
+        "cornerOutlinePixels": 12
+      },
+      "Tile": {
+        "cornerOutlinePixels": 69
+      }
+    },
+    "stressFrames": 20,
+    "stressJankyFrames": 18,
+    "stressP99Ms": 16,
+    "stressMissedVsync": 0,
+    "stressSlowUiThreadFrames": 0
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-elevated",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/01-elevated.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-filled",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/02-filled.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-outlined",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/03-outlined.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-interactive",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/04-interactive.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-horizontal",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/05-horizontal.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-loading",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/06-loading.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-disabled",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/07-disabled.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "08-tile",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/08-tile.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "09-font-scale-130",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/09-font-scale-130.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "10-landscape",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/10-landscape.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "10-landscape-horizontal",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/10-landscape-horizontal.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "11-stress-result",
+      "path": "/tmp/pam-card-v10-pass1.QgvcIN/11-stress-result.png",
+      "size": [
+        1080,
+        2400
+      ]
+    }
+  ]
+}

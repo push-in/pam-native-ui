@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-expansion-panel",
+  "candidateOnly": true,
+  "sourceReportSha256": "56f9fa814683b9acac3e96536b0c1b4431d5ea189444f4f6264ade749922dddd",
+  "baselineSha256": "e3bc444f501233ceaf3cca700dd30a1c449c59056f884a93347fc36c538eaedc",
+  "interactedSha256": "3cdd9043cb9182ca9960fcbd7156ed0f76ace32fe7fe82123730f47f9ed239b1",
+  "gif": "p-expansion-panel.gif",
+  "gifSha256": "a048246fe278f1f39d6b00f0ecd44374cbc703173c9c14c446097fe35666e9d4",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

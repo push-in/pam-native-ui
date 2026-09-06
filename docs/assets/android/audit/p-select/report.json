@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 2,
+  "component": "p-select",
+  "resultStatus": 1,
+  "verifiedAt": "2026-09-01",
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G973F",
+    "androidVersion": 12,
+    "api": 31,
+    "viewport": "1080x2280@420dpi"
+  },
+  "package": "dev.pam.mobileui.catalog.debug",
+  "buildSha256": "38b91ce19191b17abeceafe8cbb200c1a73a5c9eb6cc479417b3d081535b1f14",
+  "harness": "tools/audit-select-android.py",
+  "passes": [
+    {
+      "index": 1,
+      "resultStatus": 1,
+      "rawReportSha256": "22c4c24da55ec68c85f30c806402dcfa301d3337a06340706577baa3fc3566c1",
+      "geometryReportSha256": "0fbb5ea5596e5a341d8b0970fd5877bfdbbb85590881b3d4d5d3134b3e1c4a27",
+      "screensChecked": 13,
+      "geometryFailureCount": 0
+    },
+    {
+      "index": 2,
+      "resultStatus": 1,
+      "rawReportSha256": "230962da8a1efabb40b8c974d4d55ca6013f5c04ca26d8aa30285ed6e5d843c8",
+      "geometryReportSha256": "0fbb5ea5596e5a341d8b0970fd5877bfdbbb85590881b3d4d5d3134b3e1c4a27",
+      "screensChecked": 13,
+      "geometryFailureCount": 0
+    }
+  ],
+  "checks": {
+    "singleNativeSheet": true,
+    "materialTouchTarget": true,
+    "noSearchOrKeyboard": true,
+    "selection": true,
+    "backdropPreservesValue": true,
+    "lastRowLowerEdgeHitTarget": true,
+    "multipleInstanceIsolation": true,
+    "disabledAndReadOnly": true,
+    "uniqueAlignedNoDataState": true,
+    "materialDragIndicator": true,
+    "systemBack": true,
+    "rotation": true,
+    "adaptiveNavigation": true,
+    "runtimeLog": true,
+    "twoConsecutivePhysicalPasses": true,
+    "manualVisualReview": true,
+    "realInteractionRecording": true
+  },
+  "documentation": {
+    "recording": "interaction.mp4",
+    "recordingSha256": "551ca316faa6f965b8bd64f402dbb60f40037af0acdbedccc0ba59bf8b3b07d4",
+    "gif": "interaction.gif",
+    "gifSha256": "8a62ace931bfe27ddafeaacc088b38ece5ad17cfe668c74a05f36553ff052f79",
+    "before": "baseline.png",
+    "during": "open.png",
+    "after": "selected.png",
+    "additionalScreenshots": [
+      "no-data.png",
+      "landscape.png"
+    ]
+  }
+}

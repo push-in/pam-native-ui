@@ -7,6 +7,12 @@
 **/.cxx/
 **/.externalNativeBuild/
 **/build/
+**/dist/
+**/__pycache__/
+**/*.pyc
+# Raw device captures are large and must be force-added only when referenced
+# by the curated audit manifest or showcase documentation.
+/docs/assets/android/audit/
 /.idea/
 /.vscode/
 /.pam-native/

@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "component": "p-textarea",
+  "device": "emulator-5554",
+  "package": "dev.pam.mobileui.catalog.debug",
+  "result": "passed",
+  "checks": {
+    "labelTouchFocus": true,
+    "nativeMultilineAndEnter": true,
+    "instanceIsolation": true,
+    "systemBackPersistence": true,
+    "disabledAndReadOnly": true,
+    "errorMessage": true,
+    "clearable": true,
+    "prefixAndSuffix": true,
+    "counterAndMaxLengthWithNewline": true,
+    "autoGrow": true,
+    "rows": true,
+    "fixedOverflow": true,
+    "rotationWithIme": true,
+    "adaptiveNavigation": true,
+    "statusBarContrast": true,
+    "runtimeLog": true
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-textarea-approved-recording/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-multiline-keyboard",
+      "path": "/tmp/pam-textarea-approved-recording/01-multiline-keyboard.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-keyboard-closed",
+      "path": "/tmp/pam-textarea-approved-recording/02-keyboard-closed.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "state-disabled",
+      "path": "/tmp/pam-textarea-approved-recording/state-disabled.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "state-read-only",
+      "path": "/tmp/pam-textarea-approved-recording/state-read-only.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-error",
+      "path": "/tmp/pam-textarea-approved-recording/03-error.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-cleared",
+      "path": "/tmp/pam-textarea-approved-recording/04-cleared.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-affixes",
+      "path": "/tmp/pam-textarea-approved-recording/05-affixes.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-counter-max",
+      "path": "/tmp/pam-textarea-approved-recording/06-counter-max.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-auto-grow",
+      "path": "/tmp/pam-textarea-approved-recording/07-auto-grow.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "08-four-rows",
+      "path": "/tmp/pam-textarea-approved-recording/08-four-rows.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "09-fixed-scroll",
+      "path": "/tmp/pam-textarea-approved-recording/09-fixed-scroll.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "10-landscape-keyboard",
+      "path": "/tmp/pam-textarea-approved-recording/10-landscape-keyboard.png",
+      "size": [
+        2400,
+        1080
+      ]
+    }
+  ]
+}

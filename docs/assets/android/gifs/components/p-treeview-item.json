@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-treeview-item",
+  "candidateOnly": true,
+  "sourceReportSha256": "78753a31cb757c59e74e7f8ef8e20b62358c6760ec7c221e6a37e5ecbeecb5e3",
+  "baselineSha256": "c0dc2d5fecc172579c5fcbd5a8ae197a8dac3835ef2b060ba135b227758707fc",
+  "interactedSha256": "5eecc0e26dbb20a39312e082731b691dc5a999b39b16a441b4538483b7e25dc4",
+  "gif": "p-treeview-item.gif",
+  "gifSha256": "83e1d52df623dd1c009532d23910d7a80e7adda927e8867ea99173cea0fbaaa7",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

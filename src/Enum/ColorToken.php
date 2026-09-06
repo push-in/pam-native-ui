@@ -36,4 +36,14 @@ enum ColorToken: int
     case Focus = 28;
     case Overlay = 29;
     case OnSurface = 30;
+    case Outline = 31;
+    case OutlineVariant = 32;
+    case SurfaceContainerLowest = 33;
+    case SurfaceContainerLow = 34;
+    case SurfaceContainer = 35;
+    case SurfaceContainerHigh = 36;
+    case SurfaceContainerHighest = 37;
+    case InverseSurface = 38;
+    case InverseOnSurface = 39;
+    case InversePrimary = 40;
 }

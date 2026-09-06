@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-card-actions",
+  "candidateOnly": true,
+  "sourceReportSha256": "585dfdc093627fc476bb4a206c22b60c740c7a10d54d04827bf21f5652d18754",
+  "baselineSha256": "1a4f0db118ad27c10af60442237889a487b62e7be2a57c522fad6a4201ee13df",
+  "interactedSha256": "a96b4b26a1a7af960811ef2130ac689f83f8c10b450851dc72dc7601c8e7dacd",
+  "gif": "p-card-actions.gif",
+  "gifSha256": "85b922c6d1f494aa08e79e234d2ef5f6b0e14be2539b41aba12e4e5ac3d52d73",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

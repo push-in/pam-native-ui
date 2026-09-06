@@ -401,7 +401,7 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "8cc1f098a3dcf5e8fc8d8969b7ed7a306f47cb52"
+                "reference": "95278dd3ae532f29c4eaff6504d0151f3b16aed4"
             },
             "require": {
                 "php": "^8.5",

@@ -10,6 +10,7 @@ use Pam\MobileUi\Product\MetricCard;
 use Pam\MobileUi\Product\StatusBanner;
 use Pam\Native\AccessibilityLiveRegion;
 use Pam\Native\AccessibilityRole;
+use Pam\Native\NodeKind;
 use Pam\Native\PropKey;
 use Pam\Native\TemplateRegistry;
 
@@ -37,6 +38,66 @@ if (is_file($vendorAutoload)) {
 
 TemplateRegistry::reset();
 (new MobileUiPluginProvider())->register();
+
+$colorInputClass = MaterialComponentMap::TAGS['p-color-input'];
+$colorInputTree = $colorInputClass::make([
+    'label' => 'Brand color',
+    'value' => '#5CBBF6',
+])->toElement();
+$colorInputNode = null;
+$findColorInput = static function ($node) use (&$findColorInput, &$colorInputNode): void {
+    if ($node->kind() === NodeKind::Input) {
+        $colorInputNode = $node;
+
+        return;
+    }
+    foreach ($node->children() as $child) {
+        $findColorInput($child);
+        if ($colorInputNode !== null) {
+            return;
+        }
+    }
+};
+$findColorInput($colorInputTree);
+if ($colorInputNode === null
+    || ($colorInputNode->properties()[PropKey::InputAutoCorrect->value] ?? null) !== false
+) {
+    throw new RuntimeException('Color inputs must disable native spell correction.');
+}
+
+$textFieldClass = MaterialComponentMap::TAGS['p-text-field'];
+$disabledTextFieldTree = $textFieldClass::make([
+    'label' => 'Disabled field',
+    'value' => 'Unavailable',
+    'disabled' => true,
+])->toElement();
+$disabledInputNode = null;
+$findDisabledInput = static function ($node) use (
+    &$findDisabledInput,
+    &$disabledInputNode,
+): void {
+    if ($node->kind() === NodeKind::Input) {
+        $disabledInputNode = $node;
+
+        return;
+    }
+    foreach ($node->children() as $child) {
+        $findDisabledInput($child);
+        if ($disabledInputNode !== null) {
+            return;
+        }
+    }
+};
+$findDisabledInput($disabledTextFieldTree);
+if ($disabledInputNode === null
+    || ($disabledInputNode->properties()[PropKey::Enabled->value] ?? null) !== false
+    || ($disabledInputNode->properties()[PropKey::InputEditable->value] ?? null) !== false
+    || ($disabledInputNode->properties()[PropKey::Accessible->value] ?? null) !== false
+) {
+    throw new RuntimeException(
+        'Disabled text inputs must reject editing and native input focus.',
+    );
+}
 
 if (TemplateRegistry::factory('StatusBanner') === null) {
     throw new RuntimeException('StatusBanner is not registered for templates.');
@@ -127,6 +188,39 @@ if (($range[PropKey::AccessibilityValueMin->value] ?? null) !== 0.0
     || ($range[PropKey::AccessibilityValueText->value] ?? null) !== '20 to 80'
 ) {
     throw new RuntimeException('Range slider must announce both native endpoints.');
+}
+$normalizedRange = $rangeClass::make([
+    'value' => [83, 17],
+    'minValue' => 0,
+    'maxValue' => 100,
+    'step' => 10,
+])->toElement()->properties();
+if (
+    ($normalizedRange[PropKey::AccessibilityValueMin->value] ?? null) !== 0.0
+    || ($normalizedRange[PropKey::AccessibilityValueMax->value] ?? null) !== 100.0
+    || ($normalizedRange[PropKey::AccessibilityValueNow->value] ?? null) !== 80.0
+    || ($normalizedRange[PropKey::AccessibilityValueText->value] ?? null)
+        !== '20 to 80'
+) {
+    throw new RuntimeException(
+        'Range slider accessibility must announce the same sorted, snapped endpoints rendered natively.',
+    );
+}
+
+$rangeChanges = [];
+$rangeEnds = [];
+$interactiveRange = $rangeClass::make(['value' => [20, 80]])
+    ->onChange(static function (array $value) use (&$rangeChanges): void {
+        $rangeChanges[] = $value;
+    })
+    ->onChangeEnd(static function (array $value) use (&$rangeEnds): void {
+        $rangeEnds[] = $value;
+    })
+    ->toElement();
+$interactiveRange->events()[\Pam\Native\EventKind::Change->value]('[35,75]');
+$interactiveRange->events()[\Pam\Native\EventKind::Native->value]('[40,70]');
+if ($rangeChanges !== [[35.0, 75.0]] || $rangeEnds !== [[40.0, 70.0]]) {
+    throw new RuntimeException('Range slider callbacks must retain both native endpoints.');
 }
 
 $progressClass = MaterialComponentMap::TAGS['p-progress-linear'];

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 2,
+  "component": "p-empty-state",
+  "device": "emulator-5556",
+  "checks": {
+    "fiveProfiles": true,
+    "semanticSummary": true,
+    "directCanvas": true,
+    "materialGeometry": true,
+    "expanded48DpTarget": true,
+    "controlledActionState": true,
+    "compactDensity": true,
+    "fontScale130": true,
+    "landscape": true,
+    "runtimeLog": true
+  },
+  "metrics": {
+    "density": 2.625,
+    "profiles": {
+      "interactive": {
+        "summaryHeightDp": 264.0,
+        "buttonWidthDp": 160.0,
+        "buttonHeightDp": 40.0
+      },
+      "search": {
+        "summaryHeightDp": 264.0,
+        "buttonWidthDp": 160.0,
+        "buttonHeightDp": 40.0
+      },
+      "offline": {
+        "summaryHeightDp": 264.0,
+        "buttonWidthDp": 160.0,
+        "buttonHeightDp": 40.0
+      },
+      "permission": {
+        "summaryHeightDp": 264.0,
+        "buttonWidthDp": 160.0,
+        "buttonHeightDp": 40.0
+      },
+      "compact": {
+        "summaryHeightDp": 236.1904761904762,
+        "buttonWidthDp": 160.0,
+        "buttonHeightDp": 40.0
+      }
+    }
+  },
+  "evidence": [
+    {
+      "name": "00-interactive",
+      "path": "/tmp/pam-empty-state-audit-420-final/00-interactive.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-activated",
+      "path": "/tmp/pam-empty-state-audit-420-final/01-activated.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-search",
+      "path": "/tmp/pam-empty-state-audit-420-final/01-search.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-offline",
+      "path": "/tmp/pam-empty-state-audit-420-final/02-offline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-permission",
+      "path": "/tmp/pam-empty-state-audit-420-final/03-permission.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-compact",
+      "path": "/tmp/pam-empty-state-audit-420-final/04-compact.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-font-scale-130",
+      "path": "/tmp/pam-empty-state-audit-420-final/05-font-scale-130.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-landscape",
+      "path": "/tmp/pam-empty-state-audit-420-final/06-landscape.png",
+      "size": [
+        2400,
+        1080
+      ]
+    },
+    {
+      "name": "06-landscape-verified",
+      "path": "/tmp/pam-empty-state-audit-420-final/06-landscape-verified.png",
+      "size": [
+        2400,
+        1080
+      ]
+    }
+  ]
+}

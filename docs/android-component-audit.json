@@ -1,0 +1,1437 @@
+{
+  "schemaVersion": 1,
+  "auditGeneration": 2,
+  "status": 1,
+  "invalidatedAt": "2026-09-01",
+  "restartedAt": "2026-09-01",
+  "componentCount": 84,
+  "defaultComponentStatus": 1,
+  "approvedComponents": [
+    "p-autocomplete",
+    "p-combobox",
+    "p-otp-input",
+    "p-select",
+    "p-slider"
+  ],
+  "emulatorCandidateComponents": [
+    "p-alert",
+    "p-app-bar",
+    "p-app-bar-nav-icon",
+    "p-avatar",
+    "p-badge",
+    "p-banner",
+    "p-banner-actions",
+    "p-bottom-sheet",
+    "p-btn",
+    "p-btn-group",
+    "p-btn-toggle",
+    "p-calendar",
+    "p-calendar-day",
+    "p-card",
+    "p-card-actions",
+    "p-carousel",
+    "p-carousel-item",
+    "p-checkbox",
+    "p-chip",
+    "p-chip-group",
+    "p-color-input",
+    "p-data-table",
+    "p-data-table-virtual",
+    "p-date-input",
+    "p-date-picker",
+    "p-dialog",
+    "p-divider",
+    "p-empty-state",
+    "p-expansion-panel",
+    "p-expansion-panel-text",
+    "p-expansion-panel-title",
+    "p-expansion-panels",
+    "p-fab",
+    "p-form",
+    "p-icon",
+    "p-icon-btn",
+    "p-img",
+    "p-infinite-scroll",
+    "p-item",
+    "p-item-group",
+    "p-list",
+    "p-list-item",
+    "p-menu",
+    "p-number-input",
+    "p-overlay",
+    "p-progress-circular",
+    "p-progress-linear",
+    "p-radio",
+    "p-radio-group",
+    "p-range-slider",
+    "p-rating",
+    "p-sheet",
+    "p-skeleton-loader",
+    "p-slide-group",
+    "p-slide-group-item",
+    "p-snackbar",
+    "p-sparkline",
+    "p-speed-dial",
+    "p-stepper",
+    "p-stepper-actions",
+    "p-stepper-header",
+    "p-stepper-item",
+    "p-stepper-vertical",
+    "p-stepper-vertical-actions",
+    "p-stepper-vertical-item",
+    "p-stepper-window",
+    "p-stepper-window-item",
+    "p-switch",
+    "p-tab",
+    "p-tabs",
+    "p-text-field",
+    "p-textarea",
+    "p-time-picker",
+    "p-timeline",
+    "p-timeline-item",
+    "p-toolbar",
+    "p-tooltip",
+    "p-treeview",
+    "p-treeview-item"
+  ],
+  "componentEvidence": {
+    "p-autocomplete": {
+      "verifiedAt": "2026-09-01",
+      "device": "Samsung SM-G973F",
+      "androidVersion": 12,
+      "androidApi": 31,
+      "viewport": "1080x2280@420dpi",
+      "buildSha256": "0550ca094e67e6583f2ce0ca8e4629642eff3dc7a6acea74842e97eee015bb0a",
+      "harness": "tools/audit-autocomplete-android.py",
+      "report": "docs/assets/android/audit/p-autocomplete/report.json",
+      "recording": "docs/assets/android/audit/p-autocomplete/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-autocomplete/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-autocomplete/baseline.png",
+        "docs/assets/android/audit/p-autocomplete/open.png",
+        "docs/assets/android/audit/p-autocomplete/filtered.png",
+        "docs/assets/android/audit/p-autocomplete/selected.png",
+        "docs/assets/android/audit/p-autocomplete/no-data.png",
+        "docs/assets/android/audit/p-autocomplete/multiple.png",
+        "docs/assets/android/audit/p-autocomplete/landscape.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "27a162ed2633192b8fa0caab7d6b43ae2f087bffd1a2d45d60a590ad422f4061",
+          "geometryReportSha256": "6366386a70187d2874245e5c13fe51f1e37d2ace52ed452709ad80f8852b1de9"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "efa4e72c90b729cc3904015a0424cad29c1e1bc70e470a9bcbb83b336e7146c6",
+          "geometryReportSha256": "6366386a70187d2874245e5c13fe51f1e37d2ace52ed452709ad80f8852b1de9"
+        }
+      ],
+      "checks": [
+        "single_native_sheet",
+        "material_touch_target",
+        "filter_and_selection",
+        "backdrop_preserves_value",
+        "last_row_lower_edge_hit_target",
+        "bottom_safe_area",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "unique_separated_no_data_state",
+        "multiple_selection",
+        "keyboard_back",
+        "rotation",
+        "adaptive_navigation",
+        "material_drag_indicator",
+        "runtime_log",
+        "two_consecutive_physical_device_passes",
+        "manual_visual_review",
+        "real_interaction_recording"
+      ]
+    },
+    "p-combobox": {
+      "verifiedAt": "2026-09-01",
+      "device": "Samsung SM-G973F",
+      "androidVersion": 12,
+      "androidApi": 31,
+      "viewport": "1080x2280@420dpi",
+      "buildSha256": "0550ca094e67e6583f2ce0ca8e4629642eff3dc7a6acea74842e97eee015bb0a",
+      "harness": "tools/audit-combobox-android.py",
+      "report": "docs/assets/android/audit/p-combobox/report.json",
+      "recording": "docs/assets/android/audit/p-combobox/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-combobox/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-combobox/baseline.png",
+        "docs/assets/android/audit/p-combobox/open.png",
+        "docs/assets/android/audit/p-combobox/custom-value.png",
+        "docs/assets/android/audit/p-combobox/custom-selected.png",
+        "docs/assets/android/audit/p-combobox/filtered.png",
+        "docs/assets/android/audit/p-combobox/selected.png",
+        "docs/assets/android/audit/p-combobox/no-data.png",
+        "docs/assets/android/audit/p-combobox/landscape.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "bdc7976e9c8b3accc4a01262732621c895856ad26c952aac1cb578cd844535c6",
+          "geometryReportSha256": "2b52e67cf022c8fd9ca12f05f441d1023756c3c38def1740ac04730537cba02f"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "1be3d4c1d7e7b2983aadf68c97c2549cd1f67fc1a9bf6dec12b80b23f0a9e168",
+          "geometryReportSha256": "2b52e67cf022c8fd9ca12f05f441d1023756c3c38def1740ac04730537cba02f"
+        }
+      ],
+      "checks": [
+        "single_native_sheet",
+        "material_touch_target",
+        "custom_value",
+        "filter_and_selection",
+        "backdrop_preserves_value",
+        "last_row_lower_edge_hit_target",
+        "bottom_safe_area",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "unique_separated_no_data_state",
+        "material_drag_indicator",
+        "keyboard_back",
+        "rotation",
+        "adaptive_navigation",
+        "runtime_log",
+        "two_consecutive_physical_device_passes",
+        "manual_visual_review",
+        "real_interaction_recording"
+      ]
+    },
+    "p-select": {
+      "verifiedAt": "2026-09-01",
+      "device": "Samsung SM-G973F",
+      "androidVersion": 12,
+      "androidApi": 31,
+      "viewport": "1080x2280@420dpi",
+      "buildSha256": "38b91ce19191b17abeceafe8cbb200c1a73a5c9eb6cc479417b3d081535b1f14",
+      "harness": "tools/audit-select-android.py",
+      "report": "docs/assets/android/audit/p-select/report.json",
+      "recording": "docs/assets/android/audit/p-select/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-select/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-select/baseline.png",
+        "docs/assets/android/audit/p-select/open.png",
+        "docs/assets/android/audit/p-select/selected.png",
+        "docs/assets/android/audit/p-select/no-data.png",
+        "docs/assets/android/audit/p-select/landscape.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "22c4c24da55ec68c85f30c806402dcfa301d3337a06340706577baa3fc3566c1",
+          "geometryReportSha256": "0fbb5ea5596e5a341d8b0970fd5877bfdbbb85590881b3d4d5d3134b3e1c4a27"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "230962da8a1efabb40b8c974d4d55ca6013f5c04ca26d8aa30285ed6e5d843c8",
+          "geometryReportSha256": "0fbb5ea5596e5a341d8b0970fd5877bfdbbb85590881b3d4d5d3134b3e1c4a27"
+        }
+      ],
+      "checks": [
+        "single_native_sheet",
+        "material_touch_target",
+        "no_search_or_keyboard",
+        "selection",
+        "backdrop_preserves_value",
+        "last_row_lower_edge_hit_target",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "unique_aligned_no_data_state",
+        "material_drag_indicator",
+        "system_back",
+        "rotation",
+        "adaptive_navigation",
+        "runtime_log",
+        "two_consecutive_physical_device_passes",
+        "manual_visual_review",
+        "real_interaction_recording"
+      ]
+    },
+    "p-otp-input": {
+      "verifiedAt": "2026-09-01",
+      "device": "Samsung SM-G973F",
+      "androidVersion": 12,
+      "androidApi": 31,
+      "viewport": "1080x2280@420dpi",
+      "buildSha256": "79c8dafdb58648a7d7aa13f7d4d6d77d413e902c5e99e3778b9406dd1e5b89a9",
+      "harness": "tools/audit-otp-input-android.py",
+      "report": "docs/assets/android/audit/p-otp-input/report.json",
+      "recording": "docs/assets/android/audit/p-otp-input/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-otp-input/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-otp-input/baseline.png",
+        "docs/assets/android/audit/p-otp-input/typed-keyboard.png",
+        "docs/assets/android/audit/p-otp-input/after.png",
+        "docs/assets/android/audit/p-otp-input/masked-typed.png",
+        "docs/assets/android/audit/p-otp-input/divider.png",
+        "docs/assets/android/audit/p-otp-input/merged.png",
+        "docs/assets/android/audit/p-otp-input/error.png",
+        "docs/assets/android/audit/p-otp-input/loading.png",
+        "docs/assets/android/audit/p-otp-input/landscape-keyboard.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "c8f8596ac2b460e0d914dd21e2ef8baee520cd36fe04f514725d4801b8b07e61"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "7278bc51517f24150ead1472e3d74c827b3d5b8fb2f54dee23ca988a1c5cb227"
+        }
+      ],
+      "checks": [
+        "48dp_native_editor",
+        "single_accessibility_node_per_instance",
+        "real_numeric_keyboard_input",
+        "backspace_and_paste",
+        "max_length",
+        "multiple_instance_isolation",
+        "system_back_persistence",
+        "disabled_and_read_only",
+        "four_digit_length",
+        "masked_secret",
+        "divider_and_merged",
+        "error_message",
+        "loading_indicator",
+        "rotation_with_ime",
+        "adaptive_navigation",
+        "light_status_bar_contrast",
+        "runtime_log_and_layout_loop",
+        "two_consecutive_physical_device_passes",
+        "manual_visual_review",
+        "real_interaction_recording"
+      ]
+    },
+    "p-slider": {
+      "verifiedAt": "2026-09-02",
+      "device": "Samsung SM-G973F",
+      "androidVersion": 12,
+      "androidApi": 31,
+      "viewport": "1080x2280@420dpi",
+      "buildSha256": "c4501eb5f34c50fe54418f522e50ebe51be1eecade21fd7848fcab3f3cb2a229",
+      "harness": "tools/audit-slider-android.py",
+      "report": "docs/assets/android/audit/p-slider/report.json",
+      "recording": "docs/assets/android/audit/p-slider/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-slider/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-slider/baseline.png",
+        "docs/assets/android/audit/p-slider/dragged.png",
+        "docs/assets/android/audit/p-slider/disabled.png",
+        "docs/assets/android/audit/p-slider/step-baseline.png",
+        "docs/assets/android/audit/p-slider/step-snapped.png",
+        "docs/assets/android/audit/p-slider/reversed.png",
+        "docs/assets/android/audit/p-slider/reversed-dragged.png",
+        "docs/assets/android/audit/p-slider/landscape.png",
+        "docs/assets/android/audit/p-slider/portrait-restored.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "5d187bf1831192844ea215ffdfb480d93cc29ba611f3c85447f1ecd9671b6b73"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "15dc712c830060e53751a64ae81c45fca038f668bcb52171ac8696f52ad99179"
+        }
+      ],
+      "checks": [
+        "material_touch_target",
+        "expressive_material_geometry",
+        "native_single_pass_rendering",
+        "real_drag",
+        "multiple_instance_isolation",
+        "disabled",
+        "step_snapping",
+        "persistent_ticks",
+        "persistent_thumb_label",
+        "reversed",
+        "reversed_real_drag",
+        "bottom_safe_area",
+        "rotation",
+        "landscape_safe_area",
+        "adaptive_navigation",
+        "runtime_log",
+        "two_consecutive_physical_device_passes",
+        "manual_visual_review",
+        "real_interaction_recording"
+      ]
+    }
+  },
+  "previousComponentEvidence": {
+    "p-alert": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "cd6f96d576fabad311c931ad5fb200fdb3a848770ba3c55a5a623a9d72fd9315",
+      "harness": "focused ADB interaction gate",
+      "recording": "docs/assets/android/audit/p-alert/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-alert/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-alert/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-alert/default-candidate.png",
+        "docs/assets/android/audit/p-alert/success-candidate.png",
+        "docs/assets/android/audit/p-alert/warning-candidate.png",
+        "docs/assets/android/audit/p-alert/error-candidate.png",
+        "docs/assets/android/audit/p-alert/closable-candidate.png",
+        "docs/assets/android/audit/p-alert/compact-candidate.png",
+        "docs/assets/android/audit/p-alert/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-alert/landscape-candidate.png"
+      ],
+      "checks": [
+        "six_semantic_profiles",
+        "assertive_live_region",
+        "semantic_status_icons",
+        "controlled_dismiss_and_restore",
+        "expanded_48dp_close_target",
+        "material_80dp_minimum_height",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "runtime_log"
+      ]
+    },
+    "p-avatar": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "da8eb7998c036dbf0731cfc91571b0f5152158692c4e212632ff5901b2d3310f",
+      "harness": "avatar-badge-fab focused ADB gate",
+      "report": "docs/assets/android/audit/p-avatar/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-avatar/baseline-candidate.png",
+        "docs/assets/android/audit/p-avatar/large-candidate.png",
+        "docs/assets/android/audit/p-avatar/outlined-candidate.png",
+        "docs/assets/android/audit/p-avatar/square-candidate.png",
+        "docs/assets/android/audit/p-avatar/font-scale-130-candidate.png"
+      ],
+      "checks": ["six_profiles", "material_sizes", "official_icon", "semantic_labels", "130_percent_font_scale", "runtime_log"]
+    },
+    "p-badge": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "da8eb7998c036dbf0731cfc91571b0f5152158692c4e212632ff5901b2d3310f",
+      "harness": "avatar-badge-fab focused ADB gate",
+      "report": "docs/assets/android/audit/p-badge/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-badge/baseline-candidate.png",
+        "docs/assets/android/audit/p-badge/dot-candidate.png",
+        "docs/assets/android/audit/p-badge/new-candidate.png",
+        "docs/assets/android/audit/p-badge/font-scale-130-candidate.png"
+      ],
+      "checks": ["five_profiles", "avatar_anchoring", "overflow_geometry", "status_dot", "semantic_labels", "runtime_log"]
+    },
+    "p-fab": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "da8eb7998c036dbf0731cfc91571b0f5152158692c4e212632ff5901b2d3310f",
+      "harness": "avatar-badge-fab focused ADB gate",
+      "recording": "docs/assets/android/audit/p-fab/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-fab/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-fab/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-fab/baseline-candidate.png",
+        "docs/assets/android/audit/p-fab/activated-candidate.png",
+        "docs/assets/android/audit/p-fab/large-candidate.png",
+        "docs/assets/android/audit/p-fab/disabled-candidate.png",
+        "docs/assets/android/audit/p-fab/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-fab/landscape-candidate.png"
+      ],
+      "checks": ["four_material_sizes", "official_icons", "controlled_actions", "disabled_inertia", "130_percent_font_scale", "adaptive_landscape", "runtime_log"]
+    },
+    "p-autocomplete": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "92628d83b39ffcd5311225110e982717f8d639f1c797b465c12388c9b9d1671c",
+      "harness": "tools/audit-autocomplete-android.py",
+      "recording": "docs/assets/android/audit/p-autocomplete/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-autocomplete/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-autocomplete/baseline.png",
+        "docs/assets/android/audit/p-autocomplete/open.png",
+        "docs/assets/android/audit/p-autocomplete/filtered.png",
+        "docs/assets/android/audit/p-autocomplete/multiple.png",
+        "docs/assets/android/audit/p-autocomplete/landscape.png"
+      ],
+      "checks": [
+        "single_sheet",
+        "64dp_touch_target",
+        "filter_and_selection",
+        "backdrop_preserves_value",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "no_data",
+        "multiple_selection",
+        "keyboard_back",
+        "rotation",
+        "responsive_drawer",
+        "runtime_log_and_layout_loop"
+      ]
+    },
+    "p-combobox": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "add07e737dcb40f8b0b7ec2137c0be2215cd96db29b9334a64fbd890e94d6699",
+      "harness": "tools/audit-combobox-android.py",
+      "recording": "docs/assets/android/audit/p-combobox/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-combobox/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-combobox/baseline.png",
+        "docs/assets/android/audit/p-combobox/open.png",
+        "docs/assets/android/audit/p-combobox/custom-value.png",
+        "docs/assets/android/audit/p-combobox/custom-selected.png",
+        "docs/assets/android/audit/p-combobox/landscape.png"
+      ],
+      "checks": [
+        "single_sheet",
+        "64dp_touch_target",
+        "custom_value",
+        "filter_and_selection",
+        "backdrop_preserves_value",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "no_data",
+        "keyboard_back",
+        "rotation",
+        "responsive_drawer",
+        "runtime_log_and_layout_loop"
+      ]
+    },
+    "p-select": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "d6c47c4e9287c70867d24f56f3cd57a0cd1537a5a480b1eedcce00f12f036172",
+      "harness": "tools/audit-select-android.py",
+      "recording": "docs/assets/android/audit/p-select/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-select/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-select/baseline.png",
+        "docs/assets/android/audit/p-select/open.png",
+        "docs/assets/android/audit/p-select/selected.png",
+        "docs/assets/android/audit/p-select/no-data.png",
+        "docs/assets/android/audit/p-select/landscape.png"
+      ],
+      "checks": [
+        "single_sheet",
+        "64dp_touch_target",
+        "no_search_or_keyboard",
+        "selection",
+        "backdrop_preserves_value",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "no_data",
+        "system_back",
+        "rotation",
+        "responsive_drawer",
+        "runtime_log_and_layout_loop"
+      ]
+    },
+    "p-slider": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "0f09e4081bd739eea442aba19dd389e95c40848fe913d6546df21fd165ca127b",
+      "harness": "tools/audit-slider-android.py",
+      "recording": "docs/assets/android/audit/p-slider/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-slider/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-slider/baseline.png",
+        "docs/assets/android/audit/p-slider/dragged.png",
+        "docs/assets/android/audit/p-slider/disabled.png",
+        "docs/assets/android/audit/p-slider/step-snapped.png",
+        "docs/assets/android/audit/p-slider/landscape.png"
+      ],
+      "checks": [
+        "48dp_touch_target",
+        "visual_value_geometry",
+        "real_drag",
+        "multiple_instance_isolation",
+        "disabled_drag_rejection",
+        "step_snapping",
+        "reversed_direction",
+        "rotation",
+        "adaptive_navigation",
+        "runtime_log_and_layout_loop"
+      ]
+    },
+    "p-range-slider": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "0d032a1e595c44ac203a53c12f9654ce035bfaf1886c96daa3e27f49e8dc2a29",
+      "harness": "tools/audit-range-slider-android.py",
+      "recording": "docs/assets/android/audit/p-range-slider/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-range-slider/interaction.gif",
+      "screenshots": [
+        "docs/assets/android/audit/p-range-slider/baseline.png",
+        "docs/assets/android/audit/p-range-slider/lower-dragged.png",
+        "docs/assets/android/audit/p-range-slider/upper-dragged.png",
+        "docs/assets/android/audit/p-range-slider/step-snapped.png",
+        "docs/assets/android/audit/p-range-slider/landscape.png"
+      ],
+      "checks": [
+        "48dp_touch_target",
+        "dual_handle_geometry",
+        "lower_and_upper_drag",
+        "multiple_instance_isolation",
+        "disabled_drag_rejection",
+        "step_snapping",
+        "reversed_direction",
+        "rotation",
+        "adaptive_navigation",
+        "runtime_log_and_layout_loop"
+      ]
+    },
+    "p-text-field": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "639ee29186f1ad8e05cfdabe0c8059efc327753dc5a242ef6e7653d0ad89107d",
+      "harness": "tools/audit-text-field-android.py",
+      "recording": "docs/assets/android/audit/p-text-field/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-text-field/interaction.gif",
+      "report": "docs/assets/android/audit/p-text-field/report.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-text-field/baseline.png",
+        "docs/assets/android/audit/p-text-field/edited-keyboard.png",
+        "docs/assets/android/audit/p-text-field/error.png",
+        "docs/assets/android/audit/p-text-field/cleared.png",
+        "docs/assets/android/audit/p-text-field/affixes.png",
+        "docs/assets/android/audit/p-text-field/counter-max.png",
+        "docs/assets/android/audit/p-text-field/landscape.png"
+      ],
+      "checks": [
+        "label_touch_focus",
+        "real_keyboard_input",
+        "multiple_instance_isolation",
+        "system_back_persistence",
+        "disabled_and_read_only",
+        "error_message",
+        "clear_action",
+        "prefix_and_suffix_geometry",
+        "counter_and_max_length",
+        "rotation_with_ime",
+        "48px_minimum_landscape_editor",
+        "adaptive_navigation",
+        "light_status_bar_contrast",
+        "runtime_log_and_layout_loop",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-textarea": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "96223c75786c4a22fa3354a3dfe46b0282f9f4d8d9cc020783f2d8eeeb474c23",
+      "harness": "tools/audit-textarea-android.py",
+      "recording": "docs/assets/android/audit/p-textarea/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-textarea/interaction.gif",
+      "report": "docs/assets/android/audit/p-textarea/report.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-textarea/baseline.png",
+        "docs/assets/android/audit/p-textarea/multiline-keyboard.png",
+        "docs/assets/android/audit/p-textarea/error.png",
+        "docs/assets/android/audit/p-textarea/cleared.png",
+        "docs/assets/android/audit/p-textarea/affixes.png",
+        "docs/assets/android/audit/p-textarea/counter-max.png",
+        "docs/assets/android/audit/p-textarea/auto-grow.png",
+        "docs/assets/android/audit/p-textarea/four-rows.png",
+        "docs/assets/android/audit/p-textarea/fixed-scroll.png",
+        "docs/assets/android/audit/p-textarea/landscape.png"
+      ],
+      "checks": [
+        "label_touch_focus",
+        "native_multiline_and_enter",
+        "multiple_instance_isolation",
+        "system_back_persistence",
+        "disabled_and_read_only",
+        "error_message",
+        "clear_action",
+        "prefix_and_suffix_first_line_alignment",
+        "counter_and_max_length_include_newline",
+        "auto_grow",
+        "rows_geometry",
+        "fixed_overflow_scrolling",
+        "rotation_with_ime",
+        "adaptive_navigation",
+        "light_status_bar_contrast",
+        "runtime_log_and_layout_loop",
+        "two_consecutive_official_apk_passes",
+        "recorded_third_pass"
+      ]
+    },
+    "p-checkbox": {
+      "verifiedAt": "2026-09-05",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "f581cafa4599e642ccb2b77b23ac07c26c1363578cd14de94149b8b20540b50e",
+      "harness": "tools/audit-checkbox-android.py",
+      "recording": "docs/assets/android/audit/p-checkbox/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-checkbox/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-checkbox/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-checkbox/baseline-candidate.png",
+        "docs/assets/android/audit/p-checkbox/interacted-candidate.png",
+        "docs/assets/android/audit/p-checkbox/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-checkbox/landscape-candidate.png"
+      ],
+      "checks": [
+        "six_material_states",
+        "48dp_touch_targets",
+        "checked_and_unchecked",
+        "indeterminate_semantics",
+        "disabled_inertia",
+        "long_label_wrap",
+        "semantic_error_outline",
+        "independent_callbacks",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "20_tap_stress",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-chip": {
+      "verifiedAt": "2026-09-05",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "0013c13a900eb769c2db246cb218efe5fe0d000162350132d71a015b5ddf2f68",
+      "harness": "tools/audit-chip-android.py",
+      "recording": "docs/assets/android/audit/p-chip/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-chip/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-chip/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-chip/baseline-candidate.png",
+        "docs/assets/android/audit/p-chip/interacted-candidate.png",
+        "docs/assets/android/audit/p-chip/font-scale-130-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "9a0f2d3bdca07949840fba3c285463ff11075e383e72e0325bed08b673ef051e"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "8691156b1aab7ae887a021d221d0093294447bf3cb7e5a06552594512bd7b85d"
+        }
+      ],
+      "checks": [
+        "six_semantic_profiles",
+        "material_32dp_container",
+        "48dp_effective_touch_target",
+        "leading_icons",
+        "selected_filter_toggle",
+        "input_remove_and_restore",
+        "disabled_inertia",
+        "130_percent_font_scale",
+        "20_tap_stress",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-chip-group": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "7567b3a24921fbaaffa90be84295db44a105021af8d8351a0ee79c012662f8f3",
+      "harness": "tools/audit-chip-group-android.py",
+      "recording": "docs/assets/android/audit/p-chip-group/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-chip-group/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-chip-group/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-chip-group/baseline-candidate.png",
+        "docs/assets/android/audit/p-chip-group/interacted-candidate.png",
+        "docs/assets/android/audit/p-chip-group/font-scale-130-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "546198bdd21821c27ecfb1bc3ea2d3a075d0bed924c6dde54ea9267c7aac0944"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "1cfa82564350d3e4f7a7be23ab059438c2ec3a293a6a757e5102a4e40dd135f9"
+        }
+      ],
+      "checks": [
+        "single_selection",
+        "multiple_selection",
+        "vertical_intrinsic_geometry",
+        "material_32dp_containers",
+        "selected_visual_state",
+        "disabled_inertia",
+        "130_percent_font_scale",
+        "20_tap_stress",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-color-input": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "e81eb84cafd0f3fc10451445dfe9a2af9114863566e69bc7570fec3d38e84aab",
+      "harness": "tools/audit-color-input-android.py",
+      "gif": "docs/assets/android/audit/p-color-input/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-color-input/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-color-input/baseline-candidate.png",
+        "docs/assets/android/audit/p-color-input/palette-selected-candidate.png",
+        "docs/assets/android/audit/p-color-input/font-scale-130-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "860615e30d003a0af9271e3f127277ab03d7ea93347fe50abbf4356bd0a54dbe"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "5845e6ada98840605de07a4f2d9f84edd0c4338637a9bd9dcb789125bd8a6d77"
+        }
+      ],
+      "checks": [
+        "six_color_profiles",
+        "native_input_geometry",
+        "real_hex_keyboard_edit",
+        "controlled_palette_selection",
+        "palette_touch_target",
+        "invalid_recovery_guidance",
+        "disabled_inertia",
+        "130_percent_font_scale",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-data-table": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "9c1b5ca42572f45582a4080b0f601c7af8fe74d4b58e4b974942671c177a634a",
+      "harness": "tools/audit-data-table-android.py",
+      "gif": "docs/assets/android/audit/p-data-table/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-data-table/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-data-table/baseline-candidate.png",
+        "docs/assets/android/audit/p-data-table/selected-candidate.png",
+        "docs/assets/android/audit/p-data-table/loading-candidate.png",
+        "docs/assets/android/audit/p-data-table/mobile-empty-candidate.png",
+        "docs/assets/android/audit/p-data-table/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-data-table/landscape-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "f1d3e264b08718d0aa04879d7b7ddbb693b6d18bf2cd9892f1ac2eac6a16b2d9"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "a6686c7d1a2e07a9b8dc02ea6328ac9595e71788d22249ac14cd418ccb063fe3"
+        }
+      ],
+      "checks": [
+        "eight_profiles",
+        "density_geometry",
+        "controlled_row_selection",
+        "select_all",
+        "legible_loading_state",
+        "accessible_empty_state",
+        "mobile_layout",
+        "130_percent_font_scale",
+        "landscape_layout",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-data-table-virtual": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "f8f4ebf8bd8fa4a6075758e3364ceecb47f9a6995b3d727ed000f97c7201a6c7",
+      "harness": "tools/audit-data-table-virtual-android.py",
+      "gif": "docs/assets/android/audit/p-data-table-virtual/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-data-table-virtual/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-data-table-virtual/baseline-candidate.png",
+        "docs/assets/android/audit/p-data-table-virtual/inner-scrolled-candidate.png",
+        "docs/assets/android/audit/p-data-table-virtual/fixed-header-candidate.png",
+        "docs/assets/android/audit/p-data-table-virtual/selected-candidate.png",
+        "docs/assets/android/audit/p-data-table-virtual/loading-empty-candidate.png",
+        "docs/assets/android/audit/p-data-table-virtual/font-scale-130-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "c3d967114af1a22174ba129f994e0934c68226fb44f7dc6b7c5b97bd8693c92d"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "a88be6b12c1459fff4365a7dab36e448672bc92540e40206a7f8f4efc0e6b436"
+        }
+      ],
+      "checks": [
+        "eight_profiles",
+        "bounded_viewport",
+        "windowed_mount",
+        "inner_row_recycling",
+        "outer_scroll_isolation",
+        "fixed_header",
+        "controlled_selection",
+        "loading_and_empty_states",
+        "130_percent_font_scale",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-time-picker": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "9b20546d1261b7ec1f29333c7a18a771e5ca55310c4731478d57a74e28ce75d0",
+      "harness": "tools/audit-time-picker-android.py",
+      "recording": "docs/assets/android/audit/p-time-picker/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-time-picker/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-time-picker/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-time-picker/baseline-candidate.png",
+        "docs/assets/android/audit/p-time-picker/time-changed-candidate.png",
+        "docs/assets/android/audit/p-time-picker/24-hour-dialog-candidate.png",
+        "docs/assets/android/audit/p-time-picker/font-scale-130-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "8f5beee634bd4c6bf4c545774254d6ea417abf51ebd8bef85af5a95fce4455af"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "7369df3e9f57ebfd0879489357e8a1f49d5a504a5046a9c13d082b8612bbcc5c"
+        }
+      ],
+      "checks": [
+        "native_field_geometry",
+        "native_android_dialog",
+        "hour_and_minute_selection",
+        "controlled_time_change",
+        "24_hour_mode",
+        "am_pm_mode",
+        "read_only_inertia",
+        "disabled_inertia",
+        "130_percent_font_scale",
+        "runtime_log",
+        "two_consecutive_debug_apk_passes"
+      ]
+    },
+    "p-date-picker": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "df856dea6b66c4103824c3a02273ea55c4ad2a7e24c088230de7e7c371f287d5",
+      "harness": "tools/audit-date-picker-android.py",
+      "recording": "docs/assets/android/audit/p-date-picker/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-date-picker/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-date-picker/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-date-picker/baseline-candidate.png",
+        "docs/assets/android/audit/p-date-picker/selected-candidate.png",
+        "docs/assets/android/audit/p-date-picker/range-candidate.png",
+        "docs/assets/android/audit/p-date-picker/week-numbers-candidate.png",
+        "docs/assets/android/audit/p-date-picker/bounded-candidate.png",
+        "docs/assets/android/audit/p-date-picker/font-scale-130-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "4e318a8698a13c78cb8e3b5d4ec8f7989801db709e7ab03a129403574a476a3c"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "988b45fb5446accfdce042b85c88f967ef721ed5b1d0ef817a37e54151318e16"
+        }
+      ],
+      "checks": [
+        "native_calendar_geometry",
+        "controlled_date_selection",
+        "month_navigation",
+        "range_endpoints",
+        "accessible_week_numbers",
+        "bounded_dates",
+        "read_only_inertia",
+        "disabled_inertia",
+        "130_percent_font_scale",
+        "runtime_log",
+        "two_consecutive_debug_apk_passes"
+      ]
+    },
+    "p-divider": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "df856dea6b66c4103824c3a02273ea55c4ad2a7e24c088230de7e7c371f287d5",
+      "harness": "tools/audit-divider-android.py",
+      "report": "docs/assets/android/audit/p-divider/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-divider/baseline-candidate.png",
+        "docs/assets/android/audit/p-divider/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-divider/landscape-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "32dff32fecd9f7b93935675db370ce7011143bba4c3a4a604f464324e2919c55"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "b6fd752efa207bc2ea4c37babd687afb28eb1adc04f833fa4e9d4ef699e79ec9"
+        }
+      ],
+      "checks": [
+        "six_profiles",
+        "1dp_default",
+        "72dp_inset",
+        "4dp_thick",
+        "1x48dp_vertical",
+        "pixel_verified_semantic_colors",
+        "non_interactive_semantics",
+        "130_percent_font_scale",
+        "landscape_layout",
+        "runtime_log",
+        "two_consecutive_debug_apk_passes"
+      ]
+    },
+    "p-dialog": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "679966f2db9ef90f461d2050326b76b72831cf9df4fc1fcd7f0aeda01d3bf4fe",
+      "harness": "tools/audit-dialog-android.py",
+      "recording": "docs/assets/android/audit/p-dialog/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-dialog/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-dialog/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-dialog/baseline-candidate.png",
+        "docs/assets/android/audit/p-dialog/persistent-candidate.png",
+        "docs/assets/android/audit/p-dialog/no-scrim-candidate.png",
+        "docs/assets/android/audit/p-dialog/fullscreen-candidate.png",
+        "docs/assets/android/audit/p-dialog/compact-candidate.png",
+        "docs/assets/android/audit/p-dialog/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-dialog/landscape-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "2f88529f71805aa3991bc747c37dcc4d6c878f49fd8fea08219b540bfe2f4935"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "9e64fd0d5409f67f38ffdbba03a79560d2ae04648f9f8dede3da69f6a815b801"
+        }
+      ],
+      "checks": [
+        "six_profiles",
+        "native_dialog_window",
+        "material_geometry",
+        "explicit_action_dismissal",
+        "android_back_dismissal",
+        "backdrop_tap_dismissal",
+        "persistent_backdrop_inertia",
+        "transparent_scrim",
+        "fullscreen_safe_area",
+        "adaptive_widths",
+        "130_percent_font_scale",
+        "landscape_layout",
+        "runtime_log",
+        "two_consecutive_debug_apk_passes"
+      ]
+    },
+    "p-empty-state": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "b9ecfff545c67d1ecad04d42d403ce5c2db7c1b6c63aed3efcb18c3abb2ae32a",
+      "harness": "tools/audit-empty-state-android.py",
+      "recording": "docs/assets/android/audit/p-empty-state/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-empty-state/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-empty-state/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-empty-state/baseline-candidate.png",
+        "docs/assets/android/audit/p-empty-state/activated-candidate.png",
+        "docs/assets/android/audit/p-empty-state/search-candidate.png",
+        "docs/assets/android/audit/p-empty-state/offline-candidate.png",
+        "docs/assets/android/audit/p-empty-state/permission-candidate.png",
+        "docs/assets/android/audit/p-empty-state/compact-candidate.png",
+        "docs/assets/android/audit/p-empty-state/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-empty-state/landscape-candidate.png"
+      ],
+      "passes": [
+        {
+          "index": 1,
+          "rawReportSha256": "f6d7f7e5ae5be6903d838f8e166d65fe9ca893e3d01e3ef737fd5cb7dbfb9b9f"
+        },
+        {
+          "index": 2,
+          "rawReportSha256": "42f2489d0f06a845fbd66c7cfb5c83278ad9431ff76ca8ed25551340c46f3253"
+        }
+      ],
+      "checks": [
+        "five_profiles",
+        "semantic_summary",
+        "direct_canvas_without_decorative_card",
+        "material_geometry",
+        "expanded_48dp_touch_target",
+        "controlled_action_state",
+        "compact_density",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "runtime_log",
+        "two_consecutive_debug_apk_passes"
+      ]
+    },
+    "p-expansion-panels": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "3af6f11223fa9d1daba32f4d971d0f798a57d00e1211ea092968a35a5b645058",
+      "harness": "focused ADB interaction gate",
+      "recording": "docs/assets/android/audit/p-expansion-panels/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-expansion-panels/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-expansion-panels/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-expansion-panels/baseline-candidate.png",
+        "docs/assets/android/audit/p-expansion-panels/interaction-candidate.png",
+        "docs/assets/android/audit/p-expansion-panels/compact-candidate.png",
+        "docs/assets/android/audit/p-expansion-panels/disabled-candidate.png",
+        "docs/assets/android/audit/p-expansion-panels/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-expansion-panels/landscape-candidate.png"
+      ],
+      "checks": [
+        "direct_canvas_without_decorative_card",
+        "exclusive_expand_and_collapse",
+        "distinct_accessible_labels_and_hints",
+        "minimum_48dp_touch_targets",
+        "material_typography_and_spacing",
+        "compact_profile",
+        "disabled_profile",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "runtime_log"
+      ]
+    },
+    "p-expansion-panel": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "3af6f11223fa9d1daba32f4d971d0f798a57d00e1211ea092968a35a5b645058",
+      "harness": "expansion-family focused ADB gate",
+      "recording": "docs/assets/android/audit/p-expansion-panel/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-expansion-panel/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-expansion-panel/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-expansion-panel/baseline-candidate.png",
+        "docs/assets/android/audit/p-expansion-panel/reactivated-candidate.png"
+      ],
+      "checks": [
+        "direct_canvas_without_decorative_card",
+        "collapse_and_reopen",
+        "distinct_accessible_label_and_hint",
+        "minimum_48dp_touch_target",
+        "runtime_log"
+      ]
+    },
+    "p-expansion-panel-title": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "3af6f11223fa9d1daba32f4d971d0f798a57d00e1211ea092968a35a5b645058",
+      "harness": "expansion-family focused ADB gate",
+      "recording": "docs/assets/android/audit/p-expansion-panel-title/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-expansion-panel-title/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-expansion-panel-title/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-expansion-panel-title/baseline-candidate.png",
+        "docs/assets/android/audit/p-expansion-panel-title/expanded-candidate.png",
+        "docs/assets/android/audit/p-expansion-panel-title/font-scale-130-candidate.png"
+      ],
+      "checks": [
+        "direct_canvas_without_decorative_card",
+        "toggle_interaction",
+        "chevron_state",
+        "accessible_label_and_hint",
+        "minimum_48dp_touch_target",
+        "130_percent_font_scale",
+        "runtime_log"
+      ]
+    },
+    "p-expansion-panel-text": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "3af6f11223fa9d1daba32f4d971d0f798a57d00e1211ea092968a35a5b645058",
+      "harness": "expansion-family focused ADB gate",
+      "report": "docs/assets/android/audit/p-expansion-panel-text/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-expansion-panel-text/baseline-candidate.png",
+        "docs/assets/android/audit/p-expansion-panel-text/font-scale-130-candidate.png"
+      ],
+      "checks": [
+        "direct_canvas_without_decorative_card",
+        "title_body_hierarchy",
+        "semantic_summary",
+        "130_percent_font_scale",
+        "runtime_log"
+      ]
+    },
+    "p-carousel-item": {
+      "verifiedAt": "2026-09-05",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "73280b3a4640ce1cd9687c3e1fb1c23a9bee69faa0aceecdca27e49763bf2b8a",
+      "harness": "tools/audit-carousel-android.py --component-tag p-carousel-item",
+      "recording": "docs/assets/android/audit/p-carousel-item/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-carousel-item/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-carousel-item/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-carousel-item/baseline-candidate.png",
+        "docs/assets/android/audit/p-carousel-item/selected-candidate.png",
+        "docs/assets/android/audit/p-carousel-item/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-carousel-item/landscape-candidate.png"
+      ],
+      "checks": [
+        "semantic_parent_composition",
+        "exclusive_selected_state",
+        "horizontal_swipe",
+        "continuous_wrap",
+        "delimiter_activation",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "12_gesture_stress",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-carousel": {
+      "verifiedAt": "2026-09-05",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "a6062d388397e8dc17899be285d593561e3a0197dd8ea40c90f7d984bc0e1201",
+      "harness": "tools/audit-carousel-android.py",
+      "recording": "docs/assets/android/audit/p-carousel/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-carousel/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-carousel/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-carousel/baseline-candidate.png",
+        "docs/assets/android/audit/p-carousel/slide-2-candidate.png",
+        "docs/assets/android/audit/p-carousel/slide-3-candidate.png",
+        "docs/assets/android/audit/p-carousel/arrows-candidate.png",
+        "docs/assets/android/audit/p-carousel/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-carousel/landscape-candidate.png"
+      ],
+      "checks": [
+        "24dp_rounded_native_clip",
+        "horizontal_swipe_and_indicator_sync",
+        "continuous_wrap",
+        "delimiter_tap",
+        "arrow_controls",
+        "vertical_gesture",
+        "bounded_edges",
+        "reverse_direction",
+        "hidden_delimiters",
+        "automatic_cycle",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "12_gesture_stress",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-card-actions": {
+      "verifiedAt": "2026-09-05",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi and 1080x2400@440dpi",
+      "buildSha256": "b6555e3e19696aa02cb68de9f5e02969b947093a7b22ae52dbe8908338eab66d",
+      "harness": "tools/audit-card-actions-android.py",
+      "recording": "docs/assets/android/audit/p-card-actions/interaction-candidate.mp4",
+      "gif": "docs/assets/android/audit/p-card-actions/interaction-candidate.gif",
+      "report": "docs/assets/android/audit/p-card-actions/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-card-actions/baseline-candidate.png",
+        "docs/assets/android/audit/p-card-actions/interacted-candidate.png",
+        "docs/assets/android/audit/p-card-actions/font-scale-130-candidate.png",
+        "docs/assets/android/audit/p-card-actions/landscape-candidate.png"
+      ],
+      "checks": [
+        "six_real_arrangements",
+        "direct_canvas_presentation",
+        "8dp_insets_and_gaps",
+        "40dp_visual_and_48dp_effective_targets",
+        "responsive_action_wrapping",
+        "independent_callbacks",
+        "disabled_action_inertia",
+        "semantic_destructive_action",
+        "130_percent_font_scale",
+        "adaptive_landscape",
+        "20_tap_stress",
+        "runtime_log",
+        "two_consecutive_official_apk_passes"
+      ]
+    },
+    "p-date-input": {
+      "verifiedAt": "2026-09-06",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "575539473ef3a88437930f881a04abe94b591a61e9176cc953d6bde6d1eaf059",
+      "harness": "tools/audit-date-input-android.py",
+      "report": "docs/assets/android/audit/p-date-input/report-candidate.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-date-input/baseline-candidate.png",
+        "docs/assets/android/audit/p-date-input/changed-candidate.png",
+        "docs/assets/android/audit/p-date-input/font-scale-130-candidate.png"
+      ],
+      "checks": [
+        "six_state_profiles",
+        "56dp_material_field",
+        "localized_display_format",
+        "iso_controlled_value",
+        "unique_semantic_names",
+        "native_android_date_dialog",
+        "controlled_date_change",
+        "multiple_instance_isolation",
+        "disabled_and_read_only",
+        "font_scale_130",
+        "runtime_log"
+      ]
+    },
+    "p-number-input": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "780127c2380b2d63e946cf5fd422619804aff229d2f81c6a6c854b08af41703a",
+      "harness": "tools/audit-number-input-android.py",
+      "recording": "docs/assets/android/audit/p-number-input/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-number-input/interaction.gif",
+      "report": "docs/assets/android/audit/p-number-input/report.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-number-input/baseline.png",
+        "docs/assets/android/audit/p-number-input/typed-keyboard.png",
+        "docs/assets/android/audit/p-number-input/read-only.png",
+        "docs/assets/android/audit/p-number-input/error.png",
+        "docs/assets/android/audit/p-number-input/decimal-step.png",
+        "docs/assets/android/audit/p-number-input/stacked.png",
+        "docs/assets/android/audit/p-number-input/hidden-typed.png",
+        "docs/assets/android/audit/p-number-input/landscape.png"
+      ],
+      "checks": [
+        "48dp_controls",
+        "increment_and_decrement",
+        "real_numeric_keyboard_input",
+        "multiple_instance_isolation",
+        "system_back_persistence",
+        "disabled_and_read_only",
+        "error_message",
+        "minimum_and_maximum",
+        "decimal_step_and_precision",
+        "inset_split_stacked_reverse_hidden",
+        "rotation_with_ime",
+        "adaptive_navigation",
+        "light_status_bar_contrast",
+        "runtime_log_and_layout_loop",
+        "two_consecutive_official_apk_passes",
+        "recorded_third_pass"
+      ]
+    },
+    "p-otp-input": {
+      "verifiedAt": "2026-09-01",
+      "device": "sdk_gphone64_x86_64",
+      "androidVersion": 16,
+      "viewport": "1080x2400@420dpi",
+      "buildSha256": "49148559c4508f1b8f14c6739e83521e4476466f6becf4ce01fe1bf1a040a7e7",
+      "harness": "tools/audit-otp-input-android.py",
+      "recording": "docs/assets/android/audit/p-otp-input/interaction.mp4",
+      "gif": "docs/assets/android/audit/p-otp-input/interaction.gif",
+      "report": "docs/assets/android/audit/p-otp-input/report.json",
+      "screenshots": [
+        "docs/assets/android/audit/p-otp-input/baseline.png",
+        "docs/assets/android/audit/p-otp-input/typed-keyboard.png",
+        "docs/assets/android/audit/p-otp-input/masked-typed.png",
+        "docs/assets/android/audit/p-otp-input/divider.png",
+        "docs/assets/android/audit/p-otp-input/merged.png",
+        "docs/assets/android/audit/p-otp-input/error.png",
+        "docs/assets/android/audit/p-otp-input/loading.png",
+        "docs/assets/android/audit/p-otp-input/landscape-keyboard.png"
+      ],
+      "checks": [
+        "48dp_native_editor",
+        "single_accessibility_node_per_instance",
+        "real_numeric_keyboard_input",
+        "backspace_and_paste",
+        "max_length",
+        "multiple_instance_isolation",
+        "system_back_persistence",
+        "disabled_and_read_only",
+        "four_digit_length",
+        "masked_secret",
+        "divider_and_merged",
+        "error_message",
+        "loading_indicator",
+        "rotation_with_ime",
+        "adaptive_navigation",
+        "light_status_bar_contrast",
+        "runtime_log_and_layout_loop",
+        "two_consecutive_official_apk_passes",
+        "recorded_third_pass"
+      ]
+    }
+  },
+  "reason": "Generation 2 restarted at 0/84 after the previous harness accepted a persisted component route instead of proving every clean deep-link launch. Prior evidence is retained only as historical material and grants no approval.",
+  "requiredEvidence": [
+    "before_interaction_screenshot",
+    "real_interaction_recording",
+    "during_interaction_screenshot",
+    "after_interaction_screenshot",
+    "layout_geometry_assertions",
+    "multiple_instance_isolation",
+    "system_back_when_applicable",
+    "keyboard_when_applicable",
+    "rotation_when_applicable",
+    "accessibility_assertions",
+    "performance_and_crash_check"
+  ]
+}

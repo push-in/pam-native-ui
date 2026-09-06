@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "component": "p-text-field",
+  "device": "emulator-5554",
+  "package": "dev.pam.mobileui.catalog.debug",
+  "result": "passed",
+  "checks": {
+    "labelTouchFocus": true,
+    "realKeyboardInput": true,
+    "instanceIsolation": true,
+    "systemBackPersistence": true,
+    "disabledAndReadOnly": true,
+    "errorMessage": true,
+    "clearable": true,
+    "prefixAndSuffix": true,
+    "counterAndMaxLength": true,
+    "rotationWithIme": true,
+    "adaptiveNavigation": true,
+    "statusBarContrast": true,
+    "runtimeLog": true
+  },
+  "evidence": [
+    {
+      "name": "00-baseline",
+      "path": "/tmp/pam-text-field-approved-recording/00-baseline.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "01-edited-keyboard",
+      "path": "/tmp/pam-text-field-approved-recording/01-edited-keyboard.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "02-keyboard-closed",
+      "path": "/tmp/pam-text-field-approved-recording/02-keyboard-closed.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "state-disabled",
+      "path": "/tmp/pam-text-field-approved-recording/state-disabled.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "state-read-only",
+      "path": "/tmp/pam-text-field-approved-recording/state-read-only.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "03-error",
+      "path": "/tmp/pam-text-field-approved-recording/03-error.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "04-cleared",
+      "path": "/tmp/pam-text-field-approved-recording/04-cleared.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "05-affixes",
+      "path": "/tmp/pam-text-field-approved-recording/05-affixes.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "06-counter-max",
+      "path": "/tmp/pam-text-field-approved-recording/06-counter-max.png",
+      "size": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "name": "07-landscape-keyboard",
+      "path": "/tmp/pam-text-field-approved-recording/07-landscape-keyboard.png",
+      "size": [
+        2400,
+        1080
+      ]
+    }
+  ]
+}

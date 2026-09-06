@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-time-picker",
+  "candidateOnly": true,
+  "sourceReportSha256": "3eb2143ed928b7140ed3727496a4f9a28cad8ed37e6009165357a75221383372",
+  "baselineSha256": "ff824ee0b714eb92aee6e40f5cb71c3f6b30bf6569ff24bba28d01fbca77245b",
+  "interactedSha256": "765a1b0b9b7e2b4c96d1df1ea12a61320eb568d9fae3725e4e784f73f76d8086",
+  "gif": "p-time-picker.gif",
+  "gifSha256": "75904a1a1476393aba70d9618230d07dc969196aceec59ef3ddf1087118a3a29",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

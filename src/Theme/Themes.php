@@ -42,14 +42,24 @@ final class Themes
             ColorToken::SurfaceElevated->value => Color::rgb(255, 255, 255)->argb,
             ColorToken::SurfaceSunken->value => Color::rgb(238, 238, 238)->argb,
             ColorToken::Success->value => Color::rgb(76, 175, 80)->argb,
-            ColorToken::SuccessForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::SuccessForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Warning->value => Color::rgb(251, 140, 0)->argb,
             ColorToken::WarningForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Info->value => Color::rgb(33, 150, 243)->argb,
-            ColorToken::InfoForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::InfoForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Focus->value => Color::rgb(24, 103, 192)->argb,
             ColorToken::Overlay->value => Color::rgb(0, 0, 0, 82)->argb,
             ColorToken::OnSurface->value => Color::rgb(0, 0, 0, 222)->argb,
+            ColorToken::Outline->value => Color::rgb(116, 119, 127)->argb,
+            ColorToken::OutlineVariant->value => Color::rgb(196, 198, 208)->argb,
+            ColorToken::SurfaceContainerLowest->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::SurfaceContainerLow->value => Color::rgb(247, 248, 250)->argb,
+            ColorToken::SurfaceContainer->value => Color::rgb(241, 243, 245)->argb,
+            ColorToken::SurfaceContainerHigh->value => Color::rgb(235, 237, 240)->argb,
+            ColorToken::SurfaceContainerHighest->value => Color::rgb(228, 231, 235)->argb,
+            ColorToken::InverseSurface->value => Color::rgb(47, 48, 51)->argb,
+            ColorToken::InverseOnSurface->value => Color::rgb(241, 240, 244)->argb,
+            ColorToken::InversePrimary->value => Color::rgb(168, 199, 250)->argb,
         ]);
     }
 
@@ -57,7 +67,7 @@ final class Themes
     {
         return self::$dark ??= new Theme([
             ColorToken::Primary->value => Color::rgb(33, 150, 243)->argb,
-            ColorToken::PrimaryForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::PrimaryForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Card->value => Color::rgb(33, 33, 33)->argb,
             ColorToken::Secondary->value => Color::rgb(84, 182, 178)->argb,
             ColorToken::SecondaryForeground->value => Color::rgb(0, 0, 0)->argb,
@@ -73,7 +83,7 @@ final class Themes
             ColorToken::Ring->value => Color::rgb(33, 150, 243)->argb,
             ColorToken::Accent->value => Color::rgb(39, 55, 68)->argb,
             ColorToken::AccentForeground->value => Color::rgb(144, 202, 249)->argb,
-            ColorToken::DestructiveForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::DestructiveForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Surface->value => Color::rgb(33, 33, 33)->argb,
             ColorToken::SurfaceElevated->value => Color::rgb(42, 42, 42)->argb,
             ColorToken::SurfaceSunken->value => Color::rgb(18, 18, 18)->argb,
@@ -82,10 +92,20 @@ final class Themes
             ColorToken::Warning->value => Color::rgb(251, 140, 0)->argb,
             ColorToken::WarningForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Info->value => Color::rgb(33, 150, 243)->argb,
-            ColorToken::InfoForeground->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::InfoForeground->value => Color::rgb(0, 0, 0)->argb,
             ColorToken::Focus->value => Color::rgb(33, 150, 243)->argb,
             ColorToken::Overlay->value => Color::rgb(0, 0, 0, 128)->argb,
             ColorToken::OnSurface->value => Color::rgb(255, 255, 255)->argb,
+            ColorToken::Outline->value => Color::rgb(142, 145, 153)->argb,
+            ColorToken::OutlineVariant->value => Color::rgb(68, 71, 78)->argb,
+            ColorToken::SurfaceContainerLowest->value => Color::rgb(13, 14, 16)->argb,
+            ColorToken::SurfaceContainerLow->value => Color::rgb(25, 26, 29)->argb,
+            ColorToken::SurfaceContainer->value => Color::rgb(30, 31, 34)->argb,
+            ColorToken::SurfaceContainerHigh->value => Color::rgb(40, 41, 44)->argb,
+            ColorToken::SurfaceContainerHighest->value => Color::rgb(51, 52, 56)->argb,
+            ColorToken::InverseSurface->value => Color::rgb(228, 226, 230)->argb,
+            ColorToken::InverseOnSurface->value => Color::rgb(48, 47, 51)->argb,
+            ColorToken::InversePrimary->value => Color::rgb(24, 103, 192)->argb,
         ]);
     }
 
@@ -122,6 +142,16 @@ final class Themes
             ColorToken::Focus->value => Color::rgb(22, 101, 52),
             ColorToken::Overlay->value => Color::rgb(15, 23, 42, 140),
             ColorToken::OnSurface->value => Color::rgb(15, 23, 42),
+            ColorToken::Outline->value => Color::rgb(104, 116, 107),
+            ColorToken::OutlineVariant->value => Color::rgb(194, 202, 195),
+            ColorToken::SurfaceContainerLowest->value => Color::rgb(255, 255, 255),
+            ColorToken::SurfaceContainerLow->value => Color::rgb(245, 248, 246),
+            ColorToken::SurfaceContainer->value => Color::rgb(239, 243, 240),
+            ColorToken::SurfaceContainerHigh->value => Color::rgb(232, 237, 233),
+            ColorToken::SurfaceContainerHighest->value => Color::rgb(223, 229, 224),
+            ColorToken::InverseSurface->value => Color::rgb(37, 48, 40),
+            ColorToken::InverseOnSurface->value => Color::rgb(238, 245, 239),
+            ColorToken::InversePrimary->value => Color::rgb(126, 223, 151),
         ]);
     }
 
@@ -158,6 +188,16 @@ final class Themes
             ColorToken::Focus->value => Color::rgb(134, 239, 172),
             ColorToken::Overlay->value => Color::rgb(0, 0, 0, 153),
             ColorToken::OnSurface->value => Color::rgb(248, 250, 252),
+            ColorToken::Outline->value => Color::rgb(137, 151, 141),
+            ColorToken::OutlineVariant->value => Color::rgb(65, 78, 69),
+            ColorToken::SurfaceContainerLowest->value => Color::rgb(7, 12, 10),
+            ColorToken::SurfaceContainerLow->value => Color::rgb(14, 23, 18),
+            ColorToken::SurfaceContainer->value => Color::rgb(19, 30, 23),
+            ColorToken::SurfaceContainerHigh->value => Color::rgb(27, 40, 31),
+            ColorToken::SurfaceContainerHighest->value => Color::rgb(36, 50, 40),
+            ColorToken::InverseSurface->value => Color::rgb(226, 234, 228),
+            ColorToken::InverseOnSurface->value => Color::rgb(36, 48, 40),
+            ColorToken::InversePrimary->value => Color::rgb(22, 101, 52),
         ]);
     }
 }

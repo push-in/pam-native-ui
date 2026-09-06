@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-number-input",
+  "candidateOnly": true,
+  "sourceReportSha256": "ffca8a3a01f210dd857d49716ee020566c8ab70cb563de9c61d9cd4b3ef48f07",
+  "baselineSha256": "f69342b4a9281095437449638312d1b824d7ea464fc5ee5fbf1aa8f68b763094",
+  "interactedSha256": "b884af8317857e385016c3cc5478d9c08a08a917e3f4f6292bbc8f6413eaaaf7",
+  "gif": "p-number-input.gif",
+  "gifSha256": "24218abd7a5c0509490cf093a1a183b08ea6eddf3a6b3f0d76219ae29e2577e7",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

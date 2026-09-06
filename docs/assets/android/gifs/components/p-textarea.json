@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-textarea",
+  "candidateOnly": true,
+  "sourceReportSha256": "671033a96ab288cae85400ba5eaf76066b6b47186023dabed94ea673dd53d333",
+  "baselineSha256": "f7e85146d794a1e3a02ba5d25f936a82ab5d788dd6fc2aed67d15eb3be532c30",
+  "interactedSha256": "4170f740bdc95a36858ccdeca6f47528c0488f109385b770baddde629552b3a5",
+  "gif": "p-textarea.gif",
+  "gifSha256": "a96c37835bc2aac615c975d90c672c1ceebd3947bac8b8837a32409ebb435e25",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

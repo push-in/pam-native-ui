@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "component": "p-autocomplete",
+  "resultStatus": 1,
+  "verifiedAt": "2026-09-01",
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G973F",
+    "androidVersion": 12,
+    "api": 31,
+    "viewport": "1080x2280@420dpi"
+  },
+  "package": "dev.pam.mobileui.catalog.debug",
+  "buildSha256": "0550ca094e67e6583f2ce0ca8e4629642eff3dc7a6acea74842e97eee015bb0a",
+  "harness": "tools/audit-autocomplete-android.py",
+  "passes": [
+    {
+      "index": 1,
+      "resultStatus": 1,
+      "rawReportSha256": "27a162ed2633192b8fa0caab7d6b43ae2f087bffd1a2d45d60a590ad422f4061",
+      "geometryReportSha256": "6366386a70187d2874245e5c13fe51f1e37d2ace52ed452709ad80f8852b1de9",
+      "screensChecked": 16,
+      "geometryFailureCount": 0
+    },
+    {
+      "index": 2,
+      "resultStatus": 1,
+      "rawReportSha256": "efa4e72c90b729cc3904015a0424cad29c1e1bc70e470a9bcbb83b336e7146c6",
+      "geometryReportSha256": "6366386a70187d2874245e5c13fe51f1e37d2ace52ed452709ad80f8852b1de9",
+      "screensChecked": 16,
+      "geometryFailureCount": 0
+    }
+  ],
+  "checks": {
+    "singleNativeSheet": true,
+    "materialTouchTarget": true,
+    "filterAndSelection": true,
+    "backdropPreservesValue": true,
+    "lastRowLowerEdgeHitTarget": true,
+    "bottomSafeArea": true,
+    "multipleInstanceIsolation": true,
+    "disabledAndReadOnly": true,
+    "uniqueSeparatedNoDataState": true,
+    "multipleSelection": true,
+    "keyboardBack": true,
+    "rotation": true,
+    "adaptiveNavigation": true,
+    "materialDragIndicator": true,
+    "runtimeLog": true,
+    "twoConsecutivePhysicalPasses": true,
+    "manualVisualReview": true,
+    "realInteractionRecording": true
+  },
+  "documentation": {
+    "recording": "interaction.mp4",
+    "recordingSha256": "776917f4d200bde5180567919c591f126bf4c5ad6205b88f22d199b7a9732ede",
+    "gif": "interaction.gif",
+    "gifSha256": "5a40ac7081a816e0f54f63cdb89d51c3e2299100ab569780b8a65ef873740ba5",
+    "before": "baseline.png",
+    "during": "filtered.png",
+    "after": "selected.png",
+    "additionalScreenshots": [
+      "open.png",
+      "no-data.png",
+      "multiple.png",
+      "landscape.png"
+    ]
+  }
+}

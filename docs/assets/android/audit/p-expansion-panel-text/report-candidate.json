@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "resultStatus": 1,
+  "approvalStatus": 1,
+  "component": "p-expansion-panel-text",
+  "candidateOnly": true,
+  "buildSha256": "497a338b90af6b82edb9b66a08ca5fff2807df872c2e5ca836d7f1a3f67d9c12",
+  "device": {
+    "serial": "emulator-5556",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "androidVersion": "16",
+    "api": 36,
+    "viewport": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "buildSha256": "497a338b90af6b82edb9b66a08ca5fff2807df872c2e5ca836d7f1a3f67d9c12"
+  },
+  "sourceReport": "/tmp/pam-navigation-batch.json",
+  "passes": [
+    {
+      "repetition": 1,
+      "interactionKind": 1,
+      "stateChanged": false,
+      "elapsedMs": 5565,
+      "evidencePrefix": "pass-01-p-expansion-panel-text"
+    },
+    {
+      "repetition": 2,
+      "interactionKind": 1,
+      "stateChanged": false,
+      "elapsedMs": 5572,
+      "evidencePrefix": "pass-02-p-expansion-panel-text"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "baseline-candidate.png",
+      "sha256": "ea64b366df36725531fc7569d72412aa43c0f658215273310b810d3226e0f202"
+    }
+  ],
+  "checks": {
+    "twoConsecutivePasses": true,
+    "runtimeLog": true,
+    "routeIdentity": true,
+    "realInteraction": true,
+    "requiresManualVisualReview": true,
+    "requiresPhysicalApproval": true
+  }
+}

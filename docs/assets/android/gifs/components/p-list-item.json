@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-list-item",
+  "candidateOnly": true,
+  "sourceReportSha256": "d0ba2f62760e1f1a0a7056950a8689607d07edf8f30bea0710efcfae608866b1",
+  "baselineSha256": "3889b9aba3f528304e5610e93c284e0e2b7450985b4f984873d7053f09cc71f2",
+  "interactedSha256": "ab27bb68419916b645db972b37ff7caf495890c4f11235426dceffdaffffc94c",
+  "gif": "p-list-item.gif",
+  "gifSha256": "c1a4c87d1a635d541e7739c0d48c3717deb06109ae62233e6b8bddef37284c3c",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-dialog",
+  "candidateOnly": true,
+  "sourceReportSha256": "da80e1707722f820bd578716c1cdeb930adb0cee9efad9b9d0c3644b0ab81d79",
+  "baselineSha256": "b25622e68d832dd11e667876069ad50982d71d4f6ffd0e575ad4990971ebbc91",
+  "interactedSha256": "23453445273034901a86dac152fb6f184de9c337ab725a094f11ed1f6e5b2654",
+  "gif": "p-dialog.gif",
+  "gifSha256": "53c7d287804466d65934d509683c687902e182a0fae3d64f4a7d112f5b196433",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

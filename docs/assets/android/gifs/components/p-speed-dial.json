@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-speed-dial",
+  "candidateOnly": true,
+  "sourceReportSha256": "072999e57208374933277bbd5f3eaec79b96d6a62715af5b9e39eb38072daefd",
+  "baselineSha256": "97a0432bb1396b3d36f41e87e6285f6656635d4b99736a22efa27496c8dd53b5",
+  "interactedSha256": "d9c53990e076db887a196b173c9c884e0dcbf37b1576f395b46a12709eaebbda",
+  "gif": "p-speed-dial.gif",
+  "gifSha256": "6d562b7926c6cc219b6e2dec50f68920e219a8bc46c0a7105b655cb8f67e765c",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

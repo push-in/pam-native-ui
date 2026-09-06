@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-toolbar",
+  "candidateOnly": true,
+  "sourceReportSha256": "2d53c1c49e7f512ce3f29520b61b52f6eef9df347bcf4949042ea6709142d3ea",
+  "baselineSha256": "c70fadbb76b01cb3de58499afa87fa47de04a7190134a92a66b68d28ff0de1c7",
+  "interactedSha256": "285deb4aa4b01e93895078ceaed6cbc0f8774311226c9e6d0ef9034e09e7c5b8",
+  "gif": "p-toolbar.gif",
+  "gifSha256": "1a8bbf8a3df8a419cbc545e0472f795dbf00cccf1c07a8f987d387f45d7518a9",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

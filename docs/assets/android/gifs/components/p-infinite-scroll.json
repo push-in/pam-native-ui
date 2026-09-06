@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-infinite-scroll",
+  "candidateOnly": true,
+  "sourceReportSha256": "09dfa1d8f072e45164979898a4a2a9b894de0e5d65695a60beba3c5523502413",
+  "baselineSha256": "af6ab8201bb58258cafb3e2d9d89bf6bd389c48c742366157d948b125222018b",
+  "interactedSha256": "8bb9a06f32aab3837cbca3b6036f7439f03f7069f73cb948a209255d281e927b",
+  "gif": "p-infinite-scroll.gif",
+  "gifSha256": "540faed24a157edb77a3ae5a1cbebdbb49756cefe33ebc959f1e28d14b1a6dd6",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

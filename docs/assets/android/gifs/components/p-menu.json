@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-menu",
+  "candidateOnly": true,
+  "sourceReportSha256": "aa76e4182ffdd1cbb7d9bf1da92808e950d9f201391da05bb91b6a198de63bbe",
+  "baselineSha256": "b34afa9c742f62db6fb9aa642178ef2d0ca2b2c954db3027b3ed853ac6ffa6b3",
+  "interactedSha256": "83e7fc7d31295dbd0580224f817fdb9e850b13552ee359c8637ac857b9c4000a",
+  "gif": "p-menu.gif",
+  "gifSha256": "afe6e97c4e27974d17342a134a52bd9178af7443576df9c97b31120452d76586",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

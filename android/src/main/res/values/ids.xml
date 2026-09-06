@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="pam_range_lower_decrease" type="id" />
+    <item name="pam_range_lower_increase" type="id" />
+    <item name="pam_range_upper_decrease" type="id" />
+    <item name="pam_range_upper_increase" type="id" />
+</resources>

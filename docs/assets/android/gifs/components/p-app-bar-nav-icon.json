@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-app-bar-nav-icon",
+  "candidateOnly": true,
+  "sourceReportSha256": "7258185cc4c74339b05df4937bc61fc14607ecf78ddf07df06f9fde63becee21",
+  "baselineSha256": "01948285252e5dff60ec6e31002a5ac602fb2254951a070c83d18801bad5890f",
+  "interactedSha256": "9236fd516e33e5835a60d0fec7fd7ffdc525f14eb89959781799954d6c787f3f",
+  "gif": "p-app-bar-nav-icon.gif",
+  "gifSha256": "59bdcb056b0312af9be36fe518bf8933cc511bae86af26cb29a61eb7ab3b2f6a",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

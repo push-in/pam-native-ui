@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-btn",
+  "candidateOnly": true,
+  "sourceReportSha256": "838ff08a4b69ae3588f409abae555b06c9c73b5fb991e24b027e0e66e078d500",
+  "baselineSha256": "8601434c8fdb0b91191d6d627e71261e955616d3c26e73350f484a78dc186146",
+  "interactedSha256": "4cdb208079dd11e930e6a131ba30a17d646f48ccd01d987a86c220767772f588",
+  "gif": "p-btn.gif",
+  "gifSha256": "95f37b6f15435636e3ba3d8449ad986d0079469a47079fe3563b4491178a6e6e",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

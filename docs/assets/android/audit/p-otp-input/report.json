@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "component": "p-otp-input",
+  "resultStatus": 1,
+  "verifiedAt": "2026-09-01",
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G973F",
+    "androidVersion": 12,
+    "api": 31,
+    "viewport": "1080x2280@420dpi"
+  },
+  "package": "dev.pam.mobileui.catalog.debug",
+  "buildSha256": "79c8dafdb58648a7d7aa13f7d4d6d77d413e902c5e99e3778b9406dd1e5b89a9",
+  "harness": "tools/audit-otp-input-android.py",
+  "passes": [
+    {
+      "index": 1,
+      "resultStatus": 1,
+      "rawReportSha256": "c8f8596ac2b460e0d914dd21e2ef8baee520cd36fe04f514725d4801b8b07e61",
+      "geometryPairsChecked": 11,
+      "geometryFailureCount": 0
+    },
+    {
+      "index": 2,
+      "resultStatus": 1,
+      "rawReportSha256": "7278bc51517f24150ead1472e3d74c827b3d5b8fb2f54dee23ca988a1c5cb227",
+      "geometryPairsChecked": 11,
+      "geometryFailureCount": 0
+    }
+  ],
+  "checks": {
+    "accessible48dpNativeEditor": true,
+    "singleAccessibilityNodePerInstance": true,
+    "realNumericKeyboardInput": true,
+    "backspaceAndPaste": true,
+    "maxLength": true,
+    "instanceIsolation": true,
+    "systemBackPersistence": true,
+    "disabledAndReadOnly": true,
+    "fourDigitLength": true,
+    "maskedSecret": true,
+    "dividerAndMerged": true,
+    "errorMessage": true,
+    "loadingIndicator": true,
+    "rotationWithIme": true,
+    "adaptiveNavigation": true,
+    "statusBarContrast": true,
+    "runtimeLog": true,
+    "twoConsecutivePhysicalPasses": true,
+    "manualVisualReview": true,
+    "realInteractionRecording": true
+  },
+  "documentation": {
+    "recording": "interaction.mp4",
+    "recordingSha256": "d3be5b4d4f863c4f4ac1fc261a04179c31eae0bee58402f2e6f8e08945ab9cc4",
+    "gif": "interaction.gif",
+    "gifSha256": "fbf31d96befce6b0159e35a54257f680fa780dcea610010c876ffcfd569e8361",
+    "before": "baseline.png",
+    "during": "typed-keyboard.png",
+    "after": "after.png",
+    "additionalScreenshots": [
+      "masked-typed.png",
+      "divider.png",
+      "merged.png",
+      "error.png",
+      "loading.png",
+      "landscape-keyboard.png"
+    ]
+  }
+}

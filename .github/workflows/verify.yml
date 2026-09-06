@@ -142,8 +142,11 @@ jobs:
         run: |
           python3 -m unittest discover -s benchmarks/package -p 'test_*.py'
           python3 -m unittest discover -s benchmarks -p 'test_*device_evidence.py'
+          python3 -m unittest tools/test-android-component-approvals.py tools/test-android-audit-device-lock.py tools/test-android-physical-gate.py
+          bash -n tools/run-android-component-physical-gate.sh
           python3 -m json.tool benchmarks/device-evidence.schema.json >/dev/null
           python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
+          python3 tools/validate-android-component-approvals.py
 
       - name: Run composition benchmark
         env:

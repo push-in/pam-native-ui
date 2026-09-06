@@ -48,27 +48,8 @@ $drawer = Router::drawer('overview')
     ->route('all', 'All components', fn () => $gallery);
 $componentRoutes = [];
 $componentDeepLinks = [];
-$catalogInternalParts = [
-    'p-app-bar-nav-icon',
-    'p-banner-actions',
-    'p-calendar-day',
-    'p-card-actions',
-    'p-carousel-item',
-    'p-expansion-panel-text',
-    'p-expansion-panel-title',
-    'p-item',
-    'p-slide-group-item',
-    'p-stepper-actions',
-    'p-stepper-header',
-    'p-stepper-item',
-    'p-stepper-vertical-actions',
-    'p-stepper-vertical-item',
-    'p-stepper-window',
-    'p-stepper-window-item',
-    'p-timeline-item',
-    'p-treeview-item',
-];
-$catalogHidden = $catalogInternalParts;
+$componentAuditRoutes = [];
+$catalogHidden = [];
 $catalogGroup = static fn (string $tag): string => match (true) {
     preg_match('/(btn|fab|chip|icon|avatar|badge|rating)/', $tag) === 1 =>
         'Actions and identity',
@@ -88,43 +69,36 @@ $catalogGroup = static fn (string $tag): string => match (true) {
         'Navigation',
     default => 'Layout and content',
 };
+$catalogTitle = static function (string $tag): string {
+    $terms = [
+        'btn' => 'Button',
+        'fab' => 'FAB',
+        'img' => 'Image',
+        'otp' => 'OTP',
+        'ui' => 'UI',
+    ];
+    $words = explode('-', substr($tag, 2));
+
+    return implode(' ', array_map(
+        static fn (string $word): string => $terms[$word] ?? ucfirst($word),
+        $words,
+    ));
+};
 foreach (MaterialComponentMap::TAGS as $tag => $component) {
     if (in_array($tag, $catalogHidden, true)) {
         continue;
     }
-    $title = ucwords(str_replace('-', ' ', substr($tag, 2)));
+    $title = $catalogTitle($tag);
     $route = new ComponentRoute($tag, $title, $component);
     $componentRoutes[] = $route;
     $componentDeepLinks[$tag] = 'catalog-'.$tag;
+    $componentAuditRoutes[$tag] = $route;
     $drawer = $drawer->route(
         'catalog-'.$tag,
         $title,
         fn () => $route,
         group: $catalogGroup($tag),
     );
-}
-$componentParents = [
-    'p-app-bar-nav-icon' => 'p-app-bar',
-    'p-banner-actions' => 'p-banner',
-    'p-calendar-day' => 'p-calendar',
-    'p-card-actions' => 'p-card',
-    'p-carousel-item' => 'p-carousel',
-    'p-expansion-panel-text' => 'p-expansion-panel',
-    'p-expansion-panel-title' => 'p-expansion-panel',
-    'p-item' => 'p-item-group',
-    'p-slide-group-item' => 'p-slide-group',
-    'p-stepper-actions' => 'p-stepper',
-    'p-stepper-header' => 'p-stepper',
-    'p-stepper-item' => 'p-stepper',
-    'p-stepper-vertical-actions' => 'p-stepper-vertical',
-    'p-stepper-vertical-item' => 'p-stepper-vertical',
-    'p-stepper-window' => 'p-stepper',
-    'p-stepper-window-item' => 'p-stepper',
-    'p-timeline-item' => 'p-timeline',
-    'p-treeview-item' => 'p-treeview',
-];
-foreach ($componentParents as $part => $parent) {
-    $componentDeepLinks[$part] = 'catalog-'.$parent;
 }
 $showcase = $drawer
     ->presentation(DrawerType::Front)
@@ -153,6 +127,11 @@ foreach ($showcaseRoutes as $showcaseRoute) {
 foreach ($componentRoutes as $componentRoute) {
     $componentRoute->drawer = $showcase;
 }
+// The catalog wraps its drawer in ShowcaseApp so it can handle deep links.
+// Forward window changes explicitly; otherwise the Android view adapts to a
+// permanent drawer while the PHP navigation state still believes it is a
+// compact front drawer, leaving redundant toggle controls on expanded screens.
+App::onDimensions($showcase->dimensions(...));
 
 $tabs = Router::tabs('overview')
     ->tab('overview', 'Overview', new Overview(), PIcon::make(['icon' => 'star']))
@@ -163,4 +142,4 @@ $tabs = Router::tabs('overview')
     ->appearance(0xFF091526, 0xFF4C8DFF, 0xFF7F93B0, 0xFF253952)
     ->persistence('premium-showcase')
     ->build();
-App::run(new ShowcaseApp($showcase, $componentDeepLinks));
+App::run(new ShowcaseApp($showcase, $componentDeepLinks, $componentAuditRoutes));

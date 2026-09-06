@@ -125,36 +125,15 @@ capture() {
   timeout 10s "${adb[@]}" pull "${remote}" "${output}/${name}.png" >/dev/null
 }
 
-capture overview pam-showcase://screen/overview 'PAM Studio'
+capture overview pam-showcase://screen/overview 'PAM Native UI'
 for screen in actions forms data overlays all; do
   label=$(tr '[:lower:]' '[:upper:]' <<<"${screen:0:1}")${screen:1}
   [[ ${screen} == all ]] && label='Components'
   capture "screen-${screen}" "pam-showcase://screen/${screen}" "${label}"
 done
 
-declare -A component_parent=(
-  [p-app-bar-nav-icon]=p-app-bar
-  [p-banner-actions]=p-banner
-  [p-calendar-day]=p-calendar
-  [p-card-actions]=p-card
-  [p-carousel-item]=p-carousel
-  [p-expansion-panel-text]=p-expansion-panel
-  [p-expansion-panel-title]=p-expansion-panel
-  [p-item]=p-item-group
-  [p-slide-group-item]=p-slide-group
-  [p-stepper-actions]=p-stepper
-  [p-stepper-header]=p-stepper
-  [p-stepper-item]=p-stepper
-  [p-stepper-vertical-actions]=p-stepper-vertical
-  [p-stepper-vertical-item]=p-stepper-vertical
-  [p-stepper-window]=p-stepper
-  [p-stepper-window-item]=p-stepper
-  [p-timeline-item]=p-timeline
-  [p-treeview-item]=p-treeview
-)
 for tag in "${tags[@]}"; do
-  route_tag=${component_parent[${tag}]:-${tag}}
-  capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${route_tag}"
+  capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${tag}"
 done
 
 density=$("${adb[@]}" shell wm density | awk '/Physical density/ { print $3 }')

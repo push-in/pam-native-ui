@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-otp-input",
+  "candidateOnly": true,
+  "sourceReportSha256": "7ed32fe5eb0d3c483df957adb2b0a2caba6f8e76e8d14a74358e0751b8dda30c",
+  "baselineSha256": "03ae8228a3cfa6a09fee678179f9b54e3525940f183fa87fad832a36ca95547b",
+  "interactedSha256": "ac2b47f3a6ad3093c15c1b544efa4292ef45af66a396f0d31c25b696235738c4",
+  "gif": "p-otp-input.gif",
+  "gifSha256": "593ff5cd7d520c7f35d4f835fded3d0184b0544cfd3decd1b09ac6bac88b6a7e",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

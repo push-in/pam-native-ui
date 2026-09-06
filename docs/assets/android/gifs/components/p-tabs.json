@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-tabs",
+  "candidateOnly": true,
+  "sourceReportSha256": "e9f7953e63d377e0b9fd760b1e22630031ad7d4174b01d94991534f7bc6f3bf2",
+  "baselineSha256": "23c2c4ccc40e84ec76e59a7a6c39a0bf245b92716a33d14ea02f6b21322b061a",
+  "interactedSha256": "d2a8ec3485ad1e8992fb86012fbc2ad0e23765d76f1ca031e801f9dbcb02fe77",
+  "gif": "p-tabs.gif",
+  "gifSha256": "d053e8775e1baf713975fdbb1cfb91239ad1aac586c2108fc61a2fbc1ab820d1",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "component": "p-bottom-sheet",
+  "candidateOnly": true,
+  "sourceReportSha256": "efb9fb1c32bcc6a4b671cd8ed7d642aeba2d63ac700d3dddf0f5449ea0a9fccf",
+  "baselineSha256": "c72f22ed4bd117ef7e75df9947b09b0d037c529ef19951b42e0a9b0868a13603",
+  "interactedSha256": "f0588c93df1534c16c46ecf67622b71dad1e88e3456503fbec2c14229b095ea5",
+  "gif": "p-bottom-sheet.gif",
+  "gifSha256": "1dbbc45dcdd46c6fa736d0feda915e5bb2064cb2c8fd6251d1a0adde9fb8065f",
+  "width": 360,
+  "derivedFromRealInteraction": true
+}
