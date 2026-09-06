@@ -385,7 +385,7 @@ class MobileUiHostInstrumentedTest {
             val customActions = (0 until content.childCount)
                 .map(content::getChildAt)
                 .filterIsInstance<TextView>()
-                .filter { it.text?.toString() == "Use \"custom\"" }
+                .filter { it.text?.toString() == "Use custom" }
             assertEquals(childSummary(), 1, customActions.size)
             val customAction = customActions.single()
             assertEquals(View.VISIBLE, customAction.visibility)
