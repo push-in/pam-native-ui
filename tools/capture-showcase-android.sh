@@ -35,6 +35,13 @@ timeout 10s "${adb[@]}" shell pm path "${package}" >/dev/null || {
   echo "Package ${package} is not installed on ${serial}." >&2
   exit 66
 }
+density=$("${adb[@]}" shell wm density | awk '/Physical density/ { print $3 }')
+[[ ${density} =~ ^[0-9]+$ ]] || {
+  echo "Could not resolve the physical display density on ${serial}." >&2
+  exit 66
+}
+route_top_limit=$((140 * density / 160))
+variations_top_limit=$((220 * density / 160))
 
 mkdir -p "${output}"
 temporary=$(mktemp -d)
@@ -112,11 +119,20 @@ capture() {
             "string(//*[@text='${route_tag}']/@bounds)" \
             "${hierarchy}" 2>/dev/null || true)
           route_left=$(sed -nE 's/^\[([0-9]+),.*/\1/p' <<<"${route_bounds}")
+          route_top=$(sed -nE 's/^\[[0-9]+,([0-9]+)\].*/\1/p' <<<"${route_bounds}")
+          variations_bounds=$(xmllint --xpath \
+            "string(//*[@text='Variations']/@bounds)" \
+            "${hierarchy}" 2>/dev/null || true)
+          variations_top=$(sed -nE 's/^\[[0-9]+,([0-9]+)\].*/\1/p' <<<"${variations_bounds}")
           # Component routes use a 16dp page inset. A route identifier at the
-          # physical edge means navigation was captured mid-transition even
-          # if its text happened to be discoverable in the hierarchy.
-          if [[ -z ${route_left} || ${route_left} -lt 24 ]]; then
-            dump_output="route ${route_tag} is not stably inset: ${route_bounds:-missing bounds}"
+          # physical edge means navigation was captured mid-transition. Both
+          # anchors must also remain in their density-independent top bands: merely
+          # finding their text somewhere in the hierarchy would allow a
+          # restored/scrolled route to publish a misleading screenshot.
+          if [[ -z ${route_left} || ${route_left} -lt 24 || \
+                -z ${route_top} || ${route_top} -gt ${route_top_limit} || \
+                -z ${variations_top} || ${variations_top} -gt ${variations_top_limit} ]]; then
+            dump_output="route ${route_tag} is not at its stable top: tag=${route_bounds:-missing}, variations=${variations_bounds:-missing}"
             sleep 1
             continue
           fi
@@ -146,7 +162,6 @@ for tag in "${tags[@]}"; do
   capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${tag}"
 done
 
-density=$("${adb[@]}" shell wm density | awk '/Physical density/ { print $3 }')
 python3 "${root}/tools/validate-android-screenshots.py" \
   "${output}" "${hierarchies}" \
   --density "${density}" \

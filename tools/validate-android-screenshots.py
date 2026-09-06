@@ -69,6 +69,29 @@ def validate_screen(
         failures.append("hierarchy has no PAM application nodes")
         return failures, observations
 
+    if image_path.stem.startswith("p-"):
+        route_bounds = [
+            rectangle(node.attrib.get("bounds", ""))
+            for node in nodes
+            if node.attrib.get("text") == image_path.stem
+        ]
+        variation_bounds = [
+            rectangle(node.attrib.get("bounds", ""))
+            for node in nodes
+            if node.attrib.get("text") == "Variations"
+        ]
+        route_bounds = [bounds for bounds in route_bounds if bounds is not None]
+        variation_bounds = [bounds for bounds in variation_bounds if bounds is not None]
+        route_top_limit = round(140 * density / 160)
+        variations_top_limit = round(220 * density / 160)
+        if not route_bounds or min(bounds[1] for bounds in route_bounds) > route_top_limit:
+            failures.append("component route identifier is missing from the stable top")
+        if (
+            not variation_bounds
+            or min(bounds[1] for bounds in variation_bounds) > variations_top_limit
+        ):
+            failures.append("Variations heading is missing from the stable top")
+
     text_nodes: list[tuple[str, tuple[int, int, int, int]]] = []
     minimum_target = round(48 * density / 160)
     for node in nodes:
