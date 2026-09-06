@@ -122,7 +122,7 @@ final class ComponentRoute extends Component
                 $previewProps['removeClippedSubviews'] = false;
             }
             if ($this->tag === 'p-chip') {
-                $profile = (string) ($previewProps['chipProfile'] ?? 'assist');
+                $profile = self::stringValue($previewProps['chipProfile'] ?? 'assist');
                 $preview = $this->chipInteractionPreviews[$index]
                     ??= new ChipInteractionPreview($profile);
                 $samples[] = Column::make($caption, $preview)->style(new Style(
@@ -132,7 +132,7 @@ final class ComponentRoute extends Component
                 continue;
             }
             if ($this->tag === 'p-chip-group') {
-                $profile = (string) ($previewProps['chipGroupProfile'] ?? 'single');
+                $profile = self::stringValue($previewProps['chipGroupProfile'] ?? 'single');
                 $preview = $this->chipGroupInteractionPreviews[$index]
                     ??= new ChipGroupInteractionPreview($profile);
                 $samples[] = Column::make($caption, $preview)->style(new Style(
@@ -142,7 +142,7 @@ final class ComponentRoute extends Component
                 continue;
             }
             if ($this->tag === 'p-color-input') {
-                $profile = (string) ($previewProps['colorProfile'] ?? 'hex');
+                $profile = self::stringValue($previewProps['colorProfile'] ?? 'hex');
                 $preview = $this->colorInputInteractionPreviews[$index]
                     ??= new ColorInputInteractionPreview($profile);
                 $samples[] = Column::make($caption, $preview)->style(new Style(
@@ -152,7 +152,7 @@ final class ComponentRoute extends Component
                 continue;
             }
             if ($this->tag === 'p-data-table') {
-                $profile = (string) ($previewProps['dataTableProfile'] ?? 'standard');
+                $profile = self::stringValue($previewProps['dataTableProfile'] ?? 'standard');
                 $preview = $this->dataTableInteractionPreviews[$index]
                     ??= new DataTableInteractionPreview($profile);
                 $samples[] = Column::make($caption, $preview)->style(new Style(
@@ -162,7 +162,7 @@ final class ComponentRoute extends Component
                 continue;
             }
             if ($this->tag === 'p-data-table-virtual') {
-                $profile = (string) ($previewProps['virtualTableProfile'] ?? 'standard');
+                $profile = self::stringValue($previewProps['virtualTableProfile'] ?? 'standard');
                 $preview = $this->virtualDataTableInteractionPreviews[$index]
                     ??= new VirtualDataTableInteractionPreview($profile);
                 $samples[] = Column::make($caption, $preview)->style(new Style(
@@ -197,7 +197,7 @@ final class ComponentRoute extends Component
             }
             if ($this->belongsTo(['p-stepper', 'p-stepper-vertical'])) {
                 $stepOrder = ['account', 'delivery', 'confirm'];
-                $currentStep = (string) ($this->sampleValues[$index]
+                $currentStep = self::stringValue($this->sampleValues[$index]
                     ?? $previewProps['modelValue']
                     ?? 'account');
                 $currentIndex = array_search($currentStep, $stepOrder, true);
@@ -367,7 +367,7 @@ final class ComponentRoute extends Component
                 );
                 $preview = $component::make($previewProps, ...$steps)
                     ->onChange(function (mixed $value) use ($index): bool {
-                        $this->setSampleValue($index, (string) $value);
+                        $this->setSampleValue($index, self::stringValue($value));
 
                         return true;
                     })->style(new Style(
@@ -824,7 +824,7 @@ final class ComponentRoute extends Component
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $icon = MaterialComponentMap::TAGS['p-icon'];
                 $textField = MaterialComponentMap::TAGS['p-text-field'];
-                $profile = (string) ($previewProps['sheetProfile'] ?? 'default');
+                $profile = self::stringValue($previewProps['sheetProfile'] ?? 'default');
                 unset($previewProps['sheetProfile']);
                 $open = (bool) ($this->sampleValues[$index] ?? false);
                 $setOpen = function (bool $value) use ($index): bool {
@@ -874,7 +874,7 @@ final class ComponentRoute extends Component
                 $keyboard = $profile === 'keyboard';
                 $detents = $profile === 'detents';
                 $sheetSnapIndex = $this->sheetSnapIndexes[$index]
-                    ?? (int) ($previewProps['defaultSnapIndex'] ?? 0);
+                    ?? self::intValue($previewProps['defaultSnapIndex'] ?? 0);
                 if ($detents) {
                     $previewProps['snapToIndex'] = $sheetSnapIndex;
                 }
@@ -1097,7 +1097,7 @@ final class ComponentRoute extends Component
             } elseif ($this->belongsTo(['p-dialog', 'p-overlay'])) {
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $open = (bool) ($this->sampleValues[$index] ?? false);
-                $dialogProfile = (string) ($previewProps['dialogProfile'] ?? 'default');
+                $dialogProfile = self::stringValue($previewProps['dialogProfile'] ?? 'default');
                 unset($previewProps['dialogProfile']);
                 $persistent = (bool) ($previewProps['persistent'] ?? false);
                 $fullscreen = (bool) ($previewProps['fullscreen'] ?? false);
@@ -1332,7 +1332,7 @@ final class ComponentRoute extends Component
                 ));
             } elseif ($this->tag === 'p-badge') {
                 $avatar = MaterialComponentMap::TAGS['p-avatar'];
-                $profile = (string) ($previewProps['badgeProfile'] ?? 'count');
+                $profile = self::stringValue($previewProps['badgeProfile'] ?? 'count');
                 unset($previewProps['badgeProfile']);
                 $isDot = $profile === 'dot';
                 $badgeText = match ($profile) {
@@ -1396,7 +1396,7 @@ final class ComponentRoute extends Component
                         'Motion', 'Forms', 'Data', 'Release',
                     ];
                 }
-                $selectedValue = (string) ($this->sampleValues[$index]
+                $selectedValue = self::stringValue($this->sampleValues[$index]
                     ?? $previewProps['modelValue']
                     ?? 'overview');
                 $triggers = [];
@@ -1463,7 +1463,7 @@ final class ComponentRoute extends Component
                     ],
                     ...$triggers,
                 )->onChange(function (mixed $value) use ($index): bool {
-                    $this->setSampleValue($index, (string) $value);
+                    $this->setSampleValue($index, self::stringValue($value));
 
                     return true;
                 });
@@ -1519,7 +1519,7 @@ final class ComponentRoute extends Component
             } elseif ($this->tag === 'p-btn-toggle') {
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $icon = MaterialComponentMap::TAGS['p-icon'];
-                $toggleProfile = (string) (
+                $toggleProfile = self::stringValue(
                     $previewProps['buttonToggleProfile'] ?? 'default'
                 );
                 unset($previewProps['buttonToggleProfile']);
@@ -1860,7 +1860,7 @@ final class ComponentRoute extends Component
                 $preview = $component::make($previewProps, ...$barChildren);
             } elseif ($this->tag === 'p-list') {
                 $listItem = MaterialComponentMap::TAGS['p-list-item'];
-                $selectedItem = (string) ($this->sampleValues[$index] ?? 'design');
+                $selectedItem = self::stringValue($this->sampleValues[$index] ?? 'design');
                 $listEntries = [
                     ['design', 'Design system', 'Tokens and components'],
                     ['native', 'Native runtime', 'Android and iOS'],
@@ -1905,7 +1905,7 @@ final class ComponentRoute extends Component
             } elseif ($this->tag === 'p-infinite-scroll') {
                 $listItem = MaterialComponentMap::TAGS['p-list-item'];
                 $button = MaterialComponentMap::TAGS['p-btn'];
-                $profile = (string) ($previewProps['infiniteProfile'] ?? 'loading');
+                $profile = self::stringValue($previewProps['infiniteProfile'] ?? 'loading');
                 unset($previewProps['infiniteProfile']);
                 $infiniteItems = [];
                 $infiniteEntries = [
@@ -2201,7 +2201,7 @@ final class ComponentRoute extends Component
                 )->style(new Style(widthPercent: 100.0, gap: 2.0));
             } elseif ($this->tag === 'p-list-item') {
                 $icon = MaterialComponentMap::TAGS['p-icon'];
-                $profile = (string) ($previewProps['listItemProfile'] ?? 'two');
+                $profile = self::stringValue($previewProps['listItemProfile'] ?? 'two');
                 unset($previewProps['listItemProfile']);
                 $pressed = (bool) ($this->sampleValues[$index] ?? false);
                 $requestedLines = $previewProps['lines'] ?? match ($profile) {
@@ -2588,7 +2588,7 @@ final class ComponentRoute extends Component
             } elseif ($this->tag === 'p-btn-group') {
                 $button = MaterialComponentMap::TAGS['p-btn'];
                 $icon = MaterialComponentMap::TAGS['p-icon'];
-                $groupProfile = (string) (
+                $groupProfile = self::stringValue(
                     $previewProps['buttonGroupProfile'] ?? 'default'
                 );
                 unset($previewProps['buttonGroupProfile']);
@@ -2719,11 +2719,11 @@ final class ComponentRoute extends Component
                     ?? ($previewProps['modelValue'] ?? 'design');
                 $previewProps['modelValue'] = $groupValue;
                 $selectedValues = is_array($groupValue)
-                    ? array_map('strval', $groupValue)
-                    : [(string) $groupValue];
+                    ? array_map(static fn (mixed $value): string => self::stringValue($value), $groupValue)
+                    : [self::stringValue($groupValue)];
                 $groupDisabled = ($previewProps['disabled'] ?? false) === true;
                 $disabledValues = array_map(
-                    'strval',
+                    static fn (mixed $value): string => self::stringValue($value),
                     is_array($previewProps['disabledValues'] ?? null)
                         ? $previewProps['disabledValues']
                         : [],
@@ -2770,7 +2770,7 @@ final class ComponentRoute extends Component
                     ? (bool) $this->sampleValues[$index]
                     : (bool) ($previewProps['selected'] ?? $previewProps['checked'] ?? false);
                 $disabled = ($previewProps['disabled'] ?? false) === true;
-                $label = (string) ($previewProps['label'] ?? 'Design');
+                $label = self::stringValue($previewProps['label'] ?? 'Design');
                 $previewProps['selected'] = $selected;
                 $previewProps['checked'] = $selected;
                 $previewProps['accessibilityLabel'] = $label;
@@ -2812,7 +2812,7 @@ final class ComponentRoute extends Component
                         return true;
                     });
             } elseif ($this->tag === 'p-calendar-day') {
-                $profile = (string) ($previewProps['calendarDayProfile'] ?? 'day');
+                $profile = self::stringValue($previewProps['calendarDayProfile'] ?? 'day');
                 unset($previewProps['calendarDayProfile']);
                 if ($profile === 'range') {
                     $preview = Row::make(
@@ -2855,7 +2855,7 @@ final class ComponentRoute extends Component
                     } elseif (($previewProps['state'] ?? null) === 'selected') {
                         $previewProps['state'] = 'default';
                     }
-                    $day = (string) ($previewProps['day'] ?? '15');
+                    $day = self::stringValue($previewProps['day'] ?? '15');
                     unset($previewProps['day']);
                     $preview = $component::make(
                         $previewProps,
@@ -3009,8 +3009,8 @@ final class ComponentRoute extends Component
                         'owner' => 'Design team',
                         'submitted' => false,
                     ];
-                $projectValue = (string) ($formState['project'] ?? '');
-                $ownerValue = (string) ($formState['owner'] ?? '');
+                $projectValue = self::stringValue($formState['project'] ?? '');
+                $ownerValue = self::stringValue($formState['owner'] ?? '');
                 $submitted = ($formState['submitted'] ?? false) === true;
                 $content = [
                     $field::make([
@@ -3020,7 +3020,7 @@ final class ComponentRoute extends Component
                         'required' => true,
                         'accessibilityLabel' => 'Project name',
                     ])->onChange(function (mixed $value) use ($index, $formState): bool {
-                        $formState['project'] = (string) $value;
+                        $formState['project'] = self::stringValue($value);
                         $formState['submitted'] = false;
                         $this->setSampleValue($index, $formState);
 
@@ -3032,7 +3032,7 @@ final class ComponentRoute extends Component
                         'variant' => 'outlined',
                         'accessibilityLabel' => 'Project owner',
                     ])->onChange(function (mixed $value) use ($index, $formState): bool {
-                        $formState['owner'] = (string) $value;
+                        $formState['owner'] = self::stringValue($value);
                         $formState['submitted'] = false;
                         $this->setSampleValue($index, $formState);
 
@@ -3126,8 +3126,8 @@ final class ComponentRoute extends Component
                     ?? $previewProps['selected']
                     ?? $previewProps['active']
                     ?? false);
-                $label = (string) ($previewProps['label'] ?? 'Overview');
-                $itemValue = (string) ($previewProps['value']
+                $label = self::stringValue($previewProps['label'] ?? 'Overview');
+                $itemValue = self::stringValue($previewProps['value']
                     ?? strtolower(str_replace(' ', '-', $label)));
                 $item = $component::make(
                     [
@@ -3164,7 +3164,7 @@ final class ComponentRoute extends Component
                     ],
                     $item,
                 )->onChange(function (mixed $value) use ($index): bool {
-                    $this->setSampleValue($index, (string) $value !== '');
+                    $this->setSampleValue($index, self::stringValue($value) !== '');
 
                     return true;
                 })->style(new Style(
@@ -3194,7 +3194,7 @@ final class ComponentRoute extends Component
                     gap: 8.0,
                 ));
             } elseif ($this->tag === 'p-skeleton-loader') {
-                $profile = (string) ($previewProps['skeletonProfile'] ?? 'text');
+                $profile = self::stringValue($previewProps['skeletonProfile'] ?? 'text');
                 unset($previewProps['skeletonProfile']);
                 if ($profile === 'article') {
                     $preview = Column::make(
@@ -3275,10 +3275,8 @@ final class ComponentRoute extends Component
                                 Text::make($label)->style(new Style(
                                     fontSize: 14.0,
                                     lineHeight: 20.0,
-                                    fontWeight: $active ? 600 : 400,
-                                    textColor: $active
-                                        ? $theme->color(ColorToken::Primary)
-                                        : $theme->color(ColorToken::MutedForeground),
+                                    fontWeight: 600,
+                                    textColor: $theme->color(ColorToken::Primary),
                                 )),
                             )->style(new Style(gap: 4.0, alignItems: Align::Center)),
                         )->style(new Style(
@@ -3308,12 +3306,12 @@ final class ComponentRoute extends Component
                         )->style(new Style(widthPercent: 100.0, paddingVertical: 16.0, gap: 6.0)),
                     )->style(new Style(widthPercent: 100.0));
                 } else {
-                    $state = (string) ($previewProps['stepState'] ?? 'active');
+                    $state = self::stringValue($previewProps['stepState'] ?? 'active');
                     unset($previewProps['stepState']);
                     $active = (bool) ($this->sampleValues[$index] ?? ($state === 'active'));
                     $complete = $state === 'complete';
                     $disabled = $state === 'disabled';
-                    $value = (string) ($previewProps['value'] ?? 'delivery');
+                    $value = self::stringValue($previewProps['value'] ?? 'delivery');
                     $stepItem = $component::make(
                         [...$previewProps, 'active' => $active, 'selected' => $active, 'complete' => $complete, 'disabled' => $disabled],
                         Row::make(
@@ -3354,7 +3352,7 @@ final class ComponentRoute extends Component
                         ],
                         $stepItem,
                     )->onChange(function (mixed $next) use ($index, $value): bool {
-                        $this->setSampleValue($index, (string) $next === $value);
+                        $this->setSampleValue($index, self::stringValue($next) === $value);
 
                         return true;
                     })->style(new Style(
@@ -3365,10 +3363,10 @@ final class ComponentRoute extends Component
                     ));
                 }
             } elseif ($this->tag === 'p-btn') {
-                $buttonProfile = (string) ($previewProps['buttonProfile'] ?? 'label');
-                $buttonLabel = (string) ($previewProps['buttonLabel'] ?? 'Continue');
+                $buttonProfile = self::stringValue($previewProps['buttonProfile'] ?? 'label');
+                $buttonLabel = self::stringValue($previewProps['buttonLabel'] ?? 'Continue');
                 unset($previewProps['buttonProfile'], $previewProps['buttonLabel']);
-                $pressCount = (int) ($this->sampleValues[$index] ?? 0);
+                $pressCount = self::intValue($this->sampleValues[$index] ?? 0);
                 $visibleLabel = $pressCount > 0
                     ? 'Pressed '.$pressCount
                     : $buttonLabel;
@@ -3399,7 +3397,7 @@ final class ComponentRoute extends Component
                     return true;
                 });
             } elseif ($this->tag === 'p-fab') {
-                $profile = (string) ($previewProps['fabProfile'] ?? 'default');
+                $profile = self::stringValue($previewProps['fabProfile'] ?? 'default');
                 unset($previewProps['fabProfile']);
                 $pressed = (bool) ($this->sampleValues[$index] ?? false);
                 $extended = $profile === 'extended';
@@ -3445,7 +3443,7 @@ final class ComponentRoute extends Component
                     });
                 }
             } elseif ($this->tag === 'p-icon-btn') {
-                $profile = (string) ($previewProps['iconButtonProfile'] ?? 'standard');
+                $profile = self::stringValue($previewProps['iconButtonProfile'] ?? 'standard');
                 unset($previewProps['iconButtonProfile']);
                 $pressed = (bool) ($this->sampleValues[$index] ?? false);
                 $disabled = $profile === 'disabled';
@@ -3483,7 +3481,7 @@ final class ComponentRoute extends Component
                     });
                 }
             } elseif ($this->tag === 'p-avatar') {
-                $avatarProfile = (string) ($previewProps['avatarProfile'] ?? 'initials');
+                $avatarProfile = self::stringValue($previewProps['avatarProfile'] ?? 'initials');
                 unset($previewProps['avatarProfile']);
                 $avatarSize = match ($previewProps['size'] ?? null) {
                     'x-small' => 24.0,
@@ -6721,6 +6719,18 @@ final class ComponentRoute extends Component
     private function isEnabledValue(mixed $value): bool
     {
         return in_array($value, [true, 1, '1'], true);
+    }
+
+    private static function stringValue(mixed $value): string
+    {
+        return is_scalar($value) || $value instanceof \Stringable
+            ? (string) $value
+            : '';
+    }
+
+    private static function intValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
     }
 
     private function generatesNativeAnatomy(): bool

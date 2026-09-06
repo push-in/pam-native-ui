@@ -1314,9 +1314,6 @@ $dateInputText = null;
 $dateInputQueue = [$dateInput];
 while ($dateInputQueue !== []) {
     $candidate = array_shift($dateInputQueue);
-    if (!$candidate instanceof \Pam\Native\Element) {
-        continue;
-    }
     $candidateText = $candidate->properties()[PropKey::Text->value]
         ?? $candidate->properties()[PropKey::Value->value]
         ?? null;
@@ -2284,7 +2281,10 @@ if (
     !$maskedOtpInput instanceof \Pam\Native\Element
     || count($maskedOtpCells) !== 6
     || count(array_filter($maskedOtpGlyphs, static fn (mixed $glyph): bool => $glyph === '•')) !== 6
-    || array_intersect($maskedOtpGlyphs, ['4', '8', '2', '9', '1', '5']) !== []
+    || array_intersect(
+        array_values(array_filter($maskedOtpGlyphs, 'is_string')),
+        ['4', '8', '2', '9', '1', '5'],
+    ) !== []
     || ($maskedOtpInput->properties()[PropKey::Secure->value] ?? false) !== true
     || ($maskedOtpInput->properties()[PropKey::MaxLength->value] ?? null) !== 6
     || ($maskedOtpInput->properties()[PropKey::InputCaretHidden->value] ?? false) !== true
@@ -2762,7 +2762,7 @@ $fixedWeekGrid = $fixedWeekCalendar->children()[2] ?? null;
 if (
     !$fixedWeekLabels instanceof \Pam\Native\Element
     || count($fixedWeekLabels->children()) !== 8
-    || ($fixedWeekLabels->children()[1]?->properties()[PropKey::Text->value] ?? null) !== 'S'
+    || ($fixedWeekLabels->children()[1]->properties()[PropKey::Text->value] ?? null) !== 'S'
     || !$fixedWeekGrid instanceof \Pam\Native\Element
     || ($fixedWeekGrid->properties()[PropKey::Height->value] ?? null) !== 288.0
     || ($fixedWeekCalendar->properties()[PropKey::MinHeight->value] ?? null) !== 376.0

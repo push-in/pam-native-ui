@@ -343,7 +343,7 @@ final class MaterialStyleResolver
             $date = $date ?: new \DateTimeImmutable('first day of this month');
             $firstDayOfWeek = max(
                 0,
-                min(6, (int) ($props['firstDayOfWeek'] ?? 0)),
+                min(6, self::integerValue($props['firstDayOfWeek'] ?? 0)),
             );
             $firstDay = ((int) $date->format('N')) % 7;
             $startOffset = ($firstDay - $firstDayOfWeek + 7) % 7;
@@ -1432,12 +1432,12 @@ final class MaterialStyleResolver
                 MaterialDensity::Compact => 96.0,
                 default => 112.0,
             };
-            $textareaRows = max(1, (int) ($props['rows'] ?? 3));
+            $textareaRows = max(1, self::integerValue($props['rows'] ?? 3));
             if (
                 $part === 'PTextarea'
                 && ($props['autoGrow'] ?? false) === true
             ) {
-                $textareaValue = (string) (
+                $textareaValue = self::stringValue(
                     $props['modelValue'] ?? $props['value'] ?? ''
                 );
                 $contentRows = substr_count(
@@ -1446,7 +1446,7 @@ final class MaterialStyleResolver
                 ) + 1;
                 $maximumRows = max(
                     $textareaRows,
-                    (int) ($props['maxRows'] ?? PHP_INT_MAX),
+                    self::integerValue($props['maxRows'] ?? PHP_INT_MAX),
                 );
                 $textareaRows = min(
                     max($textareaRows, $contentRows),
@@ -1690,7 +1690,7 @@ final class MaterialStyleResolver
 
         if ($part === 'PSpeedDial') {
             $horizontal = in_array(
-                strtolower((string) ($props['direction'] ?? 'top')),
+                strtolower(self::stringValue($props['direction'] ?? 'top')),
                 ['start', 'end', 'left', 'right', 'horizontal'],
                 true,
             );
@@ -1906,7 +1906,7 @@ final class MaterialStyleResolver
                 minHeight: $selectionControl
                     ? $selectionSize
                     : ($groupVertical
-                        ? max(50.0, ((int) ($props['__pamChildCount'] ?? 1)) * 50.0)
+                        ? max(50.0, self::integerValue($props['__pamChildCount'] ?? 1) * 50.0)
                         : 40.0),
                 gap: 8.0,
                 opacity: $opacity,
@@ -2221,6 +2221,18 @@ final class MaterialStyleResolver
         }
 
         return is_int($value) ? (float) $value : 0.0;
+    }
+
+    private static function stringValue(mixed $value): string
+    {
+        return is_scalar($value) || $value instanceof \Stringable
+            ? (string) $value
+            : '';
+    }
+
+    private static function integerValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
     }
 
     private static function withOpacity(int $argb, float $opacity): int

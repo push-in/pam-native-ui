@@ -1033,7 +1033,7 @@ final class ComponentRenderer
                         : null;
                     if (is_numeric($props['modelValue'] ?? $props['value'] ?? null)) {
                         $inputProps['modelValue'] = self::numberInputValue(
-                            (float) ($props['modelValue'] ?? $props['value']),
+                            self::scalarFloat($props['modelValue'] ?? $props['value']),
                             $precision,
                         );
                     }
@@ -2608,7 +2608,7 @@ final class ComponentRenderer
         };
         $values['rating'] = $materialComponent === 'PRating';
         if ($materialComponent === 'PTimePicker') {
-            $format = strtolower((string) ($props['format'] ?? ''));
+            $format = strtolower(self::scalarString($props['format'] ?? ''));
             $values['is24Hour'] = self::flag($props, 'is24Hour')
                 || in_array($format, ['24', '24h', '24hr', '24-hour'], true);
         }
@@ -3741,12 +3741,12 @@ final class ComponentRenderer
             return null;
         }
         $minimum = is_numeric($props['min'] ?? $props['minValue'] ?? null)
-            ? (float) ($props['min'] ?? $props['minValue'])
+            ? self::scalarFloat($props['min'] ?? $props['minValue'])
             : 0.0;
         $requestedMaximum = is_numeric(
             $props['max'] ?? $props['maxValue'] ?? null,
         )
-            ? (float) ($props['max'] ?? $props['maxValue'])
+            ? self::scalarFloat($props['max'] ?? $props['maxValue'])
             : 100.0;
         $maximum = max($minimum + 0.000001, $requestedMaximum);
         $step = is_numeric($props['step'] ?? null)
@@ -5296,7 +5296,7 @@ final class ComponentRenderer
                 ?? ComponentMode::Single->value,
         };
         $mode = is_numeric($mode) ? (int) $mode : ComponentMode::Single->value;
-        if ($handler === null || !is_int($mode) || $mode === 1) {
+        if ($handler === null || $mode === 1) {
             return $events;
         }
 
@@ -7674,11 +7674,10 @@ final class ComponentRenderer
         $instanceIdentity = $props['id']
             ?? $props['name']
             ?? $props['instanceKey']
-            ?? self::text($props, 'accessibilityLabel')
-            ?? self::text($props, 'label');
+            ?? self::text($props, 'accessibilityLabel');
         $instanceDigest = substr(hash(
             'sha256',
-            (string) $component."\0".(string) $instanceIdentity,
+            (string) $component."\0".self::scalarString($instanceIdentity),
         ), 0, 12);
         foreach ($normalized as $item) {
             $selected = $isSelected($item['value']);
@@ -7772,7 +7771,7 @@ final class ComponentRenderer
             'sha256',
             (string) $component
                 ."\0"
-                .(string) ($props['id']
+                .self::scalarString($props['id']
                     ?? $props['name']
                     ?? $props['instanceKey']
                     ?? self::text($props, 'accessibilityLabel'))
@@ -8062,8 +8061,8 @@ final class ComponentRenderer
         $date = $date ?: new \DateTimeImmutable('first day of this month');
 
         $theme = ThemeManager::current();
-        $locale = str_replace('_', '-', strtolower((string) ($props['locale'] ?? 'en-US')));
-        $language = explode('-', $locale)[0] ?? 'en';
+        $locale = str_replace('_', '-', strtolower(self::scalarString($props['locale'] ?? 'en-US')));
+        $language = explode('-', $locale)[0];
         $weekdayLabels = match ($language) {
             'pt' => ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
             'es' => ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
@@ -8072,7 +8071,7 @@ final class ComponentRenderer
             'it' => ['D', 'L', 'M', 'M', 'G', 'V', 'S'],
             default => ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
         };
-        $firstDayOfWeek = max(0, min(6, (int) ($props['firstDayOfWeek'] ?? 0)));
+        $firstDayOfWeek = max(0, min(6, self::scalarInt($props['firstDayOfWeek'] ?? 0)));
         $weekdayLabels = array_merge(
             array_slice($weekdayLabels, $firstDayOfWeek),
             array_slice($weekdayLabels, 0, $firstDayOfWeek),
@@ -9184,6 +9183,23 @@ final class ComponentRenderer
             static fn (mixed $item): string => is_scalar($item) ? (string) $item : '',
             $value,
         ));
+    }
+
+    private static function scalarString(mixed $value): string
+    {
+        return is_scalar($value) || $value instanceof \Stringable
+            ? (string) $value
+            : '';
+    }
+
+    private static function scalarInt(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
+    private static function scalarFloat(mixed $value): float
+    {
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 
     /** @return array<string, list<string>> */
