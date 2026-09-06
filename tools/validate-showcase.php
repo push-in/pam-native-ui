@@ -14,9 +14,11 @@ use App\ShowcaseRoute;
 use App\ShowcaseApp;
 use App\TypedCommunityCard;
 use Pam\MobileUi\Enum\ThemeMode;
+use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\MobileUiPluginProvider;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Generated\MaterialComponentMap;
+use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\App;
 use Pam\Native\EventKind;
@@ -149,29 +151,39 @@ foreach ($screens as $screen) {
     (new $screen())->toElement();
 }
 
-$validationDrawer = Router::drawer('overview')
-    ->route('overview', 'Overview', static fn (): Overview => new Overview())
-    ->build();
-$showcaseRoot = (new ShowcaseApp($validationDrawer, [], []))->toElement();
-$showcaseChildren = $showcaseRoot->children();
-if ($showcaseRoot->kind() !== NodeKind::Screen
-    || count($showcaseChildren) !== 2
-    || $showcaseChildren[0]->kind() !== NodeKind::StatusBar
-    || $showcaseChildren[1]->kind() !== NodeKind::DrawerLayout
-) {
-    throw new RuntimeException(
-        'Showcase root must contain an explicit StatusBar and its full-size drawer.',
-    );
+foreach ([ThemeMode::Light, ThemeMode::Dark] as $mode) {
+    PamUI::mode($mode);
+    $validationDrawer = Router::drawer('overview')
+        ->route('overview', 'Overview', static fn (): Overview => new Overview())
+        ->build();
+    $showcaseComponent = new ShowcaseApp($validationDrawer, [], []);
+    $showcaseRoot = $showcaseComponent->toElement();
+    $showcaseChildren = $showcaseRoot->children();
+    if ($showcaseRoot->kind() !== NodeKind::Screen
+        || count($showcaseChildren) !== 2
+        || $showcaseChildren[0]->kind() !== NodeKind::StatusBar
+        || $showcaseChildren[1]->kind() !== NodeKind::DrawerLayout
+    ) {
+        throw new RuntimeException(
+            'Showcase root must contain an explicit StatusBar and its full-size drawer.',
+        );
+    }
+    $statusBarProperties = $showcaseChildren[0]->properties();
+    $expectedAppearance = $mode === ThemeMode::Dark
+        ? StatusBarAppearance::Light
+        : StatusBarAppearance::Dark;
+    if (($statusBarProperties[PropKey::StatusBarColor->value] ?? null)
+            !== ThemeManager::current()->color(ColorToken::Background)
+        || ($statusBarProperties[PropKey::StatusBarStyle->value] ?? null)
+            !== $expectedAppearance->value
+    ) {
+        throw new RuntimeException(
+            "{$mode->name} showcase must match its themed status surface and readable icons.",
+        );
+    }
+    $showcaseComponent->unmount();
 }
-$statusBarProperties = $showcaseChildren[0]->properties();
-if (($statusBarProperties[PropKey::StatusBarColor->value] ?? null) !== 0xFFF8FAFC
-    || ($statusBarProperties[PropKey::StatusBarStyle->value] ?? null)
-        !== StatusBarAppearance::Dark->value
-) {
-    throw new RuntimeException(
-        'Light showcase must author a light status surface with readable dark icons.',
-    );
-}
+PamUI::mode(ThemeMode::Dark);
 
 $showcaseRoutes = [
     'showcase-home',
