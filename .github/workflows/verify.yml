@@ -150,6 +150,7 @@ jobs:
           python3 -m json.tool benchmarks/device-evidence.schema.json >/dev/null
           python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
           python3 tools/validate-android-component-approvals.py
+          python3 tools/validate-android-gif-evidence.py
 
       - name: Run composition benchmark
         env:

@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "component": "p-radio",
   "candidateOnly": true,
-  "sourceReportSha256": "5ed8ec995d1525de8d5e1c78edbdf9c838ae53bf3444b3695596efd6b5545f23",
-  "baselineSha256": "c53b00632588bdadfde401996a3594534743db3a4edb78ab9d0fd3bbfff500e5",
-  "interactedSha256": "4912cda3ea26156fbf4ce8ce6b9760d62f4d3b593b3afb5742ecceb4322e1bf7",
+  "sourceReportSha256": "a85de242a7ff448f45420ccd7479c4b55dbbf050b3226c815cffd1e60e22e7f3",
+  "baselineSha256": "004a1b343a8f427497af31e14516307c39eb9e373dd24aa7519c82c91526e6d7",
+  "interactedSha256": "875661a5097be444167fbba9a53883c491eb03c62ebb821fcb66553f96425221",
   "gif": "p-radio.gif",
-  "gifSha256": "9ca6c9ca6d19985148972618e4326882d067038dd162136db7f441bc7a4c9596",
+  "gifSha256": "91516a5b6ab179437faa3cc73cf1f9e69a99ea3152831f4e7dce4817ef36cb33",
   "width": 360,
   "derivedFromRealInteraction": true
 }
