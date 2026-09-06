@@ -1309,7 +1309,14 @@ internal class MobileUiHost(
             applyTabsState(animate = false)
         }
         if (behavior == Behavior.BOTTOM_SHEET) {
-            post { applySheetLayout(animate = false) }
+            if (isAttachedToWindow) {
+                post { applySheetLayout(animate = false) }
+            } else {
+                // Protocol composition adds the sheet content before the host
+                // is attached. Build its native search/empty-state structure
+                // immediately so the first measure is complete on old APIs.
+                applySheetLayout(animate = false)
+            }
         }
         if (behavior == Behavior.MENU_ITEM) {
             updateMenuItemAccessibility()

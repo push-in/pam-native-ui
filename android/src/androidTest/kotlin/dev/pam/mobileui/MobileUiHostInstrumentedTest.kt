@@ -642,7 +642,7 @@ class MobileUiHostInstrumentedTest {
             assertEquals(Color.WHITE, label.currentTextColor)
             // The Material medium shape deliberately leaves the extreme
             // corner transparent; sample inside the selected container.
-            assertEquals(Color.BLUE, rendered.getPixel(16, 16))
+            assertEquals(Color.BLUE, rendered.getPixel(120, 32))
             host.release()
         }
     }
