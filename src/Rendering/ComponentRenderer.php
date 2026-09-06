@@ -4699,8 +4699,7 @@ final class ComponentRenderer
         }
         $styled = self::applyButtonForeground($element, $foreground);
         $children = $styled->children();
-        $replaceChildren = self::retainedTreeChildrenMethod();
-        if ($children === [] || !is_callable([$styled, $replaceChildren])) {
+        if ($children === []) {
             return $styled;
         }
 
@@ -4708,7 +4707,7 @@ final class ComponentRenderer
         // supported runtime. Older runtimes still receive the correctly
         // styled root instead of crashing while current runtimes propagate
         // the foreground through nested content.
-        return $styled->{$replaceChildren}(array_map(
+        return self::replaceChildren($styled, array_map(
             static fn (Element $child): Element =>
                 self::applyForegroundTree($child, $foreground),
             $children,
@@ -4726,12 +4725,11 @@ final class ComponentRenderer
                 ->property(PropKey::Accessible, $enabled)
             : $element;
         $children = $updated->children();
-        $replaceChildren = self::retainedTreeChildrenMethod();
-        if ($children === [] || !is_callable([$updated, $replaceChildren])) {
+        if ($children === []) {
             return $updated;
         }
 
-        return $updated->{$replaceChildren}(array_map(
+        return self::replaceChildren($updated, array_map(
             static fn (Element $child): Element =>
                 self::applyInputEnabledTree($child, $enabled),
             $children,
@@ -4772,9 +4770,22 @@ final class ComponentRenderer
         return $pascal.'Icon';
     }
 
-    private static function retainedTreeChildrenMethod(): string
+    /**
+     * @param list<Element> $children
+     */
+    private static function replaceChildren(Element $element, array $children): Element
     {
-        return 'domWithChildren';
+        // withChildren() is the immutable primitive shared by every supported
+        // PAM Native release. Newer releases expose domWithChildren(), but
+        // using the common primitive keeps nested Material styling identical
+        // across the full compatibility matrix.
+        $method = new \ReflectionMethod($element, 'withChildren');
+        $result = $method->invoke($element, $children);
+        if (!$result instanceof Element) {
+            throw new \LogicException('PAM Native child replacement must return an Element.');
+        }
+
+        return $result;
     }
 
     private static function isPressable(string $part): bool
