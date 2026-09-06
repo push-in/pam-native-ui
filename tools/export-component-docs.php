@@ -82,6 +82,7 @@ $delegatedProps = [
 ];
 
 $variationMethod = new ReflectionMethod(ComponentRoute::class, 'variations');
+$samplePropsMethod = new ReflectionMethod(ComponentRoute::class, 'sampleProps');
 $entries = [];
 foreach (MaterialComponentMap::TAGS as $tag => $class) {
     $shortClass = substr($class, strrpos($class, '\\') + 1);
@@ -90,8 +91,13 @@ foreach (MaterialComponentMap::TAGS as $tag => $class) {
     $variations = $variationMethod->invoke($route);
     $props = [];
     foreach ($variations as $variation) {
-        foreach ($variation['props'] as $name => $value) {
-            if (str_ends_with($name, 'Profile')) {
+        /** @var array<string, mixed> $effectiveProps */
+        $effectiveProps = $samplePropsMethod->invoke($route, $variation['props']);
+        foreach ($effectiveProps as $name => $value) {
+            if (
+                str_ends_with($name, 'Profile')
+                || in_array($name, ['id', 'source'], true)
+            ) {
                 continue;
             }
             $type = match (true) {
