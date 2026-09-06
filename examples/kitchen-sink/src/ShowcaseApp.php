@@ -23,7 +23,10 @@ final class ShowcaseApp extends Component
 {
     private ?int $linkSubscription = null;
 
-    /** @param array<string, string> $componentRoutes */
+    /**
+     * @param array<string, string> $componentRoutes
+     * @param array<string, ComponentRoute> $componentAuditRoutes
+     */
     public function __construct(
         private readonly DrawerNavigator $drawer,
         private readonly array $componentRoutes,

@@ -13,6 +13,7 @@ use Pam\Native\Style;
 use Pam\Native\UI\Column;
 use Pam\Native\UI\Text;
 
+/** @property (\stdClass&object{selected: list<int>, message: string}) $state */
 final class DataTableInteractionPreview extends Component
 {
     public function __construct(private readonly string $profile)

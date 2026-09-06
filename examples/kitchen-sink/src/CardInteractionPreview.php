@@ -17,6 +17,7 @@ use Pam\Native\UI\Column;
 use Pam\Native\UI\Text;
 
 /** Keeps card interaction state local so one press never rebuilds the catalog route. */
+/** @property (\stdClass&object{mode: string|null}) $state */
 final class CardInteractionPreview extends Component
 {
     /** @param array<string, mixed> $props */

@@ -14,6 +14,7 @@ use Pam\Native\Style;
 use Pam\Native\UI\Column;
 use Pam\Native\UI\Text;
 
+/** @property (\stdClass&object{multiple: list<string>, single: string, message: string}) $state */
 final class ChipGroupInteractionPreview extends Component
 {
     public function __construct(private readonly string $profile)

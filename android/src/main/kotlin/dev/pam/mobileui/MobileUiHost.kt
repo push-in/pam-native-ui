@@ -1283,6 +1283,17 @@ internal class MobileUiHost(
 
     override fun onViewAdded(child: View) {
         super.onViewAdded(child)
+        if (
+            behavior == Behavior.BOTTOM_SHEET
+            && child is ViewGroup
+            && child.tag == OVERLAY_CONTENT_TAG
+        ) {
+            // Selection portals are commonly configured before their native
+            // content is mounted. Build the owned search/empty-state rows as
+            // soon as that content arrives so the first composed frame is
+            // complete on every supported Android API level.
+            ensureSheetSearchInput(child)
+        }
         if (behavior == Behavior.TABLE) {
             tableSemanticsDirty = true
         } else if (behavior == Behavior.TABLE_ROW) {

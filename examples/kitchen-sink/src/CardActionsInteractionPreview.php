@@ -11,6 +11,7 @@ use Pam\Native\Renderable;
 use Pam\Native\UI\Text;
 
 /** Keeps each standalone card-action row interactive without rebuilding its route. */
+/** @property (\stdClass&object{selection: string|null}) $state */
 final class CardActionsInteractionPreview extends Component
 {
     public function __construct(private readonly string $profile = 'pair')

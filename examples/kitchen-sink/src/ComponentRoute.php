@@ -31,6 +31,13 @@ use Pam\Native\UI\ScrollView;
 use Pam\Native\UI\Text;
 use Pam\Native\UI\View;
 
+/**
+ * @property (\stdClass&object{
+ *   auditRevision: int,
+ *   auditScenario: string|null,
+ *   interactionRevision: int
+ * }) $state
+ */
 final class ComponentRoute extends Component
 {
     public DrawerNavigator $drawer;
@@ -94,7 +101,8 @@ final class ComponentRoute extends Component
         // Reading this revision subscribes the component to every interaction
         // update so PHP never reuses a stale rendered subtree after a native
         // event changes one of those values.
-        $this->state->interactionRevision;
+        $interactionRevision = $this->state->interactionRevision;
+        unset($interactionRevision);
         $theme = ThemeManager::current();
         $samples = [];
         foreach ($this->variations() as $index => $variation) {

@@ -15,6 +15,7 @@ use Pam\Native\UI\Column;
 use Pam\Native\UI\Row;
 use Pam\Native\UI\Text;
 
+/** @property (\stdClass&object{value: string, message: string}) $state */
 final class ColorInputInteractionPreview extends Component
 {
     private const array PALETTE = [
