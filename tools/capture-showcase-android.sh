@@ -7,7 +7,7 @@ output=${1:-"${root}/docs/assets/android/components"}
 package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog.debug}
 activity=${PAM_SHOWCASE_ACTIVITY:-dev.pam.nativeapp.PamActivity}
 serial=${ANDROID_SERIAL:-}
-settle_seconds=${PAM_SHOWCASE_SETTLE_SECONDS:-1}
+settle_seconds=${PAM_SHOWCASE_SETTLE_SECONDS:-2}
 
 command -v adb >/dev/null || {
   echo 'adb is required to capture the Android showcase.' >&2
@@ -107,12 +107,22 @@ capture() {
         xmllint --xpath \
           "//*[contains(@text, '${expected}') or contains(@content-desc, '${expected}')]" \
           "${hierarchy}" >/dev/null 2>&1; then
-        if [[ -z ${route_tag} ]] || \
-          xmllint --xpath "//*[@text='${route_tag}']" \
-            "${hierarchy}" >/dev/null 2>&1; then
-          dumped=true
-          break 2
+        if [[ -n ${route_tag} ]]; then
+          route_bounds=$(xmllint --xpath \
+            "string(//*[@text='${route_tag}']/@bounds)" \
+            "${hierarchy}" 2>/dev/null || true)
+          route_left=$(sed -nE 's/^\[([0-9]+),.*/\1/p' <<<"${route_bounds}")
+          # Component routes use a 16dp page inset. A route identifier at the
+          # physical edge means navigation was captured mid-transition even
+          # if its text happened to be discoverable in the hierarchy.
+          if [[ -z ${route_left} || ${route_left} -lt 24 ]]; then
+            dump_output="route ${route_tag} is not stably inset: ${route_bounds:-missing bounds}"
+            sleep 1
+            continue
+          fi
         fi
+        dumped=true
+        break 2
       fi
       sleep 1
     done
