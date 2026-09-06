@@ -3834,6 +3834,9 @@ final class ComponentRoute extends Component
                     )),
                 )->key(
                     'component-route-scroll:'.$this->tag.':'.$this->state->auditRevision,
+                )->scrollRequest(
+                    (int) $this->state->auditRevision,
+                    targetOffset: 0.0,
                 )->style(new Style(
                     widthPercent: 100.0,
                     heightPercent: 100.0,

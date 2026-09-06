@@ -230,11 +230,37 @@ Reference host: Intel Core Ultra 9 185H, 22 logical CPUs, 30 GiB RAM, Linux
 
 Reproduce it with `composer benchmark`.
 
+## Android release showcase startup
+
+The API 36 x86_64 emulator release candidate dated 2026-09-06 cold-launched
+all 84 dedicated component routes. Every launch rendered its route identifier
+and `Variations` heading at the authoritative top position, with no runtime
+error, crash or ANR marker:
+
+| Metric | Result | Budget |
+| --- | ---: | ---: |
+| Cold launch p50 | 328 ms | — |
+| Cold launch p95 | 366 ms | 1,500 ms |
+| Cold launch p99 | 500 ms | — |
+| Slowest route | 562 ms | 2,500 ms |
+
+The machine-readable result is
+[`benchmarks/emulator-android-api36-showcase-release-2026-09-06.json`](../benchmarks/emulator-android-api36-showcase-release-2026-09-06.json).
+It binds the exact installed APK SHA-256 and remains explicitly marked as
+emulator-only candidate evidence. Reproduce the complete route sweep with:
+
+```bash
+python3 tools/audit-showcase-android-release-startup.py \
+  --serial emulator-5556 \
+  --output benchmarks/emulator-android-api36-showcase-release-YYYY-MM-DD.json
+```
+
 ## Claim boundary
 
 These measurements validate bounded host work and the absence of per-frame PHP
-traffic on one high-end physical device. They do not yet establish an end-to-end
-speedup over React Native Nitro Modules. Cold start, mount/update through the
-full PAM renderer, frame p50/p95/p99, jank, memory and matched-device competitor
-baselines remain required before the performance gate can move from `planned`
-to `verified`.
+traffic on one high-end physical device. The separate release sweep validates
+cold startup and correct first layout through the full PAM renderer on an API
+36 emulator. Neither establishes an end-to-end speedup over React Native Nitro
+Modules. Physical-device full-renderer frame p50/p95/p99, jank, memory and
+matched-device competitor baselines remain required before the performance
+gate can move from `planned` to `verified`.
