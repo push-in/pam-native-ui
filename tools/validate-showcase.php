@@ -250,6 +250,41 @@ foreach (MaterialComponentMap::TAGS as $tag => $component) {
     $componentRouteCount++;
 }
 
+$deepLinkedRoute = new ComponentRoute(
+    'p-data-table-virtual',
+    'Data Table Virtual',
+    MaterialComponentMap::TAGS['p-data-table-virtual'],
+);
+$deepLinkedRoute->useAuditScenario('interactive');
+$deepLinkedTree = $deepLinkedRoute->toElement();
+$deepLinkedScroll = null;
+$findDeepLinkedScroll = static function ($node) use (
+    &$findDeepLinkedScroll,
+    &$deepLinkedScroll,
+): void {
+    if ($node->kind() === NodeKind::Scroll) {
+        $deepLinkedScroll = $node;
+
+        return;
+    }
+    foreach ($node->children() as $child) {
+        $findDeepLinkedScroll($child);
+        if ($deepLinkedScroll !== null) {
+            return;
+        }
+    }
+};
+$findDeepLinkedScroll($deepLinkedTree);
+$deepLinkedScrollProperties = $deepLinkedScroll?->properties() ?? [];
+if (
+    ($deepLinkedScrollProperties[PropKey::ScrollRequest->value] ?? null) !== 1
+    || ($deepLinkedScrollProperties[PropKey::ScrollTargetOffset->value] ?? null) !== 0.0
+) {
+    throw new RuntimeException(
+        'Every component deep link must issue a one-shot scroll-to-top request.',
+    );
+}
+
 $rangeAuditRoute = new ComponentRoute(
     'p-range-slider',
     'Range Slider',
