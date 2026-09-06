@@ -24,9 +24,9 @@ for relative in "${paths[@]}"; do
   [[ ${path} == "${root}/"* ]] || { printf 'refusing cleanup outside %s: %s\n' "${root}" "${path}" >&2; exit 1; }
   if [[ -e ${path} || -L ${path} ]]; then
     [[ ! -L ${path} ]] || { printf 'refusing symlinked build artifact: %s\n' "${path}" >&2; exit 1; }
-    blocked=$(find "${path}" -type d ! -writable -print -quit)
+    blocked=$(find "${path}" ! -user "$(id -u)" -print -quit)
     if [[ -n ${blocked} ]]; then
-      printf 'cannot clean %s: non-writable build directory %s\n' "${relative}" "${blocked}" >&2
+      printf 'cannot clean %s: build artifact is owned by another user: %s\n' "${relative}" "${blocked}" >&2
       cleanup_failures=$((cleanup_failures + 1))
       continue
     fi
