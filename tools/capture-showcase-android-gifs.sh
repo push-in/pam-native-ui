@@ -167,7 +167,7 @@ PY
 interact() {
   case $1 in
     navigation)
-      tap_text 'Open component workbench'
+      tap_text 'Open component navigation'
       sleep 2
       tap_text 'Forms'
       ;;
