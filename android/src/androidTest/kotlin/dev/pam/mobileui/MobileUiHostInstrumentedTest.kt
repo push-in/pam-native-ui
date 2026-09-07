@@ -357,7 +357,7 @@ class MobileUiHostInstrumentedTest {
             val message = messages.single()
 
             assertEquals(View.VISIBLE, message.visibility)
-            assertEquals(dp(host, 48f), search.height)
+            assertEquals(dp(host, 56f), search.height)
             assertEquals(dp(host, 56f), message.height)
             assertTrue(message.top >= search.bottom + dp(host, 8f))
             assertTrue(kotlin.math.abs(search.top - dp(host, 32f)) <= 1)
