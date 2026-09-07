@@ -80,6 +80,23 @@ final class ColorInputInteractionPreview extends Component
         $previewColor = $this->displayColor($value, $mode);
         $preview = Row::make(
             Column::make(
+                Text::make($invalid ? 'CHECK' : 'PAM')->style(new Style(
+                    textColor: $invalid
+                        ? $theme->color(ColorToken::Destructive)
+                        : $previewColor,
+                    fontSize: 14.0,
+                    lineHeight: 20.0,
+                    fontWeight: 800,
+                )),
+            )->style(new Style(
+                width: 76.0,
+                minWidth: 76.0,
+                height: 40.0,
+                minHeight: 40.0,
+                alignItems: Align::Center,
+                justifyContent: \Pam\Native\Justify::Center,
+            )),
+            Column::make(
                 Text::make('Current color')->style(new Style(
                     fontSize: 12.0,
                     lineHeight: 16.0,
@@ -93,8 +110,18 @@ final class ColorInputInteractionPreview extends Component
                         ? $theme->color(ColorToken::Destructive)
                         : $previewColor,
                 )),
-            )->style(new Style(gap: 0.0, alignItems: Align::Start)),
-        )->style(new Style(gap: 12.0, alignItems: Align::Center));
+            )->style(new Style(
+                widthPercent: 65.0,
+                flexGrow: 1.0,
+                flexShrink: 1.0,
+                gap: 0.0,
+                alignItems: Align::Start,
+            )),
+        )->style(new Style(
+            widthPercent: 100.0,
+            gap: 16.0,
+            alignItems: Align::Center,
+        ));
 
         $children = [$preview, $field];
         if ($this->profile === 'palette') {

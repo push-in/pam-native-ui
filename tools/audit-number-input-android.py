@@ -42,6 +42,43 @@ class NumberInputAudit(AutocompleteAudit):
             component_label="Number Input",
         )
 
+    def launch(self, scenario: str = "interactive") -> None:
+        for package in ("dev.pam.scanner.test", "br.com.linkinpay.app.debug"):
+            self.adb("shell", "am", "force-stop", package, check=False)
+        super().launch(scenario)
+
+    def pin_task_immediately_after_launch(self) -> bool:
+        # A separately running development harness on the physical Samsung
+        # can explicitly relaunch itself even after force-stop. Pin before the
+        # first settle/dump so keyboard/touch assertions cannot be redirected.
+        return True
+
+    def screenshot(self, name: str) -> tuple[int, int]:
+        # Screencap works while the task is pinned. Keeping the lock avoids the
+        # short unpinned window in the shared helper where another dev harness
+        # can steal the foreground between a keyboard edit and its evidence.
+        if name == "00-baseline" and self.task_locked:
+            # Lock-task mode intentionally hides Android system bars. Capture
+            # the baseline in a tightly bounded unpinned window so its status
+            # bar contrast remains a real assertion, then pin immediately.
+            self.stop_task_lock()
+            for package in ("dev.pam.scanner.test", "br.com.linkinpay.app.debug"):
+                self.adb("shell", "am", "force-stop", package, check=False)
+            time.sleep(0.15)
+            try:
+                return super().screenshot(name)
+            finally:
+                self.start_task_lock()
+        self.assert_foreground(f"screenshot {name}")
+        path = self.output / f"{name}.png"
+        payload = self.adb("exec-out", "screencap", "-p", binary=True)
+        assert isinstance(payload, bytes)
+        path.write_bytes(payload)
+        with Image.open(path) as image:
+            size = image.size
+        self.evidence.append({"name": name, "path": str(path), "size": list(size)})
+        return size
+
     def expect_ime(self, expected: bool, context: str) -> None:
         deadline = time.monotonic() + (5.0 if expected else 2.0)
         while time.monotonic() < deadline:
@@ -144,7 +181,14 @@ class NumberInputAudit(AutocompleteAudit):
         raise AuditFailure(f"could not bring {label!r} number input into the viewport")
 
     def replace_text(self, value: str) -> None:
-        self.shell("input", "keycombination", "113", "29")
+        # Samsung's numeric IME ignores Ctrl+A. Delete from the active cursor
+        # so the audit proves replacement on real manufacturer keyboards
+        # instead of accidentally appending to the existing value.
+        self.shell("input", "keyevent", "KEYCODE_MOVE_END")
+        # Four isolated deletes cover every fixture value without triggering
+        # Samsung/Google keyboard shortcuts caused by a batched key sequence.
+        for _ in range(4):
+            self.shell("input", "keyevent", "KEYCODE_DEL")
         self.shell("input", "text", value)
         time.sleep(1.0)
 
@@ -205,19 +249,24 @@ class NumberInputAudit(AutocompleteAudit):
             isolated = self.input_after(root, "Isolated instance")
             if default.attrib.get("text") != "8" or isolated.attrib.get("text") != "3":
                 raise AuditFailure("default or isolated numeric value did not render")
-            minimum_touch = round(48 * self.density()) - 1
             default_actions = self.actions_for_input(root, default)
             if len(default_actions) != 2:
                 raise AuditFailure("default number input does not expose two controls")
+            minimum_touch = round(48 * self.density()) - 1
             if any(
                 node_bounds(action).width < minimum_touch
                 or node_bounds(action).height < minimum_touch
                 for action in default_actions
             ):
-                raise AuditFailure("number step controls are smaller than 48dp")
+                raise AuditFailure("number step targets are smaller than 48dp")
 
             after_decrease, updated_default = self.tap_and_expect_value(
-                root, default, "Decrease value", "Default", "7", "01-decreased",
+                root,
+                default,
+                "Decrease value",
+                "Default",
+                "7",
+                "01-decreased",
             )
             if self.input_after(after_decrease, "Isolated instance").attrib.get("text") != "3":
                 raise AuditFailure("stepping the default number corrupted its sibling")
@@ -399,7 +448,7 @@ class NumberInputAudit(AutocompleteAudit):
             markers = (
                 "FATAL EXCEPTION", " E AndroidRuntime:", "Pam Native runtime error",
                 "failed integrity verification", "Unknown native icon",
-                "ANR in dev.pam.mobileui.catalog.debug",
+                f"ANR in {self.package}",
                 "Input dispatching timed out",
             )
             errors = [
@@ -448,7 +497,7 @@ class NumberInputAudit(AutocompleteAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-number-input on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-number-input-android-audit"))
     return parser.parse_args()

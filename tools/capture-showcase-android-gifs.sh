@@ -4,7 +4,7 @@ set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 output=${1:-"${root}/docs/assets/android/gifs"}
-package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog.debug}
+package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog}
 activity=${PAM_SHOWCASE_ACTIVITY:-dev.pam.nativeapp.PamActivity}
 serial=${ANDROID_SERIAL:-}
 

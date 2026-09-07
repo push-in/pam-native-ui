@@ -194,6 +194,8 @@ class AutocompleteAudit:
                     f"{launch_report.strip()}"
                 )
             self.assert_foreground(f"timed-out deep-link launch for {uri}")
+        if self.pin_task_immediately_after_launch():
+            self.start_task_lock()
         time.sleep(1.5)
         self.launch_count += 1
         visible: list[str] = []
@@ -225,6 +227,9 @@ class AutocompleteAudit:
             f"deep link {uri} did not render the requested component route at "
             f"its authoritative top position; top-of-screen labels were {visible[:12]!r}"
         )
+
+    def pin_task_immediately_after_launch(self) -> bool:
+        return False
 
     def start_task_lock(self) -> None:
         report = self.shell("dumpsys", "activity", "activities", timeout=30.0)
@@ -800,10 +805,11 @@ class AutocompleteAudit:
                 raise AuditFailure("runtime errors found in logcat: " + " | ".join(errors[-8:]))
 
             report = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "component": self.component_tag,
                 "device": self.serial,
                 "package": self.package,
+                "resultStatus": 1,
                 "result": "passed",
                 "checks": {
                     "singleSheet": True,
@@ -837,7 +843,7 @@ def parse_args() -> argparse.Namespace:
         description="Run the complete Android interaction audit for p-autocomplete.",
     )
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument(
         "--output",

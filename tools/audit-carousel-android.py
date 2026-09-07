@@ -230,6 +230,8 @@ class CarouselAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": self.component_tag,
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": {
                     "rounded24DpClip": True,
                     "horizontalSwipeAndIndicators": True,

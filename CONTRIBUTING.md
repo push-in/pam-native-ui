@@ -4,6 +4,16 @@ PAM Native UI welcomes components, themes, accessibility fixes, native
 behaviors, documentation and performance evidence. Public Composer packages use
 the `pushinbr/pam-*` namespace.
 
+All interface changes must satisfy the release-gating contract in
+[`docs/visual-quality-contract.md`](docs/visual-quality-contract.md). Automated
+interaction success never substitutes for visual approval on a physical device.
+
+Showcase and product screens must place components directly on the page canvas
+with spacing, headings or dividers. A card is reserved for content whose domain
+meaning is a card. Never use a card as a preview frame, never nest one card in
+another, and never put a card inside a dialog, sheet, overlay or menu that already
+owns its surface. `php tools/validate-showcase.php` enforces this rule.
+
 ## Local setup
 
 Keep `pam-native` and `pam-native-ui` as sibling directories. PHP 8.5, Java 21
@@ -42,6 +52,13 @@ With a device or emulator connected, run the behavioral suite:
   connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=dev.pam.mobileui.MobileUiHostInstrumentedTest
 ```
+
+Physical showcase audits target the signed release application
+`dev.pam.mobileui.catalog`. Do not run release evidence against the
+`dev.pam.mobileui.catalog.debug` development install: debug builds can accept a
+hot-reload bundle through an existing ADB reverse and therefore are not stable
+or artifact-identical evidence. The physical gate verifies the APK package and
+the hash of the APK actually installed on the device before it records a pass.
 
 ## Generated API and parity
 

@@ -84,11 +84,20 @@ def validate_screen(
         variation_bounds = [bounds for bounds in variation_bounds if bounds is not None]
         route_top_limit = round(140 * density / 160)
         variations_top_limit = round(220 * density / 160)
-        if not route_bounds or min(bounds[1] for bounds in route_bounds) > route_top_limit:
+        route_top_minimum = round(32 * density / 160)
+        variations_top_minimum = round(96 * density / 160)
+        route_tops = [bounds[1] for bounds in route_bounds]
+        variation_tops = [bounds[1] for bounds in variation_bounds]
+        if (
+            not route_tops
+            or min(route_tops) < route_top_minimum
+            or min(route_tops) > route_top_limit
+        ):
             failures.append("component route identifier is missing from the stable top")
         if (
-            not variation_bounds
-            or min(bounds[1] for bounds in variation_bounds) > variations_top_limit
+            not variation_tops
+            or min(variation_tops) < variations_top_minimum
+            or min(variation_tops) > variations_top_limit
         ):
             failures.append("Variations heading is missing from the stable top")
 

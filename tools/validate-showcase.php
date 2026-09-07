@@ -77,27 +77,36 @@ foreach (glob($root.'/examples/kitchen-sink/resources/native/*.pam') ?: [] as $t
         throw new RuntimeException("Vuetify v-* tag found in {$template}.");
     }
     preg_match_all(
-        '/<(?<closing>\/)?p-card(?=[\s>])[^>]*>/',
+        '/<(?<closing>\/)?(?<tag>p-(?:card|dialog|bottom-sheet|sheet|overlay|menu))(?=[\s>])[^>]*>/',
         $source,
-        $cardMatches,
+        $surfaceMatches,
         PREG_SET_ORDER | PREG_OFFSET_CAPTURE,
     );
-    $cardDepth = 0;
-    foreach ($cardMatches as $cardMatch) {
-        $isClosing = ($cardMatch['closing'][0] ?? '') === '/';
+    $surfaceStack = [];
+    $surfaceContainers = ['p-card', 'p-dialog', 'p-bottom-sheet', 'p-sheet', 'p-overlay', 'p-menu'];
+    foreach ($surfaceMatches as $surfaceMatch) {
+        $tag = $surfaceMatch['tag'][0];
+        $isClosing = ($surfaceMatch['closing'][0] ?? '') === '/';
         if ($isClosing) {
-            $cardDepth = max(0, $cardDepth - 1);
+            $last = array_pop($surfaceStack);
+            if ($last !== $tag) {
+                throw new RuntimeException(
+                    "Unbalanced {$tag} surface found in {$template}.",
+                );
+            }
             continue;
         }
-        $cardDepth++;
-        if ($cardDepth > 1) {
+        if ($tag === 'p-card' && array_intersect($surfaceStack, $surfaceContainers) !== []) {
             $line = substr_count(
-                substr($source, 0, $cardMatch[0][1]),
+                substr($source, 0, $surfaceMatch[0][1]),
                 "\n",
             ) + 1;
             throw new RuntimeException(
-                "Nested decorative p-card found in {$template}:{$line}.",
+                "Redundant p-card inside an existing surface found in {$template}:{$line}.",
             );
+        }
+        if (!str_ends_with(trim($surfaceMatch[0][0]), '/>')) {
+            $surfaceStack[] = $tag;
         }
     }
     preg_match_all('/<(p-[a-z0-9-]+)(?=[\s\/>])/', $source, $materialMatches);
@@ -258,7 +267,16 @@ if (
 $componentRouteCount = 0;
 foreach (MaterialComponentMap::TAGS as $tag => $component) {
     $title = ucwords(str_replace('-', ' ', substr($tag, 2)));
-    (new ComponentRoute($tag, $title, $component))->toElement();
+    $route = new ComponentRoute($tag, $title, $component);
+    $route->toElement();
+    $variations = new ReflectionMethod($route, 'variations');
+    $variations->setAccessible(true);
+    $variationCount = count($variations->invoke($route));
+    if ($variationCount < 4) {
+        throw new RuntimeException(
+            "{$tag} exposes only {$variationCount} showcase variations; every public component requires at least four meaningful specimens.",
+        );
+    }
     $componentRouteCount++;
 }
 

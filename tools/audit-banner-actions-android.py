@@ -301,10 +301,11 @@ class BannerActionsAudit(AutocompleteAudit):
                 raise AuditFailure("runtime errors found in logcat: " + " | ".join(errors[-8:]))
 
             report = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "component": "p-banner-actions",
                 "device": self.serial,
                 "package": self.package,
+                "resultStatus": 1,
                 "checks": {
                     "fivePurposeBuiltVariations": True,
                     "exact48DpRows": True,
@@ -341,7 +342,7 @@ class BannerActionsAudit(AutocompleteAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-banner-actions on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument(
         "--output", type=Path, default=Path("/tmp/pam-banner-actions-android-audit")

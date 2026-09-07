@@ -137,6 +137,8 @@ class DataTableAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-data-table",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {"density": density},
                 "evidence": self.evidence,

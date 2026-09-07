@@ -84,7 +84,6 @@
     </Column>
 
     <p-alert action="info" variant="subtle" class="rounded-2xl">
-        <p-icon icon="info" />
         <Column class="gap-1">
             <Text>DevTools are one command away</Text>
             <Text class="ui-text-muted">pam mobile devtools .</Text>
@@ -97,8 +96,7 @@
     </p-btn>
 
     <p-dialog open="{{ $modalOpen }}" on:event="closeModal">
-
-        <p-card>
+        <Column class="gap-4">
             <Row class="items-center justify-between">
                 <Text size="lg">Native by default</Text>
                 <p-icon-btn on:press="closeModal"><p-icon icon="close" /></p-icon-btn>
@@ -107,7 +105,7 @@
             <p-card-actions>
                 <p-btn on:press="closeModal"><Text>Got it</Text></p-btn>
             </p-card-actions>
-        </p-card>
+        </Column>
     </p-dialog>
 
     <p-bottom-sheet

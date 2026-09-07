@@ -194,6 +194,8 @@ class VirtualDataTableAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-data-table-virtual",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {"density": density, "initialMountedRows": len(mounted)},
                 "evidence": self.evidence,

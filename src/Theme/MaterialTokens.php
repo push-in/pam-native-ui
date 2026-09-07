@@ -56,12 +56,18 @@ final class MaterialTokens
     public const float RADIO_ICON_SIZE = 20.0;
     public const float SELECTION_STATE_LAYER_SIZE = 40.0;
 
-    public const float SLIDER_TRACK_HEIGHT = 16.0;
-    public const float SLIDER_HANDLE_WIDTH = 4.0;
-    public const float SLIDER_HANDLE_HEIGHT = 44.0;
-    public const float SLIDER_HANDLE_TRACK_GAP = 6.0;
+    /**
+     * PAM's slider profile keeps the Material 48dp interaction target while
+     * using a quieter, product-neutral visual treatment. The expressive M3
+     * 16dp track and 4x44dp bar handle overwhelmed dense product screens and
+     * made range controls look like three disconnected blocks.
+     */
+    public const float SLIDER_TRACK_HEIGHT = 4.0;
+    public const float SLIDER_HANDLE_WIDTH = 20.0;
+    public const float SLIDER_HANDLE_HEIGHT = 20.0;
+    public const float SLIDER_HANDLE_TRACK_GAP = 0.0;
     public const float SLIDER_STATE_LAYER_SIZE = 40.0;
-    public const float SLIDER_STOP_INDICATOR_SIZE = 4.0;
+    public const float SLIDER_STOP_INDICATOR_SIZE = 0.0;
     public const float SLIDER_TICK_SIZE = 4.0;
     public const float SLIDER_TICK_LABEL_HEIGHT = 16.0;
     public const float SLIDER_TICK_LABEL_GAP = 8.0;
@@ -84,7 +90,7 @@ final class MaterialTokens
     public const float LIST_CONTENT_GAP = 12.0;
     public const float LIST_ICON_SIZE = 24.0;
 
-    public const float CARD_RADIUS = 12.0;
+    public const float CARD_RADIUS = 24.0;
     public const float DIALOG_RADIUS = 28.0;
     public const float BOTTOM_SHEET_HANDLE_WIDTH = 32.0;
     public const float BOTTOM_SHEET_HANDLE_HEIGHT = 4.0;

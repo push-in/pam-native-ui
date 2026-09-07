@@ -4,7 +4,7 @@ set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 output=${1:-"${root}/docs/assets/android/components"}
-package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog.debug}
+package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog}
 activity=${PAM_SHOWCASE_ACTIVITY:-dev.pam.nativeapp.PamActivity}
 serial=${ANDROID_SERIAL:-}
 settle_seconds=${PAM_SHOWCASE_SETTLE_SECONDS:-2}
@@ -42,6 +42,8 @@ density=$("${adb[@]}" shell wm density | awk '/Physical density/ { print $3 }')
 }
 route_top_limit=$((140 * density / 160))
 variations_top_limit=$((220 * density / 160))
+route_top_minimum=$((32 * density / 160))
+variations_top_minimum=$((96 * density / 160))
 
 mkdir -p "${output}"
 temporary=$(mktemp -d)
@@ -130,8 +132,10 @@ capture() {
           # finding their text somewhere in the hierarchy would allow a
           # restored/scrolled route to publish a misleading screenshot.
           if [[ -z ${route_left} || ${route_left} -lt 24 || \
-                -z ${route_top} || ${route_top} -gt ${route_top_limit} || \
-                -z ${variations_top} || ${variations_top} -gt ${variations_top_limit} ]]; then
+                -z ${route_top} || ${route_top} -lt ${route_top_minimum} || \
+                ${route_top} -gt ${route_top_limit} || \
+                -z ${variations_top} || ${variations_top} -lt ${variations_top_minimum} || \
+                ${variations_top} -gt ${variations_top_limit} ]]; then
             dump_output="route ${route_tag} is not at its stable top: tag=${route_bounds:-missing}, variations=${variations_bounds:-missing}"
             sleep 1
             continue

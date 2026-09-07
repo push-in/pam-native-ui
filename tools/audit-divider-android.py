@@ -114,6 +114,8 @@ class DividerAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-divider",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {
                     "density": density,

@@ -35,7 +35,6 @@
     </p-list>
 
     <p-alert action="success" variant="tonal">
-        <p-icon icon="check-circle" />
         <Column class="flex-1 gap-1"><Text>One component per route</Text><Text>Faster rendering, clearer validation and reproducible deep links.</Text></Column>
     </p-alert>
 </AppScreen>

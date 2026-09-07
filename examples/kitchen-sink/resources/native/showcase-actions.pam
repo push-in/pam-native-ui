@@ -1,56 +1,65 @@
 <AppScreen title="Actions" subtitle="Buttons, chips and selection">
     <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
 
-    <Text size="xl">Buttons</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="PlayIcon" color="primary" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Actions</Text>
+            <Text size="sm" class="ui-text-muted">From quiet links to unmistakable primary intent.</Text>
+        </Column>
+    </Row>
         <Column class="gap-3">
-            <Row class="gap-2">
-                <p-btn><Text class="text-white">Filled</Text></p-btn>
-                <p-btn variant="tonal"><Text>Tonal</Text></p-btn>
+            <p-btn block="true">
+                <p-icon icon="add" />
+                <Text class="text-white">Create native project</Text>
+            </p-btn>
+            <Row class="gap-3">
+                <p-btn class="flex-1" variant="tonal"><p-icon icon="play" /><Text>Preview</Text></p-btn>
+                <p-btn class="flex-1" variant="outlined"><p-icon icon="share" /><Text>Share</Text></p-btn>
             </Row>
-            <Row class="gap-2">
-                <p-btn variant="outlined"><Text>Outlined</Text></p-btn>
-                <p-btn variant="text"><Text>Text</Text></p-btn>
-            </Row>
-            <Row class="gap-2">
-                <p-btn disabled="true"><Text>Disabled</Text></p-btn>
-                <p-btn loading="true"><Text class="text-white">Loading</Text></p-btn>
+            <Row class="items-center justify-between">
+                <p-btn variant="text"><Text>View documentation</Text></p-btn>
+                <p-btn disabled="true"><Text>Publish</Text></p-btn>
             </Row>
             <Row class="gap-4 items-center">
                 <p-icon-btn accessibilityLabel="Favorite"><p-icon icon="favorite" /></p-icon-btn>
                 <p-fab accessibilityLabel="Create"><p-icon icon="add" /></p-fab>
                 <p-btn-group>
-                    <p-btn><Text class="text-white">One</Text></p-btn>
-                    <p-btn><Text class="text-white">Two</Text></p-btn>
+                    <p-btn><Text class="text-white">Code</Text></p-btn>
+                    <p-btn><Text class="text-white">Design</Text></p-btn>
                 </p-btn-group>
             </Row>
         </Column>
 
-    <Text size="xl">Chips</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="SettingsIcon" color="secondary" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Chips</Text>
+            <Text size="sm" class="ui-text-muted">Compact filters and choices with readable state.</Text>
+        </Column>
+    </Row>
         <Column class="gap-3">
             <Row class="gap-2">
-                <p-chip value="selected"><Text>Selected</Text></p-chip>
-                <p-chip variant="tonal"><Text>Tonal</Text></p-chip>
+                <p-chip value="selected"><Text>Android</Text></p-chip>
+                <p-chip variant="tonal"><Text>iOS</Text></p-chip>
             </Row>
             <Row class="gap-2">
-                <p-chip variant="outlined"><Text>Outlined</Text></p-chip>
-                <p-chip closable="true"><Text>Closable</Text></p-chip>
+                <p-chip variant="outlined"><Text>Production</Text></p-chip>
+                <p-chip closable="true"><Text>Native UI</Text></p-chip>
             </Row>
         </Column>
 
-    <Text size="xl">Selection</Text>
-        <Column class="gap-4">
-            <Row class="items-center justify-between">
-                <Text>Checkbox</Text>
-                <p-checkbox class="w-12 h-12" checked="true" accessibilityLabel="Checkbox" />
-            </Row>
-            <Row class="items-center justify-between">
-                <Text>Radio</Text>
-                <p-radio class="w-12 h-12" checked="true" accessibilityLabel="Radio" />
-            </Row>
-            <Row class="items-center justify-between">
-                <Text>Switch</Text>
-                <p-switch class="w-16 h-12" checked="true" accessibilityLabel="Switch" />
-            </Row>
+    <Row class="items-center gap-3">
+        <p-icon icon="CheckCircleIcon" color="info" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Selection</Text>
+            <Text size="sm" class="ui-text-muted">Binary and rated preferences on native controls.</Text>
+        </Column>
+    </Row>
+        <Column class="gap-2">
+            <p-checkbox label="Include accessibility checks" checked="true" />
+            <p-radio label="Use the stable release channel" checked="true" />
+            <p-switch label="Sync native previews" checked="true" />
             <p-rating value="4" accessibilityLabel="Four out of five stars" />
         </Column>
 </AppScreen>

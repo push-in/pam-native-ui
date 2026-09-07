@@ -164,6 +164,8 @@ class CheckboxAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-checkbox",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {
                     "density": density,

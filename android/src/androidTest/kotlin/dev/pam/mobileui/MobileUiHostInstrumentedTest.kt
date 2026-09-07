@@ -240,7 +240,7 @@ class MobileUiHostInstrumentedTest {
     @Test
     fun searchableSelectionSheetUsesBoundedContentHeight() {
         assertEquals(
-            960,
+            984,
             selectionSheetContentHeightPx(
                 viewportHeight = 2_400,
                 density = 3f,
@@ -250,7 +250,7 @@ class MobileUiHostInstrumentedTest {
             ),
         )
         assertEquals(
-            1_020,
+            1_044,
             selectionSheetContentHeightPx(
                 viewportHeight = 2_400,
                 density = 3f,
@@ -261,7 +261,7 @@ class MobileUiHostInstrumentedTest {
             ),
         )
         assertEquals(
-            456,
+            480,
             selectionSheetContentHeightPx(
                 viewportHeight = 2_400,
                 density = 3f,
@@ -271,7 +271,7 @@ class MobileUiHostInstrumentedTest {
             ),
         )
         assertEquals(
-            456,
+            480,
             selectionSheetContentHeightPx(
                 viewportHeight = 1_080,
                 density = 3f,

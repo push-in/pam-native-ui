@@ -140,6 +140,8 @@ class DatePickerAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-date-picker",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {"density": self.density(), "calendarBounds": area.__dict__},
                 "evidence": self.evidence,

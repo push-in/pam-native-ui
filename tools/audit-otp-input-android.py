@@ -380,7 +380,7 @@ class OtpInputAudit(AutocompleteAudit):
             markers = (
                 "FATAL EXCEPTION", " E AndroidRuntime:", "Pam Native runtime error",
                 "failed integrity verification", "Unknown native icon",
-                "ANR in dev.pam.mobileui.catalog.debug", "Input dispatching timed out",
+                f"ANR in {self.package}", "Input dispatching timed out",
             )
             errors = [
                 line for line in logs.splitlines()
@@ -394,10 +394,11 @@ class OtpInputAudit(AutocompleteAudit):
                 raise AuditFailure("runtime errors found in logcat: " + " | ".join(errors[-8:]))
 
             report = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "component": "p-otp-input",
                 "device": self.serial,
                 "package": self.package,
+                "resultStatus": 1,
                 "result": "passed",
                 "checks": {
                     "accessible48dpNativeEditor": True,
@@ -431,7 +432,7 @@ class OtpInputAudit(AutocompleteAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-otp-input on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-otp-input-android-audit"))
     return parser.parse_args()

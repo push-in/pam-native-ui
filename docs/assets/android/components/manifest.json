@@ -1,7 +1,7 @@
 {
-  "device": "sdk_gphone64_x86_64",
-  "api": 36,
+  "device": "SM-G973F",
+  "api": 31,
   "package": "dev.pam.mobileui.catalog",
   "componentCount": 84,
-  "capturedAt": "2026-09-06T21:30:51Z"
+  "capturedAt": "2026-09-07T15:07:25Z"
 }

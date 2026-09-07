@@ -5,36 +5,48 @@
         </p-btn>
     </template>
 
-    <Column class="gap-1">
-        <Text size="2xl">Native interaction lab</Text>
+    <Column class="gap-2">
+        <Text size="2xl" class="font-bold">Confidence at every layer.</Text>
         <Text class="ui-text-muted">{{ $feedback }}</Text>
     </Column>
 
-    <Text size="xl">Modal surfaces</Text>
-    <Column class="gap-3">
-        <Text class="ui-text-muted">Focus trapping, Back, scrim, safe areas and entrance motion stay platform-owned.</Text>
-        <Column class="gap-2">
-            <p-btn block="true" on:press="openDialog"><Text>Dialog</Text></p-btn>
-            <p-btn block="true" variant="outlined" on:press="openSheet"><Text>Bottom sheet</Text></p-btn>
+    <Row class="items-center gap-3">
+        <p-icon icon="CopyIcon" color="secondary" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Modal focus</Text>
+            <Text size="sm" class="ui-text-muted">Purposeful layers with platform-owned dismissal.</Text>
         </Column>
-        <p-btn block="true" variant="outlined" on:press="showLoadingOverlay"><Text>Loading overlay</Text></p-btn>
+    </Row>
+    <Column class="gap-3">
+        <Text class="ui-text-muted">Review a release without losing context. Focus, Back and safe areas stay platform-owned.</Text>
+        <Column class="gap-2">
+            <p-btn block="true" on:press="openDialog"><p-icon icon="check-circle" /><Text>Review release</Text></p-btn>
+            <p-btn block="true" variant="tonal" on:press="openSheet"><p-icon icon="copy" /><Text>Open component actions</Text></p-btn>
+        </Column>
+        <p-btn block="true" variant="outlined" on:press="showLoadingOverlay"><p-icon icon="repeat" /><Text>Simulate native build</Text></p-btn>
     </Column>
 
-    <Text size="xl">Contextual surfaces</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="ThreeDotsIcon" color="info" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Contextual actions</Text>
+            <Text size="sm" class="ui-text-muted">Menus and hints stay anchored to their origin.</Text>
+        </Column>
+    </Row>
     <Column class="gap-3">
         <Column class="gap-2">
             <p-menu>
-                <p-btn block="true"><Text>Menu</Text></p-btn>
+                <p-btn block="true"><p-icon icon="more-horiz" /><Text>More release actions</Text></p-btn>
                 <p-list>
                     <p-list-item on:press="inspectMenuItem"><Text>Inspect</Text></p-list-item>
                     <p-list-item on:press="shareMenuItem"><Text>Share</Text></p-list-item>
                 </p-list>
             </p-menu>
             <p-tooltip text="Long press for native tooltip">
-                <p-btn block="true" variant="outlined"><Text>Tooltip</Text></p-btn>
+                <p-btn block="true" variant="outlined"><p-icon icon="info" /><Text>Inspect accessibility hint</Text></p-btn>
             </p-tooltip>
         </Column>
-        <p-btn block="true" variant="text" on:press="showSnackbar"><Text>Snackbar</Text></p-btn>
+        <p-btn block="true" variant="text" on:press="showSnackbar"><Text>Save component state</Text></p-btn>
         <p-speed-dial class="w-16 h-16">
             <p-fab accessibilityLabel="Open quick actions"><p-icon icon="add" /></p-fab>
             <p-icon-btn accessibilityLabel="Edit"><p-icon icon="edit" /></p-icon-btn>
@@ -42,14 +54,26 @@
         </p-speed-dial>
     </Column>
 
-    <Text size="xl">Progress and loading</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="LoaderIcon" color="warning" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Progress and loading</Text>
+            <Text size="sm" class="ui-text-muted">Motion communicates work without moving the layout.</Text>
+        </Column>
+    </Row>
     <Column class="gap-4">
         <Row class="gap-4 items-center">
             <p-progress-circular value="68" size="sm" />
             <p-progress-circular value="68" size="lg" />
             <p-progress-circular indeterminate="true" />
+            <Column class="flex-1 gap-1">
+                <Text class="font-medium">Release health</Text>
+                <Text size="sm" class="ui-text-muted">68% validated</Text>
+            </Column>
         </Row>
+        <Text size="sm" class="ui-text-muted">Component verification</Text>
         <p-progress-linear value="34" />
+        <Text size="sm" class="ui-text-muted">Native package build</Text>
         <p-progress-linear indeterminate="true" />
         <p-skeleton-loader class="h-24 rounded-2xl" />
     </Column>
@@ -57,14 +81,16 @@
     <p-btn variant="text" on:press="goAll"><Text>Browse every component route</Text></p-btn>
 
     <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
-        <p-card>
-            <Text>Discard draft?</Text>
-            <Text>The dialog traps focus and restores it to the activator when dismissed.</Text>
+        <Column class="gap-4">
+            <Column class="gap-2">
+                <Text size="xl">Discard draft?</Text>
+                <Text class="ui-text-muted">The dialog traps focus and restores it to the activator when dismissed.</Text>
+            </Column>
             <p-card-actions>
                 <p-btn variant="text" on:press="closeDialog"><Text>Cancel</Text></p-btn>
                 <p-btn on:press="closeDialog"><Text>Confirm</Text></p-btn>
             </p-card-actions>
-        </p-card>
+        </Column>
     </p-dialog>
 
     <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="0" on:requestClose="closeSheet">

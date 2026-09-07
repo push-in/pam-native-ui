@@ -795,7 +795,7 @@ def parse_args() -> argparse.Namespace:
         description="Exercise every PAM Native UI showcase component on Android.",
     )
     parser.add_argument("--serial", default="", help="ADB serial; defaults to ANDROID_SERIAL")
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--settle-seconds", type=float, default=1.5)
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-interaction-audit.json"))

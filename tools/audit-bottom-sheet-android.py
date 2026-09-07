@@ -523,10 +523,11 @@ class BottomSheetAudit(AutocompleteAudit):
                 raise AuditFailure("runtime errors found in logcat: " + " | ".join(errors[-8:]))
 
             report = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "component": "p-bottom-sheet",
                 "device": self.serial,
                 "package": self.package,
+                "resultStatus": 1,
                 "result": "passed",
                 "checks": {
                     "allSevenProfiles": True,

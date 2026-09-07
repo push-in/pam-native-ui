@@ -234,6 +234,8 @@ class DialogAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-dialog",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": metrics,
                 "evidence": self.evidence,

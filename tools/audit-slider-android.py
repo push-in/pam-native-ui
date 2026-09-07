@@ -38,6 +38,18 @@ class SliderAudit(AutocompleteAudit):
             component_label="Slider",
         )
 
+    def application_logs(self) -> str:
+        package_report = self.shell(
+            "dumpsys", "package", self.package, timeout=30.0,
+        )
+        match = re.search(r"\buserId=(\d+)\b", package_report)
+        if match is None:
+            raise AuditFailure(f"could not resolve Android UID for {self.package}")
+        return self.shell(
+            "logcat", f"--uid={match.group(1)}", "-d", "-t", "1200",
+            timeout=30.0,
+        )
+
     def slider_after(self, root, label: str):
         labels = self.exact(root, label)
         if not labels:
@@ -329,7 +341,7 @@ class SliderAudit(AutocompleteAudit):
             if {"Overview", "Actions", "Forms", "Data", "Overlays"} <= portrait_text:
                 raise AuditFailure("permanent drawer did not collapse in compact portrait")
 
-            logs = self.shell("logcat", "-d", "-t", "1200", timeout=30.0)
+            logs = self.application_logs()
             markers = (
                 "FATAL EXCEPTION", " E AndroidRuntime:", "Pam Native runtime error",
                 "failed integrity verification", "Unknown native icon",
@@ -343,10 +355,11 @@ class SliderAudit(AutocompleteAudit):
                 raise AuditFailure("runtime errors found in logcat: " + " | ".join(errors[-8:]))
 
             report = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "component": "p-slider",
                 "device": self.serial,
                 "package": self.package,
+                "resultStatus": 1,
                 "result": "passed",
                 "checks": {
                     "materialTouchTarget": True,
@@ -377,7 +390,7 @@ class SliderAudit(AutocompleteAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-slider on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-slider-android-audit"))
     return parser.parse_args()

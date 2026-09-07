@@ -106,11 +106,45 @@ final class ComponentRoute extends Component
         $theme = ThemeManager::current();
         $samples = [];
         foreach ($this->variations() as $index => $variation) {
+            $variationName = strtolower($variation['label']);
+            $variationProps = $variation['props'];
+            $sampleTone = match (true) {
+                ($variationProps['error'] ?? false) === true,
+                str_contains($variationName, 'error'),
+                str_contains($variationName, 'invalid') => ColorToken::Destructive,
+                ($variationProps['success'] ?? false) === true,
+                str_contains($variationName, 'success') => ColorToken::Success,
+                ($variationProps['loading'] ?? false) === true,
+                str_contains($variationName, 'loading') => ColorToken::Warning,
+                ($variationProps['disabled'] ?? false) === true,
+                str_contains($variationName, 'disabled') => ColorToken::Muted,
+                ($variationProps['readonly'] ?? false) === true,
+                ($variationProps['readOnly'] ?? false) === true,
+                str_contains($variationName, 'read only') => ColorToken::Secondary,
+                $index % 3 === 1 => ColorToken::Secondary,
+                $index % 3 === 2 => ColorToken::Info,
+                default => ColorToken::Primary,
+            };
+            $sampleOnTone = match ($sampleTone) {
+                ColorToken::Secondary => ColorToken::SecondaryForeground,
+                ColorToken::Info => ColorToken::InfoForeground,
+                ColorToken::Warning => ColorToken::WarningForeground,
+                ColorToken::Destructive => ColorToken::DestructiveForeground,
+                ColorToken::Success => ColorToken::SuccessForeground,
+                ColorToken::Muted => ColorToken::MutedForeground,
+                default => ColorToken::PrimaryForeground,
+            };
             $caption = Text::make($variation['label'])->style(new Style(
-                textColor: $theme->color(ColorToken::MutedForeground),
+                alignSelf: Align::Start,
+                height: 30.0,
+                minHeight: 30.0,
+                paddingHorizontal: 12.0,
+                borderRadius: 15.0,
+                backgroundColor: $theme->color($sampleTone),
+                textColor: $theme->color($sampleOnTone),
                 fontSize: 12.0,
-                lineHeight: 16.0,
-                fontWeight: 600,
+                lineHeight: 30.0,
+                fontWeight: 700,
             ));
             $component = $this->component;
             $previewProps = $this->sampleProps($variation['props']);
@@ -487,8 +521,15 @@ final class ComponentRoute extends Component
             } elseif ($this->belongsTo(['p-carousel', 'p-carousel-item'])) {
                 $carousel = MaterialComponentMap::TAGS['p-carousel'];
                 $item = MaterialComponentMap::TAGS['p-carousel-item'];
+                $carouselItemProps = [];
                 if ($this->tag === 'p-carousel-item') {
-                    $previewProps = [];
+                    $carouselItemProps = $previewProps;
+                    $previewProps = [
+                        'height' => $carouselItemProps['height']
+                            ?? MaterialTokens::CAROUSEL_HEIGHT,
+                        'hideDelimiters' => $carouselItemProps['hideDelimiters']
+                            ?? false,
+                    ];
                 }
                 $previewProps['accessibilityLabel'] = $this->tag === 'p-carousel-item'
                     ? 'Carousel item preview'
@@ -628,6 +669,7 @@ final class ComponentRoute extends Component
                 }
                 $slides[] = $item::make(
                         [
+                            ...$carouselItemProps,
                             'value' => 'overview',
                         ],
                     Column::make(
@@ -668,6 +710,7 @@ final class ComponentRoute extends Component
                 ));
                 $slides[] = $item::make(
                     [
+                        ...$carouselItemProps,
                         'value' => 'details',
                     ],
                     Column::make(
@@ -708,6 +751,7 @@ final class ComponentRoute extends Component
                 ));
                 $slides[] = $item::make(
                     [
+                        ...$carouselItemProps,
                         'value' => 'activity',
                     ],
                     Column::make(
@@ -2184,6 +2228,7 @@ final class ComponentRoute extends Component
                         )->style(new Style(
                             widthPercent: 100.0,
                             paddingLeft: 40.0,
+                            paddingRight: 12.0,
                             flexGrow: 1.0,
                             flexShrink: 1.0,
                             gap: 2.0,
@@ -3726,12 +3771,13 @@ final class ComponentRoute extends Component
 
         // Layout-engine padding does not contribute to the native
         // ScrollView's measured content extent on every Android version.
-        // With the section's 16dp gap, this explicit 8dp tail guarantees a
-        // real 24dp breathing space above system navigation.
+        // Keep a full interaction target plus 24dp breathing room after the
+        // final sample so it can scroll completely above gesture/three-button
+        // navigation on physical Android devices.
         $samples[] = Text::make('')->style(new Style(
             width: 1.0,
-            height: 8.0,
-            minHeight: 8.0,
+            height: 72.0,
+            minHeight: 72.0,
             fontSize: 1.0,
             lineHeight: 1.0,
         ));
@@ -3772,23 +3818,35 @@ final class ComponentRoute extends Component
             ->accessibilityLabel('Open component navigation');
 
         $headingChildren = [
+            View::make()->style(new Style(
+                width: 4.0,
+                height: 48.0,
+                borderRadius: 2.0,
+                backgroundColor: $theme->color(ColorToken::Secondary),
+            )),
             Column::make(
                 Text::make($this->title)->style(new Style(
                     textColor: $theme->color(ColorToken::OnSurface),
-                    fontSize: 22.0,
-                    lineHeight: 28.0,
+                    fontSize: 24.0,
+                    lineHeight: 30.0,
                     fontWeight: 700,
                 )),
                 Text::make($this->tag)->style(new Style(
-                    textColor: $theme->color(ColorToken::MutedForeground),
-                    fontSize: 14.0,
-                    lineHeight: 20.0,
+                    alignSelf: Align::Start,
+                    height: 24.0,
+                    paddingHorizontal: 9.0,
+                    borderRadius: 12.0,
+                    backgroundColor: $theme->color(ColorToken::Accent),
+                    textColor: $theme->color(ColorToken::AccentForeground),
+                    fontSize: 12.0,
+                    lineHeight: 24.0,
+                    fontWeight: 700,
                 )),
             )->style(new Style(
                 widthPercent: 70.0,
                 flexGrow: 1.0,
                 flexShrink: 1.0,
-                gap: 2.0,
+                gap: 4.0,
             )),
         ];
         if (
@@ -3799,12 +3857,12 @@ final class ComponentRoute extends Component
         }
         $heading = Row::make(...$headingChildren)->style(new Style(
             widthPercent: 100.0,
-            minHeight: 64.0,
+            minHeight: 88.0,
             paddingHorizontal: 16.0,
-            paddingVertical: 8.0,
+            paddingVertical: 12.0,
             gap: 12.0,
             alignItems: Align::Center,
-            backgroundColor: $theme->color(ColorToken::Background),
+            backgroundColor: $theme->color(ColorToken::SurfaceContainerLowest),
             borderBottomWidth: 1.0,
             borderColor: $theme->color(ColorToken::OutlineVariant),
             elevation: 0.0,
@@ -3818,16 +3876,22 @@ final class ComponentRoute extends Component
                         Column::make(
                             Text::make('Variations')->style(new Style(
                                 textColor: $theme->color(ColorToken::OnSurface),
-                                fontSize: 18.0,
-                                lineHeight: 24.0,
-                                fontWeight: 600,
+                                fontSize: 24.0,
+                                lineHeight: 32.0,
+                                fontWeight: 700,
                             )),
+                            Text::make('Real states, real gestures, rendered by the platform.')
+                                ->style(new Style(
+                                    textColor: $theme->color(ColorToken::MutedForeground),
+                                    fontSize: 13.0,
+                                    lineHeight: 18.0,
+                                )),
                             ...$samples,
                         )->style(new Style(
                             widthPercent: 100.0,
                             padding: 16.0,
                             paddingBottom: 24.0,
-                            gap: 16.0,
+                            gap: 20.0,
                         )),
                     )->style(new Style(
                         widthPercent: 100.0,
@@ -3976,6 +4040,16 @@ final class ComponentRoute extends Component
                 ['label' => 'Contained', 'props' => ['cover' => false, 'aspectRatio' => 16 / 9, 'height' => 216]],
                 ['label' => 'Square', 'props' => ['cover' => true, 'aspectRatio' => 1, 'height' => 280, 'rounded' => true]],
                 ['label' => 'Loading', 'props' => ['loading' => true, 'aspectRatio' => 16 / 9, 'height' => 216]],
+            ];
+        }
+
+        if ($this->tag === 'p-carousel-item') {
+            return [
+                ['label' => 'Default', 'props' => []],
+                ['label' => 'Selected', 'props' => ['selected' => true]],
+                ['label' => 'Disabled', 'props' => ['disabled' => true]],
+                ['label' => 'Compact', 'props' => ['height' => 180]],
+                ['label' => 'Immersive', 'props' => ['height' => 320, 'hideDelimiters' => true]],
             ];
         }
 
@@ -4760,6 +4834,13 @@ final class ComponentRoute extends Component
 
         if ($this->belongsTo(['p-treeview', 'p-treeview-item'])) {
             $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Collapsed', ['opened' => [], 'defaultExpandedPaths' => []]);
+            $add($variations, 'Selected', ['modelValue' => 'applications/mobile/android']);
+            $add($variations, 'Multiple Selection', [
+                'multiple' => true,
+                'modelValue' => ['applications/mobile/android', 'design-system'],
+            ]);
+            $add($variations, 'Disabled', ['disabled' => true]);
         }
 
         return $variations;

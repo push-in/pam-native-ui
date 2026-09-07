@@ -1,42 +1,74 @@
 <AppScreen title="Data" subtitle="Lists, tables and visualization">
     <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
-    <Column>
+    <Column class="gap-6">
 
-    <Text size="xl">Lists</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="repeat" color="secondary" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Packages</Text>
+            <Text size="sm" class="ui-text-muted">The native stack, organized by responsibility.</Text>
+        </Column>
+    </Row>
         <p-list>
-            <Text>Packages</Text>
-            <p-list-item>
-                <Text>pam-native-ui</Text>
-                <Text>Material components</Text>
+            <p-list-item lines="two">
+                <p-icon icon="palette" color="secondary" />
+                <Column class="flex-1 gap-1">
+                    <Text>pam-native-ui</Text>
+                    <Text size="sm" class="ui-text-muted">Tokens, components and product patterns</Text>
+                </Column>
+                <p-icon icon="chevron-right" />
             </p-list-item>
-            <p-list-item>
-                <Text>pam-native</Text>
-                <Text>Android and UIKit renderer</Text>
+            <p-divider inset="true" />
+            <p-list-item lines="two">
+                <p-icon icon="phone" color="primary" />
+                <Column class="flex-1 gap-1">
+                    <Text>pam-native</Text>
+                    <Text size="sm" class="ui-text-muted">Android and UIKit renderer</Text>
+                </Column>
+                <p-icon icon="chevron-right" />
             </p-list-item>
         </p-list>
 
-    <Text size="xl">Data table</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="CalendarDaysIcon" color="info" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Delivery matrix</Text>
+            <Text size="sm" class="ui-text-muted">One glance at every supported target.</Text>
+        </Column>
+    </Row>
         <p-data-table headers="Target" items="Android,iOS,Composer,GitHub" />
 
-    <Text size="xl">Timeline</Text>
-        <Column class="gap-4">
-            <Row class="items-center gap-3">
-                <p-avatar class="w-8 h-8"><Text>1</Text></p-avatar>
-                <Column><Text>Design tokens</Text><Text size="sm">Theme and density foundations</Text></Column>
+    <Row class="items-center gap-3">
+        <p-icon icon="schedule" color="primary" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Release path</Text>
+            <Text size="sm" class="ui-text-muted">From visual language to validated distribution.</Text>
+        </Column>
+    </Row>
+        <Column class="gap-2">
+            <Row class="items-center gap-4 min-h-16">
+                <p-avatar color="secondary" class="w-8 h-8"><Text>1</Text></p-avatar>
+                <Column class="flex-1 gap-1"><Text>Design tokens</Text><Text size="sm" class="ui-text-muted">Theme and density foundations</Text></Column>
             </Row>
-            <p-divider />
-            <Row class="items-center gap-3">
-                <p-avatar class="w-8 h-8"><Text>2</Text></p-avatar>
-                <Column><Text>Native render</Text><Text size="sm">Android and UIKit parity</Text></Column>
+            <p-divider inset="true" />
+            <Row class="items-center gap-4 min-h-16">
+                <p-avatar color="info" class="w-8 h-8"><Text>2</Text></p-avatar>
+                <Column class="flex-1 gap-1"><Text>Native render</Text><Text size="sm" class="ui-text-muted">Android and UIKit parity</Text></Column>
             </Row>
-            <p-divider />
-            <Row class="items-center gap-3">
-                <p-avatar class="w-8 h-8"><Text>3</Text></p-avatar>
-                <Column><Text>Release</Text><Text size="sm">Validated package distribution</Text></Column>
+            <p-divider inset="true" />
+            <Row class="items-center gap-4 min-h-16">
+                <p-avatar color="success" class="w-8 h-8"><Text>3</Text></p-avatar>
+                <Column class="flex-1 gap-1"><Text>Release</Text><Text size="sm" class="ui-text-muted">Validated package distribution</Text></Column>
             </Row>
         </Column>
 
-    <Text size="xl">Visualization</Text>
+    <Row class="items-center gap-3">
+        <p-icon icon="star" color="warning" />
+        <Column class="flex-1 gap-1">
+            <Text size="xl" class="font-semibold">Live signals</Text>
+            <Text size="sm" class="ui-text-muted">Compact visualization without a web runtime.</Text>
+        </Column>
+    </Row>
         <Column class="gap-4">
             <p-sparkline value="18,32,29,44,68,61,82" accessibilityLabel="Weekly performance" />
             <p-treeview>

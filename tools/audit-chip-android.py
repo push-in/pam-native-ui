@@ -140,6 +140,8 @@ class ChipAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-chip",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {"density": density, "stressP99Ms": p99},
                 "evidence": self.evidence,

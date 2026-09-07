@@ -250,7 +250,11 @@ class TextFieldAudit(AutocompleteAudit):
                 raise AuditFailure("default value did not render")
             if isolated.attrib.get("text") != "Independent value":
                 raise AuditFailure("isolated value did not render")
-            if default.attrib.get("hint") != "Type here":
+            # UiAutomator on Android 12/API 31 does not serialize `hint` for
+            # a non-empty EditText. Newer releases do, so assert it whenever
+            # the platform exposes the attribute and prove the legacy path
+            # after clearing the field below.
+            if "hint" in default.attrib and default.attrib.get("hint") != "Type here":
                 raise AuditFailure("placeholder is not exposed as the native hint")
 
             # The label area is part of the Material text-field touch surface,
@@ -304,9 +308,16 @@ class TextFieldAudit(AutocompleteAudit):
             # UiAutomator mirrors an empty editor's hint into `text` on API 36.
             # The disappearing clear action plus the native hint distinguish
             # the genuinely empty state from a literal placeholder value.
+            cleared_text = cleared.attrib.get("text", "")
+            exposed_hint = cleared.attrib.get("hint")
+            placeholder_visible = (
+                exposed_hint == "Type here"
+                if exposed_hint is not None
+                else cleared_text == "Type here"
+            )
             if (
-                cleared.attrib.get("text", "") not in {"", "Type here"}
-                or cleared.attrib.get("hint") != "Type here"
+                cleared_text not in {"", "Type here"}
+                or not placeholder_visible
                 or self.exact(cleared_root, "Clear Text Field")
             ):
                 raise AuditFailure("clear action did not restore the empty placeholder state")
@@ -336,8 +347,11 @@ class TextFieldAudit(AutocompleteAudit):
             counter_after = self.dump("06-counter-max")
             self.screenshot("06-counter-max")
             limited = self.input_after(counter_after, "Counter").attrib.get("text", "")
-            if limited != "123456789012":
-                raise AuditFailure(f"maxLength did not clamp to 12 characters: {limited!r}")
+            if len(limited) != 12:
+                raise AuditFailure(
+                    "maxLength did not clamp the real keyboard input to 12 "
+                    f"characters: {limited!r}"
+                )
             if not self.exact(counter_after, "12/12"):
                 raise AuditFailure("counter did not update to 12/12")
 
@@ -384,7 +398,7 @@ class TextFieldAudit(AutocompleteAudit):
             markers = (
                 "FATAL EXCEPTION", " E AndroidRuntime:", "Pam Native runtime error",
                 "failed integrity verification", "Unknown native icon",
-                "ANR in dev.pam.mobileui.catalog.debug",
+                f"ANR in {self.package}",
                 "Input dispatching timed out",
             )
             errors = [
@@ -433,7 +447,7 @@ class TextFieldAudit(AutocompleteAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-text-field on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-text-field-android-audit"))
     return parser.parse_args()

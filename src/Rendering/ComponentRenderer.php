@@ -928,6 +928,17 @@ final class ComponentRenderer
                 'readonly',
                 self::flag($props, 'readOnly'),
             );
+            $fieldFocused = self::flag(
+                $props,
+                'focused',
+                self::flag($props, 'active'),
+            );
+            $fieldError = self::flag($props, 'error')
+                || self::text(
+                    $props,
+                    'errorMessage',
+                    self::text($props, 'messages'),
+                ) !== '';
             $fieldChildren = [];
             $label = self::text($props, 'label');
             $required = self::flag($props, 'required');
@@ -968,10 +979,14 @@ final class ComponentRenderer
                 $fieldChildren[] = Text::make(
                     $label.($required ? ' *' : ''),
                 )->style(new Style(
-                    textColor: $theme->color(ColorToken::MutedForeground),
+                    textColor: $theme->color(match (true) {
+                        $fieldError => ColorToken::Destructive,
+                        $fieldFocused => ColorToken::Primary,
+                        default => ColorToken::MutedForeground,
+                    }),
                     fontSize: 12.0,
                     lineHeight: 16.0,
-                    fontWeight: 400,
+                    fontWeight: $fieldFocused || $fieldError ? 600 : 500,
                     widthPercent: 100.0,
                 ));
             }
@@ -1142,6 +1157,15 @@ final class ComponentRenderer
                     )) {
                         $controlVariant = 'default';
                     }
+                    $numberControlHeight = $controlVariant === 'stacked'
+                        ? 48.0
+                        : match ($props['density'] ?? null) {
+                            MaterialDensity::Comfortable->value,
+                            'comfortable' => 36.0,
+                            MaterialDensity::Compact->value,
+                            'compact' => 32.0,
+                            default => 40.0,
+                        };
                     $reverse = self::flag($props, 'reverse');
                     $controlsDisabled = $fieldDisabled || $fieldReadOnly;
                     $change = $events[EventKind::Change->value] ?? null;
@@ -1156,31 +1180,43 @@ final class ComponentRenderer
                         $controlVariant,
                         $controlsDisabled,
                         $fieldDisabled,
+                        $numberControlHeight,
                         $precision,
                         $theme,
                     ): Element {
                         $enabled = !$controlsDisabled && !$atLimit;
-                        $button = Pressable::make(
+                        $glyphVisual = View::make(
                             Text::make($glyph)->style(new Style(
                                 textColor: $enabled
-                                    ? $theme->color(ColorToken::OnSurface)
+                                    ? $theme->color(ColorToken::AccentForeground)
                                     : $theme->color(ColorToken::MutedForeground),
                                 fontSize: 20.0,
                                 lineHeight: 24.0,
                                 textAlign: TextAlignment::Center,
                             )),
-                        )
+                        )->style(new Style(
+                            width: $numberControlHeight,
+                            height: $numberControlHeight,
+                            minWidth: $numberControlHeight,
+                            minHeight: $numberControlHeight,
+                            borderRadius: $numberControlHeight / 2.0,
+                            backgroundColor: in_array(
+                                $controlVariant,
+                                ['split', 'stacked', 'hidden'],
+                                true,
+                            )
+                                ? 0x00000000
+                                : $theme->color(ColorToken::Accent),
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                        ));
+                        $button = Pressable::make($glyphVisual)
                             ->style(new Style(
                                 width: 48.0,
                                 height: 48.0,
                                 minWidth: 48.0,
                                 minHeight: 48.0,
-                                borderRadius: $controlVariant === 'inset'
-                                    ? 12.0
-                                    : 0.0,
-                                backgroundColor: $controlVariant === 'inset'
-                                    ? $theme->color(ColorToken::Muted)
-                                    : 0x00000000,
+                                backgroundColor: 0x00000000,
                                 borderLeftWidth: in_array(
                                     $controlVariant,
                                     ['split', 'stacked'],
@@ -1591,13 +1627,13 @@ final class ComponentRenderer
             );
             if ($invalid && $materialComponent !== 'POtpInput') {
                 $fieldVariant = $props['variant'] ?? null;
-                $outlinedField = in_array($fieldVariant, [
-                    'outlined', 'outline', MaterialVariant::Outlined->value,
+                $underlinedField = in_array($fieldVariant, [
+                    'underlined', MaterialVariant::Underlined->value,
                 ], true);
                 $children[0] = $children[0]->style(new Style(
                     borderColor: $theme->color(ColorToken::Destructive),
-                    borderWidth: $outlinedField ? 2.0 : 0.0,
-                    borderBottomWidth: $outlinedField ? null : 2.0,
+                    borderWidth: $underlinedField ? 0.0 : 2.0,
+                    borderBottomWidth: $underlinedField ? 2.0 : null,
                 ));
             }
             $counterEnabled = self::flag($props, 'counter');
@@ -1635,6 +1671,7 @@ final class ComponentRenderer
                     minHeight: 16.0,
                     paddingHorizontal: 16.0,
                     gap: 8.0,
+                    opacity: $fieldDisabled && !$invalid ? 0.38 : 1.0,
                     alignItems: Align::Center,
                     justifyContent: Justify::SpaceBetween,
                 ));
@@ -2343,9 +2380,14 @@ final class ComponentRenderer
                     } + $densityOffset,
                 ));
             } elseif ($behavior === NativeBehavior::Timeline) {
-                $host = $host->style(new Style(height: max(64.0, count($children) * 64.0)));
+                // Timeline items reserve 72dp in the Material resolver. The
+                // previous 64dp native host clipped that authored height and
+                // could produce accessibility children with bottom < top.
+                $host = $host->style(new Style(
+                    height: max(72.0, count($children) * 72.0),
+                ));
             } elseif ($behavior === NativeBehavior::TimelineItem) {
-                $host = $host->style(new Style(height: 64.0));
+                $host = $host->style(new Style(height: 72.0));
             }
 
             return $host;
@@ -7074,6 +7116,28 @@ final class ComponentRenderer
                 'modelValue',
                 self::text($props, 'value', 'Select time'),
             );
+            $format = strtolower(self::scalarString($props['format'] ?? ''));
+            if ($value !== '' && preg_match(
+                '/^(?<hour>[01]?\d|2[0-3]):(?<minute>[0-5]\d)(?::(?<second>[0-5]\d))?$/D',
+                $value,
+                $time,
+            ) === 1) {
+                $hour = (int) $time['hour'];
+                $minute = $time['minute'];
+                $second = isset($time['second']) && $time['second'] !== ''
+                    ? $time['second']
+                    : '00';
+                if (in_array($format, ['ampm', '12', '12h', '12hr', '12-hour'], true)) {
+                    $period = $hour >= 12 ? 'PM' : 'AM';
+                    $displayHour = $hour % 12;
+                    $displayHour = $displayHour === 0 ? 12 : $displayHour;
+                    $value = $displayHour.':'.$minute
+                        .(self::flag($props, 'useSeconds') ? ':'.$second : '')
+                        .' '.$period;
+                } elseif (self::flag($props, 'useSeconds')) {
+                    $value = sprintf('%02d:%s:%s', $hour, $minute, $second);
+                }
+            }
 
             return [
                 Text::make($value === '' ? 'Select time' : $value)->style(

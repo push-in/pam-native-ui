@@ -33,11 +33,21 @@ class TimePickerAudit(AutocompleteAudit):
             raise AuditFailure(f"expected one native time picker, found {len(matches)}")
         return matches[0]
 
+    def dialog_button(self, root, resource_id: str):
+        return [
+            node for node in self.nodes(root)
+            if node.attrib.get("class") == "android.widget.Button"
+            and node.attrib.get("resource-id") == resource_id
+        ]
+
     def open_dialog(self, root):
         self.tap(node_bounds(self.picker(root)))
         time.sleep(0.6)
         opened = self.dump("dialog-open")
-        if not self.exact(opened, "CANCEL") or not self.exact(opened, "OK"):
+        if (
+            len(self.dialog_button(opened, "android:id/button2")) != 1
+            or len(self.dialog_button(opened, "android:id/button1")) != 1
+        ):
             raise AuditFailure("time field did not open Android's native dialog")
         return opened
 
@@ -102,7 +112,7 @@ class TimePickerAudit(AutocompleteAudit):
                 self.tap(node_bounds(field))
                 time.sleep(0.35)
                 after = self.dump(f"05-{scenario}-after")
-                if self.exact(after, "CANCEL"):
+                if self.dialog_button(after, "android:id/button2"):
                     raise AuditFailure(f"{scenario} time field opened a dialog")
                 expected = ("false", "true") if scenario == "readonly" else ("false", "false")
                 actual = (field.attrib.get("clickable"), field.attrib.get("enabled"))
@@ -136,6 +146,8 @@ class TimePickerAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-time-picker",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {"density": self.density(), "fieldHeightDp": area.height / self.density()},
                 "evidence": self.evidence,

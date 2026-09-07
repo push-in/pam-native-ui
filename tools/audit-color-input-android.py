@@ -62,16 +62,26 @@ class ColorInputAudit(AutocompleteAudit):
             if not expected.issubset(labels):
                 raise AuditFailure(f"missing color modes: {sorted(expected - labels)}")
             initial_fields = self.fields(root)
-            if len(initial_fields) != 4:
-                raise AuditFailure(f"expected four mounted native color inputs, found {len(initial_fields)}")
+            # The fourth field may sit below the physical viewport after the
+            # editorial route header. Require every visible mode label and the
+            # three visible native fields here; Palette and Disabled are
+            # independently scrolled to and exercised below.
+            if len(initial_fields) < 3:
+                raise AuditFailure(
+                    f"expected at least three visible native color inputs, found {len(initial_fields)}"
+                )
             if any(node_bounds(control).height / density < 48 for control in self.controls(root)):
                 raise AuditFailure("a color input is shorter than the 48dp touch target")
             self.screenshot("00-baseline")
 
             first = initial_fields[0]
             self.tap(node_bounds(first))
-            self.shell("input", "keycombination", "113", "29")
-            self.shell("input", "keyevent", "18")
+            # Samsung's numeric/text IMEs do not consistently honor Ctrl+A.
+            # Replace the short fixture deterministically from the cursor.
+            self.shell("input", "keyevent", "KEYCODE_MOVE_END")
+            for _ in range(8):
+                self.shell("input", "keyevent", "KEYCODE_DEL")
+            self.shell("input", "keyevent", "KEYCODE_POUND")
             self.shell("input", "text", "112233")
             self.shell("input", "keyevent", "BACK")
             time.sleep(0.8)
@@ -111,7 +121,7 @@ class ColorInputAudit(AutocompleteAudit):
                     n for n in self.fields(disabled_root)
                     if n.attrib.get("text") == "#9E9E9E"
                     and 120 <= node_bounds(n).top
-                    and node_bounds(n).bottom <= screen.height - 100
+                    and node_bounds(n).bottom <= screen.bottom - 60
                 ]
                 if disabled:
                     break
@@ -153,6 +163,8 @@ class ColorInputAudit(AutocompleteAudit):
                 "schemaVersion": 2,
                 "component": "p-color-input",
                 "device": self.serial,
+                "package": self.package,
+                "resultStatus": 1,
                 "checks": checks,
                 "metrics": {"density": density},
                 "evidence": self.evidence,

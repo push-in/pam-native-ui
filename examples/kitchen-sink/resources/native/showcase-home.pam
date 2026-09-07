@@ -5,7 +5,7 @@
         </Pressable>
     </template>
 
-    <p-card variant="tonal" class="p-5 rounded-3xl bg-slate-700">
+    <p-card color="secondary" variant="filled" class="p-5 rounded-3xl">
         <Column class="gap-5">
             <Row class="items-center justify-between gap-3">
                 <p-chip action="success" variant="subtle">
@@ -52,7 +52,7 @@
 
         <p-list>
             <p-list-item lines="two" on:press="goActions">
-                <p-icon icon="play" />
+                <p-icon icon="play" color="primary" />
                 <Column>
                     <Text size="base" class="font-medium">Actions</Text>
                     <Text size="sm" class="text-muted-foreground">Buttons, chips and selection</Text>
@@ -61,7 +61,7 @@
             </p-list-item>
             <p-divider />
             <p-list-item lines="two" on:press="goForms">
-                <p-icon icon="edit" />
+                <p-icon icon="edit" color="secondary" />
                 <Column>
                     <Text size="base" class="font-medium">Forms</Text>
                     <Text size="sm" class="text-muted-foreground">Inputs, pickers and validation</Text>
@@ -70,7 +70,7 @@
             </p-list-item>
             <p-divider />
             <p-list-item lines="two" on:press="goData">
-                <p-icon icon="calendar-days" />
+                <p-icon icon="calendar-days" color="info" />
                 <Column>
                     <Text size="base" class="font-medium">Data</Text>
                     <Text size="sm" class="text-muted-foreground">Tables, lists and visualization</Text>
@@ -79,7 +79,7 @@
             </p-list-item>
             <p-divider />
             <p-list-item lines="two" on:press="goOverlays">
-                <p-icon icon="copy" />
+                <p-icon icon="copy" color="warning" />
                 <Column>
                     <Text size="base" class="font-medium">Overlays</Text>
                     <Text size="sm" class="text-muted-foreground">Dialogs, sheets and menus</Text>
@@ -90,7 +90,6 @@
     </Column>
 
     <p-alert action="info" variant="subtle" class="rounded-2xl">
-        <p-icon icon="info" />
         <Column class="gap-1">
             <Text class="font-medium">Accessible by contract</Text>
             <Text size="sm" class="text-muted-foreground">48 dp targets, dynamic text, screen readers and reduced motion are validated before release.</Text>

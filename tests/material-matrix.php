@@ -806,19 +806,19 @@ if (
 }
 $sliderNative = Wire::decodeMap($sliderHost->bytes);
 if (
-    ($sliderNative['trackThickness'] ?? null) !== 16.0
-    || ($sliderNative['thumbWidth'] ?? null) !== 4.0
-    || ($sliderNative['thumbHeight'] ?? null) !== 44.0
-    || ($sliderNative['thumbTrackGap'] ?? null) !== 6.0
+    ($sliderNative['trackThickness'] ?? null) !== 4.0
+    || ($sliderNative['thumbWidth'] ?? null) !== 20.0
+    || ($sliderNative['thumbHeight'] ?? null) !== 20.0
+    || ($sliderNative['thumbTrackGap'] ?? null) !== 0.0
     || ($sliderNative['stateLayerSize'] ?? null) !== 40.0
-    || ($sliderNative['stopIndicatorSize'] ?? null) !== 4.0
+    || ($sliderNative['stopIndicatorSize'] ?? null) !== 0.0
     || ($sliderNative['tickSize'] ?? null) !== 4.0
-    || ($sliderTrack->properties()[PropKey::Height->value] ?? null) !== 16.0
-    || ($sliderThumb->properties()[PropKey::Width->value] ?? null) !== 4.0
-    || ($sliderThumb->properties()[PropKey::Height->value] ?? null) !== 44.0
+    || ($sliderTrack->properties()[PropKey::Height->value] ?? null) !== 4.0
+    || ($sliderThumb->properties()[PropKey::Width->value] ?? null) !== 20.0
+    || ($sliderThumb->properties()[PropKey::Height->value] ?? null) !== 20.0
 ) {
     throw new RuntimeException(
-        'p-slider must preserve the PAM Material track, pill handle and state-layer metrics at the native boundary.',
+        'p-slider must preserve the PAM Material track, circular handle and state-layer metrics at the native boundary.',
     );
 }
 
@@ -887,7 +887,7 @@ if (
     || ($verticalLabelledRangeSlider->properties()[PropKey::Width->value] ?? null)
         !== 112.0
     || ($verticalLabelledRangeTrack->properties()[PropKey::MarginLeft->value] ?? null)
-        !== 16.0
+        !== 22.0
 ) {
     throw new RuntimeException(
         'Vertical orientation aliases must center the track and reserve an unclipped value-label lane: '
@@ -1280,6 +1280,26 @@ foreach (['p-time-picker'] as $timePickerTag) {
             "{$timePickerTag} must open a native time picker, not calendar behavior.",
         );
     }
+}
+
+$timePickerAmPm = $tags['p-time-picker']::make([
+    'modelValue' => '14:35',
+    'format' => 'ampm',
+])->toElement();
+$timePickerSeconds = $tags['p-time-picker']::make([
+    'modelValue' => '14:35',
+    'format' => '24hr',
+    'useSeconds' => true,
+])->toElement();
+if (
+    ($timePickerAmPm->children()[0]?->properties()[PropKey::Text->value] ?? null)
+        !== '2:35 PM'
+    || ($timePickerSeconds->children()[0]?->properties()[PropKey::Text->value] ?? null)
+        !== '14:35:00'
+) {
+    throw new RuntimeException(
+        'Time picker display must visibly represent AM/PM and seconds formats.',
+    );
 }
 
 $dateInputClass = $tags['p-date-input'];
@@ -1883,11 +1903,11 @@ $autocompleteError = $tags['p-autocomplete']::make([
 $autocompleteField = $autocompleteError->children()[0] ?? null;
 if (
     !$autocompleteField instanceof \Pam\Native\Element
-    || ($autocompleteField->properties()[PropKey::BorderWidth->value] ?? null) !== 0.0
-    || ($autocompleteField->properties()[PropKey::BorderBottomWidth->value] ?? null) !== 2.0
+    || ($autocompleteField->properties()[PropKey::BorderWidth->value] ?? null) !== 2.0
+    || ($autocompleteField->properties()[PropKey::BorderBottomWidth->value] ?? null) !== null
 ) {
     throw new RuntimeException(
-        'Filled autocomplete errors must use an error indicator, not a full outline.',
+        'PAM autocomplete errors must use the complete semantic outline.',
     );
 }
 
@@ -2118,7 +2138,7 @@ if (
     )
 ) {
     throw new RuntimeException(
-        'p-number-input must clamp, snap and expose 48dp controls at numeric limits.',
+        'p-number-input must clamp, snap and preserve 48dp effective targets at numeric limits.',
     );
 }
 $precisionNumberInput = $numberClass::make([
@@ -2210,11 +2230,23 @@ $stackedNumberStyle = MaterialStyleResolver::resolve([
 $defaultNumberStyle = MaterialStyleResolver::resolve([
     '__materialComponent' => 'PNumberInput',
 ], Themes::pamLight());
+$comfortableNumberStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PNumberInput',
+    'density' => 'comfortable',
+], Themes::pamLight());
+$compactNumberStyle = MaterialStyleResolver::resolve([
+    '__materialComponent' => 'PNumberInput',
+    'density' => 'compact',
+], Themes::pamLight());
 if (
     !$stackedNumberStyle instanceof Style
     || $stackedNumberStyle->height !== 112.0
     || !$defaultNumberStyle instanceof Style
-    || $defaultNumberStyle->height !== 64.0
+    || $defaultNumberStyle->height !== 72.0
+    || !$comfortableNumberStyle instanceof Style
+    || $comfortableNumberStyle->height !== 72.0
+    || !$compactNumberStyle instanceof Style
+    || $compactNumberStyle->height !== 72.0
 ) {
     throw new RuntimeException(
         'Number input variants must reserve their complete 48dp control geometry.',
@@ -3201,9 +3233,9 @@ $assertGeometry('PIconBtn', ['density' => 'compact'], [
 ]);
 $assertGeometry('PCard', [], [
     'padding' => 0.0,
-    'borderRadius' => 12.0,
-    'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceContainerLow),
-    'borderWidth' => 0.0,
+    'borderRadius' => 24.0,
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceElevated),
+    'borderWidth' => 1.0,
     'elevation' => 1.0,
 ]);
 $assertGeometry('PCard', ['variant' => 'filled'], [
@@ -3287,6 +3319,10 @@ $assertGeometry('PTextField', [], [
     'minHeight' => 56.0,
     'paddingTop' => 8.0,
     'paddingBottom' => 4.0,
+    'borderWidth' => 1.0,
+    'borderBottomWidth' => null,
+    'borderRadius' => 16.0,
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceContainerLow),
 ]);
 $assertGeometry('PTextField', ['density' => 'comfortable'], [
     'height' => 48.0,
@@ -3301,6 +3337,8 @@ $assertGeometry('PTextField', ['density' => 'compact'], [
 $assertGeometry('PTextField', ['variant' => 'outlined'], [
     'borderWidth' => 1.0,
     'borderBottomWidth' => null,
+    'borderRadius' => 16.0,
+    'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceElevated),
     'elevation' => 0.0,
 ]);
 $assertGeometry('PTextField', ['variant' => 'underlined'], [
@@ -3772,7 +3810,12 @@ $assertGeometry('PAutocomplete', ['chips' => true], [
     'height' => 64.0,
 ]);
 $assertGeometry('PSelect', ['density' => 'compact'], [
-    'height' => 64.0,
+    'height' => 48.0,
+    'minHeight' => 48.0,
+]);
+$assertGeometry('PCombobox', ['density' => 'comfortable'], [
+    'height' => 56.0,
+    'minHeight' => 56.0,
 ]);
 $assertGeometry('PImg', ['cardMedia' => true], [
     'minHeight' => 200.0,

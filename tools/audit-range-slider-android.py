@@ -81,39 +81,33 @@ class RangeSliderAudit(SliderAudit):
     @staticmethod
     def track_center_y(path: Path, area: Bounds) -> int:
         with Image.open(path).convert("RGB") as image:
+            left = max(0, area.left)
+            right = min(image.width, area.right)
+            top = max(0, area.top)
+            bottom = min(image.height, area.bottom)
+            background = image.getpixel((min(right - 1, left + 2), max(top, bottom - 2)))
             rows: list[tuple[int, int]] = []
-            inactive_rows: list[tuple[int, int]] = []
             for y in range(max(0, area.top), min(image.height, area.bottom)):
-                count = 0
-                inactive_count = 0
-                for x in range(max(0, area.left), min(image.width, area.right)):
-                    red, green, blue = image.getpixel((x, y))
-                    if green >= red + 18 and green >= blue + 10 and green >= 75:
-                        count += 1
-                    # Persistent value labels can contain more accent pixels
-                    # than a zero-length active range. The inactive rail is
-                    # still the longest muted shape in the control, so use it
-                    # to locate the real touch axis whenever it is visible.
-                    if (
-                        170 <= red <= 245
-                        and 170 <= green <= 245
-                        and 170 <= blue <= 245
-                        and max(red, green, blue) - min(red, green, blue) <= 18
-                    ):
-                        inactive_count += 1
-                rows.append((y, count))
-                inactive_rows.append((y, inactive_count))
-        inactive_peak = max((count for _, count in inactive_rows), default=0)
-        if inactive_peak >= max(18, round(area.width * 0.35)):
-            candidates = [
-                y for y, count in inactive_rows
-                if count >= inactive_peak * 0.96
-            ]
-            return round((candidates[0] + candidates[-1]) / 2.0)
-        peak = max((count for _, count in rows), default=0)
-        if peak < 18:
-            raise AuditFailure(f"range track was not visually detectable (peak={peak})")
-        candidates = [y for y, count in rows if count >= peak * 0.96]
+                run = 0
+                longest_run = 0
+                for x in range(left, right):
+                    pixel = image.getpixel((x, y))
+                    differs = max(
+                        abs(pixel[channel] - background[channel])
+                        for channel in range(3)
+                    ) >= 12
+                    if differs:
+                        run += 1
+                        longest_run = max(longest_run, run)
+                    else:
+                        run = 0
+                rows.append((y, longest_run))
+        peak = max((run for _, run in rows), default=0)
+        if peak < max(18, round(area.width * 0.35)):
+            raise AuditFailure(
+                f"range track was not visually detectable (longest run={peak})"
+            )
+        candidates = [y for y, run in rows if run >= peak * 0.90]
         return round((candidates[0] + candidates[-1]) / 2.0)
 
     @staticmethod
@@ -811,7 +805,7 @@ class RangeSliderAudit(SliderAudit):
             )
             scaled_text = self.run_scaled_text()
 
-            logs = self.shell("logcat", "-d", "-t", "1200", timeout=30.0)
+            logs = self.application_logs()
             markers = (
                 "FATAL EXCEPTION", " E AndroidRuntime:", "Pam Native runtime error",
                 "failed integrity verification", "Unknown native icon",
@@ -859,7 +853,7 @@ class RangeSliderAudit(SliderAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-range-slider on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-range-slider-android-audit"))
     return parser.parse_args()

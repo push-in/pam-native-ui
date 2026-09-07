@@ -88,7 +88,9 @@ internal fun selectionSheetContentHeightPx(
     val safeDensity = density.coerceAtLeast(0.1f)
     val topInsetDp = 12f
     val dragHandleBlockDp = if (dragHandle) 20f else 0f
-    val searchBlockDp = if (searchable) 60f else 0f
+    // Material search fields use a 56dp visual container followed by the
+    // standard 12dp separation from the first option.
+    val searchBlockDp = if (searchable) 68f else 0f
     val bottomInsetDp = 24f
     // A filtered/empty result still renders one informative row. Measuring
     // that row explicitly keeps the sheet useful without imposing a large
@@ -894,15 +896,29 @@ internal class MobileUiHost(
         // host after a stepped slider must not leak step=10 into a slider that
         // omitted the prop and expects the canonical step=1 default.
         step = properties.decimal("step", 1.0).coerceAtLeast(0.000_001)
-        value = snapped(value)
+        if (!sliderTouchActive) {
+            value = snapped(value)
+        } else {
+            // The PHP model is reconciled asynchronously. Reapplying its
+            // previous value during MOVE makes the handle jump backwards on
+            // every frame. While a pointer owns the gesture, native state is
+            // authoritative; the final value is emitted on ACTION_UP.
+            value = value.coerceIn(minimum, maximum)
+        }
         rangeEnabled = properties.flag("range", false)
         val requestedLowerValue = snapped(properties.decimal("lowerValue", minimum))
         val requestedUpperValue = snapped(properties.decimal("upperValue", maximum))
-        lowerValue = requestedLowerValue
-        upperValue = requestedUpperValue
-        if (rangeEnabled) {
-            lowerValue = minOf(requestedLowerValue, requestedUpperValue)
-            upperValue = maxOf(requestedLowerValue, requestedUpperValue)
+        if (!sliderTouchActive) {
+            lowerValue = requestedLowerValue
+            upperValue = requestedUpperValue
+            if (rangeEnabled) {
+                lowerValue = minOf(requestedLowerValue, requestedUpperValue)
+                upperValue = maxOf(requestedLowerValue, requestedUpperValue)
+                value = upperValue
+            }
+        } else if (rangeEnabled) {
+            lowerValue = lowerValue.coerceIn(minimum, maximum)
+            upperValue = upperValue.coerceIn(lowerValue, maximum)
             value = upperValue
         }
         trackThickness = if (behavior == Behavior.PROGRESS) {
@@ -7850,7 +7866,7 @@ internal class MobileUiHost(
                 ).toInt(),
             )
             search.contentDescription = sheetSearchPlaceholder
-            search.minimumHeight = (48f * resources.displayMetrics.density).roundToInt()
+            search.minimumHeight = (56f * resources.displayMetrics.density).roundToInt()
             search.gravity = android.view.Gravity.CENTER_VERTICAL
             search.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
@@ -8046,7 +8062,7 @@ internal class MobileUiHost(
 
         val density = resources.displayMetrics.density
         val rowHeight = (56f * density).roundToInt()
-        val searchHeight = (48f * density).roundToInt()
+        val searchHeight = (56f * density).roundToInt()
         val topInset = (12f * density).roundToInt()
         val handleWrapper = findTaggedDescendant(
             root,

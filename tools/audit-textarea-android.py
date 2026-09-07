@@ -472,7 +472,7 @@ class TextareaAudit(AutocompleteAudit):
             markers = (
                 "FATAL EXCEPTION", " E AndroidRuntime:", "Pam Native runtime error",
                 "failed integrity verification", "Unknown native icon",
-                "ANR in dev.pam.mobileui.catalog.debug",
+                f"ANR in {self.package}",
                 "Input dispatching timed out",
             )
             errors = [
@@ -525,7 +525,7 @@ class TextareaAudit(AutocompleteAudit):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit p-textarea on Android.")
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="dev.pam.mobileui.catalog.debug")
+    parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-textarea-android-audit"))
     return parser.parse_args()

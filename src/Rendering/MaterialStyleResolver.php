@@ -444,40 +444,6 @@ final class MaterialStyleResolver
             );
         }
 
-        if (in_array($part, [
-            'PAutocomplete',
-            'PCombobox',
-            'PSelect',
-            'PNumberInput',
-            'PDateInput',
-            'PColorInput',
-        ], true)) {
-            $selectionField = in_array($part, [
-                'PSelect', 'PAutocomplete', 'PCombobox',
-            ], true);
-            $fieldHeight = match (true) {
-                $selectionField => 64.0,
-                $part === 'PNumberInput'
-                    && ($props['controlVariant'] ?? null) === 'stacked' => 112.0,
-                $part === 'PNumberInput' => 64.0,
-                default => max(56.0, MaterialTokens::fieldHeight($density)),
-            };
-
-            return new Style(
-                widthPercent: 100.0,
-                height: $fieldHeight,
-                minHeight: $fieldHeight,
-                paddingHorizontal: 16.0,
-                borderWidth: ($props['variant'] ?? null) === 'outlined' ? 1.0 : 0.0,
-                borderRadius: 4.0,
-                borderColor: $theme->color(ColorToken::Border),
-                backgroundColor: $theme->color(ColorToken::SurfaceSunken),
-                opacity: ($props['disabled'] ?? false) ? 0.38 : 1.0,
-                animationDurationMs: 200,
-                animateChanges: true,
-            );
-        }
-
         if ($part === 'PImg') {
             $height = self::number($props['height'] ?? null);
             $aspectRatio = self::number($props['aspectRatio'] ?? null);
@@ -1357,7 +1323,7 @@ final class MaterialStyleResolver
                 $semanticBackground !== null => $semanticBackground,
                 $outlinedCard => $theme->color(ColorToken::Surface),
                 $filledCard => $theme->color(ColorToken::SurfaceContainerHighest),
-                $card => $theme->color(ColorToken::SurfaceContainerLow),
+                $card => $theme->color(ColorToken::SurfaceElevated),
                 $variant === MaterialVariant::Tonal => $theme->color(ColorToken::Secondary),
                 default => $theme->color(ColorToken::Surface),
             };
@@ -1379,6 +1345,7 @@ final class MaterialStyleResolver
                     ),
                 borderColor: $semanticBackground ?? $theme->color(ColorToken::OutlineVariant),
                 borderWidth: $outlinedCard
+                    || ($card && $variant === MaterialVariant::Elevated)
                     || (!$card && $variant === MaterialVariant::Outlined)
                         ? MaterialTokens::OUTLINE_WIDTH
                         : 0.0,
@@ -1405,10 +1372,17 @@ final class MaterialStyleResolver
                 'PSelect', 'PAutocomplete', 'PCombobox',
             ], true);
             $controlHeight = match (true) {
-                $selectionField => 64.0,
+                $selectionField => match ($density) {
+                    MaterialDensity::Comfortable => 56.0,
+                    MaterialDensity::Compact => 48.0,
+                    default => 64.0,
+                },
                 $part === 'PNumberInput'
                     && ($props['controlVariant'] ?? null) === 'stacked' => 112.0,
-                $part === 'PNumberInput' => 64.0,
+                // This compound field stacks a 16dp label lane above complete
+                // 48dp step targets. A 72dp surface keeps both lanes on the
+                // 8dp grid without clipping; density changes the inner visual.
+                $part === 'PNumberInput' => 72.0,
                 default => $height,
             };
             $focused = ($props['focused'] ?? $props['active'] ?? false) === true;
@@ -1426,7 +1400,20 @@ final class MaterialStyleResolver
                 ? $theme->color(ColorToken::Destructive)
                 : ($focused
                     ? $theme->color(ColorToken::Primary)
-                    : $theme->color(ColorToken::Outline));
+                    : $theme->color(ColorToken::Input));
+            $fieldSurface = match (true) {
+                $error => self::blendArgb(
+                    $theme->color(ColorToken::Destructive),
+                    $theme->color(ColorToken::SurfaceElevated),
+                    0.055,
+                ),
+                $focused => self::blendArgb(
+                    $theme->color(ColorToken::Primary),
+                    $theme->color(ColorToken::SurfaceElevated),
+                    0.065,
+                ),
+                default => $theme->color(ColorToken::SurfaceElevated),
+            };
             $textareaBaseHeight = match ($density) {
                 MaterialDensity::Comfortable => 104.0,
                 MaterialDensity::Compact => 96.0,
@@ -1457,47 +1444,58 @@ final class MaterialStyleResolver
                 + (24.0 * max(0, $textareaRows - 3));
 
             return new Style(
+                widthPercent: 100.0,
                 height: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
                 minHeight: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
                 paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
-                paddingTop: $selectionField ? 0.0 : match ($density) {
-                    MaterialDensity::Comfortable => 4.0,
-                    MaterialDensity::Compact => 0.0,
-                    default => 8.0,
-                },
-                paddingBottom: $selectionField ? 0.0 : match ($density) {
-                    MaterialDensity::Comfortable => 2.0,
-                    MaterialDensity::Compact => 0.0,
-                    default => 4.0,
-                },
+                paddingTop: $selectionField ? 0.0 : ($part === 'PNumberInput'
+                    ? 0.0
+                    : match ($density) {
+                        MaterialDensity::Comfortable => 4.0,
+                        MaterialDensity::Compact => 0.0,
+                        default => 8.0,
+                    }),
+                paddingBottom: $selectionField ? 0.0 : ($part === 'PNumberInput'
+                    ? 0.0
+                    : match ($density) {
+                        MaterialDensity::Comfortable => 2.0,
+                        MaterialDensity::Compact => 0.0,
+                        default => 4.0,
+                    }),
                 gap: 0.0,
                 backgroundColor: match ($variant) {
-                    MaterialVariant::Outlined,
                     MaterialVariant::Underlined,
                     MaterialVariant::Plain => $transparent,
+                    MaterialVariant::Outlined => $fieldSurface,
                     MaterialVariant::Solo => $theme->color(ColorToken::Surface),
                     MaterialVariant::SoloInverted => $focused
                         ? $theme->color(ColorToken::Surface)
                         : $theme->color(ColorToken::Muted),
-                    default => $theme->color(ColorToken::SurfaceSunken),
+                    default => $focused || $error
+                        ? $fieldSurface
+                        : $theme->color(ColorToken::SurfaceContainerLow),
                 },
                 textColor: $theme->color(ColorToken::OnSurface),
                 placeholderColor: $theme->color(ColorToken::MutedForeground),
                 borderColor: $fieldBorder,
-                borderWidth: $outlined ? ($focused || $error ? 2.0 : 1.0) : 0.0,
-                borderBottomWidth: $outlined || $solo || $plain
-                    ? null
+                borderWidth: $underlined || $plain || $solo
+                    ? 0.0
                     : ($focused || $error ? 2.0 : 1.0),
+                borderBottomWidth: $underlined
+                    ? ($focused || $error ? 2.0 : 1.0)
+                    : null,
                 borderRadius: $underlined || $plain
                     ? 0.0
-                    : MaterialTokens::radius(MaterialShape::ExtraSmall),
+                    : ($solo
+                        ? MaterialTokens::radius(MaterialShape::Large)
+                        : MaterialTokens::radius(MaterialShape::Large)),
                 elevation: in_array($variant, [
                     MaterialVariant::Solo,
                     MaterialVariant::SoloInverted,
                 ], true) ? 1.0 : 0.0,
                 opacity: $opacity,
                 flexDirection: FlexDirection::Column,
-                animationDurationMs: 150,
+                animationDurationMs: 200,
                 animateChanges: true,
             );
         }
@@ -1732,8 +1730,10 @@ final class MaterialStyleResolver
                     : 0.0,
                 borderRadius: match ($part) {
                     'PBottomSheet' => 0.0,
-                    'PTooltip' => MaterialTokens::radius(MaterialShape::ExtraSmall),
-                    default => MaterialTokens::radius(MaterialShape::ExtraSmall),
+                    'PDialog' => MaterialTokens::DIALOG_RADIUS,
+                    'PMenu' => MaterialTokens::radius(MaterialShape::Large),
+                    'PTooltip' => MaterialTokens::radius(MaterialShape::Small),
+                    default => MaterialTokens::radius(MaterialShape::Large),
                 },
                 elevation: self::resolvedElevation(
                     $props,
