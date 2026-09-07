@@ -1292,9 +1292,9 @@ $timePickerSeconds = $tags['p-time-picker']::make([
     'useSeconds' => true,
 ])->toElement();
 if (
-    ($timePickerAmPm->children()[0]?->properties()[PropKey::Text->value] ?? null)
+    ($timePickerAmPm->children()[0]->properties()[PropKey::Text->value] ?? null)
         !== '2:35 PM'
-    || ($timePickerSeconds->children()[0]?->properties()[PropKey::Text->value] ?? null)
+    || ($timePickerSeconds->children()[0]->properties()[PropKey::Text->value] ?? null)
         !== '14:35:00'
 ) {
     throw new RuntimeException(

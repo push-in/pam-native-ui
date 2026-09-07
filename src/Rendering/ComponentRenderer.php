@@ -7124,9 +7124,7 @@ final class ComponentRenderer
             ) === 1) {
                 $hour = (int) $time['hour'];
                 $minute = $time['minute'];
-                $second = isset($time['second']) && $time['second'] !== ''
-                    ? $time['second']
-                    : '00';
+                $second = $time['second'] ?? '00';
                 if (in_array($format, ['ampm', '12', '12h', '12hr', '12-hour'], true)) {
                     $period = $hour >= 12 ? 'PM' : 'AM';
                     $displayHour = $hour % 12;
