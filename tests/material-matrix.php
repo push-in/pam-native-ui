@@ -4028,9 +4028,11 @@ $chart = $tags['p-chart']::make([
 ])->onChange(static function (array $point) use (&$selectedChartPoint): void {
     $selectedChartPoint = $point;
 })->toElement();
-$chartHost = Wire::decodeMap(
-    $chart->properties()[PropKey::HostProperties->value]->bytes,
-);
+$chartHostValue = $chart->properties()[PropKey::HostProperties->value] ?? null;
+if (!$chartHostValue instanceof BinaryValue) {
+    throw new RuntimeException('p-chart must expose encoded native host properties.');
+}
+$chartHost = Wire::decodeMap($chartHostValue->bytes);
 if (
     $chart->kind() !== NodeKind::CustomView
     || ($chart->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Revenue trend'
