@@ -18,9 +18,12 @@ $pamNativeRoot = getenv('PAM_NATIVE_ROOT');
 $pamNativeRoot = is_string($pamNativeRoot) && $pamNativeRoot !== ''
     ? $pamNativeRoot
     : dirname(__DIR__, 2).'/pam-native';
+$pamNativeSource = is_dir(rtrim($pamNativeRoot, '/').'/packages/native/src')
+    ? rtrim($pamNativeRoot, '/').'/packages/native/src/'
+    : rtrim($pamNativeRoot, '/').'/src/';
 $localRoots = [
     'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',
-    'Pam\\Native\\' => rtrim($pamNativeRoot, '/').'/packages/native/src/',
+    'Pam\\Native\\' => $pamNativeSource,
 ];
 spl_autoload_register(static function (string $class) use ($localRoots): void {
     foreach ($localRoots as $prefix => $root) {
