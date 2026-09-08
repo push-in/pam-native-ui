@@ -159,6 +159,24 @@ $rtlAssertions = 0;
 $reducedMotionAssertions = 0;
 $largestFrameBytes = 0;
 $started = hrtime(true);
+$semanticAccessibilityElement = static function (
+    string $catalog,
+    string $component,
+    Element $root,
+): Element {
+    if ($catalog !== 'material' || $component !== 'p-search-bar') {
+        return $root;
+    }
+    // The editor owns search semantics; its decorative Row stays hidden from
+    // the accessibility tree so Android and iOS announce one field only.
+    foreach ($root->children() as $child) {
+        if ($child->kind() === \Pam\Native\NodeKind::Input) {
+            return $child;
+        }
+    }
+
+    return $root;
+};
 
 foreach ($catalogs as $catalog => $components) {
     foreach ($themes as [$mode, $theme]) {
@@ -176,7 +194,11 @@ foreach ($catalogs as $catalog => $components) {
                     'reduceMotion' => true,
                     ...$state,
                 ])->toElement();
-                $semanticElement = $element;
+                $semanticElement = $semanticAccessibilityElement(
+                    $catalog,
+                    (string) $name,
+                    $element,
+                );
                 $properties = $semanticElement->properties();
                 $stateProperties = $element->properties();
                 if (
