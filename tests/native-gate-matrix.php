@@ -176,18 +176,7 @@ foreach ($catalogs as $catalog => $components) {
                     'reduceMotion' => true,
                     ...$state,
                 ])->toElement();
-                // Compound search bars deliberately keep their visual Row out
-                // of the accessibility tree. The native editor owns the label,
-                // hint and search role so Android/iOS announce one field only.
                 $semanticElement = $element;
-                if ($catalog === 'material' && (string) $name === 'p-search-bar') {
-                    foreach ($element->children() as $child) {
-                        if ($child->kind() === \Pam\Native\NodeKind::Input) {
-                            $semanticElement = $child;
-                            break;
-                        }
-                    }
-                }
                 $properties = $semanticElement->properties();
                 $stateProperties = $element->properties();
                 if (

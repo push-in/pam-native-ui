@@ -682,7 +682,7 @@ final class ComponentRenderer
         ) {
             $progress = max(0.0, min(
                 100.0,
-                self::number($props, 'progress', self::number($props, 'modelValue')),
+                self::number($props, 'progress', self::number($props, 'modelValue', 0.0)),
             ));
             $reduceMotion = self::flag($props, 'reduceMotion');
             $children[] = View::make()->style(new Style(
@@ -3535,7 +3535,7 @@ final class ComponentRenderer
                 $value = $definition;
                 $label = is_scalar($definition) ? (string) $definition : (string) ($index + 1);
             }
-            if (!is_scalar($value) || !is_scalar($label)) {
+            if (!is_scalar($value)) {
                 continue;
             }
             $selected = in_array($value, $selectedValues, true);

@@ -3935,9 +3935,12 @@ if ($filterChanged !== ['Open', 'Paid']) {
     throw new RuntimeException('p-filter-bar must emit additive controlled filtering.');
 }
 $filterBar->children()[3]->events()[EventKind::Press->value]();
-if (count($filterChanged) !== 0) {
-    throw new RuntimeException('p-filter-bar must expose a visible clear-all action.');
-}
+$assertEmptyFilters = static function (array $filters): void {
+    if ($filters !== []) {
+        throw new RuntimeException('p-filter-bar must expose a visible clear-all action.');
+    }
+};
+$assertEmptyFilters($filterChanged);
 $assertGeometry('PTimeRangePicker', [], [
     'widthPercent' => 100.0,
     'minHeight' => 72.0,
