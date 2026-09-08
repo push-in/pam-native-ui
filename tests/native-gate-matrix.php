@@ -176,7 +176,20 @@ foreach ($catalogs as $catalog => $components) {
                     'reduceMotion' => true,
                     ...$state,
                 ])->toElement();
-                $properties = $element->properties();
+                // Compound search bars deliberately keep their visual Row out
+                // of the accessibility tree. The native editor owns the label,
+                // hint and search role so Android/iOS announce one field only.
+                $semanticElement = $element;
+                if ($catalog === 'material' && $name === 'p-search-bar') {
+                    foreach ($element->children() as $child) {
+                        if ($child->kind() === \Pam\Native\NodeKind::Input) {
+                            $semanticElement = $child;
+                            break;
+                        }
+                    }
+                }
+                $properties = $semanticElement->properties();
+                $stateProperties = $element->properties();
                 if (
                     ($properties[PropKey::AccessibilityLabel->value] ?? null)
                     !== $label
@@ -223,7 +236,7 @@ foreach ($catalogs as $catalog => $components) {
                 }
                 $rtlAssertions++;
                 if (($state['disabled'] ?? false) === true) {
-                    if (($properties[PropKey::Enabled->value] ?? null) !== false) {
+                    if (($stateProperties[PropKey::Enabled->value] ?? null) !== false) {
                         throw new RuntimeException(
                             "{$name} did not expose its disabled native state.",
                         );
@@ -231,7 +244,7 @@ foreach ($catalogs as $catalog => $components) {
                     $accessibilityAssertions++;
                 }
                 if (($state['selected'] ?? false) === true) {
-                    if (($properties[PropKey::Selected->value] ?? null) !== true) {
+                    if (($stateProperties[PropKey::Selected->value] ?? null) !== true) {
                         throw new RuntimeException(
                             "{$name} did not expose its selected native state.",
                         );
@@ -240,9 +253,9 @@ foreach ($catalogs as $catalog => $components) {
                 }
                 if (($state['checked'] ?? false) === true) {
                     if (
-                        ($properties[PropKey::AccessibilityCheckedState->value] ?? null)
+                        ($stateProperties[PropKey::AccessibilityCheckedState->value] ?? null)
                         !== AccessibilityCheckedState::Checked->value
-                        || ($properties[PropKey::Checked->value] ?? null) !== true
+                        || ($stateProperties[PropKey::Checked->value] ?? null) !== true
                     ) {
                         throw new RuntimeException(
                             "{$name} did not expose its checked native state.",
@@ -252,8 +265,8 @@ foreach ($catalogs as $catalog => $components) {
                 }
                 if (($state['loading'] ?? false) === true) {
                     if (
-                        ($properties[PropKey::AccessibilityBusy->value] ?? null) !== true
-                        || ($properties[PropKey::Enabled->value] ?? null) !== false
+                        ($stateProperties[PropKey::AccessibilityBusy->value] ?? null) !== true
+                        || ($stateProperties[PropKey::Enabled->value] ?? null) !== false
                     ) {
                         throw new RuntimeException(
                             "{$name} did not expose a busy, non-interactive loading state.",

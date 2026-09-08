@@ -401,7 +401,7 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "95278dd3ae532f29c4eaff6504d0151f3b16aed4"
+                "reference": "c515cd38670f0613da621a47253982e1f4bce4b9"
             },
             "require": {
                 "php": "^8.5",
@@ -431,6 +431,20 @@
                 "psr-4": {
                     "Pam\\MobileUi\\Tests\\": "tests/"
                 }
+            },
+            "archive": {
+                "exclude": [
+                    "/.git",
+                    "/.phpunit.cache",
+                    "/android/.gradle",
+                    "/android/.kotlin",
+                    "/android/build",
+                    "/examples/**/.pam-native",
+                    "/examples/**/dist",
+                    "/examples/**/vendor",
+                    "/tools/phpstan/vendor",
+                    "/vendor"
+                ]
             },
             "scripts": {
                 "generate:legacy": [
@@ -524,5 +538,5 @@
         "php": "^8.5"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

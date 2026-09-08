@@ -1,0 +1,32 @@
+{
+    "schemaVersion": 1,
+    "capturedAt": "2026-09-08",
+    "resultStatus": 1,
+    "device": {
+        "manufacturer": "Google",
+        "model": "sdk_gphone64_x86_64",
+        "androidVersion": "16",
+        "api": 36,
+        "viewport": "1080x2400",
+        "densityDpi": 420
+    },
+    "buildSha256": "08ac53cc9e0e9688888c872e4e6a5a7fd29e97e331dc87d5cfc44a811b6effe2",
+    "componentCount": 114,
+    "attemptCount": 114,
+    "passedCount": 114,
+    "failedCount": 0,
+    "repetitions": 1,
+    "interactionCoverage": {
+        "typing": true,
+        "selection": true,
+        "toggle": true,
+        "adjustment": true,
+        "openAndDismiss": true,
+        "scroll": true,
+        "gesture": true,
+        "runtimeHealth": true,
+        "routeIdentity": true
+    },
+    "physicalApprovalGranted": false,
+    "physicalApprovalReason": "Emulator evidence cannot replace the two-run Samsung gate."
+}

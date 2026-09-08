@@ -29,6 +29,9 @@ use Pam\Native\AnimationEasing;
 use Pam\Native\AnimationKeyframe;
 use Pam\Native\Element;
 use Pam\Native\EventKind;
+use Pam\Native\GestureDirection;
+use Pam\Native\GestureEvent;
+use Pam\Native\GestureType;
 use Pam\Native\ImageCachePolicy;
 use Pam\Native\ImageErrorEvent;
 use Pam\Native\InputSyncMode;
@@ -51,6 +54,9 @@ use Pam\Native\KeyboardType;
 use Pam\Native\ModalAnimationType;
 use Pam\Native\ModalOrientation;
 use Pam\Native\ModalPresentation;
+use Pam\Native\Navigation\DrawerKeyboardDismissMode;
+use Pam\Native\Navigation\DrawerPosition;
+use Pam\Native\Navigation\DrawerType;
 use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
 use Pam\Native\PointerEvents;
@@ -71,12 +77,15 @@ use Pam\Native\TextHyphenationFrequency;
 use Pam\Native\UI\ActivityIndicator;
 use Pam\Native\UI\Animated;
 use Pam\Native\UI\Column;
+use Pam\Native\UI\DrawerLayoutAndroid;
 use Pam\Native\UI\CustomView;
 use Pam\Native\UI\FlatList;
+use Pam\Native\UI\GestureDetector;
 use Pam\Native\UI\Image;
 use Pam\Native\UI\ImageBackground;
 use Pam\Native\UI\Input;
 use Pam\Native\UI\InputAccessoryView;
+use Pam\Native\UI\InteractionRegion;
 use Pam\Native\UI\KeyboardAvoidingView;
 use Pam\Native\UI\Modal as NativeModal;
 use Pam\Native\UI\Pressable;
@@ -132,6 +141,85 @@ final class ComponentRenderer
         if (!isset(ComponentMap::IDS[$part]) && !isset(MaterialComponentMap::IDS[$part])) {
             throw new InvalidArgumentException("Unknown PAM Native UI component {$part}.");
         }
+        if ($part === 'PNavigationDrawer') {
+            return self::materialNavigationDrawer(
+                $props,
+                $children,
+                $events,
+                $styleOverride,
+                $elementKey,
+            );
+        }
+        if ($part === 'PReorderableList') {
+            return self::materialReorderableList(
+                $props,
+                $children,
+                $events,
+                $styleOverride,
+                $elementKey,
+            );
+        }
+        if ($part === 'PTreeSelect') {
+            return self::materialTreeSelect(
+                $props,
+                $events,
+                $styleOverride,
+                $elementKey,
+            );
+        }
+        if ($part === 'PSwipeActions') {
+            return self::materialSwipeActions(
+                $props,
+                $children,
+                $events,
+                $styleOverride,
+                $elementKey,
+            );
+        }
+        if ($part === 'PResultState') {
+            return self::materialResultState(
+                $props,
+                $children,
+                $events,
+                $styleOverride,
+                $elementKey,
+            );
+        }
+        if ($part === 'PDataGrid') {
+            $props['virtual'] = true;
+            $props['striped'] ??= true;
+            $props['height'] ??= 360.0;
+            $part = 'PDataTableVirtual';
+        } elseif ($part === 'PChart') {
+            $props['__chart'] = true;
+            $props['smooth'] ??= true;
+            $props['showPoints'] ??= true;
+            $props['interactive'] ??= isset($events[EventKind::Change->value]);
+            $props['accessibilityLabel'] ??= 'Data chart';
+            $part = 'PSparkline';
+        }
+        if ($part === 'PCommandPalette') {
+            $props['__commandPalette'] = true;
+            $props['open'] ??= true;
+            $props['searchPlaceholder'] ??= 'Type a command';
+            $props['snapPoints'] ??= '72%';
+            $part = 'PAutocomplete';
+        } elseif ($part === 'PProgressButton') {
+            $props['__progressButton'] = true;
+            $progress = $props['progress'] ?? $props['modelValue'] ?? null;
+            $props['loading'] = self::flag($props, 'indeterminate')
+                || self::flag($props, 'loading');
+            $props['accessibilityState'] = [
+                ...(
+                    is_array($props['accessibilityState'] ?? null)
+                        ? $props['accessibilityState']
+                        : []
+                ),
+                'busy' => $props['loading']
+                    || (is_numeric($progress) && (float) $progress < 100.0),
+            ];
+            $part = 'PBtn';
+        }
 
         if (
             in_array($part, [
@@ -171,6 +259,47 @@ final class ComponentRenderer
         }
         if (in_array($part, ['PDialog', 'PMenu', 'POverlay', 'PSpeedDial'], true)) {
             $props = self::materialOverlayProperties($props);
+        }
+        if ($part === 'PPagination' && $children === []) {
+            $children = self::materialPaginationChildren($props, $events);
+        }
+        if ($part === 'PTagInput') {
+            $props['multiple'] = true;
+            $props['allowCustomValue'] = true;
+            $props['searchable'] = true;
+        } elseif ($part === 'PMultiSelect') {
+            $props['multiple'] = true;
+            $props['searchable'] ??= true;
+        }
+        if ($part === 'PSegmentedButton' && $children === []) {
+            $children = self::materialSegmentedChildren($props, $events);
+        }
+        if ($part === 'PDateRangePicker' && $children === []) {
+            $children = self::materialDateRangeChildren($props, $events);
+        }
+        if ($part === 'PSearchBar' && $children === []) {
+            $children = self::materialSearchBarChildren($props, $events);
+            // The editor is the only accessibility node for this compound
+            // control. Exposing the visual HStack as another Search field
+            // creates two overlapping EditText announcements on Android.
+            $props['accessible'] = false;
+            unset(
+                $props['role'],
+                $props['ariaRole'],
+                $props['accessibilityRole'],
+                $props['accessibilityLabel'],
+                $props['ariaLabel'],
+                $props['accessibilityHint'],
+            );
+        }
+        if ($part === 'PTimeRangePicker' && $children === []) {
+            $children = self::materialTimeRangeChildren($props, $events);
+        }
+        if ($part === 'PFilterBar' && $children === []) {
+            $children = self::materialFilterChildren($props, $events);
+        }
+        if ($part === 'PFileInput' && $children === []) {
+            $children = self::materialFileInputChildren($props);
         }
         if (
             $part === 'PSpeedDial'
@@ -547,6 +676,35 @@ final class ComponentRenderer
             ];
         }
         if (
+            self::flag($props, '__progressButton')
+            && is_numeric($props['progress'] ?? $props['modelValue'] ?? null)
+            && !self::flag($props, 'indeterminate')
+        ) {
+            $progress = max(0.0, min(
+                100.0,
+                (float) ($props['progress'] ?? $props['modelValue']),
+            ));
+            $reduceMotion = self::flag($props, 'reduceMotion');
+            $children[] = View::make()->style(new Style(
+                positionType: PositionType::Absolute,
+                left: 0.0,
+                bottom: 0.0,
+                widthPercent: $progress,
+                height: 4.0,
+                backgroundColor: ThemeManager::current()->color(
+                    ColorToken::PrimaryForeground,
+                ),
+                borderRadius: 2.0,
+                animationDurationMs: $reduceMotion ? 0 : 250,
+                animateChanges: !$reduceMotion,
+            ))->property(PropKey::Value, 'pam:progress-button-track')
+                ->accessible(false)
+                ->property(
+                    PropKey::PointerEvents,
+                    PointerEvents::None->value,
+                );
+        }
+        if (
             $part === 'Modal'
             && ($props['__materialComponent'] ?? null) !== 'PDialog'
         ) {
@@ -580,11 +738,22 @@ final class ComponentRenderer
                     ColorToken::PrimaryForeground,
                 );
             $props['progressColor'] = $loadingForeground;
-            $children = [
-                ActivityIndicator::make()
-                    ->color($loadingForeground)
-                    ->style(new Style(width: 20.0, height: 20.0)),
-            ];
+            $spinner = ActivityIndicator::make()
+                ->color($loadingForeground)
+                ->style(new Style(width: 20.0, height: 20.0));
+            $loadingLabel = self::text($props, 'text');
+            $children = self::flag($props, '__progressButton')
+                && $loadingLabel !== ''
+                ? [Row::make(
+                    $spinner,
+                    Text::make($loadingLabel)->style(new Style(
+                        textColor: $loadingForeground,
+                        fontSize: 14.0,
+                        lineHeight: 20.0,
+                        fontWeight: 700,
+                    )),
+                )->style(new Style(gap: 8.0, alignItems: Align::Center))]
+                : [$spinner];
         }
         if (
             $materialLoading
@@ -907,7 +1076,8 @@ final class ComponentRenderer
             [
                 'PTextField', 'PTextarea', 'PNumberInput',
                 'POtpInput', 'PColorInput', 'PDateInput',
-                'PSelect', 'PAutocomplete', 'PCombobox',
+                'PPasswordField', 'PMaskedField', 'PCurrencyField',
+                'PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect',
             ],
             true,
         );
@@ -961,13 +1131,14 @@ final class ComponentRenderer
                 && !$fieldDisabled;
             $inputPaddingLeft = $prefix === '' ? 0.0 : 32.0;
             $inputPaddingRight = match (true) {
+                $materialComponent === 'PPasswordField' => 56.0,
                 $fieldLoading && ($clearable || $suffix !== '') => 64.0,
                 $fieldLoading => 32.0,
                 $clearable && $suffix !== '' => 64.0,
                 $clearable || $suffix !== '' => 32.0,
                 in_array(
                     $props['__materialComponent'],
-                    ['PAutocomplete', 'PCombobox'],
+                    ['PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'],
                     true,
                 ) => 32.0,
                 default => 0.0,
@@ -1038,6 +1209,9 @@ final class ComponentRenderer
                     'PTextarea',
                     'PNumberInput',
                     'POtpInput',
+                    'PPasswordField',
+                    'PMaskedField',
+                    'PCurrencyField',
                 ], true)
             ) {
                 $inputProps = $props;
@@ -1063,6 +1237,21 @@ final class ComponentRenderer
                         || self::flag($props, 'secure')
                         || self::flag($props, 'secureTextEntry')
                         || ($props['type'] ?? null) === 'password';
+                } elseif ($materialComponent === 'PPasswordField') {
+                    $inputProps['secure'] = !self::flag($props, 'revealed');
+                    $inputProps['autoComplete'] ??= 'password';
+                    $inputProps['autoCorrect'] ??= false;
+                    $inputProps['autoCapitalize'] ??= 'none';
+                } elseif ($materialComponent === 'PMaskedField') {
+                    $inputProps['mask'] ??= self::text(
+                        $props,
+                        'pattern',
+                        self::text($props, 'mask'),
+                    );
+                    $inputProps['keyboardType'] ??= 'number-pad';
+                } elseif ($materialComponent === 'PCurrencyField') {
+                    $inputProps['currency'] = true;
+                    $inputProps['keyboardType'] ??= 'decimal-pad';
                 }
                 $nativeInput = self::input(
                     $materialComponent === 'PTextarea'
@@ -1479,6 +1668,7 @@ final class ComponentRenderer
                         textAlign: TextAlignment::Center,
                     )),
                 )
+                    ->enabled(!$fieldDisabled)
                     ->style(new Style(
                         positionType: PositionType::Absolute,
                         right: 0.0,
@@ -1500,7 +1690,7 @@ final class ComponentRenderer
                         ),
                     );
                 $change = $events[EventKind::Change->value] ?? null;
-                if ($change !== null) {
+                if ($change !== null && !$fieldDisabled) {
                     $clear = $clear->on(
                         EventKind::Press,
                         static fn () => $change(''),
@@ -1508,12 +1698,48 @@ final class ComponentRenderer
                 }
                 $fieldChildren[] = $clear;
             }
+            if ($materialComponent === 'PPasswordField') {
+                $revealed = self::flag($props, 'revealed');
+                $toggle = Pressable::make(
+                    Text::make($revealed ? 'Hide' : 'Show')->style(new Style(
+                        textColor: $theme->color(
+                            $fieldDisabled ? ColorToken::MutedForeground : ColorToken::Primary,
+                        ),
+                        fontSize: 12.0,
+                        lineHeight: 16.0,
+                        fontWeight: 600,
+                        textAlign: TextAlignment::Center,
+                    )),
+                )
+                    ->enabled(!$fieldDisabled)
+                    ->style(new Style(
+                        positionType: PositionType::Absolute,
+                        right: 0.0,
+                        bottom: 0.0,
+                        width: 48.0,
+                        height: 48.0,
+                        borderRadius: 24.0,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ))
+                    ->accessibilityRole(AccessibilityRole::Button)
+                    ->accessibilityLabel($revealed ? 'Hide password' : 'Show password')
+                    ->accessibilityExpanded($revealed);
+                $toggleHandler = $events[EventKind::Toggle->value] ?? null;
+                if ($toggleHandler !== null && !$fieldDisabled) {
+                    $toggle = $toggle->on(
+                        EventKind::Press,
+                        static fn () => $toggleHandler(!$revealed),
+                    );
+                }
+                $fieldChildren[] = $toggle;
+            }
             if (
                 $fieldLoading
                 && $materialComponent !== 'POtpInput'
                 && !in_array(
                     $materialComponent,
-                    ['PSelect', 'PAutocomplete', 'PCombobox'],
+                    ['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'],
                     true,
                 )
             ) {
@@ -1532,7 +1758,7 @@ final class ComponentRenderer
                 !$hasNativeInput
                 && !in_array(
                     $materialComponent,
-                    ['PSelect', 'PAutocomplete', 'PCombobox'],
+                    ['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'],
                     true,
                 )
             ) {
@@ -1553,7 +1779,7 @@ final class ComponentRenderer
                 }
             }
             $selectionField = in_array($materialComponent, [
-                'PSelect', 'PAutocomplete', 'PCombobox',
+                'PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect',
             ], true);
             if ($selectionField) {
                 $triggerDescriptor = null;
@@ -2834,6 +3060,34 @@ final class ComponentRenderer
         if ($part === 'PamUIProvider' && !array_key_exists('mode', $props)) {
             $props['mode'] = 'system';
         }
+        if ($materialComponent === 'PSearchBar') {
+            if (!array_key_exists('accessible', $props) || $props['accessible'] !== false) {
+                $props['accessibilityRole'] ??= AccessibilityRole::Search->value;
+            }
+            $props['returnKeyType'] ??= ReturnKeyType::Search->value;
+            $props['autoCapitalize'] ??= InputAutoCapitalize::None->value;
+        }
+        if ($materialComponent === 'PDateRangePicker') {
+            $props['multiple'] = 'range';
+            $props['range'] = true;
+        }
+        if ($materialComponent === 'PPasswordField') {
+            $props['secure'] = !self::flag($props, 'revealed');
+            $props['autoComplete'] ??= 'password';
+            $props['autoCorrect'] ??= false;
+            $props['autoCapitalize'] ??= InputAutoCapitalize::None->value;
+        } elseif ($materialComponent === 'PMaskedField') {
+            $props['mask'] ??= self::text($props, 'pattern');
+            $props['keyboardType'] ??= 'number-pad';
+        } elseif ($materialComponent === 'PCurrencyField') {
+            $props['currency'] = true;
+            $props['keyboardType'] ??= 'decimal-pad';
+        } elseif ($materialComponent === 'PFileInput') {
+            $props['text'] ??= self::flag($props, 'multiple')
+                ? 'Choose files'
+                : 'Choose file';
+            $props['accessibilityLabel'] ??= $props['label'] ?? $props['text'];
+        }
         if ($part === 'Modal' && !array_key_exists('size', $props)) {
             $props['size'] = 3;
         }
@@ -2947,7 +3201,7 @@ final class ComponentRenderer
     private static function legacyMaterialPart(string $part): string
     {
         return match ($part) {
-            
+
             'PBanner',
             'PToolbar', 'PAppBar',
             'PBtnGroup',
@@ -2983,7 +3237,8 @@ final class ComponentRenderer
             'PIcon' => 'Icon',
             'PImg' => 'Image',
             'PTextField', 'PNumberInput', 'POtpInput',
-            'PColorInput' => 'Input',
+            'PColorInput', 'PPasswordField', 'PMaskedField',
+            'PCurrencyField' => 'Input',
             'PDateInput' => 'DateTimePicker',
             'PMenu' => 'Menu',
             'PListItem' => 'ListItem',
@@ -2991,7 +3246,9 @@ final class ComponentRenderer
             'PProgressCircular', 'PProgressLinear' => 'Progress',
             'PRadio' => 'Radio',
             'PRadioGroup' => 'RadioGroup',
-            'PSelect', 'PAutocomplete', 'PCombobox' => 'Select',
+            'PSelect', 'PAutocomplete', 'PCombobox',
+            'PTagInput', 'PMultiSelect' => 'Select',
+            'PFileInput' => 'Button',
             'PSkeletonLoader' => 'Skeleton',
             'PSlideGroup' => 'Tabs',
             'PCarouselItem', 'PSlideGroupItem', 'PStepperItem' => 'TabsTrigger',
@@ -3019,8 +3276,1356 @@ final class ComponentRenderer
             'PVirtualList' => 'VirtualizedList',
             'PSectionList' => 'SectionList',
             'PPullToRefresh' => 'RefreshControl',
+            'PAppScaffold' => 'SafeAreaView',
+            'PNavigationBar', 'PBottomAppBar', 'PPagination',
+            'PSegmentedButton', 'PDateRangePicker', 'PTimeRangePicker',
+            'PFilterBar' => 'HStack',
+            'PNavigationRail' => 'VStack',
+            'PSearchBar' => 'HStack',
             default => $part,
         };
+    }
+
+    /**
+     * A search field is a compound control: its icon is semantic, while the
+     * text editor remains the native PAM input so keyboard, IME and autofill
+     * behaviour are preserved on both platforms.
+     *
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialSearchBarChildren(
+        array $props,
+        array $events,
+    ): array {
+        $theme = ThemeManager::current();
+        $props['accessibilityRole'] ??= AccessibilityRole::Search->value;
+        $props['returnKeyType'] ??= ReturnKeyType::Search->value;
+        $props['autoCapitalize'] ??= InputAutoCapitalize::None->value;
+        $input = self::input('InputField', $props)->style(new Style(
+            flexGrow: 1.0,
+            minWidth: 0.0,
+            minHeight: 48.0,
+            paddingHorizontal: 0.0,
+            backgroundColor: 0x00000000,
+            borderWidth: 0.0,
+            borderRadius: 0.0,
+            textColor: $theme->color(ColorToken::OnSurface),
+            placeholderColor: $theme->color(ColorToken::MutedForeground),
+            fontSize: 16.0,
+            lineHeight: 24.0,
+        ))->accessibilityRole(AccessibilityRole::Search);
+        foreach ([
+            [EventKind::Change, 'onChange'],
+            [EventKind::Focus, 'onFocus'],
+            [EventKind::Blur, 'onBlur'],
+            [EventKind::Submit, 'onSubmit'],
+        ] as [$event, $method]) {
+            $handler = $events[$event->value] ?? null;
+            if ($handler instanceof Closure) {
+                $input = $input->{$method}($handler);
+            }
+        }
+
+        $icon = self::render(
+            'SearchIcon',
+            ['size' => 'md', 'accessibilityLabel' => 'Search'],
+            [],
+            [],
+            new Style(
+                width: 24.0,
+                height: 24.0,
+                tintColor: $theme->color(ColorToken::OnSurface),
+            ),
+            null,
+        );
+
+        return [$icon, $input];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @return list<Element>
+     */
+    private static function materialFileInputChildren(array $props): array
+    {
+        $theme = ThemeManager::current();
+        $multiple = self::flag($props, 'multiple');
+        $text = self::text(
+            $props,
+            'text',
+            $multiple ? 'Choose files' : 'Choose file',
+        );
+        $label = self::text(
+            $props,
+            'label',
+            $multiple ? 'Attachments' : 'Document',
+        );
+        $selected = !str_starts_with(strtolower($text), 'choose');
+        $icon = self::render(
+            'PaperclipIcon',
+            ['accessibilityElementsHidden' => true],
+            [],
+            [],
+            new Style(
+                width: 22.0,
+                height: 22.0,
+                tintColor: $theme->color(ColorToken::Primary),
+            ),
+            null,
+        );
+
+        return [Row::make(
+            Column::make($icon)->style(new Style(
+                width: 44.0,
+                height: 44.0,
+                borderRadius: 14.0,
+                backgroundColor: $theme->color(ColorToken::Accent),
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            )),
+            Column::make(
+                Text::make($label)->style(new Style(
+                    fontSize: 12.0,
+                    lineHeight: 16.0,
+                    fontWeight: 600,
+                    textColor: $theme->color(ColorToken::MutedForeground),
+                )),
+                Text::make($text)
+                    ->property(PropKey::NumberOfLines, 1)
+                    ->property(
+                        PropKey::TextEllipsizeMode,
+                        TextEllipsizeMode::Middle->value,
+                    )
+                    ->style(new Style(
+                        fontSize: 15.0,
+                        lineHeight: 20.0,
+                        fontWeight: 700,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                    )),
+            )->style(new Style(flexGrow: 1.0, minWidth: 0.0, gap: 2.0)),
+            Text::make($selected ? 'Replace' : 'Browse')->style(new Style(
+                fontSize: 12.0,
+                lineHeight: 16.0,
+                fontWeight: 700,
+                textColor: $theme->color(ColorToken::Primary),
+            )),
+        )->style(new Style(
+            widthPercent: 100.0,
+            gap: 12.0,
+            alignItems: Align::Center,
+            justifyContent: Justify::SpaceBetween,
+        ))];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialPaginationChildren(
+        array $props,
+        array $events,
+    ): array {
+        $pageCount = max(1, self::integer($props, 'length', 1));
+        $current = min(
+            $pageCount,
+            max(1, self::integer(
+                $props,
+                'modelValue',
+                self::integer($props, 'value', 1),
+            )),
+        );
+        $visible = min(
+            $pageCount,
+            max(3, self::integer($props, 'totalVisible', 5)),
+        );
+        $first = max(1, min(
+            $current - intdiv($visible, 2),
+            $pageCount - $visible + 1,
+        ));
+        $last = min($pageCount, $first + $visible - 1);
+        $change = $events[EventKind::Change->value] ?? null;
+        $theme = ThemeManager::current();
+        $reduceMotion = self::flag($props, 'reduceMotion');
+        $items = [];
+        for ($page = $first; $page <= $last; $page++) {
+            $selected = $page === $current;
+            $label = (string) $page;
+            $button = Pressable::make(
+                Text::make($label)->style(new Style(
+                    textColor: $selected
+                        ? $theme->color(ColorToken::PrimaryForeground)
+                        : $theme->color(ColorToken::OnSurface),
+                    fontSize: 14.0,
+                    lineHeight: 20.0,
+                    fontWeight: $selected ? 700 : 500,
+                )),
+            )
+                ->style(new Style(
+                    width: 48.0,
+                    height: 48.0,
+                    minWidth: 48.0,
+                    minHeight: 48.0,
+                    backgroundColor: $selected
+                        ? $theme->color(ColorToken::Primary)
+                        : 0x00000000,
+                    borderRadius: 24.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                    animationDurationMs: $reduceMotion ? 0 : 150,
+                    animateChanges: !$reduceMotion,
+                ))
+                ->property(PropKey::Selected, $selected)
+                ->accessibilityRole(AccessibilityRole::Button)
+                ->accessibilityLabel("Page {$page} of {$pageCount}")
+                ->ripple(
+                    $theme->color(ColorToken::Primary),
+                    true,
+                    24.0,
+                    false,
+                    MaterialTokens::STATE_OPACITY[4],
+                );
+            if ($change instanceof Closure && !$selected) {
+                $button = $button->onPress(
+                    static function () use ($change, $page): mixed {
+                        return $change($page);
+                    },
+                );
+            }
+            $items[] = $button;
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialSegmentedChildren(
+        array $props,
+        array $events,
+    ): array {
+        $source = is_array($props['items'] ?? null)
+            ? $props['items']
+            : ['Day', 'Week', 'Month'];
+        $multiple = self::flag($props, 'multiple');
+        $model = $props['modelValue'] ?? $props['value'] ?? null;
+        $selectedValues = $multiple && is_array($model)
+            ? array_values($model)
+            : [$model];
+        $change = $events[EventKind::Change->value] ?? null;
+        $disabled = self::flag($props, 'disabled');
+        $reduceMotion = self::flag($props, 'reduceMotion');
+        $theme = ThemeManager::current();
+        $controls = [];
+
+        foreach ($source as $index => $definition) {
+            $icon = null;
+            if (is_array($definition)) {
+                $value = $definition['value'] ?? $definition['id'] ?? $index + 1;
+                $label = $definition['label'] ?? $definition['title'] ?? (string) $value;
+                $icon = $definition['icon'] ?? null;
+            } else {
+                $value = $definition;
+                $label = is_scalar($definition) ? (string) $definition : (string) ($index + 1);
+            }
+            if (!is_scalar($value) || !is_scalar($label)) {
+                continue;
+            }
+            $selected = in_array($value, $selectedValues, true);
+            if (
+                (!is_string($icon) || $icon === '')
+                && self::flag($props, 'icons')
+            ) {
+                $icon = ['SunIcon', 'CalendarDaysIcon', 'ClockIcon'][$index]
+                    ?? 'CheckIcon';
+            }
+            $foreground = $selected
+                ? $theme->color(ColorToken::SecondaryForeground)
+                : $theme->color(ColorToken::OnSurface);
+            $content = Text::make((string) $label)->style(new Style(
+                textColor: $foreground,
+                fontSize: 14.0,
+                lineHeight: 20.0,
+                fontWeight: $selected ? 700 : 500,
+            ));
+            if (is_string($icon) && $icon !== '') {
+                $content = Row::make(
+                    self::render(
+                        'Icon',
+                        ['icon' => $icon, 'size' => 'small', 'color' => $foreground],
+                        [],
+                        [],
+                        new Style(width: 18.0, height: 18.0),
+                        'segment-icon-'.$index,
+                    ),
+                    $content,
+                )->style(new Style(gap: 8.0, alignItems: Align::Center));
+            }
+            $control = Pressable::make(
+                $content,
+            )
+                ->style(new Style(
+                    height: 48.0,
+                    minWidth: 48.0,
+                    minHeight: 48.0,
+                    paddingHorizontal: 16.0,
+                    backgroundColor: $selected
+                        ? $theme->color(ColorToken::Secondary)
+                        : 0x00000000,
+                    opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+                    flexGrow: 1.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                    animationDurationMs: $reduceMotion ? 0 : 180,
+                    animateChanges: !$reduceMotion,
+                ))
+                ->property(PropKey::Selected, $selected)
+                ->property(PropKey::Checked, $selected)
+                ->property(PropKey::Enabled, !$disabled)
+                ->accessibilityRole(AccessibilityRole::ToggleButton)
+                ->accessibilityChecked($selected
+                    ? AccessibilityCheckedState::Checked
+                    : AccessibilityCheckedState::Unchecked)
+                ->accessibilityLabel((string) $label)
+                ->ripple(
+                    $theme->color(ColorToken::Primary),
+                    false,
+                    null,
+                    false,
+                    MaterialTokens::STATE_OPACITY[4],
+                );
+            if (!$disabled && $change instanceof Closure) {
+                $control = $control->onPress(static function () use (
+                    $change,
+                    $multiple,
+                    $selected,
+                    $selectedValues,
+                    $value,
+                ): mixed {
+                    if (!$multiple) {
+                        return $change($value);
+                    }
+                    $next = array_values(array_filter(
+                        $selectedValues,
+                        static fn (mixed $candidate): bool => $candidate !== null
+                            && $candidate !== $value,
+                    ));
+                    if (!$selected) {
+                        $next[] = $value;
+                    }
+
+                    return $change($next);
+                });
+            }
+            $controls[] = $control;
+        }
+
+        return $controls;
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     */
+    private static function materialTreeSelect(
+        array $props,
+        array $events,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $theme = ThemeManager::current();
+        $items = is_array($props['items'] ?? null) ? $props['items'] : [];
+        $multiple = self::flag($props, 'multiple');
+        $disabled = self::flag($props, 'disabled');
+        $compact = self::text($props, 'density', 'default') === 'compact';
+        $rowHeight = $compact ? 44.0 : 52.0;
+        $opened = array_values(array_filter(
+            is_array($props['opened'] ?? null) ? $props['opened'] : [],
+            static fn (mixed $value): bool => is_scalar($value),
+        ));
+        $selected = self::selectedValues($props);
+        $change = $events[EventKind::Change->value] ?? null;
+        $toggle = $events[EventKind::Toggle->value] ?? null;
+
+        $render = function (array $source, int $depth = 0) use (
+            &$render,
+            $theme,
+            $multiple,
+            $disabled,
+            $rowHeight,
+            $opened,
+            $selected,
+            $change,
+            $toggle,
+        ): array {
+            $rows = [];
+            foreach (array_values($source) as $index => $definition) {
+                $item = is_array($definition) ? $definition : ['title' => $definition];
+                $value = $item['value'] ?? $item['id'] ?? $item['title'] ?? $index + 1;
+                $label = $item['label'] ?? $item['title'] ?? $value;
+                if (!is_scalar($value) || !is_scalar($label)) continue;
+                $children = is_array($item['children'] ?? null) ? $item['children'] : [];
+                $hasChildren = $children !== [];
+                $expanded = in_array($value, $opened, true)
+                    || in_array((string) $value, array_map('strval', $opened), true);
+                $isSelected = in_array($value, $selected, true)
+                    || in_array((string) $value, array_map('strval', $selected), true);
+                $foreground = $isSelected
+                    ? $theme->color(ColorToken::AccentForeground)
+                    : $theme->color(ColorToken::OnSurface);
+
+                if ($hasChildren) {
+                    $indicator = Text::make($expanded ? '⌄' : '›')->style(new Style(
+                        width: 24.0,
+                        fontSize: 20.0,
+                        lineHeight: 24.0,
+                        fontWeight: 600,
+                        textColor: $theme->color(ColorToken::MutedForeground),
+                        textAlign: TextAlignment::Center,
+                    ));
+                } else {
+                    $indicator = View::make(...($isSelected ? [View::make()->style(new Style(
+                        width: $multiple ? 10.0 : 8.0,
+                        height: $multiple ? 10.0 : 8.0,
+                        borderRadius: $multiple ? 2.0 : 4.0,
+                        backgroundColor: $theme->color(ColorToken::PrimaryForeground),
+                    ))] : []))->style(new Style(
+                        width: 20.0,
+                        height: 20.0,
+                        borderRadius: $multiple ? 4.0 : 10.0,
+                        borderWidth: 2.0,
+                        borderColor: $isSelected
+                            ? $theme->color(ColorToken::Primary)
+                            : $theme->color(ColorToken::MutedForeground),
+                        backgroundColor: $isSelected
+                            ? $theme->color(ColorToken::Primary)
+                            : 0x00000000,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ));
+                }
+                $rowContent = Row::make(
+                    $indicator,
+                    Text::make((string) $label)->style(new Style(
+                        fontSize: 15.0,
+                        lineHeight: 22.0,
+                        fontWeight: $hasChildren || $isSelected ? 600 : 400,
+                        textColor: $foreground,
+                        flexGrow: 1.0,
+                    )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: $rowHeight,
+                    paddingLeft: 10.0 + ($depth * 24.0),
+                    paddingRight: 12.0,
+                    gap: 10.0,
+                    alignItems: Align::Center,
+                ));
+                $row = Pressable::make($rowContent)->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: $rowHeight,
+                    borderRadius: 12.0,
+                    backgroundColor: $isSelected
+                        ? $theme->color(ColorToken::Accent)
+                        : 0x00000000,
+                    opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+                ))->property(PropKey::Enabled, !$disabled)
+                    ->property(PropKey::Selected, $isSelected)
+                    ->accessibilityRole($hasChildren
+                        ? AccessibilityRole::Button
+                        : ($multiple ? AccessibilityRole::Checkbox : AccessibilityRole::Radio))
+                    ->accessibilityLabel((string) $label)
+                    ->accessibilityHint($hasChildren
+                        ? ($expanded ? 'Collapse group' : 'Expand group')
+                        : ($isSelected ? 'Selected' : 'Not selected'))
+                    ->ripple(
+                        $theme->color(ColorToken::Primary),
+                        false,
+                        null,
+                        false,
+                        MaterialTokens::STATE_OPACITY[4],
+                    );
+                if (!$hasChildren) {
+                    $row = $row->accessibilityChecked(
+                        $isSelected
+                            ? AccessibilityCheckedState::Checked
+                            : AccessibilityCheckedState::Unchecked,
+                    );
+                }
+                if (!$disabled && $hasChildren && $toggle instanceof Closure) {
+                    $row = $row->onPress(static function () use (
+                        $toggle,
+                        $opened,
+                        $value,
+                        $expanded,
+                    ): mixed {
+                        $next = array_values(array_filter(
+                            $opened,
+                            static fn (mixed $candidate): bool => (string) $candidate !== (string) $value,
+                        ));
+                        if (!$expanded) $next[] = $value;
+                        return $toggle($next);
+                    });
+                } elseif (!$disabled && !$hasChildren && $change instanceof Closure) {
+                    $row = $row->onPress(static function () use (
+                        $change,
+                        $multiple,
+                        $selected,
+                        $value,
+                        $isSelected,
+                    ): mixed {
+                        if (!$multiple) return $change($value);
+                        $next = array_values(array_filter(
+                            $selected,
+                            static fn (mixed $candidate): bool => (string) $candidate !== (string) $value,
+                        ));
+                        if (!$isSelected) $next[] = $value;
+                        return $change($next);
+                    });
+                }
+                $rows[] = $row;
+                if ($hasChildren && $expanded) {
+                    array_push($rows, ...$render($children, $depth + 1));
+                }
+            }
+
+            return $rows;
+        };
+
+        $tree = Column::make(...$render($items))->style(new Style(
+            widthPercent: 100.0,
+            gap: 4.0,
+            paddingVertical: 4.0,
+        ))->accessibilityRole(AccessibilityRole::List);
+
+        return self::finalizeMaterialRoot($tree, $props, $styleOverride, $elementKey);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @param array<int, Closure> $events
+     */
+    private static function materialReorderableList(
+        array $props,
+        array $children,
+        array $events,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $source = is_array($props['items'] ?? null)
+            ? array_values($props['items'])
+            : [];
+        $theme = ThemeManager::current();
+        $change = $events[EventKind::Change->value] ?? null;
+        $disabled = self::flag($props, 'disabled');
+        $compact = self::text($props, 'density', 'default') === 'compact';
+        $rowHeight = $compact ? 48.0 : 56.0;
+        $rows = [];
+        foreach ($source as $index => $definition) {
+            $value = is_array($definition)
+                ? ($definition['value'] ?? $definition['id'] ?? $index + 1)
+                : $definition;
+            $label = is_array($definition)
+                ? ($definition['label'] ?? $definition['title'] ?? $value)
+                : $definition;
+            if (!is_scalar($value) || !is_scalar($label)) continue;
+            $dragData = (string) $value;
+            $content = $children[$index] ?? Row::make(
+                Text::make('⠿')->style(new Style(
+                    width: 32.0,
+                    fontSize: 22.0,
+                    lineHeight: 24.0,
+                    textColor: $theme->color(ColorToken::MutedForeground),
+                    textAlign: TextAlignment::Center,
+                )),
+                Text::make((string) $label)->style(new Style(
+                    fontSize: 16.0,
+                    lineHeight: 24.0,
+                    fontWeight: 500,
+                    textColor: $theme->color(ColorToken::OnSurface),
+                    flexGrow: 1.0,
+                )),
+            )->style(new Style(
+                widthPercent: 100.0,
+                minHeight: $rowHeight,
+                paddingHorizontal: 12.0,
+                gap: 12.0,
+                alignItems: Align::Center,
+                borderBottomWidth: $index === count($source) - 1 ? 0.0 : 1.0,
+                borderColor: $theme->color(ColorToken::Border),
+                opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+            ));
+            $region = InteractionRegion::make($content)
+                ->draggable($dragData, !$disabled)
+                ->acceptsDrop(!$disabled)
+                ->property(PropKey::Enabled, !$disabled)
+                ->accessibilityRole(AccessibilityRole::ListItem)
+                ->accessibilityLabel('Reorder '.(string) $label)
+                ->accessibilityHint($disabled
+                    ? 'Reordering disabled'
+                    : 'Drag to change position');
+            if (!$disabled && $change instanceof Closure) {
+                $region = $region->onDrop(static function (string $dragged) use (
+                    $change,
+                    $source,
+                    $index,
+                ): mixed {
+                    $from = null;
+                    foreach ($source as $candidateIndex => $candidate) {
+                        $candidateValue = is_array($candidate)
+                            ? ($candidate['value'] ?? $candidate['id'] ?? $candidateIndex + 1)
+                            : $candidate;
+                        if (is_scalar($candidateValue) && (string) $candidateValue === $dragged) {
+                            $from = $candidateIndex;
+                            break;
+                        }
+                    }
+                    if ($from === null || $from === $index) return $change($source);
+                    $next = $source;
+                    $moving = array_splice($next, $from, 1);
+                    array_splice($next, $index, 0, $moving);
+                    return $change(array_values($next));
+                });
+            }
+            $rows[] = $region;
+        }
+        $list = Column::make(...$rows)
+            ->style(new Style(widthPercent: 100.0, paddingVertical: 4.0))
+            ->accessibilityRole(AccessibilityRole::List);
+        return self::finalizeMaterialRoot($list, $props, $styleOverride, $elementKey);
+    }
+
+    private static function materialSwipeActions(
+        array $props,
+        array $children,
+        array $events,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $theme = ThemeManager::current();
+        $change = $events[EventKind::Change->value] ?? null;
+        $startLabel = self::text($props, 'startLabel', 'Archive');
+        $endLabel = self::text($props, 'endLabel', 'Delete');
+        $foregroundContent = $children[0] ?? Text::make(
+            self::text($props, 'title', 'Swipe this item'),
+        )->style(new Style(
+                fontSize: 16.0,
+                lineHeight: 24.0,
+                fontWeight: 600,
+                textColor: $theme->color(ColorToken::OnSurface),
+            ));
+        $foreground = Row::make($foregroundContent)->collapsable(false)->style(new Style(
+            widthPercent: 100.0,
+            minHeight: 64.0,
+            paddingHorizontal: 16.0,
+            backgroundColor: $theme->color(ColorToken::Surface),
+            alignItems: Align::Center,
+        ));
+        $gesture = GestureDetector::make(GestureType::Pan, $foreground)
+            ->style(new Style(
+                widthPercent: 100.0,
+                minHeight: 64.0,
+                flexGrow: 1.0,
+                alignSelf: Align::Stretch,
+                zIndex: 1,
+            ))
+            ->direction(GestureDirection::Horizontal)
+            ->minimumDistance(24.0)
+            ->nativeTransform(
+                enabled: !self::flag($props, 'reduceMotion'),
+                translationLimitX: self::number($props, 'revealWidth', 96.0),
+                resetOnEnd: true,
+            )
+            ->accessibilityRole(AccessibilityRole::ListItem)
+            ->accessibilityHint('Swipe left or right to reveal actions');
+        if ($change instanceof Closure) {
+            $gesture = $gesture->onEnd(static function (GestureEvent $event) use (
+                $change,
+                $startLabel,
+                $endLabel,
+            ): mixed {
+                if ($event->translationX >= 48.0) return $change($startLabel);
+                if ($event->translationX <= -48.0) return $change($endLabel);
+                return null;
+            });
+        }
+        $action = static function (string $label, int $background): Element {
+            return Row::make(Text::make($label)->style(new Style(
+                fontSize: 14.0,
+                lineHeight: 20.0,
+                fontWeight: 700,
+                textColor: 0xFFFFFFFF,
+            )))->style(new Style(
+                minWidth: 96.0,
+                minHeight: 64.0,
+                paddingHorizontal: 16.0,
+                backgroundColor: $background,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))->accessibilityImportance(AccessibilityImportance::NoHideDescendants);
+        };
+        $actionRow = Row::make(
+            $action($startLabel, $theme->color(ColorToken::Primary)),
+            $action($endLabel, $theme->color(ColorToken::Destructive)),
+        )->style(new Style(
+            widthPercent: 100.0,
+            height: 64.0,
+            zIndex: 0,
+            positionType: PositionType::Absolute,
+            top: 0.0,
+            left: 0.0,
+            right: 0.0,
+            pointerEvents: PointerEvents::None,
+            alignItems: Align::Center,
+            justifyContent: Justify::SpaceBetween,
+        ));
+        $row = View::make($actionRow, $gesture)->style(new Style(
+            widthPercent: 100.0,
+            minHeight: 64.0,
+            pointerEvents: PointerEvents::BoxNone,
+            overflow: \Pam\Native\Overflow::Hidden,
+        ))->accessibilityRole(AccessibilityRole::ListItem);
+        return self::finalizeMaterialRoot($row, $props, $styleOverride, $elementKey);
+    }
+
+    private static function materialResultState(
+        array $props,
+        array $children,
+        array $events,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $theme = ThemeManager::current();
+        $status = self::text($props, 'status', 'success');
+        $iconName = self::text($props, 'icon', match ($status) {
+            'error' => 'CloseCircleIcon',
+            'warning' => 'AlertCircleIcon',
+            'empty' => 'SearchIcon',
+            default => 'CheckIcon',
+        });
+        $color = match ($status) {
+            'error' => ColorToken::Destructive,
+            'warning' => ColorToken::Warning,
+            default => ColorToken::Success,
+        };
+        $content = $children;
+        if ($content === []) {
+            $iconClass = MaterialComponentMap::TAGS['p-icon'];
+            $icon = $iconClass::make([
+                'icon' => $iconName,
+                'size' => 32,
+                'color' => 0xFFFFFFFF,
+                'decorative' => true,
+            ]);
+            $content[] = View::make($icon)->style(new Style(
+                width: 64.0, height: 64.0, borderRadius: 32.0,
+                backgroundColor: $theme->color($color),
+                alignItems: Align::Center, justifyContent: Justify::Center,
+            ));
+            $content[] = Text::make(self::text($props, 'title', 'All done'))->style(new Style(
+                fontSize: 24.0, lineHeight: 32.0, fontWeight: 700,
+                textColor: $theme->color(ColorToken::OnSurface),
+                textAlign: TextAlignment::Center,
+            ));
+            $content[] = Text::make(self::text($props, 'description', 'Your request was completed successfully.'))->style(new Style(
+                fontSize: 15.0, lineHeight: 22.0,
+                textColor: $theme->color(ColorToken::MutedForeground),
+                textAlign: TextAlignment::Center,
+            ));
+            $actionLabel = $props['actionLabel'] ?? null;
+            if (is_scalar($actionLabel) && (string) $actionLabel !== '') {
+                $button = Pressable::make(Text::make((string) $actionLabel)->style(new Style(
+                    fontSize: 14.0, lineHeight: 20.0, fontWeight: 700,
+                    textColor: $theme->color(ColorToken::PrimaryForeground),
+                )))->style(new Style(
+                    minWidth: 120.0, minHeight: 48.0, paddingHorizontal: 20.0,
+                    borderRadius: 24.0,
+                    backgroundColor: $theme->color(ColorToken::Primary),
+                    alignItems: Align::Center, justifyContent: Justify::Center,
+                ))->accessibilityRole(AccessibilityRole::Button)
+                    ->accessibilityLabel((string) $actionLabel);
+                if (isset($events[EventKind::Press->value])) {
+                    $button = $button->onPress($events[EventKind::Press->value]);
+                }
+                $content[] = $button;
+            }
+        }
+        $result = Column::make(...$content)->style(new Style(
+            widthPercent: 100.0, minHeight: 280.0, padding: 24.0, gap: 12.0,
+            alignItems: Align::Center, justifyContent: Justify::Center,
+        ))->accessibilityRole(AccessibilityRole::Summary)
+            ->accessibilityLabel(self::text($props, 'title', 'Result'));
+        return self::finalizeMaterialRoot($result, $props, $styleOverride, $elementKey);
+    }
+
+    private static function finalizeMaterialRoot(
+        Element $element,
+        array $props,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $label = $props['accessibilityLabel'] ?? $props['ariaLabel'] ?? null;
+        if (is_scalar($label) && (string) $label !== '') {
+            $element = $element->accessibilityLabel((string) $label);
+        }
+        $hint = $props['accessibilityHint'] ?? null;
+        if (is_scalar($hint) && (string) $hint !== '') {
+            $element = $element->accessibilityHint((string) $hint);
+        }
+        if (array_key_exists('rtl', $props)) {
+            $element = $element->property(
+                PropKey::LayoutDirection,
+                self::flag($props, 'rtl') ? 2 : 1,
+            );
+        }
+        if (self::flag($props, 'reduceMotion')) {
+            $element = $element
+                ->property(PropKey::AnimateChanges, false)
+                ->property(PropKey::AnimationDurationMs, 0);
+        }
+        if (self::flag($props, 'disabled')) $element = $element->enabled(false);
+        if (self::flag($props, 'selected')) {
+            $element = $element->property(PropKey::Selected, true);
+        }
+        if (self::flag($props, 'checked')) {
+            $element = $element
+                ->property(PropKey::Checked, true)
+                ->accessibilityChecked(AccessibilityCheckedState::Checked);
+        }
+        if (self::flag($props, 'loading')) {
+            $element = $element->enabled(false)->accessibilityBusy();
+        }
+        if ($styleOverride !== null) $element = $element->style($styleOverride);
+        return $elementKey === null ? $element : $element->key($elementKey);
+    }
+
+    private static function materialNavigationDrawer(
+        array $props,
+        array $children,
+        array $events,
+        ?Style $styleOverride,
+        ?string $elementKey,
+    ): Element {
+        $theme = ThemeManager::current();
+        $content = $children[0] ?? View::make()->style(new Style(
+            widthPercent: 100.0,
+            heightPercent: 100.0,
+            backgroundColor: $theme->color(ColorToken::Background),
+        ));
+        $drawer = $children[1] ?? null;
+        if (!$drawer instanceof Element) {
+            $items = is_array($props['items'] ?? null)
+                ? $props['items']
+                : ['Home', 'Explore', 'Settings'];
+            $active = $props['modelValue'] ?? $props['value'] ?? null;
+            $change = $events[EventKind::Change->value] ?? null;
+            $drawerIdentity = self::scalarString($props['type'] ?? 'front').'-'.self::scalarString($props['position'] ?? 'start');
+            $itemViews = [];
+            foreach ($items as $index => $definition) {
+                $value = is_array($definition)
+                    ? ($definition['value'] ?? $definition['id'] ?? $index + 1)
+                    : $definition;
+                $label = is_array($definition)
+                    ? ($definition['label'] ?? $definition['title'] ?? $value)
+                    : $definition;
+                if (!is_scalar($value) || !is_scalar($label)) continue;
+                $selected = $value === $active;
+                $icon = self::render(
+                    ['GlobeIcon', 'PaperclipIcon', 'SettingsIcon', 'InfoIcon'][$index % 4],
+                    ['accessibilityElementsHidden' => true],
+                    [],
+                    [],
+                    new Style(
+                        width: 20.0,
+                        height: 20.0,
+                        tintColor: $selected
+                            ? $theme->color(ColorToken::PrimaryForeground)
+                            : $theme->color(ColorToken::MutedForeground),
+                        textColor: $selected
+                            ? $theme->color(ColorToken::PrimaryForeground)
+                            : $theme->color(ColorToken::MutedForeground),
+                    ),
+                    'navigation-drawer-'.$drawerIdentity.'-icon-'.$index,
+                );
+                $item = Pressable::make(Row::make(
+                    $icon,
+                    Text::make((string) $label)->style(new Style(
+                        flexGrow: 1.0,
+                        textColor: $selected
+                            ? $theme->color(ColorToken::SecondaryForeground)
+                            : $theme->color(ColorToken::OnSurface),
+                        fontSize: 14.0,
+                        lineHeight: 20.0,
+                        fontWeight: $selected ? 700 : 500,
+                    )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    gap: 14.0,
+                    alignItems: Align::Center,
+                )))->style(new Style(
+                    widthPercent: 100.0,
+                    minHeight: 52.0,
+                    paddingHorizontal: 16.0,
+                    backgroundColor: $selected
+                        ? $theme->color(ColorToken::Secondary)
+                        : 0x00000000,
+                    borderRadius: 18.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                ))->key('navigation-drawer-'.$drawerIdentity.'-item-'.$index)
+                    ->property(PropKey::Selected, $selected)
+                    ->accessibilityRole(AccessibilityRole::Button)
+                    ->accessibilityLabel((string) $label);
+                if ($change instanceof Closure && !$selected) {
+                    $item = $item->onPress(static fn (): mixed => $change($value));
+                }
+                $itemViews[] = $item;
+            }
+            $drawer = SafeAreaView::make(
+                Column::make(
+                    Row::make(
+                        Column::make(Text::make('P')->key('navigation-drawer-'.$drawerIdentity.'-monogram-text')->style(new Style(
+                            textColor: $theme->color(ColorToken::PrimaryForeground),
+                            textAlign: TextAlignment::Center,
+                            fontSize: 18.0,
+                            lineHeight: 24.0,
+                            fontWeight: 800,
+                        )))->key('navigation-drawer-'.$drawerIdentity.'-monogram')->style(new Style(
+                            width: 40.0,
+                            height: 40.0,
+                            borderRadius: 14.0,
+                            backgroundColor: $theme->color(ColorToken::Primary),
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                        )),
+                        Column::make(
+                            Text::make(self::text($props, 'title', 'PAM Studio'))->style(new Style(
+                                fontSize: 15.0,
+                                lineHeight: 20.0,
+                                fontWeight: 700,
+                                textColor: $theme->color(ColorToken::OnSurface),
+                            )),
+                            Text::make(self::text($props, 'subtitle', 'Workspace'))->style(new Style(
+                                fontSize: 12.0,
+                                lineHeight: 16.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                            )),
+                        )->style(new Style(gap: 1.0)),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        gap: 12.0,
+                        paddingHorizontal: 8.0,
+                        paddingBottom: 12.0,
+                        alignItems: Align::Center,
+                    )),
+                    ...$itemViews,
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    paddingHorizontal: 12.0,
+                    paddingVertical: 14.0,
+                    gap: 4.0,
+                )),
+            )->collapsable(false)->style(new Style(
+                widthPercent: 100.0,
+                heightPercent: 100.0,
+                backgroundColor: $theme->color(ColorToken::Surface),
+            ));
+        }
+        $type = match ($props['type'] ?? null) {
+            'back', DrawerType::Back->value => DrawerType::Back,
+            'slide', DrawerType::Slide->value => DrawerType::Slide,
+            'permanent', DrawerType::Permanent->value => DrawerType::Permanent,
+            default => DrawerType::Front,
+        };
+        $position = match ($props['position'] ?? null) {
+            'left', 'start', DrawerPosition::Left->value => DrawerPosition::Left,
+            'right', 'end', DrawerPosition::Right->value => DrawerPosition::Right,
+            default => DrawerPosition::Automatic,
+        };
+        $overlayColor = self::packedColor($props['overlayColor'] ?? null)
+            ?? $theme->color(ColorToken::Overlay);
+        $element = DrawerLayoutAndroid::make($content, $drawer)
+            ->open(self::flag($props, 'open'))
+            ->presentation($type, $position)
+            ->width(self::number($props, 'width', 304.0))
+            ->overlayColor($overlayColor)
+            ->gestures(
+                self::flag($props, 'swipeEnabled', true),
+                self::number($props, 'swipeEdgeWidth', 32.0),
+                self::number($props, 'swipeMinDistance', 56.0),
+                DrawerKeyboardDismissMode::OnDrag,
+            )
+            ->permanentBreakpoint(
+                self::number($props, 'permanentBreakpoint', 840.0),
+            )
+            ->style(new Style(
+                widthPercent: 100.0,
+                heightPercent: 100.0,
+                minHeight: self::number($props, 'minHeight', 360.0),
+                backgroundColor: $theme->color(ColorToken::Background),
+            ));
+        if (isset($events[EventKind::DrawerOpen->value])) {
+            $element = $element->onOpen($events[EventKind::DrawerOpen->value]);
+        }
+        if (isset($events[EventKind::DrawerClose->value])) {
+            $element = $element->onClose($events[EventKind::DrawerClose->value]);
+        }
+        $label = $props['accessibilityLabel'] ?? $props['ariaLabel'] ?? null;
+        if (is_scalar($label) && (string) $label !== '') {
+            $element = $element->accessibilityLabel((string) $label);
+        }
+        $element = $element->accessibilityRole(AccessibilityRole::Menu);
+        $hint = $props['accessibilityHint'] ?? null;
+        if (is_scalar($hint) && (string) $hint !== '') {
+            $element = $element->accessibilityHint((string) $hint);
+        }
+        if (array_key_exists('rtl', $props)) {
+            $element = $element->property(
+                PropKey::LayoutDirection,
+                self::flag($props, 'rtl') ? 2 : 1,
+            );
+        }
+        if (self::flag($props, 'reduceMotion')) {
+            $element = $element
+                ->property(PropKey::AnimateChanges, false)
+                ->property(PropKey::AnimationDurationMs, 0);
+        }
+        if (self::flag($props, 'disabled')) {
+            $element = $element->enabled(false);
+        }
+        if (self::flag($props, 'selected')) {
+            $element = $element->property(PropKey::Selected, true);
+        }
+        if (self::flag($props, 'checked')) {
+            $element = $element
+                ->property(PropKey::Checked, true)
+                ->accessibilityChecked(AccessibilityCheckedState::Checked);
+        }
+        if (self::flag($props, 'loading')) {
+            $element = $element->enabled(false)->accessibilityBusy();
+        }
+        if ($styleOverride !== null) $element = $element->style($styleOverride);
+        return $elementKey === null ? $element : $element->key($elementKey);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialTimeRangeChildren(
+        array $props,
+        array $events,
+    ): array {
+        $value = is_array($props['modelValue'] ?? null)
+            ? $props['modelValue']
+            : [];
+        $from = self::scalarString($value['from'] ?? $value[0] ?? $props['from'] ?? '09:00');
+        $to = self::scalarString($value['to'] ?? $value[1] ?? $props['to'] ?? '17:00');
+        $change = $events[EventKind::Change->value] ?? null;
+        $theme = ThemeManager::current();
+        $disabled = self::flag($props, 'disabled');
+        $field = static function (
+            string $label,
+            string $current,
+            bool $isStart,
+        ) use ($change, $from, $to, $props, $theme, $disabled): Element {
+            $display = $current;
+            if (
+                in_array(strtolower(self::scalarString($props['format'] ?? '')), ['12h', '12', 'ampm'], true)
+                && preg_match('/^(?<hour>[01]?\d|2[0-3]):(?<minute>[0-5]\d)$/D', $current, $match) === 1
+            ) {
+                $hour = (int) $match['hour'];
+                $display = (($hour % 12) ?: 12).':'.$match['minute'].' '.($hour >= 12 ? 'PM' : 'AM');
+            }
+            $fieldProps = [
+                ...$props,
+                'label' => $label,
+                'modelValue' => $current,
+                'value' => $current,
+                'mode' => ComponentMode::Time->value,
+            ];
+            unset($fieldProps['__materialComponent']);
+            $fieldEvents = [];
+            if ($change instanceof Closure) {
+                $fieldEvents[EventKind::Change->value] = static function (
+                    mixed $next,
+                ) use ($change, $from, $to, $isStart): mixed {
+                    $time = self::scalarString($next);
+                    if (preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/D', $time) !== 1) {
+                        return false;
+                    }
+                    if ($isStart) {
+                        return $change([
+                            'from' => $time,
+                            'to' => $to !== '' && $time > $to ? '' : $to,
+                        ]);
+                    }
+
+                    return $change($from !== '' && $time < $from
+                        ? ['from' => $time, 'to' => '']
+                        : ['from' => $from, 'to' => $time]);
+                };
+            }
+            return Column::make(
+                Text::make($label)->style(new Style(
+                    textColor: $theme->color(ColorToken::MutedForeground),
+                    fontSize: 12.0,
+                    lineHeight: 16.0,
+                    fontWeight: 600,
+                )),
+                self::render(
+                    'DateTimePicker',
+                    $fieldProps,
+                    [Text::make($display)->style(new Style(
+                        widthPercent: 100.0,
+                        fontSize: 18.0,
+                        lineHeight: 24.0,
+                        fontWeight: 600,
+                        textColor: $theme->color($disabled
+                            ? ColorToken::MutedForeground
+                            : ColorToken::OnSurface),
+                        textAlign: TextAlignment::Center,
+                    ))],
+                    $fieldEvents,
+                    new Style(
+                        widthPercent: 100.0,
+                        minWidth: 0.0,
+                        height: 56.0,
+                        minHeight: 56.0,
+                        paddingHorizontal: 16.0,
+                        backgroundColor: $theme->color($disabled
+                            ? ColorToken::SurfaceSunken
+                            : ColorToken::SurfaceElevated),
+                        borderColor: $theme->color($disabled
+                            ? ColorToken::Border
+                            : ColorToken::Outline),
+                        borderWidth: 1.0,
+                        borderRadius: 16.0,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ),
+                    null,
+                ),
+            )->style(new Style(
+                widthPercent: 48.0,
+                minWidth: 132.0,
+                gap: 4.0,
+                flexGrow: 1.0,
+            ));
+        };
+
+        return [
+            $field(self::text($props, 'fromLabel', 'From'), $from, true),
+            $field(self::text($props, 'toLabel', 'To'), $to, false),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialDateRangeChildren(
+        array $props,
+        array $events,
+    ): array {
+        $value = is_array($props['modelValue'] ?? null)
+            ? $props['modelValue']
+            : [];
+        $from = self::scalarString($value['from'] ?? $value[0] ?? $props['from'] ?? '');
+        $to = self::scalarString($value['to'] ?? $value[1] ?? $props['to'] ?? '');
+        $disabledDates = is_array($props['disabledDates'] ?? null)
+            ? array_values(array_filter(
+                $props['disabledDates'],
+                static fn (mixed $date): bool => is_string($date) && $date !== '',
+            ))
+            : [];
+        $change = $events[EventKind::Change->value] ?? null;
+        $theme = ThemeManager::current();
+        $field = static function (
+            string $label,
+            string $current,
+            bool $isStart,
+        ) use ($change, $from, $to, $props, $theme, $disabledDates): Element {
+            $fieldProps = [
+                ...$props,
+                'mode' => ComponentMode::Date->value,
+                'modelValue' => $current,
+                'value' => $current,
+                'placeholder' => 'Select date',
+            ];
+            unset($fieldProps['__materialComponent']);
+            $fieldEvents = [];
+            if ($change instanceof Closure) {
+                $fieldEvents[EventKind::Change->value] = static function (
+                    mixed $next,
+                ) use ($change, $from, $to, $isStart, $disabledDates): mixed {
+                    $date = self::scalarString($next);
+                    if ($date === '' || in_array($date, $disabledDates, true)) {
+                        return false;
+                    }
+                    if ($isStart) {
+                        return $change([
+                            'from' => $date,
+                            'to' => $to !== '' && $date > $to ? '' : $to,
+                        ]);
+                    }
+
+                    return $change($from !== '' && $date < $from
+                        ? ['from' => $date, 'to' => '']
+                        : ['from' => $from, 'to' => $date]);
+                };
+            }
+            return Column::make(
+                Text::make($label)->style(new Style(
+                    textColor: $theme->color(ColorToken::MutedForeground),
+                    fontSize: 12.0,
+                    lineHeight: 16.0,
+                    fontWeight: 600,
+                )),
+                self::render(
+                    'DateTimePicker',
+                    $fieldProps,
+                    [Text::make($current === '' ? 'Select date' : $current)->style(new Style(
+                        widthPercent: 100.0,
+                        fontSize: 15.0,
+                        lineHeight: 24.0,
+                        fontWeight: 600,
+                        textColor: $current === ''
+                            ? $theme->color(ColorToken::MutedForeground)
+                            : $theme->color(ColorToken::OnSurface),
+                        textAlign: TextAlignment::Center,
+                    ))],
+                    $fieldEvents,
+                    new Style(
+                        widthPercent: 100.0,
+                        minWidth: 0.0,
+                        height: 56.0,
+                        minHeight: 56.0,
+                        paddingHorizontal: 12.0,
+                        backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                        borderColor: $theme->color(ColorToken::Outline),
+                        borderWidth: 1.0,
+                        borderRadius: 16.0,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ),
+                    null,
+                ),
+            )->style(new Style(
+                widthPercent: 48.0,
+                minWidth: 132.0,
+                gap: 4.0,
+                flexGrow: 1.0,
+            ));
+        };
+
+        return [
+            $field(self::text($props, 'fromLabel', 'From'), $from, true),
+            $field(self::text($props, 'toLabel', 'To'), $to, false),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialFilterChildren(
+        array $props,
+        array $events,
+    ): array {
+        $source = is_array($props['filters'] ?? null)
+            ? $props['filters']
+            : (is_array($props['items'] ?? null) ? $props['items'] : []);
+        $model = $props['modelValue'] ?? $props['value'] ?? [];
+        $selected = is_array($model) ? array_values($model) : [$model];
+        $change = $events[EventKind::Change->value] ?? null;
+        $disabled = self::flag($props, 'disabled');
+        $theme = ThemeManager::current();
+        $children = [];
+        foreach ($source as $index => $definition) {
+            $value = is_array($definition)
+                ? ($definition['value'] ?? $definition['id'] ?? $index + 1)
+                : $definition;
+            $label = is_array($definition)
+                ? ($definition['label'] ?? $definition['title'] ?? $value)
+                : $definition;
+            if (!is_scalar($value) || !is_scalar($label)) continue;
+            $active = in_array($value, $selected, true);
+            $button = Pressable::make(Text::make((string) $label)->style(new Style(
+                textColor: $disabled
+                    ? $theme->color(ColorToken::MutedForeground)
+                    : ($active
+                        ? $theme->color(ColorToken::SecondaryForeground)
+                        : $theme->color(ColorToken::OnSurface)),
+                fontSize: 14.0,
+                lineHeight: 20.0,
+                fontWeight: $active ? 700 : 500,
+            )))->style(new Style(
+                minHeight: 48.0,
+                paddingHorizontal: 16.0,
+                backgroundColor: $disabled
+                    ? $theme->color(ColorToken::SurfaceSunken)
+                    : ($active
+                        ? $theme->color(ColorToken::Secondary)
+                        : $theme->color(ColorToken::SurfaceContainerLow)),
+                borderColor: $disabled
+                    ? $theme->color(ColorToken::Border)
+                    : ($active
+                        ? $theme->color(ColorToken::Secondary)
+                        : $theme->color(ColorToken::Outline)),
+                borderWidth: 1.0,
+                borderRadius: 24.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))->enabled(!$disabled)
+                ->property(PropKey::Selected, $active)
+                ->property(PropKey::Checked, $active)
+                ->accessibilityRole(AccessibilityRole::ToggleButton)
+                ->accessibilityChecked($active
+                    ? AccessibilityCheckedState::Checked
+                    : AccessibilityCheckedState::Unchecked)
+                ->accessibilityLabel((string) $label);
+            if (!$disabled && $change instanceof Closure) {
+                $button = $button->onPress(static function () use (
+                    $active, $change, $selected, $value,
+                ): mixed {
+                    $next = array_values(array_filter(
+                        $selected,
+                        static fn (mixed $item): bool => $item !== $value,
+                    ));
+                    if (!$active) $next[] = $value;
+                    return $change($next);
+                });
+            }
+            $children[] = $button;
+        }
+        if ($selected !== [] && $change instanceof Closure && !$disabled) {
+            $children[] = Pressable::make(Text::make(
+                self::text($props, 'clearLabel', 'Clear'),
+            )->style(new Style(
+                textColor: $theme->color(ColorToken::Primary),
+                fontSize: 14.0,
+                lineHeight: 20.0,
+                fontWeight: 600,
+            )))->style(new Style(
+                minHeight: 48.0,
+                paddingHorizontal: 12.0,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            ))->accessibilityRole(AccessibilityRole::Button)
+                ->accessibilityLabel('Clear filters')
+                ->onPress(static fn (): mixed => $change([]));
+        }
+        return $children;
     }
 
     private static function componentId(string $part): int
@@ -3300,10 +4905,12 @@ final class ComponentRenderer
 
         $materialRole = match ($props['__materialComponent'] ?? null) {
             'PAppBar', 'PToolbar' => AccessibilityRole::Toolbar,
-            'PAutocomplete', 'PCombobox', 'PSelect' => AccessibilityRole::ComboBox,
+            'PAutocomplete', 'PCombobox', 'PSelect',
+            'PTagInput', 'PMultiSelect' => AccessibilityRole::ComboBox,
             'PBanner', 'PSnackbar' => AccessibilityRole::Alert,
             'PCalendar', 'PDatePicker' => AccessibilityRole::Grid,
-            'PColorInput', 'PDateInput', 'POtpInput', 'PTextField', 'PTextarea' =>
+            'PColorInput', 'PDateInput', 'POtpInput', 'PTextField', 'PTextarea',
+            'PPasswordField', 'PMaskedField', 'PCurrencyField' =>
                 AccessibilityRole::Input,
             'PEmptyState' => AccessibilityRole::Summary,
             'PList', 'PStepper', 'PStepperVertical', 'PTimeline', 'PTreeview' =>
@@ -3343,7 +4950,10 @@ final class ComponentRenderer
             'PDateInput',
             'POtpInput',
             'PTextField',
-            'PTextarea' => AccessibilityRole::Input,
+            'PTextarea',
+            'PPasswordField',
+            'PMaskedField',
+            'PCurrencyField' => AccessibilityRole::Input,
             'Menu' => AccessibilityRole::Menu,
             'MenuItem' => AccessibilityRole::MenuItem,
             'Progress', 'Spinner', 'ButtonSpinner' =>
@@ -5351,6 +6961,24 @@ final class ComponentRenderer
                     };
             }
         }
+        if (($props['__chart'] ?? false) === true) {
+            $handler = $events[EventKind::Change->value] ?? null;
+            if ($handler !== null) {
+                $events[EventKind::Change->value] =
+                    static function (string $payload) use ($handler): void {
+                        $point = json_decode($payload, true);
+                        if (!is_array($point) || !is_numeric($point['index'] ?? null)) {
+                            return;
+                        }
+                        $handler([
+                            'index' => (int) $point['index'],
+                            'value' => is_numeric($point['value'] ?? null)
+                                ? (float) $point['value']
+                                : null,
+                        ]);
+                    };
+            }
+        }
         if ($part !== 'Calendar') {
             return $events;
         }
@@ -7265,7 +8893,7 @@ final class ComponentRenderer
             $part === 'Select'
             && in_array(
                 $props['__materialComponent'] ?? null,
-                ['PSelect', 'PAutocomplete', 'PCombobox'],
+                ['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'],
                 true,
             )
         ) {
@@ -7737,6 +9365,29 @@ final class ComponentRenderer
             ];
         }
 
+        // User-created tags are part of the controlled value even when they
+        // were not in the original suggestions. Keep them in the option model
+        // so they remain visible, announced as selected, and removable when
+        // the sheet is opened again.
+        if ($component === 'PTagInput') {
+            foreach ($selectedValues as $selected) {
+                $known = false;
+                foreach ($normalized as $item) {
+                    if (self::sameScalar($item['value'], $selected)) {
+                        $known = true;
+                        break;
+                    }
+                }
+                if (!$known) {
+                    $normalized[] = [
+                        'value' => $selected,
+                        'label' => (string) $selected,
+                        'disabled' => false,
+                    ];
+                }
+            }
+        }
+
         $displayLabels = [];
         foreach ($normalized as $item) {
             if ($isSelected($item['value'])) {
@@ -7840,7 +9491,11 @@ final class ComponentRenderer
             'enableDynamicSizing' => $props['enableDynamicSizing'] ?? true,
             'closeOnSelect' => !$multiple,
             'searchable' => $component !== 'PSelect',
-            'allowCustomValue' => $component === 'PCombobox',
+            'allowCustomValue' => in_array(
+                $component,
+                ['PCombobox', 'PTagInput'],
+                true,
+            ),
             'searchPlaceholder' => self::text(
                 $props,
                 'searchPlaceholder',
@@ -7923,8 +9578,34 @@ final class ComponentRenderer
             null,
         );
         $portalEvents = [];
-        if ($change !== null && $component === 'PCombobox') {
-            $portalEvents[EventKind::Change->value] = $change;
+        if (
+            $change !== null
+            && in_array($component, ['PCombobox', 'PTagInput'], true)
+        ) {
+            // The native selection sheet emits the scalar row/custom value.
+            // TagInput is a collection control, so keep its public contract
+            // array-shaped and merge/toggle here instead of replacing every
+            // existing tag with the last tapped value.
+            $portalEvents[EventKind::Change->value] = $component === 'PTagInput'
+                ? static function (mixed $value) use ($change, $selectedValues): void {
+                    if (is_array($value)) {
+                        $change(array_values(array_filter(
+                            $value,
+                            static fn (mixed $item): bool => is_scalar($item),
+                        )));
+
+                        return;
+                    }
+                    if (!is_scalar($value)) {
+                        return;
+                    }
+                    self::listSelectionHandler(
+                        $change,
+                        $value,
+                        $selectedValues,
+                    )();
+                }
+                : $change;
         }
         if (isset($events[EventKind::Native->value])) {
             $portalEvents[EventKind::Native->value] =
@@ -7956,18 +9637,60 @@ final class ComponentRenderer
                 $events[EventKind::Press->value];
         }
         $disabled = self::flag($props, 'disabled');
+        $displayContent = self::themedText($display)->style(new Style(
+            flexGrow: 1.0,
+            textColor: $theme->color(
+                $display === self::text($props, 'placeholder')
+                    ? ColorToken::MutedForeground
+                    : ColorToken::OnSurface,
+            ),
+            fontSize: 16.0,
+            lineHeight: 24.0,
+        ));
+        if (
+            in_array($component, ['PTagInput', 'PMultiSelect'], true)
+            && $displayLabels !== []
+        ) {
+            $visibleLabels = array_slice($displayLabels, 0, 3);
+            $tagVisuals = array_map(
+                static fn (string $tag): Element => View::make(
+                    Text::make($tag)->style(new Style(
+                        textColor: $theme->color(ColorToken::Primary),
+                        fontSize: 12.0,
+                        lineHeight: 20.0,
+                        fontWeight: 600,
+                    )),
+                )->style(new Style(
+                    minHeight: 28.0,
+                    paddingHorizontal: 10.0,
+                    paddingVertical: 4.0,
+                    backgroundColor: $theme->color(ColorToken::Accent),
+                    borderRadius: 8.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                )),
+                $visibleLabels,
+            );
+            if (count($displayLabels) > count($visibleLabels)) {
+                $tagVisuals[] = Text::make(
+                    '+'.(count($displayLabels) - count($visibleLabels)),
+                )->style(new Style(
+                    textColor: $theme->color(ColorToken::MutedForeground),
+                    fontSize: 12.0,
+                    lineHeight: 28.0,
+                    fontWeight: 600,
+                ));
+            }
+            $displayContent = Row::make(...$tagVisuals)->style(new Style(
+                flexGrow: 1.0,
+                gap: 6.0,
+                flexWrap: \Pam\Native\FlexWrap::Wrap,
+                alignItems: Align::Center,
+            ));
+        }
         $trigger = View::make(
                 Row::make(
-                    self::themedText($display)->style(new Style(
-                        flexGrow: 1.0,
-                        textColor: $theme->color(
-                            $display === self::text($props, 'placeholder')
-                                ? ColorToken::MutedForeground
-                                : ColorToken::OnSurface,
-                        ),
-                        fontSize: 16.0,
-                        lineHeight: 24.0,
-                    )),
+                    $displayContent,
                     self::flag($props, 'loading')
                         ? ActivityIndicator::make()
                             ->color($theme->color(ColorToken::Primary))
@@ -8555,6 +10278,7 @@ final class ComponentRenderer
                 $rowHeight,
                 true,
             );
+            $items = [];
         } elseif ($items === []) {
             $rows[] = self::materialDataTableStateRow(
                 self::text($props, 'noDataText', 'No data available'),
@@ -8661,13 +10385,32 @@ final class ComponentRenderer
         string $label,
         ?Closure $handler,
     ): Element {
-        $cell = Pressable::make(
-            self::themedText($selected ? '☑' : '☐')->style(new Style(
-                width: 24.0,
-                fontSize: 20.0,
-                lineHeight: 24.0,
+        $theme = ThemeManager::current();
+        $mark = View::make(...($selected ? [
+            Text::make('✓')->style(new Style(
+                width: 18.0,
+                fontSize: 14.0,
+                lineHeight: 18.0,
+                fontWeight: 700,
+                textColor: $theme->color(ColorToken::PrimaryForeground),
                 textAlign: TextAlignment::Center,
             )),
+        ] : []))->style(new Style(
+            width: 20.0,
+            height: 20.0,
+            borderRadius: 3.0,
+            borderWidth: 2.0,
+            borderColor: $selected
+                ? $theme->color(ColorToken::Primary)
+                : $theme->color(ColorToken::MutedForeground),
+            backgroundColor: $selected
+                ? $theme->color(ColorToken::Primary)
+                : 0x00000000,
+            alignItems: Align::Center,
+            justifyContent: Justify::Center,
+        ));
+        $cell = Pressable::make(
+            $mark,
         )
             ->style(new Style(
                 width: 48.0,
@@ -8683,6 +10426,13 @@ final class ComponentRenderer
                 $selected
                     ? AccessibilityCheckedState::Checked
                     : AccessibilityCheckedState::Unchecked,
+            )
+            ->ripple(
+                $theme->color(ColorToken::Primary),
+                true,
+                24.0,
+                false,
+                MaterialTokens::STATE_OPACITY[4],
             );
         if ($handler !== null) {
             $cell = $cell->on(EventKind::Press, $handler);
@@ -8844,6 +10594,10 @@ final class ComponentRenderer
         if (is_string($accessibilityLabel) && $accessibilityLabel !== '') {
             $input = $input->accessibilityLabel($accessibilityLabel);
         }
+        $accessibilityHint = $props['accessibilityHint'] ?? null;
+        if (is_string($accessibilityHint) && $accessibilityHint !== '') {
+            $input = $input->accessibilityHint($accessibilityHint);
+        }
 
         if (
             $part === 'TextareaInput'
@@ -8857,6 +10611,41 @@ final class ComponentRenderer
         }
         if (($props['type'] ?? null) === 'password') {
             $input = $input->secure();
+        }
+        $mask = $props['mask'] ?? $props['inputFormatPattern'] ?? null;
+        if (is_scalar($mask) && (string) $mask !== '') {
+            $placeholder = $props['maskPlaceholder']
+                ?? $props['inputFormatPlaceholder']
+                ?? '#';
+            $input = $input->mask(
+                (string) $mask,
+                is_scalar($placeholder) ? (string) $placeholder : '#',
+            );
+        } elseif (
+            self::flag($props, 'currency')
+            || ($props['inputFormat'] ?? null) === 'currency'
+        ) {
+            $nativeAffixes = !isset($props['__materialComponent']);
+            $input = $input->currency(
+                self::integer(
+                    $props,
+                    'decimalDigits',
+                    self::integer($props, 'inputFormatDecimalDigits', 2),
+                ),
+                self::text(
+                    $props,
+                    $nativeAffixes ? 'prefix' : 'inputFormatPrefix',
+                ),
+                self::text(
+                    $props,
+                    $nativeAffixes ? 'suffix' : 'inputFormatSuffix',
+                ),
+                self::text(
+                    $props,
+                    'inputFormatLocale',
+                    self::text($props, 'locale'),
+                ),
+            );
         }
         if (isset($props['maxLength'])) {
             $input = $input->maxLength(self::integer($props, 'maxLength', 0));

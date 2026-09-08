@@ -80,5 +80,19 @@
     "config": {
         "platform-check": true,
         "sort-packages": true
+    },
+    "archive": {
+        "exclude": [
+            "/.git",
+            "/.phpunit.cache",
+            "/android/.gradle",
+            "/android/.kotlin",
+            "/android/build",
+            "/examples/**/.pam-native",
+            "/examples/**/dist",
+            "/examples/**/vendor",
+            "/tools/phpstan/vendor",
+            "/vendor"
+        ]
     }
 }

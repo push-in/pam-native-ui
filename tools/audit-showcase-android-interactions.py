@@ -25,6 +25,7 @@ class InteractionKind(IntEnum):
     OPEN_CLOSE = 6
     SELECT = 7
     SCROLL = 8
+    GESTURE = 9
 
 
 class ResultStatus(IntEnum):
@@ -39,6 +40,7 @@ STATIC = {
     "p-skeleton-loader", "p-sparkline", "p-timeline",
     "p-expansion-panel-text",
     "p-stepper-header", "p-stepper-window", "p-stepper-window-item",
+    "p-app-scaffold", "p-chart", "p-responsive-grid", "p-result-state",
 }
 PRESS = {
     "p-app-bar", "p-app-bar-nav-icon", "p-banner-actions", "p-btn",
@@ -46,6 +48,7 @@ PRESS = {
     "p-list-item", "p-snackbar", "p-stepper-actions",
     "p-stepper-vertical-actions", "p-toolbar",
     "p-timeline-item", "p-infinite-scroll",
+    "p-progress-button",
 }
 TOGGLE = {
     "p-checkbox", "p-radio", "p-radio-group",
@@ -54,12 +57,16 @@ TOGGLE = {
 INPUT = {
     "p-color-input", "p-form", "p-number-input", "p-otp-input",
     "p-text-field", "p-textarea",
+    "p-currency-field", "p-masked-field", "p-password-field", "p-search-bar",
 }
 ADJUST = {"p-range-slider", "p-rating", "p-slider"}
 OPEN_CLOSE = {
     "p-autocomplete", "p-bottom-sheet", "p-combobox", "p-date-input",
     "p-dialog", "p-menu", "p-overlay", "p-select", "p-speed-dial",
     "p-time-picker", "p-tooltip",
+    "p-command-palette", "p-date-range-picker", "p-file-input",
+    "p-multi-select", "p-popover", "p-tag-input",
+    "p-time-range-picker",
 }
 SELECT = {
     "p-btn-toggle", "p-calendar", "p-calendar-day", "p-carousel",
@@ -70,8 +77,12 @@ SELECT = {
     "p-stepper-vertical-item",
     "p-tab", "p-tabs", "p-treeview", "p-treeview-item", "p-item", "p-item-group",
     "p-list",
+    "p-bottom-app-bar", "p-data-grid", "p-filter-bar", "p-navigation-bar",
+    "p-navigation-drawer", "p-navigation-rail", "p-pagination",
+    "p-segmented-button", "p-tree-select",
 }
-SCROLL = {"p-data-table-virtual"}
+SCROLL = {"p-data-table-virtual", "p-section-list", "p-virtual-list"}
+GESTURE = {"p-pull-to-refresh", "p-reorderable-list", "p-swipe-actions"}
 
 PARENT_ROUTE: dict[str, str] = {}
 
@@ -516,6 +527,19 @@ def choose_open_node(tag: str, hierarchy: Hierarchy) -> ET.Element:
     for candidate in candidates:
         if candidate.attrib.get("class") in preferred_classes:
             return candidate
+    # Some compound controls intentionally expose one accessible parent while
+    # their visual trigger is focusable rather than separately clickable.
+    fallback_labels = {
+        "p-popover": "Show popover details",
+    }
+    fallback_label = fallback_labels.get(tag)
+    if fallback_label is not None:
+        for candidate in hierarchy.nodes():
+            if (
+                enabled(candidate)
+                and candidate.attrib.get("content-desc") == fallback_label
+            ):
+                return candidate
     if not candidates:
         raise AuditFailure("no enabled overlay trigger is exposed")
     return candidates[0]
@@ -531,6 +555,8 @@ def choose_selection_node(hierarchy: Hierarchy) -> ET.Element:
             "android.widget.CalendarView", "android.widget.ScrollView"
         }
         and candidate.attrib.get("content-desc") != "Open component navigation"
+        and not candidate.attrib.get("content-desc", "").startswith("Open Front navigation drawer")
+        and not candidate.attrib.get("content-desc", "").startswith("Open Slide navigation drawer")
     ]
     # Selection routes share the screen with the catalog navigation button.
     # Prefer actual leaf controls so the audit cannot pass or fail by opening
@@ -568,6 +594,7 @@ def interaction_kind(tag: str) -> InteractionKind:
         InteractionKind.OPEN_CLOSE: OPEN_CLOSE,
         InteractionKind.SELECT: SELECT,
         InteractionKind.SCROLL: SCROLL,
+        InteractionKind.GESTURE: GESTURE,
     }
     matches = [kind for kind, tags in groups.items() if tag in tags]
     if len(matches) != 1:
@@ -629,10 +656,16 @@ def exercise(
         audit.tap(bounds(target))
         typed_value = {
             "p-color-input": "112233",
+            "p-currency-field": "73125",
+            "p-masked-field": "21912345678",
             "p-number-input": "731",
             "p-otp-input": "738204",
+            "p-password-field": "PAM_AUDIT_2026",
         }.get(tag, "PAM_AUDIT")
-        if tag in {"p-color-input", "p-number-input", "p-otp-input"}:
+        if tag in {
+            "p-color-input", "p-currency-field", "p-masked-field",
+            "p-number-input", "p-otp-input", "p-password-field",
+        }:
             audit.adb("shell", "input", "keyevent", "KEYCODE_MOVE_END")
             for _ in range(16):
                 audit.adb("shell", "input", "keyevent", "DEL")
@@ -640,14 +673,64 @@ def exercise(
         time.sleep(0.8)
         after = audit.dump(f"{evidence_name}-after")
         assert_healthy(after, route)
-        if not any(
-            typed_value in node.attrib.get("text", "")
+        expected_text = {
+            "p-currency-field": "731,25",
+            "p-masked-field": "(21) 91234-5678",
+        }.get(tag, typed_value)
+        retained = any(
+            expected_text in node.attrib.get("text", "")
             for node in after.nodes()
             if node.attrib.get("class") == "android.widget.EditText"
-        ):
+        )
+        if tag == "p-password-field":
+            before_values = [
+                node.attrib.get("text", "")
+                for node in before.nodes()
+                if node.attrib.get("class") == "android.widget.EditText"
+            ]
+            after_values = [
+                node.attrib.get("text", "")
+                for node in after.nodes()
+                if node.attrib.get("class") == "android.widget.EditText"
+            ]
+            retained = after_values != before_values
+        if not retained:
             raise AuditFailure("typed text was not retained by the native input")
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         audit.back()
+        return after, True
+
+    if kind == InteractionKind.GESTURE:
+        previews = [
+            node for node in before.nodes()
+            if enabled(node)
+            and node.attrib.get("content-desc")
+            in {
+                "Pull To Refresh preview",
+                "Reorderable List preview",
+                "Swipe Actions preview",
+            }
+        ]
+        if not previews:
+            raise AuditFailure("no enabled gesture surface is exposed")
+        area = bounds(previews[0])
+        if tag == "p-pull-to-refresh":
+            audit.swipe(area.center, (area.center[0], area.bottom - 20), 800)
+        elif tag == "p-reorderable-list":
+            start = (area.left + 70, area.top + min(70, area.height // 4))
+            end = (start[0], min(area.bottom - 40, start[1] + 300))
+            audit.swipe(start, end, 1400)
+        else:
+            audit.swipe(
+                (area.right - 80, area.center[1]),
+                (area.left + 120, area.center[1]),
+                550,
+            )
+        after = audit.dump(f"{evidence_name}-after")
+        assert_healthy(after, route, allow_overlay=False)
+        after_hash = audit.settled_screenshot_hash(f"{evidence_name}-after")
+        if after.xml == before.xml and after_hash == before_hash:
+            raise AuditFailure("gesture produced no hierarchy or visual change")
         return after, True
 
     if kind == InteractionKind.ADJUST:
@@ -672,6 +755,29 @@ def exercise(
 
     if kind == InteractionKind.OPEN_CLOSE:
         target = choose_open_node(tag, before)
+        if tag == "p-file-input":
+            audit.stop_task_lock()
+            x, y = bounds(target).center
+            audit.adb("shell", "input", "tap", str(x), str(y))
+            time.sleep(1.0)
+            report = audit.shell("dumpsys", "activity", "activities", timeout=30.0)
+            resumed = audit.foreground_package(report)
+            if resumed != "com.google.android.documentsui":
+                raise AuditFailure(
+                    "file input did not launch Android's document picker "
+                    f"(found {resumed or 'unknown'})"
+                )
+            picker = audit.adb("exec-out", "screencap", "-p", binary=True)
+            assert isinstance(picker, bytes)
+            (audit.evidence_directory / f"{evidence_name}-open.png").write_bytes(picker)
+            audit.adb("shell", "input", "keyevent", "BACK")
+            time.sleep(0.8)
+            audit.assert_foreground("file picker cancellation")
+            audit.start_task_lock()
+            closed = audit.dump(f"{evidence_name}-closed")
+            assert_healthy(closed, route)
+            audit.screenshot_hash(f"{evidence_name}-closed")
+            return closed, True
         if tag == "p-tooltip":
             audit.touch("DOWN", bounds(target))
             time.sleep(0.75)
@@ -729,7 +835,13 @@ def exercise(
             if selected_hash == open_hash:
                 raise AuditFailure(f"{tag} action produced no visible result")
             return selected, True
-        audit.back()
+        if tag == "p-popover":
+            # Dismiss through the component's scrim. Android Back can finish
+            # the freshly deep-linked Activity and reveal another installed
+            # build, which tests task history rather than popover behavior.
+            audit.tap(Bounds(24, 260, 120, 356))
+        else:
+            audit.back()
         closed = audit.dump(f"{evidence_name}-closed")
         assert_healthy(closed, route)
         audit.screenshot_hash(f"{evidence_name}-closed")
@@ -753,6 +865,43 @@ def exercise(
         after_hash = audit.settled_screenshot_hash(f"{evidence_name}-after")
         if after.xml == before.xml and after_hash == before_hash:
             raise AuditFailure("scroll gesture produced no viewport change")
+        return after, True
+
+    if kind == InteractionKind.SELECT and tag == "p-data-grid":
+        scrolls = [
+            node for node in before.nodes()
+            if enabled(node) and node.attrib.get("scrollable") == "true"
+        ]
+        if not scrolls:
+            raise AuditFailure("data grid route exposes no scrollable catalog viewport")
+        area = bounds(max(scrolls, key=lambda node: bounds(node).height))
+        audit.swipe(
+            (area.center[0], area.bottom - 100),
+            (area.center[0], area.top + 220),
+            900,
+        )
+        scrolled = audit.dump(f"{evidence_name}-selectable")
+        tables = [
+            node for node in scrolled.nodes()
+            if enabled(node)
+            and node.attrib.get("class") == "android.widget.TableLayout"
+            and bounds(node).height > 100
+        ]
+        if not tables:
+            raise AuditFailure("selectable data grid did not enter the viewport")
+        table = max(tables, key=lambda node: bounds(node).top)
+        table_bounds = bounds(table)
+        audit.tap(Bounds(
+            table_bounds.left + 24,
+            table_bounds.top + min(180, table_bounds.height // 3),
+            min(table_bounds.left + 136, table_bounds.right),
+            table_bounds.top + min(280, table_bounds.height // 2),
+        ))
+        after = audit.dump(f"{evidence_name}-after")
+        assert_healthy(after, route, allow_overlay=True)
+        if "No rows selected" in after.all_text():
+            raise AuditFailure("selectable data grid row did not publish selection")
+        audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 
     if kind == InteractionKind.SELECT:
@@ -821,7 +970,10 @@ def main() -> int:
         raise AuditFailure("set --serial or ANDROID_SERIAL")
     root = Path(__file__).resolve().parents[1]
     all_tags = catalog_tags(root)
-    classified = STATIC | PRESS | TOGGLE | INPUT | ADJUST | OPEN_CLOSE | SELECT | SCROLL
+    classified = (
+        STATIC | PRESS | TOGGLE | INPUT | ADJUST | OPEN_CLOSE
+        | SELECT | SCROLL | GESTURE
+    )
     if classified != set(all_tags):
         missing = sorted(set(all_tags) - classified)
         extra = sorted(classified - set(all_tags))

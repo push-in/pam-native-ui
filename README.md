@@ -53,7 +53,7 @@ New to PAM? Follow the **[five-minute PAM Native setup](https://push-in.github.i
 <!-- pam:product-page:end -->
 
 PAM Native UI is a retained native Material Design 3 component library for
-PAM Native. It exposes 84 mobile `p-*` component parts across 62 manually authored
+PAM Native. It exposes 114 mobile `p-*` component parts across 92 manually authored
 modules and renders through Android views and UIKit without a WebView,
 JavaScript runtime, CSS engine, or Vuetify metadata importer.
 
@@ -76,9 +76,10 @@ to the operating system.
 
 ## Android showcase
 
-The bundled catalog exercises all 84 public component parts through the real
-Android renderer. Its 90 full-device captures pass route, viewport, blank-screen
-and text-overlap validation before they are accepted as documentation evidence.
+The bundled catalog exercises all 114 public component parts through the real
+Android renderer. Each public route has a full-device Android candidate capture;
+physical-device interaction approval remains tracked separately and cannot be
+granted by screenshot-only validation.
 
 <p align="center">
   <img src="docs/assets/android/components/overview.png" width="31%" alt="PAM Studio Android showcase home" />
@@ -224,8 +225,8 @@ composer release:check
 `resources/material-parity.json` is the release gate for the new generation.
 It is generated from the manual specification and requires:
 
-- 62 sequential modules;
-- 84 mobile `p-*` components with sequential component IDs;
+- 92 sequential modules;
+- 114 mobile `p-*` components with sequential component IDs;
 - Android and iOS targets;
 - `metadataImport=false`;
 - exact equality with `MaterialComponentMap`.

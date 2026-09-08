@@ -51,8 +51,14 @@ final class ComponentRoute extends Component
     /** @var array<int, bool> */
     private array $sampleFocused = [];
 
+    /** @var array<int, bool> */
+    private array $drawerOpen = [];
+
     /** @var array<int, int> */
     private array $sheetSnapIndexes = [];
+
+    /** @var array<int, list<string|int|float|bool>> */
+    private array $treeOpened = [];
 
     /** @var array<int, CardInteractionPreview> */
     private array $cardInteractionPreviews = [];
@@ -211,6 +217,12 @@ final class ComponentRoute extends Component
                 'p-number-input',
                 'p-otp-input', 'p-range-slider', 'p-rating', 'p-select',
                 'p-slider', 'p-text-field', 'p-textarea',
+                'p-password-field', 'p-masked-field', 'p-currency-field',
+                'p-tag-input', 'p-multi-select',
+                'p-date-range-picker', 'p-time-range-picker', 'p-filter-bar',
+                'p-search-bar',
+                'p-navigation-drawer',
+                'p-command-palette',
             ])) {
                 $previewProps['modelValue'] = $this->sampleValues[$index]
                     ?? $previewProps['modelValue']
@@ -3614,6 +3626,696 @@ final class ComponentRoute extends Component
                         ],
                     ],
                 )->style(new Style(widthPercent: 100.0, paddingVertical: 8.0));
+            } elseif ($this->tag === 'p-virtual-list') {
+                $rowHeight = max(44.0, (float) ($previewProps['rowHeight'] ?? 56.0));
+                $items = is_array($previewProps['items'] ?? null)
+                    ? array_values($previewProps['items'])
+                    : [];
+                $rows = [];
+                foreach ($items as $itemIndex => $itemLabel) {
+                    if (!is_scalar($itemLabel)) {
+                        continue;
+                    }
+                    $rows[] = Row::make(
+                        Text::make(str_pad((string) ($itemIndex + 1), 2, '0', STR_PAD_LEFT))
+                            ->style(new Style(
+                                width: 30.0,
+                                height: 30.0,
+                                borderRadius: 15.0,
+                                backgroundColor: $theme->color(ColorToken::Accent),
+                                textColor: $theme->color(ColorToken::Primary),
+                                fontSize: 11.0,
+                                lineHeight: 30.0,
+                                fontWeight: 700,
+                                textAlign: \Pam\Native\TextAlignment::Center,
+                            )),
+                        Text::make((string) $itemLabel)->style(new Style(
+                            flexGrow: 1.0,
+                            flexShrink: 1.0,
+                            fontSize: 14.0,
+                            lineHeight: 20.0,
+                            fontWeight: 600,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                        )),
+                        Text::make('Ready')->style(new Style(
+                            fontSize: 11.0,
+                            lineHeight: 16.0,
+                            fontWeight: 700,
+                            textColor: $theme->color(ColorToken::Success),
+                        )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        height: $rowHeight,
+                        minHeight: $rowHeight,
+                        paddingHorizontal: 14.0,
+                        gap: 10.0,
+                        borderBottomWidth: 1.0,
+                        borderColor: $theme->color(ColorToken::Border),
+                        alignItems: Align::Center,
+                    ));
+                }
+                $preview = $component::make($previewProps, ...$rows);
+            } elseif ($this->tag === 'p-pagination') {
+                $previewProps['modelValue'] = $this->sampleValues[$index]
+                    ?? $previewProps['modelValue']
+                    ?? 1;
+                $preview = $component::make($previewProps)->onChange(
+                    function (int $page) use ($index): bool {
+                        $this->setSampleValue($index, $page);
+
+                        return true;
+                    },
+                );
+            } elseif ($this->tag === 'p-segmented-button') {
+                $previewProps['items'] = [
+                    ['label' => 'Day', 'value' => 1],
+                    ['label' => 'Week', 'value' => 2],
+                    ['label' => 'Month', 'value' => 3],
+                ];
+                $previewProps['modelValue'] = $this->sampleValues[$index]
+                    ?? $previewProps['modelValue']
+                    ?? 2;
+                if (($previewProps['multiple'] ?? false) === true
+                    && !array_key_exists($index, $this->sampleValues)) {
+                    $previewProps['modelValue'] = [1, 3];
+                }
+                $preview = $component::make($previewProps)->onChange(
+                    function (mixed $value) use ($index): bool {
+                        $this->setSampleValue($index, $value);
+
+                        return true;
+                    },
+                );
+            } elseif ($this->tag === 'p-password-field') {
+                $previewProps['revealed'] = $this->sampleFocused[$index]
+                    ?? (($previewProps['revealed'] ?? false) === true);
+                $preview = $component::make($previewProps)->onToggle(
+                    function (bool $revealed) use ($index): bool {
+                        $this->setSampleFocused($index, $revealed);
+
+                        return true;
+                    },
+                );
+            } elseif ($this->tag === 'p-file-input') {
+                $picked = $this->sampleValues[$index] ?? null;
+                if ($picked instanceof \Pam\Native\FileReference) {
+                    $previewProps['text'] = $picked->name;
+                } elseif (is_array($picked)) {
+                    $pickedFiles = array_values(array_filter(
+                        $picked,
+                        static fn (mixed $file): bool =>
+                            $file instanceof \Pam\Native\FileReference,
+                    ));
+                    if ($pickedFiles !== []) {
+                        $previewProps['text'] = count($pickedFiles) === 1
+                            ? $pickedFiles[0]->name
+                            : count($pickedFiles).' files selected';
+                    }
+                }
+                $preview = $component::make($previewProps)->onPick(
+                    function (mixed $selection) use ($index): void {
+                        $this->setSampleValue($index, $selection);
+                    },
+                    \Pam\Native\MediaPickerType::Any,
+                    ($previewProps['multiple'] ?? false) === true,
+                    (int) ($previewProps['limit'] ?? 10),
+                );
+            } elseif ($this->tag === 'p-progress-button') {
+                $progress = is_numeric($this->sampleValues[$index] ?? null)
+                    ? max(0, min(100, (int) $this->sampleValues[$index]))
+                    : max(0, min(100, (int) ($previewProps['progress'] ?? 0)));
+                if (($previewProps['indeterminate'] ?? false) !== true) {
+                    $previewProps['progress'] = $progress;
+                    if (array_key_exists($index, $this->sampleValues)) {
+                        $previewProps['text'] = $progress >= 100
+                            ? 'Complete'
+                            : ($progress === 0 ? 'Upload' : 'Uploading '.$progress.'%');
+                    }
+                }
+                $preview = $component::make($previewProps);
+                if (($previewProps['indeterminate'] ?? false) !== true) {
+                    $preview = $preview->onPress(
+                        function () use ($index, $progress): bool {
+                            $this->setSampleValue(
+                                $index,
+                                $progress >= 100 ? 0 : min(100, $progress + 25),
+                            );
+
+                            return true;
+                        },
+                    );
+                }
+            } elseif ($this->belongsTo([
+                'p-navigation-bar', 'p-navigation-rail', 'p-bottom-app-bar',
+            ])) {
+                $button = MaterialComponentMap::TAGS['p-btn'];
+                $iconButton = MaterialComponentMap::TAGS['p-icon-btn'];
+                $allDestinations = [
+                    ['Home', 'StarIcon'],
+                    ['Explore', 'SearchIcon'],
+                    ['Create', 'AddIcon'],
+                    ['Activity', 'BellIcon'],
+                    ['Account', 'SettingsIcon'],
+                ];
+                if ($this->tag === 'p-bottom-app-bar' && ($previewProps['fab'] ?? false)) {
+                    $allDestinations = array_values(array_filter(
+                        $allDestinations,
+                        static fn (array $destination): bool => $destination[0] !== 'Create',
+                    ));
+                }
+                $destinationCount = max(3, min(5, (int) ($previewProps['destinations'] ?? 3)));
+                $destinations = array_slice($allDestinations, 0, $destinationCount);
+                $active = $this->sampleValues[$index] ?? 'Explore';
+                $controls = [];
+                foreach ($destinations as [$label, $iconName]) {
+                    $selected = $active === $label;
+                    if ($this->tag === 'p-navigation-rail' && !($previewProps['expanded'] ?? false)) {
+                        $controls[] = $iconButton::make(
+                            [
+                                'variant' => $selected ? 'tonal' : 'text',
+                                'icon' => $iconName,
+                                'accessibilityLabel' => $label,
+                                'selected' => $selected,
+                            ],
+                        )->onPress(function () use ($index, $label): bool {
+                            $this->setSampleValue($index, $label);
+
+                            return true;
+                        });
+                        continue;
+                    }
+                    if ($this->tag === 'p-bottom-app-bar') {
+                        $controls[] = $iconButton::make(
+                            [
+                                'variant' => $selected ? 'tonal' : 'text',
+                                'icon' => $iconName,
+                                'accessibilityLabel' => $label,
+                                'selected' => $selected,
+                            ],
+                        )->onPress(function () use ($index, $label): bool {
+                            $this->setSampleValue($index, $label);
+
+                            return true;
+                        });
+                        continue;
+                    }
+                    $controls[] = Column::make(
+                            $iconButton::make([
+                                'variant' => $selected ? 'tonal' : 'text',
+                                'icon' => $iconName,
+                                'size' => 'small',
+                                'selected' => $selected,
+                                'accessibilityLabel' => $label,
+                            ])->onPress(function () use ($index, $label): bool {
+                                $this->setSampleValue($index, $label);
+
+                                return true;
+                            }),
+                            Text::make($label)->style(new Style(
+                                fontSize: 11.0,
+                                lineHeight: 16.0,
+                                fontWeight: $selected ? 700 : 500,
+                                textColor: $theme->color(
+                                    $selected ? ColorToken::Primary : ColorToken::MutedForeground,
+                                ),
+                                textAlign: \Pam\Native\TextAlignment::Center,
+                            )),
+                        )->style(new Style(
+                            gap: 2.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::Center,
+                        ))->style(new Style(
+                        flexGrow: 1.0,
+                        minWidth: 48.0,
+                        minHeight: 56.0,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ));
+                }
+                if ($this->tag === 'p-bottom-app-bar' && ($previewProps['fab'] ?? false)) {
+                    $fab = MaterialComponentMap::TAGS['p-fab'];
+                    $createSelected = $active === 'Create';
+                    $controls[] = $fab::make(
+                        [
+                            'icon' => $createSelected ? 'CheckIcon' : 'AddIcon',
+                            'size' => 'small',
+                            'accessibilityLabel' => $createSelected ? 'Create selected' : 'Create',
+                            'selected' => $createSelected,
+                        ],
+                        Text::make($createSelected ? '✓' : '+')->style(new Style(
+                            fontSize: 28.0,
+                            lineHeight: 28.0,
+                            fontWeight: 400,
+                            textColor: $theme->color(ColorToken::PrimaryForeground),
+                            textAlign: \Pam\Native\TextAlignment::Center,
+                        )),
+                    )->onPress(function () use ($index): bool {
+                        $this->setSampleValue($index, 'Create');
+
+                        return true;
+                    });
+                }
+                $preview = $component::make($previewProps, ...$controls);
+            } elseif ($this->tag === 'p-result-state') {
+                $actionCompleted = (bool) ($this->sampleValues[$index] ?? false);
+                if ($actionCompleted) $previewProps['actionLabel'] = 'Report opened';
+                $preview = Column::make(
+                    $component::make($previewProps)->onPress(
+                        function () use ($index): bool {
+                            $this->setSampleValue($index, true);
+
+                            return true;
+                        },
+                    ),
+                    Text::make($actionCompleted
+                        ? 'Primary action completed'
+                        : 'Primary action ready')->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 18.0,
+                            fontWeight: $actionCompleted ? 600 : 400,
+                            textColor: $theme->color(
+                                $actionCompleted
+                                    ? ColorToken::Primary
+                                    : ColorToken::MutedForeground,
+                            ),
+                            textAlign: \Pam\Native\TextAlignment::Center,
+                        )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    gap: 6.0,
+                    alignItems: Align::Center,
+                ));
+            } elseif ($this->tag === 'p-chart') {
+                $selectedPoint = is_array($this->sampleValues[$index] ?? null)
+                    ? $this->sampleValues[$index]
+                    : null;
+                if (is_numeric($selectedPoint['index'] ?? null)) {
+                    $previewProps['selectedIndex'] = (int) $selectedPoint['index'];
+                }
+                $pointLabel = $selectedPoint === null
+                    ? 'Touch or drag across the chart'
+                    : 'Point '.((int) $selectedPoint['index'] + 1)
+                        .' · '.self::stringValue($selectedPoint['value'] ?? '');
+                $preview = Column::make(
+                    $component::make($previewProps)->onChange(
+                        function (mixed $point) use ($index): bool {
+                            if (is_array($point)) $this->setSampleValue($index, $point);
+
+                            return true;
+                        },
+                    ),
+                    Text::make($pointLabel)->style(new Style(
+                        fontSize: 12.0,
+                        lineHeight: 18.0,
+                        fontWeight: $selectedPoint === null ? 400 : 600,
+                        textColor: $theme->color(
+                            $selectedPoint === null
+                                ? ColorToken::MutedForeground
+                                : ColorToken::Primary,
+                        ),
+                    )),
+                )->style(new Style(widthPercent: 100.0, gap: 6.0));
+            } elseif ($this->tag === 'p-tree-select') {
+                $selected = $this->sampleValues[$index]
+                    ?? $previewProps['modelValue']
+                    ?? ($previewProps['multiple'] ?? false ? [] : null);
+                $opened = $this->treeOpened[$index]
+                    ?? (is_array($previewProps['opened'] ?? null)
+                        ? array_values($previewProps['opened'])
+                        : []);
+                $previewProps['modelValue'] = $selected;
+                $previewProps['opened'] = $opened;
+                $selectionCount = is_array($selected)
+                    ? count($selected)
+                    : ($selected === null || $selected === '' ? 0 : 1);
+                $preview = Column::make(
+                    $component::make($previewProps)
+                        ->onChange(function (mixed $value) use ($index): bool {
+                            $this->setSampleValue($index, $value);
+
+                            return true;
+                        })
+                        ->onToggle(function (mixed $value) use ($index): bool {
+                            if (is_array($value)) $this->setTreeOpened($index, $value);
+
+                            return true;
+                        }),
+                    Text::make($selectionCount === 0
+                        ? 'Choose an item'
+                        : $selectionCount.' item(s) selected')->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 18.0,
+                            fontWeight: $selectionCount === 0 ? 400 : 600,
+                            textColor: $theme->color(
+                                $selectionCount === 0
+                                    ? ColorToken::MutedForeground
+                                    : ColorToken::Primary,
+                            ),
+                        )),
+                )->style(new Style(widthPercent: 100.0, gap: 6.0));
+            } elseif ($this->tag === 'p-data-grid') {
+                $selectedRows = is_array($this->sampleValues[$index] ?? null)
+                    ? array_values($this->sampleValues[$index])
+                    : [];
+                $previewProps['modelValue'] = $selectedRows;
+                $preview = Column::make(
+                    $component::make($previewProps)->onChange(
+                        function (mixed $selected) use ($index): bool {
+                            if (is_array($selected)) {
+                                $this->setSampleValue($index, array_values($selected));
+                            }
+
+                            return true;
+                        },
+                    ),
+                    Text::make(count($selectedRows) === 0
+                        ? 'No rows selected'
+                        : count($selectedRows).' row(s) selected')->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 18.0,
+                            fontWeight: count($selectedRows) === 0 ? 400 : 600,
+                            textColor: $theme->color(
+                                count($selectedRows) === 0
+                                    ? ColorToken::MutedForeground
+                                    : ColorToken::Primary,
+                            ),
+                        )),
+                )->style(new Style(widthPercent: 100.0, gap: 6.0));
+            } elseif ($this->tag === 'p-reorderable-list') {
+                $items = is_array($this->sampleValues[$index] ?? null)
+                    ? array_values($this->sampleValues[$index])
+                    : (is_array($previewProps['items'] ?? null)
+                        ? array_values($previewProps['items'])
+                        : []);
+                $previewProps['items'] = $items;
+                $order = array_map(
+                    static fn (mixed $item): string => is_array($item)
+                        ? self::stringValue($item['label'] ?? $item['title'] ?? $item['value'] ?? '')
+                        : self::stringValue($item),
+                    $items,
+                );
+                $preview = Column::make(
+                    $component::make($previewProps)->onChange(
+                        function (mixed $next) use ($index): bool {
+                            if (is_array($next)) $this->setSampleValue($index, array_values($next));
+
+                            return true;
+                        },
+                    ),
+                    Text::make('Order: '.implode(' · ', $order))->style(new Style(
+                        fontSize: 12.0,
+                        lineHeight: 18.0,
+                        textColor: $theme->color(ColorToken::MutedForeground),
+                    )),
+                )->style(new Style(widthPercent: 100.0, gap: 6.0));
+            } elseif ($this->tag === 'p-swipe-actions') {
+                $lastAction = self::stringValue($this->sampleValues[$index] ?? '');
+                $preview = Column::make(
+                    $component::make($previewProps)->onChange(
+                        function (mixed $action) use ($index): bool {
+                            $this->setSampleValue($index, self::stringValue($action));
+
+                            return true;
+                        },
+                    ),
+                    Text::make($lastAction === ''
+                        ? 'Swipe horizontally to choose an action'
+                        : $lastAction.' action completed')->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 18.0,
+                            fontWeight: $lastAction === '' ? 400 : 600,
+                            textColor: $theme->color(
+                                $lastAction === '' ? ColorToken::MutedForeground : ColorToken::Primary,
+                            ),
+                        )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    gap: 6.0,
+                ));
+            } elseif ($this->tag === 'p-navigation-drawer') {
+                $open = $this->drawerOpen[$index] ?? (($previewProps['open'] ?? false) === true);
+                $previewProps['open'] = $open;
+                $drawerLabel = ($previewProps['position'] ?? null) === 'end'
+                    ? 'End-edge'
+                    : ucfirst(self::stringValue($previewProps['type'] ?? 'front'));
+                $permanentDrawer = ($previewProps['type'] ?? null) === 'permanent';
+                if ($permanentDrawer) {
+                    $previewProps['width'] ??= 216.0;
+                }
+                $content = $permanentDrawer
+                    ? Column::make(
+                        Text::make('Live canvas')->style(new Style(
+                            fontSize: 16.0,
+                            lineHeight: 22.0,
+                            fontWeight: 700,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                            textAlign: \Pam\Native\TextAlignment::Center,
+                        )),
+                        Text::make('Adaptive')->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 18.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                            textAlign: \Pam\Native\TextAlignment::Center,
+                        )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        heightPercent: 100.0,
+                        gap: 4.0,
+                        paddingHorizontal: 10.0,
+                        backgroundColor: $theme->color(ColorToken::SurfaceContainerLow),
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ))
+                    : Column::make(
+                    Text::make($drawerLabel.' drawer')->style(new Style(
+                        fontSize: 18.0,
+                        lineHeight: 24.0,
+                        fontWeight: 700,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                    )),
+                    Text::make('Swipe from the edge or use the control below.')->style(new Style(
+                        fontSize: 13.0,
+                        lineHeight: 20.0,
+                        textColor: $theme->color(ColorToken::MutedForeground),
+                    )),
+                    Pressable::make(Text::make('Open navigation')->style(new Style(
+                        fontSize: 14.0,
+                        lineHeight: 20.0,
+                        fontWeight: 700,
+                        textColor: $theme->color(ColorToken::PrimaryForeground),
+                    )))->style(new Style(
+                        alignSelf: Align::Start,
+                        minHeight: 48.0,
+                        paddingHorizontal: 18.0,
+                        backgroundColor: $theme->color(ColorToken::Primary),
+                        borderRadius: 16.0,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::Center,
+                    ))->accessibilityRole(AccessibilityRole::Button)
+                        ->accessibilityLabel('Open '.$drawerLabel.' navigation drawer')
+                        ->onPress(function () use ($index): bool {
+                            $this->setDrawerOpen($index, true);
+
+                            return true;
+                        }),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    heightPercent: 100.0,
+                    padding: 20.0,
+                    gap: 10.0,
+                    backgroundColor: 0x00000000,
+                    justifyContent: Justify::Center,
+                ));
+                $preview = $component::make($previewProps, $content)
+                    ->onChange(function (mixed $value) use ($index): bool {
+                        $this->sampleValues[$index] = $value;
+                        $this->drawerOpen[$index] = false;
+                        $this->invalidateInteractivePreview();
+
+                        return true;
+                    })
+                    ->onDrawerOpen(function () use ($index): bool {
+                        $this->setDrawerOpen($index, true);
+
+                        return true;
+                    })
+                    ->onDrawerClose(function () use ($index): bool {
+                        $this->setDrawerOpen($index, false);
+
+                        return true;
+                    });
+            } elseif ($this->tag === 'p-app-scaffold') {
+                $preview = $component::make(
+                    $previewProps,
+                    Column::make(
+                        Row::make(
+                            Column::make(
+                                Text::make('Today')->style(new Style(
+                                    fontSize: 24.0,
+                                    lineHeight: 32.0,
+                                    fontWeight: 700,
+                                    textColor: $theme->color(ColorToken::OnSurface),
+                                )),
+                                Text::make('Adaptive native canvas')->style(new Style(
+                                    fontSize: 14.0,
+                                    lineHeight: 20.0,
+                                    textColor: $theme->color(ColorToken::MutedForeground),
+                                )),
+                            )->style(new Style(gap: 2.0)),
+                            Text::make('LIVE')->style(new Style(
+                                paddingHorizontal: 12.0,
+                                paddingVertical: 6.0,
+                                borderRadius: 999.0,
+                                backgroundColor: $theme->color(ColorToken::Accent),
+                                textColor: $theme->color(ColorToken::Primary),
+                                fontSize: 11.0,
+                                lineHeight: 16.0,
+                                fontWeight: 700,
+                            )),
+                        )->style(new Style(
+                            widthPercent: 100.0,
+                            alignItems: Align::Center,
+                            justifyContent: Justify::SpaceBetween,
+                        )),
+                        Text::make('Safe areas, keyboard and edge-to-edge behavior are handled by the native host.')
+                            ->style(new Style(
+                                fontSize: 14.0,
+                                lineHeight: 20.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                            )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        heightPercent: 100.0,
+                        padding: 18.0,
+                        gap: 14.0,
+                        justifyContent: Justify::Center,
+                    )),
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    height: 184.0,
+                    minHeight: 184.0,
+                    maxHeight: 184.0,
+                    backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                    borderColor: $theme->color(ColorToken::OutlineVariant),
+                    borderWidth: 1.0,
+                    borderRadius: 20.0,
+                    overflow: \Pam\Native\Overflow::Hidden,
+                ));
+            } elseif ($this->tag === 'p-responsive-grid') {
+                $columns = max(1, min(4, (int) ($previewProps['columns'] ?? 2)));
+                $tiles = [];
+                foreach (array_slice(['Discover', 'Create', 'Review', 'Ship'], 0, $columns) as $tileIndex => $tile) {
+                    $tiles[] = Column::make(
+                        Text::make('0'.($tileIndex + 1))->style(new Style(
+                            fontSize: 12.0,
+                            lineHeight: 16.0,
+                            fontWeight: 700,
+                            textColor: $theme->color(ColorToken::Primary),
+                        )),
+                        Text::make($tile)->style(new Style(
+                            fontSize: 16.0,
+                            lineHeight: 24.0,
+                            fontWeight: 600,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                        )),
+                    )->style(new Style(
+                        minHeight: 88.0,
+                        padding: 16.0,
+                        gap: 4.0,
+                        backgroundColor: $theme->color(ColorToken::Accent),
+                        borderRadius: 16.0,
+                    ));
+                }
+                $preview = $component::make($previewProps, ...$tiles);
+            } elseif ($this->tag === 'p-pull-to-refresh') {
+                $previewProps['refreshing'] = $this->sampleValues[$index]
+                    ?? (($previewProps['refreshing'] ?? false) === true);
+                $preview = $component::make(
+                    $previewProps,
+                    Column::make(
+                        Text::make('Today')->style(new Style(
+                            fontSize: 18.0,
+                            lineHeight: 24.0,
+                            fontWeight: 700,
+                            textColor: $theme->color(ColorToken::OnSurface),
+                        )),
+                        Text::make('Pull down to sync the latest native state.')
+                            ->style(new Style(
+                                fontSize: 14.0,
+                                lineHeight: 20.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                            )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        minHeight: 144.0,
+                        padding: 20.0,
+                        gap: 8.0,
+                        backgroundColor: $theme->color(ColorToken::SurfaceContainerLow),
+                        borderRadius: 20.0,
+                    )),
+                )->style(new Style(widthPercent: 100.0, height: 176.0))
+                    ->onRefresh(function () use ($index): bool {
+                        $this->setSampleValue($index, true);
+
+                        return true;
+                    });
+            } elseif ($this->tag === 'p-popover') {
+                // Leave open state uncontrolled so the native anchored-overlay
+                // host owns tap, outside-dismiss and placement behaviour.
+                unset($previewProps['open'], $previewProps['isOpen']);
+                $trigger = Pressable::make(
+                    Row::make(
+                        Text::make('Show details')->style(new Style(
+                            fontSize: 14.0,
+                            lineHeight: 20.0,
+                            fontWeight: 700,
+                            textColor: $theme->color(ColorToken::PrimaryForeground),
+                        )),
+                        Text::make('···')->style(new Style(
+                            fontSize: 18.0,
+                            lineHeight: 20.0,
+                            fontWeight: 700,
+                            textColor: $theme->color(ColorToken::PrimaryForeground),
+                        )),
+                    )->style(new Style(
+                        widthPercent: 100.0,
+                        alignItems: Align::Center,
+                        justifyContent: Justify::SpaceBetween,
+                    )),
+                )->style(new Style(
+                    width: 176.0,
+                    minHeight: 48.0,
+                    paddingHorizontal: 16.0,
+                    backgroundColor: $theme->color(ColorToken::Primary),
+                    borderRadius: 16.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                ))->accessibilityLabel('Show popover details');
+                $content = Column::make(
+                    Text::make('Native overlay')->style(new Style(
+                        fontSize: 16.0,
+                        lineHeight: 24.0,
+                        fontWeight: 700,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                    )),
+                    Text::make('Anchored, adaptive and dismissible outside.')
+                        ->style(new Style(
+                            fontSize: 13.0,
+                            lineHeight: 20.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                        )),
+                )->collapsable(false)->style(new Style(
+                    width: 248.0,
+                    minHeight: 104.0,
+                    padding: 16.0,
+                    gap: 4.0,
+                    backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                    borderRadius: 20.0,
+                    elevation: 4.0,
+                ))->property(\Pam\Native\PropKey::Value, 'pam:overlay-content')
+                    ->property(\Pam\Native\PropKey::PositionType, PositionType::Absolute->value);
+                $preview = $component::make($previewProps, $trigger, $content)
+                    ->style(new Style(widthPercent: 100.0, minHeight: 56.0));
             } else {
                 $preview = $this->generatesNativeAnatomy()
                     ? $component::make($previewProps)
@@ -3670,9 +4372,14 @@ final class ComponentRoute extends Component
                 'p-number-input',
                 'p-otp-input', 'p-range-slider', 'p-rating', 'p-select',
                 'p-slider', 'p-text-field', 'p-textarea',
+                'p-password-field', 'p-masked-field', 'p-currency-field',
+                'p-tag-input', 'p-multi-select',
+                'p-date-range-picker', 'p-time-range-picker', 'p-filter-bar',
+                'p-search-bar',
+                'p-command-palette',
             ])) {
                 if ($preview instanceof UiComponent) {
-                    $preview = $preview->onChange(
+                $preview = $preview->onChange(
                         function (mixed $value) use ($index): bool {
                             $this->setSampleValue($index, $value);
 
@@ -3693,6 +4400,26 @@ final class ComponentRoute extends Component
                             });
                     }
                 }
+            }
+            if (
+                $preview instanceof UiComponent
+                && in_array($this->tag, ['p-virtual-list', 'p-section-list'], true)
+            ) {
+                $preview = $preview->style(new Style(
+                    widthPercent: 100.0,
+                    height: 260.0,
+                    borderRadius: 20.0,
+                    overflow: \Pam\Native\Overflow::Hidden,
+                ));
+            }
+            if ($preview instanceof UiComponent && $this->tag === 'p-navigation-drawer') {
+                $preview = $preview->style(new Style(
+                    widthPercent: 100.0,
+                    height: 280.0,
+                    minHeight: 280.0,
+                    borderRadius: 20.0,
+                    overflow: \Pam\Native\Overflow::Hidden,
+                ));
             }
             if (
                 $preview instanceof UiComponent
@@ -3938,7 +4665,9 @@ final class ComponentRoute extends Component
             $this->sampleValues = [];
             $this->expandedPanels = [];
             $this->sampleFocused = [];
+            $this->drawerOpen = [];
             $this->sheetSnapIndexes = [];
+            $this->treeOpened = [];
         }
         $this->state->auditScenario = $scenario;
         $this->state->auditRevision = (int) $this->state->auditRevision + 1;
@@ -3962,9 +4691,22 @@ final class ComponentRoute extends Component
         $this->invalidateInteractivePreview();
     }
 
+    private function setDrawerOpen(int $index, bool $open): void
+    {
+        $this->drawerOpen[$index] = $open;
+        $this->invalidateInteractivePreview();
+    }
+
     private function setSheetSnapIndex(int $index, int $value): void
     {
         $this->sheetSnapIndexes[$index] = max(0, $value);
+        $this->invalidateInteractivePreview();
+    }
+
+    /** @param list<string|int|float|bool> $value */
+    private function setTreeOpened(int $index, array $value): void
+    {
+        $this->treeOpened[$index] = array_values($value);
         $this->invalidateInteractivePreview();
     }
 
@@ -4848,6 +5590,43 @@ final class ComponentRoute extends Component
             $add($variations, 'Disabled', ['disabled' => true]);
         }
 
+        if ($this->tag === 'p-reorderable-list') {
+            $add($variations, 'Priorities', ['items' => ['Critical', 'High', 'Normal']]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Disabled', ['disabled' => true]);
+        }
+        if ($this->tag === 'p-swipe-actions') {
+            $add($variations, 'Mail', ['title' => 'Inbox message', 'startLabel' => 'Read', 'endLabel' => 'Delete']);
+            $add($variations, 'Tasks', ['title' => 'Design review', 'startLabel' => 'Done', 'endLabel' => 'Later']);
+            $add($variations, 'Reduced Motion', ['reduceMotion' => true]);
+        }
+        if ($this->tag === 'p-data-grid') {
+            $add($variations, 'Selectable', ['showSelect' => true]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+            $add($variations, 'Loading', ['loading' => true]);
+        }
+        if ($this->tag === 'p-tree-select') {
+            $add($variations, 'Collapsed', [
+                'opened' => [],
+                'modelValue' => null,
+            ]);
+            $add($variations, 'Multiple', [
+                'multiple' => true,
+                'modelValue' => ['android', 'web'],
+            ]);
+            $add($variations, 'Compact', ['density' => 'compact']);
+        }
+        if ($this->tag === 'p-result-state') {
+            $add($variations, 'Success', ['status' => 'success', 'title' => 'Payment complete']);
+            $add($variations, 'Warning', ['status' => 'warning', 'title' => 'Review required']);
+            $add($variations, 'Error', ['status' => 'error', 'title' => 'Something went wrong']);
+        }
+        if ($this->tag === 'p-chart') {
+            $add($variations, 'Line', ['type' => 'trend', 'fill' => false]);
+            $add($variations, 'Area', ['type' => 'area', 'fill' => true]);
+            $add($variations, 'Bars', ['type' => 'bar']);
+        }
+
         return $variations;
     }
 
@@ -5565,6 +6344,120 @@ final class ComponentRoute extends Component
                 ['label' => 'Offset', 'props' => ['progressViewOffset' => 24]],
                 ['label' => 'Disabled', 'props' => ['enabled' => false]],
             ],
+            'p-app-scaffold' => [
+                ['label' => 'Phone', 'props' => ['edges' => 'top,bottom']],
+                ['label' => 'Edge to edge', 'props' => ['edges' => 'left,right']],
+                ['label' => 'Keyboard aware', 'props' => ['keyboardAware' => true]],
+                ['label' => 'Compact', 'props' => ['density' => 'compact']],
+            ],
+            'p-navigation-bar' => [
+                ['label' => 'Three destinations', 'props' => ['destinations' => 3]],
+                ['label' => 'Four destinations', 'props' => ['destinations' => 4]],
+                ['label' => 'Five destinations', 'props' => ['destinations' => 5]],
+                ['label' => 'Tonal', 'props' => ['variant' => 'tonal']],
+            ],
+            'p-navigation-rail' => [
+                ['label' => 'Standard', 'props' => ['expanded' => false]],
+                ['label' => 'Expanded', 'props' => ['expanded' => true]],
+                ['label' => 'With FAB', 'props' => ['fab' => true]],
+                ['label' => 'Compact', 'props' => ['density' => 'compact']],
+            ],
+            'p-bottom-app-bar' => [
+                ['label' => 'Actions', 'props' => ['actionCount' => 3]],
+                ['label' => 'With FAB', 'props' => ['fab' => true]],
+                ['label' => 'Elevated', 'props' => ['elevation' => 4]],
+                ['label' => 'Tonal', 'props' => ['variant' => 'tonal']],
+            ],
+            'p-search-bar' => [
+                ['label' => 'Resting', 'props' => ['placeholder' => 'Search components']],
+                ['label' => 'Focused', 'props' => ['placeholder' => 'Search components', 'focused' => true]],
+                ['label' => 'With query', 'props' => ['modelValue' => 'Navigation']],
+                ['label' => 'Outlined', 'props' => ['outlined' => true]],
+            ],
+            'p-pagination' => [
+                ['label' => 'First page', 'props' => ['modelValue' => 1, 'length' => 5]],
+                ['label' => 'Middle page', 'props' => ['modelValue' => 3, 'length' => 7]],
+                ['label' => 'Last page', 'props' => ['modelValue' => 5, 'length' => 5]],
+                ['label' => 'Compact', 'props' => ['modelValue' => 4, 'length' => 12, 'totalVisible' => 5]],
+            ],
+            'p-segmented-button' => [
+                ['label' => 'Single', 'props' => ['modelValue' => 1]],
+                ['label' => 'Multiple', 'props' => ['multiple' => true, 'modelValue' => [1, 3]]],
+                ['label' => 'Icons', 'props' => ['icons' => true]],
+                ['label' => 'Disabled', 'props' => ['disabled' => true]],
+            ],
+            'p-password-field' => [
+                ['label' => 'Secure', 'props' => ['label' => 'Password', 'modelValue' => 'PAM-native-2026']],
+                ['label' => 'Revealed', 'props' => ['label' => 'Password', 'modelValue' => 'PAM-native-2026', 'revealed' => true]],
+                ['label' => 'Error', 'props' => ['label' => 'Password', 'error' => true, 'errorMessage' => 'Use at least 12 characters']],
+                ['label' => 'Disabled', 'props' => ['label' => 'Password', 'disabled' => true]],
+            ],
+            'p-masked-field' => [
+                ['label' => 'Phone', 'props' => ['label' => 'Mobile phone', 'pattern' => '(##) #####-####', 'modelValue' => '11987654321']],
+                ['label' => 'Document', 'props' => ['label' => 'CPF', 'pattern' => '###.###.###-##', 'modelValue' => '12345678901']],
+                ['label' => 'Focused', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'focused' => true]],
+                ['label' => 'Error', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'error' => true]],
+            ],
+            'p-currency-field' => [
+                ['label' => 'BRL', 'props' => ['label' => 'Investment', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'modelValue' => '128450']],
+                ['label' => 'USD', 'props' => ['label' => 'Revenue', 'prefix' => '$ ', 'locale' => 'en-US', 'modelValue' => '948025', 'decimalDigits' => 2]],
+                ['label' => 'No cents', 'props' => ['label' => 'Budget', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'modelValue' => '12000', 'decimalDigits' => 0]],
+                ['label' => 'Error', 'props' => ['label' => 'Amount', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'error' => true]],
+            ],
+            'p-tag-input' => [
+                ['label' => 'Skills', 'props' => ['label' => 'Skills', 'items' => ['PHP', 'Kotlin', 'Swift'], 'modelValue' => ['PHP', 'Kotlin']]],
+                ['label' => 'Create tag', 'props' => ['label' => 'Technologies', 'items' => ['Android', 'iOS'], 'modelValue' => ['Android']]],
+                ['label' => 'Empty', 'props' => ['label' => 'Tags', 'placeholder' => 'Add tags', 'items' => ['Design', 'Code'], 'modelValue' => []]],
+                ['label' => 'Disabled', 'props' => ['label' => 'Tags', 'items' => ['Design'], 'disabled' => true]],
+            ],
+            'p-multi-select' => [
+                ['label' => 'Teams', 'props' => ['label' => 'Teams', 'items' => ['Design', 'Engineering', 'Product'], 'modelValue' => ['Design', 'Product']]],
+                ['label' => 'Searchable', 'props' => ['label' => 'People', 'items' => ['Ana', 'Bruno', 'Carla'], 'modelValue' => ['Ana']]],
+                ['label' => 'Empty', 'props' => ['label' => 'Categories', 'placeholder' => 'Choose categories', 'items' => ['Mobile', 'Web'], 'modelValue' => []]],
+                ['label' => 'Error', 'props' => ['label' => 'Categories', 'items' => ['Mobile'], 'modelValue' => [], 'error' => true]],
+            ],
+            'p-file-input' => [
+                ['label' => 'Single file', 'props' => ['label' => 'Contract', 'text' => 'Choose document']],
+                ['label' => 'Multiple files', 'props' => ['label' => 'Attachments', 'multiple' => true, 'text' => 'Choose files', 'limit' => 5]],
+                ['label' => 'Selected', 'props' => ['label' => 'Resume', 'text' => 'resume.pdf']],
+                ['label' => 'Disabled', 'props' => ['label' => 'Attachments', 'disabled' => true]],
+            ],
+            'p-date-range-picker' => [
+                ['label' => 'Selected range', 'props' => ['modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14']]],
+                ['label' => 'Open range', 'props' => ['modelValue' => ['from' => '2026-09-08', 'to' => '']]],
+                ['label' => 'With week', 'props' => ['showWeek' => true, 'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14']]],
+                ['label' => 'Disabled dates', 'props' => ['disabledDates' => ['2026-09-10', '2026-09-11']]],
+            ],
+            'p-time-range-picker' => [
+                ['label' => 'Business hours', 'props' => ['modelValue' => ['from' => '09:00', 'to' => '18:00']]],
+                ['label' => 'Appointment', 'props' => ['modelValue' => ['from' => '14:30', 'to' => '15:15']]],
+                ['label' => '12 hour', 'props' => ['format' => '12h', 'modelValue' => ['from' => '09:00', 'to' => '17:00']]],
+                ['label' => 'Disabled', 'props' => ['disabled' => true]],
+            ],
+            'p-filter-bar' => [
+                ['label' => 'Orders', 'props' => ['items' => ['Open', 'Paid', 'Overdue'], 'modelValue' => ['Open']]],
+                ['label' => 'Multiple', 'props' => ['items' => ['Android', 'iOS', 'Web'], 'modelValue' => ['Android', 'iOS']]],
+                ['label' => 'Empty', 'props' => ['items' => ['Recent', 'Popular', 'Saved'], 'modelValue' => []]],
+                ['label' => 'Disabled', 'props' => ['items' => ['Active', 'Archived'], 'modelValue' => [], 'disabled' => true]],
+            ],
+            'p-navigation-drawer' => [
+                ['label' => 'Front', 'props' => ['open' => true, 'type' => 'front', 'items' => ['Home', 'Explore', 'Settings'], 'modelValue' => 'Home']],
+                ['label' => 'Slide', 'props' => ['open' => false, 'type' => 'slide', 'items' => ['Home', 'Projects', 'Profile']]],
+                ['label' => 'End edge', 'props' => ['open' => false, 'position' => 'end', 'items' => ['Activity', 'Messages']]],
+                ['label' => 'Permanent', 'props' => ['open' => false, 'type' => 'permanent', 'items' => ['Dashboard', 'Reports']]],
+            ],
+            'p-command-palette' => [
+                ['label' => 'Commands', 'props' => ['label' => 'Quick actions', 'open' => true, 'items' => ['New project', 'Open file', 'Publish']]],
+                ['label' => 'Navigation', 'props' => ['label' => 'Navigate', 'open' => false, 'items' => ['Go to dashboard', 'Open settings']]],
+                ['label' => 'Selected', 'props' => ['label' => 'Build target', 'open' => false, 'items' => ['Build Android', 'Build iOS'], 'modelValue' => 'Build Android']],
+                ['label' => 'Empty', 'props' => ['label' => 'No matches', 'open' => false, 'items' => []]],
+            ],
+            'p-progress-button' => [
+                ['label' => 'Queued', 'props' => ['text' => 'Upload', 'progress' => 0]],
+                ['label' => 'Uploading', 'props' => ['text' => 'Uploading 42%', 'progress' => 42]],
+                ['label' => 'Almost done', 'props' => ['text' => 'Publishing 88%', 'progress' => 88]],
+                ['label' => 'Indeterminate', 'props' => ['text' => 'Preparing', 'indeterminate' => true]],
+            ],
             default => null,
         };
     }
@@ -5620,6 +6513,16 @@ final class ComponentRoute extends Component
 
         if ($this->tag === 'p-list') {
             return [['label' => 'Selectable list', 'props' => []]];
+        }
+
+        if ($this->tag === 'p-data-grid') {
+            return [[
+                'label' => 'Selectable data grid',
+                'props' => [
+                    'showSelect' => true,
+                    'items' => $this->tableRows(6),
+                ],
+            ]];
         }
 
         if ($this->tag === 'p-item') {
@@ -6733,6 +7636,10 @@ final class ComponentRoute extends Component
                 'prefetch' => 8,
             ],
             'p-virtual-list' => [
+                'items' => [
+                    'Design system', 'Android runtime', 'UIKit renderer',
+                    'Accessibility', 'Motion', 'Performance',
+                ],
                 'rowHeight' => 56,
                 'prefetch' => 8,
                 'removeClippedSubviews' => true,
@@ -6749,6 +7656,119 @@ final class ComponentRoute extends Component
             'p-popover' => [
                 'open' => false,
                 'placement' => \Pam\MobileUi\Enum\Placement::Bottom->value,
+            ],
+            'p-app-scaffold' => ['edges' => 'top,bottom,left,right'],
+            'p-navigation-bar' => ['destinations' => 4, 'modelValue' => 'components'],
+            'p-navigation-rail' => ['destinations' => 4, 'modelValue' => 'components'],
+            'p-bottom-app-bar' => ['actionCount' => 3],
+            'p-search-bar' => [
+                'label' => 'Search',
+                'placeholder' => 'Search components',
+                'accessibilityLabel' => 'Search components',
+            ],
+            'p-pagination' => ['modelValue' => 3, 'length' => 7, 'totalVisible' => 5],
+            'p-segmented-button' => ['modelValue' => 'week'],
+            'p-password-field' => [
+                'label' => 'Password',
+                'modelValue' => 'PAM-native-2026',
+                'autoComplete' => 'password',
+            ],
+            'p-masked-field' => [
+                'label' => 'Mobile phone',
+                'pattern' => '(##) #####-####',
+                'modelValue' => '11987654321',
+            ],
+            'p-currency-field' => [
+                'label' => 'Amount',
+                'prefix' => 'R$ ',
+                'modelValue' => '128450',
+                'decimalDigits' => 2,
+            ],
+            'p-tag-input' => [
+                'label' => 'Skills',
+                'items' => ['PHP', 'Kotlin', 'Swift'],
+                'modelValue' => ['PHP', 'Kotlin'],
+            ],
+            'p-multi-select' => [
+                'label' => 'Teams',
+                'items' => ['Design', 'Engineering', 'Product'],
+                'modelValue' => ['Design', 'Product'],
+            ],
+            'p-file-input' => [
+                'label' => 'Attachments',
+                'text' => 'Choose files',
+                'multiple' => true,
+                'limit' => 5,
+            ],
+            'p-date-range-picker' => [
+                'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14'],
+            ],
+            'p-time-range-picker' => [
+                'modelValue' => ['from' => '09:00', 'to' => '18:00'],
+            ],
+            'p-filter-bar' => [
+                'items' => ['Open', 'Paid', 'Overdue'],
+                'modelValue' => ['Open'],
+            ],
+            'p-navigation-drawer' => [
+                'open' => true,
+                'items' => ['Home', 'Explore', 'Settings'],
+                'modelValue' => 'Home',
+            ],
+            'p-command-palette' => [
+                'open' => true,
+                'label' => 'Commands',
+                'items' => ['New project', 'Open file', 'Publish'],
+            ],
+            'p-progress-button' => [
+                'text' => 'Publishing 42%',
+                'progress' => 42,
+            ],
+            'p-reorderable-list' => [
+                'items' => ['Research', 'Prototype', 'Build', 'Ship'],
+            ],
+            'p-swipe-actions' => [
+                'title' => 'Quarterly design review',
+                'startLabel' => 'Archive',
+                'endLabel' => 'Delete',
+            ],
+            'p-data-grid' => [
+                'headers' => [
+                    ['title' => 'Product', 'key' => 'name'],
+                    ['title' => 'Status', 'key' => 'status'],
+                    ['title' => 'Price', 'key' => 'price'],
+                ],
+                // Component pages demonstrate a concise data set. Large-data
+                // virtualization belongs to the dedicated Virtual List page,
+                // avoiding a tall nested scrolling surface in this showcase.
+                'items' => $this->tableRows(6),
+                'showSelect' => false,
+            ],
+            'p-tree-select' => [
+                'items' => [
+                    ['title' => 'Mobile', 'value' => 'mobile', 'children' => [
+                        ['title' => 'Android', 'value' => 'android'],
+                        ['title' => 'iOS', 'value' => 'ios'],
+                    ]],
+                    ['title' => 'Web', 'value' => 'web'],
+                ],
+                'opened' => ['mobile'],
+                'modelValue' => 'android',
+            ],
+            'p-result-state' => [
+                'status' => 'success',
+                'title' => 'Ready to launch',
+                'description' => 'Every validation passed on the native runtime.',
+                'actionLabel' => 'View report',
+            ],
+            'p-chart' => [
+                'values' => '12,18,14,26,22,34,31,42,38,52,48,64',
+                'type' => 'area',
+                'smooth' => true,
+                'fill' => true,
+                'showPoints' => true,
+                'lineWidth' => 3,
+                'accessibilityLabel' => 'Revenue increased from 12 to 64',
             ],
             'p-autocomplete', 'p-combobox', 'p-select' => [
                 'items' => ['Design', 'Engineering', 'Product', 'Research'],
@@ -6900,17 +7920,26 @@ final class ComponentRoute extends Component
             'p-carousel',
             'p-data-table',
             'p-data-table-virtual',
+            'p-data-grid',
             'p-date-input',
             'p-date-picker',
             'p-expansion-panels',
             'p-number-input',
             'p-otp-input',
+            'p-password-field',
+            'p-masked-field',
+            'p-currency-field',
+            'p-tag-input',
+            'p-multi-select',
+            'p-file-input',
+            'p-progress-button',
             'p-progress-circular',
             'p-progress-linear',
             'p-range-slider',
             'p-rating',
             'p-select',
             'p-section-list',
+            'p-virtual-list',
             'p-slider',
             'p-stepper',
             'p-stepper-vertical',
@@ -6919,6 +7948,17 @@ final class ComponentRoute extends Component
             'p-textarea',
             'p-time-picker',
             'p-treeview',
+            'p-tree-select',
+            'p-chart',
+            'p-reorderable-list',
+            'p-swipe-actions',
+            'p-result-state',
+            'p-search-bar',
+            'p-date-range-picker',
+            'p-time-range-picker',
+            'p-filter-bar',
+            'p-navigation-drawer',
+            'p-command-palette',
         ]);
     }
 

@@ -14,27 +14,22 @@ use Pam\Native\NodeKind;
 use Pam\Native\PropKey;
 use Pam\Native\TemplateRegistry;
 
-$vendorAutoload = dirname(__DIR__).'/vendor/autoload.php';
-if (is_file($vendorAutoload)) {
-    require $vendorAutoload;
-} else {
-    $localRoots = [
-        'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',
-        'Pam\\Native\\' => dirname(__DIR__, 2).'/pam-native/packages/native/src/',
-    ];
-    spl_autoload_register(static function (string $class) use ($localRoots): void {
-        foreach ($localRoots as $prefix => $root) {
-            if (!str_starts_with($class, $prefix)) {
-                continue;
-            }
-            $path = $root.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
-            if (is_file($path)) {
-                require_once $path;
-            }
-        }
-    });
-    require_once dirname(__DIR__).'/src/Generated/MaterialComponentFacades.php';
-}
+$pamNativeRoot = getenv('PAM_NATIVE_ROOT');
+$pamNativeRoot = is_string($pamNativeRoot) && $pamNativeRoot !== ''
+    ? $pamNativeRoot
+    : dirname(__DIR__, 2).'/pam-native';
+$localRoots = [
+    'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',
+    'Pam\\Native\\' => rtrim($pamNativeRoot, '/').'/packages/native/src/',
+];
+spl_autoload_register(static function (string $class) use ($localRoots): void {
+    foreach ($localRoots as $prefix => $root) {
+        if (!str_starts_with($class, $prefix)) continue;
+        $path = $root.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
+        if (is_file($path)) require_once $path;
+    }
+});
+require_once dirname(__DIR__).'/src/Generated/MaterialComponentFacades.php';
 
 TemplateRegistry::reset();
 (new MobileUiPluginProvider())->register();
@@ -283,7 +278,6 @@ $removedMaterialTags = [
     'p-date-picker-month',
     'p-date-picker-months',
     'p-date-picker-years',
-    'p-file-input',
     'p-file-upload',
     'p-file-upload-item',
     'p-field',
@@ -300,8 +294,6 @@ $removedMaterialTags = [
     'p-list-group',
     'p-list-subheader',
     'p-main',
-    'p-navigation-drawer',
-    'p-pagination',
     'p-parallax',
     'p-responsive',
     'p-row',

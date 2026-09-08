@@ -28,17 +28,18 @@ $static = [
     'p-divider', 'p-empty-state', 'p-expansion-panel-text', 'p-icon', 'p-img',
     'p-progress-circular', 'p-progress-linear', 'p-sheet', 'p-skeleton-loader',
     'p-sparkline', 'p-stepper-header', 'p-stepper-window-item', 'p-timeline',
+    'p-app-scaffold', 'p-chart', 'p-responsive-grid', 'p-result-state',
 ];
 
 $families = [
     'Actions and identity' => ['p-btn', 'p-btn-group', 'p-btn-toggle', 'p-chip', 'p-chip-group', 'p-fab', 'p-icon-btn', 'p-speed-dial', 'p-avatar', 'p-badge', 'p-icon'],
     'Selection controls' => ['p-checkbox', 'p-radio', 'p-radio-group', 'p-switch', 'p-slider', 'p-range-slider', 'p-rating', 'p-item', 'p-item-group'],
-    'Forms and editing' => ['p-form', 'p-text-field', 'p-textarea', 'p-number-input', 'p-otp-input', 'p-autocomplete', 'p-combobox', 'p-select', 'p-color-input'],
-    'Dates and time' => ['p-calendar', 'p-calendar-day', 'p-date-input', 'p-date-picker', 'p-time-picker'],
-    'Data display' => ['p-data-table', 'p-data-table-virtual', 'p-list', 'p-list-item', 'p-infinite-scroll', 'p-timeline', 'p-timeline-item', 'p-treeview', 'p-treeview-item', 'p-sparkline'],
-    'Navigation and progress' => ['p-app-bar', 'p-app-bar-nav-icon', 'p-toolbar', 'p-tabs', 'p-tab', 'p-stepper', 'p-stepper-header', 'p-stepper-item', 'p-stepper-actions', 'p-stepper-window', 'p-stepper-window-item', 'p-stepper-vertical', 'p-stepper-vertical-item', 'p-stepper-vertical-actions', 'p-slide-group', 'p-slide-group-item'],
-    'Overlays and feedback' => ['p-alert', 'p-banner', 'p-banner-actions', 'p-bottom-sheet', 'p-dialog', 'p-menu', 'p-overlay', 'p-snackbar', 'p-tooltip', 'p-progress-circular', 'p-progress-linear', 'p-skeleton-loader', 'p-empty-state'],
-    'Surfaces and media' => ['p-card', 'p-card-actions', 'p-sheet', 'p-divider', 'p-carousel', 'p-carousel-item', 'p-img', 'p-expansion-panels', 'p-expansion-panel', 'p-expansion-panel-title', 'p-expansion-panel-text'],
+    'Forms and editing' => ['p-form', 'p-text-field', 'p-textarea', 'p-number-input', 'p-otp-input', 'p-autocomplete', 'p-combobox', 'p-select', 'p-color-input', 'p-search-bar', 'p-password-field', 'p-masked-field', 'p-currency-field', 'p-tag-input', 'p-multi-select', 'p-file-input', 'p-filter-bar', 'p-segmented-button'],
+    'Dates and time' => ['p-calendar', 'p-calendar-day', 'p-date-input', 'p-date-picker', 'p-time-picker', 'p-date-range-picker', 'p-time-range-picker'],
+    'Data display' => ['p-data-table', 'p-data-table-virtual', 'p-data-grid', 'p-list', 'p-list-item', 'p-virtual-list', 'p-section-list', 'p-reorderable-list', 'p-swipe-actions', 'p-pull-to-refresh', 'p-infinite-scroll', 'p-timeline', 'p-timeline-item', 'p-treeview', 'p-treeview-item', 'p-tree-select', 'p-sparkline', 'p-chart'],
+    'Navigation and progress' => ['p-app-bar', 'p-app-bar-nav-icon', 'p-app-scaffold', 'p-bottom-app-bar', 'p-navigation-bar', 'p-navigation-rail', 'p-navigation-drawer', 'p-pagination', 'p-toolbar', 'p-tabs', 'p-tab', 'p-stepper', 'p-stepper-header', 'p-stepper-item', 'p-stepper-actions', 'p-stepper-window', 'p-stepper-window-item', 'p-stepper-vertical', 'p-stepper-vertical-item', 'p-stepper-vertical-actions', 'p-slide-group', 'p-slide-group-item'],
+    'Overlays and feedback' => ['p-alert', 'p-banner', 'p-banner-actions', 'p-bottom-sheet', 'p-command-palette', 'p-dialog', 'p-menu', 'p-overlay', 'p-popover', 'p-snackbar', 'p-tooltip', 'p-progress-button', 'p-progress-circular', 'p-progress-linear', 'p-skeleton-loader', 'p-empty-state', 'p-result-state'],
+    'Surfaces and media' => ['p-card', 'p-card-actions', 'p-sheet', 'p-divider', 'p-carousel', 'p-carousel-item', 'p-img', 'p-responsive-grid', 'p-expansion-panels', 'p-expansion-panel', 'p-expansion-panel-title', 'p-expansion-panel-text'],
 ];
 $familyByTag = [];
 foreach ($families as $family => $tags) {
