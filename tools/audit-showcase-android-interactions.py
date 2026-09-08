@@ -40,7 +40,7 @@ STATIC = {
     "p-skeleton-loader", "p-sparkline", "p-timeline",
     "p-expansion-panel-text",
     "p-stepper-header", "p-stepper-window", "p-stepper-window-item",
-    "p-app-scaffold", "p-chart", "p-responsive-grid", "p-result-state",
+    "p-app-scaffold", "p-responsive-grid", "p-result-state",
 }
 PRESS = {
     "p-app-bar", "p-app-bar-nav-icon", "p-banner-actions", "p-btn",
@@ -79,7 +79,7 @@ SELECT = {
     "p-list",
     "p-bottom-app-bar", "p-data-grid", "p-filter-bar", "p-navigation-bar",
     "p-navigation-drawer", "p-navigation-rail", "p-pagination",
-    "p-segmented-button", "p-tree-select",
+    "p-segmented-button", "p-tree-select", "p-chart",
 }
 SCROLL = {"p-data-table-virtual", "p-section-list", "p-virtual-list"}
 GESTURE = {"p-pull-to-refresh", "p-reorderable-list", "p-swipe-actions"}
@@ -902,6 +902,31 @@ def exercise(
         if "No rows selected" in after.all_text():
             raise AuditFailure("selectable data grid row did not publish selection")
         audit.settled_screenshot_hash(f"{evidence_name}-after")
+        return after, True
+
+    if kind == InteractionKind.SELECT and tag == "p-chart":
+        charts = [
+            node for node in before.nodes()
+            if enabled(node)
+            and node.attrib.get("class") == "android.widget.ImageView"
+            and node.attrib.get("clickable") == "true"
+        ]
+        if not charts:
+            raise AuditFailure("interactive chart surface is not exposed")
+        area = bounds(max(charts, key=lambda node: bounds(node).width))
+        audit.tap(Bounds(
+            area.left + (area.width * 3 // 4) - 12,
+            area.top + area.height // 2 - 12,
+            area.left + (area.width * 3 // 4) + 12,
+            area.top + area.height // 2 + 12,
+        ))
+        after = audit.dump(f"{evidence_name}-after")
+        assert_healthy(after, route)
+        if not re.search(r"Point\s+\d+\s+·", after.all_text()):
+            raise AuditFailure("chart touch did not publish the selected data point")
+        after_hash = audit.settled_screenshot_hash(f"{evidence_name}-after")
+        if after.xml == before.xml and after_hash == before_hash:
+            raise AuditFailure("chart touch produced no visible selection")
         return after, True
 
     if kind == InteractionKind.SELECT:
