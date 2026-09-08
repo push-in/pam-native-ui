@@ -2247,7 +2247,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? ""
         return source
             .split(whereSeparator: { $0 == "," || $0 == "\n" || $0 == ";" || $0 == " " })
-            .compactMap { Double($0).map(CGFloat.init) }
+            .compactMap { point -> CGFloat? in
+                guard let value = Double(String(point)) else { return nil }
+                return CGFloat(value)
+            }
     }
 
     private var sparklineAccessibilityValue: String? {
