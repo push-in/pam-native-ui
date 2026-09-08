@@ -97,6 +97,7 @@ $map .= "    public const array IDS = ".var_export($ids, true).";\n\n";
 $map .= "    /** @var array<string, list<string>> */\n";
 $map .= "    public const array MODULES = ".var_export($modules, true).";\n\n";
 $map .= "    private function __construct()\n    {\n    }\n}\n";
+$map = str_replace(" => \n", " =>\n", $map);
 
 $materialParity = json_encode([
     '$schema' => './material-parity.schema.json',

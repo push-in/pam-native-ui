@@ -574,6 +574,11 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::Scroll, $handler);
     }
 
+    final public function onRefresh(Closure $handler): static
+    {
+        return $this->on(EventKind::Refresh, $handler);
+    }
+
     final public function onEndReached(Closure $handler): static
     {
         return $this->on(EventKind::EndReached, $handler);

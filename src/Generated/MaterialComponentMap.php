@@ -92,6 +92,11 @@ final class MaterialComponentMap
   'p-tooltip' => 'Pam\\MobileUi\\Material\\PTooltip',
   'p-treeview' => 'Pam\\MobileUi\\Material\\PTreeview',
   'p-treeview-item' => 'Pam\\MobileUi\\Material\\PTreeviewItem',
+  'p-popover' => 'Pam\\MobileUi\\Material\\PPopover',
+  'p-responsive-grid' => 'Pam\\MobileUi\\Material\\PResponsiveGrid',
+  'p-virtual-list' => 'Pam\\MobileUi\\Material\\PVirtualList',
+  'p-section-list' => 'Pam\\MobileUi\\Material\\PSectionList',
+  'p-pull-to-refresh' => 'Pam\\MobileUi\\Material\\PPullToRefresh',
 );
 
     /** @var array<string, int> */
@@ -180,227 +185,232 @@ final class MaterialComponentMap
   'PTooltip' => 82,
   'PTreeview' => 83,
   'PTreeviewItem' => 84,
+  'PPopover' => 85,
+  'PResponsiveGrid' => 86,
+  'PVirtualList' => 87,
+  'PSectionList' => 88,
+  'PPullToRefresh' => 89,
 );
 
     /** @var array<string, list<string>> */
     public const array MODULES = array (
-  'app-bar' => 
+  'app-bar' =>
   array (
     0 => 'p-app-bar',
     1 => 'p-app-bar-nav-icon',
   ),
-  'alert' => 
+  'alert' =>
   array (
     0 => 'p-alert',
   ),
-  'autocomplete' => 
+  'autocomplete' =>
   array (
     0 => 'p-autocomplete',
   ),
-  'avatar' => 
+  'avatar' =>
   array (
     0 => 'p-avatar',
   ),
-  'badge' => 
+  'badge' =>
   array (
     0 => 'p-badge',
   ),
-  'banner' => 
+  'banner' =>
   array (
     0 => 'p-banner',
     1 => 'p-banner-actions',
   ),
-  'bottom-sheet' => 
+  'bottom-sheet' =>
   array (
     0 => 'p-bottom-sheet',
   ),
-  'button' => 
+  'button' =>
   array (
     0 => 'p-btn',
   ),
-  'button-group' => 
+  'button-group' =>
   array (
     0 => 'p-btn-group',
   ),
-  'button-toggle' => 
+  'button-toggle' =>
   array (
     0 => 'p-btn-toggle',
   ),
-  'calendar' => 
+  'calendar' =>
   array (
     0 => 'p-calendar',
     1 => 'p-calendar-day',
   ),
-  'card' => 
+  'card' =>
   array (
     0 => 'p-card',
     1 => 'p-card-actions',
   ),
-  'carousel' => 
+  'carousel' =>
   array (
     0 => 'p-carousel',
     1 => 'p-carousel-item',
   ),
-  'checkbox' => 
+  'checkbox' =>
   array (
     0 => 'p-checkbox',
   ),
-  'chip' => 
+  'chip' =>
   array (
     0 => 'p-chip',
   ),
-  'chip-group' => 
+  'chip-group' =>
   array (
     0 => 'p-chip-group',
   ),
-  'color-input' => 
+  'color-input' =>
   array (
     0 => 'p-color-input',
   ),
-  'combobox' => 
+  'combobox' =>
   array (
     0 => 'p-combobox',
   ),
-  'data-table' => 
+  'data-table' =>
   array (
     0 => 'p-data-table',
     1 => 'p-data-table-virtual',
   ),
-  'date-input' => 
+  'date-input' =>
   array (
     0 => 'p-date-input',
   ),
-  'date-picker' => 
+  'date-picker' =>
   array (
     0 => 'p-date-picker',
   ),
-  'dialog' => 
+  'dialog' =>
   array (
     0 => 'p-dialog',
   ),
-  'divider' => 
+  'divider' =>
   array (
     0 => 'p-divider',
   ),
-  'empty-state' => 
+  'empty-state' =>
   array (
     0 => 'p-empty-state',
   ),
-  'expansion-panels' => 
+  'expansion-panels' =>
   array (
     0 => 'p-expansion-panels',
     1 => 'p-expansion-panel',
     2 => 'p-expansion-panel-title',
     3 => 'p-expansion-panel-text',
   ),
-  'fab' => 
+  'fab' =>
   array (
     0 => 'p-fab',
   ),
-  'form' => 
+  'form' =>
   array (
     0 => 'p-form',
   ),
-  'icon' => 
+  'icon' =>
   array (
     0 => 'p-icon',
   ),
-  'icon-button' => 
+  'icon-button' =>
   array (
     0 => 'p-icon-btn',
   ),
-  'image' => 
+  'image' =>
   array (
     0 => 'p-img',
   ),
-  'infinite-scroll' => 
+  'infinite-scroll' =>
   array (
     0 => 'p-infinite-scroll',
   ),
-  'item-group' => 
+  'item-group' =>
   array (
     0 => 'p-item-group',
     1 => 'p-item',
   ),
-  'list' => 
+  'list' =>
   array (
     0 => 'p-list',
     1 => 'p-list-item',
   ),
-  'menu' => 
+  'menu' =>
   array (
     0 => 'p-menu',
   ),
-  'number-input' => 
+  'number-input' =>
   array (
     0 => 'p-number-input',
   ),
-  'otp-input' => 
+  'otp-input' =>
   array (
     0 => 'p-otp-input',
   ),
-  'overlay' => 
+  'overlay' =>
   array (
     0 => 'p-overlay',
   ),
-  'progress-circular' => 
+  'progress-circular' =>
   array (
     0 => 'p-progress-circular',
   ),
-  'progress-linear' => 
+  'progress-linear' =>
   array (
     0 => 'p-progress-linear',
   ),
-  'radio' => 
+  'radio' =>
   array (
     0 => 'p-radio',
   ),
-  'radio-group' => 
+  'radio-group' =>
   array (
     0 => 'p-radio-group',
   ),
-  'range-slider' => 
+  'range-slider' =>
   array (
     0 => 'p-range-slider',
   ),
-  'rating' => 
+  'rating' =>
   array (
     0 => 'p-rating',
   ),
-  'select' => 
+  'select' =>
   array (
     0 => 'p-select',
   ),
-  'sheet' => 
+  'sheet' =>
   array (
     0 => 'p-sheet',
   ),
-  'skeleton-loader' => 
+  'skeleton-loader' =>
   array (
     0 => 'p-skeleton-loader',
   ),
-  'slide-group' => 
+  'slide-group' =>
   array (
     0 => 'p-slide-group',
     1 => 'p-slide-group-item',
   ),
-  'slider' => 
+  'slider' =>
   array (
     0 => 'p-slider',
   ),
-  'snackbar' => 
+  'snackbar' =>
   array (
     0 => 'p-snackbar',
   ),
-  'sparkline' => 
+  'sparkline' =>
   array (
     0 => 'p-sparkline',
   ),
-  'speed-dial' => 
+  'speed-dial' =>
   array (
     0 => 'p-speed-dial',
   ),
-  'stepper' => 
+  'stepper' =>
   array (
     0 => 'p-stepper',
     1 => 'p-stepper-header',
@@ -409,50 +419,70 @@ final class MaterialComponentMap
     4 => 'p-stepper-window-item',
     5 => 'p-stepper-actions',
   ),
-  'stepper-vertical' => 
+  'stepper-vertical' =>
   array (
     0 => 'p-stepper-vertical',
     1 => 'p-stepper-vertical-item',
     2 => 'p-stepper-vertical-actions',
   ),
-  'switch' => 
+  'switch' =>
   array (
     0 => 'p-switch',
   ),
-  'tabs' => 
+  'tabs' =>
   array (
     0 => 'p-tabs',
     1 => 'p-tab',
   ),
-  'text-field' => 
+  'text-field' =>
   array (
     0 => 'p-text-field',
   ),
-  'textarea' => 
+  'textarea' =>
   array (
     0 => 'p-textarea',
   ),
-  'time-picker' => 
+  'time-picker' =>
   array (
     0 => 'p-time-picker',
   ),
-  'timeline' => 
+  'timeline' =>
   array (
     0 => 'p-timeline',
     1 => 'p-timeline-item',
   ),
-  'toolbar' => 
+  'toolbar' =>
   array (
     0 => 'p-toolbar',
   ),
-  'tooltip' => 
+  'tooltip' =>
   array (
     0 => 'p-tooltip',
   ),
-  'treeview' => 
+  'treeview' =>
   array (
     0 => 'p-treeview',
     1 => 'p-treeview-item',
+  ),
+  'popover' =>
+  array (
+    0 => 'p-popover',
+  ),
+  'responsive-grid' =>
+  array (
+    0 => 'p-responsive-grid',
+  ),
+  'virtual-list' =>
+  array (
+    0 => 'p-virtual-list',
+  ),
+  'section-list' =>
+  array (
+    0 => 'p-section-list',
+  ),
+  'pull-to-refresh' =>
+  array (
+    0 => 'p-pull-to-refresh',
   ),
 );
 

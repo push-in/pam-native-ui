@@ -3014,6 +3014,11 @@ final class ComponentRenderer
             'PTreeview' => 'FileTree',
             'PTreeviewItem' => 'FileTreeFolder',
             'PInfiniteScroll' => 'VirtualizedList',
+            'PPopover' => 'Popover',
+            'PResponsiveGrid' => 'Grid',
+            'PVirtualList' => 'VirtualizedList',
+            'PSectionList' => 'SectionList',
+            'PPullToRefresh' => 'RefreshControl',
             default => $part,
         };
     }

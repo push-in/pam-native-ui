@@ -583,4 +583,49 @@ return array_values(array (
       1 => 'PTreeviewItem',
     ),
   ),
+  62 =>
+  array (
+    'type' => 63,
+    'module' => 'popover',
+    'components' =>
+    array (
+      0 => 'PPopover',
+    ),
+  ),
+  63 =>
+  array (
+    'type' => 64,
+    'module' => 'responsive-grid',
+    'components' =>
+    array (
+      0 => 'PResponsiveGrid',
+    ),
+  ),
+  64 =>
+  array (
+    'type' => 65,
+    'module' => 'virtual-list',
+    'components' =>
+    array (
+      0 => 'PVirtualList',
+    ),
+  ),
+  65 =>
+  array (
+    'type' => 66,
+    'module' => 'section-list',
+    'components' =>
+    array (
+      0 => 'PSectionList',
+    ),
+  ),
+  66 =>
+  array (
+    'type' => 67,
+    'module' => 'pull-to-refresh',
+    'components' =>
+    array (
+      0 => 'PPullToRefresh',
+    ),
+  ),
 ));

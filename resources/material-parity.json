@@ -4,8 +4,8 @@
         "source": "resources/pam-material-components.php",
         "namespace": "p-*",
         "metadataImport": false,
-        "moduleCount": 62,
-        "componentCount": 84,
+        "moduleCount": 67,
+        "componentCount": 89,
         "targets": [
             1,
             2
@@ -1398,6 +1398,111 @@
             "components": [
                 "p-treeview",
                 "p-treeview-item"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 63,
+            "module": "popover",
+            "components": [
+                "p-popover"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 64,
+            "module": "responsive-grid",
+            "components": [
+                "p-responsive-grid"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 65,
+            "module": "virtual-list",
+            "components": [
+                "p-virtual-list"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 66,
+            "module": "section-list",
+            "components": [
+                "p-section-list"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 67,
+            "module": "pull-to-refresh",
+            "components": [
+                "p-pull-to-refresh"
             ],
             "verification": [
                 3,

@@ -3002,6 +3002,101 @@ if (!$endReached) {
     throw new RuntimeException('p-infinite-scroll must emit its end-reached callback.');
 }
 
+$virtualListClass = $tags['p-virtual-list'];
+$virtualListReachedEnd = false;
+$virtualList = $virtualListClass::make(
+    ['rowHeight' => 60, 'prefetch' => 10, 'numColumns' => 2],
+    Text::make('First item'),
+    Text::make('Second item'),
+)->onEndReached(static function () use (&$virtualListReachedEnd): void {
+    $virtualListReachedEnd = true;
+})->toElement();
+$virtualListEndEvent = $virtualList->events()[EventKind::EndReached->value] ?? null;
+if (
+    $virtualList->kind() !== NodeKind::VirtualList
+    || count($virtualList->children()) !== 2
+    || ($virtualList->properties()[PropKey::ListRowHeight->value] ?? null) !== 60.0
+    || ($virtualList->properties()[PropKey::ListPrefetch->value] ?? null) !== 10
+    || ($virtualList->properties()[PropKey::ListNumColumns->value] ?? null) !== 2
+    || !$virtualListEndEvent instanceof Closure
+) {
+    throw new RuntimeException(
+        'p-virtual-list must preserve rich children, virtualization tuning and end-reached behavior.',
+    );
+}
+$virtualListEndEvent();
+if (!$virtualListReachedEnd) {
+    throw new RuntimeException('p-virtual-list must emit its end-reached callback.');
+}
+
+$sectionListClass = $tags['p-section-list'];
+$sectionList = $sectionListClass::make([
+    'sections' => [
+        'Foundations' => ['Color', 'Typography'],
+        'Platforms' => ['Android', 'UIKit'],
+    ],
+    'rowHeight' => 48,
+    'prefetch' => 6,
+])->toElement();
+if (
+    $sectionList->kind() !== NodeKind::SectionList
+    || ($sectionList->properties()[PropKey::ListRowHeight->value] ?? null) !== 48.0
+    || ($sectionList->properties()[PropKey::ListPrefetch->value] ?? null) !== 6
+    || !($sectionList->properties()[PropKey::SectionItems->value] ?? null) instanceof BinaryValue
+) {
+    throw new RuntimeException(
+        'p-section-list must compile typed sections into the native section-list contract.',
+    );
+}
+
+$refreshClass = $tags['p-pull-to-refresh'];
+$didRefresh = false;
+$refresh = $refreshClass::make(
+    ['refreshing' => true, 'progressViewOffset' => 24],
+    Text::make('Pullable content'),
+)->onRefresh(static function () use (&$didRefresh): void {
+    $didRefresh = true;
+})->toElement();
+$refreshEvent = $refresh->events()[EventKind::Refresh->value] ?? null;
+if (
+    $refresh->kind() !== NodeKind::RefreshControl
+    || ($refresh->properties()[PropKey::Refreshing->value] ?? null) !== true
+    || ($refresh->properties()[PropKey::RefreshProgressViewOffset->value] ?? null) !== 24.0
+    || !$refreshEvent instanceof Closure
+) {
+    throw new RuntimeException(
+        'p-pull-to-refresh must expose native refresh state, offset and behavior.',
+    );
+}
+$refreshEvent();
+if (!$didRefresh) {
+    throw new RuntimeException('p-pull-to-refresh must emit its refresh callback.');
+}
+
+$gridClass = $tags['p-responsive-grid'];
+$grid = $gridClass::make(
+    ['columns' => 3, 'columnGap' => 12, 'rowGap' => 8],
+    Text::make('A'),
+    Text::make('B'),
+    Text::make('C'),
+)->toElement();
+$gridHost = $grid->properties()[PropKey::HostProperties->value] ?? null;
+$gridNative = $gridHost instanceof BinaryValue
+    ? Wire::decodeMap($gridHost->bytes)
+    : [];
+if (
+    $grid->kind() !== NodeKind::CustomView
+    || count($grid->children()) !== 3
+    || ($grid->properties()[PropKey::HostName->value] ?? null) !== 'pam.mobile_ui.grid'
+    || ($gridNative['columns'] ?? null) !== '3,3,3,3,3,3'
+    || ($gridNative['columnGaps'] ?? null) !== '12,12,12,12,12,12'
+    || ($gridNative['rowGaps'] ?? null) !== '8,8,8,8,8,8'
+) {
+    throw new RuntimeException(
+        'p-responsive-grid must map columns and independent gutters to the native grid engine.',
+    );
+}
+
 $dataTableClass = $tags['p-data-table'];
 $selectedRows = null;
 $dataTable = $dataTableClass::make([

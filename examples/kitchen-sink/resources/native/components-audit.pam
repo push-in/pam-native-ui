@@ -545,4 +545,24 @@
         <p-list-item><Text>View accessibility</Text></p-list-item>
         <p-list-item on:press="closeSheet"><Text>Close</Text></p-list-item>
     </p-bottom-sheet>
+
+    <Column class="gap-3">
+        <Text size="lg">Adaptive foundations</Text>
+        <p-responsive-grid columns="2" class="gap-3">
+            <Column class="p-3 rounded-xl bg-surface"><Text>Adaptive column</Text></Column>
+            <Column class="p-3 rounded-xl bg-surface"><Text>Responsive column</Text></Column>
+        </p-responsive-grid>
+        <p-virtual-list rowHeight="56" prefetch="8">
+            <p-list-item><Text>Virtualized release</Text></p-list-item>
+            <p-list-item><Text>Virtualized documentation</Text></p-list-item>
+        </p-virtual-list>
+        <p-section-list />
+        <p-pull-to-refresh refreshing="false">
+            <Column class="gap-2"><Text>Pull down to refresh</Text></Column>
+        </p-pull-to-refresh>
+        <p-popover open="false">
+            <p-btn><Text>Open popover</Text></p-btn>
+            <Column class="p-4 gap-2"><Text>Anchored native content</Text></Column>
+        </p-popover>
+    </Column>
 </AppScreen>

@@ -2,7 +2,7 @@
 
 This catalog is generated from the manually authored `resources/pam-material-components.php` specification. It contains no imported Vuetify metadata and exposes only native `p-*` tags.
 
-**62 modules · 84 component parts · Android and iOS**
+**67 modules · 89 component parts · Android and iOS**
 
 Every component below links to a screenshot captured from the verified Android showcase. See the [visual showcase](android-showcase.md) for complete screens, interaction GIFs and capture metadata.
 
@@ -275,3 +275,23 @@ Every component below links to a screenshot captured from the verified Android s
 
 - `<p-treeview />` · [Android screenshot](assets/android/components/p-treeview.png)
 - `<p-treeview-item />` · [Android screenshot](assets/android/components/p-treeview-item.png)
+
+## `popover`
+
+- `<p-popover />` · [Android screenshot](assets/android/components/p-popover.png)
+
+## `responsive-grid`
+
+- `<p-responsive-grid />` · [Android screenshot](assets/android/components/p-responsive-grid.png)
+
+## `virtual-list`
+
+- `<p-virtual-list />` · [Android screenshot](assets/android/components/p-virtual-list.png)
+
+## `section-list`
+
+- `<p-section-list />` · [Android screenshot](assets/android/components/p-section-list.png)
+
+## `pull-to-refresh`
+
+- `<p-pull-to-refresh />` · [Android screenshot](assets/android/components/p-pull-to-refresh.png)

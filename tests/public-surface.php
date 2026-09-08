@@ -303,7 +303,6 @@ $removedMaterialTags = [
     'p-navigation-drawer',
     'p-pagination',
     'p-parallax',
-    'p-pull-to-refresh',
     'p-responsive',
     'p-row',
     'p-skeleton-text',

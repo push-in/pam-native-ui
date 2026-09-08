@@ -430,3 +430,28 @@ final class PTreeviewItem extends UiComponent
 {
     protected const string COMPONENT = 'PTreeviewItem';
 }
+
+final class PPopover extends UiComponent
+{
+    protected const string COMPONENT = 'PPopover';
+}
+
+final class PResponsiveGrid extends UiComponent
+{
+    protected const string COMPONENT = 'PResponsiveGrid';
+}
+
+final class PVirtualList extends UiComponent
+{
+    protected const string COMPONENT = 'PVirtualList';
+}
+
+final class PSectionList extends UiComponent
+{
+    protected const string COMPONENT = 'PSectionList';
+}
+
+final class PPullToRefresh extends UiComponent
+{
+    protected const string COMPONENT = 'PPullToRefresh';
+}

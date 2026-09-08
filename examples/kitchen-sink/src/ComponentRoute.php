@@ -3984,6 +3984,11 @@ final class ComponentRoute extends Component
             return $this->auditVariations($auditScenario);
         }
 
+        $foundationVariations = $this->foundationVariations();
+        if ($foundationVariations !== null) {
+            return $foundationVariations;
+        }
+
         if ($this->tag === 'p-chip') {
             return $this->chipVariations();
         }
@@ -5526,9 +5531,51 @@ final class ComponentRoute extends Component
         ];
     }
 
+    /** @return null|list<array{label: string, props: array<string, mixed>}> */
+    private function foundationVariations(): ?array
+    {
+        return match ($this->tag) {
+            'p-popover' => [
+                ['label' => 'Bottom', 'props' => ['placement' => \Pam\MobileUi\Enum\Placement::Bottom->value]],
+                ['label' => 'Top', 'props' => ['placement' => \Pam\MobileUi\Enum\Placement::Top->value]],
+                ['label' => 'Left', 'props' => ['placement' => \Pam\MobileUi\Enum\Placement::Left->value]],
+                ['label' => 'Right', 'props' => ['placement' => \Pam\MobileUi\Enum\Placement::Right->value]],
+            ],
+            'p-responsive-grid' => [
+                ['label' => 'Single Column', 'props' => ['columns' => 1]],
+                ['label' => 'Two Columns', 'props' => ['columns' => 2]],
+                ['label' => 'Three Columns', 'props' => ['columns' => 3]],
+                ['label' => 'Four Columns', 'props' => ['columns' => 4]],
+            ],
+            'p-virtual-list' => [
+                ['label' => 'Comfortable', 'props' => ['rowHeight' => 56, 'prefetch' => 8]],
+                ['label' => 'Compact', 'props' => ['rowHeight' => 48, 'prefetch' => 12]],
+                ['label' => 'Two Columns', 'props' => ['rowHeight' => 64, 'numColumns' => 2]],
+                ['label' => 'No Indicator', 'props' => ['showsScrollIndicator' => false]],
+            ],
+            'p-section-list' => [
+                ['label' => 'Default', 'props' => ['rowHeight' => 52]],
+                ['label' => 'Compact', 'props' => ['rowHeight' => 44]],
+                ['label' => 'Comfortable', 'props' => ['rowHeight' => 60]],
+                ['label' => 'No Indicator', 'props' => ['showsScrollIndicator' => false]],
+            ],
+            'p-pull-to-refresh' => [
+                ['label' => 'Ready', 'props' => ['refreshing' => false]],
+                ['label' => 'Refreshing', 'props' => ['refreshing' => true]],
+                ['label' => 'Offset', 'props' => ['progressViewOffset' => 24]],
+                ['label' => 'Disabled', 'props' => ['enabled' => false]],
+            ],
+            default => null,
+        };
+    }
+
     /** @return list<array{label: string, props: array<string, mixed>}> */
     private function auditVariations(string $scenario): array
     {
+        $foundationVariations = $this->foundationVariations();
+        if ($foundationVariations !== null) {
+            return $foundationVariations;
+        }
         if ($this->tag === 'p-chip') {
             return $this->chipVariations();
         }
@@ -6677,6 +6724,32 @@ final class ComponentRoute extends Component
                 'items' => $this->tableRows($this->tag === 'p-data-table-virtual' ? 36 : 6),
                 'itemHeight' => 52,
             ],
+            'p-section-list' => [
+                'sections' => [
+                    'Foundations' => ['Color', 'Typography', 'Shape'],
+                    'Platform' => ['Android', 'UIKit'],
+                ],
+                'rowHeight' => 52,
+                'prefetch' => 8,
+            ],
+            'p-virtual-list' => [
+                'rowHeight' => 56,
+                'prefetch' => 8,
+                'removeClippedSubviews' => true,
+            ],
+            'p-responsive-grid' => [
+                'columns' => 2,
+                'columnGap' => 12,
+                'rowGap' => 12,
+            ],
+            'p-pull-to-refresh' => [
+                'refreshing' => false,
+                'enabled' => true,
+            ],
+            'p-popover' => [
+                'open' => false,
+                'placement' => \Pam\MobileUi\Enum\Placement::Bottom->value,
+            ],
             'p-autocomplete', 'p-combobox', 'p-select' => [
                 'items' => ['Design', 'Engineering', 'Product', 'Research'],
                 'modelValue' => 'Design',
@@ -6837,6 +6910,7 @@ final class ComponentRoute extends Component
             'p-range-slider',
             'p-rating',
             'p-select',
+            'p-section-list',
             'p-slider',
             'p-stepper',
             'p-stepper-vertical',
