@@ -3627,7 +3627,8 @@ final class ComponentRoute extends Component
                     ],
                 )->style(new Style(widthPercent: 100.0, paddingVertical: 8.0));
             } elseif ($this->tag === 'p-virtual-list') {
-                $rowHeight = max(44.0, (float) ($previewProps['rowHeight'] ?? 56.0));
+                $rowHeightValue = $previewProps['rowHeight'] ?? 56.0;
+                $rowHeight = max(44.0, is_numeric($rowHeightValue) ? (float) $rowHeightValue : 56.0);
                 $items = is_array($previewProps['items'] ?? null)
                     ? array_values($previewProps['items'])
                     : [];
@@ -3732,18 +3733,22 @@ final class ComponentRoute extends Component
                             : count($pickedFiles).' files selected';
                     }
                 }
-                $preview = $component::make($previewProps)->onPick(
+                $preview = \Pam\MobileUi\Material\PFileInput::make($previewProps)->onPick(
                     function (mixed $selection) use ($index): void {
                         $this->setSampleValue($index, $selection);
                     },
                     \Pam\Native\MediaPickerType::Any,
                     ($previewProps['multiple'] ?? false) === true,
-                    (int) ($previewProps['limit'] ?? 10),
+                    is_numeric($previewProps['limit'] ?? null)
+                        ? (int) $previewProps['limit']
+                        : 10,
                 );
             } elseif ($this->tag === 'p-progress-button') {
                 $progress = is_numeric($this->sampleValues[$index] ?? null)
                     ? max(0, min(100, (int) $this->sampleValues[$index]))
-                    : max(0, min(100, (int) ($previewProps['progress'] ?? 0)));
+                    : max(0, min(100, is_numeric($previewProps['progress'] ?? null)
+                        ? (int) $previewProps['progress']
+                        : 0));
                 if (($previewProps['indeterminate'] ?? false) !== true) {
                     $previewProps['progress'] = $progress;
                     if (array_key_exists($index, $this->sampleValues)) {
@@ -3783,7 +3788,10 @@ final class ComponentRoute extends Component
                         static fn (array $destination): bool => $destination[0] !== 'Create',
                     ));
                 }
-                $destinationCount = max(3, min(5, (int) ($previewProps['destinations'] ?? 3)));
+                $destinationCountValue = $previewProps['destinations'] ?? 3;
+                $destinationCount = max(3, min(5, is_numeric($destinationCountValue)
+                    ? (int) $destinationCountValue
+                    : 3));
                 $destinations = array_slice($allDestinations, 0, $destinationCount);
                 $active = $this->sampleValues[$index] ?? 'Explore';
                 $controls = [];
@@ -3956,7 +3964,13 @@ final class ComponentRoute extends Component
                             return true;
                         })
                         ->onToggle(function (mixed $value) use ($index): bool {
-                            if (is_array($value)) $this->setTreeOpened($index, $value);
+                            if (is_array($value)) {
+                                $opened = array_values(array_filter(
+                                    $value,
+                                    static fn (mixed $item): bool => is_scalar($item),
+                                ));
+                                $this->setTreeOpened($index, $opened);
+                            }
 
                             return true;
                         }),
@@ -4202,7 +4216,8 @@ final class ComponentRoute extends Component
                     overflow: \Pam\Native\Overflow::Hidden,
                 ));
             } elseif ($this->tag === 'p-responsive-grid') {
-                $columns = max(1, min(4, (int) ($previewProps['columns'] ?? 2)));
+                $columnValue = $previewProps['columns'] ?? 2;
+                $columns = max(1, min(4, is_numeric($columnValue) ? (int) $columnValue : 2));
                 $tiles = [];
                 foreach (array_slice(['Discover', 'Create', 'Review', 'Ship'], 0, $columns) as $tileIndex => $tile) {
                     $tiles[] = Column::make(
@@ -4706,7 +4721,7 @@ final class ComponentRoute extends Component
     /** @param list<string|int|float|bool> $value */
     private function setTreeOpened(int $index, array $value): void
     {
-        $this->treeOpened[$index] = array_values($value);
+        $this->treeOpened[$index] = $value;
         $this->invalidateInteractivePreview();
     }
 

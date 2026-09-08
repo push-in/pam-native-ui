@@ -180,7 +180,7 @@ foreach ($catalogs as $catalog => $components) {
                 // of the accessibility tree. The native editor owns the label,
                 // hint and search role so Android/iOS announce one field only.
                 $semanticElement = $element;
-                if ($catalog === 'material' && $name === 'p-search-bar') {
+                if ($catalog === 'material' && (string) $name === 'p-search-bar') {
                     foreach ($element->children() as $child) {
                         if ($child->kind() === \Pam\Native\NodeKind::Input) {
                             $semanticElement = $child;

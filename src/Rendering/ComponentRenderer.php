@@ -682,7 +682,7 @@ final class ComponentRenderer
         ) {
             $progress = max(0.0, min(
                 100.0,
-                (float) ($props['progress'] ?? $props['modelValue']),
+                self::number($props, 'progress', self::number($props, 'modelValue')),
             ));
             $reduceMotion = self::flag($props, 'reduceMotion');
             $children[] = View::make()->style(new Style(
@@ -1668,7 +1668,7 @@ final class ComponentRenderer
                         textAlign: TextAlignment::Center,
                     )),
                 )
-                    ->enabled(!$fieldDisabled)
+                    ->enabled(true)
                     ->style(new Style(
                         positionType: PositionType::Absolute,
                         right: 0.0,
@@ -1690,7 +1690,7 @@ final class ComponentRenderer
                         ),
                     );
                 $change = $events[EventKind::Change->value] ?? null;
-                if ($change !== null && !$fieldDisabled) {
+                if ($change !== null) {
                     $clear = $clear->on(
                         EventKind::Press,
                         static fn () => $change(''),
@@ -3527,7 +3527,9 @@ final class ComponentRenderer
             $icon = null;
             if (is_array($definition)) {
                 $value = $definition['value'] ?? $definition['id'] ?? $index + 1;
-                $label = $definition['label'] ?? $definition['title'] ?? (string) $value;
+                $label = self::scalarString(
+                    $definition['label'] ?? $definition['title'] ?? $value,
+                );
                 $icon = $definition['icon'] ?? null;
             } else {
                 $value = $definition;
@@ -3875,7 +3877,7 @@ final class ComponentRenderer
                     $change,
                     $source,
                     $index,
-                ): mixed {
+                ): void {
                     $from = null;
                     foreach ($source as $candidateIndex => $candidate) {
                         $candidateValue = is_array($candidate)
@@ -3886,11 +3888,14 @@ final class ComponentRenderer
                             break;
                         }
                     }
-                    if ($from === null || $from === $index) return $change($source);
+                    if ($from === null || $from === $index) {
+                        $change($source);
+                        return;
+                    }
                     $next = $source;
                     $moving = array_splice($next, $from, 1);
                     array_splice($next, $index, 0, $moving);
-                    return $change(array_values($next));
+                    $change($next);
                 });
             }
             $rows[] = $region;
@@ -3901,6 +3906,11 @@ final class ComponentRenderer
         return self::finalizeMaterialRoot($list, $props, $styleOverride, $elementKey);
     }
 
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @param array<int, Closure> $events
+     */
     private static function materialSwipeActions(
         array $props,
         array $children,
@@ -3949,10 +3959,9 @@ final class ComponentRenderer
                 $change,
                 $startLabel,
                 $endLabel,
-            ): mixed {
-                if ($event->translationX >= 48.0) return $change($startLabel);
-                if ($event->translationX <= -48.0) return $change($endLabel);
-                return null;
+            ): void {
+                if ($event->translationX >= 48.0) $change($startLabel);
+                if ($event->translationX <= -48.0) $change($endLabel);
             });
         }
         $action = static function (string $label, int $background): Element {
@@ -3994,6 +4003,11 @@ final class ComponentRenderer
         return self::finalizeMaterialRoot($row, $props, $styleOverride, $elementKey);
     }
 
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @param array<int, Closure> $events
+     */
     private static function materialResultState(
         array $props,
         array $children,
@@ -4064,6 +4078,7 @@ final class ComponentRenderer
         return self::finalizeMaterialRoot($result, $props, $styleOverride, $elementKey);
     }
 
+    /** @param array<string, mixed> $props */
     private static function finalizeMaterialRoot(
         Element $element,
         array $props,
@@ -4105,6 +4120,11 @@ final class ComponentRenderer
         return $elementKey === null ? $element : $element->key($elementKey);
     }
 
+    /**
+     * @param array<string, mixed> $props
+     * @param list<Element> $children
+     * @param array<int, Closure> $events
+     */
     private static function materialNavigationDrawer(
         array $props,
         array $children,
