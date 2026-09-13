@@ -360,3 +360,42 @@ UI CI run `34776338798` completed successfully for `62e47a6`: all nine checks
 passed, including Android API 26/36 instrumentation and UIKit current/minimum.
 The later showcase-only file cancellation fix has local syntax, build and
 emulator interaction evidence; do not attribute it to that earlier CI run.
+
+### Range Slider audit integrity follow-up
+
+The baseline Reversed example was partly clipped by the bottom viewport.
+The audit now scrolls the page gutter before measuring the actual Android
+accessibility bounds. Removed the helper that fabricated a taller bounds
+rectangle for clipped controls; target-size assertions must use real geometry.
+
+The subsequent run reached Tick labels and failed its pixel assertion, despite
+all five numbers being visibly rendered in the inspected screenshot
+`/tmp/pam-ui-range-scrolled-20260913/15-tick-labels.png`.
+Its 50dp scan offset began below the glyphs: the original band contained zero
+dark pixels; the corrected 36dp text band contained 1,397 on the same capture.
+The new band remains below the track/thumb and within the measured control.
+No component rendering was changed to accommodate this test correction.
+
+Syntax and diff checks pass. A full rerun is in progress at
+`/tmp/pam-ui-range-label-band-20260913`; until its final report exists, this is
+not complete Range Slider approval or evidence of animation smoothness.
+
+That run stopped at Custom bounds: the detector counted disconnected green
+value bubbles (and their glyph cut-outs) as extra handles. On its saved capture,
+the old detector returned three centers `[271.5, 298.0, 942.5]`; counting only
+green segments connected to the track yields `[274.5, 942.0]`, matching the
+two displayed handles and expected range. The same detector passes all six
+saved baseline variants. Four regression tests cover labels, plain handles,
+a missing handle and no handles; the combined evidence-test suite passes
+20 tests and now includes these checks in CI.
+
+The full rerun `/tmp/pam-ui-range-track-connected-20260913` terminated with
+`130% text-scale landscape lost range sliders`. It progressed through the
+advanced range cases but produced no final passing report. This failure is
+still unresolved; do not count this component as approved.
+
+Separately, inspection of `00-baseline.png` shows asymmetric outer clearance
+in Full range. The right handle extends past the accessibility host's right
+edge while the left has more clearance. Investigate authored padding versus
+Android host child placement before applying a UI-only workaround. No runtime
+fix for this issue has been made in this follow-up yet.

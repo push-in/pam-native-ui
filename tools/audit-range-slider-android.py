@@ -50,13 +50,22 @@ class RangeSliderAudit(SliderAudit):
 
     @staticmethod
     def thumb_centers(path: Path, area: Bounds) -> list[float]:
+        track_y = RangeSliderAudit.track_center_y(path, area)
         with Image.open(path).convert("RGB") as image:
             counts: list[tuple[int, int]] = []
             for x in range(max(0, area.left), min(image.width, area.right)):
                 count = 0
-                for y in range(max(0, area.top), min(image.height, area.bottom)):
-                    red, green, blue = image.getpixel((x, y))
-                    if green >= red + 18 and green >= blue + 10 and green >= 75:
+                # Count only the green segment connected to the track. Value
+                # bubbles have the same fill, but are separate shapes; counting
+                # their text cut-outs can invent additional handles.
+                for rows in (
+                    range(track_y, max(0, area.top) - 1, -1),
+                    range(track_y + 1, min(image.height, area.bottom)),
+                ):
+                    for y in rows:
+                        red, green, blue = image.getpixel((x, y))
+                        if not (green >= red + 18 and green >= blue + 10 and green >= 75):
+                            break
                         count += 1
                 counts.append((x, count))
         peak = max((count for _, count in counts), default=0)
@@ -291,7 +300,10 @@ class RangeSliderAudit(SliderAudit):
         label_pixels = self.dark_pixels(
             tick_labels_path,
             tick_labels_area,
-            top=tick_labels_area.top + round(50.0 * density),
+            # The 72dp lane places the track at 18dp and the labels' baseline
+            # at 48dp. Starting at 50dp skips the rendered glyphs entirely.
+            # 36dp is below the thumb and includes the complete text lane.
+            top=tick_labels_area.top + round(36.0 * density),
             bottom=tick_labels_area.bottom,
         )
         if label_pixels < round(24.0 * density):
@@ -514,7 +526,6 @@ class RangeSliderAudit(SliderAudit):
     ) -> tuple[object, object]:
         content_bottom = self.physical_content_bottom(width, height)
         density = self.density()
-        minimum_target = round(48.0 * density)
         # Layout coordinates are integer pixels; at 420 dpi a canonical
         # 48x300dp control can round one edge down. Use the same 1.5dp geometry
         # tolerance as the component assertions instead of requiring ceil-like
@@ -522,7 +533,6 @@ class RangeSliderAudit(SliderAudit):
         geometry_tolerance = round(1.5 * density)
         required_width = max(0, round(minimum_width_dp * density) - geometry_tolerance)
         required_height = max(0, round(minimum_height_dp * density) - geometry_tolerance)
-        minimum_bottom_gap = round(16.0 * density)
         for attempt in range(10):
             slug = label.lower().replace(" ", "-")
             root = self.dump(f"scroll-{slug}-{attempt}")
@@ -533,17 +543,6 @@ class RangeSliderAudit(SliderAudit):
                     slider = None
                 if slider is not None:
                     area = node_bounds(slider)
-                    restored_bottom = area.top + minimum_target
-                    if (
-                        minimum_height_dp <= 48.0
-                        and 0 < area.height < minimum_target
-                        and area.top >= 120
-                        and restored_bottom <= content_bottom - minimum_bottom_gap
-                    ):
-                        area = Bounds(area.left, area.top, area.right, restored_bottom)
-                        slider.attrib["bounds"] = (
-                            f"[{area.left},{area.top}][{area.right},{area.bottom}]"
-                        )
                     if (
                         area.width >= required_width
                         and area.height >= required_height
@@ -572,6 +571,20 @@ class RangeSliderAudit(SliderAudit):
                 "Default", "Isolated instance", "Disabled", "Full range",
                 "Step 10", "Reversed",
             )
+            # The six baseline examples can extend behind the system bar.
+            # Scroll the page gutter before measuring real accessibility
+            # bounds; never inflate a clipped node to the expected height.
+            for attempt in range(3):
+                last = node_bounds(self.slider_after(root, "Reversed"))
+                if (last.height >= round(48.0 * self.density())
+                        and last.bottom < self.physical_content_bottom(width, height) - 32):
+                    break
+                x = width - round(8.0 * self.density())
+                self.shell("input", "swipe", str(x), str(height // 2),
+                           str(x), str(height // 2 - round(64.0 * self.density())), "650")
+                time.sleep(0.8)
+                root = self.dump(f"baseline-scroll-{attempt}")
+            self.screenshot("00-baseline")
             nodes = {label: self.slider_after(root, label) for label in labels}
             self.assert_window_count(1, "baseline")
             if self.ime_shown():
