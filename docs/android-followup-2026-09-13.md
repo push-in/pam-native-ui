@@ -1252,3 +1252,21 @@ scrolling. Font scale restored to 1.0. This does not cover every state transitio
 Report `/tmp/pam-ui-toggle-14-20260913/report.json`, SHA-256
 `504a9d50811063b7b593a84813b7447e7e1f30f6f166b1cb6698c9e4018490c1`;
 APK SHA-256 `f1a5f0adbbc6f760b3bd6bd5d0203d296847a93d97131d9812871e2c023898c0`.
+
+### CI-only indicator failure investigation
+
+The installed local Native debug APK and instrumentation APK matched their
+on-disk SHA-256 hashes (`cebde91b...` / `776f2149...`). The renderer class passed
+35 tests in 16.366s, and the complete installed suite passed 81 tests in 27.382s.
+These APKs predate the constructor-overload annotation: comparison with the
+downloaded c223515 CI artifact confirmed the main four-argument constructor
+bytecode is identical, but only CI had the generated overloads. Therefore these
+81 tests must not be described as an exact c223515 artifact validation.
+
+Rebuilt current Native plus failure-capture diagnostics in 3s, installed both
+debug APKs, and the indicator test passed in 2.922s. No runtime fix or assertion
+relaxation was made. Native c2548cc preserves initial/shown/hidden PNG frames on
+assertion failure and pulls them before the CI emulator exits, retaining the
+original test exit status. This follows the Kotlin cleanup and CI artifact
+guidance; a fresh CI run must provide the missing environment-specific evidence.
+The API 26/36 failures remain unresolved and release remains gated.
