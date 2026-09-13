@@ -350,9 +350,10 @@ final class ComponentRenderer
                 ),
             };
             // Material controls can be visually smaller than 48 dp, but their
-            // effective target must be exactly 48 dp. A generic 8 dp expansion
+            // effective target must be at least 48 dp. A generic 8 dp expansion
             // made adjacent banner actions overlap; deriving the inset keeps
-            // the accessible target large without ambiguous hit regions.
+            // the accessible target large without ambiguous hit regions at
+            // normal text scale. Intrinsic text growth can exceed this minimum.
             $touchInset = max(
                 0.0,
                 (MaterialTokens::MINIMUM_TOUCH_TARGET - $visualHeight) / 2.0,

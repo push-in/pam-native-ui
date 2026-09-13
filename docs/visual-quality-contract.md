@@ -22,6 +22,11 @@ approval.
   uses San Francisco so controls retain native metrics; brand character comes
   from hierarchy, weight and color rather than an unregistered display font.
   Font scaling must not clip or overlap controls.
+- Text-bearing buttons use their size token as a minimum height, not a fixed
+  box. Reserve at least 4 dp vertical padding for extra-small/compact controls
+  and 8 dp for regular text controls so system font scaling preserves breathing
+  room. Icon-only controls retain their square size. An explicit application
+  height override still needs its own large-text validation.
 - Body copy defaults to 14/20 or 16/24, component titles to 22/28, and compact
   metadata to 11/16. Uppercase is reserved for short eyebrows and status
   markers, never paragraphs or control labels.

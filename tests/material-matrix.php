@@ -387,7 +387,8 @@ foreach ($disabledButtonGroup->children() as $disabledButton) {
     $disabledProperties = $disabledButton->properties();
     if (
         ($disabledProperties[PropKey::Enabled->value] ?? null) !== false
-        || ($disabledProperties[PropKey::Height->value] ?? null) !== 32.0
+        || ($disabledProperties[PropKey::MinHeight->value] ?? null) !== 32.0
+        || isset($disabledProperties[PropKey::Height->value])
         || ($disabledProperties[PropKey::HitSlopTop->value] ?? null) !== 8.0
     ) {
         throw new RuntimeException(
@@ -1691,7 +1692,8 @@ foreach ($disabledToggleChildren as $disabledToggleChild) {
     $disabledToggleProperties = $disabledToggleChild->properties();
     if (
         ($disabledToggleProperties[PropKey::Enabled->value] ?? null) !== false
-        || ($disabledToggleProperties[PropKey::Height->value] ?? null) !== 32.0
+        || ($disabledToggleProperties[PropKey::MinHeight->value] ?? null) !== 32.0
+        || isset($disabledToggleProperties[PropKey::Height->value])
         || ($disabledToggleProperties[PropKey::HitSlopLeft->value] ?? null) !== 0.0
         || ($disabledToggleProperties[PropKey::HitSlopTop->value] ?? null) !== 8.0
     ) {
@@ -3496,12 +3498,27 @@ $assertGeometry = static function (
 $assertGeometry('PBtn', [], [
     'minWidth' => 64.0,
     'minHeight' => 40.0,
+    'height' => null,
+    'paddingVertical' => 8.0,
 ]);
 $assertGeometry('PBtn', ['density' => 'comfortable'], [
     'minHeight' => 36.0,
 ]);
 $assertGeometry('PBtn', ['density' => 'compact'], [
     'minHeight' => 32.0,
+    'height' => null,
+    'paddingVertical' => 4.0,
+]);
+foreach (['text', 'plain', 'outlined', 'tonal', 'flat', 'elevated'] as $buttonVariant) {
+    $assertGeometry('PBtn', ['variant' => $buttonVariant, 'size' => 'x-small'], [
+        'minHeight' => 32.0,
+        'height' => null,
+        'paddingVertical' => 4.0,
+    ]);
+}
+$assertGeometry('PBtn', ['icon' => true, 'size' => 'x-small'], [
+    'height' => 32.0,
+    'paddingVertical' => 0.0,
 ]);
 $assertGeometry('PAlert', ['density' => 'compact'], [
     'paddingVertical' => 12.0,
@@ -4462,7 +4479,9 @@ $assertGeometry('PFab', [], [
 ]);
 $assertGeometry('PFab', ['extended' => true], [
     'width' => null,
-    'height' => 56.0,
+    'height' => null,
+    'minHeight' => 56.0,
+    'paddingVertical' => 8.0,
     'minWidth' => 64.0,
     'paddingHorizontal' => 16.0,
     'borderRadius' => 16.0,

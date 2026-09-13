@@ -1214,7 +1214,9 @@ final class MaterialStyleResolver
                         : 64.0),
                 width: !$block && $icon ? $effectiveHeight : null,
                 minHeight: $effectiveHeight,
-                height: $effectiveHeight,
+                // Text-bearing controls grow with native font metrics. A fixed
+                // surface height squeezes large text even before it clips.
+                height: $icon ? $effectiveHeight : null,
                 paddingHorizontal: $icon
                     ? 0.0
                     : ($slim
@@ -1222,7 +1224,7 @@ final class MaterialStyleResolver
                         : MaterialTokens::buttonHorizontalSpace(
                             $props['size'] ?? null,
                         )),
-                paddingVertical: $stacked ? 8.0 : 0.0,
+                paddingVertical: $icon ? 0.0 : ($stacked || $height > 32.0 ? 8.0 : 4.0),
                 gap: $stacked ? 4.0 : 8.0,
                 textColor: match (true) {
                     $disabled => $disabledForeground,

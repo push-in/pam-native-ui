@@ -717,3 +717,37 @@ downloaded modules, sources and evidence were preserved. Global Gradle caches
 fell to 3.7 GiB, under the documented 8 GiB limit; disk free space was about
 30 GiB during the build. The first force-delete command was rejected without
 execution; a non-force recursive removal of the same exact cache succeeded.
+
+### Public text-button intrinsic padding
+
+Fixed the public UI style resolver, not the showcase: text-bearing buttons now
+use the size token as `minHeight`, omit fixed `height`, and reserve vertical
+padding (4 dp for extra-small/compact, 8 dp otherwise). Icon-only controls
+retain fixed geometry and zero text padding. This also applies to grouped
+text buttons and extended FABs using the same resolver; no new Native API or
+core PAM change was needed. Group/toggle disabled-state contracts now assert
+minimum height and absence of a fixed height while preserving hit-slop checks.
+Added six button-variant intrinsic-height checks and an icon-only control
+counterexample. Extended FAB tests retain its 56 dp minimum.
+
+Material matrix, theme runtime, recipe matrix, PHPStan level 9 and diff checks
+passed. Initial matrix runs correctly failed obsolete fixed-height assertions
+for toggle segments and extended FAB; these were updated to the explicit new
+minimum-height contract, not removed. Release build installed in 3m38s and
+cleaned 904.9 MiB of intermediates.
+
+Measured and tapped Default, Outlined, Text, Extra small, Small and Compact
+density on API 36 at font scales 1.0 and 2.0: all 12 checks passed. Report and
+captures: `/tmp/pam-ui-button-intrinsic-padding-20260913/report.json`.
+
+| Controls | Height at 100% | Height at 200% | Top/bottom text clearance at 200% |
+| --- | --- | --- | --- |
+| Default, Outlined, Text, Small | 40 dp | 56 dp | 8 / 8 dp |
+| Extra small, Compact density | 32 dp | 48 dp | 4.19 / 3.81 dp (pixel rounding) |
+
+Inspected default, extra-small and compact 200% screenshots: text no longer
+crowds the surface edge. Font scale was restored to 1.0. This closes the
+specific tight vertical padding defect for the six measured button examples;
+it does not approve all grouped controls, FAB variations, themes, landscape,
+Samsung, iOS rendering or continuous animation. Those shared consumers still
+need device regression coverage before release.
