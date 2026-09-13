@@ -107,11 +107,11 @@ def main() -> int:
         measurements[tag] = int(match.group(1))
         time.sleep(args.settle_seconds)
 
-        # These showcase examples intentionally start expanded. UiAutomator
+        # This showcase example intentionally starts with a modal. UiAutomator
         # exposes only the active modal, not the underlying route heading.
-        # Dismiss only these known initial overlays after measuring startup;
+        # Dismiss only this confirmed initial overlay after measuring startup;
         # keep the same strict route/top assertions for the underlying page.
-        if tag in {"p-command-palette", "p-navigation-drawer"}:
+        if tag == "p-command-palette":
             run(adb, "shell", "input", "keyevent", "BACK")
             time.sleep(args.settle_seconds)
             dismissed_initial_overlays.append(tag)

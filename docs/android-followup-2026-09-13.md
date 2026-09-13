@@ -235,3 +235,34 @@ not just the count. Its three tests are included in CI; the combined 16-test
 audit-tool unit suite passed locally. Native CI for `7137867` completed all six
 jobs successfully; the subsequent uppercase fix `d6a6a87` has been pushed for
 its own checks. UI changes through `64fb0be` were pushed to draft PR 46.
+
+Recent selector evidence is also preserved locally outside `/tmp` in the
+ignored archive `docs/assets/android/audit/2026-09-13/selector-native-followup.tar.gz`
+(6.3 MiB). It contains the three complete Autocomplete, Combobox and Select
+reports, captures and hierarchies, including the before/after 200% tag case.
+Archive integrity was checked with `gzip -t`; SHA-256:
+`92cd2319b21a394f5c5716e42a97256e50ebbbda00da5578d1c3deb5919c4089`.
+This is diagnostic evidence, not a public documentation asset or physical
+device approval.
+
+The next startup run terminated at Navigation Drawer after the harness sent
+Back and left the app. Isolated cold launch confirmed its route caption and
+Variations already appear at y=265/409 without dismissal. The drawer exception
+was incorrect and has been removed; only Command Palette is dismissed.
+No complete 114-route performance report has been produced yet.
+
+## Tag Input custom-value interaction regression
+
+A dedicated Tag Input audit was added to exercise add/remove of existing
+options, custom creation, reopening/removing the custom value and isolation.
+After correcting its parsing of the persistent field label, it reproduced
+an inconsistent close: existing-option selection stays open, but custom Rust
+creation closes the multiple-selection sheet. Evidence is under
+`/tmp/pam-ui-tag-interactions-complete-20260913`; this is a failed partial run,
+not a passing component report.
+
+The UI modal identity was hashing the expanded option list, including custom
+controlled values. It now hashes configured options before expansion. The
+matrix regression asserts the same modal marker before/after Rust is added;
+all 32,832 style and 456 render cases pass. Device confirmation of this change
+and completion of the dedicated interaction audit remain pending.

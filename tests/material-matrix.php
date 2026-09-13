@@ -3875,6 +3875,17 @@ if (
         'p-tag-input must preserve custom tags as selected removable options.',
     );
 }
+$initialCustomTag = $tags['p-tag-input']::make([
+    'label' => 'Skills',
+    'items' => ['PHP'],
+    'modelValue' => ['PHP'],
+])->toElement();
+if (
+    $modalMarker($initialCustomTag) === null
+    || $modalMarker($initialCustomTag) !== $modalMarker($persistedCustomTag)
+) {
+    throw new RuntimeException('Creating a custom tag must preserve the open modal identity.');
+}
 $fileInput = $tags['p-file-input']::make(['label' => 'Attachments'])
     ->onPick(static function (mixed $files): void {})
     ->toElement();

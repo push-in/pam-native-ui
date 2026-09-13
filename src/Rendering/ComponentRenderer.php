@@ -9434,6 +9434,11 @@ final class ComponentRenderer
             ];
         }
 
+        // Modal identity must not change when a controlled custom tag adds
+        // an option. Otherwise Native sees a different modal and closes the
+        // open sheet during the Change update.
+        $configuredItems = $normalized;
+
         // User-created tags are part of the controlled value even when they
         // were not in the original suggestions. Keep them in the option model
         // so they remain visible, announced as selected, and removable when
@@ -9591,7 +9596,7 @@ final class ComponentRenderer
                 ."\0"
                 .self::text($props, 'label')
                 ."\0"
-                .json_encode($normalized, JSON_UNESCAPED_SLASHES),
+                .json_encode($configuredItems, JSON_UNESCAPED_SLASHES),
         ), 0, 16);
         $dragIndicator = View::make()
             ->property(PropKey::Value, 'pam:sheet-drag-indicator')
