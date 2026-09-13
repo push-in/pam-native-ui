@@ -331,3 +331,19 @@ Android instrumented test: its collected event type was incorrectly Int,
 although NativeViewEmitter supplies NativeViewEventKind. Commit `62e47a6`
 corrects the test type. Replacement run `34776338798` is in progress; the
 earlier compile failure did not execute the Android behavioral assertions.
+
+## File Input document selection follow-up
+
+Using two 43-byte text fixtures created in the emulator's Downloads directory,
+manual selection returned the correct single filename and then `2 files
+selected` in the separate multiple-file field. Inspected capture:
+`/tmp/pam-file-multiple-selected-20260913.png`; XML for single, multiple and
+cancellation is retained under `/tmp/pam-file-*-20260913.xml`.
+
+Cancelling a subsequent multiple selection incorrectly cleared the displayed
+value. Native Files intentionally reports cancellation as null/empty list;
+the showcase was assigning that cancellation result to the selected state.
+Its callback now ignores null/empty cancellation. Syntax and diff checks pass;
+device confirmation is pending. The two fixtures remain temporarily for that
+retest: `/sdcard/Download/pam-ui-file-audit-a-20260913.txt` and the matching
+`pam-ui-file-audit-b-20260913.txt`. No personal documents were selected.

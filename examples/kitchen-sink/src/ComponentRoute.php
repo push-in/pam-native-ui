@@ -3735,6 +3735,11 @@ final class ComponentRoute extends Component
                 }
                 $preview = \Pam\MobileUi\Material\PFileInput::make($previewProps)->onPick(
                     function (mixed $selection) use ($index): void {
+                        // Native pickers report cancellation as null (single)
+                        // or an empty list (multiple). Cancel is not Clear.
+                        if ($selection === null || $selection === []) {
+                            return;
+                        }
                         $this->setSampleValue($index, $selection);
                     },
                     \Pam\Native\MediaPickerType::Any,
