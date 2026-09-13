@@ -1974,6 +1974,28 @@ final class ComponentRenderer
             $nativeBackground,
         )->style($rootStyle);
 
+        if (in_array($props['__materialComponent'] ?? null, ['PBtnGroup', 'PBtnToggle'], true)) {
+            // Keep layout and public semantics on the viewport. Only the row
+            // flows horizontally; margins, padding and application sizing must
+            // not be duplicated on both the viewport and its content.
+            $content = Row::make(...$children)->style(new Style(
+                gap: $styleOverride->gap ?? $rootStyle->gap,
+                flexDirection: $styleOverride->flexDirection ?? $rootStyle->flexDirection,
+                alignItems: $styleOverride->alignItems ?? $rootStyle->alignItems,
+                justifyContent: $styleOverride->justifyContent ?? $rootStyle->justifyContent,
+            ));
+            $element = Scroll::make($content)
+                ->horizontal(true)
+                ->fillViewport(true)
+                ->scrollEnabled(true)
+                ->showsIndicator(true)
+                ->persistentScrollbar(true)
+                ->fadingEdgeLength(12.0)
+                ->nestedScrollEnabled(true)
+                ->style(new Style(widthPercent: 100.0))
+                ->style($rootStyle);
+        }
+
         if (
             self::hasSemanticValue($part)
             && isset($props['value'])

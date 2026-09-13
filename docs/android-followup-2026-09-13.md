@@ -875,3 +875,115 @@ evidence, native-only before-stretch capture and startup report in local
 Gzip integrity passes; SHA-256:
 `127f55dcf5762b7167f28ca33a80fe8ed5052ef201662c6d54f406f9522ffae2`.
 This ignored diagnostic archive is not published gallery media.
+
+### Horizontal overflow prerequisite — local Native implementation
+
+Investigating the Five options letter wrapping and Disabled group overflow
+confirmed that Native already supplies horizontal Scroll, but its unspecified
+height falls back to the generic 240 dp list height. The local engine change
+measures horizontal Scroll's auto height from its children at the natural
+scrollable width (with fillViewport respected), including vertical padding.
+Explicit height continues to take precedence; vertical Scroll is unchanged.
+
+The regression checks a 400 dp content row in a 300 dp viewport: 56 dp content
+plus 16 dp padding produces a 72 dp scroller and positions the following
+sibling at 72 dp. An explicit 100 dp height still positions it at 100 dp.
+All 76 engine unit tests and clippy with warnings denied pass locally.
+This is an unpublished Native prerequisite, not an installed Android build
+or a UI visual approval. Group integration, narrow-width and enlarged-font
+interaction checks remain pending; the two reported visual defects remain open.
+
+### Scrollable groups — integration and first device check, not approved
+
+PBtnGroup/PBtnToggle now compose Native Scroll with an inner Row. Public
+semantics, viewport sizing, padding and margins remain on the root; row gap,
+direction and alignment (including explicit Style overrides) stay on content.
+The PHP matrix preserves existing selection/mandatory/multiple/disabled/RTL
+checks through that new hierarchy and adds custom-inset/non-duplication checks.
+Material matrix, theme runtime, recipe matrix and PHPStan level 9 pass.
+
+First release build completed in 4m59s, installed on emulator-5554 and cleaned
+904.9 MiB. Samsung was authoritatively locked. This APK contains the initial
+horizontal-auto-height engine change, NOT the later natural-text/grow-width
+corrections described below. Diagnostic captures are at
+`/tmp/pam-ui-group-overflow-20260913`.
+
+The first diagnostic swipe started too near the system edge, navigated away
+from the app and failed the foreground guard. After moving the gesture into
+the center of the control, four scoped checks passed: Five options/Fri selected
+and Disabled group/Admin remained disabled, each at font scales 1.0 and 2.0.
+Font scale restored and confirmed 1.0. These checks prove reachability and those
+specific state transitions, not text quality. Inspected captures still show
+Mon/Wed breaking into fragments, including at normal scale. Visual gate fails.
+
+Two additional local Native corrections address the cause: text leaves on
+the horizontal scrolling axis are measured without a viewport-width cap;
+zero-basis grow items reserve enough natural content width for the largest
+weighted share instead of dividing a sum that can undersize the widest label.
+Regression checks include a long unwrapped label and two equal-grow children
+with natural widths 120/180, which require a 360-wide scroll row and 180 each.
+All 77 engine tests and clippy with warnings denied pass. The second release
+build is running; its device evidence must not be confused with the first APK.
+Source SHA-256 for this second build:
+
+- Renderer: `0da258117a42d08f35913d333a2d82a93628f7953aaddcdeac42be2eb8458654`
+- Engine layout: `3559f3c1935ac1f025d2d52e4ea85c98f7a3b606e7c74bb95d4e39ca248bddea`
+
+No release/public gallery update, Samsung approval or complete group approval
+is claimed. Remaining checks include readable full labels, scroll affordance,
+RTL overflow, all variants and user styles on the corrected binary.
+
+### Corrected binary — readable short labels and scoped overflow interactions
+
+The second build completed successfully in 3m56s, installed on emulator-5554
+and cleaned 904.9 MiB. Its source hashes match the preceding entry. Installed
+APK SHA-256: `f19daa87871db9c90f4d81e1b1925cce00c9bb08ac5711e8a949a44783747020`.
+
+Inspected Five options at normal and 200% scale: visible Mon/Tue/Wed/Thu/Fri
+labels no longer break into fragments. Horizontal swiping reaches Fri and a
+real tap selects it. The initial corrected diagnostic still accepted a partly
+visible Admin, so it is not proof of a complete label. Strengthened the check
+to require the target text to have at least 4 dp clearance inside the viewport
+before tapping. That corrected run passed all four cases (Five options/Fri,
+Disabled group/Admin, each at 100% and 200%). Inspected its 200% Admin capture:
+the complete label is visible after swiping and the disabled control remains
+inactive. Font scale restored and confirmed 1.0.
+
+Final scoped report:
+`/tmp/pam-ui-group-overflow-complete-labels-20260913/report.json`;
+SHA-256 `fe833dce9644b982694e0d4dd71b75bf78acf2265b213e93fd6d380783f4d3be`.
+The reusable runner is `tools/audit-button-toggle-overflow-android.py`
+(`--serial`, `--output` required); Python compilation and CLI help pass.
+It checks visible short-label height, viewport gutters, reaching/selecting Fri,
+and reaching Admin without enabling it. It does not validate all variants,
+all labels, performance, screen readers, or the entire component.
+
+Native Android's inner HorizontalScrollView is exposed as scrollable when it
+overflows; the outer semantic group being non-scrollable was not evidence of
+a lost scroll action. This is hierarchy evidence, not a TalkBack approval.
+Visual release remains pending: overflow needs a clearer persistent affordance,
+and RTL/all-variant checks are not complete. Existing neighboring labels outside
+the horizontal viewport are intentionally clipped until scrolled, not proof of
+letter wrapping. No public gallery or package release was updated.
+
+The three diagnostic batches (including rejected/intermediate captures) are
+preserved in ignored `docs/assets/android/audit/2026-09-13/group-overflow-followup.tar.gz`.
+Gzip integrity passes; SHA-256:
+`9a4b8f7c06d070bbc8c0de7d3f47335e9f15d8ab0ced9adf4ca3d580e81bbc30`.
+
+### Overflow affordance candidate and Native CI
+
+The local UI candidate enables Native Scroll's persistent scrollbar and 12 dp
+fading edges for both button-group families. Material matrix and PHPStan level
+9 pass; the group contract asserts the two native properties. Renderer SHA-256:
+`e89592275ad876ced8a92e82c899ea57558f1d0b160cd061b548e9134553ab1c`.
+Its Android release build is in progress; appearance of the indicator is not
+yet approved. The overflow runner now also checks RTL visual order and tapping
+Day, at both font scales. Python compilation passes; those new device checks
+have not yet run on the candidate.
+
+Native layout changes are committed/pushed as
+`ebd00a32e67f6b31272a2af8efc920910f2d2b93` on the existing draft PR 134.
+CI run `34784866537` is confirmed in progress for that exact SHA. This is a
+review-branch push, not a merge or package release. Local Native validation
+remains 77 passing engine tests and clippy with warnings denied.

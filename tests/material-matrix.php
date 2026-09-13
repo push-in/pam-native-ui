@@ -250,10 +250,16 @@ $buttonGroup = $tags['p-btn-group']::make(
     $buttonGroupValue = $value;
 })->toElement();
 $buttonGroupProperties = $buttonGroup->properties();
-$buttonGroupChildren = $buttonGroup->children();
+$buttonGroupChildren = $buttonGroup->children()[0]->children();
 $buttonGroupSelected = $buttonGroupChildren[1]->properties();
 if (
-    $buttonGroup->kind() !== NodeKind::Row
+    $buttonGroup->kind() !== NodeKind::Scroll
+    || ($buttonGroupProperties[PropKey::ScrollHorizontal->value] ?? null) !== true
+    || ($buttonGroupProperties[PropKey::ScrollFillViewport->value] ?? null) !== true
+    || ($buttonGroupProperties[PropKey::ScrollPersistentScrollbar->value] ?? null) !== true
+    || ($buttonGroupProperties[PropKey::ScrollFadingEdgeLength->value] ?? null) !== 12.0
+    || isset($buttonGroupProperties[PropKey::Height->value])
+    || $buttonGroup->children()[0]->kind() !== NodeKind::Row
     || ($buttonGroupProperties[PropKey::Gap->value] ?? null) !== 8.0
     || ($buttonGroupProperties[PropKey::MinHeight->value] ?? null) !== 48.0
     || count($buttonGroupChildren) !== 3
@@ -281,6 +287,25 @@ if ($buttonGroupValue !== null) {
     );
 }
 
+$styledGroup = $tags['p-btn-group']::make(
+    ['accessibilityLabel' => 'Custom actions'],
+    $tags['p-btn']::make([], Text::make('Action')),
+)->style(new Style(width: 240.0, paddingHorizontal: 12.0, marginTop: 16.0, gap: 12.0))
+    ->toElement();
+$styledViewport = $styledGroup->properties();
+$styledContent = $styledGroup->children()[0]->properties();
+if (
+    ($styledViewport[PropKey::Width->value] ?? null) !== 240.0
+    || ($styledViewport[PropKey::PaddingHorizontal->value] ?? null) !== 12.0
+    || ($styledViewport[PropKey::MarginTop->value] ?? null) !== 16.0
+    || ($styledContent[PropKey::Gap->value] ?? null) !== 12.0
+    || isset($styledContent[PropKey::PaddingHorizontal->value])
+    || isset($styledContent[PropKey::MarginTop->value])
+    || isset($styledContent[PropKey::WidthPercent->value])
+) {
+    throw new RuntimeException('Scrollable groups must preserve custom viewport sizing and row gaps without duplicating insets.');
+}
+
 $connectedValue = null;
 $connectedButtonGroup = $tags['p-btn-group']::make(
     [
@@ -296,7 +321,7 @@ $connectedButtonGroup = $tags['p-btn-group']::make(
     $connectedValue = $value;
 })->toElement();
 $connectedProperties = $connectedButtonGroup->properties();
-$connectedChildren = $connectedButtonGroup->children();
+$connectedChildren = $connectedButtonGroup->children()[0]->children();
 $connectedLeading = $connectedChildren[0]->properties();
 $connectedSelected = $connectedChildren[1]->properties();
 $connectedTrailing = $connectedChildren[2]->properties();
@@ -336,7 +361,7 @@ $rtlButtonGroup = $tags['p-btn-group']::make(
     $tags['p-btn']::make(['value' => 'month'], Text::make('Month')),
 )->toElement();
 $rtlProperties = $rtlButtonGroup->properties();
-$rtlChildren = $rtlButtonGroup->children();
+$rtlChildren = $rtlButtonGroup->children()[0]->children();
 $rtlLogicalFirst = $rtlChildren[0]->properties();
 $rtlLogicalLast = $rtlChildren[2]->properties();
 if (
@@ -361,7 +386,7 @@ $multipleButtonGroup = $tags['p-btn-group']::make(
 )->onChange(static function (mixed $value) use (&$multipleValue): void {
     $multipleValue = $value;
 })->toElement();
-$multipleButtonGroup->children()[0]->events()[EventKind::Press->value]();
+$multipleButtonGroup->children()[0]->children()[0]->events()[EventKind::Press->value]();
 if ($multipleValue !== ['bold']) {
     throw new RuntimeException(
         'A mandatory multiple p-btn-group must never clear its final selection.',
@@ -378,7 +403,7 @@ if (($disabledButtonGroup->properties()[PropKey::Opacity->value] ?? null) !== 1.
         'Disabled p-btn-group must not compound the state alpha already applied to its children.',
     );
 }
-$disabledGroupChildren = $disabledButtonGroup->children();
+$disabledGroupChildren = $disabledButtonGroup->children()[0]->children();
 if (
     ($disabledGroupChildren[0]->properties()[PropKey::Selected->value] ?? null) !== true
     || ($disabledGroupChildren[0]->properties()[PropKey::BackgroundColor->value] ?? 0)
@@ -390,7 +415,7 @@ if (
         'Disabled p-btn-group must preserve a visible distinction between selected and unselected items.',
     );
 }
-foreach ($disabledButtonGroup->children() as $disabledButton) {
+foreach ($disabledGroupChildren as $disabledButton) {
     $disabledProperties = $disabledButton->properties();
     if (
         ($disabledProperties[PropKey::Enabled->value] ?? null) !== false
@@ -1561,12 +1586,14 @@ $buttonToggle = $buttonToggleClass::make(
     },
 )->toElement();
 $toggleProperties = $buttonToggle->properties();
-$toggleChildren = $buttonToggle->children();
+$toggleChildren = $buttonToggle->children()[0]->children();
 $toggleLeading = $toggleChildren[0]->properties();
 $toggleMiddle = $toggleChildren[1]->properties();
 $toggleTrailing = $toggleChildren[2]->properties();
 if (
-    $buttonToggle->kind() !== NodeKind::Row
+    $buttonToggle->kind() !== NodeKind::Scroll
+    || ($toggleProperties[PropKey::ScrollHorizontal->value] ?? null) !== true
+    || isset($toggleProperties[PropKey::Height->value])
     || ($toggleProperties[PropKey::Gap->value] ?? null) !== 0.0
     || ($toggleProperties[PropKey::MinHeight->value] ?? null) !== 48.0
     || ($toggleProperties[PropKey::WidthPercent->value] ?? null) !== 100.0
@@ -1619,7 +1646,7 @@ $optionalToggle = $buttonToggleClass::make(
         $optionalButton = $value;
     },
 )->toElement();
-$optionalToggle->children()[0]->events()[EventKind::Press->value]();
+$optionalToggle->children()[0]->children()[0]->events()[EventKind::Press->value]();
 if ($optionalButton !== null) {
     throw new RuntimeException(
         'A non-mandatory p-btn-toggle must allow its selected item to be cleared.',
@@ -1635,7 +1662,7 @@ $mandatoryToggle = $buttonToggleClass::make(
         $mandatoryButtons = $value;
     },
 )->toElement();
-$mandatoryPress = ($mandatoryToggle->children()[0] ?? null)?->events()[
+$mandatoryPress = ($mandatoryToggle->children()[0]->children()[0] ?? null)?->events()[
     EventKind::Press->value
 ] ?? null;
 if (!$mandatoryPress instanceof Closure) {
@@ -1658,7 +1685,7 @@ $rtlToggle = $buttonToggleClass::make(
     $buttonClass::make(['text' => 'Right', 'value' => 'right']),
 )->toElement();
 $rtlToggleProperties = $rtlToggle->properties();
-$rtlToggleChildren = $rtlToggle->children();
+$rtlToggleChildren = $rtlToggle->children()[0]->children();
 $rtlToggleLogicalFirst = $rtlToggleChildren[0]->properties();
 $rtlToggleLogicalLast = $rtlToggleChildren[2]->properties();
 if (
@@ -1682,7 +1709,7 @@ $disabledToggle = $buttonToggleClass::make(
     $buttonClass::make(['text' => 'Read', 'value' => 'read']),
     $buttonClass::make(['text' => 'Write', 'value' => 'write']),
 )->toElement();
-$disabledToggleChildren = $disabledToggle->children();
+$disabledToggleChildren = $disabledToggle->children()[0]->children();
 if (
     ($disabledToggle->properties()[PropKey::Opacity->value] ?? null) !== 1.0
     || ($disabledToggleChildren[0]->properties()[PropKey::Selected->value] ?? null) !== true
