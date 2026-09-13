@@ -274,3 +274,17 @@ the native dismissal event unconditionally, unlike existing-option actions.
 The UI Android plugin now respects `closeOnSelect` before emitting that event;
 the instrumented regression expects only Change when it is false. This
 Kotlin change still needs compilation, instrumentation and device confirmation.
+
+The Android build with `079941c` subsequently installed and the dedicated tag
+audit passed all six checks. Complete report:
+`/tmp/pam-ui-tag-dismiss-policy-20260913/report.json`. The inspected
+`06-custom-retained.png` shows Kotlin/Swift in Skills and Android/Rust in
+Technologies, with clean label/chip spacing. Existing-option additions and
+custom creation both keep the sheet open; reopening and removing Rust passes.
+This is an emulator functional result, not Samsung or all-variant approval.
+
+UIKit had the same unconditional custom dismissal and ignored closeOnSelect
+for existing sheet items. Commit `04c3201` unifies both paths under the same
+property policy and adds a UIKit precedence test. It was pushed to draft PR
+46; compilation/tests remain pending on the iOS CI runner. Android build
+cleanup removed 904.9 MiB.
