@@ -199,3 +199,24 @@ Kotlin and Android. The matching XML is retained in the evidence directory.
 This resolves the reproduced PHP clipping case on the API 36 emulator, not
 all strings, font families, devices or Tag Input interaction gates. Font scale
 was restored to 1.0; automatic build cleanup removed 904.9 MiB.
+
+## Integrated Select and Combobox follow-up
+
+On the installed Native `d6a6a87` build, Combobox completed all 15 detailed
+checks and Select all 14. Reports are respectively under
+`/tmp/pam-ui-combobox-native-fixed-20260913` and
+`/tmp/pam-ui-select-native-fixed-20260913`. Combobox covers creation of Strategy,
+replacement with an existing option and instance isolation. Select verifies
+that neither search nor the software keyboard appears. Both cover disabled
+and read-only behavior, Back, rotation and runtime logs. These are emulator
+functional reports, not physical or performance approval.
+
+Combobox's `02-custom-value.png` was inspected: the search and custom action
+are separated. The floating IME toolbar makes it diagnostic-only, unsuitable
+for public showcase documentation.
+
+The release startup audit was still discovering only 84 screenshot-backed
+routes. It now uses the catalog, checking its count against parity metadata,
+so all 114 current routes participate even without screenshots. Two unit
+tests pass, including rejection of incomplete discovery before ADB mutations.
+The full 114-route startup benchmark has not yet been run on this revision.

@@ -46,6 +46,16 @@ def percentile(values: list[int], fraction: float) -> int:
     return ordered[min(len(ordered) - 1, round((len(ordered) - 1) * fraction))]
 
 
+def catalog_tags(root: Path) -> list[str]:
+    catalog = (root / "docs/catalog.md").read_text(encoding="utf-8")
+    tags = sorted({match[1:] for match in re.findall(r"<p-[a-z0-9-]+", catalog)})
+    parity = json.loads((root / "resources/material-parity.json").read_text(encoding="utf-8"))
+    expected = parity["reference"]["componentCount"]
+    if not tags or len(tags) != expected:
+        raise AuditFailure(f"expected {expected} catalog routes, found {len(tags)}")
+    return tags
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serial", required=True)
@@ -58,9 +68,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parent.parent
-    tags = sorted(path.stem for path in (root / "docs/assets/android/components").glob("p-*.png"))
-    if len(tags) != 84:
-        raise AuditFailure(f"expected 84 component routes, found {len(tags)}")
+    tags = catalog_tags(root)
 
     adb = ["adb", "-s", args.serial]
     run(adb, "get-state")
