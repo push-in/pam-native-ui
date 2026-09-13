@@ -156,3 +156,15 @@ writing its final report. Do not treat that run as a complete report.
 Multi Select was resumed separately and passed; its complete report is
 `/tmp/pam-ui-multi-select-padding-20260913.json`. Full detailed selection and
 large-text coverage after the spacing change still remain pending.
+
+### Post-padding autocomplete regression
+
+The installed spacing build completed the detailed autocomplete audit again:
+all 14 checks passed, with a complete report at
+`/tmp/pam-ui-autocomplete-post-padding-20260913/report.json`.
+The `06-isolated-open.png` capture was visually inspected: field labels are
+inset, selection remains independent between instances, and the open sheet's
+search field and options have visible horizontal gutters. This replaces the
+pending detailed autocomplete check above, not the remaining large-text,
+other-component, physical-device or performance gates. The audit disables
+system animations and therefore does not establish animation smoothness.
