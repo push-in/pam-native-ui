@@ -548,3 +548,47 @@ range endpoint/payload behavior, adaptive stale-track bounds and the
 100-tick allocation regression (`OK (3 tests)`). The hidden-anatomy hot-path
 change is retained as tested redundant-work removal, not as a measured jank
 fix. Release/physical smoothness remains unapproved.
+
+Executed the complete `MobileUiHostInstrumentedTest` class on emulator-5554
+against the latest UI optimization: `OK (66 tests)`, 6.194s. This covers the
+host's existing behavioral/layout/accessibility regressions, not all 114
+showcase compositions or all visual variants. UI commit `05dfed8` was pushed;
+CI run `34778970174` is running against native `f83eaa3`.
+
+Started the exact 114-route cold-start regression on the installed release
+at `/tmp/pam-ui-startup-114-padding-hotpath-20260913.json`; no final result yet.
+
+Native CI `34778057612` is now fully green for `f83eaa3`: six jobs including
+API 26/36 instrumentation and cross-platform accessibility evidence passed.
+
+A subsequent native code review found the virtualized-cell placement path
+did not set the physical frame gravity already used by ordinary placement.
+Added that gravity so an RTL FrameLayout does not resolve engine coordinates
+through START again. A narrow-cell LTR/RTL instrumentation regression was
+added; pixel-snapping/padding unit tests and instrumentation compilation pass
+(26s). Native debug/test APK assembly is running for local execution. This
+new patch is not covered by the earlier green CI and is not yet in showcase.
+
+Native debug and test APK assembly completed successfully in 12s. Execution
+of the new RTL test is waiting for the active startup audit to release the
+emulator; do not overlap foreground test apps with startup measurements.
+The public `/pam-docs/mobile-ui/overview/` URL returned HTTP 200 in a read-only
+check (this does not approve the pending documentation media).
+
+The startup auditor now emits flushed per-route progress on stderr after each
+route/heading assertion. The three catalog-discovery unit tests pass; the
+already running process was not restarted to adopt this diagnostic change.
+
+The 114-route startup run passed: p50 330ms, p95 422ms, p99 479ms, max 500ms,
+zero matched runtime errors. Report SHA-256:
+`a085c8fa071aaf15ec47b7c7ed606113c524374cd2542d2a91766c83f71b73d3`;
+installed APK SHA-256:
+`f96f127975f6a281cc5a7a7ad92ce438be48b1a6fe4b46d8312e9ac0c0edf1c3`.
+This is emulator startup evidence for native f83eaa3 plus UI drag optimization;
+it predates the new virtual-cell RTL patch and does not approve every variant.
+
+After startup completed, installed the native debug/test APKs and ran both
+padding and physical-cell LTR/RTL instrumentation checks: `OK (2 tests)`.
+The first runner command used the unsuffixed test package and could not start;
+`pm list instrumentation` identified `dev.pam.nativeapp.debug.test`, which was
+used for the successful execution. No test was silently skipped.

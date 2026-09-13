@@ -9,6 +9,7 @@ import json
 import re
 import statistics
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -142,6 +143,11 @@ def main() -> int:
             raise AuditFailure(f"{tag} cold-launched outside the authoritative route top")
         if not variations_visible:
             raise AuditFailure(f"{tag} cold launch hid the Variations heading")
+        print(
+            f"[{index:03d}/{len(tags):03d}] {tag}: cold launch {measurements[tag]}ms; route verified",
+            file=sys.stderr,
+            flush=True,
+        )
 
     durations = list(measurements.values())
     p95 = percentile(durations, 0.95)
