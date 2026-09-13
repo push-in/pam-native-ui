@@ -3544,6 +3544,7 @@ final class ComponentRenderer
             $pageCount - $visible + 1,
         ));
         $last = min($pageCount, $first + $visible - 1);
+        $disabled = self::flag($props, 'disabled');
         $change = $events[EventKind::Change->value] ?? null;
         $theme = ThemeManager::current();
         $reduceMotion = self::flag($props, 'reduceMotion');
@@ -3575,6 +3576,7 @@ final class ComponentRenderer
                     animationDurationMs: $reduceMotion ? 0 : 150,
                     animateChanges: !$reduceMotion,
                 ))
+                ->enabled(!$disabled)
                 ->property(PropKey::Selected, $selected)
                 ->accessibilityRole(AccessibilityRole::Button)
                 ->accessibilityLabel("Page {$page} of {$pageCount}")
@@ -3585,7 +3587,7 @@ final class ComponentRenderer
                     false,
                     MaterialTokens::STATE_OPACITY[4],
                 );
-            if ($change instanceof Closure && !$selected) {
+            if (!$disabled && $change instanceof Closure && !$selected) {
                 $button = $button->onPress(
                     static function () use ($change, $page): mixed {
                         return $change($page);
@@ -4681,9 +4683,13 @@ final class ComponentRenderer
                 ? ($definition['label'] ?? $definition['title'] ?? $value)
                 : $definition;
             if (!is_scalar($value) || !is_scalar($label)) continue;
+            $itemDisabled = $disabled || (is_array($definition) && self::flag(
+                ['disabled' => $definition['disabled'] ?? false],
+                'disabled',
+            ));
             $active = in_array($value, $selected, true);
             $button = Pressable::make(Text::make((string) $label)->style(new Style(
-                textColor: $disabled
+                textColor: $itemDisabled
                     ? $theme->color(ColorToken::MutedForeground)
                     : ($active
                         ? $theme->color(ColorToken::SecondaryForeground)
@@ -4694,12 +4700,12 @@ final class ComponentRenderer
             )))->style(new Style(
                 minHeight: 48.0,
                 paddingHorizontal: 16.0,
-                backgroundColor: $disabled
+                backgroundColor: $itemDisabled
                     ? $theme->color(ColorToken::SurfaceSunken)
                     : ($active
                         ? $theme->color(ColorToken::Secondary)
                         : $theme->color(ColorToken::SurfaceContainerLow)),
-                borderColor: $disabled
+                borderColor: $itemDisabled
                     ? $theme->color(ColorToken::Border)
                     : ($active
                         ? $theme->color(ColorToken::Secondary)
@@ -4708,7 +4714,7 @@ final class ComponentRenderer
                 borderRadius: 24.0,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
-            ))->enabled(!$disabled)
+            ))->enabled(!$itemDisabled)
                 ->property(PropKey::Selected, $active)
                 ->property(PropKey::Checked, $active)
                 ->accessibilityRole(AccessibilityRole::ToggleButton)
@@ -4716,7 +4722,7 @@ final class ComponentRenderer
                     ? AccessibilityCheckedState::Checked
                     : AccessibilityCheckedState::Unchecked)
                 ->accessibilityLabel((string) $label);
-            if (!$disabled && $change instanceof Closure) {
+            if (!$itemDisabled && $change instanceof Closure) {
                 $button = $button->onPress(static function () use (
                     $active, $change, $selected, $value,
                 ): mixed {

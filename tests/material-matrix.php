@@ -3343,6 +3343,39 @@ if ($selectedPage !== 2) {
 }
 
 $segmentedClass = $tags['p-segmented-button'];
+foreach ([false, true] as $disabled) {
+    $pages = $tags['p-pagination']::make([
+        'length' => 3, 'modelValue' => 1, 'disabled' => $disabled,
+    ])->onChange(static function (int $value): void {})->toElement()->children();
+    foreach ($pages as $index => $page) {
+        if (
+            ($page->properties()[PropKey::Enabled->value] ?? null) !== !$disabled
+            || isset($page->events()[EventKind::Press->value]) !== (!$disabled && $index !== 0)
+        ) {
+            throw new RuntimeException('Pagination must disable every generated page action.');
+        }
+    }
+    $filters = $tags['p-filter-bar']::make([
+        'items' => [
+            ['label' => 'Available', 'value' => 1],
+            ['label' => 'Unavailable', 'value' => 2, 'disabled' => true],
+            ['label' => 'Another', 'value' => 3, 'disabled' => false],
+        ],
+        'modelValue' => [], 'disabled' => $disabled,
+    ])->onChange(static function (array $value): void {})->toElement()->children();
+    if (count($filters) !== 3) {
+        throw new RuntimeException('Filter disabled-state fixture must expose all three controls.');
+    }
+    foreach ($filters as $index => $filter) {
+        $expectedDisabled = $disabled || $index === 1;
+        if (
+            ($filter->properties()[PropKey::Enabled->value] ?? null) !== !$expectedDisabled
+            || isset($filter->events()[EventKind::Press->value]) === $expectedDisabled
+        ) {
+            throw new RuntimeException('Filters must honor both item and group disabled state.');
+        }
+    }
+}
 $selectedSegment = null;
 $segmented = $segmentedClass::make([
     'items' => [

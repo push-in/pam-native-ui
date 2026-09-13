@@ -1375,3 +1375,28 @@ Disabled item fixture and preserves fixture-provided items. This change is not
 in the tested Samsung APK and still needs device validation. Initial PHPStan
 flagged passing an untyped item map to flag(); the fix extracts only the disabled
 property into a string-keyed map, without suppressions or widened types.
+
+### Selection-control batch: disabled semantics
+
+The segmented-item fix above is now validated on Samsung at font scales 1.0
+and 2.0: tapping Edit leaves View selected; tapping Share selects Share.
+Enabled, checked and selected native semantics agree. Original font scale 1.1
+was restored. Report: `/tmp/pam-ui-segmented-disabled-20260913/report.json`.
+APK SHA-256: `bb9c77400bbcce81bd656abc9167f78e4e24065828baea6bf4c1553dc5591ec6`.
+This closes the scoped disabled-item check, not full component approval.
+
+The same code-review batch found two additional UI-owned defects: pagination
+attached page actions despite group disabled state; Filter Bar ignored individual
+item disabled state. Pagination now sets native Enabled and omits disabled page
+handlers. Filter Bar applies item/group precedence to native Enabled, handlers
+and existing disabled color tokens. Regression checks cover enabled/disabled
+groups and independently disabled items. The 114-component matrix passes
+(32,832 style cases and 456 render cases). These two changes are not yet in the
+Samsung APK above and still require device validation. No Native workaround or
+dependency change was needed.
+
+PHPStan level 9 also passed for this batch. Visual inspection of the Samsung
+2.0-font screenshot confirms disabled-item distinction and Share selection,
+but the Icons variation has tight trailing label clearance. That enlarged-text
+layout remains pending; the interaction pass is not visual approval. Screenshots
+from this diagnostic run must not be published as polished documentation assets.
