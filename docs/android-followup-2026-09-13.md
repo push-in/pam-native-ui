@@ -168,3 +168,18 @@ search field and options have visible horizontal gutters. This replaces the
 pending detailed autocomplete check above, not the remaining large-text,
 other-component, physical-device or performance gates. The audit disables
 system animations and therefore does not establish animation smoothness.
+
+### Selection fields at 200% system text
+
+Manual inspection at font scale 2.0 confirmed the visible Autocomplete, Select,
+Combobox and Multi Select labels and values remain inside their outlines.
+Autocomplete was opened and its last option, Research, tapped; the resulting
+hierarchy contains Research in the field. Captures and XML are in the same
+post-padding evidence directory (`scaled-200*`, `multi-select-200.png`,
+`p-select-200.png`, `p-combobox-200.png`, `p-tag-input-200.png`).
+
+**New failure:** Tag Input's selected PHP chip renders only PH at this scale.
+Do not approve its large-text variant. The chip uses intrinsic text sizing,
+not a fixed width. Native fallback glyph measurement and chip child sizing
+need investigation; no root cause or fix is yet verified. System font scale
+was restored to 1.0 after the checks.
