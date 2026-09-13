@@ -208,6 +208,13 @@ $textButton = PBtn::make(
     Text::make('Text action'),
 )->toElement();
 $textButtonProperties = $textButton->properties();
+if (($textButton->children()[0]->properties()[PropKey::FlexShrink->value] ?? null) !== 1.0) {
+    throw new RuntimeException('Button labels must shrink into their allocated width for multiline measurement.');
+}
+$fixedLabelButton = PBtn::make([], Text::make('Fixed label')->style(new Style(flexShrink: 0.0)))->toElement();
+if (($fixedLabelButton->children()[0]->properties()[PropKey::FlexShrink->value] ?? null) !== 0.0) {
+    throw new RuntimeException('Explicit application label shrink behavior must remain customizable.');
+}
 $extraSmallButtonProperties = PBtn::make(
     ['variant' => 'text', 'size' => 'x-small'],
     Text::make('Compact action'),
@@ -3501,6 +3508,11 @@ $assertGeometry('PBtn', [], [
     'height' => null,
     'paddingVertical' => 8.0,
 ]);
+foreach (['PBtnGroup', 'PBtnToggle'] as $groupPart) {
+    $assertGeometry($groupPart, [], ['alignItems' => \Pam\Native\Align::Center]);
+    $assertGeometry($groupPart, ['block' => true], ['alignItems' => \Pam\Native\Align::Stretch]);
+    $assertGeometry($groupPart, ['fullWidth' => true], ['alignItems' => \Pam\Native\Align::Stretch]);
+}
 $assertGeometry('PBtn', ['density' => 'comfortable'], [
     'minHeight' => 36.0,
 ]);

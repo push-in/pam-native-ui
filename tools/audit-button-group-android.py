@@ -544,9 +544,13 @@ class ButtonGroupAudit(AutocompleteAudit):
             button = button_map[label]
             area = node_bounds(button)
             point: Bounds | tuple[int, int] = area
-            if variation == "Standard" and index == 0:
+            # Outside-edge taps exercise the expansion needed by controls
+            # smaller than 48 dp. A grown control already meets that minimum;
+            # Android does not route a parent's out-of-bounds touch to its child.
+            needs_expansion = area.height / density < 48.0
+            if variation == "Standard" and index == 0 and needs_expansion:
                 point = (area.center[0], area.top - int(round(3.0 * density)))
-            elif variation == "Compact density" and index == 0:
+            elif variation == "Compact density" and index == 0 and needs_expansion:
                 point = (area.center[0], area.top - int(round(6.0 * density)))
             self.tap(point)
             root = self.dump(

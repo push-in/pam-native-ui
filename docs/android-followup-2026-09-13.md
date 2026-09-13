@@ -782,3 +782,55 @@ The native patch is **not installed on Android yet**. Actual group labels,
 runtime performance of the shared layout change, outside-edge taps, FAB
 interaction, iOS and Samsung validation remain pending. UI CI `34781564249`
 targets UI `539789e` with the older Native `3f6e17d`, not this new engine patch.
+
+### Native row fix on-device and shared-consumer follow-up
+
+Installed Native `634ef37` with the existing UI in 4m02s. Inspected
+`/tmp/pam-ui-group-native-only-20260913/full-width-font200.png`: both “7 days”
+and “30 days” now display completely on two lines. The native correction alone
+fixes that reproduced clipping defect. It also exposes differing heights for
+single-line and multiline siblings (Today 56 dp, the other two 96 dp).
+
+Separately, public button Text children now default to `flexShrink: 1` while
+preserving an explicit application override (including zero). Matrix tests
+cover both behaviors. This makes label width adaptation explicit; it is not
+claimed as necessary to recover the specific words already fixed above.
+A second build with this label policy installed in 3m43s. Both builds cleaned
+904.9 MiB each after completion.
+
+The group helper now exercises outside-edge expansion only when the actual
+button is shorter than 48 dp. A grown control is already a complete minimum
+target; its ancestor delegates only received events, not arbitrary points
+outside that ancestor. See Android's [TouchDelegate contract](https://developer.android.com/reference/android/view/TouchDelegate).
+Normal 40/32 dp examples still execute the original outside-edge taps, so this
+change does not skip their expanded-target checks.
+
+Group results are `/tmp/pam-ui-group-native-width-20260913/report.json`:
+Standard, Connected, Full width, Compact density and Long labels complete
+selection steps in normal font and the expanded-font round. **Exception:**
+the first Standard capture in the expanded round was taken before Android
+applied the configuration; its recorded 40 dp heights and screenshot prove
+it was still normal font. Do not count that entry as 200% evidence.
+Repeated only Standard after a fresh launch and confirmed all three actual
+heights were 56 dp before tapping. Initial Week and final Month selection
+passed; inspected the after capture. Corrected evidence:
+`/tmp/pam-ui-group-standard-font200-confirmed-20260913/report.json`.
+
+Extended FAB activated at both 100% and 200%, changed its accessible label to
+“Create project completed”, displayed Created and a check icon, and retained
+its 56 dp height with readable, aligned content at 200%. Inspected the latter
+capture. Evidence: `/tmp/pam-ui-fab-native-flex-20260913/report.json`.
+These are interaction/layout observations, not animation/performance approval.
+
+To address the mixed-height row, UI now sets cross-axis stretch for full-width
+PBtnGroup/PBtnToggle while keeping regular groups centered. Six style checks
+cover default, block and fullWidth for both families; material matrix and
+PHPStan level 9 pass. **This final stretch change is not installed yet:** stage
+the updated MaterialStyleResolver in the next build and verify equal heights,
+wrapping and group/toggle interactions. Current screenshots intentionally show
+the before state. Font scale was restored to 1.0; disk has about 31 GiB free.
+
+Native CI `34782038599` targets `634ef37` and was still running Android API 36
+at the last check. UI run `34781564249` finished successfully on the older native
+snapshot; it does not validate this combined native/UI revision. No release
+or documentation gallery publication was performed.

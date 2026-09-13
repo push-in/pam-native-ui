@@ -2029,7 +2029,7 @@ final class MaterialStyleResolver
                 flexDirection: $rtl
                     ? FlexDirection::RowReverse
                     : FlexDirection::Row,
-                alignItems: Align::Center,
+                alignItems: $fill ? Align::Stretch : Align::Center,
                 alignSelf: $fill ? Align::Stretch : null,
                 animationDurationMs: 200,
                 animateChanges: true,
@@ -2048,7 +2048,7 @@ final class MaterialStyleResolver
                 flexDirection: $rtl
                     ? FlexDirection::RowReverse
                     : FlexDirection::Row,
-                alignItems: Align::Center,
+                alignItems: $fill ? Align::Stretch : Align::Center,
                 alignSelf: $fill ? Align::Stretch : null,
             );
         }

@@ -838,6 +838,10 @@ final class ComponentRenderer
                             lineHeight: 20.0,
                             fontWeight: 500,
                             letterSpacing: 0.1,
+                            flexShrink: $child->kind() === NodeKind::Text
+                                && !array_key_exists(PropKey::FlexShrink->value, $child->properties())
+                                    ? 1.0
+                                    : null,
                         ),
                     ),
                 $children,
