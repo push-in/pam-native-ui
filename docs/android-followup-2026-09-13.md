@@ -671,3 +671,49 @@ UI CI run `34780218220` pins UI `8d908f8` to Native
 were still in progress at this observation; neither is a completed release gate.
 The 11 local range geometry/frame-parser regression tests also pass, without
 changing the previously documented unresolved drag-performance result.
+
+### Showcase hierarchy and button interaction batch
+
+Native CI `34779362085` completed all six jobs successfully. UI CI
+`34780218220` completed all nine jobs successfully for UI `8d908f8` pinned to
+Native `3f6e17d`; this does not cover subsequent showcase caption edits.
+
+Current button inspection confirmed Text and Plain have no filled containers
+and Text, Plain and Outlined activate correctly. Before evidence:
+`/tmp/pam-ui-button-current-20260913`. The inspection exposed a showcase-wide
+hierarchy problem: rotating filled variation captions looked like additional
+buttons. Replaced those decorative pills with muted 12/18 semibold captions,
+without fixed height or background. This follows the UI/UX skill's hierarchy
+and dynamic-type guidance and changes showcase composition only. Updated the
+visual-quality contract accordingly; component theme colors remain intact.
+
+PHP syntax, PHPStan level 9 and diff checks passed. Combined build installed
+successfully in 3m44s, including the incomplete phone Error example; automatic
+cleanup removed 904.9 MiB. Button batch evidence:
+`/tmp/pam-ui-button-quiet-captions-20260913/report.json`.
+
+All 19 button specimens passed the scoped interaction batch: every enabled
+example activated its callback; Disabled and Loading remained disabled and
+did not produce the pressed label. Extra small, Small and Compact density
+retained their text-node bounds inside their controls at 200% font scale.
+Inspected baseline, loading and large-font captures. Captions no longer compete
+with controls, but **small buttons remain visually tight vertically at 200%**:
+contained text is not enough to approve their typography/padding. Revisit the
+public button's intrinsic height/padding before approving dynamic type.
+Font scale was restored to 1.0. This batch did not measure motion, verify
+expanded hit areas, test every theme, or replace the Samsung release gate.
+
+The older full button auditor still contains pre-Spectrum color expectations
+(for example primary RGB 22/101/52 instead of the current 7/122/80). It was
+not run wholesale or silently treated as current: this batch reused its
+route/interaction helpers with explicit scoped checks, not its obsolete
+visual-token assertions. Those expectations need updating from the actual
+theme contract before that full auditor can serve as a release gate again.
+
+Disk hygiene: removed only `/home/davidbalbino/.gradle/caches/9.3.1/transforms`
+after verifying it was a regular user-owned directory and no Gradle 9.3.1
+process was running. Its 6.9 GiB of derived transforms are regenerable;
+downloaded modules, sources and evidence were preserved. Global Gradle caches
+fell to 3.7 GiB, under the documented 8 GiB limit; disk free space was about
+30 GiB during the build. The first force-delete command was rejected without
+execution; a non-force recursive removal of the same exact cache succeeded.

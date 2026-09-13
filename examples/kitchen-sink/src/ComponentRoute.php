@@ -112,45 +112,15 @@ final class ComponentRoute extends Component
         $theme = ThemeManager::current();
         $samples = [];
         foreach ($this->variations() as $index => $variation) {
-            $variationName = strtolower($variation['label']);
-            $variationProps = $variation['props'];
-            $sampleTone = match (true) {
-                ($variationProps['error'] ?? false) === true,
-                str_contains($variationName, 'error'),
-                str_contains($variationName, 'invalid') => ColorToken::Destructive,
-                ($variationProps['success'] ?? false) === true,
-                str_contains($variationName, 'success') => ColorToken::Success,
-                ($variationProps['loading'] ?? false) === true,
-                str_contains($variationName, 'loading') => ColorToken::Warning,
-                ($variationProps['disabled'] ?? false) === true,
-                str_contains($variationName, 'disabled') => ColorToken::Muted,
-                ($variationProps['readonly'] ?? false) === true,
-                ($variationProps['readOnly'] ?? false) === true,
-                str_contains($variationName, 'read only') => ColorToken::Secondary,
-                $index % 3 === 1 => ColorToken::Secondary,
-                $index % 3 === 2 => ColorToken::Info,
-                default => ColorToken::Primary,
-            };
-            $sampleOnTone = match ($sampleTone) {
-                ColorToken::Secondary => ColorToken::SecondaryForeground,
-                ColorToken::Info => ColorToken::InfoForeground,
-                ColorToken::Warning => ColorToken::WarningForeground,
-                ColorToken::Destructive => ColorToken::DestructiveForeground,
-                ColorToken::Success => ColorToken::SuccessForeground,
-                ColorToken::Muted => ColorToken::MutedForeground,
-                default => ColorToken::PrimaryForeground,
-            };
+            // Specimen metadata must not impersonate a button or chip. Keep
+            // semantic color and interactive surfaces on the actual control;
+            // intrinsic text height also preserves large-font captions.
             $caption = Text::make($variation['label'])->style(new Style(
                 alignSelf: Align::Start,
-                height: 30.0,
-                minHeight: 30.0,
-                paddingHorizontal: 12.0,
-                borderRadius: 15.0,
-                backgroundColor: $theme->color($sampleTone),
-                textColor: $theme->color($sampleOnTone),
+                textColor: $theme->color(ColorToken::MutedForeground),
                 fontSize: 12.0,
-                lineHeight: 30.0,
-                fontWeight: 700,
+                lineHeight: 18.0,
+                fontWeight: 600,
             ));
             $component = $this->component;
             $previewProps = $this->sampleProps($variation['props']);

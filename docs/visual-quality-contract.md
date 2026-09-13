@@ -36,9 +36,12 @@ approval.
 
 - Demonstrations sit directly on the page canvas with headings and deliberate
   vertical rhythm.
-- Variation markers identify the specimen but never become the dominant object:
-  26 dp high, 11–12 sp bold, semantic color, and an 8 dp gap before the real
-  component.
+- Variation captions identify the specimen without imitating a button or chip:
+  12 sp medium/semibold, 18 sp line height, muted foreground, no filled surface,
+  no fixed height, and an 8 dp gap before the real component. Native touch-target
+  clearance may add space inside the preview. Captions grow with system font
+  scaling; semantic color belongs to the demonstrated control, not a rotating
+  decorative palette on its metadata.
 - A card is used only when the card itself is being demonstrated or represents
   a real domain grouping. Decorative wrapper cards and card-inside-card layouts
   are prohibited.
