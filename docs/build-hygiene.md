@@ -2,7 +2,8 @@
 
 PAM Native UI retains only explicit release deliverables and bounded evidence.
 Every local, CI and release build must remove regenerable Gradle, Xcode, SwiftPM
-and Rust outputs after success or failure.
+and Rust project build outputs after success or failure. The bounded shared
+Gradle cache described below is the exception, not an application deliverable.
 
 The repository uses `scripts/cleanup-build-artifacts.sh` in unconditional final
 workflow steps. The script is project-scoped, follows a fixed allowlist, refuses
@@ -53,6 +54,21 @@ Local development must follow these limits:
 - treat `$HOME/.gradle/caches` as disposable and prune it when it exceeds 8 GB;
 - retain release files in `dist`, never an entire `.pam-native` build tree;
 - check `df -h /` before a release build and stop if less than 10 GB is free.
+
+### Reuse one bounded Gradle cache during iterative device work
+
+For repeated local showcase builds, prefer the existing user-owned Gradle cache
+via `PAM_NATIVE_GRADLE_HOME="$HOME/.gradle"`, after checking it is below the 8 GB
+limit. Check its size again after the build. Do not create another shared cache
+or disable application-artifact cleanup to obtain faster builds.
+
+PAM Native's `android_gradle_user_home` honors this explicit override. Its
+mandatory cleanup still removes the generated application's `app/build` and
+project-local Gradle intermediates; it does not recursively delete the shared
+user cache. This avoids repopulating an isolated dependency/transform cache for
+every small UI candidate. It does not imply that all compilation is cached or
+promise a particular build time. If the shared cache exceeds the limit, stop
+and prune only verified disposable entries with no active build using them.
 
 Build commands must run as the regular development user. Running Composer,
 PHPStan, Gradle or PAM Native with `sudo` creates non-writable caches that the

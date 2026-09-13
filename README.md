@@ -212,6 +212,13 @@ consume semantic MD3 color, typography, shape, elevation and motion tokens.
 `pamLight()` and `pamDark()` ship the contrast-gated PAM identity; `light()` and
 `dark()` remain neutral foundations for fully custom brands.
 
+Grouped buttons (`PBtnGroup`, `PBtnToggle`) select a contrasting native scroll
+indicator from the theme's background. For a group placed on a different
+surface, override `scrollIndicatorStyle` with `Pam\Native\ScrollIndicatorStyle`
+(`Dark`, `Light`, or `Auto`), or its integer value. This changes the platform
+indicator, not the group's layout or selection behavior. Requires the matching
+PAM Native candidate API; this follow-up has not been released yet.
+
 ## Verification
 
 ```bash

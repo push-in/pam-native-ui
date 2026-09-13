@@ -987,3 +987,209 @@ Native layout changes are committed/pushed as
 CI run `34784866537` is confirmed in progress for that exact SHA. This is a
 review-branch push, not a merge or package release. Local Native validation
 remains 77 passing engine tests and clippy with warnings denied.
+
+### Affordance/RTL device batch and paired review branches
+
+UI candidate `ca87d63cf58503949f30186b278bb462b078de34` is pushed to draft PR
+46. CI `34784974116` is running with Native explicitly pinned to
+`ebd00a32e67f6b31272a2af8efc920910f2d2b93`; no merge or version release occurred.
+The local build completed in 4m43s, installed successfully and cleaned
+904.9 MiB. Installed APK SHA-256:
+`3b4586e63a830fe719ecb581c799dee47706d80d8604f1cbedef0d76a2b60684`.
+
+`tools/audit-button-toggle-overflow-android.py` completed six checks on that
+APK: Five options/Fri, Disabled group/Admin, and RTL/Day at 100% and 200%.
+The RTL check verifies physical left-to-right ordering as Month/Week/Day among
+visible segments, then reaches and selects Day. Inspected the RTL 200% result
+and Five options normal-scale capture. Short labels remain unwrapped; target
+labels are visible before taps. Font scale restored and confirmed 1.0.
+Report: `/tmp/pam-ui-overflow-affordance-rtl-20260913/report.json`;
+SHA-256 `b850b1b5b4068ceb692cc29c2d5bcb3de70c46f474f364baf36dc7887dec71c3`.
+
+Fading edges are visibly active. A clearly distinguishable persistent scrollbar
+was NOT established by visual inspection; enabling its property is insufficient
+evidence. Overflow discoverability therefore remains an open visual gate.
+This six-case batch also does not approve every group variant or the PBtnGroup
+family, iOS visuals, TalkBack, physical Samsung, or gesture performance.
+Native CI has completed Swift/UIKit and Rust/PHP successfully; Android jobs
+are still pending at this checkpoint.
+
+### Isolated native indicator regression and track separation candidate
+
+Added a local Native instrumentation regression,
+`PamScrollContainerInstrumentedTest#persistentHorizontalIndicatorDrawsBeforeFirstGesture`.
+It lays out blank overflowing horizontal content in a 300×80 viewport and
+requires non-background indicator pixels in the bottom strip before any gesture.
+The debug/test APK build reused cached dependencies offline (16s); installation
+and the focused test on emulator-5554 succeeded: `OK (1 test)`. This proves the
+basic native indicator draws, not that its contrast/placement in UI is adequate.
+No production Native change was needed for this diagnostic.
+
+The working UI candidate reserves a 4 dp bottom strip on the inner content row,
+with a 52 dp minimum row extent to retain the prior 48 dp content area. This
+tests the hypothesis that a scrollbar drawn over a segmented outline is hard
+to distinguish. Public viewport padding/margins are unchanged. Material matrix
+and PHPStan level 9 pass. Renderer SHA-256:
+`d9bbe54f4df4a306f5e0d7e899e61dcd99786955c9e54b6b6975aba33f6800f1`.
+Its release build is in progress; visual improvement is not yet proven.
+
+UI CI `34784974116` completed all nine jobs successfully for `ca87d63`, pinned
+to Native `ebd00a3`. It does NOT cover the new 4 dp working-tree change. Native
+CI still has API 26/36 instrumentation running. Global Gradle cache remains
+3.7 GiB; local Native app build is 151 MiB. No package was released.
+
+### Track candidate: partial device evidence and interruption recovery
+
+The 4 dp track candidate built in 5m52s, installed and cleaned 904.3 MiB.
+The device runner now checks clearance below all visible buttons. Five scoped
+cases completed (three normal-scale cases, Five options and Disabled group at
+200%) before the process terminated with signal 143. The last RTL 200% case
+and final report did NOT complete. Captures are in
+`/tmp/pam-ui-scrollbar-track-20260913`; they are partial diagnostics, not a
+passing batch. Font scale was found at 2.0 and explicitly restored to 1.0.
+The interrupted run had no durable settings snapshot, so restoration of its
+other pre-run settings cannot be proven retrospectively.
+
+Inspected Five options after selection at normal scale: labels and clearance
+are retained, but a clearly distinguishable indicator is still not established.
+The isolated native draw test does not explain this composition-level result.
+Next diagnosis must use the complete renderer rather than another padding guess.
+
+Hardened the overflow runner with incremental reports and a SIGTERM handler
+that executes cleanup. The shared Android audit helper now captures font scale
+and persists all seven original settings before changing them. Python
+compilation passes. A deliberate 8-second SIGTERM test exited with expected
+timeout code 124; direct ADB reads then matched all seven saved values, and
+the partial report was written with zero completed checks and fullApproval=false.
+Evidence: `/tmp/pam-ui-overflow-signal-recovery-20260913`.
+
+Also documented bounded shared Gradle cache reuse in `docs/build-hygiene.md`:
+the existing CLI override can avoid repopulating isolated caches while mandatory
+application-artifact cleanup and the 8 GB shared-cache limit remain in force.
+This was verified in CLI code, not yet benchmarked on a showcase release build.
+
+### Renderer window regression: redraw fixed, initial showcase indicator still open
+
+A complete-renderer fixture compared indicator-on/off pixels in the reserved
+strip. Software Canvas drawing passed, while actual UiAutomation window
+captures failed. A separate body-color assertion proved the fixture was really
+present in the captured window. Explicit invalidation after changing native
+indicator visibility/persistence made that same window comparison pass.
+Combined Scroll/renderer instrumentation completed `OK (11 tests)` in 4.813s.
+The reusable Native fix and regressions are pushed on draft PR 134 as
+`aa9a9df4b71e143f4079c42a3a88611ff1a3b8cc`; CI `34786118795` is running.
+Previous Native `ebd00a3` CI `34784866537` completed all six jobs successfully.
+
+The showcase release build with the bounded existing shared Gradle cache
+completed in 1m06s (27 cached tasks), versus 5m52s for the preceding isolated
+cache build. This is an observed pair, not a controlled universal speedup.
+The Gradle file-watcher warning did not stop the build. Installation succeeded,
+96.9 MiB of project artifacts were cleaned, shared cache remained 3.7 GiB and
+31 GiB remained free.
+
+All six scoped overflow/RTL cases passed on this build, including track
+clearance; font scale restored to 1.0. Report:
+`/tmp/pam-ui-indicator-redraw-20260913/report.json` (SHA-256
+`b850b1b5b4068ceb692cc29c2d5bcb3de70c46f474f364baf36dc7887dec71c3`).
+Report content is deterministic and shares a hash with an earlier six-case
+report; do not treat that hash as an APK or media identity.
+Installed APK SHA-256:
+`c88bb451c7b274b46b5223e5edb7df3205113da4cd24c483b7a5f1226ac12295`.
+
+Initial showcase indicator visibility is STILL unproven/failed: in the inspected
+normal-scale Five options capture, group bounds were [42,1753,1038,1890], button
+bottom 1879. All 9,560 sampled interior footer pixels were canvas RGB(247,249,255).
+The native toggled-visibility fix therefore does not yet resolve this initial
+showcase state. Next regression must capture the initial window before software
+draw/toggling; no additional padding experiment or blanket approval is justified.
+
+### Initial-window and nested-scroll isolation
+
+The renderer regression now captures the initial window before any software
+Canvas draw or indicator toggle and compares the reserved strip with a later
+indicator-disabled capture. It passed on API 36 (1 test, 1.170s). Adding the
+showcase's fill-viewport, nested-scroll and 12dp fading-edge properties also
+passed (1.169s). The retained fixture now additionally nests the horizontal
+scroll in a vertical Scroll/Column, positioned at x=16dp/y=480dp; the same
+initial-window assertion passed (1.183s). These are native regression results,
+not evidence that the showcase indicator is fixed.
+
+Rendering the staged Button Toggle route through its real PHP lifecycle
+confirmed all 14 group Scroll elements carry horizontal=true,
+showsIndicator=true, persistentScrollbar=true, fillViewport=true,
+nestedScrollEnabled=true and fadingEdgeLength=12. The staged and source
+PamScrollContainer.kt hashes also match:
+`b8a264ab5bfb4de57ffda904faa22f949c12a7538f447d54a6d561bbe7807d3c`.
+Missing PHP properties and an outdated staged Kotlin source are therefore not
+supported explanations. The initial showcase visibility issue remains open;
+no additional production change or publication was made during this isolation.
+
+### Runtime indicator diagnostics: contrast is not covered by pixel-difference tests
+
+A temporary local Kotlin diagnostic measured the real overflowing group:
+viewport/active Scroll=996x137px, content=1188x137px, max horizontal offset=192px,
+indicator enabled=true, fading=false, persistent=true. The framework horizontal
+thumb is a GradientDrawable with alpha=255, color `#84FFFFFF`, bounds
+`Rect(0,126 - 835,137)`, scrollbar size=11px and zero bottom padding.
+The same white semitransparent thumb was measured in the passing native fixture.
+Thus a nonzero on/off pixel difference is NOT a sufficient visual gate: it can
+pass for a low-contrast white indicator on a near-white canvas. This identifies
+a contrast defect, but does not by itself explain the previously measured
+completely unchanged footer pixels; do not claim the showcase issue resolved.
+
+The regression additionally passed after rendering the group initially below
+the viewport, capturing that window, then revealing it by vertical scrolling
+without a horizontal gesture (1 test, 1.216s). Properties are applied in numeric
+protocol order. Native indicator color/style is currently not exposed in the
+PHP Scroll API; the next implementation should provide a reusable Native
+capability and a theme-aware UI choice, with actual contrast verification.
+
+Temporary runtime logging was removed from Native source after diagnostics.
+Diagnostic showcase build times were 27s, 23s and 21s with the bounded shared
+cache; each automatically cleaned 96.6 MiB of project build artifacts. Captures
+in `/tmp/pam-ui-scroll-runtime-20260913` are diagnostic, not gallery assets.
+
+### Persistent indicator fixed: delayed regression and real showcase contrast
+
+The missing indicator was not just a color issue. Waiting 1.8 seconds before
+revealing the native fixture reproduced the disappearance: the previously
+passing renderer test failed after 2.596s. A fade callback scheduled before
+persistence was configured still ran later. Native now configures a replacement
+viewport before attaching it, replacing the viewport when persistence changes
+to discard the old callback while retaining content, focus and offsets. The
+same delayed test passed (2.929s); the final combined Scroll/renderer suite
+passed `OK (12 tests)` in 7.253s. Initial renderer construction takes the final
+orientation/persistence/appearance so it does not rebuild the viewport for each
+initial property. Temporary logs were removed.
+
+New reusable API: `Scroll::indicatorStyle(ScrollIndicatorStyle::Auto|Dark|Light)`
+(wire values 1/2/3, property 465). Android uses themed system scrollbar drawables
+without non-SDK access; UIKit maps the enum to native default/black/white styles.
+Native templates accept `scrollIndicatorStyle="dark"`. UI grouped buttons choose
+the style from background luminance and accept an explicit enum/integer override.
+Native PHP SDK tests (including template mapping), 12 Rust protocol tests,
+protocol parity and Android unit tests passed. UI PHPStan level 9 passed; the
+114-component PHP matrix passed (32,832 style cases / 456 render cases), with
+additional light/dark and appearance-override assertions.
+
+The scoped real showcase audit now requires >=3:1 contrast in the reserved strip
+for the overflowing Five options fixture. All six interaction cases passed at
+font scales 1.0/2.0; contrasting strip pixel counts were 7,419 / 5,547. The normal
+scale screenshot was visually inspected and the persistent track is visible.
+Font scale restored to 1.0. Evidence: `/tmp/pam-ui-persistent-contrast-20260913`;
+report SHA-256 `e9c72eacf5f0ed5e5a2ba459c467774aa2ca1d03ff848a16c0f9abe2802ca29b`;
+installed APK SHA-256
+`67cb95c44162c34023951d21467a6039f1a54fdf03cb8c1cd4b3fdfaa1962f9f`.
+The final showcase build completed in 54s and cleaned 96.7 MiB automatically.
+
+Verification limits: device tests here are emulator API 36, not Samsung or API
+26. UIKit implementation and its new enum tests still require macOS CI. These
+six cases do not approve every grouped-button variation or all 114 components.
+Running full level-9 analysis specifically on Native TemplateRenderer exposed
+89 diagnostics. A clean HEAD export and the changed file produce exactly the
+same 89 identifier/message pairs; no suppressions were added. This is existing
+Native static-analysis debt, not a clean full-SDK PHPStan result. Release remains
+gated; no package, production docs or public gallery has been published here.
+
+The test bootstrap now prepends its selected SDK autoloader: previously Composer
+could silently win over explicit PAM_NATIVE_ROOT, testing an older SDK instead.

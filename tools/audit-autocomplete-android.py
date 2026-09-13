@@ -124,9 +124,13 @@ class AutocompleteAudit:
                 ("global", "animator_duration_scale"),
                 ("system", "accelerometer_rotation"),
                 ("system", "user_rotation"),
+                ("system", "font_scale"),
                 ("secure", "show_ime_with_hard_keyboard"),
             ):
                 self.original_settings[f"{namespace}:{name}"] = self.setting(namespace, name)
+            (self.output / "original-settings.json").write_text(
+                json.dumps(self.original_settings, indent=2), encoding="utf-8",
+            )
             for name in (
                 "window_animation_scale",
                 "transition_animation_scale",

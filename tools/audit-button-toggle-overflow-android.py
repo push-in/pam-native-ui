@@ -4,6 +4,7 @@
 import argparse
 import importlib.util
 import json
+import signal
 import sys
 import time
 from pathlib import Path
@@ -23,6 +24,7 @@ out = args.output
 audit = module.ButtonToggleAudit(args.serial, args.package, args.activity, out)
 original = audit.shell('settings', 'get', 'system', 'font_scale').strip()
 checks = []
+signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
 try:
     audit.prepare()
     for scale in ('1.0', '2.0'):
@@ -36,6 +38,10 @@ try:
             root, group = audit.scroll_to_group(variation, width, height, f'font-{scale}')
             area = module.node_bounds(group)
             assert area.left > 0 and area.right < width, (variation, area)
+            visible_buttons = audit.buttons(group)
+            assert visible_buttons, f'{variation}: no visible buttons'
+            footer = area.bottom - max(module.node_bounds(n).bottom for n in visible_buttons)
+            assert footer >= 3 * audit.density(), (variation, 'scrollbar overlaps button outline', footer)
             if variation == 'RTL':
                 visual_order = [n.attrib.get('content-desc') for n in sorted(
                     audit.buttons(group), key=lambda n: module.node_bounds(n).left
@@ -48,7 +54,24 @@ try:
                             assert module.node_bounds(label).height <= 22 * float(scale) * audit.density(), (
                                 'short label wraps', label.attrib
                             )
-            audit.screenshot(f'{variation.replace(" ", "-")}-{scale}-before')
+            before_name = f'{variation.replace(" ", "-")}-{scale}-before'
+            audit.screenshot(before_name)
+            indicator_pixels = None
+            if variation == 'Five options':
+                # This fixture overflows at both tested scales. Sample only the
+                # reserved strip, excluding button borders/text, and compare
+                # against the surrounding canvas rather than a fixed theme RGB.
+                strip_top = max(module.node_bounds(n).bottom for n in visible_buttons) + 1
+                with module.Image.open(out / f'{before_name}.png').convert('RGB') as capture:
+                    canvas = capture.getpixel((area.left - 5, strip_top))
+                    indicator_pixels = sum(
+                        audit.contrast_ratio(capture.getpixel((x, y)), canvas) >= 3.0
+                        for y in range(strip_top, area.bottom - 1)
+                        for x in range(area.left + 10, area.right - 10)
+                    )
+                assert indicator_pixels > area.width, (
+                    variation, scale, 'persistent indicator lacks 3:1 contrast', indicator_pixels
+                )
             found = None
             for attempt in range(5):
                 candidates = [n for n in audit.buttons(group) if n.attrib.get('content-desc') == target]
@@ -79,7 +102,9 @@ try:
                 assert all(n.attrib.get('enabled') == 'false' for n in audit.buttons(group))
                 assert target not in audit.selected_labels(group)
             audit.screenshot(f'{variation.replace(" ", "-")}-{scale}-after')
-            checks.append({'variation': variation, 'fontScale': scale, 'target': target, 'status': 1})
+            checks.append({'variation': variation, 'fontScale': scale, 'target': target, 'status': 1,
+                           'indicatorPixelsAtLeast3To1': indicator_pixels})
+            (out/'report.json').write_text(json.dumps({'checks': checks, 'fullApproval': False}, indent=2))
             print(checks[-1], flush=True)
 finally:
     audit.shell('settings', 'put', 'system', 'font_scale', original)

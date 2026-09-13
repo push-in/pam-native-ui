@@ -19,6 +19,7 @@ use Pam\MobileUi\Enum\SelectionMode;
 use Pam\MobileUi\Generated\ComponentMap;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Theme\MaterialTokens;
+use Pam\MobileUi\Theme\Color;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\AccessibilityRole;
 use Pam\Native\Align;
@@ -66,6 +67,7 @@ use Pam\Native\RefreshIndicatorSize;
 use Pam\Native\ReturnKeyType;
 use Pam\Native\SafeAreaMode;
 use Pam\Native\ScrollKeyboardDismissMode;
+use Pam\Native\ScrollIndicatorStyle;
 use Pam\Native\ScrollOverScrollMode;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;
@@ -1975,10 +1977,25 @@ final class ComponentRenderer
         )->style($rootStyle);
 
         if (in_array($props['__materialComponent'] ?? null, ['PBtnGroup', 'PBtnToggle'], true)) {
+            $indicatorStyle = $props['scrollIndicatorStyle'] ?? (
+                Color::fromArgb(ThemeManager::current()->color(ColorToken::Background))->relativeLuminance() > 0.179
+                    ? ScrollIndicatorStyle::Dark
+                    : ScrollIndicatorStyle::Light
+            );
+            if (!$indicatorStyle instanceof ScrollIndicatorStyle) {
+                if (!is_int($indicatorStyle) || ScrollIndicatorStyle::tryFrom($indicatorStyle) === null) {
+                    throw new InvalidArgumentException('scrollIndicatorStyle must be a ScrollIndicatorStyle or its integer value.');
+                }
+                $indicatorStyle = ScrollIndicatorStyle::from($indicatorStyle);
+            }
             // Keep layout and public semantics on the viewport. Only the row
             // flows horizontally; margins, padding and application sizing must
             // not be duplicated on both the viewport and its content.
             $content = Row::make(...$children)->style(new Style(
+                // Scrollbars overlay the scroll content. Keep their track
+                // below the button outline instead of painting over it.
+                minHeight: ($rootStyle->minHeight ?? MaterialTokens::MINIMUM_TOUCH_TARGET) + 4.0,
+                paddingBottom: 4.0,
                 gap: $styleOverride->gap ?? $rootStyle->gap,
                 flexDirection: $styleOverride->flexDirection ?? $rootStyle->flexDirection,
                 alignItems: $styleOverride->alignItems ?? $rootStyle->alignItems,
@@ -1989,6 +2006,7 @@ final class ComponentRenderer
                 ->fillViewport(true)
                 ->scrollEnabled(true)
                 ->showsIndicator(true)
+                ->indicatorStyle($indicatorStyle)
                 ->persistentScrollbar(true)
                 ->fadingEdgeLength(12.0)
                 ->nestedScrollEnabled(true)

@@ -35,6 +35,7 @@ use Pam\Native\Overflow;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
 use Pam\Native\Style;
+use Pam\Native\ScrollIndicatorStyle;
 use Pam\Native\UI\Text;
 
 require __DIR__.'/bootstrap.php';
@@ -257,9 +258,12 @@ if (
     || ($buttonGroupProperties[PropKey::ScrollHorizontal->value] ?? null) !== true
     || ($buttonGroupProperties[PropKey::ScrollFillViewport->value] ?? null) !== true
     || ($buttonGroupProperties[PropKey::ScrollPersistentScrollbar->value] ?? null) !== true
+    || ($buttonGroupProperties[PropKey::ScrollIndicatorStyle->value] ?? null) !== ScrollIndicatorStyle::Dark->value
     || ($buttonGroupProperties[PropKey::ScrollFadingEdgeLength->value] ?? null) !== 12.0
     || isset($buttonGroupProperties[PropKey::Height->value])
     || $buttonGroup->children()[0]->kind() !== NodeKind::Row
+    || ($buttonGroup->children()[0]->properties()[PropKey::PaddingBottom->value] ?? null) !== 4.0
+    || ($buttonGroup->children()[0]->properties()[PropKey::MinHeight->value] ?? null) !== 52.0
     || ($buttonGroupProperties[PropKey::Gap->value] ?? null) !== 8.0
     || ($buttonGroupProperties[PropKey::MinHeight->value] ?? null) !== 48.0
     || count($buttonGroupChildren) !== 3
@@ -285,6 +289,28 @@ if ($buttonGroupValue !== null) {
     throw new RuntimeException(
         'A non-mandatory p-btn-group must allow its selected item to be cleared.',
     );
+}
+
+$indicatorThemeMode = ThemeManager::configuredMode();
+try {
+    foreach ([ThemeMode::Light, ThemeMode::Dark] as $mode) {
+        ThemeManager::mode($mode);
+        foreach (['p-btn-group', 'p-btn-toggle'] as $tag) {
+            $indicatorGroup = $tags[$tag]::make([], Text::make('Example'))->toElement();
+            $expectedIndicator = $mode === ThemeMode::Light ? ScrollIndicatorStyle::Dark : ScrollIndicatorStyle::Light;
+            if (($indicatorGroup->properties()[PropKey::ScrollIndicatorStyle->value] ?? null) !== $expectedIndicator->value) {
+                throw new RuntimeException('Grouped buttons must select a contrasting indicator for each theme.');
+            }
+            foreach (ScrollIndicatorStyle::cases() as $indicatorStyle) {
+                $customIndicator = $tags[$tag]::make(['scrollIndicatorStyle' => $indicatorStyle], Text::make('Example'))->toElement();
+                if (($customIndicator->properties()[PropKey::ScrollIndicatorStyle->value] ?? null) !== $indicatorStyle->value) {
+                    throw new RuntimeException('Applications must be able to override the group indicator appearance.');
+                }
+            }
+        }
+    }
+} finally {
+    ThemeManager::mode($indicatorThemeMode);
 }
 
 $styledGroup = $tags['p-btn-group']::make(

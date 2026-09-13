@@ -44,6 +44,8 @@ spl_autoload_register(
             }
         }
     },
+    true,
+    true,
 );
 
 require_once __DIR__.'/fixtures/InternalComponentFacades.php';
