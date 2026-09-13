@@ -491,15 +491,15 @@ class RangeSliderAudit(SliderAudit):
             )
             if landscape_width <= landscape_height:
                 raise AuditFailure("130% text-scale check did not enter landscape")
-            landscape_root = self.dump("24-font-scale-130-landscape")
-            landscape_path = self.output / "24-font-scale-130-landscape.png"
-            landscape_sliders = [
-                node for node in self.nodes(landscape_root)
-                if node.attrib.get("class") == "android.widget.SeekBar"
-            ]
-            if len(landscape_sliders) < 2:
-                raise AuditFailure("130% text-scale landscape lost range sliders")
-            for index, slider in enumerate(landscape_sliders[:2], start=1):
+            self.dump("24-font-scale-130-landscape")
+            # Large text plus the adaptive header can leave only one example
+            # visible. Verify both named controls by scrolling, not by requiring
+            # two controls to fit in a single accessibility viewport.
+            for index, label in enumerate(("Default", "Isolated instance"), start=1):
+                _, slider = self.scroll_to_range(label, landscape_width, landscape_height)
+                capture = f"24-font-scale-130-landscape-{index}"
+                self.screenshot(capture)
+                landscape_path = self.output / f"{capture}.png"
                 area = node_bounds(slider)
                 if area.right > landscape_width:
                     raise AuditFailure(
@@ -610,6 +610,14 @@ class RangeSliderAudit(SliderAudit):
             if len(full) != 2:
                 raise AuditFailure("full range does not expose both handles")
             start, end = full
+            full_area = node_bounds(nodes["Full range"])
+            left_clearance = start - full_area.left
+            right_clearance = full_area.right - end
+            if abs(left_clearance - right_clearance) > round(2.0 * density):
+                raise AuditFailure(
+                    "full-range outer clearance is asymmetric: "
+                    f"left={left_clearance:.1f}px, right={right_clearance:.1f}px"
+                )
             if end - start < width * 0.72:
                 raise AuditFailure("range track wastes horizontal space or is clipped")
             self.assert_ratios("Default", self.ratios(centers["Default"], start, end), [0.24, 0.76])
@@ -837,6 +845,7 @@ class RangeSliderAudit(SliderAudit):
                 "checks": {
                     "materialTouchTarget": True,
                     "dualHandleGeometry": True,
+                    "symmetricOuterClearance": True,
                     "lowerAndUpperDrag": True,
                     "instanceIsolation": True,
                     "disabled": True,

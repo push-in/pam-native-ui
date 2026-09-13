@@ -40,9 +40,14 @@ class SliderAudit(AutocompleteAudit):
 
     def application_logs(self) -> str:
         package_report = self.shell(
-            "dumpsys", "package", self.package, timeout=30.0,
+            "pm", "list", "packages", "--user", "current", "-U", self.package,
+            timeout=30.0,
         )
-        match = re.search(r"\buserId=(\d+)\b", package_report)
+        match = re.search(
+            rf"^package:{re.escape(self.package)}\s+uid:(\d+)\s*$",
+            package_report,
+            re.MULTILINE,
+        )
         if match is None:
             raise AuditFailure(f"could not resolve Android UID for {self.package}")
         return self.shell(

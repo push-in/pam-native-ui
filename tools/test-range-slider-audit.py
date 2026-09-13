@@ -4,7 +4,8 @@ import importlib.util
 from pathlib import Path
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from types import SimpleNamespace
 
 SCRIPT = Path(__file__).with_name("audit-range-slider-android.py")
 SPEC = importlib.util.spec_from_file_location("range_slider_geometry_test", SCRIPT)
@@ -46,6 +47,24 @@ class PixelFixture:
 
 
 class RangeGeometryTest(unittest.TestCase):
+    def test_logs_use_exact_current_user_package_uid(self):
+        shell = Mock(side_effect=[
+            "package:dev.pam.catalog.debug uid:10244\n"
+            "package:dev.pam.catalog uid:10228\n",
+            "runtime log",
+        ])
+        audit = SimpleNamespace(package="dev.pam.catalog", shell=shell)
+        self.assertEqual(MODULE.SliderAudit.application_logs(audit), "runtime log")
+        shell.assert_called_with("logcat", "--uid=10228", "-d", "-t", "1200", timeout=30.0)
+
+    def test_logs_reject_a_different_package(self):
+        audit = SimpleNamespace(
+            package="dev.pam.catalog",
+            shell=Mock(return_value="package:dev.pam.catalog.debug uid:10244\n"),
+        )
+        with self.assertRaises(MODULE.AuditFailure):
+            MODULE.SliderAudit.application_logs(audit)
+
     def detect(self, fixture):
         with patch.object(MODULE.Image, "open", return_value=fixture):
             return MODULE.RangeSliderAudit.thumb_centers(

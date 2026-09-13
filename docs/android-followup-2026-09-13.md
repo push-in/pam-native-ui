@@ -399,3 +399,63 @@ in Full range. The right handle extends past the accessibility host's right
 edge while the left has more clearance. Investigate authored padding versus
 Android host child placement before applying a UI-only workaround. No runtime
 fix for this issue has been made in this follow-up yet.
+
+The inspected 130% landscape capture actually shows Default fully rendered;
+Isolated instance is below the viewport. The audit now scrolls to each named
+control and checks its handles separately, retaining the initial viewport
+capture. Seven local range/startup unit tests pass after this change.
+
+The padding investigation identified an Android renderer issue in PAM Native:
+engine child frames already include authored padding, while custom FrameLayout
+hosts apply native padding again to the renderer's child margins. The pending
+native patch subtracts the custom host's native padding from engine-derived
+margins, in ordinary and virtualized-cell placement. Other container types and
+safe-area adjustments are unchanged. Native `:app:testDebugUnitTest --tests
+dev.pam.nativeapp.render.PamCustomViewPaddingTest --offline --no-daemon` passed
+with Kotlin compilation (26s). A release showcase build is now running for
+visual confirmation; no publication or final range approval yet.
+
+Added a native instrumentation regression exercising actual Android
+FrameLayout measurement/layout: a 300x80px host with 21px horizontal and
+13px vertical padding must retain symmetric child margins without removing
+the host padding. `:app:compileDebugAndroidTestKotlin --offline --no-daemon`
+passes (16s); this is compilation, not an instrumented execution result.
+The range audit now additionally requires symmetric outer clearance in its
+Full range example (2dp rounding tolerance), preventing the observed defect
+from passing on handle count and drag behavior alone.
+
+The release showcase build completed and installed on emulator-5554 in 3m44s;
+automatic cleanup removed 904.9 MiB. The new full range interaction audit is
+running at `/tmp/pam-ui-range-native-padding-20260913` against that installed
+native padding correction. Final runtime/visual confirmation remains pending.
+
+Inspected that run's `00-baseline.png`: Full range now has symmetric endpoint
+clearance, unlike the prior capture. The new symmetry assertion passed and
+execution advanced to real lower/upper-handle gestures. This confirms the
+specific padding defect visually, not the full component or all custom hosts.
+
+Native correction committed/pushed as `f83eaa3d8df5c95b6c1b0ffc6475a895691792cb`
+to draft PR 134. The complete local Android unit-test task passed in 9s.
+Native CI run `34778057612` is in progress for that exact SHA; it is not yet
+a passing instrumented/platform gate. No version was released.
+
+The native unit XML reports total 139 tests, zero failures/errors/skips.
+Prior failed range runs were preserved locally in
+`docs/assets/android/audit/2026-09-13/range-audit-diagnostics.tar.gz`
+(SHA-256 `83bbdc2a3f2d760539dd4762d25680e973926cf1f38ba43562f9bb5177ffceff`;
+gzip integrity passed). These are diagnostic captures, not approved docs media.
+
+The native-padding range run completed its gesture/advanced/130% text checks,
+then stopped in the log collector: Android 36 exposes `appId`, not the old
+`dumpsys package` `userId` field. The shared slider collector now resolves the
+exact package UID using `pm list packages --user current -U`; tests reject a
+debug-package prefix match. All six geometry/log-collector unit tests pass.
+Reran only the failed log check immediately, without another app session:
+21 UID-scoped lines, zero matches for the audit's runtime-error markers.
+There is no fabricated full-run report: the original process exited at the
+collector and this supplemental check is recorded separately. Physical,
+smoothness and broad custom-host regression gates remain pending.
+
+Started Autocomplete regression against the same installed native correction
+at `/tmp/pam-ui-autocomplete-native-padding-20260913` to check another affected
+host family before considering publication.
