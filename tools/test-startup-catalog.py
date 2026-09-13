@@ -33,6 +33,19 @@ class StartupCatalogTest(unittest.TestCase):
             with self.assertRaises(MODULE.AuditFailure):
                 MODULE.catalog_tags(root)
 
+    def test_equal_count_cannot_hide_replaced_route(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "docs").mkdir()
+            (root / "resources").mkdir()
+            (root / "docs/catalog.md").write_text("<p-select>\n<p-unknown>")
+            (root / "resources/material-parity.json").write_text(json.dumps({
+                "reference": {"componentCount": 2},
+                "modules": [{"components": ["p-select", "p-tag-input"]}],
+            }))
+            with self.assertRaisesRegex(MODULE.AuditFailure, "p-tag-input"):
+                MODULE.catalog_tags(root)
+
 
 if __name__ == "__main__":
     unittest.main()

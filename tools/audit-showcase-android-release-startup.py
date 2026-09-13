@@ -53,6 +53,12 @@ def catalog_tags(root: Path) -> list[str]:
     expected = parity["reference"]["componentCount"]
     if not tags or len(tags) != expected:
         raise AuditFailure(f"expected {expected} catalog routes, found {len(tags)}")
+    registered = {tag for module in parity["modules"] for tag in module["components"]}
+    if set(tags) != registered:
+        raise AuditFailure(
+            f"catalog differs from registry: missing={sorted(registered - set(tags))}, "
+            f"unknown={sorted(set(tags) - registered)}"
+        )
     return tags
 
 
