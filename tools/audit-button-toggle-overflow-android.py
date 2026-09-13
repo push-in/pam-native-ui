@@ -27,6 +27,8 @@ parser.add_argument('--package', default='dev.pam.mobileui.catalog')
 parser.add_argument('--activity', default='dev.pam.nativeapp.PamActivity')
 parser.add_argument('--variation', action='append', choices=[label for label, _ in VARIATIONS],
                     help='Run only this fixture label; repeat to select several.')
+parser.add_argument('--font-scale', action='append', choices=('1.0', '2.0'),
+                    help='Run only this font scale; defaults to both supported scales.')
 args = parser.parse_args()
 source = Path(__file__).with_name('audit-button-toggle-android.py')
 spec = importlib.util.spec_from_file_location('overflow_toggle', source)
@@ -44,11 +46,12 @@ provenance = {
     'scriptSha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'apkSha256': audit.shell('sha256sum', apk_path).split()[0],
     'requestedVariations': args.variation or [label for label, _ in VARIATIONS],
+    'requestedFontScales': args.font_scale or ['1.0', '2.0'],
 }
 signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
 try:
     audit.prepare()
-    for scale in ('1.0', '2.0'):
+    for scale in dict.fromkeys(args.font_scale or ('1.0', '2.0')):
         audit.shell('settings', 'put', 'system', 'font_scale', scale)
         time.sleep(2)
         audit.shell('am', 'force-stop', audit.package)

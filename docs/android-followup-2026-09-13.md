@@ -1315,3 +1315,28 @@ passed in 9s and exported initial/shown/hidden PNGs to
 `android/app/build/outputs/connected_android_test_additional_output/`.
 Initial PNG was inspected and its dark indicator is visible. This verifies the
 collection mechanism locally, not the unresolved CI renderer behavior.
+
+### Samsung interrupted cases resumed without rerunning passed cases
+
+The device was unlocked at its launcher. RTL alone passed at 1.0/2.0 on the same
+APK 7340ab84...; the enlarged after-capture was visually inspected and Day is
+fully readable/selected with the expected physical RTL ordering. Report:
+`/tmp/pam-ui-samsung-toggle-rtl-20260913/report.json`, SHA-256
+`65a304cfccd120b4675fef9043437ce73d1ff05dc2a20a0fc8253f16b2abf5af`.
+
+Added repeatable validated `--font-scale` selection to avoid repeating the five
+passed normal-font cases. The five pending 2.0 cases then passed on Samsung:
+mandatory, multiple, optional two-tap transitions, Five options overflow/contrast
+(5547 contrasting pixels), and disabled-item rejection. Report:
+`/tmp/pam-ui-samsung-toggle-large-20260913/report.json`, SHA-256
+`56093a47b76e964092eea36aa543ec8636043e4fd100f6f8b65581ac1a660d54`.
+Original font scale 1.1 was restored. This completes these six
+selected variations at both scales across the three reports, not all 14
+variations or the entire component. Invalid scale 0 was rejected with exit 2
+before device access. Native CI 34790093998 remains pending Android instrumentation.
+
+Inspection also identified a weakness in the Native fixture's capture check:
+resolveHostBackground inherits the gray descendant color, so checking that same
+gray at one point cannot independently prove the child has rendered. Preserve
+the current CI evidence before changing the fixture; distinguish initial-frame
+synchronization from actual persistent-scrollbar failure.
