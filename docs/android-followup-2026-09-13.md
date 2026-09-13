@@ -633,3 +633,41 @@ The PHP matrix verifies these three families render exactly one error message
 with the semantic destructive color; matrix and syntax pass. These new
 showcase messages are not in the just-inspected APK and await next-build
 visual confirmation. No new core/native API was introduced for the copy.
+
+### Error-helper confirmation and retained selection
+
+Built UI `8d908f8` with Native `3f6e17d` and installed on the API 36 emulator
+successfully in 3m46s. Automatic cleanup removed 904.9 MiB. The shared Gradle
+cache already occupies 11 GiB, so this build retained isolated cache cleanup;
+no global cache configuration was changed or user cache deleted.
+
+Inspected all three error-helper screenshots at normal font scale and 200%:
+masked phone, currency and multiple categories retain their complete helper
+text below the outline. The phone helper wraps onto two lines at 200%; the
+currency and category helpers remain visible without clipping. These are
+scrolled field-region checks, not approval of the entire large-text screen,
+all themes, or every component variant. Original font scale 1.0 was restored.
+
+Evidence directories:
+
+- `/tmp/pam-ui-error-messages-20260913` (hierarchies, captures, presence report).
+- `/tmp/pam-ui-error-messages-font200-20260913` (hierarchies and captures).
+- `/tmp/pam-ui-multi-select-error-helper-20260913` (six interaction checks
+  passed: add/remove, filtering, empty selection, instance isolation and
+  keeping the multiple-selection sheet open).
+
+The presence report deliberately retains `visualApprovalPending: true`;
+manual inspection above is a separate, scoped observation, not an automated
+whole-component approval. Samsung remains locked (`deviceLocked=1`).
+
+Visual review also caught an inconsistent demo: the phone Error variation
+inherited a complete number while asking the user to complete it. Its source
+now explicitly starts with incomplete digits `11987`. Syntax and PHPStan
+level 9 pass. This last demo-data adjustment is **not yet installed** and is
+not represented in the screenshots above; include it in the next batch build.
+
+UI CI run `34780218220` pins UI `8d908f8` to Native
+`3f6e17d38f4b3552c7f9161cace8883dd0d000da`. It and Native run `34779362085`
+were still in progress at this observation; neither is a completed release gate.
+The 11 local range geometry/frame-parser regression tests also pass, without
+changing the previously documented unresolved drag-performance result.

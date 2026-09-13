@@ -6416,7 +6416,7 @@ final class ComponentRoute extends Component
                 ['label' => 'Phone', 'props' => ['label' => 'Mobile phone', 'pattern' => '(##) #####-####', 'modelValue' => '11987654321']],
                 ['label' => 'Document', 'props' => ['label' => 'CPF', 'pattern' => '###.###.###-##', 'modelValue' => '12345678901']],
                 ['label' => 'Focused', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'focused' => true]],
-                ['label' => 'Error', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'error' => true, 'errorMessage' => 'Enter the area code and complete phone number']],
+                ['label' => 'Error', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'modelValue' => '11987', 'error' => true, 'errorMessage' => 'Enter the area code and complete phone number']],
             ],
             'p-currency-field' => [
                 ['label' => 'BRL', 'props' => ['label' => 'Investment', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'modelValue' => '128450']],
