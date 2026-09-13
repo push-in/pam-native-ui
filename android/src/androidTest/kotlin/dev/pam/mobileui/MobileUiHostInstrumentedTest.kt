@@ -295,7 +295,7 @@ class MobileUiHostInstrumentedTest {
     @Test
     fun emptySearchableSheetSeparatesSearchAndNoDataMessage() {
         onMain {
-            val emitted = mutableListOf<Pair<Int, String>>()
+            val emitted = mutableListOf<Pair<NativeViewEventKind, String>>()
             val host = MobileUiHost(
                 ApplicationProvider.getApplicationContext(),
             ) { kind, payload -> emitted += kind to payload.decodeToString() }
