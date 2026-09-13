@@ -1270,3 +1270,22 @@ assertion failure and pulls them before the CI emulator exits, retaining the
 original test exit status. This follows the Kotlin cleanup and CI artifact
 guidance; a fresh CI run must provide the missing environment-specific evidence.
 The API 26/36 failures remain unresolved and release remains gated.
+
+### Selection transition follow-up
+
+Six targeted cases passed on the same showcase APK f1a5f0ad...: Single choice,
+Single optional and Multiple choice at font scales 1.0/2.0, with two actual
+taps per case. Assertions verify exact visible selection sets after both taps:
+mandatory Month remains selected, optional Compact clears, and multiple Drive
+toggles off without clearing Walk/Ride. Checked and selected remain consistent.
+The normal-font cleared optional state was visually inspected. Font scale was
+restored to 1.0. Report `/tmp/pam-ui-toggle-transitions-20260913/report.json`,
+SHA-256 `c7b2b35559f08c81cdb92aef6320ee6f6470f36369efb5de1481ca17c29dc8d8`.
+
+The audit now accepts repeatable `--variation` filters to avoid rerunning
+unaffected fixtures. After the device batch, argument validation was tightened
+with the same fixture table and requested scope added to future reports.
+An invalid label exits 2 before any ADB call; this was checked without a device.
+These runner-only follow-ups do not alter the tested selection implementation.
+Native diagnostic CI 34789501902 and UI CI 34789550326 remain in progress;
+neither is a release approval.

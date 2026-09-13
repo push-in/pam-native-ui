@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused overflow regression; does not approve the whole component."""
+"""Grouped-button overflow and selection regressions, not full component approval."""
 
 import argparse
 import hashlib
@@ -10,11 +10,23 @@ import sys
 import time
 from pathlib import Path
 
+VARIATIONS = (
+    ('Single choice', 'Month'), ('Multiple choice', 'Drive'),
+    ('Full width', 'Calendar'), ('Single optional', 'Compact'),
+    ('Leading icons', 'Saved'), ('Compact density', 'Right'),
+    ('Two options', 'Yearly'), ('Five options', 'Fri'),
+    ('Disabled item', 'Edit'), ('Disabled group', 'Admin'),
+    ('Long labels', 'Assigned to me'), ('Tile', 'Three'),
+    ('RTL', 'Day'), ('Success color', 'Review'),
+)
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--package', default='dev.pam.mobileui.catalog')
 parser.add_argument('--activity', default='dev.pam.nativeapp.PamActivity')
+parser.add_argument('--variation', action='append', choices=[label for label, _ in VARIATIONS],
+                    help='Run only this fixture label; repeat to select several.')
 args = parser.parse_args()
 source = Path(__file__).with_name('audit-button-toggle-android.py')
 spec = importlib.util.spec_from_file_location('overflow_toggle', source)
@@ -31,6 +43,7 @@ provenance = {
     'startedAtUnix': time.time(),
     'scriptSha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'apkSha256': audit.shell('sha256sum', apk_path).split()[0],
+    'requestedVariations': args.variation or [label for label, _ in VARIATIONS],
 }
 signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
 try:
@@ -42,15 +55,9 @@ try:
         audit.shell('am', 'start', '-W', '-n', f'{audit.package}/{audit.activity}', '-d', 'pam-showcase://audit/p-btn-toggle')
         time.sleep(2)
         width, height = audit.screenshot(f'launch-{scale}')
-        for variation, target in [
-            ('Single choice', 'Month'), ('Multiple choice', 'Drive'),
-            ('Full width', 'Calendar'), ('Single optional', 'Compact'),
-            ('Leading icons', 'Saved'), ('Compact density', 'Right'),
-            ('Two options', 'Yearly'), ('Five options', 'Fri'),
-            ('Disabled item', 'Edit'), ('Disabled group', 'Admin'),
-            ('Long labels', 'Assigned to me'), ('Tile', 'Three'),
-            ('RTL', 'Day'), ('Success color', 'Review'),
-        ]:
+        for variation, target in VARIATIONS:
+            if args.variation and variation not in args.variation:
+                continue
             root, group = audit.scroll_to_group(variation, width, height, f'font-{scale}')
             area = module.node_bounds(group)
             assert area.left > 0 and area.right < width, (variation, area)
@@ -126,7 +133,29 @@ try:
                     assert all(n.attrib.get('enabled') == 'false' for n in audit.buttons(group))
                 assert target not in audit.selected_labels(group)
             audit.screenshot(f'{variation.replace(" ", "-")}-{scale}-after')
+            second_tap = None
+            if variation in ('Single choice', 'Single optional', 'Multiple choice'):
+                selected = audit.selected_labels(group)
+                expected = before_selected | {target} if variation == 'Multiple choice' else {target}
+                assert selected == expected, (variation, 'first tap selection', selected, expected)
+                current = next(n for n in audit.buttons(group) if n.attrib.get('content-desc') == target)
+                current_bounds = module.node_bounds(current)
+                audit.shell('input', 'tap', str((current_bounds.left + current_bounds.right)//2),
+                            str((current_bounds.top + current_bounds.bottom)//2))
+                time.sleep(.7)
+                root = audit.dump(f'{variation.replace(" ", "-")}-{scale}-second-tap')
+                group = audit.group_after(root, variation)
+                expected = ({target} if variation == 'Single choice' else
+                            before_selected if variation == 'Multiple choice' else set())
+                assert audit.selected_labels(group) == expected, (
+                    variation, 'second tap selection', audit.selected_labels(group), expected
+                )
+                for button in audit.buttons(group):
+                    assert button.attrib.get('checked') == button.attrib.get('selected'), button.attrib
+                second_tap = sorted(expected)
+                audit.screenshot(f'{variation.replace(" ", "-")}-{scale}-second-tap')
             checks.append({'variation': variation, 'fontScale': scale, 'target': target, 'status': 1,
+                           'secondTapSelectedLabels': second_tap,
                            'indicatorPixelsAtLeast3To1': indicator_pixels})
             (out/'report.json').write_text(json.dumps({**provenance, 'checks': checks, 'fullApproval': False}, indent=2))
             print(checks[-1], flush=True)
