@@ -220,3 +220,18 @@ routes. It now uses the catalog, checking its count against parity metadata,
 so all 114 current routes participate even without screenshots. Two unit
 tests pass, including rejection of incomplete discovery before ADB mutations.
 The full 114-route startup benchmark has not yet been run on this revision.
+
+Startup follow-up: the first 114-route attempt stopped at Command Palette's
+route-heading assertion. Its inspected screenshot showed the correct page
+behind the intentionally open command sheet. Dismissing the sheet exposed
+`p-command-palette` at y=265 and Variations at y=409, both within the existing
+limits. The harness now explicitly dismisses the two initially open showcase
+overlays (Command Palette and Navigation Drawer) after measuring cold-start
+time; route/top checks remain unchanged, and the dismissals are reported.
+A new full run is in progress; no startup performance approval is claimed.
+
+Catalog discovery now also compares exact tags against the parity registry,
+not just the count. Its three tests are included in CI; the combined 16-test
+audit-tool unit suite passed locally. Native CI for `7137867` completed all six
+jobs successfully; the subsequent uppercase fix `d6a6a87` has been pushed for
+its own checks. UI changes through `64fb0be` were pushed to draft PR 46.
