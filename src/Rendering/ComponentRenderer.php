@@ -6699,7 +6699,7 @@ final class ComponentRenderer
             'MenuItem',
             'TabsTrigger' => [...$props, 'selected' => $selected],
             'PBtn' => $buttonToggleItem || $buttonGroupItem
-                ? [...$props, 'selected' => $selected]
+                ? [...$props, 'selected' => $selected, 'checked' => $selected]
                 : $props,
             'PChip' => $chipGroupItem
                 ? [...$props, 'selected' => $selected]

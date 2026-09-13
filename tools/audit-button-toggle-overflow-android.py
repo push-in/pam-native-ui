@@ -2,6 +2,7 @@
 """Focused overflow regression; does not approve the whole component."""
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import signal
@@ -24,6 +25,13 @@ out = args.output
 audit = module.ButtonToggleAudit(args.serial, args.package, args.activity, out)
 original = audit.shell('settings', 'get', 'system', 'font_scale').strip()
 checks = []
+apk_path = audit.shell('pm', 'path', audit.package).strip().splitlines()[0].removeprefix('package:')
+provenance = {
+    'serial': args.serial,
+    'startedAtUnix': time.time(),
+    'scriptSha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    'apkSha256': audit.shell('sha256sum', apk_path).split()[0],
+}
 signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
 try:
     audit.prepare()
@@ -34,7 +42,15 @@ try:
         audit.shell('am', 'start', '-W', '-n', f'{audit.package}/{audit.activity}', '-d', 'pam-showcase://audit/p-btn-toggle')
         time.sleep(2)
         width, height = audit.screenshot(f'launch-{scale}')
-        for variation, target in [('Five options', 'Fri'), ('Disabled group', 'Admin'), ('RTL', 'Day')]:
+        for variation, target in [
+            ('Single choice', 'Month'), ('Multiple choice', 'Drive'),
+            ('Full width', 'Calendar'), ('Single optional', 'Compact'),
+            ('Leading icons', 'Saved'), ('Compact density', 'Right'),
+            ('Two options', 'Yearly'), ('Five options', 'Fri'),
+            ('Disabled item', 'Edit'), ('Disabled group', 'Admin'),
+            ('Long labels', 'Assigned to me'), ('Tile', 'Three'),
+            ('RTL', 'Day'), ('Success color', 'Review'),
+        ]:
             root, group = audit.scroll_to_group(variation, width, height, f'font-{scale}')
             area = module.node_bounds(group)
             assert area.left > 0 and area.right < width, (variation, area)
@@ -92,21 +108,29 @@ try:
                 group = audit.group_after(root, variation)
             assert found is not None, f'{variation}: {target} unreachable'
             bounds = module.node_bounds(found)
+            before_selected = audit.selected_labels(group)
             audit.shell('input', 'tap', str((bounds.left+bounds.right)//2), str((bounds.top+bounds.bottom)//2))
             time.sleep(.7)
             root = audit.dump(f'{variation.replace(" ", "-")}-{scale}-after')
             group = audit.group_after(root, variation)
-            if variation != 'Disabled group':
+            for button in audit.buttons(group):
+                assert button.attrib.get('checked') == button.attrib.get('selected'), (
+                    variation, 'checked and selected states disagree', button.attrib
+                )
+            if variation not in ('Disabled item', 'Disabled group'):
                 assert target in audit.selected_labels(group), audit.selected_labels(group)
             else:
-                assert all(n.attrib.get('enabled') == 'false' for n in audit.buttons(group))
+                assert found.attrib.get('enabled') == 'false'
+                assert audit.selected_labels(group) == before_selected
+                if variation == 'Disabled group':
+                    assert all(n.attrib.get('enabled') == 'false' for n in audit.buttons(group))
                 assert target not in audit.selected_labels(group)
             audit.screenshot(f'{variation.replace(" ", "-")}-{scale}-after')
             checks.append({'variation': variation, 'fontScale': scale, 'target': target, 'status': 1,
                            'indicatorPixelsAtLeast3To1': indicator_pixels})
-            (out/'report.json').write_text(json.dumps({'checks': checks, 'fullApproval': False}, indent=2))
+            (out/'report.json').write_text(json.dumps({**provenance, 'checks': checks, 'fullApproval': False}, indent=2))
             print(checks[-1], flush=True)
 finally:
     audit.shell('settings', 'put', 'system', 'font_scale', original)
     audit.restore()
-    (out/'report.json').write_text(json.dumps({'checks': checks, 'fullApproval': False}, indent=2))
+    (out/'report.json').write_text(json.dumps({**provenance, 'checks': checks, 'fullApproval': False}, indent=2))

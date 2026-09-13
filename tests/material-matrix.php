@@ -276,6 +276,9 @@ if (
         !== 4.0
     || ($buttonGroupChildren[0]->properties()[PropKey::Selected->value] ?? null) !== false
     || ($buttonGroupSelected[PropKey::Selected->value] ?? null) !== true
+    || ($buttonGroupSelected[PropKey::Checked->value] ?? null) !== true
+    || ($buttonGroupSelected[PropKey::AccessibilityCheckedState->value] ?? null) !== AccessibilityCheckedState::Checked->value
+    || ($buttonGroupChildren[0]->properties()[PropKey::AccessibilityCheckedState->value] ?? null) !== AccessibilityCheckedState::Unchecked->value
     || ($buttonGroupSelected[PropKey::BackgroundColor->value] ?? null)
         !== ThemeManager::current()->color(ColorToken::Primary)
     || !isset($buttonGroupChildren[1]->events()[EventKind::Press->value])
@@ -1628,6 +1631,8 @@ if (
     || ($toggleLeading[PropKey::HitSlopLeft->value] ?? null) !== 0.0
     || ($toggleLeading[PropKey::HitSlopTop->value] ?? null) !== 4.0
     || ($toggleLeading[PropKey::Selected->value] ?? null) !== true
+    || ($toggleLeading[PropKey::AccessibilityCheckedState->value] ?? null) !== AccessibilityCheckedState::Checked->value
+    || ($toggleMiddle[PropKey::AccessibilityCheckedState->value] ?? null) !== AccessibilityCheckedState::Unchecked->value
     || ($toggleLeading[PropKey::BackgroundColor->value] ?? null)
         !== ThemeManager::current()->color(ColorToken::Secondary)
     || ($toggleLeading[PropKey::FlexGrow->value] ?? null) !== 1.0

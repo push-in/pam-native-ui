@@ -1193,3 +1193,62 @@ gated; no package, production docs or public gallery has been published here.
 
 The test bootstrap now prepends its selected SDK autoloader: previously Composer
 could silently win over explicit PAM_NATIVE_ROOT, testing an older SDK instead.
+
+### Follow-up: Android tooling constructor and toggle semantics
+
+Native CI `34788279996` passed Rust/PHP/protocol and Swift/UIKit contracts, but
+failed Android lint: the constructor with optional configuration did not expose
+a Java `(Context)` overload (`ViewConstructor`). Added `@JvmOverloads`, without
+lint suppression; local `:app:lintDebug` passed in 38s. Fix pushed as Native
+`c223515feef0603efbc4b0e74b1013473ff0ffcb`; fresh CI is required for this head.
+
+Inspection of the previous showcase XML also found a separate UI defect:
+the selected Board toggle reported selected=true but checked=false. Parent
+selection propagation now sets both selected and checked for PBtnGroup and
+PBtnToggle children. PHP assertions cover checked/unchecked accessibility
+states, and the real interaction audit now requires checked == selected.
+The PHP matrix and UI level-9 analysis passed for this change. Device validation
+is pending: the active 114-route startup audit intentionally continues on the
+unchanged prior APK, and cannot be used as evidence for this uninstalled change.
+
+The prior-APK startup sweep completed: 114/114 cold launches at the authoritative
+route top, p50=342ms, p95=419ms, max=556ms, no matched runtime errors. Report:
+`/tmp/pam-ui-startup-114-persistent-20260913.json`, SHA-256
+`fc9e637cc625a4c47ceb15df88e63dd9fbeb6599d04c131d024b2c6f38b2d9ea`.
+Android lint ran concurrently during part of the sweep; these are gate timings,
+not a controlled performance comparison. UI CI `34788293413` completed all nine
+jobs successfully for UI 5e9d408 with Native 7470fbc. Native constructor-fix CI
+`34788559359` is running for c223515. Neither result validates the uncommitted
+checked-state adjustment in an installed APK.
+
+The subsequent release-mode build (24s, 96.7 MiB cleaned) installed that
+checked-state adjustment with Native c223515 on emulator API 36. All six
+focused interaction cases passed at font scales 1.0/2.0, including the new
+checked/selected agreement assertion. Evidence:
+`/tmp/pam-ui-toggle-checked-20260913/report.json`. Inspection of its normal-font
+launch capture also confirms that the selected Board check glyph is visible;
+this does not establish a root cause for its absence in an older capture.
+The expanded audit now covers all 14 fixture variations and records APK/script
+hashes in each report, including failed/partial reports. That expanded batch
+is pending; the six-case result is not whole-component approval.
+
+Native CI 34788559359 subsequently passed Rust/PHP/protocol, Swift/UIKit and
+Android build/unit/lint, but both API 26 and API 36 instrumentation jobs failed
+the initial-window assertion in
+`rendererKeepsPersistentHorizontalIndicatorVisibleBelowContent`. The later
+software-draw and toggled-window assertions passed. Thus the earlier local
+12-test success is not sufficient to approve persistence across environments.
+Cross-platform accessibility evidence was skipped downstream. Investigation
+must remain in Native; no weakened assertion or release is justified.
+
+Expanded local batch completed: 28/28 cases (14 variations at font scales
+1.0 and 2.0), including real target taps, checked/selected agreement, disabled
+target rejection with unchanged selection, RTL ordering, reachable labels and
+reserved scrollbar space. Five-options track contrast passed at both scales.
+Normal launch and enlarged Full width captures were visually inspected; the
+selected check glyphs and full target labels are visible after horizontal
+scrolling. Font scale restored to 1.0. This does not cover every state transition
+(for example second-tap deselection) or constitute full component approval.
+Report `/tmp/pam-ui-toggle-14-20260913/report.json`, SHA-256
+`504a9d50811063b7b593a84813b7447e7e1f30f6f166b1cb6698c9e4018490c1`;
+APK SHA-256 `f1a5f0adbbc6f760b3bd6bd5d0203d296847a93d97131d9812871e2c023898c0`.
