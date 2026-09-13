@@ -3658,7 +3658,7 @@ final class ComponentRoute extends Component
                     },
                 );
             } elseif ($this->tag === 'p-segmented-button') {
-                $previewProps['items'] = [
+                $previewProps['items'] ??= [
                     ['label' => 'Day', 'value' => 1],
                     ['label' => 'Week', 'value' => 2],
                     ['label' => 'Month', 'value' => 3],
@@ -6375,6 +6375,11 @@ final class ComponentRoute extends Component
                 ['label' => 'Multiple', 'props' => ['multiple' => true, 'modelValue' => [1, 3]]],
                 ['label' => 'Icons', 'props' => ['icons' => true]],
                 ['label' => 'Disabled', 'props' => ['disabled' => true]],
+                ['label' => 'Disabled item', 'props' => ['modelValue' => 1, 'items' => [
+                    ['label' => 'View', 'value' => 1],
+                    ['label' => 'Edit', 'value' => 2, 'disabled' => true],
+                    ['label' => 'Share', 'value' => 3],
+                ]]],
             ],
             'p-password-field' => [
                 ['label' => 'Secure', 'props' => ['label' => 'Password', 'modelValue' => 'PAM-native-2026']],

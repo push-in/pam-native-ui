@@ -3381,6 +3381,28 @@ $dayPress();
 if ($selectedSegment !== 1) {
     throw new RuntimeException('p-segmented-button must emit its selected value.');
 }
+foreach ([false, true] as $groupDisabled) {
+    $disabledSegments = $segmentedClass::make([
+        'items' => [
+            ['label' => 'View', 'value' => 1],
+            ['label' => 'Edit', 'value' => 2, 'disabled' => true],
+            ['label' => 'Share', 'value' => 3, 'disabled' => false],
+        ],
+        'modelValue' => 1,
+        'disabled' => $groupDisabled,
+    ])->onChange(static function (int $value): void {})->toElement()->children();
+    foreach ($disabledSegments as $index => $control) {
+        $expectedDisabled = $groupDisabled || $index === 1;
+        if (
+            ($control->properties()[PropKey::Enabled->value] ?? null) !== !$expectedDisabled
+            || isset($control->events()[EventKind::Press->value]) === $expectedDisabled
+            || ($control->properties()[PropKey::Opacity->value] ?? null)
+                !== ($expectedDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0)
+        ) {
+            throw new RuntimeException('Segmented items must honor individual and group disabled state.');
+        }
+    }
+}
 $iconSegments = $segmentedClass::make([
     'items' => ['Day', 'Week', 'Month'],
     'icons' => true,

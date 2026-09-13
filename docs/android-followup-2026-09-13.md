@@ -1353,3 +1353,25 @@ white just outside the gray child before checking that child's pixel. The
 scoped connected Android test passed locally in 9s, without changing runtime
 code or weakening the indicator assertions. This commit is being submitted to
 CI to distinguish an initial-frame problem from an indicator-only problem.
+
+### Remaining toggle variations and separate segmented-item fix
+
+Samsung completed the remaining eight PBtnToggle variations at font scales
+1.0/2.0: Full width, Leading icons, Compact density, Two options, Disabled group,
+Long labels, Tile and Success color. All 16 scoped cases passed on APK 7340ab84...
+and original font 1.1 was restored. Report:
+`/tmp/pam-ui-samsung-toggle-remaining-20260913/report.json`, SHA-256
+`42b44470c18fcfc89c4d84acb4dbcace121ce8da2c40fc4d7fcc4f80aa7f712e`.
+Combined with previous physical reports this covers the 14 fixture variations
+at both scales. It does not establish every interaction, dark-mode, performance
+or accessibility-service requirement, nor fix the separate CI indicator failure.
+
+Code review found a separate PSegmentedButton defect: generated items ignored
+their individual disabled flag. Added regression assertions for item/group
+precedence, Enabled, opacity and absence of Press handlers; the test failed
+before the UI fix and the 114-component PHP matrix passed after it. Generated
+controls now honor that flag without changing Native code. The showcase has a
+Disabled item fixture and preserves fixture-provided items. This change is not
+in the tested Samsung APK and still needs device validation. Initial PHPStan
+flagged passing an untyped item map to flag(); the fix extracts only the disabled
+property into a string-keyed map, without suppressions or widened types.

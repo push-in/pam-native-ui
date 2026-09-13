@@ -3623,6 +3623,10 @@ final class ComponentRenderer
 
         foreach ($source as $index => $definition) {
             $icon = null;
+            $itemDisabled = $disabled || (is_array($definition) && self::flag(
+                ['disabled' => $definition['disabled'] ?? false],
+                'disabled',
+            ));
             if (is_array($definition)) {
                 $value = $definition['value'] ?? $definition['id'] ?? $index + 1;
                 $label = self::scalarString(
@@ -3677,7 +3681,7 @@ final class ComponentRenderer
                     backgroundColor: $selected
                         ? $theme->color(ColorToken::Secondary)
                         : 0x00000000,
-                    opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+                    opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
                     flexGrow: 1.0,
                     alignItems: Align::Center,
                     justifyContent: Justify::Center,
@@ -3686,7 +3690,7 @@ final class ComponentRenderer
                 ))
                 ->property(PropKey::Selected, $selected)
                 ->property(PropKey::Checked, $selected)
-                ->property(PropKey::Enabled, !$disabled)
+                ->property(PropKey::Enabled, !$itemDisabled)
                 ->accessibilityRole(AccessibilityRole::ToggleButton)
                 ->accessibilityChecked($selected
                     ? AccessibilityCheckedState::Checked
@@ -3699,7 +3703,7 @@ final class ComponentRenderer
                     false,
                     MaterialTokens::STATE_OPACITY[4],
                 );
-            if (!$disabled && $change instanceof Closure) {
+            if (!$itemDisabled && $change instanceof Closure) {
                 $control = $control->onPress(static function () use (
                     $change,
                     $multiple,
