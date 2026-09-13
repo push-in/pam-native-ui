@@ -1020,6 +1020,8 @@ def main() -> int:
     results: list[dict[str, object]] = []
     failed_components: set[str] = set()
     failed_attempts = 0
+    interrupted = False
+    device_info: dict[str, object] = {}
     audit.prepare()
     try:
         package_report = audit.shell("pm", "path", args.package).strip()
@@ -1039,6 +1041,9 @@ def main() -> int:
         attempt_index = 0
         for repetition in range(1, args.repetitions + 1):
             for tag in tags:
+                if audit.device_locked():
+                    interrupted = True
+                    break
                 attempt_index += 1
                 route = PARENT_ROUTE.get(tag, tag)
                 kind = interaction_kind(tag)
@@ -1079,6 +1084,9 @@ def main() -> int:
                     result_status = ResultStatus.PASSED
                     detail = ""
                 except Exception as exception:  # keep the full inventory running
+                    if audit.device_locked():
+                        interrupted = True
+                        break
                     failed_attempts += 1
                     failed_components.add(tag)
                     result_status = ResultStatus.FAILED
@@ -1103,16 +1111,24 @@ def main() -> int:
                     f"({kind.name.lower()}) {detail}",
                     flush=True,
                 )
+            if interrupted:
+                break
+    except KeyboardInterrupt:
+        interrupted = True
     finally:
         audit.restore()
 
+    tested_components = {result["component"] for result in results}
     report = {
         "schemaVersion": 1,
+        "complete": not interrupted and len(results) == len(tags) * args.repetitions,
+        "interrupted": interrupted,
         "device": device_info,
         "componentCount": len(tags),
         "repetitions": args.repetitions,
         "attemptCount": len(results),
-        "passedCount": len(tags) - len(failed_components),
+        "passedCount": len(tested_components) - len(failed_components),
+        "untestedCount": len(set(tags) - tested_components),
         "failedCount": len(failed_components),
         "failedAttemptCount": failed_attempts,
         "evidenceDirectory": str(args.evidence_directory),
@@ -1121,13 +1137,13 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(
-        f"Audited {len(tags)} components across {args.repetitions} passes: "
-        f"{len(tags) - len(failed_components)} passed, "
+        f"Audited {len(tested_components)}/{len(tags)} components across {args.repetitions} passes: "
+        f"{len(tested_components) - len(failed_components)} passed, "
         f"{len(failed_components)} failed. "
         f"Report: {args.output}",
         flush=True,
     )
-    return 1 if failed_components else 0
+    return 2 if interrupted else (1 if failed_components else 0)
 
 
 if __name__ == "__main__":

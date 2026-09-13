@@ -766,6 +766,11 @@ $outlinedTextField = $textFieldClass::make([
     'error' => true,
 ])->toElement();
 $outlinedTextFieldHost = $outlinedTextField->properties()[PropKey::HostProperties->value] ?? null;
+$underlinedTextField = $textFieldClass::make([
+    'label' => 'Email',
+    'variant' => 'underlined',
+])->toElement();
+$underlinedTextFieldHost = $underlinedTextField->properties()[PropKey::HostProperties->value] ?? null;
 $filledTextFieldInput = null;
 $filledTextFieldStack = [$filledTextField];
 while ($filledTextFieldStack !== []) {
@@ -779,12 +784,14 @@ while ($filledTextFieldStack !== []) {
 if (
     !$filledTextFieldHost instanceof BinaryValue
     || !$outlinedTextFieldHost instanceof BinaryValue
+    || !$underlinedTextFieldHost instanceof BinaryValue
     || !$filledTextFieldInput instanceof \Pam\Native\Element
     || ($filledTextFieldInput->properties()[
         PropKey::AccessibilityLabel->value
     ] ?? null) !== 'Email'
-    || (Wire::decodeMap($filledTextFieldHost->bytes)['indicatorOnly'] ?? null) !== true
+    || (Wire::decodeMap($filledTextFieldHost->bytes)['indicatorOnly'] ?? null) !== false
     || (Wire::decodeMap($outlinedTextFieldHost->bytes)['indicatorOnly'] ?? null) !== false
+    || (Wire::decodeMap($underlinedTextFieldHost->bytes)['indicatorOnly'] ?? null) !== true
     || (Wire::decodeMap($filledTextFieldHost->bytes)['outlineWidth'] ?? null) !== 2.0
     || (Wire::decodeMap($outlinedTextFieldHost->bytes)['outlineWidth'] ?? null) !== 2.0
 ) {

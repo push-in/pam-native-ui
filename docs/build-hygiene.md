@@ -15,6 +15,24 @@ trees are cleaned.
 
 ## Local development storage contract
 
+### Composer path packages in showcase builds
+
+Build the kitchen-sink application in a temporary directory outside the UI
+repository when installing the UI through a Composer path repository. Composer
+rejects installing a package inside its own source tree. Point the temporary
+application's path repositories at the Native PHP package and a clean export
+of the UI commit being validated. A clean export avoids copying Gradle caches,
+old example dependencies and build outputs into the package.
+
+Check both `composer.lock` and `vendor/composer/installed.json` before building:
+an updated lock alone does not prove the installed PHP files are current.
+Run Composer with the PHP version required by the application, complete the
+dependency preflight, and verify the installed source before capturing device
+evidence. Keep the temporary application's lock with its build evidence.
+
+After the audit, remove that exact temporary application and source export,
+retaining only the intended APK and evidence. Do not use a broad `/tmp` cleanup.
+
 Run the project cleanup after every local native build or audit:
 
 ```bash

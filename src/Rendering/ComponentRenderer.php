@@ -7151,12 +7151,8 @@ final class ComponentRenderer
 
         $variant = $props['variant'] ?? null;
         $materialIndicatorOnly = is_string($props['__materialComponent'] ?? null)
-            && !in_array($variant, [
-                'outlined', 'outline', MaterialVariant::Outlined->value,
-                'plain', MaterialVariant::Plain->value,
-                'solo', MaterialVariant::Solo->value,
-                'solo-inverted', MaterialVariant::SoloInverted->value,
-                'solo-filled', MaterialVariant::SoloFilled->value,
+            && in_array($variant, [
+                'underlined', MaterialVariant::Underlined->value,
             ], true);
 
         $readOnly = self::flag(
