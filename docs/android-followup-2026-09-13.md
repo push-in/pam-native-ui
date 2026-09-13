@@ -347,3 +347,16 @@ Its callback now ignores null/empty cancellation. Syntax and diff checks pass;
 device confirmation is pending. The two fixtures remain temporarily for that
 retest: `/sdcard/Download/pam-ui-file-audit-a-20260913.txt` and the matching
 `pam-ui-file-audit-b-20260913.txt`. No personal documents were selected.
+
+The showcase fix built and installed successfully. Both cancellation paths
+were verified: two selected files remain after reopening/cancelling the
+multiple picker, and the selected filename remains after cancelling the
+single picker. XML/captures are `/tmp/pam-file-cancel-fixed-20260913.*` and
+`/tmp/pam-file-single-cancel-fixed-20260913.*`; the latter capture was inspected.
+The two exact Downloads fixtures were removed afterward; their local `/tmp`
+source copies remain reproducible. Build cleanup removed 904.9 MiB.
+
+UI CI run `34776338798` completed successfully for `62e47a6`: all nine checks
+passed, including Android API 26/36 instrumentation and UIKit current/minimum.
+The later showcase-only file cancellation fix has local syntax, build and
+emulator interaction evidence; do not attribute it to that earlier CI run.
