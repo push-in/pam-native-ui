@@ -1035,6 +1035,10 @@ def main() -> int:
             "api": int(audit.shell("getprop", "ro.build.version.sdk").strip()),
             "viewport": audit.shell("wm", "size").strip().replace("\n", "; "),
             "density": audit.shell("wm", "density").strip().replace("\n", "; "),
+            "fontScale": audit.shell("settings", "get", "system", "font_scale").strip(),
+            # prepare() disables system animations for deterministic state
+            # checks. These reports must not be mistaken for motion profiling.
+            "systemAnimationsEnabled": False,
             "buildSha256": build_hash,
         }
         attempt_total = len(tags) * args.repetitions

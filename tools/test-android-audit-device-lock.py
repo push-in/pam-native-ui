@@ -81,11 +81,14 @@ class AndroidAuditDeviceLockTest(unittest.TestCase):
                     "package:/data/app/base.apk" if args[:2] == ("pm", "path")
                     else "abc123 /data/app/base.apk" if args[0] == "sha256sum"
                     else "31" if args == ("getprop", "ro.build.version.sdk")
+                    else "2.0" if args == ("settings", "get", "system", "font_scale")
                     else ""
                 )
                 self.assertEqual(2, SHOWCASE.main())
             report = json.loads(output.read_text())
             self.assertFalse(report["complete"])
+            self.assertEqual("2.0", report["device"]["fontScale"])
+            self.assertFalse(report["device"]["systemAnimationsEnabled"])
             self.assertTrue(report["interrupted"])
             self.assertEqual(1, report["passedCount"])
             self.assertEqual(1, report["untestedCount"])
