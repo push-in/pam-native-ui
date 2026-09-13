@@ -183,3 +183,12 @@ Do not approve its large-text variant. The chip uses intrinsic text sizing,
 not a fixed width. Native fallback glyph measurement and chip child sizing
 need investigation; no root cause or fix is yet verified. System font scale
 was restored to 1.0 after the checks.
+
+The emulator's `/system/fonts/Roboto-Regular.ttf` was measured with the existing
+Rust TTF parser (no dependency installation). At weight 600 and 24sp, PHP
+requires 47.789063 dp; the Native fallback estimated only 46.8032 dp. Native
+commit `d6a6a87` replaces the coarse uppercase advance class with differentiated
+glyph estimates while retaining actual metrics for packaged fonts. Its
+regression covers PHP at 100%, 130% and 200%; all 74 engine tests and Clippy
+passed. An optimized Android build is running for visual confirmation; this
+is not yet proof that the observed chip clipping has been resolved on screen.
