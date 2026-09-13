@@ -834,3 +834,44 @@ Native CI `34782038599` targets `634ef37` and was still running Android API 36
 at the last check. UI run `34781564249` finished successfully on the older native
 snapshot; it does not validate this combined native/UI revision. No release
 or documentation gallery publication was performed.
+
+### Equal-height groups installed; full-catalog startup regression
+
+Installed UI `5824402` / Native `634ef37`, including the final group stretch
+policy, in 3m44s; automatic cleanup removed 904.9 MiB. Eight focused checks
+passed: Full width and Long labels in both PBtnGroup and PBtnToggle at 100%
+and 200%, with equal sibling heights and successful selection sequences.
+Heights were 48 dp at normal scale and 96 dp for the tested multiline groups
+at 200%. Toggle checks also require unchanged segment bounds after selection.
+Evidence: `/tmp/pam-ui-equal-group-heights-20260913/report.json`.
+The toggle interaction helper now applies the same measured sub-48 dp
+outside-edge probe rule as the group helper; Python compilation passes.
+
+Inspected the group Full width and toggle Long labels 200% captures: the
+target specimens are aligned and their labels complete. **Other specimens in
+the same toggle capture are not approved:** Five options breaks Mon/Tue/etc.
+letter by letter, and Disabled group extends beyond the right content edge.
+Their responsive width/overflow behavior is the next concrete defect; passing
+the eight scoped checks does not approve those neighboring examples.
+
+After restoring and confirming font scale 1.0, the complete 114-route release
+cold-start audit passed with no matched runtime errors: p50 329ms, p95 392ms,
+max 450ms. This exercises route startup, not every interaction or visual state.
+Report: `/tmp/pam-ui-startup-114-flex-width-20260913.json`, also preserved at
+`docs/assets/android/audit/2026-09-13/startup-114-flex-width.json` (ignored).
+Report SHA-256:
+`2b558d1be68955b6873ca1e53f23176a30f28e7f2628a7725a9e2f48ee7d2190`.
+APK SHA-256:
+`7b9e737b8c7761dcd955c147515b9e5cf98107e411b847f0685a0b6ebe2a33fc`.
+
+Native CI `34782038599` completed all six jobs successfully. UI CI
+`34782732115` completed all nine jobs successfully for UI `5824402` pinned to
+Native `634ef37`. These CI results and startup timings do not approve Samsung,
+all iOS visuals, continuous gesture performance, or the known width defects.
+
+Preserved the focused group/FAB captures, corrected Standard large-font
+evidence, native-only before-stretch capture and startup report in local
+`docs/assets/android/audit/2026-09-13/button-native-flex-followup.tar.gz`.
+Gzip integrity passes; SHA-256:
+`127f55dcf5762b7167f28ca33a80fe8ed5052ef201662c6d54f406f9522ffae2`.
+This ignored diagnostic archive is not published gallery media.

@@ -539,9 +539,12 @@ class ButtonToggleAudit(AutocompleteAudit):
                 self.text(node): node.attrib.get("bounds", "")
                 for node in self.buttons(current_group)
             }
-            if variation == "Single choice" and index == 0:
+            # Only sub-48 dp segments need the outside-edge minimum-target
+            # probe. Larger text can already grow a segment past that size.
+            needs_expansion = area.height / density < 48.0
+            if variation == "Single choice" and index == 0 and needs_expansion:
                 point = (area.center[0], area.top - int(round(3.0 * density)))
-            elif variation == "Compact density" and index == 0:
+            elif variation == "Compact density" and index == 0 and needs_expansion:
                 point = (area.center[0], area.top - int(round(6.0 * density)))
             self.tap(point)
             root = self.dump(
