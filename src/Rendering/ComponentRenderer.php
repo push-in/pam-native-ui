@@ -9475,11 +9475,17 @@ final class ComponentRenderer
             );
         }
         $display = implode(', ', $displayLabels);
-        if ($display === '') {
+        $hasDisplayValue = $display !== '';
+        if (!$hasDisplayValue) {
             $display = self::text(
                 $props,
                 'placeholder',
-                self::text($props, 'label', 'Select an option'),
+                match ($component) {
+                    'PTagInput' => 'Add tags',
+                    'PCombobox' => 'Select or add',
+                    'PAutocomplete' => 'Search options',
+                    default => $multiple ? 'Select options' : 'Select an option',
+                },
             );
         }
 
@@ -9714,9 +9720,7 @@ final class ComponentRenderer
         $displayContent = self::themedText($display)->style(new Style(
             flexGrow: 1.0,
             textColor: $theme->color(
-                $display === self::text($props, 'placeholder')
-                    ? ColorToken::MutedForeground
-                    : ColorToken::OnSurface,
+                $hasDisplayValue ? ColorToken::OnSurface : ColorToken::MutedForeground,
             ),
             fontSize: 16.0,
             lineHeight: 24.0,

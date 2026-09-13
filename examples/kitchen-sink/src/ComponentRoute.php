@@ -6416,13 +6416,13 @@ final class ComponentRoute extends Component
                 ['label' => 'Phone', 'props' => ['label' => 'Mobile phone', 'pattern' => '(##) #####-####', 'modelValue' => '11987654321']],
                 ['label' => 'Document', 'props' => ['label' => 'CPF', 'pattern' => '###.###.###-##', 'modelValue' => '12345678901']],
                 ['label' => 'Focused', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'focused' => true]],
-                ['label' => 'Error', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'error' => true]],
+                ['label' => 'Error', 'props' => ['label' => 'Phone', 'pattern' => '(##) #####-####', 'error' => true, 'errorMessage' => 'Enter the area code and complete phone number']],
             ],
             'p-currency-field' => [
                 ['label' => 'BRL', 'props' => ['label' => 'Investment', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'modelValue' => '128450']],
                 ['label' => 'USD', 'props' => ['label' => 'Revenue', 'prefix' => '$ ', 'locale' => 'en-US', 'modelValue' => '948025', 'decimalDigits' => 2]],
                 ['label' => 'No cents', 'props' => ['label' => 'Budget', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'modelValue' => '12000', 'decimalDigits' => 0]],
-                ['label' => 'Error', 'props' => ['label' => 'Amount', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'error' => true]],
+                ['label' => 'Error', 'props' => ['label' => 'Amount', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'error' => true, 'errorMessage' => 'Check the amount and try again']],
             ],
             'p-tag-input' => [
                 ['label' => 'Skills', 'props' => ['label' => 'Skills', 'items' => ['PHP', 'Kotlin', 'Swift'], 'modelValue' => ['PHP', 'Kotlin']]],
@@ -6434,7 +6434,7 @@ final class ComponentRoute extends Component
                 ['label' => 'Teams', 'props' => ['label' => 'Teams', 'items' => ['Design', 'Engineering', 'Product'], 'modelValue' => ['Design', 'Product']]],
                 ['label' => 'Searchable', 'props' => ['label' => 'People', 'items' => ['Ana', 'Bruno', 'Carla'], 'modelValue' => ['Ana']]],
                 ['label' => 'Empty', 'props' => ['label' => 'Categories', 'placeholder' => 'Choose categories', 'items' => ['Mobile', 'Web'], 'modelValue' => []]],
-                ['label' => 'Error', 'props' => ['label' => 'Categories', 'items' => ['Mobile'], 'modelValue' => [], 'error' => true]],
+                ['label' => 'Error', 'props' => ['label' => 'Categories', 'items' => ['Mobile'], 'modelValue' => [], 'error' => true, 'errorMessage' => 'Select at least one category']],
             ],
             'p-file-input' => [
                 ['label' => 'Single file', 'props' => ['label' => 'Contract', 'text' => 'Choose document']],

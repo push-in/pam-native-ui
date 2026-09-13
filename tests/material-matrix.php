@@ -4634,6 +4634,49 @@ $assertGeometry('POtpInput', ['divided' => true], [
     'width' => 360.0,
 ]);
 foreach (['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'] as $selectionField) {
+    $selectionClass = '\\Pam\\MobileUi\\Material\\'.$selectionField;
+    $defaultHint = match ($selectionField) {
+        'PTagInput' => 'Add tags',
+        'PCombobox' => 'Select or add',
+        'PAutocomplete' => 'Search options',
+        'PMultiSelect' => 'Select options',
+        default => 'Select an option',
+    };
+    foreach ([[], ['placeholder' => 'Choose a category']] as $hintProps) {
+        $field = $selectionClass::make([
+            'label' => 'Categories', 'items' => [], 'modelValue' => [], ...$hintProps,
+        ])->toElement();
+        $textNodes = array_values(array_filter(
+            $otpNodes($field),
+            static fn (\Pam\Native\Element $node): bool => $node->kind() === NodeKind::Text,
+        ));
+        $labels = array_filter($textNodes, static fn (\Pam\Native\Element $node): bool =>
+            ($node->properties()[PropKey::Text->value] ?? null) === 'Categories');
+        $hint = $hintProps['placeholder'] ?? $defaultHint;
+        $hints = array_values(array_filter($textNodes, static fn (\Pam\Native\Element $node): bool =>
+            ($node->properties()[PropKey::Text->value] ?? null) === $hint));
+        if (count($labels) !== 1 || count($hints) !== 1) {
+            throw new RuntimeException($selectionField.' must separate its persistent label from its empty hint.');
+        }
+        if (($hints[0]->properties()[PropKey::TextColor->value] ?? null)
+            !== ThemeManager::current()->color(ColorToken::MutedForeground)) {
+            throw new RuntimeException($selectionField.' empty hint must use the semantic muted foreground.');
+        }
+    }
+    if (in_array($selectionField, ['PSelect', 'PAutocomplete', 'PCombobox'], true)) {
+        $selectedField = $selectionClass::make([
+            'label' => 'Category', 'placeholder' => 'Mobile',
+            'items' => ['Mobile'], 'modelValue' => 'Mobile',
+        ])->toElement();
+        foreach ($otpNodes($selectedField) as $node) {
+            if ($node->kind() === NodeKind::Text
+                && ($node->properties()[PropKey::Text->value] ?? null) === 'Mobile'
+                && ($node->properties()[PropKey::TextColor->value] ?? null)
+                    === ThemeManager::current()->color(ColorToken::MutedForeground)) {
+                throw new RuntimeException($selectionField.' selected value must not become placeholder-colored when their strings match.');
+            }
+        }
+    }
     $assertGeometry($selectionField, [], [
         'height' => null,
         'minHeight' => 64.0,
@@ -4646,6 +4689,22 @@ foreach (['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'] 
         'paddingTop' => 4.0,
         'paddingBottom' => 4.0,
     ]);
+}
+foreach (['PMaskedField', 'PCurrencyField', 'PMultiSelect'] as $errorField) {
+    $errorClass = '\\Pam\\MobileUi\\Material\\'.$errorField;
+    $errorElement = $errorClass::make([
+        'label' => 'Required value', 'error' => true,
+        'errorMessage' => 'Choose or enter a valid value',
+    ])->toElement();
+    $errorHints = array_values(array_filter($otpNodes($errorElement),
+        static fn (\Pam\Native\Element $node): bool =>
+            $node->kind() === NodeKind::Text
+            && ($node->properties()[PropKey::Text->value] ?? null) === 'Choose or enter a valid value'));
+    if (count($errorHints) !== 1
+        || ($errorHints[0]->properties()[PropKey::TextColor->value] ?? null)
+            !== ThemeManager::current()->color(ColorToken::Destructive)) {
+        throw new RuntimeException($errorField.' must render one visible semantic error message.');
+    }
 }
 $assertGeometry('PAutocomplete', [], [
     'height' => null,

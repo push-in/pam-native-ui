@@ -592,3 +592,44 @@ padding and physical-cell LTR/RTL instrumentation checks: `OK (2 tests)`.
 The first runner command used the unsuffixed test package and could not start;
 `pm list instrumentation` identified `dev.pam.nativeapp.debug.test`, which was
 used for the successful execution. No test was silently skipped.
+
+### Selector empty-state hierarchy
+
+MultiSelect regression after native padding passed all six interaction checks
+at `/tmp/pam-ui-multi-select-padding-regression-20260913/report.json`. Inspection
+of `09-two-categories.png` exposed the Error field repeating Categories as
+both persistent label and empty placeholder. Following the UI/UX skill's
+label/hint hierarchy guidance, material selectors now use action hints by
+default (Select an option / Search options / Select or add / Add tags /
+Select options), preserving the label and explicit custom placeholders.
+The UI renderer also determines hint color from selection state rather than
+string equality, so a selected value matching placeholder text remains a
+normal foreground value.
+
+Added regressions for all five selector families, explicit hint overrides and
+selected-value/placeholder collisions. PHP material matrix passes (32,832
+style cases, 456 renders, 114 components), syntax and diff checks pass. These
+are pending UI-only appearance changes; native APIs were not changed for them.
+
+PHPStan level 9 also completed with no errors for the selector hint changes.
+A combined release build is running with the selector rendering fix and the
+latest native virtual-cell RTL correction. It has not yet supplied new visual
+evidence; the previous MultiSelect capture is explicitly the before image.
+
+The combined release build completed in 3m42s and installed successfully;
+cleanup removed 904.9 MiB. Started the post-hint MultiSelect interaction and
+capture run at `/tmp/pam-ui-multi-select-action-hints-20260913`. It uses native
+3f6e17d and the pending UI selector hint changes; results are not yet final.
+
+Post-hint MultiSelect completed: all six interaction checks passed. Inspected
+`09-two-categories.png`: the Error control now shows Categories once as its
+label and Select options in muted text as its empty hint; selected chips in
+the other fields remain aligned. This is the after image for the duplicate
+label defect.
+
+Also added explanatory error messages to the showcase's masked-phone,
+currency and multi-category examples using existing `errorMessage` props.
+The PHP matrix verifies these three families render exactly one error message
+with the semantic destructive color; matrix and syntax pass. These new
+showcase messages are not in the just-inspected APK and await next-build
+visual confirmation. No new core/native API was introduced for the copy.
