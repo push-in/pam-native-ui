@@ -1340,3 +1340,16 @@ resolveHostBackground inherits the gray descendant color, so checking that same
 gray at one point cannot independently prove the child has rendered. Preserve
 the current CI evidence before changing the fixture; distinguish initial-frame
 synchronization from actual persistent-scrollbar failure.
+
+### First CI window evidence obtained
+
+API 26 of Native run 34790093998 failed and exported all three PNGs via Gradle's
+additional-test-output collection. Downloaded to
+`/tmp/pam-indicator-frames-ci26.mc4g0b`. Visual inspection confirms no indicator
+in initial.png and a dark indicator after toggling visibility in shown.png.
+The shared gray canvas still prevents visual confirmation of child readiness.
+Native 69ee5cc gives the fixture an explicit white Screen background and asserts
+white just outside the gray child before checking that child's pixel. The
+scoped connected Android test passed locally in 9s, without changing runtime
+code or weakening the indicator assertions. This commit is being submitted to
+CI to distinguish an initial-frame problem from an indicator-only problem.
