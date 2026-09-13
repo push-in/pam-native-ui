@@ -4,6 +4,26 @@ import XCTest
 @testable import PamMobileUi
 
 final class PamMobileUiTests: XCTestCase {
+    func testSelectionDismissalHonorsCloseOnSelectBeforeLegacyCloseOnPress() {
+        let factory = MobileUiHostFactory()
+        let view = factory.create(context: nil) { _ in }
+        guard let host = view as? PamMobileUiHost else {
+            return XCTFail("Expected the selection host")
+        }
+        for behavior in [3, 24] {
+            for close in [false, true] {
+                factory.update(view: host, properties: [
+                    "behavior": .integer(Int64(behavior)),
+                    "closeOnSelect": .flag(close),
+                    "closeOnPress": .flag(!close),
+                ])
+                XCTAssertEqual(host.closesSheetOnSelection, close)
+            }
+        }
+        factory.release(view: host)
+        factory.close()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),

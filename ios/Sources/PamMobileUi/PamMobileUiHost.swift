@@ -90,6 +90,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var emit: EventEmitter?
     private var behavior = PamMobileBehavior.container
     private var properties: [String: WireValue] = [:]
+
+    var closesSheetOnSelection: Bool {
+        properties["closeOnSelect"]?.pamFlag
+            ?? properties["closeOnPress"]?.pamFlag
+            ?? (behavior == .sheetItem)
+    }
     private var isOpen = true
     private var isControlled = false
     private var openDefaultInitialized = false
@@ -509,7 +515,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
              .fileTreeFolder, .fileTreeFile:
             emit?(.press, Data())
             if behavior == .sheetItem,
-               properties["closeOnPress"]?.pamFlag ?? true {
+               closesSheetOnSelection {
                 sheetAncestor()?.clearSheetSearch()
                 sheetAncestor()?.requestDismiss()
             }
@@ -1022,7 +1028,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             !value.isEmpty else { return }
         emit?(.change, Data(value.utf8))
         clearSheetSearch()
-        emit?(.native, Data())
+        if closesSheetOnSelection {
+            emit?(.native, Data())
+        }
     }
 
     private func clearSheetSearch() {
