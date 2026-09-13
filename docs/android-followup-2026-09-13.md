@@ -192,3 +192,10 @@ glyph estimates while retaining actual metrics for packaged fonts. Its
 regression covers PHP at 100%, 130% and 200%; all 74 engine tests and Clippy
 passed. An optimized Android build is running for visual confirmation; this
 is not yet proof that the observed chip clipping has been resolved on screen.
+
+The `d6a6a87` build subsequently completed and installed. Visual inspection of
+`tag-uppercase-fixed-200.png` confirms PHP is fully visible at 200%, alongside
+Kotlin and Android. The matching XML is retained in the evidence directory.
+This resolves the reproduced PHP clipping case on the API 36 emulator, not
+all strings, font families, devices or Tag Input interaction gates. Font scale
+was restored to 1.0; automatic build cleanup removed 904.9 MiB.
