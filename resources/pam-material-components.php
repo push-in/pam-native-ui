@@ -628,4 +628,154 @@ return array_values(array (
       0 => 'PPullToRefresh',
     ),
   ),
+  67 =>
+  array (
+    'type' => 68,
+    'module' => 'app-scaffold',
+    'components' => array (0 => 'PAppScaffold'),
+  ),
+  68 =>
+  array (
+    'type' => 69,
+    'module' => 'navigation-bar',
+    'components' => array (0 => 'PNavigationBar'),
+  ),
+  69 =>
+  array (
+    'type' => 70,
+    'module' => 'navigation-rail',
+    'components' => array (0 => 'PNavigationRail'),
+  ),
+  70 =>
+  array (
+    'type' => 71,
+    'module' => 'bottom-app-bar',
+    'components' => array (0 => 'PBottomAppBar'),
+  ),
+  71 =>
+  array (
+    'type' => 72,
+    'module' => 'search-bar',
+    'components' => array (0 => 'PSearchBar'),
+  ),
+  72 =>
+  array (
+    'type' => 73,
+    'module' => 'pagination',
+    'components' => array (0 => 'PPagination'),
+  ),
+  73 =>
+  array (
+    'type' => 74,
+    'module' => 'segmented-button',
+    'components' => array (0 => 'PSegmentedButton'),
+  ),
+  74 =>
+  array (
+    'type' => 75,
+    'module' => 'password-field',
+    'components' => array (0 => 'PPasswordField'),
+  ),
+  75 =>
+  array (
+    'type' => 76,
+    'module' => 'masked-field',
+    'components' => array (0 => 'PMaskedField'),
+  ),
+  76 =>
+  array (
+    'type' => 77,
+    'module' => 'currency-field',
+    'components' => array (0 => 'PCurrencyField'),
+  ),
+  77 =>
+  array (
+    'type' => 78,
+    'module' => 'tag-input',
+    'components' => array (0 => 'PTagInput'),
+  ),
+  78 =>
+  array (
+    'type' => 79,
+    'module' => 'multi-select',
+    'components' => array (0 => 'PMultiSelect'),
+  ),
+  79 =>
+  array (
+    'type' => 80,
+    'module' => 'file-input',
+    'components' => array (0 => 'PFileInput'),
+  ),
+  80 =>
+  array (
+    'type' => 81,
+    'module' => 'date-range-picker',
+    'components' => array (0 => 'PDateRangePicker'),
+  ),
+  81 =>
+  array (
+    'type' => 82,
+    'module' => 'time-range-picker',
+    'components' => array (0 => 'PTimeRangePicker'),
+  ),
+  82 =>
+  array (
+    'type' => 83,
+    'module' => 'filter-bar',
+    'components' => array (0 => 'PFilterBar'),
+  ),
+  83 =>
+  array (
+    'type' => 84,
+    'module' => 'navigation-drawer',
+    'components' => array (0 => 'PNavigationDrawer'),
+  ),
+  84 =>
+  array (
+    'type' => 85,
+    'module' => 'command-palette',
+    'components' => array (0 => 'PCommandPalette'),
+  ),
+  85 =>
+  array (
+    'type' => 86,
+    'module' => 'progress-button',
+    'components' => array (0 => 'PProgressButton'),
+  ),
+  86 =>
+  array (
+    'type' => 87,
+    'module' => 'reorderable-list',
+    'components' => array (0 => 'PReorderableList'),
+  ),
+  87 =>
+  array (
+    'type' => 88,
+    'module' => 'swipe-actions',
+    'components' => array (0 => 'PSwipeActions'),
+  ),
+  88 =>
+  array (
+    'type' => 89,
+    'module' => 'data-grid',
+    'components' => array (0 => 'PDataGrid'),
+  ),
+  89 =>
+  array (
+    'type' => 90,
+    'module' => 'tree-select',
+    'components' => array (0 => 'PTreeSelect'),
+  ),
+  90 =>
+  array (
+    'type' => 91,
+    'module' => 'result-state',
+    'components' => array (0 => 'PResultState'),
+  ),
+  91 =>
+  array (
+    'type' => 92,
+    'module' => 'chart',
+    'components' => array (0 => 'PChart'),
+  ),
 ));

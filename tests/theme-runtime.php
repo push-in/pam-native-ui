@@ -14,8 +14,7 @@ use Pam\Native\Internal\Wire;
 use Pam\Native\UI\Text;
 use Pam\Native\UserInterfaceAppearance;
 
-$vendorAutoload = dirname(__DIR__).'/vendor/autoload.php';
-require is_file($vendorAutoload) ? $vendorAutoload : __DIR__.'/bootstrap.php';
+require __DIR__.'/bootstrap.php';
 
 function expectTheme(bool $condition, string $message): void
 {

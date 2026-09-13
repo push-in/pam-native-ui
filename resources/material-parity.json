@@ -4,8 +4,8 @@
         "source": "resources/pam-material-components.php",
         "namespace": "p-*",
         "metadataImport": false,
-        "moduleCount": 67,
-        "componentCount": 89,
+        "moduleCount": 92,
+        "componentCount": 114,
         "targets": [
             1,
             2
@@ -1503,6 +1503,531 @@
             "module": "pull-to-refresh",
             "components": [
                 "p-pull-to-refresh"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 68,
+            "module": "app-scaffold",
+            "components": [
+                "p-app-scaffold"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 69,
+            "module": "navigation-bar",
+            "components": [
+                "p-navigation-bar"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 70,
+            "module": "navigation-rail",
+            "components": [
+                "p-navigation-rail"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 71,
+            "module": "bottom-app-bar",
+            "components": [
+                "p-bottom-app-bar"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 72,
+            "module": "search-bar",
+            "components": [
+                "p-search-bar"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 73,
+            "module": "pagination",
+            "components": [
+                "p-pagination"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 74,
+            "module": "segmented-button",
+            "components": [
+                "p-segmented-button"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 75,
+            "module": "password-field",
+            "components": [
+                "p-password-field"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 76,
+            "module": "masked-field",
+            "components": [
+                "p-masked-field"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 77,
+            "module": "currency-field",
+            "components": [
+                "p-currency-field"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 78,
+            "module": "tag-input",
+            "components": [
+                "p-tag-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 79,
+            "module": "multi-select",
+            "components": [
+                "p-multi-select"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 80,
+            "module": "file-input",
+            "components": [
+                "p-file-input"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 81,
+            "module": "date-range-picker",
+            "components": [
+                "p-date-range-picker"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 82,
+            "module": "time-range-picker",
+            "components": [
+                "p-time-range-picker"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 83,
+            "module": "filter-bar",
+            "components": [
+                "p-filter-bar"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 84,
+            "module": "navigation-drawer",
+            "components": [
+                "p-navigation-drawer"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 85,
+            "module": "command-palette",
+            "components": [
+                "p-command-palette"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 86,
+            "module": "progress-button",
+            "components": [
+                "p-progress-button"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 87,
+            "module": "reorderable-list",
+            "components": [
+                "p-reorderable-list"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 88,
+            "module": "swipe-actions",
+            "components": [
+                "p-swipe-actions"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 89,
+            "module": "data-grid",
+            "components": [
+                "p-data-grid"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 90,
+            "module": "tree-select",
+            "components": [
+                "p-tree-select"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 91,
+            "module": "result-state",
+            "components": [
+                "p-result-state"
+            ],
+            "verification": [
+                3,
+                3,
+                3,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3
+            ]
+        },
+        {
+            "type": 92,
+            "module": "chart",
+            "components": [
+                "p-chart"
             ],
             "verification": [
                 3,

@@ -489,6 +489,18 @@ abstract class UiComponent implements Renderable
         return $this->on(EventKind::Change, $handler);
     }
 
+    /** @param Closure(list<mixed>): mixed $handler */
+    final public function onReorder(Closure $handler): static
+    {
+        return $this->on(EventKind::Change, $handler);
+    }
+
+    /** @param Closure(string): mixed $handler */
+    final public function onAction(Closure $handler): static
+    {
+        return $this->on(EventKind::Change, $handler);
+    }
+
     /**
      * Registers the final value callback used by range controls.
      *
@@ -512,6 +524,16 @@ abstract class UiComponent implements Renderable
     final public function onToggle(Closure $handler): static
     {
         return $this->on(EventKind::Toggle, $handler);
+    }
+
+    final public function onDrawerOpen(Closure $handler): static
+    {
+        return $this->on(EventKind::DrawerOpen, $handler);
+    }
+
+    final public function onDrawerClose(Closure $handler): static
+    {
+        return $this->on(EventKind::DrawerClose, $handler);
     }
 
     final public function onLongPress(Closure $handler): static

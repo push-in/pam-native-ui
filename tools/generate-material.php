@@ -72,6 +72,9 @@ PHP;
 
 foreach ($facadeTags as $tag => $class) {
     $facades .= "final class {$class} extends UiComponent\n{\n";
+    if ($class === 'PFileInput') {
+        $facades .= "    use \\Pam\\MobileUi\\Component\\Concerns\\HandlesFilePicking;\n\n";
+    }
     $facades .= "    protected const string COMPONENT = ".var_export($class, true).";\n";
     $facades .= "}\n\n";
 }

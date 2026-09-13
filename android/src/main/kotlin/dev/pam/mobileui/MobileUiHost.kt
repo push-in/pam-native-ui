@@ -302,6 +302,8 @@ internal class MobileUiHost(
         setShadowLayer(1.5f * density, 0f, density, 0x55000000)
     }
     private var behavior = Behavior.CONTAINER
+    private var sparklineTouchActive = false
+    private var sparklineSelectedIndex = -1
     private var component = 0
     private var expanded = false
     private var checked = false
@@ -1969,6 +1971,17 @@ internal class MobileUiHost(
             sliderTouchActive = true
             return true
         }
+        if (
+            behavior == Behavior.SPARKLINE &&
+            isEnabled &&
+            nativeProperties.flag("interactive", false) &&
+            event.actionMasked == MotionEvent.ACTION_DOWN
+        ) {
+            sparklineTouchActive = true
+            updateSparklineSelection(event.x)
+            parent?.requestDisallowInterceptTouchEvent(true)
+            return true
+        }
         if (behavior == Behavior.DATE_TIME_PICKER && isEnabled && !readOnly) {
             return true
         }
@@ -2012,6 +2025,33 @@ internal class MobileUiHost(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (behavior == Behavior.SPARKLINE && nativeProperties.flag("interactive", false)) {
+            if (!isEnabled) return false
+            return when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    sparklineTouchActive = true
+                    updateSparklineSelection(event.x)
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (sparklineTouchActive) updateSparklineSelection(event.x)
+                    sparklineTouchActive
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (sparklineTouchActive) updateSparklineSelection(event.x, emit = true)
+                    sparklineTouchActive = false
+                    parent?.requestDisallowInterceptTouchEvent(false)
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    sparklineTouchActive = false
+                    parent?.requestDisallowInterceptTouchEvent(false)
+                    true
+                }
+                else -> sparklineTouchActive
+            }
+        }
         if (behavior == Behavior.TABS && navigationKind == 1) {
             if (!isEnabled) return false
             return when (event.actionMasked) {
@@ -3297,12 +3337,7 @@ internal class MobileUiHost(
     }
 
     private fun drawSparkline(canvas: Canvas) {
-        val points = (
-            nativeProperties.text("values")
-                ?: nativeProperties.text("value")
-                ?: return
-        ).split(',', '\n', ';', ' ')
-            .mapNotNull(String::toFloatOrNull)
+        val points = sparklinePoints()
         if (points.size < 2 || width <= 0 || height <= 0) return
         val low = points.minOrNull() ?: return
         val high = points.maxOrNull() ?: return
@@ -3344,6 +3379,22 @@ internal class MobileUiHost(
                     paint,
                 )
             }
+            val selectedIndex = if (sparklineSelectedIndex >= 0) {
+                sparklineSelectedIndex
+            } else {
+                nativeProperties.integer("selectedIndex", -1L).toInt()
+            }
+            if (selectedIndex in points.indices) {
+                val logicalX = inset + (selectedIndex + 0.5f) * barSlot
+                val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - logicalX else logicalX
+                val y = coordinates[selectedIndex].second
+                val ring = Paint(paint).apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = 2f * density
+                    alpha = 110
+                }
+                canvas.drawCircle(x, y, 8f * density, ring)
+            }
             return
         }
         val path = android.graphics.Path()
@@ -3371,6 +3422,54 @@ internal class MobileUiHost(
             canvas.drawPath(fillPath, fill)
         }
         canvas.drawPath(path, paint)
+        if (nativeProperties.flag("showPoints", false)) {
+            val selectedIndex = if (sparklineSelectedIndex >= 0) {
+                sparklineSelectedIndex
+            } else {
+                nativeProperties.integer("selectedIndex", -1L).toInt()
+            }
+            paint.style = Paint.Style.FILL
+            coordinates.forEachIndexed { index, (x, y) ->
+                val radius = (if (index == selectedIndex) 5f else 3f) * density
+                canvas.drawCircle(x, y, radius, paint)
+                if (index == selectedIndex) {
+                    val ring = Paint(paint).apply {
+                        style = Paint.Style.STROKE
+                        strokeWidth = 2f * density
+                        alpha = 90
+                    }
+                    canvas.drawCircle(x, y, 8f * density, ring)
+                }
+            }
+        }
+    }
+
+    private fun sparklinePoints(): List<Float> = (
+            nativeProperties.text("values")
+                ?: nativeProperties.text("value")
+                ?: ""
+        ).split(',', '\n', ';', ' ')
+            .mapNotNull(String::toFloatOrNull)
+
+    private fun updateSparklineSelection(x: Float, emit: Boolean = false) {
+        val points = sparklinePoints()
+        if (points.isEmpty() || width <= 0) return
+        val logicalX = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - x else x
+        val index = ((logicalX / width.coerceAtLeast(1)) * (points.size - 1))
+            .roundToInt()
+            .coerceIn(0, points.lastIndex)
+        if (sparklineSelectedIndex != index) {
+            sparklineSelectedIndex = index
+            invalidate()
+        }
+        if (emit) {
+            emitter.emit(
+                NativeViewEventKind.CHANGE,
+                "{\"index\":$index,\"value\":${points[index]}}".encodeToByteArray(),
+            )
+            performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED)
+        }
     }
 
     private fun installInputFocusObserver() {

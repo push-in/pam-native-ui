@@ -25,10 +25,13 @@ use Pam\Native\EventKind;
 use Pam\Native\ImageErrorEvent;
 use Pam\Native\Align;
 use Pam\Native\FlexDirection;
+use Pam\Native\FlexWrap;
+use Pam\Native\Justify;
 use Pam\Native\KeyboardType;
 use Pam\Native\ModalAnimationType;
 use Pam\Native\ModalPresentation;
 use Pam\Native\NodeKind;
+use Pam\Native\Overflow;
 use Pam\Native\PositionType;
 use Pam\Native\PropKey;
 use Pam\Native\Style;
@@ -1777,6 +1780,8 @@ foreach ([
     'p-select' => [false, false],
     'p-autocomplete' => [true, false],
     'p-combobox' => [true, true],
+    'p-tag-input' => [true, true],
+    'p-multi-select' => [true, false],
 ] as $selectionTag => [$searchable, $allowCustomValue]) {
     $selectionClass = $tags[$selectionTag];
     $selection = $selectionClass::make([
@@ -1825,7 +1830,10 @@ foreach ([
         $host = $candidate->properties()[PropKey::HostProperties->value] ?? null;
         if ($host instanceof BinaryValue) {
             $decoded = Wire::decodeMap($host->bytes);
-            if (array_key_exists('searchable', $decoded)) {
+            if (
+                array_key_exists('searchable', $decoded)
+                && array_key_exists('enableDynamicSizing', $decoded)
+            ) {
                 $sheetProperties = $decoded;
             }
         }
@@ -1853,6 +1861,36 @@ foreach ([
             "{$selectionTag} must use one full-screen portal around one native searchable sheet.",
         );
     }
+}
+
+$createdTag = null;
+$tagInput = $tags['p-tag-input']::make([
+    'label' => 'Technologies',
+    'items' => ['Android', 'iOS'],
+    'modelValue' => ['Android'],
+])->onChange(static function (mixed $value) use (&$createdTag): void {
+    $createdTag = $value;
+})->toElement();
+$stack = [$tagInput];
+$customTagChange = null;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    $candidateChange = $candidate->events()[EventKind::Change->value] ?? null;
+    if ($candidateChange instanceof Closure) {
+        $customTagChange = $candidateChange;
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (!$customTagChange instanceof Closure) {
+    throw new RuntimeException(
+        'p-tag-input must route native custom-value changes through its portal.',
+    );
+}
+$customTagChange(['Android', 'Rust']);
+if ($createdTag !== ['Android', 'Rust']) {
+    throw new RuntimeException(
+        'p-tag-input must emit created custom values through onChange.',
+    );
 }
 
 $multipleAutocompleteValue = null;
@@ -3097,6 +3135,156 @@ if (
     );
 }
 
+$scaffoldClass = $tags['p-app-scaffold'];
+$scaffold = $scaffoldClass::make(
+    ['edges' => ['top', 'bottom']],
+    Text::make('Screen content'),
+)->toElement();
+if (
+    $scaffold->kind() !== NodeKind::SafeAreaView
+    || count($scaffold->children()) !== 1
+    || ($scaffold->properties()[PropKey::SafeAreaTop->value] ?? null) !== true
+    || ($scaffold->properties()[PropKey::SafeAreaRight->value] ?? null) !== false
+    || ($scaffold->properties()[PropKey::SafeAreaBottomEdge->value] ?? null) !== true
+    || ($scaffold->properties()[PropKey::SafeAreaLeft->value] ?? null) !== false
+) {
+    throw new RuntimeException(
+        'p-app-scaffold must preserve content and explicit native safe-area edges.',
+    );
+}
+
+$searchClass = $tags['p-search-bar'];
+$searchValue = null;
+$search = $searchClass::make([
+    'modelValue' => 'native',
+    'placeholder' => 'Search components',
+    'accessibilityLabel' => 'Search components',
+])->onChange(static function (string $value) use (&$searchValue): void {
+    $searchValue = $value;
+})->toElement();
+$searchInput = null;
+foreach ($search->children() as $child) {
+    if ($child->kind() === NodeKind::Input) {
+        $searchInput = $child;
+        break;
+    }
+}
+$searchChange = $searchInput?->events()[EventKind::Change->value] ?? null;
+if (
+    $search->kind() !== NodeKind::Row
+    || count($search->children()) !== 2
+    || ($search->properties()[PropKey::Accessible->value] ?? null) !== false
+    || ($search->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::Generic->value
+    || !$searchInput instanceof \Pam\Native\Element
+    || ($searchInput->properties()[PropKey::Value->value] ?? null) !== 'native'
+    || ($searchInput->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Search components'
+    || ($searchInput->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::Search->value
+    || !$searchChange instanceof Closure
+) {
+    throw new RuntimeException(
+        'p-search-bar must expose one labeled native input and no duplicate compound semantics.',
+    );
+}
+$searchChange('navigation');
+if ($searchValue !== 'navigation') {
+    throw new RuntimeException('p-search-bar must emit its native text change.');
+}
+
+$paginationClass = $tags['p-pagination'];
+$selectedPage = null;
+$pagination = $paginationClass::make([
+    'modelValue' => 3,
+    'length' => 7,
+    'totalVisible' => 5,
+])->onChange(static function (int $page) use (&$selectedPage): void {
+    $selectedPage = $page;
+})->toElement();
+$pageButtons = $pagination->children();
+$pageTwoPress = $pageButtons[1]->events()[EventKind::Press->value] ?? null;
+if (
+    $pagination->kind() !== NodeKind::Row
+    || count($pageButtons) !== 5
+    || ($pageButtons[2]->properties()[PropKey::Selected->value] ?? null) !== true
+    || ($pageButtons[2]->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Page 3 of 7'
+    || !$pageTwoPress instanceof Closure
+    || array_any(
+        $pageButtons,
+        static fn (\Pam\Native\Element $button): bool =>
+            ($button->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+            || ($button->properties()[PropKey::MinHeight->value] ?? null) !== 48.0,
+    )
+) {
+    throw new RuntimeException(
+        'p-pagination must generate accessible 48dp page controls and controlled selection.',
+    );
+}
+$pageTwoPress();
+if ($selectedPage !== 2) {
+    throw new RuntimeException('p-pagination must emit the selected page.');
+}
+
+$segmentedClass = $tags['p-segmented-button'];
+$selectedSegment = null;
+$segmented = $segmentedClass::make([
+    'items' => [
+        ['label' => 'Day', 'value' => 1],
+        ['label' => 'Week', 'value' => 2],
+        ['label' => 'Month', 'value' => 3],
+    ],
+    'modelValue' => 2,
+])->onChange(static function (int $value) use (&$selectedSegment): void {
+    $selectedSegment = $value;
+})->toElement();
+$segmentControls = $segmented->children();
+$dayPress = $segmentControls[0]->events()[EventKind::Press->value] ?? null;
+if (
+    $segmented->kind() !== NodeKind::Row
+    || count($segmentControls) !== 3
+    || ($segmentControls[1]->properties()[PropKey::Selected->value] ?? null) !== true
+    || ($segmentControls[1]->properties()[PropKey::Checked->value] ?? null) !== true
+    || ($segmentControls[1]->properties()[PropKey::AccessibilityCheckedState->value] ?? null)
+        !== AccessibilityCheckedState::Checked->value
+    || ($segmentControls[1]->properties()[PropKey::AccessibilityRole->value] ?? null)
+        !== AccessibilityRole::ToggleButton->value
+    || !$dayPress instanceof Closure
+    || array_any(
+        $segmentControls,
+        static fn (\Pam\Native\Element $control): bool =>
+            ($control->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+            || ($control->properties()[PropKey::MinHeight->value] ?? null) !== 48.0,
+    )
+) {
+    throw new RuntimeException(
+        'p-segmented-button must generate accessible controlled native toggle buttons.',
+    );
+}
+$dayPress();
+if ($selectedSegment !== 1) {
+    throw new RuntimeException('p-segmented-button must emit its selected value.');
+}
+$iconSegments = $segmentedClass::make([
+    'items' => ['Day', 'Week', 'Month'],
+    'icons' => true,
+])->toElement()->children();
+if (
+    count($iconSegments) !== 3
+    || array_any(
+        $iconSegments,
+        static fn (\Pam\Native\Element $control): bool =>
+            count($control->children()) !== 1
+            || $control->children()[0]->kind() !== NodeKind::Row
+            || count($control->children()[0]->children()) !== 2,
+    )
+) {
+    throw new RuntimeException(
+        'p-segmented-button icons variation must render one icon beside every label.',
+    );
+}
+
 $dataTableClass = $tags['p-data-table'];
 $selectedRows = null;
 $dataTable = $dataTableClass::make([
@@ -3463,6 +3651,490 @@ $assertGeometry('PTextField', ['variant' => 'plain'], [
     'borderBottomWidth' => null,
     'borderRadius' => 0.0,
 ]);
+$findNativeInput = static function (\Pam\Native\Element $root): ?\Pam\Native\Element {
+    $stack = [$root];
+    while ($stack !== []) {
+        $candidate = array_pop($stack);
+        if ($candidate->kind() === NodeKind::Input) {
+            return $candidate;
+        }
+        array_push($stack, ...$candidate->children());
+    }
+    return null;
+};
+$passwordToggled = null;
+$passwordField = $tags['p-password-field']::make([
+    'label' => 'Password',
+    'modelValue' => 'secret',
+])->onToggle(static function (bool $revealed) use (&$passwordToggled): void {
+    $passwordToggled = $revealed;
+})->toElement();
+$passwordInput = $findNativeInput($passwordField);
+$passwordToggle = null;
+$passwordStack = [$passwordField];
+while ($passwordStack !== []) {
+    $candidate = array_pop($passwordStack);
+    if (
+        $candidate->kind() === NodeKind::Pressable
+        && ($candidate->properties()[PropKey::AccessibilityLabel->value] ?? null)
+            === 'Show password'
+    ) {
+        $passwordToggle = $candidate;
+        break;
+    }
+    array_push($passwordStack, ...$candidate->children());
+}
+if (
+    !$passwordInput instanceof \Pam\Native\Element
+    || ($passwordInput->properties()[PropKey::Secure->value] ?? null) !== true
+    || !$passwordToggle instanceof \Pam\Native\Element
+    || ($passwordToggle->properties()[PropKey::Width->value] ?? null) !== 48.0
+    || !isset($passwordToggle->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'p-password-field must expose a secure native input and an accessible 48dp reveal action.',
+    );
+}
+$passwordToggle->events()[EventKind::Press->value]();
+if ($passwordToggled !== true) {
+    throw new RuntimeException('p-password-field reveal action must emit its next controlled state.');
+}
+$disabledPassword = $tags['p-password-field']::make([
+    'label' => 'Password',
+    'modelValue' => 'secret',
+    'disabled' => true,
+])->onToggle(static function (): void {
+    throw new RuntimeException('A disabled password reveal action must not emit.');
+})->toElement();
+$disabledPasswordToggle = null;
+$passwordStack = [$disabledPassword];
+while ($passwordStack !== []) {
+    $candidate = array_pop($passwordStack);
+    if (
+        ($candidate->properties()[PropKey::AccessibilityLabel->value] ?? null)
+            === 'Show password'
+    ) {
+        $disabledPasswordToggle = $candidate;
+        break;
+    }
+    array_push($passwordStack, ...$candidate->children());
+}
+if (
+    !$disabledPasswordToggle instanceof \Pam\Native\Element
+    || ($disabledPasswordToggle->properties()[PropKey::Enabled->value] ?? null) !== false
+    || isset($disabledPasswordToggle->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException('A disabled password field must disable its reveal action.');
+}
+$maskedInput = $findNativeInput($tags['p-masked-field']::make([
+    'label' => 'Phone',
+    'pattern' => '(##) #####-####',
+])->toElement());
+$currencyInput = $findNativeInput($tags['p-currency-field']::make([
+    'label' => 'Amount',
+    'prefix' => 'R$ ',
+    'decimalDigits' => 2,
+])->toElement());
+if (
+    !$maskedInput instanceof \Pam\Native\Element
+    || ($maskedInput->properties()[PropKey::InputFormat->value] ?? null) !== 2
+    || ($maskedInput->properties()[PropKey::InputFormatPattern->value] ?? null)
+        !== '(##) #####-####'
+    || !$currencyInput instanceof \Pam\Native\Element
+    || ($currencyInput->properties()[PropKey::InputFormat->value] ?? null) !== 3
+    || ($currencyInput->properties()[PropKey::InputFormatDecimalDigits->value] ?? null) !== 2
+) {
+    throw new RuntimeException(
+        'Masked and currency fields must delegate formatting to the typed PAM Native input contract.',
+    );
+}
+$multiSelection = null;
+$multiSelect = $tags['p-multi-select']::make([
+    'label' => 'Teams',
+    'items' => ['Design', 'Engineering', 'Product'],
+    'modelValue' => ['Design'],
+])->onChange(static function (array $values) use (&$multiSelection): void {
+    $multiSelection = $values;
+})->toElement();
+$engineeringOption = null;
+$multiStack = [$multiSelect];
+while ($multiStack !== []) {
+    $candidate = array_pop($multiStack);
+    if (
+        ($candidate->properties()[PropKey::AccessibilityLabel->value] ?? null)
+            === 'Engineering'
+        && isset($candidate->events()[EventKind::Press->value])
+    ) {
+        $engineeringOption = $candidate;
+        break;
+    }
+    array_push($multiStack, ...$candidate->children());
+}
+if (!$engineeringOption instanceof \Pam\Native\Element) {
+    throw new RuntimeException('p-multi-select must render selectable native options.');
+}
+$engineeringOption->events()[EventKind::Press->value]();
+if ($multiSelection !== ['Design', 'Engineering']) {
+    throw new RuntimeException('p-multi-select must preserve and extend controlled selection.');
+}
+$tagInput = $tags['p-tag-input']::make([
+    'label' => 'Skills',
+    'items' => ['PHP', 'Kotlin'],
+    'modelValue' => ['PHP'],
+])->toElement();
+$tagAllowsCustom = false;
+$tagStack = [$tagInput];
+while ($tagStack !== []) {
+    $candidate = array_pop($tagStack);
+    $host = $candidate->properties()[PropKey::HostProperties->value] ?? null;
+    if ($host instanceof BinaryValue) {
+        $hostProps = Wire::decodeMap($host->bytes);
+        $tagAllowsCustom = $tagAllowsCustom
+            || ($hostProps['allowCustomValue'] ?? false) === true;
+    }
+    array_push($tagStack, ...$candidate->children());
+}
+if (!$tagAllowsCustom) {
+    throw new RuntimeException('p-tag-input must expose native custom-value creation.');
+}
+$persistedCustomTag = $tags['p-tag-input']::make([
+    'label' => 'Skills',
+    'items' => ['PHP'],
+    'modelValue' => ['PHP', 'Rust'],
+])->toElement();
+$rustOption = null;
+$tagStack = [$persistedCustomTag];
+while ($tagStack !== []) {
+    $candidate = array_pop($tagStack);
+    if (($candidate->properties()[PropKey::AccessibilityLabel->value] ?? null) === 'Rust') {
+        $rustOption = $candidate;
+        break;
+    }
+    array_push($tagStack, ...$candidate->children());
+}
+if (
+    !$rustOption instanceof \Pam\Native\Element
+    || ($rustOption->properties()[PropKey::Selected->value] ?? null) !== true
+    || ($rustOption->properties()[PropKey::Checked->value] ?? null) !== true
+) {
+    throw new RuntimeException(
+        'p-tag-input must preserve custom tags as selected removable options.',
+    );
+}
+$fileInput = $tags['p-file-input']::make(['label' => 'Attachments'])
+    ->onPick(static function (mixed $files): void {})
+    ->toElement();
+if (
+    $fileInput->kind() !== NodeKind::Pressable
+    || ($fileInput->properties()[PropKey::MinHeight->value] ?? null) !== 72.0
+    || ($fileInput->properties()[PropKey::AccessibilityLabel->value] ?? null)
+        !== 'Attachments'
+    || !isset($fileInput->events()[EventKind::Press->value])
+) {
+    throw new RuntimeException(
+        'p-file-input must be an accessible native picker trigger backed by the typed Files service.',
+    );
+}
+$assertGeometry('PFileInput', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 72.0,
+    'paddingHorizontal' => 16.0,
+    'borderWidth' => 1.0,
+    'borderRadius' => 16.0,
+]);
+$dateRange = $tags['p-date-range-picker']::make([
+    'modelValue' => ['from' => '2026-09-01', 'to' => '2026-09-08'],
+])->onChange(static function (array $range) use (&$dateRangeChanged): void {
+    $dateRangeChanged = $range;
+})->toElement();
+$dateInputs = [];
+$dateStack = [$dateRange];
+while ($dateStack !== []) {
+    $candidate = array_pop($dateStack);
+    if ($candidate->kind() === NodeKind::CustomView) {
+        $dateInputs[] = $candidate;
+    }
+    array_push($dateStack, ...$candidate->children());
+}
+if (
+    $dateRange->kind() !== NodeKind::Row
+    || count($dateRange->children()) !== 2
+    || count($dateInputs) !== 2
+    || !isset($dateInputs[0]->events()[EventKind::Change->value])
+    || !isset($dateInputs[1]->events()[EventKind::Change->value])
+) {
+    throw new RuntimeException('p-date-range-picker must compose two typed native date controls.');
+}
+$blockedDateChanged = null;
+$blockedDateRange = $tags['p-date-range-picker']::make([
+    'disabledDates' => ['2026-09-10'],
+    'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14'],
+])->onChange(static function (array $range) use (&$blockedDateChanged): void {
+    $blockedDateChanged = $range;
+})->toElement();
+$blockedDateStack = [$blockedDateRange];
+while ($blockedDateStack !== []) {
+    $candidate = array_pop($blockedDateStack);
+    $handler = $candidate->events()[EventKind::Change->value] ?? null;
+    if ($candidate->kind() === NodeKind::CustomView && $handler instanceof Closure) {
+        $handler('2026-09-10');
+        break;
+    }
+    array_push($blockedDateStack, ...$candidate->children());
+}
+if ($blockedDateChanged !== null) {
+    throw new RuntimeException('p-date-range-picker must reject disabled dates.');
+}
+$timeRangeChanged = null;
+$timeRange = $tags['p-time-range-picker']::make([
+    'modelValue' => ['from' => '09:00', 'to' => '17:00'],
+])->onChange(static function (array $range) use (&$timeRangeChanged): void {
+    $timeRangeChanged = $range;
+})->toElement();
+$timeInput = null;
+$timeStack = [$timeRange];
+while ($timeStack !== []) {
+    $candidate = array_pop($timeStack);
+    if (
+        $candidate->kind() === NodeKind::CustomView
+        && isset($candidate->events()[EventKind::Change->value])
+    ) {
+        $timeInput = $candidate;
+        break;
+    }
+    array_push($timeStack, ...$candidate->children());
+}
+if (
+    count($timeRange->children()) !== 2
+    || !$timeInput instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException('p-time-range-picker must expose two independently interactive native time fields.');
+}
+$timeInput->events()[EventKind::Change->value]('10:30');
+if (!is_array($timeRangeChanged) || !in_array('10:30', $timeRangeChanged, true)) {
+    throw new RuntimeException('p-time-range-picker must emit the complete controlled interval.');
+}
+$filterChanged = null;
+$filterBar = $tags['p-filter-bar']::make([
+    'items' => ['Open', 'Paid', 'Overdue'],
+    'modelValue' => ['Open'],
+])->onChange(static function (array $filters) use (&$filterChanged): void {
+    $filterChanged = $filters;
+})->toElement();
+if (count($filterBar->children()) !== 4) {
+    throw new RuntimeException('p-filter-bar must render filters plus an explicit clear action.');
+}
+if (
+    ($filterBar->children()[0]->properties()[PropKey::Checked->value] ?? null) !== true
+    || ($filterBar->children()[1]->properties()[PropKey::Checked->value] ?? null) !== false
+) {
+    throw new RuntimeException('p-filter-bar must expose checked semantics for every filter.');
+}
+$filterBar->children()[1]->events()[EventKind::Press->value]();
+if ($filterChanged !== ['Open', 'Paid']) {
+    throw new RuntimeException('p-filter-bar must emit additive controlled filtering.');
+}
+$filterBar->children()[3]->events()[EventKind::Press->value]();
+$assertEmptyFilters = static function (array $filters): void {
+    if ($filters !== []) {
+        throw new RuntimeException('p-filter-bar must expose a visible clear-all action.');
+    }
+};
+$assertEmptyFilters($filterChanged);
+$assertGeometry('PTimeRangePicker', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 72.0,
+    'gap' => 12.0,
+]);
+$assertGeometry('PFilterBar', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 48.0,
+    'gap' => 8.0,
+    'flexWrap' => FlexWrap::Wrap,
+]);
+$reordered = null;
+$reorderable = $tags['p-reorderable-list']::make([
+    'items' => ['Research', 'Prototype', 'Build'],
+])->onReorder(static function (array $items) use (&$reordered): void {
+    $reordered = $items;
+})->toElement();
+if (
+    count($reorderable->children()) !== 3
+    || ($reorderable->children()[0]->properties()[PropKey::Draggable->value] ?? null) !== true
+    || ($reorderable->children()[0]->properties()[PropKey::DropEnabled->value] ?? null) !== true
+) {
+    throw new RuntimeException('p-reorderable-list must use PAM Native drag and drop regions.');
+}
+$reorderable->children()[0]->events()[EventKind::Drop->value](Wire::map(['data' => 'Build']));
+if ($reordered !== ['Build', 'Research', 'Prototype']) {
+    throw new RuntimeException('p-reorderable-list must emit the reordered controlled collection.');
+}
+$swipeAction = null;
+$swipe = $tags['p-swipe-actions']::make([
+    'title' => 'Design review',
+    'startLabel' => 'Archive',
+    'endLabel' => 'Delete',
+])->onAction(static function (string $action) use (&$swipeAction): void {
+    $swipeAction = $action;
+})->toElement();
+if (
+    count($swipe->children()) !== 2
+    || ($swipe->children()[1]->properties()[PropKey::GestureType->value] ?? null) !== 2
+    || ($swipe->children()[1]->properties()[PropKey::GestureDirection->value] ?? null) !== 6
+) {
+    throw new RuntimeException('p-swipe-actions must use a horizontal PAM Native pan gesture.');
+}
+$swipe->children()[1]->events()[EventKind::GestureEnd->value](Wire::map([
+    'type' => 2,
+    'state' => 3,
+    'translationX' => -96.0,
+]));
+if ($swipeAction !== 'Delete') {
+    throw new RuntimeException('p-swipe-actions gesture must emit its semantic action.');
+}
+$dataGrid = $tags['p-data-grid']::make([
+    'headers' => [['title' => 'Name', 'key' => 'name']],
+    'items' => [['name' => 'Aurora']],
+])->toElement();
+if ($dataGrid->kind() !== NodeKind::CustomView || count($dataGrid->children()) < 1) {
+    throw new RuntimeException('p-data-grid must reuse the virtual native table contract.');
+}
+$treeSelectChanged = null;
+$treeSelect = $tags['p-tree-select']::make([
+    'items' => [['title' => 'Android', 'value' => 'android']],
+])->onChange(static function (string $value) use (&$treeSelectChanged): void {
+    $treeSelectChanged = $value;
+})->toElement();
+$treeSelect->children()[0]->events()[EventKind::Press->value]();
+if ($treeSelectChanged !== 'android') {
+    throw new RuntimeException('p-tree-select must emit native tree selection.');
+}
+$resultPressed = false;
+$result = $tags['p-result-state']::make([
+    'status' => 'success',
+    'title' => 'Ready',
+    'actionLabel' => 'Continue',
+])->onPress(static function () use (&$resultPressed): void {
+    $resultPressed = true;
+})->toElement();
+$result->children()[3]->events()[EventKind::Press->value]();
+if (!$resultPressed || count($result->children()) !== 4) {
+    throw new RuntimeException('p-result-state must expose a directly actionable result layout.');
+}
+$selectedChartPoint = null;
+$chart = $tags['p-chart']::make([
+    'values' => '12,18,14,26',
+    'accessibilityLabel' => 'Revenue trend',
+])->onChange(static function (array $point) use (&$selectedChartPoint): void {
+    $selectedChartPoint = $point;
+})->toElement();
+$chartHostValue = $chart->properties()[PropKey::HostProperties->value] ?? null;
+if (!$chartHostValue instanceof BinaryValue) {
+    throw new RuntimeException('p-chart must expose encoded native host properties.');
+}
+$chartHost = Wire::decodeMap($chartHostValue->bytes);
+if (
+    $chart->kind() !== NodeKind::CustomView
+    || ($chart->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Revenue trend'
+    || ($chartHost['interactive'] ?? null) !== true
+) {
+    throw new RuntimeException('p-chart must render as an interactive native chart with an accessible summary.');
+}
+$chart->events()[EventKind::Change->value]('{"index":2,"value":14}');
+if ($selectedChartPoint !== ['index' => 2, 'value' => 14.0]) {
+    throw new RuntimeException('p-chart must emit its selected native data point.');
+}
+$drawerSelection = null;
+$navigationDrawer = $tags['p-navigation-drawer']::make([
+    'open' => true,
+    'type' => 'front',
+    'items' => ['Home', 'Explore', 'Settings'],
+    'modelValue' => 'Home',
+    'overlayColor' => 0x3D4F46E5,
+])->onChange(static function (string $value) use (&$drawerSelection): void {
+    $drawerSelection = $value;
+})->toElement();
+$drawerExplore = null;
+$drawerStack = [$navigationDrawer];
+while ($drawerStack !== []) {
+    $candidate = array_pop($drawerStack);
+    if (
+        ($candidate->properties()[PropKey::AccessibilityLabel->value] ?? null)
+            === 'Explore'
+        && isset($candidate->events()[EventKind::Press->value])
+    ) {
+        $drawerExplore = $candidate;
+        break;
+    }
+    array_push($drawerStack, ...$candidate->children());
+}
+if (
+    $navigationDrawer->kind() !== NodeKind::DrawerLayout
+    || ($navigationDrawer->properties()[PropKey::DrawerOpen->value] ?? null) !== true
+    || ($navigationDrawer->properties()[PropKey::DrawerWidth->value] ?? null) !== 304.0
+    || ($navigationDrawer->properties()[PropKey::DrawerOverlayColor->value] ?? null)
+        !== 0x3D4F46E5
+    || count($navigationDrawer->children()) !== 2
+    || !$drawerExplore instanceof \Pam\Native\Element
+) {
+    throw new RuntimeException(
+        'p-navigation-drawer must compose the cross-platform PAM Native drawer host.',
+    );
+}
+$drawerExplore->events()[EventKind::Press->value]();
+if ($drawerSelection !== 'Explore') {
+    throw new RuntimeException('p-navigation-drawer destinations must emit selection.');
+}
+$commandPalette = $tags['p-command-palette']::make([
+    'label' => 'Commands',
+    'items' => ['New project', 'Open file', 'Publish'],
+])->toElement();
+$commandHost = null;
+$commandStack = [$commandPalette];
+while ($commandStack !== []) {
+    $candidate = array_pop($commandStack);
+    $host = $candidate->properties()[PropKey::HostProperties->value] ?? null;
+    if ($host instanceof BinaryValue) {
+        $decoded = Wire::decodeMap($host->bytes);
+        if (($decoded['searchable'] ?? false) === true) {
+            $commandHost = $decoded;
+            break;
+        }
+    }
+    array_push($commandStack, ...$candidate->children());
+}
+if (
+    !is_array($commandHost)
+    || ($commandHost['searchPlaceholder'] ?? null) !== 'Type a command'
+) {
+    throw new RuntimeException(
+        'p-command-palette must expose an open, searchable native command surface.',
+    );
+}
+$progressButton = $tags['p-progress-button']::make([
+    'text' => 'Publishing',
+    'progress' => 42,
+])->toElement();
+$progressTrack = null;
+$progressStack = [$progressButton];
+while ($progressStack !== []) {
+    $candidate = array_pop($progressStack);
+    if (($candidate->properties()[PropKey::Value->value] ?? null)
+        === 'pam:progress-button-track') {
+        $progressTrack = $candidate;
+        break;
+    }
+    array_push($progressStack, ...$candidate->children());
+}
+if (
+    !$progressTrack instanceof \Pam\Native\Element
+    || ($progressTrack->properties()[PropKey::WidthPercent->value] ?? null) !== 42.0
+    || ($progressButton->properties()[PropKey::AccessibilityBusy->value] ?? null) !== true
+) {
+    throw new RuntimeException(
+        'p-progress-button must retain its action label and expose determinate native progress.',
+    );
+}
 $assertGeometry('PDialog', [], [
     'margin' => 24.0,
     'borderRadius' => 28.0,
@@ -3934,6 +4606,64 @@ $assertGeometry('PCalendarDay', [], [
     'borderWidth' => 0.0,
     'fontSize' => 14.0,
     'lineHeight' => 20.0,
+]);
+$assertGeometry('PNavigationBar', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 80.0,
+    'paddingHorizontal' => 8.0,
+    'paddingVertical' => 8.0,
+    'gap' => 4.0,
+    'flexDirection' => FlexDirection::Row,
+    'alignItems' => Align::Center,
+    'justifyContent' => Justify::SpaceAround,
+]);
+$assertGeometry('PNavigationRail', [], [
+    'width' => 80.0,
+    'minHeight' => 280.0,
+    'paddingHorizontal' => 12.0,
+    'paddingVertical' => 16.0,
+    'gap' => 12.0,
+    'flexDirection' => FlexDirection::Column,
+    'alignItems' => Align::Center,
+]);
+$assertGeometry('PBottomAppBar', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 80.0,
+    'paddingHorizontal' => 16.0,
+    'paddingVertical' => 12.0,
+    'gap' => 8.0,
+    'flexDirection' => FlexDirection::Row,
+    'alignItems' => Align::Center,
+    'justifyContent' => Justify::SpaceBetween,
+]);
+$assertGeometry('PSearchBar', [], [
+    'widthPercent' => 100.0,
+    'height' => 56.0,
+    'minHeight' => 56.0,
+    'paddingHorizontal' => 20.0,
+    'borderRadius' => 28.0,
+    'fontSize' => 16.0,
+    'lineHeight' => 24.0,
+    'animationDurationMs' => 200,
+]);
+$assertGeometry('PPagination', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 48.0,
+    'gap' => 4.0,
+    'flexDirection' => FlexDirection::Row,
+    'flexWrap' => FlexWrap::Wrap,
+    'alignItems' => Align::Center,
+    'justifyContent' => Justify::Center,
+]);
+$assertGeometry('PSegmentedButton', [], [
+    'widthPercent' => 100.0,
+    'minHeight' => 48.0,
+    'gap' => 0.0,
+    'borderWidth' => 1.0,
+    'borderRadius' => 24.0,
+    'overflow' => Overflow::Hidden,
+    'flexDirection' => FlexDirection::Row,
+    'alignItems' => Align::Center,
 ]);
 
 fwrite(

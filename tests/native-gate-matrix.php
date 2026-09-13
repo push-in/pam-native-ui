@@ -159,6 +159,24 @@ $rtlAssertions = 0;
 $reducedMotionAssertions = 0;
 $largestFrameBytes = 0;
 $started = hrtime(true);
+$semanticAccessibilityElement = static function (
+    string $catalog,
+    string $component,
+    Element $root,
+): Element {
+    if ($catalog !== 'material' || $component !== 'p-search-bar') {
+        return $root;
+    }
+    // The editor owns search semantics; its decorative Row stays hidden from
+    // the accessibility tree so Android and iOS announce one field only.
+    foreach ($root->children() as $child) {
+        if ($child->kind() === \Pam\Native\NodeKind::Input) {
+            return $child;
+        }
+    }
+
+    return $root;
+};
 
 foreach ($catalogs as $catalog => $components) {
     foreach ($themes as [$mode, $theme]) {
@@ -176,7 +194,13 @@ foreach ($catalogs as $catalog => $components) {
                     'reduceMotion' => true,
                     ...$state,
                 ])->toElement();
-                $properties = $element->properties();
+                $semanticElement = $semanticAccessibilityElement(
+                    $catalog,
+                    (string) $name,
+                    $element,
+                );
+                $properties = $semanticElement->properties();
+                $stateProperties = $element->properties();
                 if (
                     ($properties[PropKey::AccessibilityLabel->value] ?? null)
                     !== $label
@@ -223,7 +247,7 @@ foreach ($catalogs as $catalog => $components) {
                 }
                 $rtlAssertions++;
                 if (($state['disabled'] ?? false) === true) {
-                    if (($properties[PropKey::Enabled->value] ?? null) !== false) {
+                    if (($stateProperties[PropKey::Enabled->value] ?? null) !== false) {
                         throw new RuntimeException(
                             "{$name} did not expose its disabled native state.",
                         );
@@ -231,7 +255,7 @@ foreach ($catalogs as $catalog => $components) {
                     $accessibilityAssertions++;
                 }
                 if (($state['selected'] ?? false) === true) {
-                    if (($properties[PropKey::Selected->value] ?? null) !== true) {
+                    if (($stateProperties[PropKey::Selected->value] ?? null) !== true) {
                         throw new RuntimeException(
                             "{$name} did not expose its selected native state.",
                         );
@@ -240,9 +264,9 @@ foreach ($catalogs as $catalog => $components) {
                 }
                 if (($state['checked'] ?? false) === true) {
                     if (
-                        ($properties[PropKey::AccessibilityCheckedState->value] ?? null)
+                        ($stateProperties[PropKey::AccessibilityCheckedState->value] ?? null)
                         !== AccessibilityCheckedState::Checked->value
-                        || ($properties[PropKey::Checked->value] ?? null) !== true
+                        || ($stateProperties[PropKey::Checked->value] ?? null) !== true
                     ) {
                         throw new RuntimeException(
                             "{$name} did not expose its checked native state.",
@@ -252,8 +276,8 @@ foreach ($catalogs as $catalog => $components) {
                 }
                 if (($state['loading'] ?? false) === true) {
                     if (
-                        ($properties[PropKey::AccessibilityBusy->value] ?? null) !== true
-                        || ($properties[PropKey::Enabled->value] ?? null) !== false
+                        ($stateProperties[PropKey::AccessibilityBusy->value] ?? null) !== true
+                        || ($stateProperties[PropKey::Enabled->value] ?? null) !== false
                     ) {
                         throw new RuntimeException(
                             "{$name} did not expose a busy, non-interactive loading state.",

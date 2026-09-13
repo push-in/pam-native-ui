@@ -1,118 +1,118 @@
 {
-  "componentCount": 84,
+  "componentCount": 114,
   "densityDpi": 420,
   "failures": {},
   "observations": {
     "overview.png": [
+      "compact visual control 'android.widget.Button' is 451x84px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 890x105px; PAM Native expands its effective target to 126px"
     ],
     "p-app-bar-nav-icon.png": [
-      "compact visual control 'Open navigation' is 126x100px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Open navigation' is 126x85px; PAM Native expands its effective target to 126px"
     ],
     "p-app-bar.png": [
       "compact visual control 'More options' is 106x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 106x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 106x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 106x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Open navigation' is 126x6px; PAM Native expands its effective target to 126px",
-      "compact visual control 'More options' is 0x0px; PAM Native expands its effective target to 126px"
-    ],
-    "p-autocomplete.png": [
-      "compact visual control 'Autocomplete' is 996x90px; PAM Native expands its effective target to 126px"
+      "compact visual control 'More options' is 106x105px; PAM Native expands its effective target to 126px"
     ],
     "p-banner-actions.png": [
-      "compact visual control 'android.widget.Button' is 192x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 227x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 195x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 227x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 401x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 356x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 217x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 193x105px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 183x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 214x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 185x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 214x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 373x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 331x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 205x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 183x105px; PAM Native expands its effective target to 126px"
     ],
     "p-banner.png": [
-      "compact visual control 'android.widget.Button' is 192x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 227x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 192x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 227x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 192x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 227x105px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 183x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 214x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 183x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 214x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 183x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 214x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 183x54px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 214x54px; PAM Native expands its effective target to 126px"
     ],
-    "p-bottom-sheet.png": [
-      "compact visual control 'Open sheet without indicator' is 651x27px; PAM Native expands its effective target to 126px"
+    "p-bottom-app-bar.png": [
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 106x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 106x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 106x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px"
     ],
     "p-btn-group.png": [
       "compact visual control 'Day' is 168x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Week' is 196x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Month' is 213x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Week' is 186x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Month' is 201x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'List' is 168x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Board' is 198x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Timeline' is 248x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Board' is 188x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Timeline' is 234x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Today' is 318x105px; PAM Native expands its effective target to 126px",
       "compact visual control '7 days' is 318x105px; PAM Native expands its effective target to 126px",
       "compact visual control '30 days' is 318x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Grid' is 168x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'List' is 168x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Compact' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Daily' is 180x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Weekly' is 229x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Monthly' is 246x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Bold' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Italic' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Underline' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Compact' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Daily' is 171x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Weekly' is 217x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Monthly' is 231x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Bold' is 329x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Italic' is 328x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Underline' is 328x105px; PAM Native expands its effective target to 126px"
     ],
     "p-btn-toggle.png": [
-      "compact visual control 'Day' is 233x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Week' is 270x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Month' is 286x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Walk' is 255x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Ride' is 244x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Drive' is 258x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Day' is 226x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Week' is 259x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Month' is 275x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Walk' is 246x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Ride' is 235x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Drive' is 249x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'List' is 334x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Board' is 334x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Calendar' is 334x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Grid' is 234x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'List' is 238x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Compact' is 334x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'New' is 242x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Recent' is 300x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Saved' is 281x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Left' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Center' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Right' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Grid' is 227x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'List' is 231x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Compact' is 318x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'New' is 234x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Recent' is 287x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Saved' is 270x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Left' is 239x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Center' is 278x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Right' is 253x84px; PAM Native expands its effective target to 126px"
     ],
     "p-btn.png": [
-      "compact visual control 'Continue button' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Create button' is 217x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Confirm button' is 238x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Save draft button' is 295x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Add item button' is 259x90px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Continue button' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create button' is 205x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Confirm button' is 224x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Save draft button' is 276x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Add item button' is 243x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Learn more button' is 287x75px; PAM Native expands its effective target to 126px"
     ],
     "p-calendar-day.png": [
-      "compact visual control 'Calendar Day preview' is 126x100px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Calendar Day preview' is 126x85px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Calendar Day preview' is 126x85px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Calendar Day preview' is 126x85px; PAM Native expands its effective target to 126px"
     ],
     "p-calendar.png": [
-      "compact visual control 'domingo, junho 28, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, junho 29, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, junho 30, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 1, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 2, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 3, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 4, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'domingo, julho 5, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, julho 6, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, julho 7, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 8, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 9, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 10, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 11, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'domingo, julho 12, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, julho 13, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, julho 14, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 15, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 16, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 17, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 18, 2026' is 0x0px; PAM Native expands its effective target to 126px",
+      "compact visual control 'domingo, julho 12, 2026' is 142x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'segunda-feira, julho 13, 2026' is 142x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ter\u00e7a-feira, julho 14, 2026' is 142x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quarta-feira, julho 15, 2026' is 143x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quinta-feira, julho 16, 2026' is 142x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'sexta-feira, julho 17, 2026' is 142x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 's\u00e1bado, julho 18, 2026' is 143x33px; PAM Native expands its effective target to 126px",
       "compact visual control 'domingo, julho 19, 2026' is 0x0px; PAM Native expands its effective target to 126px",
       "compact visual control 'segunda-feira, julho 20, 2026' is 0x0px; PAM Native expands its effective target to 126px",
       "compact visual control 'ter\u00e7a-feira, julho 21, 2026' is 0x0px; PAM Native expands its effective target to 126px",
@@ -136,70 +136,80 @@
       "compact visual control 's\u00e1bado, agosto 8, 2026' is 0x0px; PAM Native expands its effective target to 126px"
     ],
     "p-card-actions.png": [
-      "compact visual control 'Cancel' is 217x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Done' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Keep' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Delete' is 212x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Review changes' is 407x90px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Publish release' is 384x90px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Cancel' is 205x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Done' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Keep' is 174x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Delete' is 201x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Review changes' is 377x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Publish release' is 357x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Back' is 175x75px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Save draft' is 276x75px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Send' is 175x75px; PAM Native expands its effective target to 126px"
     ],
     "p-card.png": [
-      "compact visual control 'Show card details' is 223x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue from card' is 261x105px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Show card details' is 210x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue from card' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Open native experience card' is 996x117px; PAM Native expands its effective target to 126px"
     ],
     "p-carousel-item.png": [
       "compact visual control 'Go to slide 1' is 64x21px; PAM Native expands its effective target to 126px",
       "compact visual control 'Go to slide 2' is 21x21px; PAM Native expands its effective target to 126px",
       "compact visual control 'Go to slide 3' is 21x21px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Go to slide 1' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Go to slide 2' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Go to slide 3' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Go to slide 1' is 64x21px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Go to slide 2' is 21x21px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Go to slide 3' is 21x21px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Carousel item preview' is 996x27px; PAM Native expands its effective target to 126px"
     ],
     "p-carousel.png": [
       "compact visual control 'Go to slide 1' is 64x21px; PAM Native expands its effective target to 126px",
       "compact visual control 'Go to slide 2' is 21x21px; PAM Native expands its effective target to 126px",
       "compact visual control 'Go to slide 3' is 21x21px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Go to slide 1' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Go to slide 2' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Go to slide 3' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Go to slide 1' is 64x21px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Go to slide 2' is 21x21px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Go to slide 3' is 21x21px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Carousel preview' is 996x27px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Carousel preview' is 996x27px; PAM Native expands its effective target to 126px"
     ],
     "p-checkbox.png": [
-      "compact visual control 'Checkbox' is 311x79px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Checkbox' is 270x22px; PAM Native expands its effective target to 126px"
     ],
     "p-chip-group.png": [
-      "compact visual control 'Design filter' is 176x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Android filter' is 259x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Documentation filter' is 142x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Design filter' is 244x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Android filter' is 259x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Documentation filter' is 142x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Design filter' is 318x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Android filter' is 415x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Documentation filter' is 345x84px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Design filter' is 164x81px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Android filter' is 246x81px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Documentation filter' is 132x81px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Design filter' is 232x82px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Android filter' is 246x82px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Documentation filter' is 133x82px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Design filter' is 293x81px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Android filter' is 387x81px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Documentation filter' is 318x81px; PAM Native expands its effective target to 126px"
     ],
     "p-chip.png": [
-      "compact visual control 'View release details' is 361x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Filter production releases' is 411x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Android filter' is 338x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'View release details' is 338x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Filter production releases' is 387x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Android filter' is 324x84px; PAM Native expands its effective target to 126px",
       "compact visual control 'Remove Android filter' is 84x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Design system tag' is 379x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Ready for accessibility review' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Design system tag' is 353x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Ready for accessibility review' is 628x84px; PAM Native expands its effective target to 126px"
     ],
     "p-color-input.png": [
-      "compact visual control 'HEX color value' is 912x70px; PAM Native expands its effective target to 126px",
-      "compact visual control 'RGB color value' is 912x70px; PAM Native expands its effective target to 126px",
-      "compact visual control 'HSL color value' is 912x70px; PAM Native expands its effective target to 126px"
+      "compact visual control 'HEX color value' is 912x73px; PAM Native expands its effective target to 126px",
+      "compact visual control 'RGB color value' is 912x73px; PAM Native expands its effective target to 126px",
+      "compact visual control 'HSL color value' is 912x74px; PAM Native expands its effective target to 126px"
     ],
-    "p-combobox.png": [
-      "compact visual control 'Combobox' is 996x90px; PAM Native expands its effective target to 126px"
+    "p-currency-field.png": [
+      "compact visual control 'Currency Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Currency Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Currency Field preview' is 912x73px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Currency Field preview' is 912x73px; PAM Native expands its effective target to 126px"
     ],
-    "p-data-table.png": [
-      "compact visual control 'Comfortable product table' is 0x0px; PAM Native expands its effective target to 126px"
+    "p-data-grid.png": [
+      "compact visual control 'Select row 3' is 249x21px; PAM Native expands its effective target to 126px"
     ],
     "p-date-input.png": [
-      "compact visual control 'Date Input preview' is 996x111px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Date Input preview' is 996x43px; PAM Native expands its effective target to 126px"
     ],
     "p-date-picker.png": [
       "compact visual control 'domingo, junho 28, 2026' is 123x126px; PAM Native expands its effective target to 126px",
@@ -237,34 +247,34 @@
       "compact visual control 'quinta-feira, julho 30, 2026' is 123x126px; PAM Native expands its effective target to 126px",
       "compact visual control 'sexta-feira, julho 31, 2026' is 123x126px; PAM Native expands its effective target to 126px",
       "compact visual control 's\u00e1bado, agosto 1, 2026' is 123x126px; PAM Native expands its effective target to 126px",
-      "compact visual control 'domingo, junho 28, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, junho 29, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, junho 30, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 1, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 2, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 3, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 4, 2026' is 123x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'domingo, julho 5, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, julho 6, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, julho 7, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 8, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 9, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 10, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 11, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'domingo, julho 12, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, julho 13, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, julho 14, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 15, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 16, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 17, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 18, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'domingo, julho 19, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'segunda-feira, julho 20, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ter\u00e7a-feira, julho 21, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quarta-feira, julho 22, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'quinta-feira, julho 23, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'sexta-feira, julho 24, 2026' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 's\u00e1bado, julho 25, 2026' is 0x0px; PAM Native expands its effective target to 126px",
+      "compact visual control 'domingo, junho 28, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'segunda-feira, junho 29, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ter\u00e7a-feira, junho 30, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quarta-feira, julho 1, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quinta-feira, julho 2, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'sexta-feira, julho 3, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 's\u00e1bado, julho 4, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'domingo, julho 5, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'segunda-feira, julho 6, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ter\u00e7a-feira, julho 7, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quarta-feira, julho 8, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quinta-feira, julho 9, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'sexta-feira, julho 10, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 's\u00e1bado, julho 11, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'domingo, julho 12, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'segunda-feira, julho 13, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ter\u00e7a-feira, julho 14, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quarta-feira, julho 15, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quinta-feira, julho 16, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'sexta-feira, julho 17, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 's\u00e1bado, julho 18, 2026' is 123x126px; PAM Native expands its effective target to 126px",
+      "compact visual control 'domingo, julho 19, 2026' is 123x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'segunda-feira, julho 20, 2026' is 123x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ter\u00e7a-feira, julho 21, 2026' is 123x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quarta-feira, julho 22, 2026' is 123x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'quinta-feira, julho 23, 2026' is 123x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 'sexta-feira, julho 24, 2026' is 123x33px; PAM Native expands its effective target to 126px",
+      "compact visual control 's\u00e1bado, julho 25, 2026' is 123x33px; PAM Native expands its effective target to 126px",
       "compact visual control 'domingo, julho 26, 2026' is 0x0px; PAM Native expands its effective target to 126px",
       "compact visual control 'segunda-feira, julho 27, 2026' is 0x0px; PAM Native expands its effective target to 126px",
       "compact visual control 'ter\u00e7a-feira, julho 28, 2026' is 0x0px; PAM Native expands its effective target to 126px",
@@ -278,45 +288,43 @@
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px"
     ],
     "p-empty-state.png": [
       "compact visual control 'Create item' is 420x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Create item' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Create item' is 420x105px; PAM Native expands its effective target to 126px"
     ],
     "p-expansion-panel-title.png": [
-      "compact visual control 'Product details' is 996x111px; PAM Native expands its effective target to 126px"
-    ],
-    "p-expansion-panel.png": [
-      "compact visual control 'Product details' is 0x0px; PAM Native expands its effective target to 126px"
-    ],
-    "p-fab.png": [
-      "compact visual control 'Create project' is 147x16px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Product details' is 996x96px; PAM Native expands its effective target to 126px"
     ],
     "p-form.png": [
-      "compact visual control 'Project name' is 912x70px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Project owner' is 912x70px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Project name' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Project owner' is 912x74px; PAM Native expands its effective target to 126px",
       "compact visual control 'Save project' is 996x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Project name' is 912x69px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Project owner' is 912x69px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Project name' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Project owner' is 912x74px; PAM Native expands its effective target to 126px",
       "compact visual control 'Save project' is 996x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Project name' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Project name' is 912x73px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Project owner' is 912x69px; PAM Native expands its effective target to 126px"
     ],
     "p-icon-btn.png": [
       "compact visual control 'Settings' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Favorite' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Share' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 105x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Edit project' is 105x90px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Edit project' is 105x105px; PAM Native expands its effective target to 126px"
     ],
-    "p-item-group.png": [
-      "compact visual control 'Design' is 996x37px; PAM Native expands its effective target to 126px"
+    "p-infinite-scroll.png": [
+      "compact visual control 'Infinite Scroll preview' is 996x27px; PAM Native expands its effective target to 126px"
     ],
-    "p-item.png": [
-      "compact visual control 'Design' is 996x111px; PAM Native expands its effective target to 126px"
+    "p-list.png": [
+      "compact visual control 'Design system, Tokens and components' is 996x48px; PAM Native expands its effective target to 126px"
     ],
-    "p-list-item.png": [
-      "compact visual control 'Design system' is 996x16px; PAM Native expands its effective target to 126px"
+    "p-masked-field.png": [
+      "compact visual control 'Masked Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Masked Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Masked Field preview' is 912x73px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Masked Field preview' is 912x73px; PAM Native expands its effective target to 126px"
     ],
     "p-menu.png": [
       "compact visual control 'android.widget.Button' is 378x105px; PAM Native expands its effective target to 126px",
@@ -324,27 +332,63 @@
       "compact visual control 'android.widget.Button' is 378x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 378x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 378x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 378x22px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 378x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 378x48px; PAM Native expands its effective target to 126px"
     ],
-    "p-number-input.png": [
-      "compact visual control 'Number Input preview' is 0x0px; PAM Native expands its effective target to 126px"
+    "p-navigation-bar.png": [
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 106x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Account' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 105x105px; PAM Native expands its effective target to 126px"
     ],
-    "p-otp-input.png": [
-      "compact visual control 'OTP Input' is 0x0px; PAM Native expands its effective target to 126px"
+    "p-navigation-rail.png": [
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Home' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Explore' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Create' is 105x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 105x105px; PAM Native expands its effective target to 126px"
     ],
     "p-overlay.png": [
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 546x105px; PAM Native expands its effective target to 126px"
+    ],
+    "p-password-field.png": [
+      "compact visual control 'Password Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Password Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Password Field preview' is 912x73px; PAM Native expands its effective target to 126px"
+    ],
+    "p-progress-button.png": [
+      "compact visual control 'Progress Button preview' is 996x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Progress Button preview' is 996x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.FrameLayout' is 383x10px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Progress Button preview' is 996x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.FrameLayout' is 803x11px; PAM Native expands its effective target to 126px"
     ],
     "p-progress-circular.png": [
       "compact visual control 'Progress Circular preview' is 84x84px; PAM Native expands its effective target to 126px",
       "compact visual control 'Progress Circular preview' is 84x84px; PAM Native expands its effective target to 126px",
       "compact visual control 'Progress Circular preview' is 84x84px; PAM Native expands its effective target to 126px",
       "compact visual control 'Progress Circular preview' is 84x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Progress Circular preview' is 84x79px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Progress Circular preview' is 84x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Progress Circular preview' is 84x64px; PAM Native expands its effective target to 126px"
     ],
     "p-progress-linear.png": [
       "compact visual control 'Progress Linear preview' is 996x11px; PAM Native expands its effective target to 126px",
@@ -355,27 +399,22 @@
       "compact visual control 'Progress Linear preview' is 996x10px; PAM Native expands its effective target to 126px",
       "compact visual control 'Progress Linear preview' is 996x10px; PAM Native expands its effective target to 126px",
       "compact visual control 'Progress Linear preview' is 996x11px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Progress Linear preview' is 996x5px; PAM Native expands its effective target to 126px"
-    ],
-    "p-radio-group.png": [
-      "compact visual control 'Engineering' is 996x69px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Product' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Progress Linear preview' is 996x5px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Progress Linear preview' is 996x21px; PAM Native expands its effective target to 126px"
     ],
     "p-radio.png": [
-      "compact visual control 'Radio' is 219x79px; PAM Native expands its effective target to 126px"
-    ],
-    "p-range-slider.png": [
-      "compact visual control 'Range Slider preview' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Radio' is 187x22px; PAM Native expands its effective target to 126px"
     ],
     "p-rating.png": [
-      "compact visual control 'Rating preview' is 263x100px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Rating preview' is 263x85px; PAM Native expands its effective target to 126px"
     ],
-    "p-select.png": [
-      "compact visual control 'Select' is 996x90px; PAM Native expands its effective target to 126px"
+    "p-reorderable-list.png": [
+      "compact visual control 'Reorder Research' is 996x80px; PAM Native expands its effective target to 126px"
     ],
     "p-slide-group-item.png": [
       "compact visual control 'Overview' is 347x116px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Android' is 347x115px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Android' is 347x115px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Design system' is 347x116px; PAM Native expands its effective target to 126px"
     ],
     "p-slide-group.png": [
       "compact visual control 'Overview' is 284x116px; PAM Native expands its effective target to 126px",
@@ -393,80 +432,87 @@
       "compact visual control 'Overview' is 284x115px; PAM Native expands its effective target to 126px",
       "compact visual control 'Design' is 284x116px; PAM Native expands its effective target to 126px",
       "compact visual control 'Android' is 284x115px; PAM Native expands its effective target to 126px",
-      "compact visual control 'iOS' is 284x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Motion' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'iOS' is 284x116px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Motion' is 284x115px; PAM Native expands its effective target to 126px"
     ],
     "p-snackbar.png": [
-      "compact visual control 'android.widget.Button' is 184x104px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 184x104px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Your changes were saved.. Undo' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 175x104px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 175x104px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 175x104px; PAM Native expands its effective target to 126px"
+    ],
+    "p-sparkline.png": [
+      "compact visual control 'Sparkline preview' is 996x33px; PAM Native expands its effective target to 126px"
     ],
     "p-speed-dial.png": [
       "compact visual control 'android.widget.Button' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 105x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 105x27px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 105x105px; PAM Native expands its effective target to 126px"
     ],
     "p-stepper-actions.png": [
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 0x0px; PAM Native expands its effective target to 126px"
-    ],
-    "p-stepper-item.png": [
-      "compact visual control 'Delivery step state' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Stepper Item preview' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px"
     ],
     "p-stepper-vertical-actions.png": [
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Previous step' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Continue to next step' is 261x105px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Previous step' is 175x96px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Continue to next step' is 245x96px; PAM Native expands its effective target to 126px"
     ],
     "p-stepper-vertical.png": [
       "compact visual control 'Step 2, Delivery' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Step 3, Confirm' is 996x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Next step' is 261x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Step 3, Confirm' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Next step' is 245x105px; PAM Native expands its effective target to 126px"
     ],
     "p-stepper.png": [
-      "compact visual control 'Next step' is 261x105px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Next step' is 245x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Next step' is 245x105px; PAM Native expands its effective target to 126px"
     ],
     "p-switch.png": [
-      "compact visual control 'Enabled' is 340x100px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Enabled' is 324x85px; PAM Native expands its effective target to 126px"
+    ],
+    "p-tab.png": [
+      "compact visual control 'Tab preview' is 996x48px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Overview' is 236x48px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Details' is 236x48px; PAM Native expands its effective target to 126px"
+    ],
+    "p-tabs.png": [
+      "compact visual control 'Tabs preview' is 996x48px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Overview' is 311x48px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Details' is 311x48px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Activity' is 311x48px; PAM Native expands its effective target to 126px"
     ],
     "p-text-field.png": [
-      "compact visual control 'Text Field preview' is 912x70px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Text Field preview' is 912x64px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Text Field preview' is 912x59px; PAM Native expands its effective target to 126px"
-    ],
-    "p-time-picker.png": [
-      "compact visual control 'Time Picker preview' is 861x111px; PAM Native expands its effective target to 126px"
-    ],
-    "p-timeline-item.png": [
-      "compact visual control 'Timeline Item preview' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'Text Field preview' is 912x74px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Text Field preview' is 912x69px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Text Field preview' is 912x63px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Text Field preview' is 912x74px; PAM Native expands its effective target to 126px"
     ],
     "p-toolbar.png": [
       "compact visual control 'More options' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 105x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'More options' is 105x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'More options' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'More options' is 105x105px; PAM Native expands its effective target to 126px"
     ],
     "p-tooltip.png": [
       "compact visual control 'android.widget.Button' is 483x105px; PAM Native expands its effective target to 126px",
@@ -474,65 +520,71 @@
       "compact visual control 'android.widget.Button' is 483x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 483x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 483x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 483x105px; PAM Native expands its effective target to 126px"
+    ],
+    "p-tree-select.png": [
+      "compact visual control 'Android' is 996x101px; PAM Native expands its effective target to 126px"
     ],
     "p-treeview-item.png": [
-      "compact visual control 'android' is 891x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ios' is 891x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android' is 891x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ios' is 891x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android' is 891x52px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ios' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ios' is 891x82px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ios' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ios' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Treeview Item preview' is 996x39px; PAM Native expands its effective target to 126px"
     ],
     "p-treeview.png": [
-      "compact visual control 'android' is 786x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ios' is 786x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'web' is 891x87px; PAM Native expands its effective target to 126px",
-      "compact visual control 'design-system' is 996x89px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android' is 786x88px; PAM Native expands its effective target to 126px",
-      "compact visual control 'ios' is 786x1px; PAM Native expands its effective target to 126px",
-      "compact visual control 'web' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android' is 786x82px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ios' is 786x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'web' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'design-system' is 996x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android' is 786x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'ios' is 786x82px; PAM Native expands its effective target to 126px",
+      "compact visual control 'web' is 891x83px; PAM Native expands its effective target to 126px",
+      "compact visual control 'design-system' is 996x83px; PAM Native expands its effective target to 126px"
     ],
     "screen-actions.png": [
-      "compact visual control 'android.widget.Button' is 194x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 184x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 482x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 482x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 490x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 453x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'Favorite' is 105x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 184x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 218x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.Button' is 365x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Close chip' is 84x84px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Four out of five stars' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 175x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 206x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 219x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 143x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 280x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.Button' is 349x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Close chip' is 84x84px; PAM Native expands its effective target to 126px"
     ],
     "screen-all.png": [
+      "compact visual control 'android.widget.Button' is 345x84px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.view.View' is 996x96px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.view.View' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.view.View' is 996x37px; PAM Native expands its effective target to 126px"
     ],
     "screen-data.png": [
-      "compact visual control 'android.widget.Button' is 194x105px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 184x105px; PAM Native expands its effective target to 126px"
     ],
     "screen-forms.png": [
-      "compact visual control 'android.widget.Button' is 194x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Project name' is 912x69px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Owner' is 912x69px; PAM Native expands its effective target to 126px",
-      "compact visual control 'Primary platform' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.Button' is 184x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Project name' is 912x73px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Owner' is 912x74px; PAM Native expands its effective target to 126px"
     ],
     "screen-overlays.png": [
-      "compact visual control 'Open component menu' is 194x105px; PAM Native expands its effective target to 126px",
+      "compact visual control 'Open component menu' is 184x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
       "compact visual control 'android.widget.Button' is 996x105px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.ProgressBar' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.ProgressBar' is 0x0px; PAM Native expands its effective target to 126px",
-      "compact visual control 'android.widget.ProgressBar' is 0x0px; PAM Native expands its effective target to 126px"
+      "compact visual control 'android.widget.ProgressBar' is 63x63px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.ProgressBar' is 84x84px; PAM Native expands its effective target to 126px",
+      "compact visual control 'android.widget.ProgressBar' is 996x11px; PAM Native expands its effective target to 126px"
     ]
   },
-  "screenCount": 90,
+  "screenCount": 120,
   "status": "passed"
 }

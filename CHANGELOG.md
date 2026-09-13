@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.0.9
+
+- Expand the premium native catalog to 114 public components across 92
+  modules, with complete Android/iOS, accessibility, style and render gates.
+- Redesign the showcase as a polished five-destination product and component
+  studio with direct canvas presentation, responsive spacing and native PAM
+  navigation.
+- Add interaction audits, screenshots and recording provenance for every
+  component while keeping physical-device approval distinct from emulator
+  candidates.
+- Require PAM Native 1.0.27 so currency and masked fields retain rapid input
+  without cursor crashes or dropped keyboard events.
+
 ## 1.0.8
 
 - Dispatch the certified Composer distribution explicitly after GitHub Release

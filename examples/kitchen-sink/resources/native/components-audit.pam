@@ -564,5 +564,43 @@
             <p-btn><Text>Open popover</Text></p-btn>
             <Column class="p-4 gap-2"><Text>Anchored native content</Text></Column>
         </p-popover>
+        <p-app-scaffold><Text>Safe-area aware application content</Text></p-app-scaffold>
+        <p-navigation-bar>
+            <p-btn variant="text"><Text>Home</Text></p-btn>
+            <p-btn variant="tonal"><Text>Components</Text></p-btn>
+            <p-btn variant="text"><Text>Profile</Text></p-btn>
+        </p-navigation-bar>
+        <p-navigation-rail>
+            <p-icon-btn accessibilityLabel="Home"><p-icon icon="home" /></p-icon-btn>
+            <p-icon-btn accessibilityLabel="Components"><p-icon icon="apps" /></p-icon-btn>
+        </p-navigation-rail>
+        <p-bottom-app-bar>
+            <p-icon-btn accessibilityLabel="Search"><p-icon icon="search" /></p-icon-btn>
+            <p-icon-btn accessibilityLabel="Share"><p-icon icon="share" /></p-icon-btn>
+        </p-bottom-app-bar>
+        <p-search-bar placeholder="Search components" accessibilityLabel="Search components" />
+        <p-pagination><p-btn variant="tonal"><Text>3</Text></p-btn></p-pagination>
+        <p-segmented-button>
+            <p-btn variant="tonal"><Text>Day</Text></p-btn>
+            <p-btn variant="text"><Text>Week</Text></p-btn>
+        </p-segmented-button>
+        <p-password-field label="Password" value="PAM-native-2026" accessibilityLabel="Password" />
+        <p-masked-field label="Mobile phone" pattern="(##) #####-####" value="11987654321" accessibilityLabel="Mobile phone" />
+        <p-currency-field label="Amount" prefix="R$ " decimalDigits="2" value="128450" accessibilityLabel="Amount" />
+        <p-tag-input label="Skills" items="PHP,Kotlin,Swift" accessibilityLabel="Skills" />
+        <p-multi-select label="Teams" items="Design,Engineering,Product" accessibilityLabel="Teams" />
+        <p-file-input label="Attachments" text="Choose files" multiple="true" accessibilityLabel="Attachments" />
+        <p-date-range-picker />
+        <p-time-range-picker />
+        <p-filter-bar />
+        <p-navigation-drawer />
+        <p-command-palette />
+        <p-progress-button text="Publishing" progress="42" />
+        <p-reorderable-list items="Research,Prototype,Build,Ship" />
+        <p-swipe-actions title="Quarterly design review" startLabel="Archive" endLabel="Delete" />
+        <p-data-grid />
+        <p-tree-select />
+        <p-result-state title="Ready to launch" description="Every validation passed." actionLabel="View report" />
+        <p-chart values="12,18,14,26,22,34,31,42,38,52,48,64" type="area" smooth="true" fill="true" />
     </Column>
 </AppScreen>

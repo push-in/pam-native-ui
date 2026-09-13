@@ -5,12 +5,16 @@ Material surface. The evidence in this page was captured from the production
 renderer on an Android API 36 emulator at 420 dpi; it is not a web mockup.
 
 > **Generation 2 validation is in progress.** Physical-device testing exposed
-> defects that the prior screenshot-only gate did not detect. The new
-> interaction and geometry matrix currently approves **5 of 84 components**.
-> The remaining **79 components** have passed the emulator candidate gate, so
-> the complete **84 of 84** inventory now has current audited evidence. They await
-> two independent physical Samsung runs before approval.
+> defects that the prior screenshot-only gate did not detect. The complete
+> Android emulator interaction sweep now passes **114 of 114 components** on
+> API 36; this includes real typing, selection, opening and dismissal, scrolling,
+> adjustment and gesture execution rather than screenshot-only inspection.
+> Physical approval remains **5 of 114 components**, so **109 components** still
+> require two independent Samsung runs before release approval.
 > Candidate captures prove emulator behavior but grant no physical approval.
+
+The reproducible run summary is available in
+[`android-emulator-interaction-audit.json`](android-emulator-interaction-audit.json).
 
 The previous automated visual audit rejected empty renders, unexpected routes,
 invalid viewports and overlapping text, but did not prove modal-window

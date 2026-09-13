@@ -10,7 +10,7 @@ Reference:
 
 - source: the manually maintained PAM Material component specification;
 - namespace: `p-*` only, with no `v-*` aliases;
-- captured surface: 62 mobile modules and 84 public component parts;
+- captured surface: 92 mobile modules and 114 public component parts;
 - targets: retained native Android and UIKit renderers;
 - metadata import: none.
 
@@ -80,5 +80,5 @@ the build. Modules with no upstream variant axis use status `4`
 All coded fields use sequential integer IDs represented by PHP enums. Human
 names under `definitions` are documentation labels; component records store the
 IDs. `resources/material-parity.schema.json` fixes the curated inventory at
-62 mobile modules and 84 public `p-*` components, requires both native targets, rejects
+92 mobile modules and 114 public `p-*` components, requires both native targets, rejects
 metadata import, and rejects unknown fields.

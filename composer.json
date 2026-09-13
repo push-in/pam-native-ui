@@ -19,7 +19,7 @@
     },
     "require": {
         "php": "^8.5",
-        "pushinbr/pam-native": "^1.0"
+        "pushinbr/pam-native": "^1.0.27"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1"
@@ -53,7 +53,7 @@
             "@generate:material"
         ],
         "audit:styles": "php tools/audit-styles.php --strict",
-        "analyse": "vendor/bin/phpstan analyse --level=9 --no-progress --debug --memory-limit=1G",
+        "analyse": "vendor/bin/phpstan analyse --level=9 --no-progress --debug --memory-limit=2G",
         "benchmark": "php benchmarks/php.php",
         "benchmark:material": "php benchmarks/material.php",
         "release:check": "php tools/release-check.php",
@@ -80,5 +80,19 @@
     "config": {
         "platform-check": true,
         "sort-packages": true
+    },
+    "archive": {
+        "exclude": [
+            "/.git",
+            "/.phpunit.cache",
+            "/android/.gradle",
+            "/android/.kotlin",
+            "/android/build",
+            "/examples/**/.pam-native",
+            "/examples/**/dist",
+            "/examples/**/vendor",
+            "/tools/phpstan/vendor",
+            "/vendor"
+        ]
     }
 }

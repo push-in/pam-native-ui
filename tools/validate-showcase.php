@@ -270,7 +270,6 @@ foreach (MaterialComponentMap::TAGS as $tag => $component) {
     $route = new ComponentRoute($tag, $title, $component);
     $route->toElement();
     $variations = new ReflectionMethod($route, 'variations');
-    $variations->setAccessible(true);
     $variationCount = count($variations->invoke($route));
     if ($variationCount < 4) {
         throw new RuntimeException(

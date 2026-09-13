@@ -455,3 +455,130 @@ final class PPullToRefresh extends UiComponent
 {
     protected const string COMPONENT = 'PPullToRefresh';
 }
+
+final class PAppScaffold extends UiComponent
+{
+    protected const string COMPONENT = 'PAppScaffold';
+}
+
+final class PNavigationBar extends UiComponent
+{
+    protected const string COMPONENT = 'PNavigationBar';
+}
+
+final class PNavigationRail extends UiComponent
+{
+    protected const string COMPONENT = 'PNavigationRail';
+}
+
+final class PBottomAppBar extends UiComponent
+{
+    protected const string COMPONENT = 'PBottomAppBar';
+}
+
+final class PSearchBar extends UiComponent
+{
+    protected const string COMPONENT = 'PSearchBar';
+}
+
+final class PPagination extends UiComponent
+{
+    protected const string COMPONENT = 'PPagination';
+}
+
+final class PSegmentedButton extends UiComponent
+{
+    protected const string COMPONENT = 'PSegmentedButton';
+}
+
+final class PPasswordField extends UiComponent
+{
+    protected const string COMPONENT = 'PPasswordField';
+}
+
+final class PMaskedField extends UiComponent
+{
+    protected const string COMPONENT = 'PMaskedField';
+}
+
+final class PCurrencyField extends UiComponent
+{
+    protected const string COMPONENT = 'PCurrencyField';
+}
+
+final class PTagInput extends UiComponent
+{
+    protected const string COMPONENT = 'PTagInput';
+}
+
+final class PMultiSelect extends UiComponent
+{
+    protected const string COMPONENT = 'PMultiSelect';
+}
+
+final class PFileInput extends UiComponent
+{
+    use \Pam\MobileUi\Component\Concerns\HandlesFilePicking;
+
+    protected const string COMPONENT = 'PFileInput';
+}
+
+final class PDateRangePicker extends UiComponent
+{
+    protected const string COMPONENT = 'PDateRangePicker';
+}
+
+final class PTimeRangePicker extends UiComponent
+{
+    protected const string COMPONENT = 'PTimeRangePicker';
+}
+
+final class PFilterBar extends UiComponent
+{
+    protected const string COMPONENT = 'PFilterBar';
+}
+
+final class PNavigationDrawer extends UiComponent
+{
+    protected const string COMPONENT = 'PNavigationDrawer';
+}
+
+final class PCommandPalette extends UiComponent
+{
+    protected const string COMPONENT = 'PCommandPalette';
+}
+
+final class PProgressButton extends UiComponent
+{
+    protected const string COMPONENT = 'PProgressButton';
+}
+
+final class PReorderableList extends UiComponent
+{
+    protected const string COMPONENT = 'PReorderableList';
+}
+
+final class PSwipeActions extends UiComponent
+{
+    protected const string COMPONENT = 'PSwipeActions';
+}
+
+final class PDataGrid extends UiComponent
+{
+    protected const string COMPONENT = 'PDataGrid';
+}
+
+final class PTreeSelect extends UiComponent
+{
+    protected const string COMPONENT = 'PTreeSelect';
+}
+
+final class PResultState extends UiComponent
+{
+    protected const string COMPONENT = 'PResultState';
+}
+
+final class PChart extends UiComponent
+{
+    protected const string COMPONENT = 'PChart';
+}

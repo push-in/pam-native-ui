@@ -8,6 +8,7 @@ package=${PAM_SHOWCASE_PACKAGE:-dev.pam.mobileui.catalog}
 activity=${PAM_SHOWCASE_ACTIVITY:-dev.pam.nativeapp.PamActivity}
 serial=${ANDROID_SERIAL:-}
 settle_seconds=${PAM_SHOWCASE_SETTLE_SECONDS:-2}
+start_at=${PAM_SHOWCASE_START_AT:-}
 
 command -v adb >/dev/null || {
   echo 'adb is required to capture the Android showcase.' >&2
@@ -83,8 +84,9 @@ mapfile -t tags < <(
     sed 's/^<//' |
     sort -u
 )
-[[ ${#tags[@]} -eq 84 ]] || {
-  echo "Expected 84 catalog tags, found ${#tags[@]}." >&2
+expected_component_count=114
+[[ ${#tags[@]} -eq ${expected_component_count} ]] || {
+  echo "Expected ${expected_component_count} catalog tags, found ${#tags[@]}." >&2
   exit 65
 }
 
@@ -162,9 +164,25 @@ for screen in actions forms data overlays all; do
   capture "screen-${screen}" "pam-showcase://screen/${screen}" "${label}"
 done
 
+waiting_for_start=${start_at}
 for tag in "${tags[@]}"; do
-  capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${tag}"
+  if [[ -n ${waiting_for_start} ]]; then
+    [[ ${tag} == "${waiting_for_start}" ]] || continue
+    waiting_for_start=''
+  fi
+  if [[ ${tag} == p-command-palette ]]; then
+    # Its public default is an intentionally open, full-window command surface;
+    # route anchors remain behind the modal and are not part of the active
+    # accessibility window.
+    capture "${tag}" "pam-showcase://component/${tag}" 'Type a command'
+  else
+    capture "${tag}" "pam-showcase://component/${tag}" 'Variations' "${tag}"
+  fi
 done
+[[ -z ${waiting_for_start} ]] || {
+  echo "Resume tag ${start_at} does not exist in the catalog." >&2
+  exit 65
+}
 
 python3 "${root}/tools/validate-android-screenshots.py" \
   "${output}" "${hierarchies}" \
