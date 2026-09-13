@@ -132,3 +132,27 @@ password semantics, taps **Hide password**, and verifies secure semantics are
 restored. This flow passed on the emulator; its revealed/hidden XML snapshots
 and report are under `/tmp/pam-ui-password-toggle-20260913` and the matching
 `.json` file. The six device-lock audit unit tests also passed.
+
+## Detailed autocomplete audit
+
+`/tmp/pam-ui-autocomplete-integrated-20260913/report.json` completed with all
+14 checks passing: one sheet, touch targets, filtering/selection, backdrop
+preservation, last-option edge hit area, bottom safe area, instance isolation,
+disabled/read-only, empty result separation, multiple selection, keyboard Back,
+rotation, responsive drawer and runtime log.
+
+Visual inspection of `06-isolated-open.png` nevertheless found the field label
+touching its top outline. A subsequent UI change gives selection fields top
+and bottom padding plus intrinsic height, retaining the existing minimum
+height. Its matrix passes; its Android build/visual validation is pending.
+The completed autocomplete report predates that spacing change.
+
+The spacing build subsequently installed successfully. The inspected
+`/tmp/pam-ui-selector-padding-20260913/pass-01-p-autocomplete-before.png` shows
+the label inset from the outline. Matrix, theme, recipe and PHPStan checks pass.
+The five-family round logged successful open/close checks for Autocomplete,
+Combobox, Select and Tag Input, then exited with signal-derived code 143 before
+writing its final report. Do not treat that run as a complete report.
+Multi Select was resumed separately and passed; its complete report is
+`/tmp/pam-ui-multi-select-padding-20260913.json`. Full detailed selection and
+large-text coverage after the spacing change still remain pending.

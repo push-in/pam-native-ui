@@ -4622,21 +4622,39 @@ $assertGeometry('POtpInput', [], [
 $assertGeometry('POtpInput', ['divided' => true], [
     'width' => 360.0,
 ]);
+foreach (['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'] as $selectionField) {
+    $assertGeometry($selectionField, [], [
+        'height' => null,
+        'minHeight' => 64.0,
+        'paddingTop' => 8.0,
+        'paddingBottom' => 4.0,
+    ]);
+    $assertGeometry($selectionField, ['density' => 'compact'], [
+        'height' => null,
+        'minHeight' => 48.0,
+        'paddingTop' => 4.0,
+        'paddingBottom' => 4.0,
+    ]);
+}
 $assertGeometry('PAutocomplete', [], [
-    'height' => 64.0,
+    'height' => null,
     'minHeight' => 64.0,
+    'paddingTop' => 8.0,
+    'paddingBottom' => 4.0,
     'animationDurationMs' => 200,
 ]);
 $assertGeometry('PAutocomplete', ['chips' => true], [
-    'height' => 64.0,
+    'height' => null,
 ]);
 $assertGeometry('PSelect', ['density' => 'compact'], [
-    'height' => 48.0,
+    'height' => null,
     'minHeight' => 48.0,
+    'paddingTop' => 4.0,
 ]);
 $assertGeometry('PCombobox', ['density' => 'comfortable'], [
-    'height' => 56.0,
+    'height' => null,
     'minHeight' => 56.0,
+    'paddingTop' => 4.0,
 ]);
 $assertGeometry('PImg', ['cardMedia' => true], [
     'minHeight' => 200.0,
