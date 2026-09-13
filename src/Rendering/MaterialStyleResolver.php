@@ -1443,10 +1443,18 @@ final class MaterialStyleResolver
             }
             $textareaHeight = $textareaBaseHeight
                 + (24.0 * max(0, $textareaRows - 3));
+            $intrinsicFieldHeight = in_array($part, [
+                'PTextField', 'PPasswordField', 'PMaskedField', 'PCurrencyField',
+                'PColorInput', 'PDateInput',
+            ], true);
 
             return new Style(
                 widthPercent: 100.0,
-                height: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
+                // Native font scaling must be allowed to expand the label and
+                // editor lanes beyond the theme's minimum touch target.
+                height: $intrinsicFieldHeight
+                    ? null
+                    : ($part === 'PTextarea' ? $textareaHeight : $controlHeight),
                 minHeight: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
                 paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
                 paddingTop: $selectionField ? 0.0 : ($part === 'PNumberInput'

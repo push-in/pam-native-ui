@@ -3645,8 +3645,14 @@ $assertGeometry('PTab', ['density' => 'comfortable'], [
 $assertGeometry('PTab', ['density' => 'compact'], [
     'minHeight' => 48.0,
 ]);
+foreach (['PTextField', 'PPasswordField', 'PMaskedField', 'PCurrencyField', 'PColorInput', 'PDateInput'] as $scalableField) {
+    $assertGeometry($scalableField, [], [
+        'height' => null,
+        'minHeight' => 56.0,
+    ]);
+}
 $assertGeometry('PTextField', [], [
-    'height' => 56.0,
+    'height' => null,
     'minHeight' => 56.0,
     'paddingTop' => 8.0,
     'paddingBottom' => 4.0,
@@ -3656,11 +3662,11 @@ $assertGeometry('PTextField', [], [
     'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceContainerLow),
 ]);
 $assertGeometry('PTextField', ['density' => 'comfortable'], [
-    'height' => 48.0,
+    'height' => null,
     'minHeight' => 48.0,
 ]);
 $assertGeometry('PTextField', ['density' => 'compact'], [
-    'height' => 40.0,
+    'height' => null,
     'minHeight' => 40.0,
     'paddingTop' => 0.0,
     'paddingBottom' => 0.0,

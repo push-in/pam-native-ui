@@ -75,3 +75,22 @@ Raw evidence is in `/tmp/pam-ui-flow-affixes-20260913.json` and the matching
 directory. The first `font-scale-130.png` captured the launcher and is not
 validation evidence; `currency-font-scale-130.png` is the inspected app screen.
 Larger scales, long affixes on-device, landscape and iOS/Samsung remain open.
+
+## Font-scale 2.0 follow-up
+
+The first 200% capture reproduced clipped editor values: field surfaces had a
+fixed height despite scaled labels and text. Text Field, Password Field, Masked
+Field, Currency Field, Color Input and Date Input now keep the density-defined
+minimum height without imposing a fixed surface height.
+
+The material matrix (including all six height contracts), PHPStan level 9,
+theme runtime and recipe matrix passed. An optimized Android build installed
+successfully. In `currency-intrinsic-font-200.png`, the displayed BRL, USD and
+integer fields grow and retain their full values inside the outline. The error
+field is below the initial viewport and is not approved by that capture.
+Font scale was restored to 1.0 afterward.
+
+The showcase heading still displays only “Currency” instead of “Currency Field”
+at 200%. Its wrapping/measurement and the fixed-height tag caption require a
+separate correction. This screenshot does not approve the whole screen or all
+six field families at 200%.
