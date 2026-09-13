@@ -315,3 +315,19 @@ Only Command Palette required intentional overlay dismissal. These numbers
 measure Activity cold-launch time, one sample per route; they do not certify
 frame smoothness, interaction latency, physical-device performance or all
 component variants. No release/public documentation gate is waived.
+
+## Multi Select retained-state follow-up
+
+The dedicated Multi Select audit completed all six checks on the installed
+Android emulator build: add to selection, remove after reopening, filtered
+selection, selecting two values from empty, three-field isolation and keeping
+the sheet open during multiple selection. Report/captures:
+`/tmp/pam-ui-multi-select-complete-20260913`. `09-two-categories.png` was
+inspected and shows Engineering/Product, Ana/Bruno and Mobile/Web retained in
+their separate fields. This is not complete all-variant or physical approval.
+
+UI CI run `34776129611` passed both UIKit jobs but failed to compile the new
+Android instrumented test: its collected event type was incorrectly Int,
+although NativeViewEmitter supplies NativeViewEventKind. Commit `62e47a6`
+corrects the test type. Replacement run `34776338798` is in progress; the
+earlier compile failure did not execute the Android behavioral assertions.
