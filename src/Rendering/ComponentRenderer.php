@@ -1637,7 +1637,7 @@ final class ComponentRenderer
                     // visible affix glyph on the first editable text baseline;
                     // 24 dp visibly dropped it by roughly 11 dp.
                     top: $materialComponent === 'PTextarea' ? 13.0 : null,
-                    bottom: $materialComponent === 'PTextarea' ? null : 4.0,
+                    bottom: $materialComponent === 'PTextarea' ? null : 0.0,
                     minWidth: 28.0,
                     height: 24.0,
                     textColor: $theme->color(ColorToken::MutedForeground),
@@ -1650,7 +1650,7 @@ final class ComponentRenderer
                     positionType: PositionType::Absolute,
                     right: $clearable ? 32.0 : 0.0,
                     top: $materialComponent === 'PTextarea' ? 13.0 : null,
-                    bottom: $materialComponent === 'PTextarea' ? null : 4.0,
+                    bottom: $materialComponent === 'PTextarea' ? null : 0.0,
                     minWidth: 28.0,
                     height: 24.0,
                     textColor: $theme->color(ColorToken::MutedForeground),
