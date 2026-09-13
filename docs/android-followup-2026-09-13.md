@@ -481,3 +481,70 @@ These mixed results do not establish impeccable smoothness; rendering and
 input latency need further diagnosis/physical comparison. The diagnostic now
 also exposes those counters directly in future reports instead of hiding
 them behind the percentiles. System animation settings were restored.
+
+### Slider drag hot-path investigation
+
+Found redundant UI-plugin work: each changed touch MOVE called
+`applyRangeVisualState`, laying out/scaling/translating invisible authored
+children even though the visible slider canvas reads current values directly.
+The pending UI Android patch leaves canvas invalidation and coalesced change
+events intact, and synchronizes hidden anatomy at UP/CANCEL instead.
+An instrumentation regression checks no hidden-fill transform during MOVE
+and correct synchronization at both termination paths. This is a UI-plugin
+optimization, separate from the already committed native layout correction.
+
+Local `compileDebugAndroidTestKotlin testDebugUnitTest --offline --no-daemon`
+passed in 25s. Instrumentation is compiled, not yet executed for this patch.
+Gradle reported a cleanup permission warning for an old 96KiB `.gradle/8.13`
+cache after successful completion; no permissions were broadened or user files
+deleted. A release build is running to compare the same drag diagnostic before
+and after. No performance improvement is claimed until measured.
+
+The frame collector now has three focused regression tests: current jank is
+kept distinct from legacy jank, missing latency counters fail rather than
+defaulting to zero, and insufficient frame samples fail. The combined
+geometry/collector suite passes nine tests. These tests were added to CI;
+the in-flight earlier CI run does not include this local diagnostic change.
+
+UI CI `34778225705` completed successfully for `0dd36df` with native `f83eaa3`:
+all nine jobs passed. This covers the padding correction, not the later
+uncommitted drag-hot-path optimization. Its release build has now installed
+successfully (3m46s; cleanup 904.5 MiB), and the comparison sample is running at
+`/tmp/pam-ui-range-frames-hotpath-20260913`. SurfaceFlinger identifies NVIDIA
+RTX 4070 through the Android Emulator OpenGL ES translator; this is hardware
+accelerated emulation, not evidence that the emulator caused the measured jank.
+
+Comparison completed: 399 frames, 55 current janky/deadline-missed frames,
+zero legacy jank, p95/p99 16ms, 308 high-input-latency frames, zero slow UI
+thread frames and 54 slow draw-command frames. Geometry remains correct.
+Against baseline (54/404 janky), this does **not** demonstrate smoother
+rendering. Removing hidden-child work did not resolve the observed deadline
+misses; investigate frame stages before claiming or publishing a performance
+fix. The optimization remains uncommitted pending further validation.
+
+### Frame-stage evidence and native gesture execution
+
+The collector now retains `gfxinfo ... framestats` and names timestamp
+intervals literally; it does not call the swap-to-GPU-completion interval pure
+GPU execution time. Android documents framestats as recent-frame diagnostic
+data: https://developer.android.com/tools/dumpsys#graphics . Eleven local
+geometry/collector tests pass, including flagged and missing timestamp cases.
+
+Stage sample `/tmp/pam-ui-range-frame-stages-20260913/report.json`: 400 frames,
+55 current janky frames, one legacy janky frame, p95 16ms/p99 17ms. In its
+120 eligible recent frames, p95 input-start-to-draw-start was 1.386ms,
+draw-commands-to-swap 1.542ms, and swap-to-GPU-completion 15.373ms. Host-side
+test APK assembly overlapped the beginning of this diagnostic; do not treat
+it as a controlled A/B performance comparison or proof of a GPU defect.
+
+Built the instrumentation APK and executed the exact
+`sliderAndProgressMoveAuthoredAnatomyWithoutPhpFrames` test on emulator-5554:
+`OK (1 test)`, including MOVE, UP and CANCEL assertions added for the pending
+optimization. This upgrades that regression from compiled-only to executed;
+it does not close the remaining smoothness gate.
+
+Three additional targeted instrumented tests passed on the same emulator:
+range endpoint/payload behavior, adaptive stale-track bounds and the
+100-tick allocation regression (`OK (3 tests)`). The hidden-anatomy hot-path
+change is retained as tested redundant-work removal, not as a measured jank
+fix. Release/physical smoothness remains unapproved.

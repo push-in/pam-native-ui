@@ -5308,7 +5308,9 @@ internal class MobileUiHost(
                         changed
                     }
                     if (changed) {
-                        applyRangeVisualState()
+                        // Canvas reads the current values directly. Updating
+                        // invisible authored anatomy on every MOVE performs
+                        // redundant child layout/transforms in the hot path.
                         scheduleSliderChange()
                         invalidate()
                     }
@@ -5326,10 +5328,10 @@ internal class MobileUiHost(
                         && value != minimum
                     ) {
                         value = minimum
-                        applyRangeVisualState()
                         scheduleSliderChange()
                         invalidate()
                     }
+                    applyRangeVisualState()
                     performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     flushSliderChange()
                     emitSliderChangeEnd()
@@ -5341,6 +5343,7 @@ internal class MobileUiHost(
                     parent?.requestDisallowInterceptTouchEvent(false)
                     val claimed = sliderTouchActive
                     sliderTouchActive = false
+                    if (claimed) applyRangeVisualState()
                     invalidate()
                     claimed
                 }

@@ -1554,6 +1554,20 @@ class MobileUiHostInstrumentedTest {
             assertEquals(0.75f, filled.scaleX, 0.001f)
             assertTrue(thumb.translationX < 150f)
 
+            // The visible canvas follows values during a drag; invisible
+            // authored anatomy should be synchronized only at gesture end.
+            slider.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 100f, 50f))
+            slider.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 200f, 50f))
+            assertEquals(0.75f, filled.scaleX, 0.001f)
+            slider.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, 200f, 50f))
+            assertEquals(0.5f, filled.scaleX, 0.001f)
+
+            slider.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, 200f, 50f))
+            slider.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, 300f, 50f))
+            assertEquals(0.5f, filled.scaleX, 0.001f)
+            slider.dispatchTouchEvent(motion(MotionEvent.ACTION_CANCEL, 300f, 50f))
+            assertEquals(0.25f, filled.scaleX, 0.001f)
+
             val progress = MobileUiHost(context) { _, _ -> }
             progress.update(
                 mapOf(
