@@ -459,3 +459,25 @@ smoothness and broad custom-host regression gates remain pending.
 Started Autocomplete regression against the same installed native correction
 at `/tmp/pam-ui-autocomplete-native-padding-20260913` to check another affected
 host family before considering publication.
+
+Autocomplete completed successfully after the native padding fix: all 14
+checks pass in `/tmp/pam-ui-autocomplete-native-padding-20260913/report.json`.
+Inspected its empty-state sheet capture: search field, message and panel
+margins remain aligned. UI CI run `34778225705` targets UI `0dd36df` with native
+`f83eaa3`; native CI `34778057612` has passed build/unit, Rust/PHP/protocol and
+Swift/UIKit jobs, while API 26/36 instrumented execution is still running.
+
+Added a focused range frame diagnostic (`tools/audit-range-slider-frames-android.py`)
+using 12 real ADB drags, animations enabled, final geometry verification and
+UID-independent gfxinfo for the exact package. It explicitly does not grant
+approval or claim physical-device smoothness. First measurement is running
+at `/tmp/pam-ui-range-frames-native-padding-20260913`.
+
+That sample completed: 404 frames, p95/p99 16ms, zero legacy janky frames,
+but **54 current-definition janky frames (13.37%)**. Raw gfxinfo additionally
+reports 325 high-input-latency frames, zero slow-UI-thread frames and 54 slow
+draw-command/deadline-missed frames. The 12 drags preserved final geometry.
+These mixed results do not establish impeccable smoothness; rendering and
+input latency need further diagnosis/physical comparison. The diagnostic now
+also exposes those counters directly in future reports instead of hiding
+them behind the percentiles. System animation settings were restored.
