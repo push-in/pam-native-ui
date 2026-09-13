@@ -5,7 +5,12 @@
     "entry": "index.php",
     "android": {
         "minSdk": 26,
-        "targetSdk": 36
+        "targetSdk": 36,
+        "deepLinks": [
+            {
+                "scheme": "pam-showcase"
+            }
+        ]
     },
     "modules": [],
     "views": []

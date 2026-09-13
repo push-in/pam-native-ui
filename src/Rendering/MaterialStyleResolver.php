@@ -1365,11 +1365,12 @@ final class MaterialStyleResolver
 
         if (in_array($part, [
             'PTextField', 'PTextarea', 'PNumberInput', 'POtpInput',
-            'PColorInput', 'PDateInput', 'PSelect',
-            'PAutocomplete', 'PCombobox',
+            'PColorInput', 'PDateInput', 'PPasswordField', 'PMaskedField',
+            'PCurrencyField', 'PSelect',
+            'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect',
         ], true)) {
             $selectionField = in_array($part, [
-                'PSelect', 'PAutocomplete', 'PCombobox',
+                'PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect',
             ], true);
             $controlHeight = match (true) {
                 $selectionField => match ($density) {
@@ -1558,6 +1559,174 @@ final class MaterialStyleResolver
                 flexWrap: FlexWrap::Wrap,
                 alignItems: Align::Center,
                 justifyContent: Justify::End,
+            );
+        }
+
+        if ($part === 'PAppScaffold') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 320.0,
+                gap: 24.0,
+                backgroundColor: $theme->color(ColorToken::Background),
+                textColor: $theme->color(ColorToken::Foreground),
+                flexDirection: FlexDirection::Column,
+            );
+        }
+
+        if ($part === 'PNavigationBar') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 80.0,
+                paddingHorizontal: 8.0,
+                paddingVertical: 8.0,
+                gap: 4.0,
+                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                textColor: $theme->color(ColorToken::OnSurface),
+                tintColor: $theme->color(ColorToken::OnSurface),
+                borderRadius: MaterialTokens::radius(MaterialShape::Large),
+                elevation: self::resolvedElevation($props, 3.0),
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
+                justifyContent: Justify::SpaceAround,
+            );
+        }
+
+        if ($part === 'PNavigationRail') {
+            $railExpanded = ($props['expanded'] ?? false) === true;
+            return new Style(
+                width: $railExpanded ? 200.0 : 80.0,
+                minHeight: 280.0,
+                paddingHorizontal: 12.0,
+                paddingVertical: 16.0,
+                gap: 12.0,
+                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                textColor: $theme->color(ColorToken::OnSurface),
+                tintColor: $theme->color(ColorToken::OnSurface),
+                borderRadius: MaterialTokens::radius(MaterialShape::Large),
+                elevation: self::resolvedElevation($props, 1.0),
+                flexDirection: FlexDirection::Column,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            );
+        }
+
+        if ($part === 'PBottomAppBar') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 80.0,
+                paddingHorizontal: 16.0,
+                paddingVertical: 12.0,
+                gap: 8.0,
+                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                textColor: $theme->color(ColorToken::OnSurface),
+                tintColor: $theme->color(ColorToken::OnSurface),
+                borderRadius: MaterialTokens::radius(MaterialShape::Large),
+                elevation: self::resolvedElevation($props, 3.0),
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
+                justifyContent: Justify::SpaceBetween,
+            );
+        }
+
+        if ($part === 'PSearchBar') {
+            return new Style(
+                widthPercent: 100.0,
+                height: 56.0,
+                minHeight: 56.0,
+                paddingHorizontal: 20.0,
+                backgroundColor: $theme->color(ColorToken::SurfaceContainerLow),
+                textColor: $theme->color(ColorToken::OnSurface),
+                tintColor: $theme->color(ColorToken::Primary),
+                borderColor: ($props['focused'] ?? false)
+                    ? $theme->color(ColorToken::Primary)
+                    : $theme->color(ColorToken::Outline),
+                borderWidth: ($props['focused'] ?? false)
+                    ? 2.0
+                    : (($props['outlined'] ?? false) ? 1.0 : 0.0),
+                borderRadius: 28.0,
+                fontSize: 16.0,
+                lineHeight: 24.0,
+                opacity: $opacity,
+                elevation: self::resolvedElevation($props, 1.0),
+                animationDurationMs: 200,
+                animateChanges: true,
+            );
+        }
+
+        if ($part === 'PFileInput') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 72.0,
+                paddingHorizontal: 16.0,
+                paddingVertical: 12.0,
+                backgroundColor: $theme->color(ColorToken::SurfaceContainerLow),
+                textColor: $theme->color(ColorToken::Primary),
+                tintColor: $theme->color(ColorToken::Primary),
+                borderColor: $theme->color(ColorToken::Outline),
+                borderWidth: 1.0,
+                borderRadius: 16.0,
+                opacity: $opacity,
+                elevation: 0.0,
+                alignItems: Align::Stretch,
+                justifyContent: Justify::Center,
+            );
+        }
+
+        if ($part === 'PPagination') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 48.0,
+                gap: 4.0,
+                flexDirection: FlexDirection::Row,
+                flexWrap: FlexWrap::Wrap,
+                alignItems: Align::Center,
+                justifyContent: Justify::Center,
+            );
+        }
+
+        if ($part === 'PTimeRangePicker') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 72.0,
+                gap: 12.0,
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
+            );
+        }
+
+        if ($part === 'PDateRangePicker') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 76.0,
+                gap: 12.0,
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
+            );
+        }
+
+        if ($part === 'PFilterBar') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 48.0,
+                gap: 8.0,
+                flexDirection: FlexDirection::Row,
+                flexWrap: FlexWrap::Wrap,
+                alignItems: Align::Center,
+            );
+        }
+
+        if ($part === 'PSegmentedButton') {
+            return new Style(
+                widthPercent: 100.0,
+                minHeight: 48.0,
+                gap: 0.0,
+                backgroundColor: $transparent,
+                borderColor: $theme->color(ColorToken::Outline),
+                borderWidth: 1.0,
+                borderRadius: 24.0,
+                overflow: Overflow::Hidden,
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
             );
         }
 

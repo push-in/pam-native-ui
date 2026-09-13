@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e1bb78353b7fa5d9c00e92bcf9c1f93f",
+    "content-hash": "4f8099dfcec0e9ec5ecb8789fc5bb8e3",
     "packages": [
         {
             "name": "pushinbr/pam-native",
-            "version": "1.0.0",
+            "version": "1.0.27",
             "dist": {
                 "type": "path",
                 "url": "../../../pam-native/packages/native",
-                "reference": "6b32db52d200273c4f88bb781af860486073497e"
+                "reference": "e4647e7d9a47fbdc58ccd11c0a63b842ed29c652"
             },
             "require": {
                 "php": "^8.5"
@@ -401,11 +401,11 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "95278dd3ae532f29c4eaff6504d0151f3b16aed4"
+                "reference": "a9950aa542f701d74cce3db05983faccd688bab8"
             },
             "require": {
                 "php": "^8.5",
-                "pushinbr/pam-native": "^1.0"
+                "pushinbr/pam-native": "^1.0.27"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1"
@@ -432,6 +432,20 @@
                     "Pam\\MobileUi\\Tests\\": "tests/"
                 }
             },
+            "archive": {
+                "exclude": [
+                    "/.git",
+                    "/.phpunit.cache",
+                    "/android/.gradle",
+                    "/android/.kotlin",
+                    "/android/build",
+                    "/examples/**/.pam-native",
+                    "/examples/**/dist",
+                    "/examples/**/vendor",
+                    "/tools/phpstan/vendor",
+                    "/vendor"
+                ]
+            },
             "scripts": {
                 "generate:legacy": [
                     "php tools/generate.php"
@@ -447,7 +461,7 @@
                     "php tools/audit-styles.php --strict"
                 ],
                 "analyse": [
-                    "vendor/bin/phpstan analyse --level=9 --no-progress --debug --memory-limit=1G"
+                    "vendor/bin/phpstan analyse --level=9 --no-progress --debug --memory-limit=2G"
                 ],
                 "benchmark": [
                     "php benchmarks/php.php"

@@ -2,7 +2,7 @@
 
 This catalog is generated from the manually authored `resources/pam-material-components.php` specification. It contains no imported Vuetify metadata and exposes only native `p-*` tags.
 
-**67 modules · 89 component parts · Android and iOS**
+**92 modules · 114 component parts · Android and iOS**
 
 Every component below links to a screenshot captured from the verified Android showcase. See the [visual showcase](android-showcase.md) for complete screens, interaction GIFs and capture metadata.
 
@@ -295,3 +295,103 @@ Every component below links to a screenshot captured from the verified Android s
 ## `pull-to-refresh`
 
 - `<p-pull-to-refresh />` · [Android screenshot](assets/android/components/p-pull-to-refresh.png)
+
+## `app-scaffold`
+
+- `<p-app-scaffold />` · [Android screenshot](assets/android/components/p-app-scaffold.png)
+
+## `navigation-bar`
+
+- `<p-navigation-bar />` · [Android screenshot](assets/android/components/p-navigation-bar.png)
+
+## `navigation-rail`
+
+- `<p-navigation-rail />` · [Android screenshot](assets/android/components/p-navigation-rail.png)
+
+## `bottom-app-bar`
+
+- `<p-bottom-app-bar />` · [Android screenshot](assets/android/components/p-bottom-app-bar.png)
+
+## `search-bar`
+
+- `<p-search-bar />` · [Android screenshot](assets/android/components/p-search-bar.png)
+
+## `pagination`
+
+- `<p-pagination />` · [Android screenshot](assets/android/components/p-pagination.png)
+
+## `segmented-button`
+
+- `<p-segmented-button />` · [Android screenshot](assets/android/components/p-segmented-button.png)
+
+## `password-field`
+
+- `<p-password-field />` · [Android screenshot](assets/android/components/p-password-field.png)
+
+## `masked-field`
+
+- `<p-masked-field />` · [Android screenshot](assets/android/components/p-masked-field.png)
+
+## `currency-field`
+
+- `<p-currency-field />` · [Android screenshot](assets/android/components/p-currency-field.png)
+
+## `tag-input`
+
+- `<p-tag-input />` · [Android screenshot](assets/android/components/p-tag-input.png)
+
+## `multi-select`
+
+- `<p-multi-select />` · [Android screenshot](assets/android/components/p-multi-select.png)
+
+## `file-input`
+
+- `<p-file-input />` · [Android screenshot](assets/android/components/p-file-input.png)
+
+## `date-range-picker`
+
+- `<p-date-range-picker />` · [Android screenshot](assets/android/components/p-date-range-picker.png)
+
+## `time-range-picker`
+
+- `<p-time-range-picker />` · [Android screenshot](assets/android/components/p-time-range-picker.png)
+
+## `filter-bar`
+
+- `<p-filter-bar />` · [Android screenshot](assets/android/components/p-filter-bar.png)
+
+## `navigation-drawer`
+
+- `<p-navigation-drawer />` · [Android screenshot](assets/android/components/p-navigation-drawer.png)
+
+## `command-palette`
+
+- `<p-command-palette />` · [Android screenshot](assets/android/components/p-command-palette.png)
+
+## `progress-button`
+
+- `<p-progress-button />` · [Android screenshot](assets/android/components/p-progress-button.png)
+
+## `reorderable-list`
+
+- `<p-reorderable-list />` · [Android screenshot](assets/android/components/p-reorderable-list.png)
+
+## `swipe-actions`
+
+- `<p-swipe-actions />` · [Android screenshot](assets/android/components/p-swipe-actions.png)
+
+## `data-grid`
+
+- `<p-data-grid />` · [Android screenshot](assets/android/components/p-data-grid.png)
+
+## `tree-select`
+
+- `<p-tree-select />` · [Android screenshot](assets/android/components/p-tree-select.png)
+
+## `result-state`
+
+- `<p-result-state />` · [Android screenshot](assets/android/components/p-result-state.png)
+
+## `chart`
+
+- `<p-chart />` · [Android screenshot](assets/android/components/p-chart.png)

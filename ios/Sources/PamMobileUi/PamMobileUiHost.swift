@@ -147,6 +147,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var carouselInterval: TimeInterval = 6
     private var carouselWorkItem: DispatchWorkItem?
     private var sparklineAutoDrawApplied = false
+    private var sparklineSelectedIndex = -1
 
     private var animationsEnabled: Bool {
         !UIAccessibility.isReduceMotionEnabled
@@ -270,6 +271,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             60,
             max(0.75, (next["interval"]?.pamDecimal ?? 6_000) / 1_000)
         )
+        if let selectedIndex = next["selectedIndex"]?.pamInteger {
+            sparklineSelectedIndex = selectedIndex
+        }
         snapPoints = parseNumbers(next["snapPoints"]?.pamText)
         snapIndex = min(
             max(0, next["snapToIndex"]?.pamInteger
@@ -437,6 +441,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override func accessibilityIncrement() {
+        if behavior == .sparkline, properties["interactive"]?.pamFlag == true {
+            selectSparklineIndex(sparklineSelectedIndex + 1, emitChange: true)
+            return
+        }
         guard behavior == .slider || behavior == .progress || behavior == .bottomSheet else {
             return
         }
@@ -448,6 +456,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override func accessibilityDecrement() {
+        if behavior == .sparkline, properties["interactive"]?.pamFlag == true {
+            selectSparklineIndex(sparklineSelectedIndex - 1, emitChange: true)
+            return
+        }
         guard behavior == .slider || behavior == .progress || behavior == .bottomSheet else {
             return
         }
@@ -509,6 +521,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             }
         case .dateTimePicker:
             presentDateTimePicker()
+        case .sparkline where properties["interactive"]?.pamFlag == true:
+            updateSparklineSelection(at: point.x, emitChange: true)
         case .overlayDismiss:
             overlayAncestor()?.requestDismiss()
         default:
@@ -683,6 +697,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             if navigationKind == 1 {
                 panCarousel(recognizer)
             }
+        case .sparkline:
+            panSparkline(recognizer)
         default:
             break
         }
@@ -718,6 +734,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 : (rangeEnabled && behavior == .slider
                     ? "\(formatted(lowerValue)) to \(formatted(upperValue))"
                     : formatted(value))
+        case .sparkline where properties["interactive"]?.pamFlag == true:
+            isAccessibilityElement = true
+            traits = [.adjustable]
+            accessibilityValue = sparklineAccessibilityValue
         case .tabTrigger:
             isAccessibilityElement = true
             traits = [.button]
@@ -740,7 +760,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .accordion, .slider, .checkbox, .radio, .switchControl,
              .tabTrigger, .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
              .fileTreeFolder, .fileTreeFile,
-             .calendar, .dateTimePicker:
+             .calendar, .dateTimePicker, .sparkline:
             true
         default:
             false
@@ -2119,23 +2139,165 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         guard points.count > 1, bounds.width > 0, bounds.height > 0,
               let low = points.min(), let high = points.max() else { return }
         let spread = max(0.000_001, high - low)
-        let path = UIBezierPath()
-        path.lineWidth = properties["lineWidth"]?.pamDecimal ?? 2.5
-        path.lineCapStyle = .round
-        path.lineJoinStyle = .round
-        for (index, point) in points.enumerated() {
-            let logicalX = bounds.width * CGFloat(index) / CGFloat(points.count - 1)
+        let lineWidth = properties["lineWidth"]?.pamDecimal ?? 2.5
+        let inset = lineWidth / 2
+        let drawableWidth = max(1, bounds.width - lineWidth)
+        let drawableHeight = max(1, bounds.height - lineWidth)
+        let coordinates = points.enumerated().map { index, point -> CGPoint in
+            let logicalX = inset + drawableWidth * CGFloat(index) / CGFloat(points.count - 1)
             let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
                 ? bounds.width - logicalX : logicalX
-            let y = bounds.height - (point - low) / spread * bounds.height
-            if index == 0 {
-                path.move(to: CGPoint(x: x, y: y))
-            } else {
-                path.addLine(to: CGPoint(x: x, y: y))
+            let y = inset + drawableHeight - (point - low) / spread * drawableHeight
+            return CGPoint(x: x, y: y)
+        }
+        let type = properties["type"]?.pamText?.lowercased() ?? ""
+        if type == "bar" || type == "bars" {
+            let slot = drawableWidth / CGFloat(points.count)
+            let barWidth = max(3, slot * 0.58)
+            let radius = min(6, barWidth / 2)
+            fillColor.setFill()
+            for (index, point) in coordinates.enumerated() {
+                let logicalX = inset + (CGFloat(index) + 0.5) * slot
+                let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                    ? bounds.width - logicalX : logicalX
+                UIBezierPath(
+                    roundedRect: CGRect(
+                        x: x - barWidth / 2,
+                        y: point.y,
+                        width: barWidth,
+                        height: max(0, bounds.height - inset - point.y)
+                    ),
+                    cornerRadius: radius
+                ).fill()
             }
+            if points.indices.contains(sparklineSelectedIndex) {
+                let logicalX = inset + (CGFloat(sparklineSelectedIndex) + 0.5) * slot
+                let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                    ? bounds.width - logicalX : logicalX
+                let point = coordinates[sparklineSelectedIndex]
+                fillColor.withAlphaComponent(0.45).setStroke()
+                let ring = UIBezierPath(
+                    ovalIn: CGRect(x: x - 8, y: point.y - 8, width: 16, height: 16)
+                )
+                ring.lineWidth = 2
+                ring.stroke()
+            }
+            return
+        }
+        let path = UIBezierPath()
+        path.lineWidth = lineWidth
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
+        let smooth = properties["smooth"]?.pamFlag == true
+        for (index, point) in coordinates.enumerated() {
+            if index == 0 {
+                path.move(to: point)
+            } else if smooth {
+                let previous = coordinates[index - 1]
+                let controlX = (previous.x + point.x) / 2
+                path.addCurve(
+                    to: point,
+                    controlPoint1: CGPoint(x: controlX, y: previous.y),
+                    controlPoint2: CGPoint(x: controlX, y: point.y)
+                )
+            } else {
+                path.addLine(to: point)
+            }
+        }
+        if properties["fill"]?.pamFlag == true, let first = coordinates.first,
+           let last = coordinates.last, let fillPath = path.copy() as? UIBezierPath {
+            fillPath.addLine(to: CGPoint(x: last.x, y: bounds.height - inset))
+            fillPath.addLine(to: CGPoint(x: first.x, y: bounds.height - inset))
+            fillPath.close()
+            fillColor.withAlphaComponent(0.16).setFill()
+            fillPath.fill()
         }
         fillColor.setStroke()
         path.stroke()
+        if properties["showPoints"]?.pamFlag == true {
+            let selectedIndex = sparklineSelectedIndex >= 0
+                ? sparklineSelectedIndex
+                : (properties["selectedIndex"]?.pamInteger ?? -1)
+            fillColor.setFill()
+            for (index, point) in coordinates.enumerated() {
+                let radius: CGFloat = index == selectedIndex ? 5 : 3
+                UIBezierPath(
+                    ovalIn: CGRect(
+                        x: point.x - radius,
+                        y: point.y - radius,
+                        width: radius * 2,
+                        height: radius * 2
+                    )
+                ).fill()
+                if index == selectedIndex {
+                    fillColor.withAlphaComponent(0.35).setStroke()
+                    let ring = UIBezierPath(
+                        ovalIn: CGRect(x: point.x - 8, y: point.y - 8, width: 16, height: 16)
+                    )
+                    ring.lineWidth = 2
+                    ring.stroke()
+                }
+            }
+        }
+    }
+
+    private var sparklineValues: [CGFloat] {
+        let source = properties["values"]?.pamText
+            ?? properties["value"]?.pamText
+            ?? ""
+        return source
+            .split(whereSeparator: { $0 == "," || $0 == "\n" || $0 == ";" || $0 == " " })
+            .compactMap { point -> CGFloat? in
+                guard let value = Double(String(point)) else { return nil }
+                return CGFloat(value)
+            }
+    }
+
+    private var sparklineAccessibilityValue: String? {
+        let points = sparklineValues
+        guard points.indices.contains(sparklineSelectedIndex) else { return nil }
+        return "Point \(sparklineSelectedIndex + 1) of \(points.count), \(formatted(points[sparklineSelectedIndex]))"
+    }
+
+    private func panSparkline(_ recognizer: UIPanGestureRecognizer) {
+        guard properties["interactive"]?.pamFlag == true,
+              properties["enabled"]?.pamFlag ?? true else { return }
+        switch recognizer.state {
+        case .began, .changed:
+            updateSparklineSelection(at: recognizer.location(in: self).x, emitChange: false)
+        case .ended:
+            updateSparklineSelection(at: recognizer.location(in: self).x, emitChange: true)
+        default:
+            break
+        }
+    }
+
+    private func updateSparklineSelection(at x: CGFloat, emitChange: Bool) {
+        let points = sparklineValues
+        guard !points.isEmpty, bounds.width > 0 else { return }
+        let logicalX = effectiveUserInterfaceLayoutDirection == .rightToLeft
+            ? bounds.width - x : x
+        let ratio = min(1, max(0, logicalX / bounds.width))
+        let index = min(points.count - 1, max(0, Int(round(ratio * CGFloat(points.count - 1)))))
+        selectSparklineIndex(index, emitChange: emitChange)
+    }
+
+    private func selectSparklineIndex(_ requestedIndex: Int, emitChange: Bool) {
+        let points = sparklineValues
+        guard !points.isEmpty else { return }
+        let index = min(points.count - 1, max(0, requestedIndex))
+        if sparklineSelectedIndex != index {
+            sparklineSelectedIndex = index
+            accessibilityValue = sparklineAccessibilityValue
+            setNeedsDisplay()
+        }
+        guard emitChange,
+              let payload = try? JSONSerialization.data(withJSONObject: [
+                "index": index,
+                "value": Double(points[index]),
+              ]) else { return }
+        emit?(.change, payload)
+        UIAccessibility.post(notification: .announcement, argument: sparklineAccessibilityValue)
     }
 
     private func applySparklineAutoDraw() {
@@ -2447,6 +2609,6 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        behavior == .bottomSheet || behavior == .slider
+        behavior == .bottomSheet || behavior == .slider || behavior == .sparkline
     }
 }

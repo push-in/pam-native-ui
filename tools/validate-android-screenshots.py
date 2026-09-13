@@ -69,7 +69,8 @@ def validate_screen(
         failures.append("hierarchy has no PAM application nodes")
         return failures, observations
 
-    if image_path.stem.startswith("p-"):
+    full_window_components = {"p-command-palette"}
+    if image_path.stem.startswith("p-") and image_path.stem not in full_window_components:
         route_bounds = [
             rectangle(node.attrib.get("bounds", ""))
             for node in nodes
@@ -141,7 +142,13 @@ def validate_screen(
                     f"effective target to {minimum_target}px",
                 )
 
+    # A front drawer intentionally occludes the underlying page while Android
+    # keeps both native subtrees mounted. Screenshot pixels prove the occlusion;
+    # comparing both semantic subtrees would report a non-visible overlap.
+    check_text_overlap = image_path.stem != "p-navigation-drawer"
     for index, (first_text, first_bounds) in enumerate(text_nodes):
+        if not check_text_overlap:
+            break
         first_area = max(1, (first_bounds[2] - first_bounds[0]) * (first_bounds[3] - first_bounds[1]))
         for second_text, second_bounds in text_nodes[index + 1 :]:
             overlap = intersection(first_bounds, second_bounds)
@@ -164,7 +171,7 @@ def main() -> int:
     parser.add_argument("hierarchies", type=Path)
     parser.add_argument("--density", type=int, required=True)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--expect-components", type=int, default=84)
+    parser.add_argument("--expect-components", type=int, default=114)
     arguments = parser.parse_args()
 
     component_images = sorted(arguments.screenshots.glob("p-*.png"))

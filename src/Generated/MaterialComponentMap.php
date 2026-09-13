@@ -97,6 +97,31 @@ final class MaterialComponentMap
   'p-virtual-list' => 'Pam\\MobileUi\\Material\\PVirtualList',
   'p-section-list' => 'Pam\\MobileUi\\Material\\PSectionList',
   'p-pull-to-refresh' => 'Pam\\MobileUi\\Material\\PPullToRefresh',
+  'p-app-scaffold' => 'Pam\\MobileUi\\Material\\PAppScaffold',
+  'p-navigation-bar' => 'Pam\\MobileUi\\Material\\PNavigationBar',
+  'p-navigation-rail' => 'Pam\\MobileUi\\Material\\PNavigationRail',
+  'p-bottom-app-bar' => 'Pam\\MobileUi\\Material\\PBottomAppBar',
+  'p-search-bar' => 'Pam\\MobileUi\\Material\\PSearchBar',
+  'p-pagination' => 'Pam\\MobileUi\\Material\\PPagination',
+  'p-segmented-button' => 'Pam\\MobileUi\\Material\\PSegmentedButton',
+  'p-password-field' => 'Pam\\MobileUi\\Material\\PPasswordField',
+  'p-masked-field' => 'Pam\\MobileUi\\Material\\PMaskedField',
+  'p-currency-field' => 'Pam\\MobileUi\\Material\\PCurrencyField',
+  'p-tag-input' => 'Pam\\MobileUi\\Material\\PTagInput',
+  'p-multi-select' => 'Pam\\MobileUi\\Material\\PMultiSelect',
+  'p-file-input' => 'Pam\\MobileUi\\Material\\PFileInput',
+  'p-date-range-picker' => 'Pam\\MobileUi\\Material\\PDateRangePicker',
+  'p-time-range-picker' => 'Pam\\MobileUi\\Material\\PTimeRangePicker',
+  'p-filter-bar' => 'Pam\\MobileUi\\Material\\PFilterBar',
+  'p-navigation-drawer' => 'Pam\\MobileUi\\Material\\PNavigationDrawer',
+  'p-command-palette' => 'Pam\\MobileUi\\Material\\PCommandPalette',
+  'p-progress-button' => 'Pam\\MobileUi\\Material\\PProgressButton',
+  'p-reorderable-list' => 'Pam\\MobileUi\\Material\\PReorderableList',
+  'p-swipe-actions' => 'Pam\\MobileUi\\Material\\PSwipeActions',
+  'p-data-grid' => 'Pam\\MobileUi\\Material\\PDataGrid',
+  'p-tree-select' => 'Pam\\MobileUi\\Material\\PTreeSelect',
+  'p-result-state' => 'Pam\\MobileUi\\Material\\PResultState',
+  'p-chart' => 'Pam\\MobileUi\\Material\\PChart',
 );
 
     /** @var array<string, int> */
@@ -190,6 +215,31 @@ final class MaterialComponentMap
   'PVirtualList' => 87,
   'PSectionList' => 88,
   'PPullToRefresh' => 89,
+  'PAppScaffold' => 90,
+  'PNavigationBar' => 91,
+  'PNavigationRail' => 92,
+  'PBottomAppBar' => 93,
+  'PSearchBar' => 94,
+  'PPagination' => 95,
+  'PSegmentedButton' => 96,
+  'PPasswordField' => 97,
+  'PMaskedField' => 98,
+  'PCurrencyField' => 99,
+  'PTagInput' => 100,
+  'PMultiSelect' => 101,
+  'PFileInput' => 102,
+  'PDateRangePicker' => 103,
+  'PTimeRangePicker' => 104,
+  'PFilterBar' => 105,
+  'PNavigationDrawer' => 106,
+  'PCommandPalette' => 107,
+  'PProgressButton' => 108,
+  'PReorderableList' => 109,
+  'PSwipeActions' => 110,
+  'PDataGrid' => 111,
+  'PTreeSelect' => 112,
+  'PResultState' => 113,
+  'PChart' => 114,
 );
 
     /** @var array<string, list<string>> */
@@ -483,6 +533,106 @@ final class MaterialComponentMap
   'pull-to-refresh' =>
   array (
     0 => 'p-pull-to-refresh',
+  ),
+  'app-scaffold' =>
+  array (
+    0 => 'p-app-scaffold',
+  ),
+  'navigation-bar' =>
+  array (
+    0 => 'p-navigation-bar',
+  ),
+  'navigation-rail' =>
+  array (
+    0 => 'p-navigation-rail',
+  ),
+  'bottom-app-bar' =>
+  array (
+    0 => 'p-bottom-app-bar',
+  ),
+  'search-bar' =>
+  array (
+    0 => 'p-search-bar',
+  ),
+  'pagination' =>
+  array (
+    0 => 'p-pagination',
+  ),
+  'segmented-button' =>
+  array (
+    0 => 'p-segmented-button',
+  ),
+  'password-field' =>
+  array (
+    0 => 'p-password-field',
+  ),
+  'masked-field' =>
+  array (
+    0 => 'p-masked-field',
+  ),
+  'currency-field' =>
+  array (
+    0 => 'p-currency-field',
+  ),
+  'tag-input' =>
+  array (
+    0 => 'p-tag-input',
+  ),
+  'multi-select' =>
+  array (
+    0 => 'p-multi-select',
+  ),
+  'file-input' =>
+  array (
+    0 => 'p-file-input',
+  ),
+  'date-range-picker' =>
+  array (
+    0 => 'p-date-range-picker',
+  ),
+  'time-range-picker' =>
+  array (
+    0 => 'p-time-range-picker',
+  ),
+  'filter-bar' =>
+  array (
+    0 => 'p-filter-bar',
+  ),
+  'navigation-drawer' =>
+  array (
+    0 => 'p-navigation-drawer',
+  ),
+  'command-palette' =>
+  array (
+    0 => 'p-command-palette',
+  ),
+  'progress-button' =>
+  array (
+    0 => 'p-progress-button',
+  ),
+  'reorderable-list' =>
+  array (
+    0 => 'p-reorderable-list',
+  ),
+  'swipe-actions' =>
+  array (
+    0 => 'p-swipe-actions',
+  ),
+  'data-grid' =>
+  array (
+    0 => 'p-data-grid',
+  ),
+  'tree-select' =>
+  array (
+    0 => 'p-tree-select',
+  ),
+  'result-state' =>
+  array (
+    0 => 'p-result-state',
+  ),
+  'chart' =>
+  array (
+    0 => 'p-chart',
   ),
 );
 
