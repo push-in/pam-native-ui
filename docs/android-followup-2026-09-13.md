@@ -751,3 +751,34 @@ specific tight vertical padding defect for the six measured button examples;
 it does not approve all grouped controls, FAB variations, themes, landscape,
 Samsung, iOS rendering or continuous animation. Those shared consumers still
 need device regression coverage before release.
+
+### Group regression exposed native row measurement
+
+On UI `539789e` / Native `3f6e17d`, Standard, Connected, Compact density and
+Long labels groups completed every selection step at font scale 1.0. The
+200% run stopped on Standard's first **outside-edge** tap: the helper taps
+3 dp above Day, and Week stayed selected. This does not establish that center
+taps fail; it leaves expanded-target behavior outside a grown parent pending.
+Evidence: `/tmp/pam-ui-group-intrinsic-20260913` (partial run, no final report).
+The emulator font scale was restored to 1.0 by cleanup.
+
+Inspection of `standard-font2.0.png` also found clipped second words in Full
+width: “7 days” and “30 days” displayed only the numbers. Native intrinsic row
+measurement was using the entire row width for each child, before final flex
+allocation narrowed those children. A candidate fix now shares main-axis
+allocation between measurement and final layout, including growth/shrink and
+constraints. This belongs to PAM Native's layout engine, not a UI height hack.
+
+New Rust regression `auto_row_measures_text_height_at_allocated_flex_width`
+models three equally allocated text-bearing pressables at 200% with shrinkable
+text. With allocated-width measurement disabled, the row incorrectly remains
+56 dp and the test fails; restoring it passes the two-line 96 dp requirement.
+The initial fixture incorrectly used Button/Value instead of Pressable/Text;
+only the corrected fixture plus the explicit disabled-fix check count as
+regression evidence. All 75 engine tests and all-target Clippy with warnings
+denied pass after restoring the fix.
+
+The native patch is **not installed on Android yet**. Actual group labels,
+runtime performance of the shared layout change, outside-edge taps, FAB
+interaction, iOS and Samsung validation remain pending. UI CI `34781564249`
+targets UI `539789e` with the older Native `3f6e17d`, not this new engine patch.
