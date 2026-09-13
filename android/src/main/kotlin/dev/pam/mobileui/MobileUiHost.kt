@@ -8019,7 +8019,9 @@ internal class MobileUiHost(
                 if (value.isEmpty()) return@setOnClickListener
                 emitter.emit(NativeViewEventKind.CHANGE, value.encodeToByteArray())
                 clearSheetSearch()
-                emitter.emit(NativeViewEventKind.NATIVE, byteArrayOf())
+                if (closeSheetItemOnPress) {
+                    emitter.emit(NativeViewEventKind.NATIVE, byteArrayOf())
+                }
             }
             sheetCustomAction = action
         }

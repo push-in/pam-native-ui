@@ -295,9 +295,10 @@ class MobileUiHostInstrumentedTest {
     @Test
     fun emptySearchableSheetSeparatesSearchAndNoDataMessage() {
         onMain {
+            val emitted = mutableListOf<Pair<Int, String>>()
             val host = MobileUiHost(
                 ApplicationProvider.getApplicationContext(),
-            ) { _, _ -> Unit }
+            ) { kind, payload -> emitted += kind to payload.decodeToString() }
             host.update(
                 mapOf(
                     "behavior" to WireValue.Integer(3),
@@ -307,6 +308,7 @@ class MobileUiHostInstrumentedTest {
                     "open" to WireValue.Flag(true),
                     "searchable" to WireValue.Flag(true),
                     "allowCustomValue" to WireValue.Flag(true),
+                    "closeOnSelect" to WireValue.Flag(false),
                     "enableDynamicSizing" to WireValue.Flag(true),
                     "noDataText" to WireValue.Text("Nothing matches"),
                     "customActionTextColor" to WireValue.Integer(0xff166534),
@@ -395,6 +397,10 @@ class MobileUiHostInstrumentedTest {
             assertTrue(
                 customAction.background is android.graphics.drawable.StateListDrawable,
             )
+            emitted.clear()
+            assertTrue(customAction.performClick())
+            assertEquals(listOf(NativeViewEventKind.CHANGE to "custom"), emitted)
+            assertEquals("", search.text?.toString())
 
             // Local selection portals reuse their Dialog and content tree. A
             // dismissed window must not leak the previous query into the next

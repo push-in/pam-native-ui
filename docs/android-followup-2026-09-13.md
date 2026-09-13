@@ -266,3 +266,11 @@ controlled values. It now hashes configured options before expansion. The
 matrix regression asserts the same modal marker before/after Rust is added;
 all 32,832 style and 456 render cases pass. Device confirmation of this change
 and completion of the dedicated interaction audit remain pending.
+
+The stable-identity build installed but the interaction audit still failed at
+custom creation (`/tmp/pam-ui-tag-stable-modal-20260913`). The identity change
+alone did not resolve dismissal. Android's custom-value action also emitted
+the native dismissal event unconditionally, unlike existing-option actions.
+The UI Android plugin now respects `closeOnSelect` before emitting that event;
+the instrumented regression expects only Change when it is false. This
+Kotlin change still needs compilation, instrumentation and device confirmation.
