@@ -4575,7 +4575,7 @@ final class ComponentRoute extends Component
                 )),
                 Text::make($this->tag)->style(new Style(
                     alignSelf: Align::Start,
-                    height: 24.0,
+                    minHeight: 24.0,
                     paddingHorizontal: 9.0,
                     borderRadius: 12.0,
                     backgroundColor: $theme->color(ColorToken::Accent),
