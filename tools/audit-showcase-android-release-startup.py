@@ -85,6 +85,7 @@ def main() -> int:
     run(adb, "shell", "logcat", "-c")
 
     measurements: dict[str, int] = {}
+    dismissed_initial_overlays: list[str] = []
     for index, tag in enumerate(tags, start=1):
         launch = run(
             adb,
@@ -105,6 +106,15 @@ def main() -> int:
             raise AuditFailure(f"{tag} launch did not report TotalTime")
         measurements[tag] = int(match.group(1))
         time.sleep(args.settle_seconds)
+
+        # These showcase examples intentionally start expanded. UiAutomator
+        # exposes only the active modal, not the underlying route heading.
+        # Dismiss only these known initial overlays after measuring startup;
+        # keep the same strict route/top assertions for the underlying page.
+        if tag in {"p-command-palette", "p-navigation-drawer"}:
+            run(adb, "shell", "input", "keyevent", "BACK")
+            time.sleep(args.settle_seconds)
+            dismissed_initial_overlays.append(tag)
 
         remote = f"/sdcard/pam-startup-{index:02d}.xml"
         route_at_top = False
@@ -175,6 +185,7 @@ def main() -> int:
             "runtimeErrorCount": len(runtime_errors),
         },
         "coldStartMs": measurements,
+        "dismissedInitialOverlays": dismissed_initial_overlays,
         "runtimeErrors": runtime_errors,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
