@@ -288,3 +288,30 @@ for existing sheet items. Commit `04c3201` unifies both paths under the same
 property policy and adds a UIKit precedence test. It was pushed to draft PR
 46; compilation/tests remain pending on the iOS CI runner. Android build
 cleanup removed 904.9 MiB.
+
+Tag Input's passing report/captures are preserved in the ignored local archive
+`docs/assets/android/audit/2026-09-13/tag-interaction-fixed.tar.gz`, verified by
+`gzip -t`, SHA-256
+`13c4c0da12c4a1882fdfd77536cc60f302010875ed7b6072ad66000c4e23f54f`.
+
+Native CI run `34774898818` for `d6a6a87` completed all six jobs successfully.
+The newest UI commits had no automatically triggered run. Manual UI run
+`34775988382` failed during checkout because the supplied abbreviated Native
+SHA was interpreted as a branch/tag. It did not establish code failures.
+Replacement run `34776129611` uses full Native SHA
+`d6a6a8772e315551d0e4b3d3bca37d9c9ccb8ff5` against UI `04c3201` and is running.
+The corrected 114-route startup audit on the tag-fixed build is also running;
+its intended report is `/tmp/pam-ui-startup-114-tag-fixed-20260913.json`.
+
+That startup run subsequently completed successfully: **114/114 cold launches**,
+p50 329 ms, p95 386 ms, p99 410 ms, maximum 411 ms, and no matched runtime log
+errors. Device: API 36 x86_64 emulator. Installed APK SHA-256:
+`11ab30e2cf1525f0426850a8af629637dad4b43da453d0cb6da015b337306919`.
+Report SHA-256:
+`62d6210986d5a77956dbd2ab0b72b9cead34e8c41873c2c7438d5d08a4b9c96e`.
+A local copy is retained at
+`docs/assets/android/audit/2026-09-13/startup-114-tag-fixed.json`.
+Only Command Palette required intentional overlay dismissal. These numbers
+measure Activity cold-launch time, one sample per route; they do not certify
+frame smoothness, interaction latency, physical-device performance or all
+component variants. No release/public documentation gate is waived.
