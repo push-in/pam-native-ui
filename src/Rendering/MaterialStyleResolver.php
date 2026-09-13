@@ -1443,20 +1443,28 @@ final class MaterialStyleResolver
             }
             $textareaHeight = $textareaBaseHeight
                 + (24.0 * max(0, $textareaRows - 3));
+            $intrinsicFieldHeight = $selectionField || in_array($part, [
+                'PTextField', 'PPasswordField', 'PMaskedField', 'PCurrencyField',
+                'PColorInput', 'PDateInput',
+            ], true);
 
             return new Style(
                 widthPercent: 100.0,
-                height: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
+                // Native font scaling must be allowed to expand the label and
+                // editor lanes beyond the theme's minimum touch target.
+                height: $intrinsicFieldHeight
+                    ? null
+                    : ($part === 'PTextarea' ? $textareaHeight : $controlHeight),
                 minHeight: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
                 paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
-                paddingTop: $selectionField ? 0.0 : ($part === 'PNumberInput'
+                paddingTop: $selectionField ? ($density === MaterialDensity::Default ? 8.0 : 4.0) : ($part === 'PNumberInput'
                     ? 0.0
                     : match ($density) {
                         MaterialDensity::Comfortable => 4.0,
                         MaterialDensity::Compact => 0.0,
                         default => 8.0,
                     }),
-                paddingBottom: $selectionField ? 0.0 : ($part === 'PNumberInput'
+                paddingBottom: $selectionField ? 4.0 : ($part === 'PNumberInput'
                     ? 0.0
                     : match ($density) {
                         MaterialDensity::Comfortable => 2.0,

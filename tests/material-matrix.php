@@ -766,6 +766,11 @@ $outlinedTextField = $textFieldClass::make([
     'error' => true,
 ])->toElement();
 $outlinedTextFieldHost = $outlinedTextField->properties()[PropKey::HostProperties->value] ?? null;
+$underlinedTextField = $textFieldClass::make([
+    'label' => 'Email',
+    'variant' => 'underlined',
+])->toElement();
+$underlinedTextFieldHost = $underlinedTextField->properties()[PropKey::HostProperties->value] ?? null;
 $filledTextFieldInput = null;
 $filledTextFieldStack = [$filledTextField];
 while ($filledTextFieldStack !== []) {
@@ -779,12 +784,14 @@ while ($filledTextFieldStack !== []) {
 if (
     !$filledTextFieldHost instanceof BinaryValue
     || !$outlinedTextFieldHost instanceof BinaryValue
+    || !$underlinedTextFieldHost instanceof BinaryValue
     || !$filledTextFieldInput instanceof \Pam\Native\Element
     || ($filledTextFieldInput->properties()[
         PropKey::AccessibilityLabel->value
     ] ?? null) !== 'Email'
-    || (Wire::decodeMap($filledTextFieldHost->bytes)['indicatorOnly'] ?? null) !== true
+    || (Wire::decodeMap($filledTextFieldHost->bytes)['indicatorOnly'] ?? null) !== false
     || (Wire::decodeMap($outlinedTextFieldHost->bytes)['indicatorOnly'] ?? null) !== false
+    || (Wire::decodeMap($underlinedTextFieldHost->bytes)['indicatorOnly'] ?? null) !== true
     || (Wire::decodeMap($filledTextFieldHost->bytes)['outlineWidth'] ?? null) !== 2.0
     || (Wire::decodeMap($outlinedTextFieldHost->bytes)['outlineWidth'] ?? null) !== 2.0
 ) {
@@ -2058,6 +2065,47 @@ if (
     throw new RuntimeException(
         'Material text inputs must be readonly-aware and remain inline in landscape.',
     );
+}
+
+foreach (['p-text-field', 'p-masked-field', 'p-currency-field'] as $affixTag) {
+    $adornedField = $tags[$affixTag]::make([
+        'label' => 'Amount',
+        'prefix' => 'BRL total',
+        'suffix' => 'per month',
+        'modelValue' => '123',
+        'clearable' => true,
+    ])->toElement();
+    $stack = [$adornedField];
+    $adornedRow = null;
+    while ($stack !== []) {
+        $candidate = array_pop($stack);
+        $rowChildren = $candidate->children();
+        if (
+            $candidate->kind() === NodeKind::Row
+            && count($rowChildren) === 3
+            && $rowChildren[1]->kind() === NodeKind::Input
+        ) {
+            $adornedRow = $candidate;
+            break;
+        }
+        array_push($stack, ...$rowChildren);
+    }
+    if (!$adornedRow instanceof \Pam\Native\Element) {
+        throw new RuntimeException($affixTag.' must keep its affixes and input in one row.');
+    }
+    [$leading, $editable, $trailing] = $adornedRow->children();
+    if (
+        ($leading->properties()[PropKey::Text->value] ?? null) !== 'BRL total'
+        || ($trailing->properties()[PropKey::Text->value] ?? null) !== 'per month'
+        || isset($leading->properties()[PropKey::PositionType->value])
+        || isset($trailing->properties()[PropKey::PositionType->value])
+        || isset($leading->properties()[PropKey::Height->value])
+        || ($editable->properties()[PropKey::PaddingLeft->value] ?? null) !== 0.0
+        || ($editable->properties()[PropKey::PaddingRight->value] ?? null) !== 0.0
+        || ($adornedRow->properties()[PropKey::PaddingRight->value] ?? null) !== 32.0
+    ) {
+        throw new RuntimeException($affixTag.' must measure affixes in flow and reserve its clear action.');
+    }
 }
 
 $textareaAffixes = $tags['p-textarea']::make([
@@ -3597,8 +3645,14 @@ $assertGeometry('PTab', ['density' => 'comfortable'], [
 $assertGeometry('PTab', ['density' => 'compact'], [
     'minHeight' => 48.0,
 ]);
+foreach (['PTextField', 'PPasswordField', 'PMaskedField', 'PCurrencyField', 'PColorInput', 'PDateInput'] as $scalableField) {
+    $assertGeometry($scalableField, [], [
+        'height' => null,
+        'minHeight' => 56.0,
+    ]);
+}
 $assertGeometry('PTextField', [], [
-    'height' => 56.0,
+    'height' => null,
     'minHeight' => 56.0,
     'paddingTop' => 8.0,
     'paddingBottom' => 4.0,
@@ -3608,11 +3662,11 @@ $assertGeometry('PTextField', [], [
     'backgroundColor' => $themes[0]['theme']->color(ColorToken::SurfaceContainerLow),
 ]);
 $assertGeometry('PTextField', ['density' => 'comfortable'], [
-    'height' => 48.0,
+    'height' => null,
     'minHeight' => 48.0,
 ]);
 $assertGeometry('PTextField', ['density' => 'compact'], [
-    'height' => 40.0,
+    'height' => null,
     'minHeight' => 40.0,
     'paddingTop' => 0.0,
     'paddingBottom' => 0.0,
@@ -4568,21 +4622,39 @@ $assertGeometry('POtpInput', [], [
 $assertGeometry('POtpInput', ['divided' => true], [
     'width' => 360.0,
 ]);
+foreach (['PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'] as $selectionField) {
+    $assertGeometry($selectionField, [], [
+        'height' => null,
+        'minHeight' => 64.0,
+        'paddingTop' => 8.0,
+        'paddingBottom' => 4.0,
+    ]);
+    $assertGeometry($selectionField, ['density' => 'compact'], [
+        'height' => null,
+        'minHeight' => 48.0,
+        'paddingTop' => 4.0,
+        'paddingBottom' => 4.0,
+    ]);
+}
 $assertGeometry('PAutocomplete', [], [
-    'height' => 64.0,
+    'height' => null,
     'minHeight' => 64.0,
+    'paddingTop' => 8.0,
+    'paddingBottom' => 4.0,
     'animationDurationMs' => 200,
 ]);
 $assertGeometry('PAutocomplete', ['chips' => true], [
-    'height' => 64.0,
+    'height' => null,
 ]);
 $assertGeometry('PSelect', ['density' => 'compact'], [
-    'height' => 48.0,
+    'height' => null,
     'minHeight' => 48.0,
+    'paddingTop' => 4.0,
 ]);
 $assertGeometry('PCombobox', ['density' => 'comfortable'], [
-    'height' => 56.0,
+    'height' => null,
     'minHeight' => 56.0,
+    'paddingTop' => 4.0,
 ]);
 $assertGeometry('PImg', ['cardMedia' => true], [
     'minHeight' => 200.0,

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import importlib.util
+import argparse
+import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 
@@ -57,6 +60,41 @@ class FakeShowcaseAudit(DeviceStateMixin, SHOWCASE.AndroidAudit):
 
 
 class AndroidAuditDeviceLockTest(unittest.TestCase):
+    def test_mid_run_lock_preserves_partial_results(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            args = argparse.Namespace(
+                serial="phone", package="package", activity="activity",
+                settle_seconds=0.0, evidence_directory=Path(directory),
+                output=output, tags=["p-app-scaffold", "p-chart"], repetitions=1,
+            )
+            audit = MagicMock()
+            audit.device_locked.side_effect = [False, True]
+            with (
+                patch.object(SHOWCASE, "parse_args", return_value=args),
+                patch.object(SHOWCASE, "AndroidAudit", return_value=audit),
+                patch.object(SHOWCASE, "assert_route_top"),
+                patch.object(SHOWCASE, "assert_healthy"),
+                patch.object(SHOWCASE, "exercise", return_value=(None, False)),
+            ):
+                audit.shell.side_effect = lambda *args, **kwargs: (
+                    "package:/data/app/base.apk" if args[:2] == ("pm", "path")
+                    else "abc123 /data/app/base.apk" if args[0] == "sha256sum"
+                    else "31" if args == ("getprop", "ro.build.version.sdk")
+                    else "2.0" if args == ("settings", "get", "system", "font_scale")
+                    else ""
+                )
+                self.assertEqual(2, SHOWCASE.main())
+            report = json.loads(output.read_text())
+            self.assertFalse(report["complete"])
+            self.assertEqual("2.0", report["device"]["fontScale"])
+            self.assertFalse(report["device"]["systemAnimationsEnabled"])
+            self.assertTrue(report["interrupted"])
+            self.assertEqual(1, report["passedCount"])
+            self.assertEqual(1, report["untestedCount"])
+            self.assertEqual(0, report["failedCount"])
+            audit.restore.assert_called_once()
+
     def audits(self):
         return (FakeAutocompleteAudit(), FakeShowcaseAudit())
 

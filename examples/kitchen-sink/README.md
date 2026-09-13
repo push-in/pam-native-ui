@@ -17,27 +17,30 @@ tree:
 
 ## Run from this workspace
 
-Keep `pam-native-ui` and `pam-native` as sibling directories, then run:
+Keep `pam-native-ui` and `pam-native` as sibling directories. Build this example
+from an isolated application directory outside both repositories, following
+[the isolated Composer build procedure](../../docs/build-hygiene.md).
+Do not mirror the UI package into `vendor` inside its own source tree: that can
+copy build caches recursively or leave an older installed package in use.
 
-```bash
-cd pam-native-ui/examples/kitchen-sink
-composer update
-PAM_NATIVE_HOME=../../../pam-native pam mobile run
-```
+Before installing dependencies, inspect the manifests and lockfile, check
+package compatibility, and run `composer install --dry-run`. Verify the actual
+installed Native/UI versions as well as the lockfile before building.
 
 During PAM development, build the PAM CLI repository first if it is not already
 available. The SDK and CLI are separate repositories.
 
 ```bash
-cargo build --release --manifest-path ../../../../pam/Cargo.toml
+cargo build --release --manifest-path /path/to/pam/Cargo.toml
 ```
 
-The example's path repositories intentionally point to the two local packages.
+The example's path repositories intentionally point to the two local packages;
+adjust these paths in the isolated copy to the external package sources.
 For a normal application, remove the `repositories` section and install the
 published packages instead:
 
 ```bash
-composer require pushinbr/pam-native:^0.2 pushinbr/pam-native-ui:^0.2
+composer require pushinbr/pam-native:^1.0.27 pushinbr/pam-native-ui:^1.0.9
 pam mobile codegen
 pam mobile run
 ```
