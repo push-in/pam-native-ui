@@ -1115,6 +1115,13 @@ final class ComponentRenderer
             $prefix = self::text($props, 'prefix');
             $suffix = self::text($props, 'suffix');
             $materialComponent = $props['__materialComponent'];
+            $inlineAffixes = ($prefix !== '' || $suffix !== '')
+                && !self::flag($props, 'multiline')
+                && in_array($materialComponent, [
+                    'PTextField', 'PMaskedField', 'PCurrencyField',
+                ], true);
+            $prefixElement = null;
+            $suffixElement = null;
             $modelText = self::text(
                 $props,
                 'modelValue',
@@ -1629,7 +1636,7 @@ final class ComponentRenderer
                 $hasNativeInput = true;
             }
             if ($prefix !== '') {
-                $fieldChildren[] = Text::make($prefix)->style(new Style(
+                $prefixElement = Text::make($prefix)->style(new Style(
                     positionType: PositionType::Absolute,
                     left: 0.0,
                     // Android's top-aligned EditText and its adjacent TextView
@@ -1644,9 +1651,10 @@ final class ComponentRenderer
                     fontSize: 16.0,
                     lineHeight: 24.0,
                 ));
+                $fieldChildren[] = $prefixElement;
             }
             if ($suffix !== '') {
-                $fieldChildren[] = Text::make($suffix)->style(new Style(
+                $suffixElement = Text::make($suffix)->style(new Style(
                     positionType: PositionType::Absolute,
                     right: $clearable ? 32.0 : 0.0,
                     top: $materialComponent === 'PTextarea' ? 13.0 : null,
@@ -1658,6 +1666,7 @@ final class ComponentRenderer
                     lineHeight: 24.0,
                     textAlign: TextAlignment::End,
                 ));
+                $fieldChildren[] = $suffixElement;
             }
             if ($clearable) {
                 $clear = Pressable::make(
@@ -1777,6 +1786,50 @@ final class ComponentRenderer
                         widthPercent: 100.0,
                     ));
                 }
+            }
+            if ($inlineAffixes && $hasNativeInput) {
+                $inlineChildren = [];
+                foreach ($fieldChildren as $fieldChild) {
+                    if ($fieldChild === $prefixElement || $fieldChild === $suffixElement) {
+                        continue;
+                    }
+                    if ($fieldChild->kind() !== NodeKind::Input) {
+                        $inlineChildren[] = $fieldChild;
+                        continue;
+                    }
+                    $adornedInput = [];
+                    foreach ([$prefix, null, $suffix] as $affix) {
+                        if ($affix === null) {
+                            $adornedInput[] = $fieldChild->style(new Style(
+                                width: 0.0,
+                                widthPercent: 0.0,
+                                minWidth: 0.0,
+                                flexGrow: 1.0,
+                                paddingLeft: 0.0,
+                                paddingRight: 0.0,
+                            ));
+                        } elseif ($affix !== '') {
+                            $adornedInput[] = Text::make($affix)->style(new Style(
+                                minHeight: 24.0,
+                                textColor: $theme->color(ColorToken::MutedForeground),
+                                fontSize: 16.0,
+                                lineHeight: 24.0,
+                            ));
+                        }
+                    }
+                    // All three native text views share the row's height and
+                    // vertical alignment. Affix width is measured, not a fixed
+                    // 32 dp overlay that can collide with the editable value.
+                    $inlineChildren[] = Row::make(...$adornedInput)->style(new Style(
+                        widthPercent: 100.0,
+                        flexGrow: 1.0,
+                        minHeight: 24.0,
+                        alignItems: Align::Stretch,
+                        gap: 8.0,
+                        paddingRight: max(0.0, $inputPaddingRight - ($suffix !== '' ? 32.0 : 0.0)),
+                    ));
+                }
+                $fieldChildren = $inlineChildren;
             }
             $selectionField = in_array($materialComponent, [
                 'PSelect', 'PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect',

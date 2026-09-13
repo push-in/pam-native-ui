@@ -2067,6 +2067,47 @@ if (
     );
 }
 
+foreach (['p-text-field', 'p-masked-field', 'p-currency-field'] as $affixTag) {
+    $adornedField = $tags[$affixTag]::make([
+        'label' => 'Amount',
+        'prefix' => 'BRL total',
+        'suffix' => 'per month',
+        'modelValue' => '123',
+        'clearable' => true,
+    ])->toElement();
+    $stack = [$adornedField];
+    $adornedRow = null;
+    while ($stack !== []) {
+        $candidate = array_pop($stack);
+        $rowChildren = $candidate->children();
+        if (
+            $candidate->kind() === NodeKind::Row
+            && count($rowChildren) === 3
+            && $rowChildren[1]->kind() === NodeKind::Input
+        ) {
+            $adornedRow = $candidate;
+            break;
+        }
+        array_push($stack, ...$rowChildren);
+    }
+    if (!$adornedRow instanceof \Pam\Native\Element) {
+        throw new RuntimeException($affixTag.' must keep its affixes and input in one row.');
+    }
+    [$leading, $editable, $trailing] = $adornedRow->children();
+    if (
+        ($leading->properties()[PropKey::Text->value] ?? null) !== 'BRL total'
+        || ($trailing->properties()[PropKey::Text->value] ?? null) !== 'per month'
+        || isset($leading->properties()[PropKey::PositionType->value])
+        || isset($trailing->properties()[PropKey::PositionType->value])
+        || isset($leading->properties()[PropKey::Height->value])
+        || ($editable->properties()[PropKey::PaddingLeft->value] ?? null) !== 0.0
+        || ($editable->properties()[PropKey::PaddingRight->value] ?? null) !== 0.0
+        || ($adornedRow->properties()[PropKey::PaddingRight->value] ?? null) !== 32.0
+    ) {
+        throw new RuntimeException($affixTag.' must measure affixes in flow and reserve its clear action.');
+    }
+}
+
 $textareaAffixes = $tags['p-textarea']::make([
     'label' => 'Message',
     'modelValue' => 'Hello',

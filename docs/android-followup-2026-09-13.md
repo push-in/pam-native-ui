@@ -51,3 +51,27 @@ This is a local reproducibility artifact, not a publicly accessible download.
   large text, landscape, accessibility and measured performance remain pending.
 - These results do not replace existing release gates or approve all 114
   components as a finished premium library.
+
+## Subsequent in-flow affix correction
+
+Text Field, Masked Field and Currency Field now compose single-line adornments
+and the editor in a shared, stretched native row. Prefix/suffix widths are
+measured; the editor receives remaining space, and clear-action space stays
+reserved separately. Multiline and specialized controls are unchanged.
+This uses existing Native primitives; no new native protocol property was
+needed for this UI composition change.
+
+Validation after this correction:
+
+- Material matrix, including long prefix/suffix structural regressions: passed.
+- PHPStan level 9, theme runtime and recipe matrix: passed.
+- Optimized Android build and installation: passed.
+- Currency Field actual input: `73125` retained and formatted as `731,25`.
+- Currency Field screenshot inspected at font scales 1.0 and 1.3: affix/value
+  alignment improved, with no overlap in the displayed BRL, USD, integer and
+  error examples. The original emulator font scale was restored to 1.0.
+
+Raw evidence is in `/tmp/pam-ui-flow-affixes-20260913.json` and the matching
+directory. The first `font-scale-130.png` captured the launcher and is not
+validation evidence; `currency-font-scale-130.png` is the inspected app screen.
+Larger scales, long affixes on-device, landscape and iOS/Samsung remain open.
