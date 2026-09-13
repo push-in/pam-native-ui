@@ -119,3 +119,16 @@ fully visible on two lines, the route caption grows, and the visible monetary
 values remain inside their fields. This resolves the specific title clipping
 reproduced above on the API 36 emulator. It does not establish all-component,
 all-scale or physical Samsung approval. Font scale was restored to 1.0.
+
+## Integrated field interaction follow-up
+
+The Native `451e296` build passed the six-family showcase round: text, mask,
+currency, password and color entry, plus opening/closing the date input.
+Report: `/tmp/pam-ui-integrated-fields-20260913.json`.
+
+Password coverage was then strengthened beyond masked-character changes. The
+audit now taps **Show password**, verifies the exact typed value and exposed
+password semantics, taps **Hide password**, and verifies secure semantics are
+restored. This flow passed on the emulator; its revealed/hidden XML snapshots
+and report are under `/tmp/pam-ui-password-toggle-20260913` and the matching
+`.json` file. The six device-lock audit unit tests also passed.

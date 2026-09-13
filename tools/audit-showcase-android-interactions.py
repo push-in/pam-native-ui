@@ -696,6 +696,30 @@ def exercise(
             retained = after_values != before_values
         if not retained:
             raise AuditFailure("typed text was not retained by the native input")
+        if tag == "p-password-field":
+            for label, revealed in (("Show password", True), ("Hide password", False)):
+                toggles = [
+                    node for node in after.nodes()
+                    if enabled(node) and node.attrib.get("content-desc") == label
+                ]
+                if not toggles:
+                    raise AuditFailure(f"password action is unavailable: {label}")
+                audit.tap(bounds(toggles[0]))
+                time.sleep(0.8)
+                after = audit.dump(f"{evidence_name}-{'revealed' if revealed else 'hidden'}")
+                assert_healthy(after, route)
+                editors = [
+                    node for node in after.nodes()
+                    if node.attrib.get("class") == "android.widget.EditText"
+                    and enabled(node)
+                ]
+                if not editors:
+                    raise AuditFailure("password editor disappeared after toggling visibility")
+                editor = editors[0]
+                if editor.attrib.get("password") != ("false" if revealed else "true"):
+                    raise AuditFailure("password visibility did not follow the toggle")
+                if revealed and editor.attrib.get("text") != typed_value:
+                    raise AuditFailure("revealing the password did not preserve the typed value")
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         audit.back()
         return after, True
