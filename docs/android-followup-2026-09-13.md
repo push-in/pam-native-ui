@@ -1289,3 +1289,29 @@ An invalid label exits 2 before any ADB call; this was checked without a device.
 These runner-only follow-ups do not alter the tested selection implementation.
 Native diagnostic CI 34789501902 and UI CI 34789550326 remain in progress;
 neither is a release approval.
+
+### Samsung return and artifact collection correction
+
+Samsung SM-G973F was connected and unlocked. Built/installed the current arm64
+release-mode showcase: Rust 9.69s, Gradle 4s, cold start 1267ms, automatic cleanup
+88.1 MiB. Staged and source UI renderer hashes matched. APK SHA-256:
+`7340ab84b247189c9f5b80665cdc171210b48a1d5479c1f6af24c8cff8d328f9`.
+Five normal-font cases passed: mandatory/optional/multiple two-tap transitions,
+Five options (7419 track pixels at >=3:1 contrast), and Disabled item. During RTL
+the foreground became Samsung's launcher, so the audit exited 1 and restored
+the original font scale 1.1. Logcat showed a HOME launch; the precise cause was
+not established. RTL and all enlarged-font physical cases remain unapproved.
+Report `/tmp/pam-ui-samsung-toggle-transitions-20260913/report.json`, SHA-256
+`3487e25931de61dfa4c142d410d6900f7e334e9efbc4db16799fcd282cd54f5d`.
+
+Native CI 34789501902 failed the initial-indicator assertion on both Android
+versions. The shell trap could not find the app-owned evidence directory after
+Gradle finished, so no PNGs were uploaded. Native a904d22 replaces that trap with
+Gradle's `additionalTestOutputDir` collection (see the
+[Android test runner implementation](https://android.googlesource.com/platform/tools/base/+/95fd82a56d2c27676620cd25ae6fec291c666977/android-test/android-test-junit-engine/src/main/java/com/android/tools/androidtest/testengine/AndroidDeviceDescriptor.kt)).
+The fixture saves all three already-captured frames on success and failure,
+without redrawing or relaxing assertions. A scoped local connected Gradle run
+passed in 9s and exported initial/shown/hidden PNGs to
+`android/app/build/outputs/connected_android_test_additional_output/`.
+Initial PNG was inspected and its dark indicator is visible. This verifies the
+collection mechanism locally, not the unresolved CI renderer behavior.
