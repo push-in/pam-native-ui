@@ -94,3 +94,14 @@ The showcase heading still displays only “Currency” instead of “Currency F
 at 200%. Its wrapping/measurement and the fixed-height tag caption require a
 separate correction. This screenshot does not approve the whole screen or all
 six field families at 200%.
+
+## Native measurement integration check
+
+The build combining Native `ef981e6` and UI `0299e83` installed successfully.
+`native-width-final-font-200.png` confirms the route tag caption expands and
+the visible currency values remain inside their surfaces. It does **not**
+confirm the title fix: only “Currency” is visible. The UI hierarchy still
+contains the complete `Currency Field` text at bounds `[84,246][880,404]`.
+The title therefore still receives a single-line-height frame at this scale.
+Further text measurement investigation is required; do not approve the heading
+based on the passing parent-row regression alone. Font scale was restored.
