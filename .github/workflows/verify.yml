@@ -6,7 +6,7 @@ on:
       native_ref:
         description: PAM Native branch, tag or commit to certify against
         required: false
-        default: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+        default: 9468f8e3a6f20d77c0384d463494560792f09843
         type: string
   push:
     branches:
@@ -21,8 +21,8 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
-  PAM_NATIVE_REF: ${{ inputs.native_ref || '30ca5a0ccf4d70c2ca7393a96a674cf124042abc' }}
+  PAM_NATIVE_COMMIT: 9468f8e3a6f20d77c0384d463494560792f09843
+  PAM_NATIVE_REF: ${{ inputs.native_ref || '9468f8e3a6f20d77c0384d463494560792f09843' }}
 
 jobs:
   composer-compatibility:
@@ -60,7 +60,7 @@ jobs:
       - name: Preflight dependency graph
         run: |
           composer config repositories.pam-native-candidate \
-            '{"type":"path","url":"pam-native/packages/native","options":{"symlink":false,"versions":{"pushinbr/pam-native":"1.0.26"}}}'
+            '{"type":"path","url":"pam-native/packages/native","options":{"symlink":false,"versions":{"pushinbr/pam-native":"1.0.27"}}}'
           arguments=(--no-interaction --no-progress --prefer-dist)
           if [[ '${{ matrix.graph }}' == lowest ]]; then
             arguments+=(--prefer-lowest --prefer-stable)
@@ -133,7 +133,7 @@ jobs:
       - name: Install package dependencies
         run: |
           composer config repositories.pam-native-candidate \
-            '{"type":"path","url":"pam-native/packages/native","options":{"symlink":false,"versions":{"pushinbr/pam-native":"1.0.26"}}}'
+            '{"type":"path","url":"pam-native/packages/native","options":{"symlink":false,"versions":{"pushinbr/pam-native":"1.0.27"}}}'
           composer install --no-interaction --no-progress --prefer-dist
 
       - name: Validate package
@@ -176,9 +176,9 @@ jobs:
       matrix:
         native:
           - label: minimum
-            commit: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+            commit: 9468f8e3a6f20d77c0384d463494560792f09843
           - label: current
-            commit: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+            commit: 9468f8e3a6f20d77c0384d463494560792f09843
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
@@ -231,9 +231,9 @@ jobs:
       matrix:
         native:
           - label: minimum
-            commit: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+            commit: 9468f8e3a6f20d77c0384d463494560792f09843
           - label: current
-            commit: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+            commit: 9468f8e3a6f20d77c0384d463494560792f09843
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7

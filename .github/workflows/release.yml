@@ -19,7 +19,7 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+  PAM_NATIVE_COMMIT: 9468f8e3a6f20d77c0384d463494560792f09843
 
 jobs:
   ecosystem-compatibility:
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+          ref: 9468f8e3a6f20d77c0384d463494560792f09843
           path: pam-native
       - uses: actions/setup-java@v5
         with:
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+          ref: 9468f8e3a6f20d77c0384d463494560792f09843
           path: pam-native
       - name: Test and build against the minimum UIKit boundary
         env:
@@ -387,7 +387,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: 30ca5a0ccf4d70c2ca7393a96a674cf124042abc
+          ref: 9468f8e3a6f20d77c0384d463494560792f09843
           path: pam-native-candidate
           persist-credentials: false
       - uses: actions/setup-java@v5

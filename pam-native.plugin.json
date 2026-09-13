@@ -3,7 +3,7 @@
     "version": 1,
     "protocol": 1,
     "pamNative": {
-        "minimum": "1.0.26",
+        "minimum": "1.0.27",
         "maximumExclusive": "2.0.0"
     },
     "capabilities": {
