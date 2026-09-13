@@ -105,3 +105,17 @@ contains the complete `Currency Field` text at bounds `[84,246][880,404]`.
 The title therefore still receives a single-line-height frame at this scale.
 Further text measurement investigation is required; do not approve the heading
 based on the passing parent-row regression alone. Font scale was restored.
+
+## Confirmed title wrapping correction
+
+Native `451e296` additionally makes line breaking use the same platform width
+correction as intrinsic text width. A regression at the observed 303-point
+width failed before this change (one line despite a wider measured title) and
+passed afterward. All 73 engine tests and Clippy with warnings denied passed.
+
+The optimized Android build with this revision installed successfully.
+`native-wrap-consistent-font-200.png` was inspected: **Currency Field** is now
+fully visible on two lines, the route caption grows, and the visible monetary
+values remain inside their fields. This resolves the specific title clipping
+reproduced above on the API 36 emulator. It does not establish all-component,
+all-scale or physical Samsung approval. Font scale was restored to 1.0.
