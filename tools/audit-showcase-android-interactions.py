@@ -1093,6 +1093,15 @@ def exercise(
             opened = audit.dump(f"{evidence_name}-open")
             if "Native overlay" not in opened.all_text():
                 raise AuditFailure("p-popover trigger did not expose its content")
+            actions = [n for n in interactive_nodes(opened)
+                if n.attrib.get("content-desc") == "Acknowledge popover details"]
+            if len(actions) != 1 or "Acknowledged: 0" not in opened.all_text():
+                raise AuditFailure("popover must expose one internal action and initial feedback")
+            audit.tap(bounds(actions[0]))
+            acknowledged = audit.dump(f"{evidence_name}-acknowledged")
+            if "Native overlay" not in acknowledged.all_text() or "Acknowledged: 1" not in acknowledged.all_text():
+                raise AuditFailure("popover internal action must update content without dismissing it")
+            audit.settled_screenshot_hash(f"{evidence_name}-acknowledged")
             # Dismiss through the component's scrim. Android Back can finish
             # the freshly deep-linked Activity and reveal another installed
             # build, which tests task history rather than popover behavior.

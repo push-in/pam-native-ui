@@ -1,5 +1,24 @@
 # Anchored overlays — scoped Samsung batch
 
+## Interactive Popover follow-up
+
+The showcase now includes an existing text-variant UI button and a controlled
+acknowledgement counter inside each Popover, not just static copy. The integrated
+audit opens the overlay, invokes the action, requires the counter to change from
+0 to 1 while the overlay remains open, then dismisses outside and checks that
+overlay content is no longer accessible.
+
+`/tmp/pam-popover-action-20260914.json` passes on emulator-5554/API 36, font 1.0,
+APK `333d2a830c7e53d502fd810c5d961c7b8a2ec8a3c5ea2cbe1abdff5c0f5f932c`.
+The acknowledged screenshot was inspected: supporting text, text button and
+counter fit inside the surface with bottom padding. This verifies one anchored
+placement and internal action, not every placement, keyboard focus, reopening,
+large fonts, TalkBack, motion or iOS. No native workaround or primitive was added.
+The matrix, targeted showcase PHPStan and Python syntax checks pass. One build
+took 10 seconds and cleaned 96.8 MiB of previous development artifacts.
+
+## Historical Samsung sizing batch
+
 APK: `ca9d10ec355cf24b51811232880cab0d0596e81ab7e837af21c76ec7579d2015`.
 Report: `/tmp/pam-overlays-batch-20260914.json`.
 Captures/XML: `/tmp/pam-overlays-batch-20260914`.

@@ -4268,6 +4268,9 @@ final class ComponentRoute extends Component
                     }),
                 )->style(new Style(widthPercent: 100.0, gap: 8.0));
             } elseif ($this->tag === 'p-popover') {
+                $actionCount = is_int($this->sampleValues[$index] ?? null)
+                    ? $this->sampleValues[$index] : 0;
+                $button = MaterialComponentMap::TAGS['p-btn'];
                 // Leave open state uncontrolled so the native anchored-overlay
                 // host owns tap, outside-dismiss and placement behaviour.
                 unset($previewProps['open'], $previewProps['isOpen']);
@@ -4312,6 +4315,18 @@ final class ComponentRoute extends Component
                             lineHeight: 20.0,
                             textColor: $theme->color(ColorToken::MutedForeground),
                         )),
+                    $button::make([
+                        'text' => 'Acknowledge details',
+                        'variant' => MaterialVariant::Text->value,
+                        'accessibilityLabel' => 'Acknowledge popover details',
+                    ])->onPress(function () use ($index, $actionCount): bool {
+                        $this->setSampleValue($index, $actionCount + 1);
+                        return true;
+                    })->toElement(),
+                    Text::make('Acknowledged: '.$actionCount)->style(new Style(
+                        fontSize: 13.0, lineHeight: 20.0,
+                        textColor: $theme->color(ColorToken::MutedForeground),
+                    )),
                 )->collapsable(false)->style(new Style(
                     width: 248.0,
                     minHeight: 104.0,
