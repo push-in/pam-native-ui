@@ -3856,6 +3856,16 @@ foreach ([false, true] as $disabled) {
     }
 }
 $selectedSegment = null;
+foreach (['p-navigation-bar', 'p-navigation-rail'] as $navigationTag) {
+    $navigationRoute = new \App\ComponentRoute($navigationTag, 'Navigation', $tags[$navigationTag]);
+    foreach ([[], ['modelValue' => 1], ['modelValue' => 3]] as $variation) {
+        $navigationDefaults = $samplePropsMethod->invoke($navigationRoute, $variation);
+        if (!is_array($navigationDefaults)
+            || ($navigationDefaults['modelValue'] ?? null) !== ($variation['modelValue'] ?? 2)) {
+            throw new RuntimeException('Navigation showcase defaults must use integer IDs and preserve explicit initial selection.');
+        }
+    }
+}
 $segmentedRoute = new \App\ComponentRoute('p-segmented-button', 'Segmented Button', $tags['p-segmented-button']);
 $segmentedDefaults = $samplePropsMethod->invoke($segmentedRoute, []);
 if (!is_array($segmentedDefaults) || ($segmentedDefaults['modelValue'] ?? null) !== 2) {

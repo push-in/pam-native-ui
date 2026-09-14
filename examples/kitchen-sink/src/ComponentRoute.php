@@ -3772,7 +3772,9 @@ final class ComponentRoute extends Component
                     ['value' => 4, 'label' => 'Activity', 'icon' => 'BellIcon'],
                     ['value' => 5, 'label' => 'Account', 'icon' => 'SettingsIcon'],
                 ], 0, $destinationCount);
-                $previewProps['modelValue'] = $this->sampleValues[$index] ?? 2;
+                $previewProps['modelValue'] = $this->sampleValues[$index]
+                    ?? $previewProps['modelValue']
+                    ?? 2;
                 $preview = $component::make($previewProps)->onChange(function (mixed $value) use ($index): bool {
                     $this->setSampleValue($index, $value);
                     return true;
@@ -7868,8 +7870,8 @@ final class ComponentRoute extends Component
                 'placement' => \Pam\MobileUi\Enum\Placement::Bottom->value,
             ],
             'p-app-scaffold' => ['edges' => 'top,bottom,left,right'],
-            'p-navigation-bar' => ['destinations' => 4, 'modelValue' => 'components'],
-            'p-navigation-rail' => ['destinations' => 4, 'modelValue' => 'components'],
+            'p-navigation-bar' => ['destinations' => 4, 'modelValue' => 2],
+            'p-navigation-rail' => ['destinations' => 4, 'modelValue' => 2],
             'p-bottom-app-bar' => ['actionCount' => 3],
             'p-search-bar' => [
                 'label' => 'Search',

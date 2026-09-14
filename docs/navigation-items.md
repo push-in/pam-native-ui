@@ -11,6 +11,15 @@ Selected destinations and disabled destinations do not emit another selection.
 Explicit children still take precedence for fully custom composition. This is
 UI composition over PAM Native primitives, not an additional navigation runtime.
 
+Showcase defaults use integer destination 2, matching the generated items.
+The preview resolves selection from an interaction value first, then the
+variation's explicit modelValue, then the fallback. It no longer overwrites an
+explicit initial selection with 2. PHP regressions cover resolved defaults and
+explicit values 1/3 for both Bar and Rail; targeted showcase PHPStan passes.
+This follow-up does not alter current catalog initial selections, so no new
+Android build was made solely for it. Its custom-initial-selection render path
+has not received separate device verification.
+
 The rail uses icons with accessible labels when compact, and visible labels
 when expanded (text-only items remain visible). Navigation Bar labels wrap and
 retain their complete accessible name. Each generated destination uses its native
