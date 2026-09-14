@@ -3,6 +3,7 @@
 import argparse
 import importlib.util
 import json
+import re
 from pathlib import Path
 import signal
 import sys
@@ -100,6 +101,13 @@ try:
         report['checks'].append({'layoutSectionsCaptured': True, 'lastTallRowReachable': True, 'manualReviewRequired': True})
         sys.exit(0)
     controls = section('Protected selection')
+    densities = re.findall(r'(?:Physical|Override) density:\s*(\d+)', audit.shell('wm', 'density'))
+    assert densities, 'Cannot determine density for touch target validation'
+    minimum = 48 * int(densities[-1]) / 160
+    for control in controls:
+        bounds = base.node_bounds(control)
+        assert bounds.right-bounds.left >= minimum-1 and bounds.bottom-bounds.top >= minimum-1, 'Compact selection target is below 48 dp'
+    report['checks'].append({'compactSelectionTargetsAtLeast48Dp': True})
     bulk, first, protected, third = controls
     assert protected.attrib.get('enabled') == 'false' and protected.attrib.get('checked') == 'true'
     audit.tap(base.node_bounds(protected))

@@ -77,14 +77,26 @@ try:
         root = audit.dump('button-'+label)
         assert label+' action completed' in feedback(root), 'Visible action button failed: '+label
     audit.screenshot('buttons-result')
-    root, bounds = locate('Locked item')
-    before = feedback(root)
-    swipe(bounds)
-    root = audit.dump('disabled-result')
-    assert feedback(root) == before, 'Disabled swipe emitted an action'
-    audit.screenshot('disabled-result')
+    for label in ['Locked item', 'Read only item', 'Synchronizing item']:
+        root, bounds = locate(label)
+        before = feedback(root)
+        swipe(bounds)
+        root = audit.dump(label.replace(' ', '-')+'-result')
+        assert feedback(root) == before, label+' emitted an action'
+        # Locate the specimen by its content, not another row's duplicate button.
+        parent = {child: node for node in root.iter('node') for child in node}
+        specimen = next(n for n in root.iter('node') if n.attrib.get('text') == label)
+        while specimen in parent and not any(n.attrib.get('content-desc') == 'Archive' for n in specimen.iter('node')):
+            specimen = parent[specimen]
+        controls = [n for n in specimen.iter('node') if n.attrib.get('content-desc') in ['Archive', 'Delete']]
+        assert len(controls) == 2, 'Missing protected action buttons for '+label
+        for control in controls:
+            assert control.attrib.get('enabled') == 'false', label+' exposes enabled action'
+            audit.tap(module.node_bounds(control))
+        assert feedback(audit.dump(label.replace(' ', '-')+'-buttons')) == before, label+' button emitted an action'
+        audit.screenshot(label.replace(' ', '-')+'-result')
     report['checks'].append({'result': 1, 'enabledAction': True, 'disabledRejected': True,
-                             'visibleArchiveAndDelete': True})
+                             'visibleArchiveAndDelete': True, 'readonlyAndLoadingRejected': True})
 finally:
     audit.restore()
     (args.output/'report.json').write_text(json.dumps(report, indent=2))

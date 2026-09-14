@@ -152,7 +152,7 @@ final class ComponentRenderer
         if (!array_key_exists('disabled', $props) && array_key_exists('isDisabled', $props)) {
             $props['disabled'] = self::flag($props, 'isDisabled');
         }
-        if (in_array($part, ['PResultState', 'PProgressButton'], true)
+        if (in_array($part, ['PResultState', 'PProgressButton', 'PDataTable', 'PDataTableVirtual', 'PDataGrid'], true)
             && !array_key_exists('loading', $props) && array_key_exists('isLoading', $props)) {
             $props['loading'] = self::flag($props, 'isLoading');
         }
@@ -259,6 +259,12 @@ final class ComponentRenderer
                 MaterialDensity::Compact->value, 'compact' => 44.0,
                 default => 52.0,
             });
+        }
+
+        if (in_array($part, ['PDataTable', 'PDataTableVirtual'], true)
+            && self::flag($props, 'showSelect')) {
+            // Keep virtual row geometry and the checkbox hit area in agreement.
+            $props['rowHeight'] = max(48.0, self::number($props, 'rowHeight', 52.0));
         }
 
         if ($part === 'PBottomSheet') {
@@ -4140,6 +4146,7 @@ final class ComponentRenderer
         $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
         $compact = self::text($props, 'density', 'default') === 'compact';
         $rowHeight = $compact ? 48.0 : 56.0;
+        $blocked = self::mutationBlocked($props);
         $rows = [];
         foreach ($source as $index => $definition) {
             $value = is_array($definition)
@@ -4152,6 +4159,7 @@ final class ComponentRenderer
             $dragData = (string) $value;
             $itemDisabled = $disabled || (is_array($definition)
                 && self::flag(['disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false], 'disabled'));
+            $itemBlocked = $blocked || $itemDisabled;
             $content = $children[$index] ?? Row::make(
                 Text::make('⠿')->style(new Style(
                     width: 32.0,
@@ -4178,15 +4186,15 @@ final class ComponentRenderer
                 opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
             ));
             $region = InteractionRegion::make($content)
-                ->draggable($dragData, !$itemDisabled)
-                ->acceptsDrop(!$itemDisabled)
-                ->property(PropKey::Enabled, !$itemDisabled)
+                ->draggable($dragData, !$itemBlocked)
+                ->acceptsDrop(!$itemBlocked)
+                ->property(PropKey::Enabled, !$itemBlocked)
                 ->accessibilityRole(AccessibilityRole::ListItem)
                 ->accessibilityLabel('Reorder '.(string) $label)
-                ->accessibilityHint($itemDisabled
-                    ? 'Reordering disabled'
+                ->accessibilityHint($itemBlocked
+                    ? 'Reordering unavailable'
                     : 'Drag to change position, or use the move buttons');
-            if (!$itemDisabled && $change instanceof Closure) {
+            if (!$itemBlocked && $change instanceof Closure) {
                 $region = $region->onDrop(static function (string $dragged) use (
                     $change,
                     $source,
@@ -4227,7 +4235,7 @@ final class ComponentRenderer
             foreach ([-1 => 'Up', 1 => 'Down'] as $offset => $direction) {
                 $destination = $index + $offset;
                 $neighbor = $source[$destination] ?? null;
-                $canMove = !$itemDisabled && array_key_exists($destination, $source)
+                $canMove = !$itemBlocked && array_key_exists($destination, $source)
                     && !(is_array($neighbor) && self::flag(['disabled' => $neighbor['disabled'] ?? $neighbor['isDisabled'] ?? false], 'disabled'));
                 $control = Pressable::make(Text::make($direction)->style(new Style(
                     fontSize: 14.0,
@@ -4288,7 +4296,7 @@ final class ComponentRenderer
         $change = $events[EventKind::Change->value] ?? null;
         $startLabel = self::text($props, 'startLabel', 'Archive');
         $endLabel = self::text($props, 'endLabel', 'Delete');
-        $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
+        $disabled = self::mutationBlocked($props);
         $foregroundContent = $children[0] ?? Text::make(
             self::text($props, 'title', 'Swipe this item'),
         )->style(new Style(
@@ -9626,7 +9634,7 @@ final class ComponentRenderer
                 ?? $theme->color(ColorToken::Primary))
             : (MaterialStyleResolver::semanticForeground($props, $theme)
                 ?? $theme->color(ColorToken::SecondaryForeground));
-        $closeBlocked = self::dismissalBlocked($props);
+        $closeBlocked = self::mutationBlocked($props);
         $close = Pressable::make(self::actionIcon('close', $closeColor))
             ->enabled(!$closeBlocked)
             ->style(new Style(
@@ -9856,7 +9864,7 @@ final class ComponentRenderer
             null,
             'alert-close-icon',
         );
-        $closeBlocked = self::dismissalBlocked($props);
+        $closeBlocked = self::mutationBlocked($props);
         $close = Pressable::make($closeIcon)
             ->enabled(!$closeBlocked)
             ->style(new Style(
@@ -10887,7 +10895,7 @@ final class ComponentRenderer
             'comfortable', 2 => 48.0,
             default => 52.0,
         };
-        $rowHeight = max(1.0, self::number(
+        $rowHeight = max(self::flag($props, 'showSelect') ? 48.0 : 1.0, self::number(
             $props,
             'rowHeight',
             self::number($props, 'itemHeight', $defaultRowHeight),
@@ -10924,11 +10932,7 @@ final class ComponentRenderer
 
         $rows = [];
         $showSelect = self::flag($props, 'showSelect');
-        $selectionBlocked = self::flag($props, 'disabled')
-            || self::flag($props, 'loading')
-            || self::flag($props, 'readonly')
-            || self::flag($props, 'readOnly')
-            || self::flag($props, 'isReadOnly');
+        $selectionBlocked = self::mutationBlocked($props);
         $selectionChange = $selectionBlocked ? null : ($events[EventKind::Change->value] ?? null);
         $selectedValues = self::selectedValues($props);
         $itemValue = self::text($props, 'itemValue', 'id');
@@ -11327,7 +11331,7 @@ final class ComponentRenderer
     }
 
     /** @param array<string, mixed> $props */
-    private static function dismissalBlocked(array $props): bool
+    private static function mutationBlocked(array $props): bool
     {
         return self::flag($props, 'disabled', self::flag($props, 'isDisabled'))
             || self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')))

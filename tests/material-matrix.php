@@ -42,6 +42,7 @@ use Pam\Native\UI\Text;
 
 require __DIR__.'/bootstrap.php';
 require __DIR__.'/material-field-state.php';
+require __DIR__.'/material-list-mutation.php';
 require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 
 $samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');
@@ -4152,7 +4153,7 @@ if (
 }
 
 foreach (['p-data-table', 'p-data-table-virtual', 'p-data-grid'] as $tableTag) {
-    foreach (['disabled', 'isDisabled', 'loading', 'readonly', 'readOnly', 'isReadOnly'] as $lock) {
+    foreach (['disabled', 'isDisabled', 'loading', 'isLoading', 'readonly', 'readOnly', 'isReadOnly'] as $lock) {
         $lockedTable = $tags[$tableTag]::make([
             $lock => true, 'showSelect' => true,
             'headers' => [['key' => 'name', 'title' => 'Name']],

@@ -5613,6 +5613,8 @@ final class ComponentRoute extends Component
 
         if ($this->tag === 'p-reorderable-list') {
             $add($variations, 'Priorities', ['items' => ['Critical', 'High', 'Normal']]);
+            $add($variations, 'Read Only', ['readonly' => true, 'items' => ['Approved order', 'Retained order']]);
+            $add($variations, 'Loading', ['loading' => true, 'items' => ['Synchronizing order', 'Pending order']]);
             $add($variations, 'Locked item', ['items' => [
                 ['value' => 1, 'label' => 'Planning'],
                 ['value' => 2, 'label' => 'Approved milestone', 'disabled' => true],
@@ -5628,6 +5630,8 @@ final class ComponentRoute extends Component
         }
         if ($this->tag === 'p-swipe-actions') {
             $add($variations, 'Disabled', ['disabled' => true, 'title' => 'Locked item']);
+            $add($variations, 'Read Only', ['readonly' => true, 'title' => 'Read only item']);
+            $add($variations, 'Loading', ['loading' => true, 'title' => 'Synchronizing item']);
             $add($variations, 'Mail', ['title' => 'Inbox message', 'startLabel' => 'Read', 'endLabel' => 'Delete']);
             $add($variations, 'Tasks', ['title' => 'Design review', 'startLabel' => 'Done', 'endLabel' => 'Later']);
             $add($variations, 'Reduced Motion', ['reduceMotion' => true]);
@@ -5660,7 +5664,7 @@ final class ComponentRoute extends Component
                 'headers' => [['title' => 'Workspace', 'key' => 'name']],
                 'items' => $selectionRows, 'height' => 260.0,
             ];
-            $add($variations, 'Protected selection', $selectionProps);
+            $add($variations, 'Protected selection', ['density' => 'compact'] + $selectionProps);
             $add($variations, 'Read-only selection', ['readOnly' => true] + $selectionProps);
             $add($variations, 'Disabled selection', ['disabled' => true] + $selectionProps);
         }

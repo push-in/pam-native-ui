@@ -11,8 +11,9 @@
 - Later UI tree-marker and dismissal changes are now under verification in
   [run 34840530667](https://github.com/push-in/pam-native-ui/actions/runs/34840530667),
   revision `8661e8e4a3709e27b267f892491f74860af0658c`, against the same Native
-  candidate. This run was confirmed in progress; do not transfer earlier green
-  results to these later implementations or start a duplicate run.
+  candidate. This run is now **completed / success**, confirmed through the run
+  API. It covers revision `8661e8e`, not the subsequent uncommitted list mutation
+  guards, table loading aliases or compact selection geometry changes.
 
 The release evidence inventory is still incomplete. Green build/contract CI
 does not establish full visual, interaction, accessibility or performance
