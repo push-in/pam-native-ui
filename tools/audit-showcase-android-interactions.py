@@ -1066,21 +1066,41 @@ def exercise(
     if kind == InteractionKind.SCROLL:
         scrolls = [
             node for node in before.nodes()
-            if enabled(node) and node.attrib.get("scrollable") == "true"
+            if enabled(node)
+            and node.attrib.get("class") == "androidx.recyclerview.widget.RecyclerView"
+            and bounds(node).height >= 240
         ]
         if not scrolls:
-            raise AuditFailure("no scrollable viewport is exposed")
-        area = bounds(max(scrolls, key=lambda node: bounds(node).height))
+            raise AuditFailure("no usable native list viewport is exposed")
+        target = min(scrolls, key=lambda node: bounds(node).top)
+        area = bounds(target)
+
+        def visible_rows(node: ET.Element) -> list[tuple[str, str, str]]:
+            return [(child.attrib.get("text", ""), child.attrib.get("content-desc", ""),
+                     child.attrib.get("bounds", "")) for child in node.iter("node")
+                    if child is not node and
+                    (child.attrib.get("text") or child.attrib.get("content-desc"))]
+
+        previous = visible_rows(target)
+        if not previous:
+            raise AuditFailure("native list has no observable row content")
         x = (area.left + area.right) // 2
-        audit.swipe((x, area.bottom - 80), (x, area.top + 120), 800)
-        after = audit.dump(f"{evidence_name}-after")
-        # The route marker lives above the virtual table and is expected to
-        # leave the viewport after a successful scroll. Runtime error markers
-        # must still be absent, while viewport movement is asserted below.
-        assert_healthy(after, route, allow_overlay=True)
-        after_hash = audit.settled_screenshot_hash(f"{evidence_name}-after")
-        if after.xml == before.xml and after_hash == before_hash:
-            raise AuditFailure("scroll gesture produced no viewport change")
+        upper = (x, area.top + area.height // 4)
+        lower = (x, area.bottom - area.height // 4)
+        for direction, start, end in [("forward", lower, upper), ("backward", upper, lower)]:
+            audit.swipe(start, end, 800)
+            after = audit.dump(f"{evidence_name}-{direction}")
+            assert_healthy(after, route, allow_overlay=True)
+            matches = [node for node in after.nodes()
+                if node.attrib.get("class") == "androidx.recyclerview.widget.RecyclerView"
+                and bounds(node) == area]
+            if len(matches) != 1:
+                raise AuditFailure("native viewport moved: gesture may have scrolled the outer catalog")
+            current = visible_rows(matches[0])
+            if not current or current == previous:
+                raise AuditFailure(f"native list rows did not scroll {direction}")
+            previous = current
+        audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 
     if kind == InteractionKind.SELECT and tag == "p-data-grid":

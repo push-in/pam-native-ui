@@ -1,5 +1,23 @@
 # Collections batch
 
+## Integrated native-scroll contract
+
+The integrated audit now targets the first usable RecyclerView rather than the
+largest scrollable element (which could be the outer catalog). It requires the
+same native viewport bounds after forward and backward gestures and changed,
+nonempty row content/positions inside that viewport in each direction. Moving
+the catalog or only changing unrelated pixels can no longer satisfy this check.
+
+`/tmp/pam-native-scroll-contract-20260914.json` passes all three scenarios:
+Virtual List, Section List and virtual Data Table, on emulator-5554/API 36 and
+candidate `e73add1a5806362152ad065a31ce6077d7489f0e1f27ab5cc80feb1644046af3`.
+No rebuild was needed. Virtual List XML shows Record 991 initially, Record 993
+after forward scroll and Record 991 after backward scroll, within the same
+viewport. Each route retains before/forward/backward XML and screenshots.
+This proves scoped touch scrolling, not accessibility scroll actions, smoothness,
+memory use, all variants or full component approval. Historical generic reports
+below retain their weaker original meaning.
+
 ## Virtual-list composition follow-up
 
 After the native partial-row accessibility correction, the integrated report
