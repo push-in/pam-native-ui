@@ -4601,7 +4601,7 @@ foreach (['p-date-range-picker', 'p-time-range-picker'] as $rangeTag) {
             }
         }
     }
-    foreach (['disabled', 'isDisabled'] as $disabledProp) {
+    foreach (['disabled', 'isDisabled', 'readonly', 'readOnly', 'isReadOnly'] as $disabledProp) {
         $range = $tags[$rangeTag]::make([
             $disabledProp => true, 'fromLabel' => 'Departure', 'toLabel' => 'Arrival',
         ])->onChange(static function (array $value): void {})->toElement();
@@ -4609,12 +4609,33 @@ foreach (['p-date-range-picker', 'p-time-range-picker'] as $rangeTag) {
             $picker = $field->children()[1];
             if (isset($picker->events()[EventKind::Change->value])
                 || ($picker->properties()[PropKey::AccessibilityLabel->value] ?? null) !== ['Departure', 'Arrival'][$index]) {
-                throw new RuntimeException('Range pickers must retain distinct accessible labels and suppress disabled changes.');
+                throw new RuntimeException('Range pickers must retain distinct accessible labels and suppress disabled/readonly changes.');
             }
         }
     }
 }
 $timeRangeChanged = null;
+$openTimeRange = $tags['p-time-range-picker']::make([
+    'modelValue' => ['from' => '09:00', 'to' => ''],
+])->toElement();
+$openTimeLabel = $openTimeRange->children()[1]->children()[1]->children()[0];
+if (($openTimeLabel->properties()[PropKey::Text->value] ?? null) !== 'Select time') {
+    throw new RuntimeException('An empty time range endpoint must display a visible selection hint.');
+}
+foreach ([
+    ['p-date-range-picker', '2026-09-08', '2026-09-14', '2026-09-20', '2026-09-01'],
+    ['p-time-range-picker', '09:00', '17:00', '18:00', '08:00'],
+] as [$rangeTag, $from, $to, $later, $earlier]) {
+    $emittedRanges = [];
+    $range = $tags[$rangeTag]::make(['modelValue' => ['from' => $from, 'to' => $to]])
+        ->onChange(static function (array $next) use (&$emittedRanges): void { $emittedRanges[] = $next; })
+        ->toElement();
+    $range->children()[0]->children()[1]->events()[EventKind::Change->value]($later);
+    $range->children()[1]->children()[1]->events()[EventKind::Change->value]($earlier);
+    if ($emittedRanges !== [['from' => $later, 'to' => ''], ['from' => $earlier, 'to' => '']]) {
+        throw new RuntimeException('Existing interval normalization must never emit a reversed range.');
+    }
+}
 $timeRange = $tags['p-time-range-picker']::make([
     'modelValue' => ['from' => '09:00', 'to' => '17:00'],
 ])->onChange(static function (array $range) use (&$timeRangeChanged): void {

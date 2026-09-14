@@ -6535,12 +6535,15 @@ final class ComponentRoute extends Component
             ],
             'p-date-range-picker' => [
                 ['label' => 'Selected range', 'props' => ['modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14']]],
+                ['label' => 'Read only', 'props' => ['readOnly' => true, 'fromLabel' => 'Locked start', 'toLabel' => 'Locked end', 'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14']]],
                 ['label' => 'Open range', 'props' => ['modelValue' => ['from' => '2026-09-08', 'to' => '']]],
                 ['label' => 'With week', 'props' => ['showWeek' => true, 'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14']]],
                 ['label' => 'Disabled dates', 'props' => ['disabledDates' => ['2026-09-10', '2026-09-11']]],
             ],
             'p-time-range-picker' => [
                 ['label' => 'Business hours', 'props' => ['modelValue' => ['from' => '09:00', 'to' => '18:00']]],
+                ['label' => 'Read only', 'props' => ['isReadOnly' => true, 'fromLabel' => 'Locked start', 'toLabel' => 'Locked end', 'modelValue' => ['from' => '09:00', 'to' => '18:00']]],
+                ['label' => 'Open range', 'props' => ['modelValue' => ['from' => '09:00', 'to' => '']]],
                 ['label' => 'Appointment', 'props' => ['modelValue' => ['from' => '14:30', 'to' => '15:15']]],
                 ['label' => '12 hour', 'props' => ['format' => '12h', 'modelValue' => ['from' => '09:00', 'to' => '17:00']]],
                 ['label' => 'Disabled', 'props' => ['disabled' => true]],

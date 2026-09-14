@@ -4755,12 +4755,13 @@ final class ComponentRenderer
         $change = $events[EventKind::Change->value] ?? null;
         $theme = ThemeManager::current();
         $disabled = self::flag($props, 'disabled');
+        $readOnly = self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
         $field = static function (
             string $label,
             string $current,
             bool $isStart,
-        ) use ($change, $from, $to, $props, $theme, $disabled): Element {
-            $display = $current;
+        ) use ($change, $from, $to, $props, $theme, $disabled, $readOnly): Element {
+            $display = $current === '' ? 'Select time' : $current;
             if (
                 in_array(strtolower(self::scalarString($props['format'] ?? '')), ['12h', '12', 'ampm'], true)
                 && preg_match('/^(?<hour>[01]?\d|2[0-3]):(?<minute>[0-5]\d)$/D', $current, $match) === 1
@@ -4778,7 +4779,7 @@ final class ComponentRenderer
             ];
             unset($fieldProps['__materialComponent']);
             $fieldEvents = [];
-            if (!$disabled && $change instanceof Closure) {
+            if (!$disabled && !$readOnly && $change instanceof Closure) {
                 $fieldEvents[EventKind::Change->value] = static function (
                     mixed $next,
                 ) use ($change, $from, $to, $isStart): mixed {
@@ -4813,7 +4814,7 @@ final class ComponentRenderer
                         fontSize: 18.0,
                         lineHeight: 24.0,
                         fontWeight: 600,
-                        textColor: $theme->color($disabled
+                        textColor: $theme->color($disabled || $current === ''
                             ? ColorToken::MutedForeground
                             : ColorToken::OnSurface),
                         textAlign: TextAlignment::Center,
@@ -4875,11 +4876,12 @@ final class ComponentRenderer
         $change = $events[EventKind::Change->value] ?? null;
         $theme = ThemeManager::current();
         $disabled = self::flag($props, 'disabled');
+        $readOnly = self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
         $field = static function (
             string $label,
             string $current,
             bool $isStart,
-        ) use ($change, $from, $to, $props, $theme, $disabledDates, $disabled): Element {
+        ) use ($change, $from, $to, $props, $theme, $disabledDates, $disabled, $readOnly): Element {
             $fieldProps = [
                 ...$props,
                 'mode' => ComponentMode::Date->value,
@@ -4891,7 +4893,7 @@ final class ComponentRenderer
             ];
             unset($fieldProps['__materialComponent']);
             $fieldEvents = [];
-            if (!$disabled && $change instanceof Closure) {
+            if (!$disabled && !$readOnly && $change instanceof Closure) {
                 $fieldEvents[EventKind::Change->value] = static function (
                     mixed $next,
                 ) use ($change, $from, $to, $isStart, $disabledDates): mixed {

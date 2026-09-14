@@ -783,14 +783,33 @@ def exercise(
 
     if kind == InteractionKind.OPEN_CLOSE:
         target = choose_open_node(tag, before)
+        if tag in {"p-date-range-picker", "p-time-range-picker"}:
+            for label in ("Locked start", "Locked end"):
+                locked = [node for node in before.nodes()
+                    if node.attrib.get("content-desc") == label and bounds(node).height > 0]
+                if not locked or any(node.attrib.get("clickable") == "true" for node in locked):
+                    raise AuditFailure(f"readonly interval field is missing or clickable: {label}")
+                audit.tap(bounds(locked[-1]))
+                unchanged = audit.dump(f"{evidence_name}-{label.replace(' ', '-').lower()}")
+                if any(node.attrib.get("resource-id") == "android:id/button1" for node in unchanged.nodes()):
+                    raise AuditFailure("readonly interval field opened a picker")
+                if unchanged.all_text() != before.all_text():
+                    raise AuditFailure("readonly interval interaction changed field content")
         if tag == "p-file-input":
+            resolved = audit.shell("cmd", "package", "resolve-activity", "--brief",
+                "-a", "android.intent.action.OPEN_DOCUMENT", "-c", "android.intent.category.OPENABLE",
+                "-t", "'*/*'")
+            components = [line.strip().split("/", 1)[0] for line in resolved.splitlines()
+                if re.fullmatch(r"[\w.]+/[\w.$]+", line.strip())]
+            if len(components) != 1:
+                raise AuditFailure("Android did not resolve a unique document picker activity")
             audit.stop_task_lock()
             x, y = bounds(target).center
             audit.adb("shell", "input", "tap", str(x), str(y))
             time.sleep(1.0)
             report = audit.shell("dumpsys", "activity", "activities", timeout=30.0)
             resumed = audit.foreground_package(report)
-            if resumed != "com.google.android.documentsui":
+            if resumed != components[0]:
                 raise AuditFailure(
                     "file input did not launch Android's document picker "
                     f"(found {resumed or 'unknown'})"
@@ -804,6 +823,8 @@ def exercise(
             audit.start_task_lock()
             closed = audit.dump(f"{evidence_name}-closed")
             assert_healthy(closed, route)
+            if descendant_labels(choose_open_node(tag, closed)) != descendant_labels(target):
+                raise AuditFailure("cancelling document selection changed the field value")
             audit.screenshot_hash(f"{evidence_name}-closed")
             return closed, True
         if tag == "p-tooltip":
@@ -919,6 +940,8 @@ def exercise(
             audit.back()
         closed = audit.dump(f"{evidence_name}-closed")
         assert_healthy(closed, route)
+        if tag in {"p-date-range-picker", "p-time-range-picker"} and closed.all_text() != before.all_text():
+            raise AuditFailure("cancelling the interval picker changed field content")
         if tag == "p-popover" and "Native overlay" in closed.all_text():
             raise AuditFailure("p-popover content remained accessible after outside dismissal")
         audit.screenshot_hash(f"{evidence_name}-closed")
