@@ -119,3 +119,30 @@ silently change behavior and lose the sixth tier. Completing the responsive
 migration therefore requires an explicit reusable breakpoint contract in PAM
 Native, including column counts and gutters, before removing the UI host fallback.
 Do not change existing breakpoints or shorten labels to bypass this requirement.
+# Responsive row-grid integration
+
+Responsive columns, x/y gutters and GridItem spans now use PAM Native's shared
+six-level GridTemplate instead of host-only resizing. UI thresholds remain
+0/640/768/1024/1280/1536. Responsive plans can now combine `minColumnWidth` with
+per-breakpoint maximum columns. Non-row direction variants retain their existing
+host implementation; fixed grids and authored native spans remain supported.
+
+The showcase includes “Responsive columns and gutters” with four real cells.
+The Android audit accepts `--responsive` and scopes label checks to the selected
+section, avoiding duplicate labels in neighboring examples.
+
+Validation: material matrix passed (114 components, 32,832 style cases, 456
+renders); this is PHP coverage, not 114 device approvals. One release-mode build
+was installed on emulator-5554/API 36. The responsive audit scrolled to the new
+section, checked the four label bounds in an aligned 2×2 arrangement, and retained
+a screenshot inspected for whole labels and consistent gutters. Evidence:
+`/tmp/pam-grid-template-20260914/report.json` and `autofit-verified.png`, SHA-256
+`9078f1ea97dc2613882b3e20c47496f7168e468a7693b638453408935f4551ac`.
+Font scale was 1.0; settings were restored. Build cleanup reclaimed 96.7 MiB.
+
+Not proven here: resize across all breakpoints on device, RTL, large text, iOS,
+or complete component approval. Native TemplateRenderer has wider static-analysis
+debt documented in its grid contract. No publication was performed.
+Focused PHPStan level 9 passed for the UI renderer, matrix, showcase route and
+the new Native SDK value objects/Style. The wider native TemplateRenderer file
+does not have a clean static-analysis gate.

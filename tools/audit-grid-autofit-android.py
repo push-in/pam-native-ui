@@ -21,6 +21,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--serial", required=True)
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-grid-autofit"))
+    parser.add_argument("--responsive", action="store_true")
     args = parser.parse_args()
     audit = M.AutocompleteAudit(args.serial, "dev.pam.mobileui.catalog",
         "dev.pam.nativeapp.PamActivity", args.output, "p-responsive-grid", "Responsive Grid")
@@ -28,21 +29,28 @@ def main() -> None:
         audit.prepare()
         audit.launch()
         width, height = audit.screenshot("initial")
-        audit.assert_foreground("scroll auto-fit section")
-        audit.shell("input", "swipe", str(width // 2), str(height * 4 // 5),
-            str(width // 2), str(height // 3), "450")
-        root = audit.dump("autofit")
-        heading = audit.exact(root, "Up to four columns — adapts to width")
-        if not heading:
-            raise M.AuditFailure("Auto-fit section is not visible")
-        lower = M.node_bounds(heading[0]).bottom
+        section = "Responsive columns and gutters" if args.responsive else "Up to four columns — adapts to width"
         cells = []
-        for label in ["Discover", "Create", "Review", "Ship"]:
-            matches = [M.node_bounds(n) for n in audit.exact(root, label)
-                if M.node_bounds(n).top >= lower]
-            if len(matches) != 1:
-                raise M.AuditFailure(f"Missing unique auto-fit label: {label}")
-            cells.append(matches[0])
+        for attempt in range(5):
+            root = audit.dump(f"grid-{attempt}")
+            heading = audit.exact(root, section)
+            if heading:
+                lower = M.node_bounds(heading[0]).bottom
+                following = audit.exact(root, "Responsive columns and gutters") if not args.responsive else []
+                upper = M.node_bounds(following[0]).top if following else height - 80
+                cells = []
+                for label in ["Discover", "Create", "Review", "Ship"]:
+                    matches = [M.node_bounds(n) for n in audit.exact(root, label)
+                        if lower <= M.node_bounds(n).top and M.node_bounds(n).bottom <= upper]
+                    if len(matches) == 1:
+                        cells.append(matches[0])
+                if len(cells) == 4:
+                    break
+            audit.assert_foreground("scroll grid section")
+            audit.shell("input", "swipe", str(width // 2), str(height * 4 // 5),
+                str(width // 2), str(height // 2), "450")
+        if len(cells) != 4:
+            raise M.AuditFailure(f"Four unique labels not visible in {section}")
         if not (cells[0].top == cells[1].top < cells[2].top == cells[3].top
                 and cells[0].left == cells[2].left < cells[1].left == cells[3].left):
             raise M.AuditFailure("Narrow phone must place four cells in an aligned 2x2 grid")
@@ -51,6 +59,7 @@ def main() -> None:
         audit.screenshot("autofit-verified")
         apk = audit.shell("pm", "path", audit.package).strip().splitlines()[0].removeprefix("package:")
         report = {"fullApproval": False, "device": args.serial, "columns": 2, "rows": 2,
+            "section": section,
             "buildSha256": audit.shell("sha256sum", apk).split()[0],
             "fontScale": audit.setting("system", "font_scale"), "resultStatus": 1}
         (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n")

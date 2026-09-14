@@ -4170,7 +4170,7 @@ final class ComponentRoute extends Component
                 ));
             } elseif ($this->tag === 'p-responsive-grid') {
                 $columnValue = $previewProps['columns'] ?? 2;
-                $columns = max(1, min(4, is_numeric($columnValue) ? (int) $columnValue : 2));
+                $columns = max(1, min(4, is_numeric($columnValue) ? (int) $columnValue : 4));
                 $tiles = [];
                 foreach (array_slice(['Discover', 'Create', 'Review', 'Ship'], 0, $columns) as $tileIndex => $tile) {
                     $tiles[] = Column::make(
@@ -6401,6 +6401,11 @@ final class ComponentRoute extends Component
                 ['label' => 'Two Columns', 'props' => ['columns' => 2]],
                 ['label' => 'Three Columns', 'props' => ['columns' => 3]],
                 ['label' => 'Up to four columns — adapts to width', 'props' => ['columns' => 4, 'minColumnWidth' => 120]],
+                ['label' => 'Responsive columns and gutters', 'props' => [
+                    'columns' => ['default' => 2, 'md' => 3, '2xl' => 4],
+                    'columnGap' => ['default' => 8, 'md' => 16],
+                    'rowGap' => 12, 'minColumnWidth' => 120,
+                ]],
             ],
             'p-virtual-list' => [
                 ['label' => '1,000 items — near the end', 'props' => [

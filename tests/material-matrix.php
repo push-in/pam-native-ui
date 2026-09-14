@@ -3479,13 +3479,10 @@ $autoFitGrid = $gridClass::make(['columns' => 4, 'minColumnWidth' => 120], Text:
 if (($autoFitGrid->properties()[PropKey::GridMinColumnWidth->value] ?? null) !== 120.0) {
     throw new RuntimeException('Minimum column width must be delegated to native layout, not a host-only resize.');
 }
-try {
-    $gridClass::make(['columns' => ['default' => 1, 'md' => 4], 'minColumnWidth' => 120], Text::make('Mixed'))->toElement();
-    throw new RuntimeException('Unsupported auto-fit/breakpoint combinations must not silently discard the minimum width.');
-} catch (InvalidArgumentException $exception) {
-    if (!str_contains($exception->getMessage(), 'minColumnWidth')) {
-        throw $exception;
-    }
+$adaptiveAutoFit = $gridClass::make(['columns' => ['default' => 1, 'md' => 4], 'minColumnWidth' => 120], Text::make('Mixed'))->toElement();
+if (($adaptiveAutoFit->properties()[PropKey::GridMinColumnWidth->value] ?? null) !== 120.0
+    || !isset($adaptiveAutoFit->properties()[PropKey::GridTemplate->value])) {
+    throw new RuntimeException('Responsive auto-fit must preserve both the native template and minimum width.');
 }
 if (($spanningGrid->children()[0]->properties()[PropKey::GridSpan->value] ?? null) !== 2) {
     throw new RuntimeException('Fixed GridItem spans must reach the shared layout engine.');
@@ -3494,10 +3491,31 @@ foreach ([
     $gridClass::make(['columns' => ['default' => 1, 'md' => 3]], Text::make('Adaptive')),
     $gridClass::make(['columns' => 3], Text::make('Adaptive span')
         ->property(PropKey::Value, 'pam:grid-item:1,1,2,2,3,3')),
-    $gridClass::make(['columns' => 3, 'flexDirection' => \Pam\Native\FlexDirection::RowReverse->value], Text::make('Reversed')),
 ] as $adaptiveGrid) {
-    if (($adaptiveGrid->toElement()->properties()[PropKey::HostName->value] ?? null) !== 'pam.mobile_ui.grid') {
-        throw new RuntimeException('Adaptive and reversed grids must retain their existing host contract until engine support is integrated.');
+    if ($adaptiveGrid->toElement()->kind() !== NodeKind::Column
+        || !isset($adaptiveGrid->toElement()->properties()[PropKey::GridTemplate->value])) {
+        throw new RuntimeException('Responsive columns and spans must be measured by the shared engine.');
+    }
+}
+$sixTierGrid = $gridClass::make([
+    'columns' => ['default' => 2, 'sm' => 3, 'md' => 4, 'lg' => 5, 'xl' => 6, '2xl' => 8],
+    'columnGap' => ['default' => 8, 'md' => 16], 'rowGap' => 12,
+], Text::make('Six tiers')->property(PropKey::Value, 'pam:grid-item:1,2,3,4,5,6'))->toElement();
+if (($sixTierGrid->properties()[PropKey::GridTemplate->value] ?? null)
+    !== '0,2,8,12;640,3,8,12;768,4,16,12;1024,5,16,12;1280,6,16,12;1536,8,16,12') {
+    throw new RuntimeException('UI breakpoints and independent gutters must survive the native template mapping.');
+}
+foreach ([PropKey::GridSpan, PropKey::GridSpanSm, PropKey::GridSpanMd,
+    PropKey::GridSpanLg, PropKey::GridSpanXl, PropKey::GridSpan2xl] as $tier => $key) {
+    if (($sixTierGrid->children()[0]->properties()[$key->value] ?? null) !== $tier + 1) {
+        throw new RuntimeException('Every GridItem span tier must reach native layout.');
+    }
+}
+foreach ([\Pam\Native\FlexDirection::RowReverse, \Pam\Native\FlexDirection::Column,
+    \Pam\Native\FlexDirection::ColumnReverse] as $direction) {
+    $reverseGrid = $gridClass::make(['columns' => 3, 'flexDirection' => $direction->value], Text::make('Direction'))->toElement();
+    if (($reverseGrid->properties()[PropKey::HostName->value] ?? null) !== 'pam.mobile_ui.grid') {
+        throw new RuntimeException('Non-row grids must retain their existing direction-aware host.');
     }
 }
 

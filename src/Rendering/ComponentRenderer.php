@@ -8502,18 +8502,37 @@ final class ComponentRenderer
                 $spans = array_map('intval', explode(',', substr($tag, strlen('pam:grid-item:'))));
                 $fixedGrid = $fixedGrid && count(array_unique($spans)) === 1;
                 $span = max(1, $spans[0]);
+                foreach ([PropKey::GridSpan, PropKey::GridSpanSm, PropKey::GridSpanMd,
+                    PropKey::GridSpanLg, PropKey::GridSpanXl, PropKey::GridSpan2xl] as $level => $key) {
+                    $child = $child->property($key, max(1, $spans[$level] ?? $span));
+                }
             }
             $engineChildren[] = $child->property(PropKey::GridSpan, $span);
         }
         $minimum = max(0.0, self::number($props, 'minColumnWidth', 0.0));
-        if ($minimum > 0.0 && !$fixedGrid) {
-            throw new InvalidArgumentException('minColumnWidth currently requires fixed columns, gutters and spans with row direction.');
+        if ($minimum > 0.0 && $direction !== \Pam\Native\FlexDirection::Row->value) {
+            throw new InvalidArgumentException('minColumnWidth currently requires row direction.');
         }
         if ($fixedGrid) {
             $grid = Column::make(...$engineChildren)
                 ->property(PropKey::GridColumns, $columns[0])
                 ->property(PropKey::GridColumnGap, (float) $columnGaps[0])
                 ->property(PropKey::GridRowGap, (float) $rowGaps[0]);
+            return $minimum > 0.0
+                ? $grid->property(PropKey::GridMinColumnWidth, $minimum)
+                : $grid;
+        }
+        if ($direction === \Pam\Native\FlexDirection::Row->value) {
+            $levels = [];
+            foreach ([0, 640, 768, 1024, 1280, 1536] as $index => $width) {
+                $levels[] = new \Pam\Native\GridBreakpoint(
+                    (float) $width, $columns[$index],
+                    (float) $columnGaps[$index], (float) $rowGaps[$index],
+                );
+            }
+            $grid = Column::make(...$engineChildren)->property(
+                PropKey::GridTemplate, (new \Pam\Native\GridTemplate(...$levels))->toWire(),
+            );
             return $minimum > 0.0
                 ? $grid->property(PropKey::GridMinColumnWidth, $minimum)
                 : $grid;
