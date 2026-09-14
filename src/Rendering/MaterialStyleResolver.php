@@ -1382,11 +1382,10 @@ final class MaterialStyleResolver
                     default => 64.0,
                 },
                 $part === 'PNumberInput'
-                    && ($props['controlVariant'] ?? null) === 'stacked' => 112.0,
-                // This compound field stacks a 16dp label lane above complete
-                // 48dp step targets. A 72dp surface keeps both lanes on the
-                // 8dp grid without clipping; density changes the inner visual.
-                $part === 'PNumberInput' => 72.0,
+                    && ($props['controlVariant'] ?? null) === 'stacked' => 128.0,
+                // Reserve a 16dp label, complete 48dp targets and 8dp padding
+                // on both edges. Intrinsic height lets scaled labels grow.
+                $part === 'PNumberInput' => 80.0,
                 default => $height,
             };
             $focused = ($props['focused'] ?? $props['active'] ?? false) === true;
@@ -1447,7 +1446,7 @@ final class MaterialStyleResolver
                 + (24.0 * max(0, $textareaRows - 3));
             $intrinsicFieldHeight = $selectionField || in_array($part, [
                 'PTextField', 'PPasswordField', 'PMaskedField', 'PCurrencyField',
-                'PColorInput', 'PDateInput',
+                'PColorInput', 'PDateInput', 'PNumberInput',
             ], true);
 
             return new Style(
@@ -1460,14 +1459,14 @@ final class MaterialStyleResolver
                 minHeight: $part === 'PTextarea' ? $textareaHeight : $controlHeight,
                 paddingHorizontal: $underlined || $plain ? 0.0 : 16.0,
                 paddingTop: $selectionField ? ($density === MaterialDensity::Default ? 8.0 : 4.0) : ($part === 'PNumberInput'
-                    ? 0.0
+                    ? 8.0
                     : match ($density) {
                         MaterialDensity::Comfortable => 4.0,
                         MaterialDensity::Compact => 0.0,
                         default => 8.0,
                     }),
                 paddingBottom: $selectionField ? 4.0 : ($part === 'PNumberInput'
-                    ? 0.0
+                    ? 8.0
                     : match ($density) {
                         MaterialDensity::Comfortable => 2.0,
                         MaterialDensity::Compact => 0.0,

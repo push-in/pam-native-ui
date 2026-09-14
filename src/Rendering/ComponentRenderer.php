@@ -3017,7 +3017,11 @@ final class ComponentRenderer
             'component' => self::componentId($part),
             'behavior' => $behavior->value,
             'theme' => ThemeManager::resolvedMode()->value,
-            'trackColor' => ThemeManager::current()->color(ColorToken::Muted),
+            'trackColor' => ThemeManager::current()->color(
+                $behavior === NativeBehavior::Checkbox || $behavior === NativeBehavior::Radio
+                    ? ColorToken::Outline
+                    : ColorToken::Muted,
+            ),
             'fillColor' => self::materialSemanticColor($props),
             'foregroundColor' => ThemeManager::current()->color(ColorToken::Foreground),
             'selectedForegroundColor' => ThemeManager::current()->color(

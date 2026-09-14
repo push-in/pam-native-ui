@@ -4,6 +4,50 @@ import XCTest
 @testable import PamMobileUi
 
 final class PamMobileUiTests: XCTestCase {
+    func testSelectionIndicatorUsesTaggedGeometryInBothDirections() {
+        let host = PamMobileUiHost { _, _ in }
+        defer { host.releaseCallbacks() }
+        host.frame = CGRect(x: 0, y: 0, width: 320, height: 64)
+        let container = UIView(frame: CGRect(x: 8, y: 4, width: 304, height: 56))
+        let indicator = UIView(frame: CGRect(x: 12, y: 16, width: 24, height: 24))
+        indicator.accessibilityIdentifier = "pam:selection-indicator"
+        host.addSubview(container)
+        container.addSubview(indicator)
+        XCTAssertEqual(host.selectionIndicatorRect, CGRect(x: 20, y: 20, width: 24, height: 24))
+        host.semanticContentAttribute = .forceRightToLeft
+        indicator.frame.origin.x = 268
+        XCTAssertEqual(host.selectionIndicatorRect, CGRect(x: 276, y: 20, width: 24, height: 24))
+        container.removeFromSuperview()
+        XCTAssertEqual(host.selectionIndicatorRect, CGRect(x: 150, y: 22, width: 20, height: 20))
+    }
+
+    func testCheckboxRendersDistinctCheckedAndIndeterminateMarks() throws {
+        let host = PamMobileUiHost { _, _ in }
+        defer { host.releaseCallbacks() }
+        host.frame = CGRect(x: 0, y: 0, width: 48, height: 48)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: host.bounds.size, format: format)
+        func capture(checked: Bool, indeterminate: Bool) throws -> Data {
+            host.update([
+                "behavior": .integer(Int64(PamMobileBehavior.checkbox.rawValue)),
+                "checked": .flag(checked),
+                "indeterminate": .flag(indeterminate),
+                "fillColor": .integer(0xFF077A50),
+                "trackColor": .integer(0xFF5B657E),
+                "selectedForegroundColor": .integer(0xFFFFFFFF),
+            ])
+            let image = renderer.image { _ in host.draw(host.bounds) }
+            return try XCTUnwrap(image.pngData())
+        }
+        let unchecked = try capture(checked: false, indeterminate: false)
+        let checked = try capture(checked: true, indeterminate: false)
+        let mixed = try capture(checked: false, indeterminate: true)
+        XCTAssertNotEqual(unchecked, checked)
+        XCTAssertNotEqual(unchecked, mixed)
+        XCTAssertNotEqual(checked, mixed)
+    }
+
     func testFileTreeMultipleSelectionRetainsOtherPaths() {
         var changes: [String] = []
         let tree = PamMobileUiHost { kind, data in

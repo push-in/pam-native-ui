@@ -27,7 +27,7 @@ private extension WireValue {
     }
 }
 
-private enum PamMobileBehavior: Int {
+enum PamMobileBehavior: Int {
     case container = 1
     case accordion = 2
     case bottomSheet = 3
@@ -2065,28 +2065,59 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         ))
     }
 
-    private func drawSelection(_ context: CGContext) {
-        let size = min(24, min(bounds.width, bounds.height))
-        let rect = CGRect(
+    var selectionIndicatorRect: CGRect {
+        if let indicator = descendant(tag: "pam:selection-indicator"),
+           indicator.bounds.width > 0, indicator.bounds.height > 0 {
+            return indicator.convert(indicator.bounds, to: self)
+        }
+        let size = min(20, min(bounds.width, bounds.height))
+        return CGRect(
             x: (bounds.width - size) / 2,
             y: (bounds.height - size) / 2,
             width: size,
             height: size
         )
-        context.setStrokeColor((isChecked ? fillColor : trackColor).cgColor)
+    }
+
+    private func drawSelection(_ context: CGContext) {
+        let rect = selectionIndicatorRect
+        guard rect.width > 0, rect.height > 0 else { return }
+        let indeterminate = properties["indeterminate"]?.pamFlag ?? false
+        let marked = isChecked || indeterminate
+        let invalid = properties["invalid"]?.pamFlag ?? false
+        let activeColor = invalid
+            ? color(properties["invalidColor"]?.pamInteger, fallback: fillColor)
+            : fillColor
+        let unit = min(rect.width, rect.height)
+        context.saveGState()
+        defer { context.restoreGState() }
+        context.setStrokeColor((marked || invalid ? activeColor : trackColor).cgColor)
         context.setLineWidth(2)
         if behavior == .radio {
             context.strokeEllipse(in: rect.insetBy(dx: 1, dy: 1))
-            if isChecked {
-                context.setFillColor(fillColor.cgColor)
-                context.fillEllipse(in: rect.insetBy(dx: 6, dy: 6))
+            if marked {
+                context.setFillColor(activeColor.cgColor)
+                context.fillEllipse(in: rect.insetBy(dx: unit * 0.22, dy: unit * 0.22))
             }
         } else {
-            let path = UIBezierPath(roundedRect: rect, cornerRadius: 2)
+            let path = UIBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: 4)
             context.addPath(path.cgPath)
-            if isChecked {
-                context.setFillColor(fillColor.cgColor)
-                context.fillPath()
+            if marked {
+                context.setFillColor(activeColor.cgColor)
+                context.drawPath(using: .fillStroke)
+                context.setStrokeColor(selectedForegroundColor.cgColor)
+                context.setLineWidth(max(2, unit * 0.11))
+                context.setLineCap(.round)
+                context.setLineJoin(.round)
+                if indeterminate {
+                    context.move(to: CGPoint(x: rect.midX - unit * 0.25, y: rect.midY))
+                    context.addLine(to: CGPoint(x: rect.midX + unit * 0.25, y: rect.midY))
+                } else {
+                    context.move(to: CGPoint(x: rect.midX - unit * 0.27, y: rect.midY))
+                    context.addLine(to: CGPoint(x: rect.midX - unit * 0.07, y: rect.midY + unit * 0.2))
+                    context.addLine(to: CGPoint(x: rect.midX + unit * 0.3, y: rect.midY - unit * 0.24))
+                }
+                context.strokePath()
             } else {
                 context.strokePath()
             }

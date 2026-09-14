@@ -43,6 +43,7 @@ use Pam\Native\UI\Text;
 require __DIR__.'/bootstrap.php';
 require __DIR__.'/material-field-state.php';
 require __DIR__.'/material-list-mutation.php';
+require __DIR__.'/material-selection-colors.php';
 require __DIR__.'/showcase-list-hints.php';
 require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 
@@ -2726,17 +2727,27 @@ $compactNumberStyle = MaterialStyleResolver::resolve([
 ], Themes::pamLight());
 if (
     !$stackedNumberStyle instanceof Style
-    || $stackedNumberStyle->height !== 112.0
+    || $stackedNumberStyle->height !== null
+    || $stackedNumberStyle->minHeight !== 128.0
     || !$defaultNumberStyle instanceof Style
-    || $defaultNumberStyle->height !== 72.0
+    || $defaultNumberStyle->height !== null
+    || $defaultNumberStyle->minHeight !== 80.0
     || !$comfortableNumberStyle instanceof Style
-    || $comfortableNumberStyle->height !== 72.0
+    || $comfortableNumberStyle->height !== null
+    || $comfortableNumberStyle->minHeight !== 80.0
     || !$compactNumberStyle instanceof Style
-    || $compactNumberStyle->height !== 72.0
+    || $compactNumberStyle->height !== null
+    || $compactNumberStyle->minHeight !== 80.0
 ) {
     throw new RuntimeException(
         'Number input variants must reserve their complete 48dp control geometry.',
     );
+}
+
+foreach ([$stackedNumberStyle, $defaultNumberStyle, $comfortableNumberStyle, $compactNumberStyle] as $numberStyle) {
+    if ($numberStyle->paddingTop !== 8.0 || $numberStyle->paddingBottom !== 8.0) {
+        throw new RuntimeException('Number input labels and controls need interior spacing at every density.');
+    }
 }
 
 $otpClass = $tags['p-otp-input'];
