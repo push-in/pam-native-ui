@@ -8496,7 +8496,8 @@ final class ComponentRenderer
             && count(array_unique($rowGaps)) === 1;
         foreach ($children as $child) {
             $tag = $child->properties()[PropKey::Value->value] ?? null;
-            $span = 1;
+            $authoredSpan = $child->properties()[PropKey::GridSpan->value] ?? null;
+            $span = is_int($authoredSpan) ? max(1, $authoredSpan) : 1;
             if (is_string($tag) && str_starts_with($tag, 'pam:grid-item:')) {
                 $spans = array_map('intval', explode(',', substr($tag, strlen('pam:grid-item:'))));
                 $fixedGrid = $fixedGrid && count(array_unique($spans)) === 1;

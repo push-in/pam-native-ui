@@ -3463,6 +3463,18 @@ $spanningGrid = $gridClass::make(
     ['columns' => 3],
     Text::make('Spanning')->property(PropKey::Value, 'pam:grid-item:2,2,2,2,2,2'),
 )->toElement();
+foreach ([0, 1, 2, 8] as $authoredSpan) {
+    $authoredGrid = $gridClass::make(
+        ['columns' => 3],
+        Text::make('Native span')->property(PropKey::GridSpan, $authoredSpan)
+            ->property(PropKey::GridSpanMd, 3),
+    )->toElement();
+    $cellProps = $authoredGrid->children()[0]->properties();
+    if (($cellProps[PropKey::GridSpan->value] ?? null) !== max(1, $authoredSpan)
+        || ($cellProps[PropKey::GridSpanMd->value] ?? null) !== 3) {
+        throw new RuntimeException('Grid composition must preserve authored native spans; the engine clamps to available columns.');
+    }
+}
 $autoFitGrid = $gridClass::make(['columns' => 4, 'minColumnWidth' => 120], Text::make('Adaptive'))->toElement();
 if (($autoFitGrid->properties()[PropKey::GridMinColumnWidth->value] ?? null) !== 120.0) {
     throw new RuntimeException('Minimum column width must be delegated to native layout, not a host-only resize.');

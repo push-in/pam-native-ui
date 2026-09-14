@@ -102,3 +102,20 @@ material matrix and focused PHPStan 9 passed. Auto-fit plus breakpoint/reversed
 configurations are explicitly rejected for now. See `adaptive-grid.md` for the
 candidate API. Large font/RTL/iOS/device resize and full responsive migration
 remain unapproved. No release or online media publication was performed.
+
+## Authored native span preservation
+
+The fixed-grid composition no longer overwrites an explicitly authored native
+`GridSpan` with 1. Unspecified spans still default to one column; GridItem's
+explicit span retains precedence. Native breakpoint span properties remain
+untouched. Regression cases cover spans 0, 1, 2 and 8 plus GridSpanMd preservation;
+the engine remains responsible for clamping a span to actual available columns.
+The material matrix passed. This change has not yet been installed in the showcase.
+
+Migration constraint confirmed from current source: UI GridSpec uses breakpoints
+640/768/1024/1280/1536, whereas PAM Native's existing responsive span engine uses
+600/840/1200/1600. Simply forwarding UI breakpoint spans into native keys would
+silently change behavior and lose the sixth tier. Completing the responsive
+migration therefore requires an explicit reusable breakpoint contract in PAM
+Native, including column counts and gutters, before removing the UI host fallback.
+Do not change existing breakpoints or shorten labels to bypass this requirement.
