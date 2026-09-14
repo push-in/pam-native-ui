@@ -1753,12 +1753,7 @@ final class ComponentRenderer
             }
             if ($clearable) {
                 $clear = Pressable::make(
-                    Text::make('×')->style(new Style(
-                        textColor: $theme->color(ColorToken::MutedForeground),
-                        fontSize: 20.0,
-                        lineHeight: 24.0,
-                        textAlign: TextAlignment::Center,
-                    )),
+                    self::fieldActionIcon('close', $theme->color(ColorToken::MutedForeground)),
                 )
                     ->enabled(true)
                     ->style(new Style(
@@ -1793,15 +1788,12 @@ final class ComponentRenderer
             if ($materialComponent === 'PPasswordField') {
                 $revealed = self::flag($props, 'revealed');
                 $toggle = Pressable::make(
-                    Text::make($revealed ? 'Hide' : 'Show')->style(new Style(
-                        textColor: $theme->color(
+                    self::fieldActionIcon(
+                        $revealed ? 'eye-off' : 'eye',
+                        $theme->color(
                             $fieldDisabled ? ColorToken::MutedForeground : ColorToken::Primary,
                         ),
-                        fontSize: 12.0,
-                        lineHeight: 16.0,
-                        fontWeight: 600,
-                        textAlign: TextAlignment::Center,
-                    )),
+                    ),
                 )
                     ->enabled(!$fieldDisabled)
                     ->style(new Style(
@@ -1815,7 +1807,11 @@ final class ComponentRenderer
                         justifyContent: Justify::Center,
                     ))
                     ->accessibilityRole(AccessibilityRole::Button)
-                    ->accessibilityLabel($revealed ? 'Hide password' : 'Show password')
+                    ->accessibilityLabel(self::text(
+                        $props,
+                        $revealed ? 'hideLabel' : 'showLabel',
+                        $revealed ? 'Hide password' : 'Show password',
+                    ))
                     ->accessibilityExpanded($revealed);
                 $toggleHandler = $events[EventKind::Toggle->value] ?? null;
                 if ($toggleHandler !== null && !$fieldDisabled) {
@@ -11316,6 +11312,13 @@ final class ComponentRenderer
                 ))
                 ->property(PropKey::Value, 'pam:file-tree-content'),
         ];
+    }
+
+    private static function fieldActionIcon(string $name, int $color): Element
+    {
+        return self::render('Icon', ['icon' => $name, 'color' => $color], [], [], null, null)
+            ->style(new Style(width: 20.0, height: 20.0))
+            ->accessibilityImportance(AccessibilityImportance::NoHideDescendants);
     }
 
     private static function nativeEventAction(string $payload): ?int

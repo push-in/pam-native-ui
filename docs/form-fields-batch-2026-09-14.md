@@ -1,5 +1,32 @@
 # Consolidated form review
 
+## Shared field action visuals
+
+The shared clear action now renders the existing native CloseIcon rather than a
+font multiplication glyph. Password visibility uses EyeIcon/EyeOffIcon, with
+`showLabel` and `hideLabel` for localized accessible names. Decorative icons are
+hidden from accessibility traversal; the parent retains its accessible action.
+Existing slot geometry, callbacks and readonly/disabled policy are unchanged.
+This is entirely UI composition over existing capabilities, with no new native
+implementation, CLI change or dependency.
+
+PHP regressions cover vector clearing in Text Field, Textarea, Password Field,
+Masked Field and Currency Field, and both localized password visibility states.
+The 114-component render/style matrix and targeted level-9 PHPStan pass.
+
+One 10-second Android build produced candidate SHA-256
+`bbd39bf7d6ebfe666111148cf39a3746a8f429372ee981c62bace40d5814803f`.
+`/tmp/pam-field-vector-actions-20260914/report.json` records a passed password
+reveal/clear flow, readonly-clear exclusion, distinct field names and aligned,
+non-overlapping actions on emulator-5554. The combined-actions screenshot was
+inspected: eye, eye-off and close vectors are visible, centered and separated
+alongside the loading indicator. The build automatically cleaned 96.8 MiB.
+
+Device coverage here is the password composite, not a new full approval of all
+five fields, all themes, iOS, large text or animation performance. Existing
+unchanged formatting and retention tests were not repeated. Images remain local
+diagnostic evidence, not published media.
+
 ## Date range event bounds
 
 Copy customization follow-up: Date Range and Time Range now honor shared

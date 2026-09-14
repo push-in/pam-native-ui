@@ -55,6 +55,31 @@ Every public `p-*` tag has a typed facade under `Pam\MobileUi\Material`.
 Low-level text and layout use PAM Native primitives rather than duplicate PAM
 UI components.
 
+## Password and clear actions
+
+Field clear actions use the same native vector close icon. Password visibility
+uses eye/eye-off icons, preserving a 48dp action target without fitting translated
+button text into a fixed slot. Icons are decorative; the parent action owns its
+accessible name. Use `clearLabel`, `showLabel` and `hideLabel` to localize actions:
+
+```php
+use Pam\MobileUi\Material\PPasswordField;
+
+$password = PPasswordField::make([
+    'label' => 'Senha',
+    'modelValue' => $passwordValue,
+    'revealed' => $passwordRevealed,
+    'clearable' => true,
+    'clearLabel' => 'Limpar senha',
+    'showLabel' => 'Mostrar senha',
+    'hideLabel' => 'Ocultar senha',
+])->onChange($updatePassword)->onToggle($updatePasswordRevealed);
+```
+
+The application owns both values and updates them through the two callbacks.
+Readonly fields omit clearing; disabled password fields also disable visibility
+actions. This UI composition reuses existing icons and native secure input.
+
 ## Localized interval fields
 
 Date Range Picker and Time Range Picker accept `fromLabel`/`toLabel` for visible
