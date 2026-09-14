@@ -110,3 +110,25 @@ existing task/foreground guards and wait for the picker before dismissal. No UI
 defect is inferred from that unguarded attempt. The emulator Downloads fixture
 and this attempt's remote hierarchy files were removed; the 92-byte source fixture
 remains locally in `/tmp`. No personal document was selected. No publication.
+
+## Multiple document selection and guarded cancellation
+
+On the same emulator candidate, two separate 37-byte fixtures,
+`pam-ui-file-proof-a.txt` and `pam-ui-file-proof-b.txt`, were placed in Downloads.
+The enabled Attachments field opened DocumentsUI. Long-pressing A and tapping B
+exposed `2 selected`; tapping Select returned to the showcase. The enabled
+Attachments button's text was asserted exactly as `Attachments`,
+`2 files selected`, `Replace`. Evidence: `/tmp/pam-multiple-selected.xml`.
+
+The picker was then reopened. Its package was verified from the current hierarchy
+before sending Back (no dismissal button was exposed in that state). The returned
+showcase hierarchy passed the same exact field assertion in
+`/tmp/pam-multiple-retained.xml`. This establishes retained UI selection count
+after cancellation, unlike the earlier unguarded single-file attempt.
+`/tmp/pam-multiple-selected.png` was viewed: label, count and action remain aligned
+inside the control. No build was repeated.
+
+The two Downloads fixtures and the four remote diagnostic XML files were removed;
+source fixtures remain in `/tmp`. These checks do not verify imported file bytes,
+limit overflow, replacement with a different set, or error handling. No full
+component approval or publication is claimed.
