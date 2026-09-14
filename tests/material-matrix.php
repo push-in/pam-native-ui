@@ -3428,21 +3428,38 @@ $grid = $gridClass::make(
     Text::make('B'),
     Text::make('C'),
 )->toElement();
-$gridHost = $grid->properties()[PropKey::HostProperties->value] ?? null;
-$gridNative = $gridHost instanceof BinaryValue
-    ? Wire::decodeMap($gridHost->bytes)
-    : [];
 if (
-    $grid->kind() !== NodeKind::CustomView
+    $grid->kind() !== NodeKind::Column
     || count($grid->children()) !== 3
-    || ($grid->properties()[PropKey::HostName->value] ?? null) !== 'pam.mobile_ui.grid'
-    || ($gridNative['columns'] ?? null) !== '3,3,3,3,3,3'
-    || ($gridNative['columnGaps'] ?? null) !== '12,12,12,12,12,12'
-    || ($gridNative['rowGaps'] ?? null) !== '8,8,8,8,8,8'
+    || ($grid->properties()[PropKey::GridColumns->value] ?? null) !== 3
+    || ($grid->properties()[PropKey::GridColumnGap->value] ?? null) !== 12.0
+    || ($grid->properties()[PropKey::GridRowGap->value] ?? null) !== 8.0
 ) {
     throw new RuntimeException(
         'p-responsive-grid must map columns and independent gutters to the native grid engine.',
     );
+}
+foreach ($grid->children() as $cell) {
+    if (($cell->properties()[PropKey::GridSpan->value] ?? null) !== 1) {
+        throw new RuntimeException('Unwrapped grid children must occupy one engine column.');
+    }
+}
+$spanningGrid = $gridClass::make(
+    ['columns' => 3],
+    Text::make('Spanning')->property(PropKey::Value, 'pam:grid-item:2,2,2,2,2,2'),
+)->toElement();
+if (($spanningGrid->children()[0]->properties()[PropKey::GridSpan->value] ?? null) !== 2) {
+    throw new RuntimeException('Fixed GridItem spans must reach the shared layout engine.');
+}
+foreach ([
+    $gridClass::make(['columns' => ['default' => 1, 'md' => 3]], Text::make('Adaptive')),
+    $gridClass::make(['columns' => 3], Text::make('Adaptive span')
+        ->property(PropKey::Value, 'pam:grid-item:1,1,2,2,3,3')),
+    $gridClass::make(['columns' => 3, 'flexDirection' => \Pam\Native\FlexDirection::RowReverse->value], Text::make('Reversed')),
+] as $adaptiveGrid) {
+    if (($adaptiveGrid->toElement()->properties()[PropKey::HostName->value] ?? null) !== 'pam.mobile_ui.grid') {
+        throw new RuntimeException('Adaptive and reversed grids must retain their existing host contract until engine support is integrated.');
+    }
 }
 
 $scaffoldClass = $tags['p-app-scaffold'];

@@ -198,6 +198,9 @@ internal class MobileUiGridView(
         }
 
     private fun constrainCellContent(cell: View, width: Int) {
+        // Only GridItem is a sizing wrapper. Direct authored Columns/Rows may
+        // start with a deliberately narrow icon, badge or heading.
+        if ((cell.tag as? String)?.startsWith("pam:grid-item:") != true) return
         val content = (cell as? ViewGroup)?.getChildAt(0) ?: return
         val params = content.layoutParams ?: return
         if (params.width == width) return

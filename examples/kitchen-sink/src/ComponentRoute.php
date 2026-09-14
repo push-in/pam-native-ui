@@ -6403,6 +6403,12 @@ final class ComponentRoute extends Component
                 ['label' => 'Four Columns', 'props' => ['columns' => 4]],
             ],
             'p-virtual-list' => [
+                ['label' => '1,000 items — near the end', 'props' => [
+                    'items' => array_map(static fn (int $row): string => 'Record '.$row, range(1, 1000)),
+                    'rowHeight' => 56,
+                    'prefetch' => 8,
+                    'initialScrollIndex' => 990,
+                ]],
                 ['label' => 'Comfortable', 'props' => ['rowHeight' => 56, 'prefetch' => 8]],
                 ['label' => 'Compact', 'props' => ['rowHeight' => 48, 'prefetch' => 12]],
                 ['label' => 'Two Columns', 'props' => ['rowHeight' => 64, 'numColumns' => 2]],

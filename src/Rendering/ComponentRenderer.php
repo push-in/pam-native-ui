@@ -8464,6 +8464,29 @@ final class ComponentRenderer
             1,
             min(4, self::integer($props, 'flexDirection', 2)),
         );
+        // Let the shared engine measure descendants at their actual cell width.
+        // A host-only resize happens too late to recompute wrapped text heights.
+        $engineChildren = [];
+        $fixedGrid = $direction === \Pam\Native\FlexDirection::Row->value
+            && count(array_unique($columns)) === 1
+            && count(array_unique($columnGaps)) === 1
+            && count(array_unique($rowGaps)) === 1;
+        foreach ($children as $child) {
+            $tag = $child->properties()[PropKey::Value->value] ?? null;
+            $span = 1;
+            if (is_string($tag) && str_starts_with($tag, 'pam:grid-item:')) {
+                $spans = array_map('intval', explode(',', substr($tag, strlen('pam:grid-item:'))));
+                $fixedGrid = $fixedGrid && count(array_unique($spans)) === 1;
+                $span = max(1, $spans[0]);
+            }
+            $engineChildren[] = $child->property(PropKey::GridSpan, $span);
+        }
+        if ($fixedGrid) {
+            return Column::make(...$engineChildren)
+                ->property(PropKey::GridColumns, $columns[0])
+                ->property(PropKey::GridColumnGap, (float) $columnGaps[0])
+                ->property(PropKey::GridRowGap, (float) $rowGaps[0]);
+        }
         $grid = CustomView::make(
             'pam.mobile_ui.grid',
             [

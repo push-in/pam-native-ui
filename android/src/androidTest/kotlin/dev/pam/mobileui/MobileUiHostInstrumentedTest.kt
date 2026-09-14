@@ -44,6 +44,32 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
     @Test
+    fun gridOnlyResizesExplicitGridItemWrapperContent() {
+        onMain {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val grid = MobileUiGridView(context)
+            grid.update(mapOf("columns" to WireValue.Text("2,2,2,2,2,2")))
+            val badge = View(context)
+            val authoredCell = FrameLayout(context).apply {
+                addView(badge, FrameLayout.LayoutParams(24, 24))
+            }
+            val wrappedContent = View(context)
+            val wrapper = FrameLayout(context).apply {
+                tag = "pam:grid-item:1,1,1,1,1,1"
+                addView(wrappedContent, FrameLayout.LayoutParams(24, 24))
+            }
+            grid.addView(authoredCell, ViewGroup.LayoutParams(360, 48))
+            grid.addView(wrapper, ViewGroup.LayoutParams(360, 48))
+            grid.measure(
+                View.MeasureSpec.makeMeasureSpec(360, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            )
+            assertEquals(24, badge.layoutParams.width)
+            assertEquals(180, wrappedContent.layoutParams.width)
+        }
+    }
+
+    @Test
     fun anchoredContentPreservesRendererDimensionsIncludingTrailingPadding() {
         onMain {
             val context = InstrumentationRegistry.getInstrumentation().targetContext
