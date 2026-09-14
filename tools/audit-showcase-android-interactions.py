@@ -975,32 +975,47 @@ def exercise(
         if not scrolls:
             raise AuditFailure("data grid route exposes no scrollable catalog viewport")
         area = bounds(max(scrolls, key=lambda node: bounds(node).height))
-        audit.swipe(
-            (area.center[0], area.bottom - 100),
-            (area.center[0], area.top + 220),
-            900,
-        )
-        scrolled = audit.dump(f"{evidence_name}-selectable")
-        tables = [
-            node for node in scrolled.nodes()
-            if enabled(node)
-            and node.attrib.get("class") == "android.widget.TableLayout"
-            and bounds(node).height > 100
-        ]
-        if not tables:
-            raise AuditFailure("selectable data grid did not enter the viewport")
-        table = max(tables, key=lambda node: bounds(node).top)
-        table_bounds = bounds(table)
-        audit.tap(Bounds(
-            table_bounds.left + 24,
-            table_bounds.top + min(180, table_bounds.height // 3),
-            min(table_bounds.left + 136, table_bounds.right),
-            table_bounds.top + min(280, table_bounds.height // 2),
-        ))
-        after = audit.dump(f"{evidence_name}-after")
-        assert_healthy(after, route, allow_overlay=True)
-        if "No rows selected" in after.all_text():
-            raise AuditFailure("selectable data grid row did not publish selection")
+        scrolled = before
+        table = None
+        footer = None
+        for attempt in range(6):
+            headings = [n for n in scrolled.nodes() if n.attrib.get("text") == "Selectable"]
+            if headings:
+                tables = [n for n in scrolled.nodes()
+                    if enabled(n) and n.attrib.get("class") == "android.widget.TableLayout"
+                    and bounds(n).top >= bounds(headings[0]).bottom]
+                if tables:
+                    table = min(tables, key=lambda n: bounds(n).top)
+                    footers = [n for n in scrolled.nodes()
+                        if n.attrib.get("text") == "No rows selected"
+                        and bounds(table).bottom <= bounds(n).top < bounds(table).bottom + 100
+                        and bounds(n).bottom < area.bottom - 20]
+                    if footers:
+                        footer = footers[0]
+                        break
+            # Use the page gutter, not the nested virtual table's scroll region.
+            audit.swipe((area.right - 8, area.bottom - 120),
+                (area.right - 8, area.bottom - min(800, area.height // 2)), 450)
+            scrolled = audit.dump(f"{evidence_name}-reveal-{attempt}")
+        if table is None or footer is None:
+            raise AuditFailure("selectable table and its own selection summary are not visible")
+        checkboxes = [n for n in table.iter("node")
+            if n.attrib.get("content-desc") == "Select row 1" and enabled(n)]
+        if len(checkboxes) != 1 or checkboxes[0].attrib.get("checked") != "false":
+            raise AuditFailure("selectable first row lacks a unique unchecked control")
+        control_bounds = bounds(checkboxes[0])
+        footer_top = bounds(footer).top
+        for expected_checked, expected_summary in [("true", "1 row(s) selected"), ("false", "No rows selected")]:
+            audit.tap(control_bounds)
+            after = audit.dump(f"{evidence_name}-checked-{expected_checked}")
+            assert_healthy(after, route, allow_overlay=True)
+            control = [n for n in after.nodes() if n.attrib.get("content-desc") == "Select row 1"
+                and abs(bounds(n).top - control_bounds.top) < 8]
+            summary = [n for n in after.nodes() if n.attrib.get("text") == expected_summary
+                and abs(bounds(n).top - footer_top) < 8]
+            if len(control) != 1 or control[0].attrib.get("checked") != expected_checked or len(summary) != 1:
+                raise AuditFailure("data grid checkbox and controlled selection summary disagree")
+            audit.settled_screenshot_hash(f"{evidence_name}-checked-{expected_checked}")
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 

@@ -81,3 +81,30 @@ in the sibling repository. This closes that particular code gate, not the whole
 native SDK audit. Before the next Android build, explicitly sync the current PHP
 TemplateRenderer into staging; the installed feedback candidate predates these
 native PHP changes. Do not repeat the resolved static-diagnostic investigation.
+
+## Integrated Android candidate — 2026-09-14
+
+The staging PHP SDK was synchronized with Native `2654c90` and a single release
+build installed on `emulator-5554` (Android 16/API 36). Candidate SHA-256:
+`298ca172c5b4d59f1da0be470c6f5eeaedaa71208295d5dc7155f19b741a0a0e`.
+UI implementation: `9edd6aa`; documentation HEAD before this batch: `cfc57ec`.
+
+- Chart point selection and Search Bar text entry passed in the integrated run:
+  `/tmp/pam-sdk-integrated-20260914.json`.
+- Data Grid initially failed because the harness inspected another instance's
+  `No rows selected` footer. The corrected locator scrolls the page gutter,
+  identifies the Selectable table and its own footer, and verifies both checkbox
+  state and summary when selecting **and deselecting** row 1.
+- Only Data Grid was repeated: `/tmp/pam-sdk-data-grid-20260914.json`, one pass,
+  zero failures, 21.558 seconds. The initial failure remains in its original report.
+- Existing screenshots were inspected for all three cases. The selected grid
+  checkbox appears as a solid green square without a contrasting check mark;
+  selection works, but this remains a visual issue to investigate in the native
+  checkbox rendering. Search Bar evidence covers entry with the keyboard open,
+  not clear, submit, long-query handling or every variation. Chart evidence does
+  not establish all point/gesture behavior.
+
+These are scoped interaction results, **not full component approvals** or
+publication-quality media. Animations were disabled; no motion-performance,
+iOS, RTL or comprehensive accessibility claim is made. Temporary evidence paths
+are local diagnostic artifacts, not durable online documentation assets.
