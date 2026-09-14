@@ -1,5 +1,22 @@
 # Search family validation
 
+## Command Palette integrated search contract
+
+The integrated audit no longer accepts only opening/closing the palette. It now
+focuses the unique search editor, checks focus survives keyboard appearance,
+types Open, requires exactly the Open file result, selects it, checks dismissal
+and verifies the selected value in the Quick actions trigger specifically.
+
+`/tmp/pam-command-integrated-search-20260914.json` passes on emulator-5554/API 36
+in 21.328 seconds using existing candidate
+`ad9367fe9acecb49a648d9639eabaec35f6571795ee2701ee9e6f3958ed7b15a`.
+The filtered screenshot was inspected: query and result are visible above the
+keyboard, with the search icon/editor aligned. No new build was needed.
+This closes the integrated-suite coverage gap recorded in the navigation/search
+batch, not empty results, disabled commands, rotation mid-edit, performance,
+TalkBack, iOS or full component approval. Historical open/close-only reports
+remain scoped to their original assertions.
+
 ## Custom value collision: Android event path
 
 `/tmp/pam-tag-collision-final-20260914.json` passes the Tag Input flow on the

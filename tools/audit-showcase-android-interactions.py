@@ -928,6 +928,38 @@ def exercise(
         changed = open_hash != before_hash
         if not changed:
             raise AuditFailure("overlay trigger produced no visual change")
+        if tag == "p-command-palette":
+            opened = audit.dump(f"{evidence_name}-opened")
+            editors = [n for n in opened.nodes()
+                if n.attrib.get("class") == "android.widget.EditText" and enabled(n)]
+            if len(editors) != 1:
+                raise AuditFailure("command palette requires a unique native search editor")
+            audit.tap(bounds(editors[0]))
+            focused = audit.dump(f"{evidence_name}-keyboard")
+            if not any(n.attrib.get("class") == "android.widget.EditText"
+                and n.attrib.get("focused") == "true" for n in focused.nodes()):
+                raise AuditFailure("command search disappeared or lost focus when keyboard opened")
+            audit.adb("shell", "input", "text", "Open")
+            filtered = audit.dump(f"{evidence_name}-filtered")
+            assert_healthy(filtered, route, allow_overlay=True)
+            options = [n for n in filtered.nodes()
+                if n.attrib.get("class") == "android.widget.CheckedTextView"]
+            if len(options) != 1 or options[0].attrib.get("content-desc") != "Open file":
+                raise AuditFailure("command query did not filter to Open file")
+            audit.settled_screenshot_hash(f"{evidence_name}-filtered")
+            audit.tap(bounds(options[0]))
+            after = audit.dump(f"{evidence_name}-selected")
+            assert_healthy(after, route)
+            if any(n.attrib.get("class") == "android.widget.CheckedTextView" for n in after.nodes()):
+                raise AuditFailure("selecting a command did not dismiss its panel")
+            triggers = [n for n in after.nodes()
+                if n.attrib.get("class") == "android.widget.Spinner"
+                and n.attrib.get("content-desc") == "Quick actions"
+                and n.attrib.get("clickable") == "true"]
+            if len(triggers) != 1 or "Open file" not in descendant_labels(triggers[0]):
+                raise AuditFailure("selected command was not retained in its own trigger")
+            audit.settled_screenshot_hash(f"{evidence_name}-after")
+            return after, True
         if tag in {"p-tag-input", "p-multi-select"}:
             option = "Swift" if tag == "p-tag-input" else "Engineering"
             label = "Skills" if tag == "p-tag-input" else "Teams"
