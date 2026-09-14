@@ -6,7 +6,7 @@ on:
       native_ref:
         description: PAM Native branch, tag or commit to certify against
         required: false
-        default: 1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e
+        default: cef35fcb2610f29028fac2dd4dc1d720aca52c55
         type: string
   push:
     branches:
@@ -21,8 +21,8 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e
-  PAM_NATIVE_REF: ${{ inputs.native_ref || '1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e' }}
+  PAM_NATIVE_COMMIT: cef35fcb2610f29028fac2dd4dc1d720aca52c55
+  PAM_NATIVE_REF: ${{ inputs.native_ref || 'cef35fcb2610f29028fac2dd4dc1d720aca52c55' }}
 
 jobs:
   composer-compatibility:
@@ -176,9 +176,9 @@ jobs:
       matrix:
         native:
           - label: minimum
-            commit: 1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e
+            commit: cef35fcb2610f29028fac2dd4dc1d720aca52c55
           - label: current
-            commit: 1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e
+            commit: cef35fcb2610f29028fac2dd4dc1d720aca52c55
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
@@ -231,9 +231,9 @@ jobs:
       matrix:
         native:
           - label: minimum
-            commit: 1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e
+            commit: cef35fcb2610f29028fac2dd4dc1d720aca52c55
           - label: current
-            commit: 1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e
+            commit: cef35fcb2610f29028fac2dd4dc1d720aca52c55
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7

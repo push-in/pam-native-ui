@@ -77,3 +77,19 @@ UI compatibility run 34849797154 completed successfully (all nine jobs), UI
 `9d6cb884fd5b1d79f4ce18d793138b353d93f7f0` against Native
 `1d3cb56f75bd69dd8189c39fc1ab649a4a10cb9e`. This certifies the preceding Treeview
 integration candidate, not the later `defacc0` numeric fix or full UI approval.
+
+Android decimal keyboard/input-mode mapping now includes the signed-number
+flag; Number/Numeric remains digit-only for OTP-like fields. Focused renderer
+instrumentation passed on API 36 (7 seconds): inserting `-7.5` into Decimal
+retains it, switching to Number filters `-75` to `75`. This is native input
+acceptance evidence, not yet a rebuilt showcase lower-bound confirmation.
+UIKit inspection also found the renderer does not apply keyboardType/inputMode
+properties; that platform gap remains to implement and test separately.
+
+Signed lower-bound showcase roundtrip now passed on emulator-5554: `-7` was
+accepted intact, normalized to `0` on blur, sibling stayed `3`. Installed APK
+`98844101c40ae6e0eba8f49439ce5b61f5a6348ec83df44b0ac8c87203d34ab9`;
+output `/tmp/pam-number-signed-minimum-fixed-20260914`. Build took 17 seconds and
+cleaned 96.8 MiB. This closes the reproduced Android signed-entry/minimum case.
+UIKit keyboard mapping was implemented in Native `4882875` and is being tested
+in CI run 34851408115; do not count it as passing before that run completes.
