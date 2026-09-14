@@ -1,5 +1,27 @@
 # Tree Select state contract
 
+## Treeview disabled-branch parity
+
+The older `p-treeview` composition now propagates a disabled item/ancestor into
+all generated folders and files, removes their selection callbacks and honors
+the `isDisabled` item alias. An explicit enabled child cannot escape a disabled
+ancestor. This matches the existing Tree Select disabled-branch policy.
+
+The Android FileTree host also checks the root, target and intermediate host
+ancestors before changing expansion/selection, including direct `performClick`
+activation. The check traverses ancestors without allocating a collection.
+This is UI-specific FileTree policy, not a new engine or CLI responsibility.
+
+Validation: matrix and focused PHPStan level 9 pass. On emulator-5554/API 36,
+`fileTreeRejectsActivationThroughDisabledItemsAndAncestors` passed: one test,
+zero failures/errors/skips, 0.014s test body, 13s Gradle build/test. It rejects
+root, branch and leaf disabled activation without emitting events, then confirms
+folder and file changes after re-enabling. JUnit is under
+`android/build/outputs/androidTest-results/connected/debug/`.
+This host-level interaction test is not a screenshot/visual approval, a manual
+screen-reader check, or UIKit behavior evidence. The showcase APK must synchronize
+the changed Kotlin host before its next consolidated build.
+
 Tree Select owns visual composition and selection policy in PAM Native UI;
 it uses existing PAM Native Pressable, checked and expanded semantics.
 

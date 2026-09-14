@@ -44,6 +44,51 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
     @Test
+    fun fileTreeRejectsActivationThroughDisabledItemsAndAncestors() {
+        onMain {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val events = ArrayList<NativeViewEventKind>()
+            // Existing wire behavior identifiers: FileTree, Folder and File.
+            val tree = MobileUiHost(context) { kind, _ -> events += kind }.apply {
+                update(mapOf("behavior" to WireValue.Integer(32)))
+            }
+            val folder = MobileUiHost(context) { _, _ -> }.apply {
+                update(mapOf("behavior" to WireValue.Integer(33), "path" to WireValue.Text("/src")))
+            }
+            val file = MobileUiHost(context) { _, _ -> }.apply {
+                update(mapOf("behavior" to WireValue.Integer(34), "path" to WireValue.Text("/src/app.php")))
+            }
+            val content = FrameLayout(context).apply {
+                tag = "pam:file-tree-content"
+                addView(file)
+            }
+            folder.addView(content)
+            tree.addView(folder)
+            try {
+                tree.isEnabled = false
+                assertFalse(folder.performClick())
+                assertFalse(file.performClick())
+                tree.isEnabled = true
+                folder.isEnabled = false
+                assertFalse(folder.performClick())
+                assertFalse(file.performClick())
+                folder.isEnabled = true
+                file.isEnabled = false
+                assertFalse(file.performClick())
+                assertTrue(events.isEmpty())
+                file.isEnabled = true
+                assertTrue(folder.performClick())
+                assertTrue(file.performClick())
+                assertEquals(2, events.count { it == NativeViewEventKind.CHANGE })
+            } finally {
+                file.release()
+                folder.release()
+                tree.release()
+            }
+        }
+    }
+
+    @Test
     fun gridOnlyResizesExplicitGridItemWrapperContent() {
         onMain {
             val context = InstrumentationRegistry.getInstrumentation().targetContext

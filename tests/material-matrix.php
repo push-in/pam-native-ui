@@ -3423,6 +3423,26 @@ if ($selectedTreePath !== 'android') {
 }
 
 $imageClass = $tags['p-img'];
+foreach (['disabled', 'isDisabled'] as $treeDisabledAlias) {
+    $lockedTree = $treeClass::make([
+        'items' => [[
+            'title' => 'Archived', 'value' => 'archived', $treeDisabledAlias => true,
+            'children' => [['title' => 'Child', 'value' => 'child', 'disabled' => false]],
+        ]],
+        'opened' => ['archived'],
+        'modelValue' => 'child',
+    ])->onChange(static function (string $value): void {
+        throw new RuntimeException('Disabled tree branch must not emit a selection.');
+    })->toElement();
+    $lockedFolder = $lockedTree->children()[0];
+    $lockedLeaf = $lockedFolder->children()[1]->children()[0];
+    foreach ([$lockedFolder, $lockedLeaf] as $lockedNode) {
+        if (($lockedNode->properties()[PropKey::Enabled->value] ?? true) !== false
+            || isset($lockedNode->events()[EventKind::Press->value])) {
+            throw new RuntimeException('Treeview must propagate disabled branches through generated descendants.');
+        }
+    }
+}
 $imageError = null;
 $image = $imageClass::make([
     'src' => 'https://cdn.example.com/cover.jpg',

@@ -7152,7 +7152,7 @@ internal class MobileUiHost(
     }
 
     private fun toggleFileTreeFolder(folder: MobileUiHost): Boolean {
-        if (behavior != Behavior.FILE_TREE || folder.fileTreePath == "") return false
+        if (behavior != Behavior.FILE_TREE || folder.fileTreePath == "" || !canActivateFileTreeItem(folder)) return false
         val path = folder.fileTreePath
         val expanded = if (fileTreeExpandedPaths.remove(path)) {
             false
@@ -7180,7 +7180,7 @@ internal class MobileUiHost(
     }
 
     private fun selectFileTreeItem(item: MobileUiHost): Boolean {
-        if (behavior != Behavior.FILE_TREE || item.fileTreePath == "") return false
+        if (behavior != Behavior.FILE_TREE || item.fileTreePath == "" || !canActivateFileTreeItem(item)) return false
         if (fileTreeSelectedPath == item.fileTreePath) return false
         fileTreeSelectedPath = item.fileTreePath
         applyFileTreeState(announce = true)
@@ -7189,6 +7189,16 @@ internal class MobileUiHost(
             item.fileTreePath.encodeToByteArray(),
         )
         return true
+    }
+
+    private fun canActivateFileTreeItem(item: MobileUiHost): Boolean {
+        if (!isEnabled || !item.isEnabled) return false
+        var ancestor = item.parent
+        while (ancestor != null && ancestor !== this) {
+            if (ancestor is MobileUiHost && !ancestor.isEnabled) return false
+            ancestor = ancestor.parent
+        }
+        return ancestor === this
     }
 
     private fun applyFileTreeSelectionVisual(selected: Boolean) {

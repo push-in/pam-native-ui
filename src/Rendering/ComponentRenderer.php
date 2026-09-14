@@ -10746,6 +10746,7 @@ final class ComponentRenderer
         $renderItems = function (
             array $source,
             string $parentPath = '',
+            bool $parentDisabled = false,
         ) use (
             &$renderItems,
             $opened,
@@ -10755,6 +10756,9 @@ final class ComponentRenderer
             $rendered = [];
             foreach (array_values($source) as $index => $item) {
                 $item = is_array($item) ? $item : ['title' => $item];
+                $itemDisabled = $parentDisabled || self::flag([
+                    'disabled' => $item['disabled'] ?? $item['isDisabled'] ?? false,
+                ], 'disabled');
                 $title = (string) (
                     $item['title']
                     ?? $item['name']
@@ -10772,10 +10776,10 @@ final class ComponentRenderer
                 );
                 $nestedSource = $item['children'] ?? [];
                 $nested = is_array($nestedSource)
-                    ? $renderItems($nestedSource, $path)
+                    ? $renderItems($nestedSource, $path, $itemDisabled)
                     : [];
                 $itemEvents = [];
-                if ($change !== null) {
+                if ($change !== null && !$itemDisabled) {
                     $itemEvents[EventKind::Press->value] =
                         static fn () => $change($path);
                 }
@@ -10784,6 +10788,7 @@ final class ComponentRenderer
                     [
                         'path' => $path,
                         'name' => $title,
+                        'disabled' => $itemDisabled,
                         'expanded' => in_array($path, $opened, true),
                         'selected' => in_array($path, $selectedValues, true),
                     ],
@@ -10797,7 +10802,7 @@ final class ComponentRenderer
             return $rendered;
         };
 
-        return $renderItems($items);
+        return $renderItems($items, '', self::flag($props, 'disabled'));
     }
 
     /**
