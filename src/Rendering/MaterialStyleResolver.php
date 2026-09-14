@@ -1736,7 +1736,7 @@ final class MaterialStyleResolver
                 borderRadius: 24.0,
                 overflow: Overflow::Hidden,
                 flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
+                alignItems: Align::Stretch,
             );
         }
 

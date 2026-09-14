@@ -3440,6 +3440,19 @@ $iconSegments = $segmentedClass::make([
     'items' => ['Day', 'Week', 'Month'],
     'icons' => true,
 ])->toElement()->children();
+foreach ($iconSegments as $control) {
+    $row = $control->children()[0];
+    $label = $row->children()[1];
+    if (
+        isset($control->properties()[PropKey::Height->value])
+        || ($control->properties()[PropKey::PaddingVertical->value] ?? null) !== 8.0
+        || ($control->properties()[PropKey::FlexShrink->value] ?? null) !== 1.0
+        || ($label->properties()[PropKey::FlexShrink->value] ?? null) !== 0.0
+        || ($row->properties()[PropKey::FlexWrap->value] ?? null) !== FlexWrap::Wrap->value
+    ) {
+        throw new RuntimeException('Segment labels must wrap inside padded, naturally growing controls.');
+    }
+}
 if (
     count($iconSegments) !== 3
     || array_any(
@@ -4949,7 +4962,7 @@ $assertGeometry('PSegmentedButton', [], [
     'borderRadius' => 24.0,
     'overflow' => Overflow::Hidden,
     'flexDirection' => FlexDirection::Row,
-    'alignItems' => Align::Center,
+    'alignItems' => Align::Stretch,
 ]);
 
 fwrite(

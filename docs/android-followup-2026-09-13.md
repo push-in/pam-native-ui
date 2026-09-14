@@ -1400,3 +1400,17 @@ PHPStan level 9 also passed for this batch. Visual inspection of the Samsung
 but the Icons variation has tight trailing label clearance. That enlarged-text
 layout remains pending; the interaction pass is not visual approval. Screenshots
 from this diagnostic run must not be published as polished documentation assets.
+
+### Segmented enlarged-text layout follow-up
+
+Removed the generated controls' fixed height, retained the 48dp minimum, added
+8dp vertical padding and stretched siblings to a shared natural height. Icon
+rows can wrap icon/label as units; labels retain the available-width bound and
+icons never shrink. An intermediate text-only wrapping attempt was rejected
+after Samsung inspection because it split Week/Month mid-word. The final
+flowing-row change passes the PHP matrix and PHPStan level 9; physical evidence
+is recorded in `/tmp/pam-ui-segmented-flow-20260913`. Both font-scale interaction
+cases passed. Inspection of after-Share-2.0.png confirms complete Week/Month
+labels and retained padding. The short Day label remains beside its icon while
+longer labels flow below: legibility is improved, but uniform icon alignment at
+large font remains a visual refinement, not a fully approved gallery image.

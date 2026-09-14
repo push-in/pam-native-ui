@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pam\MobileUi\Rendering;
 
+use Pam\Native\FlexWrap;
+
 use Closure;
 use InvalidArgumentException;
 use Pam\MobileUi\Enum\CalendarDayState;
@@ -3658,33 +3660,46 @@ final class ComponentRenderer
                 fontSize: 14.0,
                 lineHeight: 20.0,
                 fontWeight: $selected ? 700 : 500,
+                flexShrink: 1.0,
+                textAlign: TextAlignment::Center,
             ));
             if (is_string($icon) && $icon !== '') {
+                $content = $content->style(new Style(
+                    flexShrink: 0.0,
+                    maxWidthPercent: 100.0,
+                ));
                 $content = Row::make(
                     self::render(
                         'Icon',
                         ['icon' => $icon, 'size' => 'small', 'color' => $foreground],
                         [],
                         [],
-                        new Style(width: 18.0, height: 18.0),
+                        new Style(width: 18.0, height: 18.0, flexShrink: 0.0),
                         'segment-icon-'.$index,
                     ),
                     $content,
-                )->style(new Style(gap: 8.0, alignItems: Align::Center));
+                )->style(new Style(
+                    widthPercent: 100.0,
+                    gap: 8.0,
+                    flexWrap: FlexWrap::Wrap,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                ));
             }
             $control = Pressable::make(
                 $content,
             )
                 ->style(new Style(
-                    height: 48.0,
                     minWidth: 48.0,
                     minHeight: 48.0,
                     paddingHorizontal: 16.0,
+                    paddingVertical: 8.0,
                     backgroundColor: $selected
                         ? $theme->color(ColorToken::Secondary)
                         : 0x00000000,
                     opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
                     flexGrow: 1.0,
+                    flexShrink: 1.0,
                     alignItems: Align::Center,
                     justifyContent: Justify::Center,
                     animationDurationMs: $reduceMotion ? 0 : 180,
