@@ -5009,7 +5009,7 @@ $result->children()[3]->events()[EventKind::Press->value]();
 if (!$resultPressed || count($result->children()) !== 4) {
     throw new RuntimeException('p-result-state must expose a directly actionable result layout.');
 }
-foreach (['disabled', 'isDisabled', 'loading'] as $blockedProp) {
+foreach (['disabled', 'isDisabled', 'loading', 'isLoading'] as $blockedProp) {
     $blockedResult = $tags['p-result-state']::make([
         'actionLabel' => 'Continue with the next stage of your application', $blockedProp => true,
     ])->onPress(static function (): void {})->toElement()->children()[3];
@@ -5020,6 +5020,38 @@ foreach (['disabled', 'isDisabled', 'loading'] as $blockedProp) {
     }
 }
 $selectedChartPoint = null;
+foreach (\Pam\MobileUi\Enum\ResultStatus::cases() as $status) {
+    $state = $tags['p-result-state']::make(['status' => $status->value])->toElement();
+    $title = $state->children()[1]->properties()[PropKey::Text->value] ?? null;
+    $description = $state->children()[2]->properties()[PropKey::Text->value] ?? null;
+    if ($status !== \Pam\MobileUi\Enum\ResultStatus::Success
+        && ($title === 'All done' || $description === 'Your request was completed successfully.')) {
+        throw new RuntimeException('Non-success results must never default to success copy.');
+    }
+    $legacy = $tags['p-result-state']::make(['status' => strtolower($status->name)])->toElement();
+    if ($legacy->children()[1]->properties() !== $state->children()[1]->properties()) {
+        throw new RuntimeException('Legacy result names must resolve to the integer enum.');
+    }
+    $custom = $tags['p-result-state']::make(['status' => $status, 'title' => 'Custom title',
+        'description' => 'Custom description'])->toElement();
+    if (($custom->children()[1]->properties()[PropKey::Text->value] ?? null) !== 'Custom title'
+        || ($custom->children()[2]->properties()[PropKey::Text->value] ?? null) !== 'Custom description') {
+        throw new RuntimeException('Result status must preserve application copy overrides.');
+    }
+}
+$emptyState = $tags['p-result-state']::make(['status' => \Pam\MobileUi\Enum\ResultStatus::Empty->value])->toElement();
+foreach ([0, 5, true, 'unknown', 1.5] as $invalidResultStatus) {
+    try {
+        \Pam\MobileUi\Enum\ResultStatus::resolve($invalidResultStatus);
+        throw new RuntimeException('Invalid result status must not silently display success.');
+    } catch (InvalidArgumentException) {
+        // Invalid configuration fails at the public boundary, before rendering.
+    }
+}
+if (($emptyState->children()[0]->properties()[PropKey::BackgroundColor->value] ?? null)
+    !== ThemeManager::current()->color(ColorToken::Muted)) {
+    throw new RuntimeException('An empty result must use a neutral surface, not a success signal.');
+}
 $loadingResult = $tags['p-result-state']::make([
     'loading' => true, 'actionLabel' => 'Preparing',
 ])->toElement();
@@ -5241,6 +5273,17 @@ $progressButton = $tags['p-progress-button']::make([
     'text' => 'Publishing',
     'progress' => 42,
 ])->toElement();
+foreach (['p-result-state', 'p-progress-button'] as $loadingTag) {
+    $aliasLoading = $tags[$loadingTag]::make(['isLoading' => true, 'text' => 'Preparing'])->toElement();
+    if (($aliasLoading->properties()[PropKey::Enabled->value] ?? null) !== false
+        || ($aliasLoading->properties()[PropKey::AccessibilityBusy->value] ?? null) !== true) {
+        throw new RuntimeException('Feedback components must honor the isLoading alias.');
+    }
+    $explicitIdle = $tags[$loadingTag]::make(['isLoading' => true, 'loading' => false])->toElement();
+    if (($explicitIdle->properties()[PropKey::AccessibilityBusy->value] ?? false) === true) {
+        throw new RuntimeException('Explicit loading=false must take precedence over isLoading.');
+    }
+}
 $progressTrack = null;
 $progressStack = [$progressButton];
 while ($progressStack !== []) {

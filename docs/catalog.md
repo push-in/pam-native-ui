@@ -404,6 +404,7 @@ The linked gallery screenshot predates these controls; refreshed publication is 
 ## `result-state`
 
 - `<p-result-state />` · [Android screenshot](assets/android/components/p-result-state.png)
+- [Status codes, semantic defaults and loading behavior](result-state.md)
 
 ## `chart`
 

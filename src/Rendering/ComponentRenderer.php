@@ -150,6 +150,10 @@ final class ComponentRenderer
         if (!array_key_exists('disabled', $props) && array_key_exists('isDisabled', $props)) {
             $props['disabled'] = self::flag($props, 'isDisabled');
         }
+        if (in_array($part, ['PResultState', 'PProgressButton'], true)
+            && !array_key_exists('loading', $props) && array_key_exists('isLoading', $props)) {
+            $props['loading'] = self::flag($props, 'isLoading');
+        }
         if ($part === 'PNavigationDrawer') {
             return self::materialNavigationDrawer(
                 $props,
@@ -4331,22 +4335,24 @@ final class ComponentRenderer
         ?string $elementKey,
     ): Element {
         $theme = ThemeManager::current();
-        $status = self::text($props, 'status', 'success');
+        $status = \Pam\MobileUi\Enum\ResultStatus::resolve($props['status'] ?? null);
         $iconName = self::text($props, 'icon', match ($status) {
-            'error' => 'CloseCircleIcon',
-            'warning' => 'AlertCircleIcon',
-            'empty' => 'SearchIcon',
+            \Pam\MobileUi\Enum\ResultStatus::Error => 'CloseCircleIcon',
+            \Pam\MobileUi\Enum\ResultStatus::Warning => 'AlertCircleIcon',
+            \Pam\MobileUi\Enum\ResultStatus::Empty => 'SearchIcon',
             default => 'CheckIcon',
         });
         $color = match ($status) {
-            'error' => ColorToken::Destructive,
-            'warning' => ColorToken::Warning,
+            \Pam\MobileUi\Enum\ResultStatus::Error => ColorToken::Destructive,
+            \Pam\MobileUi\Enum\ResultStatus::Warning => ColorToken::Warning,
+            \Pam\MobileUi\Enum\ResultStatus::Empty => ColorToken::Muted,
             default => ColorToken::Success,
         };
         $loading = self::flag($props, 'loading');
         $foreground = match ($color) {
             ColorToken::Destructive => ColorToken::DestructiveForeground,
             ColorToken::Warning => ColorToken::WarningForeground,
+            ColorToken::Muted => ColorToken::MutedForeground,
             default => ColorToken::SuccessForeground,
         };
         $content = $children;
@@ -4366,7 +4372,19 @@ final class ComponentRenderer
                 backgroundColor: $theme->color($loading ? ColorToken::Accent : $color),
                 alignItems: Align::Center, justifyContent: Justify::Center,
             ));
-            $content[] = Text::make(self::text($props, 'title', $loading ? 'In progress' : 'All done'))->style(new Style(
+            $defaultTitle = match ($status) {
+                \Pam\MobileUi\Enum\ResultStatus::Success => 'All done',
+                \Pam\MobileUi\Enum\ResultStatus::Error => 'Something went wrong',
+                \Pam\MobileUi\Enum\ResultStatus::Warning => 'Review required',
+                \Pam\MobileUi\Enum\ResultStatus::Empty => 'Nothing here yet',
+            };
+            $defaultDescription = match ($status) {
+                \Pam\MobileUi\Enum\ResultStatus::Success => 'Your request was completed successfully.',
+                \Pam\MobileUi\Enum\ResultStatus::Error => 'Your request could not be completed. Please try again.',
+                \Pam\MobileUi\Enum\ResultStatus::Warning => 'Review the details before continuing.',
+                \Pam\MobileUi\Enum\ResultStatus::Empty => 'Try a different search or add your first item.',
+            };
+            $content[] = Text::make(self::text($props, 'title', $loading ? 'In progress' : $defaultTitle))->style(new Style(
                 maxWidthPercent: 100.0,
                 fontSize: 24.0, lineHeight: 32.0, fontWeight: 700,
                 textColor: $theme->color(ColorToken::OnSurface),
@@ -4374,7 +4392,7 @@ final class ComponentRenderer
             ));
             $content[] = Text::make(self::text($props, 'description', $loading
                 ? 'Your request is being processed.'
-                : 'Your request was completed successfully.'))->style(new Style(
+                : $defaultDescription))->style(new Style(
                 maxWidthPercent: 100.0,
                 fontSize: 15.0, lineHeight: 22.0,
                 textColor: $theme->color(ColorToken::MutedForeground),

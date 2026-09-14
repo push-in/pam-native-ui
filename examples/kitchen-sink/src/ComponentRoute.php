@@ -5683,9 +5683,13 @@ final class ComponentRoute extends Component
                 'title' => 'Preparing report', 'description' => 'The action becomes available when preparation finishes.',
             ]);
             $add($variations, 'Long action', ['actionLabel' => 'Continue with the next stage of your application']);
-            $add($variations, 'Success', ['status' => 'success', 'title' => 'Payment complete']);
-            $add($variations, 'Warning', ['status' => 'warning', 'title' => 'Review required']);
-            $add($variations, 'Error', ['status' => 'error', 'title' => 'Something went wrong']);
+            $add($variations, 'Success', ['status' => \Pam\MobileUi\Enum\ResultStatus::Success->value, 'title' => 'Payment complete']);
+            $add($variations, 'Warning', ['status' => \Pam\MobileUi\Enum\ResultStatus::Warning->value, 'title' => 'Review required',
+                'description' => 'Review the details before continuing.', 'actionLabel' => 'Review details']);
+            $add($variations, 'Error', ['status' => \Pam\MobileUi\Enum\ResultStatus::Error->value, 'title' => 'Something went wrong',
+                'description' => 'Your request could not be completed. Please try again.', 'actionLabel' => 'Try again']);
+            $add($variations, 'Empty', ['status' => \Pam\MobileUi\Enum\ResultStatus::Empty->value, 'title' => 'Nothing here yet',
+                'description' => 'Add your first item to get started.', 'actionLabel' => 'Add item']);
         }
         if ($this->tag === 'p-chart') {
             $add($variations, 'Line', ['type' => 'trend', 'fill' => false]);
@@ -7926,7 +7930,7 @@ final class ComponentRoute extends Component
                 'modelValue' => 'android',
             ],
             'p-result-state' => [
-                'status' => 'success',
+                'status' => \Pam\MobileUi\Enum\ResultStatus::Success->value,
                 'title' => 'Ready to launch',
                 'description' => 'Your report is ready. Open it to review the details.',
                 'actionLabel' => 'View report',

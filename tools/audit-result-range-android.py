@@ -62,6 +62,20 @@ try:
             assert any(n.attrib.get('text') == 'Preparing report' for n in root.iter('node')), 'Loading result lacks its progress message'
         audit.screenshot(name)
     report['checks'].append({'component': 'result-state', 'enabledAction': True, 'disabledAndLoadingRejected': True})
+    for label, title, name in [('Review details', 'Review required', 'warning'),
+                               ('Try again', 'Something went wrong', 'error'),
+                               ('Add item', 'Nothing here yet', 'empty')]:
+        node = locate(label, 'result-'+name)
+        root = audit.dump('result-'+name+'-copy')
+        assert any(n.attrib.get('text') == title for n in root.iter('node')), name+' title missing'
+        audit.screenshot('result-'+name)
+        audit.tap(module.node_bounds(node))
+        root = audit.dump('result-'+name+'-action')
+        assert any(n.attrib.get('content-desc') == 'Report opened'
+                   and abs(module.node_bounds(n).top-module.node_bounds(node).top) < 8
+                   for n in root.iter('node')), name+' action did not update the tapped instance'
+        report['checks'].append({'component': 'result-state', 'scenario': name,
+                                'titleVisible': True, 'actionUpdatesInstance': True})
     range_tags = [] if args.results_only else ['p-date-range-picker', 'p-time-range-picker']
     for tag in range_tags:
         launch(tag)
