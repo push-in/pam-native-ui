@@ -314,6 +314,8 @@ Every component below links to a screenshot captured from the verified Android s
 
 ## `search-bar`
 
+- [Controlled search, clearing and native editor events](search-bar.md)
+
 - `<p-search-bar />` · [Android screenshot](assets/android/components/p-search-bar.png)
 
 ## `pagination`

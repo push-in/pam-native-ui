@@ -3538,15 +3538,17 @@ if (
 }
 
 $searchClass = $tags['p-search-bar'];
-foreach ([EventKind::InputEndEditing, EventKind::InputSelectionChange,
-    EventKind::InputContentSizeChange, EventKind::InputKeyPress] as $searchNativeEvent) {
+foreach ([
+    [EventKind::InputEndEditing, 'onEndEditing'],
+    [EventKind::InputSelectionChange, 'onSelectionChange'],
+    [EventKind::InputContentSizeChange, 'onContentSizeChange'],
+    [EventKind::InputKeyPress, 'onKeyPress'],
+] as [$searchNativeEvent, $searchEventMethod]) {
     $nativePayload = null;
     $nativeHandler = static function (mixed $payload) use (&$nativePayload): void {
         $nativePayload = $payload;
     };
-    $eventSearch = \Pam\MobileUi\Rendering\ComponentRenderer::render(
-        'PSearchBar', [], [], [$searchNativeEvent->value => $nativeHandler], null, null,
-    );
+    $eventSearch = $searchClass::make()->{$searchEventMethod}($nativeHandler)->toElement();
     $nativeEditor = $eventSearch->children()[1] ?? null;
     $forwarded = $nativeEditor?->events()[$searchNativeEvent->value] ?? null;
     if ($forwarded !== $nativeHandler) {
