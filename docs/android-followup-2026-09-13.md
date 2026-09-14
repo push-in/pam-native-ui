@@ -1563,3 +1563,13 @@ built once per render rather than converting and scanning the full arrays for
 every row; normalized identifier matching is preserved. Matrix passes. No
 device-performance improvement is claimed without measurement, and these tree
 changes are not yet installed on Samsung.
+
+### Reorderable List guards
+
+Item.disabled now disables drag, drop, Enabled and the drop callback. Destination
+handlers also reject disabled source identifiers, unknown identifiers and drops
+onto the source's own position without emitting redundant changes. Valid moves
+retain the existing controlled reorder behavior. Generated labels use remaining
+row width. Regression invokes wire-level drop callbacks for all four cases and
+checks disabled native properties. Matrix passes; physical drag/drop validation
+remains pending and no accessibility alternative is approved by these checks.

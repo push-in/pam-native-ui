@@ -3970,6 +3970,8 @@ final class ComponentRenderer
                 : $definition;
             if (!is_scalar($value) || !is_scalar($label)) continue;
             $dragData = (string) $value;
+            $itemDisabled = $disabled || (is_array($definition)
+                && self::flag(['disabled' => $definition['disabled'] ?? false], 'disabled'));
             $content = $children[$index] ?? Row::make(
                 Text::make('⠿')->style(new Style(
                     width: 32.0,
@@ -3983,7 +3985,9 @@ final class ComponentRenderer
                     lineHeight: 24.0,
                     fontWeight: 500,
                     textColor: $theme->color(ColorToken::OnSurface),
+                    width: 0.0,
                     flexGrow: 1.0,
+                    flexShrink: 1.0,
                 )),
             )->style(new Style(
                 widthPercent: 100.0,
@@ -3993,18 +3997,18 @@ final class ComponentRenderer
                 alignItems: Align::Center,
                 borderBottomWidth: $index === count($source) - 1 ? 0.0 : 1.0,
                 borderColor: $theme->color(ColorToken::Border),
-                opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+                opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
             ));
             $region = InteractionRegion::make($content)
-                ->draggable($dragData, !$disabled)
-                ->acceptsDrop(!$disabled)
-                ->property(PropKey::Enabled, !$disabled)
+                ->draggable($dragData, !$itemDisabled)
+                ->acceptsDrop(!$itemDisabled)
+                ->property(PropKey::Enabled, !$itemDisabled)
                 ->accessibilityRole(AccessibilityRole::ListItem)
                 ->accessibilityLabel('Reorder '.(string) $label)
-                ->accessibilityHint($disabled
+                ->accessibilityHint($itemDisabled
                     ? 'Reordering disabled'
                     : 'Drag to change position');
-            if (!$disabled && $change instanceof Closure) {
+            if (!$itemDisabled && $change instanceof Closure) {
                 $region = $region->onDrop(static function (string $dragged) use (
                     $change,
                     $source,
@@ -4016,12 +4020,14 @@ final class ComponentRenderer
                             ? ($candidate['value'] ?? $candidate['id'] ?? $candidateIndex + 1)
                             : $candidate;
                         if (is_scalar($candidateValue) && (string) $candidateValue === $dragged) {
+                            if (is_array($candidate) && self::flag(['disabled' => $candidate['disabled'] ?? false], 'disabled')) {
+                                return;
+                            }
                             $from = $candidateIndex;
                             break;
                         }
                     }
                     if ($from === null || $from === $index) {
-                        $change($source);
                         return;
                     }
                     $next = $source;

@@ -4320,6 +4320,34 @@ if ($reordered !== ['Build', 'Research', 'Prototype']) {
     throw new RuntimeException('p-reorderable-list must emit the reordered controlled collection.');
 }
 $swipeAction = null;
+$dropCalls = 0;
+$guardedList = $tags['p-reorderable-list']::make([
+    'items' => [
+        ['value' => 1, 'label' => 'First'],
+        ['value' => 2, 'label' => 'Unavailable', 'disabled' => true],
+        ['value' => 3, 'label' => 'Last'],
+    ],
+])->onReorder(static function (array $items) use (&$dropCalls): void { $dropCalls++; })->toElement();
+$blockedRow = $guardedList->children()[1];
+if (
+    ($blockedRow->properties()[PropKey::Enabled->value] ?? null) !== false
+    || ($blockedRow->properties()[PropKey::Draggable->value] ?? null) !== false
+    || ($blockedRow->properties()[PropKey::DropEnabled->value] ?? null) !== false
+    || isset($blockedRow->events()[EventKind::Drop->value])
+) {
+    throw new RuntimeException('Disabled reorder items must neither drag nor accept drops.');
+}
+$drop = $guardedList->children()[0]->events()[EventKind::Drop->value];
+foreach (['unknown', '1', '2'] as $invalidDrop) {
+    $drop(Wire::map(['data' => $invalidDrop]));
+}
+if ($dropCalls !== 0) {
+    throw new RuntimeException('Unknown, same-position and disabled source drops must not emit changes.');
+}
+$drop(Wire::map(['data' => '3']));
+if ($dropCalls !== 1) {
+    throw new RuntimeException('Valid neighboring items must remain reorderable.');
+}
 $swipe = $tags['p-swipe-actions']::make([
     'title' => 'Design review',
     'startLabel' => 'Archive',
