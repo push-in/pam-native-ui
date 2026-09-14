@@ -1,5 +1,38 @@
 # Chart series edge cases
 
+## Bar presentation follow-up
+
+Chart and Sparkline bars now cap their width at 48 logical pixels by default,
+including singleton series. Dense bars stay within 58% of their slot rather than
+expanding to a forced minimum that can overlap adjacent slots. A subtle zero
+baseline makes positive/negative direction explicit. Both renderers implement
+these defaults; UIKit source remains uncompiled/unexecuted in this environment.
+
+Configuration is preserved through the PHP API:
+
+```php
+$chart::make([
+    'type' => 'bar',
+    'modelValue' => [-20, 10, -10, 30],
+    'barMaxWidth' => 24.0,
+    'showBaseline' => false,
+]);
+```
+
+`barMaxWidth` is a positive logical-pixel maximum, not a forced width. Invalid
+or nonpositive values fall back to 48. `showBaseline` defaults to true for bars;
+it does not alter line/area series. The axis derives its color from the series.
+
+One 16-second Android build installed APK
+`06492d475f7310589179b4c0a61d270064e1377afd2065c5caed6584ec2d8d02`
+and cleaned 96.8 MiB. `/tmp/pam-chart-bar-polish-20260914/report.json` verifies
+exact feedback for all four mixed bars and the singleton. Both selected images
+were viewed: the zero axis is visible and the single bar is narrow and centered.
+The PHP matrix passes, including transmission of customization props on Chart
+and Sparkline. Dense-series pixels, customized-width device rendering, RTL,
+font scaling, performance and iOS still require evidence. This is not full
+component approval or publication-ready documentation media.
+
 Android now renders singleton series as a centered point, centers constant series,
 filters non-finite input and caches parsed values until the source changes. iOS
 source has matching singleton/constant behavior and finite filtering; Swift/UIKit

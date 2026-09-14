@@ -1955,10 +1955,7 @@ internal class MobileUiHost(
                     anchoredTriggerTouchActive = anchoredTriggerBounds()
                         ?.contains(event.x, event.y) == true
                     if (anchoredTriggerTouchActive) {
-                        if (
-                            behavior == Behavior.TOOLTIP
-                            && openOnLongPress
-                        ) {
+                        if (openOnLongPress) {
                             pendingAnchoredLongPress?.let(::removeCallbacks)
                             val action = Runnable {
                                 if (anchoredTriggerTouchActive && !open) {
@@ -2124,7 +2121,7 @@ internal class MobileUiHost(
             }
         }
         if (
-            behavior == Behavior.TOOLTIP
+            behavior.isAnchoredOverlay()
             && anchoredLongPressOpened
             && event.actionMasked in setOf(
                 MotionEvent.ACTION_UP,
@@ -2135,7 +2132,7 @@ internal class MobileUiHost(
             pendingAnchoredLongPress = null
             anchoredTriggerTouchActive = false
             anchoredLongPressOpened = false
-            if (open) {
+            if (open && behavior == Behavior.TOOLTIP) {
                 requestOverlayDismiss()
             }
             return true
@@ -2159,10 +2156,7 @@ internal class MobileUiHost(
                         anchoredTrigger()?.performClick()
                         if (
                             !anchoredLongPressOpened
-                            && (
-                                behavior != Behavior.TOOLTIP
-                                || openOnClick
-                            )
+                            && openOnClick
                         ) {
                             requestAnchoredOverlayOpen()
                         }
@@ -3391,8 +3385,23 @@ internal class MobileUiHost(
         if (bars) {
             val baseline = inset + drawableHeight - scale.fraction(0f) * drawableHeight
             val barSlot = drawableWidth / points.size
-            val barWidth = (barSlot * 0.58f).coerceAtLeast(3f * density)
+            val requestedMaxWidth = nativeProperties.decimal("barMaxWidth", 48.0)
+            val maxWidth = if (requestedMaxWidth.isFinite() && requestedMaxWidth > 0.0) {
+                requestedMaxWidth.toFloat() * density
+            } else {
+                48f * density
+            }
+            // Dense series must fit their slots, while sparse series should not
+            // turn a single observation into a chart-wide slab.
+            val barWidth = minOf(barSlot * 0.58f, maxWidth)
             val radius = (barWidth / 2f).coerceAtMost(6f * density)
+            if (nativeProperties.flag("showBaseline", true)) {
+                val axis = Paint(paint).apply {
+                    strokeWidth = density
+                    alpha = 90
+                }
+                canvas.drawLine(inset, baseline, width - inset, baseline, axis)
+            }
             paint.style = Paint.Style.FILL
             coordinates.forEachIndexed { index, (_, y) ->
                 val logicalX = inset + (index + 0.5f) * barSlot

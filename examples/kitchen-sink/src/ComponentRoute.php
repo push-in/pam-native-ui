@@ -791,7 +791,6 @@ final class ComponentRoute extends Component
                 $preview = $component::make(
                     [
                         ...$previewProps,
-                        'placement' => \Pam\MobileUi\Enum\Placement::BottomStart->value,
                         'closeOnClick' => true,
                         'accessibilityLabel' => $this->title.' example',
                     ],
@@ -5463,18 +5462,15 @@ final class ComponentRoute extends Component
         }
 
         if ($this->belongsTo(['p-menu', 'p-tooltip'])) {
-            foreach ([
-                'top', 'top start', 'top end', 'bottom', 'bottom start',
-                'bottom end', 'start', 'end',
-            ] as $location) {
+            foreach (\Pam\MobileUi\Enum\Placement::cases() as $placement) {
                 $add(
                     $variations,
-                    'Location '.ucwords($location),
-                    ['location' => $location, 'placement' => $location],
+                    'Location '.preg_replace('/(?<!^)[A-Z]/', ' $0', $placement->name),
+                    ['placement' => $placement->value],
                 );
             }
             $add($variations, 'Open On Click', ['openOnClick' => true]);
-            $add($variations, 'Open On Long Press', ['openOnClick' => false, 'openOnContextmenu' => true]);
+            $add($variations, 'Open On Long Press', ['openOnClick' => false, 'openOnLongPress' => true]);
             $add($variations, 'Persistent', ['persistent' => true]);
         }
 
@@ -6686,6 +6682,12 @@ final class ComponentRoute extends Component
     /** @return list<array{label: string, props: array<string, mixed>}> */
     private function auditVariations(string $scenario): array
     {
+        if ($scenario === 'gestures' && $this->belongsTo(['p-menu', 'p-tooltip'])) {
+            return [
+                ['label' => 'Tap only', 'props' => ['openOnClick' => true, 'openOnLongPress' => false]],
+                ['label' => 'Long press only', 'props' => ['openOnClick' => false, 'openOnLongPress' => true]],
+            ];
+        }
         $foundationVariations = $this->foundationVariations();
         if ($foundationVariations !== null) {
             return $foundationVariations;
@@ -7752,6 +7754,10 @@ final class ComponentRoute extends Component
             'accessibilityLabel' => $this->title.' preview',
             'source' => '',
         ];
+
+        if ($this->belongsTo(['p-menu', 'p-tooltip'])) {
+            $defaults['placement'] = \Pam\MobileUi\Enum\Placement::BottomStart->value;
+        }
 
         if ($this->belongsTo([
             'p-autocomplete', 'p-checkbox', 'p-color-input',

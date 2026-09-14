@@ -3362,6 +3362,9 @@ final class ComponentRenderer
         ) {
             $props['trapFocus'] = false;
         }
+        if (array_key_exists('openOnContextmenu', $props)) {
+            $props['openOnLongPress'] ??= self::flag($props, 'openOnContextmenu');
+        }
         if ($part === 'Tooltip') {
             $props['openOnClick'] ??= false;
             $props['openOnLongPress'] ??= true;

@@ -520,7 +520,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 sheetAncestor()?.requestDismiss()
             }
         case .popover, .menu:
-            setOpen(!isOpen, shouldEmit: true)
+            if properties["openOnClick"]?.pamFlag ?? true {
+                setOpen(!isOpen, shouldEmit: true)
+            }
         case .tooltip:
             if properties["openOnClick"]?.pamFlag ?? false {
                 setOpen(!isOpen, shouldEmit: true)
@@ -550,8 +552,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     @objc private func onOverlayLongPress(_ recognizer: UILongPressGestureRecognizer) {
-        guard behavior == .tooltip,
-              properties["openOnLongPress"]?.pamFlag ?? true,
+        guard behavior == .tooltip || behavior == .menu || behavior == .popover,
+              properties["openOnLongPress"]?.pamFlag ?? (behavior == .tooltip),
               isUserInteractionEnabled else {
             return
         }
@@ -559,7 +561,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .began:
             setOpen(true, shouldEmit: true)
         case .ended, .cancelled, .failed:
-            setOpen(false, shouldEmit: true)
+            if behavior == .tooltip {
+                setOpen(false, shouldEmit: true)
+            }
         default:
             break
         }
@@ -2168,8 +2172,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             let zeroFraction: CGFloat = high == low ? 0.5 : (0 - low) / spread
             let baseline = inset + drawableHeight - zeroFraction * drawableHeight
             let slot = drawableWidth / CGFloat(points.count)
-            let barWidth = max(3, slot * 0.58)
+            let requestedMaxWidth = properties["barMaxWidth"]?.pamDecimal ?? 48
+            let maxWidth = requestedMaxWidth.isFinite && requestedMaxWidth > 0
+                ? requestedMaxWidth : 48
+            let barWidth = min(slot * 0.58, maxWidth)
             let radius = min(6, barWidth / 2)
+            if properties["showBaseline"]?.pamFlag ?? true {
+                context.saveGState()
+                context.setStrokeColor(fillColor.withAlphaComponent(90.0 / 255.0).cgColor)
+                context.setLineWidth(1)
+                context.move(to: CGPoint(x: inset, y: baseline))
+                context.addLine(to: CGPoint(x: bounds.width - inset, y: baseline))
+                context.strokePath()
+                context.restoreGState()
+            }
             fillColor.setFill()
             for (index, point) in coordinates.enumerated() {
                 let logicalX = inset + (CGFloat(index) + 0.5) * slot

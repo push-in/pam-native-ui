@@ -1,5 +1,55 @@
 # Anchored overlays — scoped Samsung batch
 
+## Exclusive overlay gestures
+
+Android previously ignored `openOnClick=false` for Menu/Popover and only
+scheduled long presses for Tooltip. The shared UI host now respects both flags
+for anchored overlays. Releasing a long press resets touch bookkeeping for all
+anchored overlays, retains Menu/Popover and dismisses Tooltip. Equivalent UIKit
+branches were updated but have not been compiled or executed on iOS here.
+
+The PHP renderer maps legacy `openOnContextmenu` to `openOnLongPress`, without
+overwriting the explicit canonical property. The showcase now uses the canonical
+property. This is UI overlay interaction policy; no new CLI or Native primitive
+was needed. PHP regressions cover all three components and explicit precedence.
+
+`tools/audit-overlay-gestures-android.py` runs the deep-link `gestures` specimens.
+On emulator-5554, `/tmp/pam-overlay-gestures-20260914/report.json` passes Menu and
+Tooltip on APK `4b9f9aa7fb8e8731e7f3bcc3f71bf2531fac6bee08e1020ce55a3733a9671897`:
+tap-only opens and dismisses outside; short tap cannot open long-press-only;
+holding reveals actual content in the accessibility hierarchy; release retains
+Menu but hides Tooltip; Menu action changes feedback and dismisses. Both held
+captures were inspected. This runner checks content, not just changed pixels.
+
+One Android build took 16 seconds and cleaned 96.8 MiB. PHP matrix, changed PHP
+files' PHPStan and Python syntax checks pass. Popover gesture device coverage,
+drag cancellation, accessibility activation, iOS execution and the broader
+release gates remain open. These scoped passes are not full component approval.
+
+## Menu / Tooltip catalog placement correction
+
+The showcase no longer overwrites placement with BottomStart during rendering.
+Its default remains BottomStart, but explicit specimens retain their requested
+value. Both catalogs now demonstrate all 13 existing Placement enum values;
+unsupported strings such as `top start` are no longer passed as placement codes.
+This is a showcase correction, not a new Native positioning implementation.
+
+The PHP matrix checks enum validity, completeness and preservation for both
+catalogs; all 32,832 style cases and 456 render cases pass. Route PHPStan passes.
+One 10-second build installed APK
+`30b0065bfd7150d60c2c057dce26630bbb909e2de544c0d3be0bde864c12349c`
+and cleaned 96.8 MiB of generated artifacts.
+
+On emulator-5554, `/tmp/pam-overlay-placement-config-20260914.json` records
+Menu action/dismissal and Tooltip hold/release passing. Both open captures were
+viewed. Tooltip's automated assertion is pixel-based, not semantic. A separate
+actual long press on Location Top produced `tooltip-top-held.png` in the same
+evidence directory: the tooltip appears above its trigger, unlike the default
+below-trigger capture. This is not device verification of all 13 positions.
+Overlay surfaces cover nearby specimen captions while open; these diagnostic
+captures are not approved documentation media. iOS, RTL, font scaling and the
+remaining placement geometry cases are still open. No publication approval.
+
 ## Anchor collision correction
 
 PAM Native's new Android plugin API selects an origin using clamped anchor

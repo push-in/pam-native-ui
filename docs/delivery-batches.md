@@ -54,6 +54,15 @@ requirements remain open. No publication is authorized by these partial results.
 
 ## Latest scoped deliveries and process blockers
 
+List configuration follow-up: the PHP matrix now explicitly covers Virtual List
+and Section List default foreground, custom packed foreground and transparent
+foreground, combined with a custom row height and disabled scrolling. All six
+configurations pass. Inspection showed that explicit Style is applied after the
+shared list default; no renderer change was needed. This proves compiled
+properties, not physical row appearance or gesture behavior. No Android rebuild
+was performed for this test-only change. Data table empty/loading rows already
+exist in the renderer; their existence alone is not visual approval.
+
 Do not restart these scopes merely because their evidence is not a full approval:
 
 | Delivery | Code identity | Evidence and remaining scope |

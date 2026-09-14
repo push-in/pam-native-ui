@@ -46,6 +46,27 @@ require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 $samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');
 $catalogMethod = new ReflectionMethod(\App\ComponentRoute::class, 'catalogVariations');
 $auditMethod = new ReflectionMethod(\App\ComponentRoute::class, 'auditVariations');
+foreach (['p-menu', 'p-tooltip'] as $overlayTag) {
+    $route = new \App\ComponentRoute($overlayTag, 'Overlay', MaterialComponentMap::TAGS[$overlayTag]);
+    $placements = [];
+    foreach ($catalogMethod->invoke($route) as $specimen) {
+        if (!str_starts_with($specimen['label'], 'Location ')) {
+            continue;
+        }
+        $expected = $specimen['props']['placement'];
+        if (!is_int($expected) || Placement::tryFrom($expected) === null) {
+            throw new RuntimeException($overlayTag.' placement specimens must use supported enum codes.');
+        }
+        $resolved = $samplePropsMethod->invoke($route, $specimen['props']);
+        if ($resolved['placement'] !== $expected) {
+            throw new RuntimeException($overlayTag.' showcase must preserve each requested placement.');
+        }
+        $placements[] = $expected;
+    }
+    if ($placements !== array_column(Placement::cases(), 'value')) {
+        throw new RuntimeException($overlayTag.' showcase must demonstrate every supported placement.');
+    }
+}
 foreach (MaterialComponentMap::TAGS as $catalogTag => $catalogClass) {
     $catalogRoute = new \App\ComponentRoute($catalogTag, $catalogTag, $catalogClass);
     $specimens = $catalogMethod->invoke($catalogRoute);
@@ -1954,6 +1975,32 @@ if ($selectedSlide !== 'second') {
 }
 
 $tooltipClass = $tags['p-tooltip'];
+foreach (['p-menu', 'p-tooltip', 'p-popover'] as $overlayTag) {
+    $overlayClass = $tags[$overlayTag];
+    foreach ([true, false] as $explicitLongPress) {
+        $overlay = $overlayClass::make([
+            'openOnClick' => false,
+            'openOnContextmenu' => true,
+            'openOnLongPress' => $explicitLongPress,
+        ], $buttonClass::make(['text' => 'Open']), Text::make('Details'))->toElement();
+        $payload = $overlay->properties()[PropKey::HostProperties->value] ?? null;
+        if (!$payload instanceof BinaryValue) {
+            throw new RuntimeException('Anchored overlay must expose native properties.');
+        }
+        $configuration = Wire::decodeMap($payload->bytes);
+        if (($configuration['openOnClick'] ?? null) !== false
+            || ($configuration['openOnLongPress'] ?? null) !== $explicitLongPress) {
+            throw new RuntimeException('Explicit gesture configuration must win over legacy aliases.');
+        }
+    }
+    $overlay = $overlayClass::make(['openOnContextmenu' => true],
+        $buttonClass::make(['text' => 'Open']), Text::make('Details'))->toElement();
+    $payload = $overlay->properties()[PropKey::HostProperties->value] ?? null;
+    if (!$payload instanceof BinaryValue
+        || (Wire::decodeMap($payload->bytes)['openOnLongPress'] ?? null) !== true) {
+        throw new RuntimeException('Context-menu alias must enable native long press.');
+    }
+}
 $tooltip = $tooltipClass::make(
     ['text' => 'More information'],
     $buttonClass::make(['text' => 'Details']),
@@ -3425,6 +3472,27 @@ if (!$endReached) {
 }
 
 $virtualListClass = $tags['p-virtual-list'];
+foreach (['p-virtual-list', 'p-section-list'] as $listTag) {
+    $listClass = $tags[$listTag];
+    foreach ([null, 0xFF123456, 0x00000000] as $customForeground) {
+        $list = $listClass::make([
+            'items' => ['First', 'Second'],
+            'sections' => ['Group' => ['First', 'Second']],
+            'rowHeight' => 64,
+            'scrollEnabled' => false,
+        ]);
+        if ($customForeground !== null) {
+            $list = $list->style(new Style(textColor: $customForeground));
+        }
+        $properties = $list->toElement()->properties();
+        if (($properties[PropKey::TextColor->value] ?? null)
+            !== ($customForeground ?? ThemeManager::current()->color(ColorToken::Foreground))
+            || ($properties[PropKey::ListRowHeight->value] ?? null) !== 64.0
+            || ($properties[PropKey::ScrollEnabled->value] ?? null) !== false) {
+            throw new RuntimeException('Lists must preserve explicit foreground, row height and disabled scrolling.');
+        }
+    }
+}
 $virtualListReachedEnd = false;
 $virtualList = $virtualListClass::make(
     ['rowHeight' => 60, 'prefetch' => 10, 'numColumns' => 2],
@@ -5338,6 +5406,23 @@ if (!$chartHostValue instanceof BinaryValue) {
     throw new RuntimeException('p-chart must expose encoded native host properties.');
 }
 $chartHost = Wire::decodeMap($chartHostValue->bytes);
+foreach (['p-chart', 'p-sparkline'] as $seriesTag) {
+    $series = $tags[$seriesTag]::make([
+        'type' => 'bar',
+        'modelValue' => [-20, 30],
+        'barMaxWidth' => 24.0,
+        'showBaseline' => false,
+    ])->toElement();
+    $seriesPayload = $series->properties()[PropKey::HostProperties->value] ?? null;
+    if (!$seriesPayload instanceof BinaryValue) {
+        throw new RuntimeException('Bar chart must expose native configuration.');
+    }
+    $seriesProps = Wire::decodeMap($seriesPayload->bytes);
+    if (($seriesProps['barMaxWidth'] ?? null) !== 24.0
+        || ($seriesProps['showBaseline'] ?? null) !== false) {
+        throw new RuntimeException('Chart and Sparkline must preserve bar geometry overrides.');
+    }
+}
 if (
     $chart->kind() !== NodeKind::CustomView
     || ($chart->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Revenue trend'
