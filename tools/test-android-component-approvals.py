@@ -24,6 +24,20 @@ SPEC.loader.exec_module(VALIDATOR)
 
 
 class AndroidComponentApprovalValidatorTest(unittest.TestCase):
+    def test_partial_inventory_cannot_approve_a_release(self) -> None:
+        with self.assertRaisesRegex(VALIDATOR.ApprovalFailure, "5/114"):
+            VALIDATOR.validate(ROOT, ROOT / "docs/android-component-audit.json", release_build_sha256="a" * 64)
+
+    def test_historical_approval_cannot_approve_a_different_apk(self) -> None:
+        manifest = VALIDATOR.read_json(ROOT / "docs/android-component-audit.json")
+        evidence = manifest["componentEvidence"]["p-slider"]
+        with self.assertRaisesRegex(VALIDATOR.ApprovalFailure, "does not match the release APK"):
+            VALIDATOR.validate_component(ROOT, "p-slider", evidence, "a" * 64)
+
+    def test_release_hash_must_be_a_real_digest(self) -> None:
+        with self.assertRaisesRegex(VALIDATOR.ApprovalFailure, "SHA-256"):
+            VALIDATOR.validate(ROOT, ROOT / "docs/android-component-audit.json", release_build_sha256="latest")
+
     def test_current_approved_evidence_is_complete(self) -> None:
         self.assertEqual(
             5,

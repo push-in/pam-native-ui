@@ -186,7 +186,7 @@ def validate_media(root: Path, component: str, evidence: dict[str, object], repo
         raise ApprovalFailure(f"{component}: screenshots do not prove distinct interaction states")
 
 
-def validate_component(root: Path, component: str, evidence: object) -> None:
+def validate_component(root: Path, component: str, evidence: object, release_build_sha256: str | None = None) -> None:
     if not isinstance(evidence, dict):
         raise ApprovalFailure(f"{component}: component evidence must be an object")
     report_path = repository_file(root, evidence.get("report"), f"{component} report")
@@ -198,6 +198,8 @@ def validate_component(root: Path, component: str, evidence: object) -> None:
     build_hash = expect_hash(report.get("buildSha256"), f"{component} build hash")
     if evidence.get("buildSha256") != build_hash:
         raise ApprovalFailure(f"{component}: manifest and report build hashes differ")
+    if release_build_sha256 is not None and build_hash != release_build_sha256:
+        raise ApprovalFailure(f"{component}: evidence does not match the release APK")
     checks = report.get("checks")
     if not isinstance(checks, dict) or not checks or not all(value is True for value in checks.values()):
         raise ApprovalFailure(f"{component}: every report check must be explicitly true")
@@ -209,7 +211,9 @@ def validate_component(root: Path, component: str, evidence: object) -> None:
     validate_media(root, component, evidence, report)
 
 
-def validate(root: Path, manifest_path: Path) -> int:
+def validate(root: Path, manifest_path: Path, *, release_build_sha256: str | None = None) -> int:
+    if release_build_sha256 is not None:
+        expect_hash(release_build_sha256, "release APK hash")
     manifest = read_json(manifest_path)
     parity = read_json(root / "resources/material-parity.json")
     reference = parity.get("reference")
@@ -238,6 +242,8 @@ def validate(root: Path, manifest_path: Path) -> int:
         raise ApprovalFailure("componentCount does not match the public Material inventory")
     if not set(approved) <= inventory:
         raise ApprovalFailure("approvedComponents contains a non-public component")
+    if release_build_sha256 is not None and set(approved) != inventory:
+        raise ApprovalFailure(f"release requires all component approvals: {len(approved)}/{component_count}")
     candidates = manifest.get("emulatorCandidateComponents")
     if not isinstance(candidates, list) or not all(
         isinstance(value, str) for value in candidates
@@ -263,7 +269,7 @@ def validate(root: Path, manifest_path: Path) -> int:
     if manifest.get("defaultComponentStatus") != int(ComponentStatus.NOT_VERIFIED):
         raise ApprovalFailure("default component status must be the not-verified integer enum")
     for component in approved:
-        validate_component(root, component, evidence[component])
+        validate_component(root, component, evidence[component], release_build_sha256)
     print(
         f"Validated {len(approved)}/{component_count} Android component approvals; "
         "every approved component has two independent physical passes and hashed media."
@@ -279,6 +285,7 @@ def parse_args() -> argparse.Namespace:
         nargs="?",
         default=Path("docs/android-component-audit.json"),
     )
+    parser.add_argument("--release-build-sha256", help="Require the full catalog approved against this exact APK hash.")
     return parser.parse_args()
 
 
@@ -288,7 +295,7 @@ def main() -> int:
     root = Path(__file__).resolve().parent.parent
     try:
         manifest.relative_to(root)
-        validate(root, manifest)
+        validate(root, manifest, release_build_sha256=args.release_build_sha256)
     except (ApprovalFailure, ValueError) as exception:
         print(f"FAIL Android component approvals: {exception}", file=sys.stderr)
         return 1

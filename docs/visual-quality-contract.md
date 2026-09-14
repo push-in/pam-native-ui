@@ -73,3 +73,20 @@ A component is approved only when all of the following are true:
 
 Any failed item keeps the component pending regardless of automated `PASS`
 output.
+
+## Evidence validation versus release approval
+
+`python3 tools/validate-android-component-approvals.py` checks the integrity of
+recorded approvals, including historical builds. A successful exit does **not**
+mean the full catalog or the current APK is approved.
+
+For a release candidate, use:
+
+```sh
+python3 tools/validate-android-component-approvals.py --release-build-sha256 "$PAM_UI_RELEASE_APK_SHA256"
+```
+
+This mode requires every public component to have complete evidence and every
+approval report to match that exact APK digest. It rejects partial inventories
+and evidence from other builds. This is an additional Android evidence gate,
+not a replacement for the iOS, performance, visual review or publishing gates.
