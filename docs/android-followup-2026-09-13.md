@@ -1754,3 +1754,19 @@ UI PR 46 remains draft at remote SHA
 `fe8ffa44efed738781d6b635a5851fd8998d7991`; local d1d4d5b has 30 commits beyond its
 tracking branch. Existing remote checks therefore do not validate the current
 local UI. No merge, release, push, or rerun was performed during this inspection.
+
+### Integrated UI CI succeeded after branch synchronization
+
+Subsequently pushed the reviewed UI branch and Native test synchronization fix.
+UI run https://github.com/push-in/pam-native-ui/actions/runs/34795441973 completed
+successfully at UI `0c9fe92ef836626d77536ed8212cb6727600f3fb`, explicitly selecting
+Native `46bfe50645d149345df30796793346be824b7dfc`. All nine jobs passed: Android
+behavior on APIs 26/36, Android/iOS against minimum/current Native references,
+PHP verification and lowest/latest Composer compatibility.
+
+This supersedes the earlier remote-validation gap for UI changes through
+0c9fe92 only. Subsequent local gate-hardening and curation-documentation commits
+are not covered by that run. Native run 34795404445 was still executing its
+API 26/36 renderer jobs at the time of this entry. Neither CI result constitutes
+full visual/interaction approval for every catalog specimen. No release or merge
+has been performed.
