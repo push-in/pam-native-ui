@@ -1,5 +1,32 @@
 # Consolidated form review
 
+## Shared validation-state normalization
+
+`MaterialFieldProps` now normalizes the 14 composed field types before styling
+and rendering. `isRequired` reaches the required label indicator; `error`,
+`invalid` and `isInvalid` resolve consistently, with explicit false precedence.
+Nonempty error message arrays are rendered as separate lines and mark both the
+visual field and native host invalid. Empty arrays/strings/null no longer cause
+a style-only error. This is UI validation presentation, not native validation
+logic or a new CLI responsibility.
+
+`tests/material-field-state.php`, included by the material matrix, exercises
+five invalid cases plus five precedence/empty-message cases across 14 fields.
+It checks normalization, host payloads (including nested selection hosts),
+required label copy except OTP's separate label composition, error text and
+rendered error borders (OTP slots rather than the outer container). Full matrix
+and targeted level-9 analysis pass. This does not certify all field interactions.
+
+One Android build (10 seconds) and one validation audit passed on emulator-5554:
+`/tmp/pam-field-validation-state-20260914/report.json`, APK SHA-256
+`54c5843b003a6bd4325e18e19bd91dc7076545ec77a0212c82d740db33dc3d61`.
+Actual typing changed `Ada` to `Ada42` while invalid and retained it after IME
+dismissal. The viewed final capture shows the required asterisk, aligned field
+labels, both error lines without clipping, and a normal border for explicit
+`error: false`. Device coverage is this Text Field composite, not every platform,
+font size, theme or field type. Evidence is diagnostic, not published media.
+The later PHPDoc-only correction does not change this APK's behavior.
+
 ## Shared field action visuals
 
 The shared clear action now renders the existing native CloseIcon rather than a

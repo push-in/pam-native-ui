@@ -41,6 +41,7 @@ use Pam\Native\ScrollIndicatorStyle;
 use Pam\Native\UI\Text;
 
 require __DIR__.'/bootstrap.php';
+require __DIR__.'/material-field-state.php';
 require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 
 $samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');

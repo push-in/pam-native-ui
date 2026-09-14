@@ -35,6 +35,7 @@ final class MaterialStyleResolver
         if (!is_string($part)) {
             return null;
         }
+        $props = MaterialFieldProps::normalize($part, $props);
 
         $density = match ($props['density'] ?? null) {
             MaterialDensity::Comfortable->value, 'comfortable' => MaterialDensity::Comfortable,
@@ -1389,8 +1390,7 @@ final class MaterialStyleResolver
                 default => $height,
             };
             $focused = ($props['focused'] ?? $props['active'] ?? false) === true;
-            $error = ($props['error'] ?? false) === true
-                || ($props['errorMessages'] ?? []) !== [];
+            $error = ($props['error'] ?? false) === true;
             $outlined = $variant === MaterialVariant::Outlined;
             $underlined = $variant === MaterialVariant::Underlined;
             $plain = $variant === MaterialVariant::Plain;

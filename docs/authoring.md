@@ -55,6 +55,22 @@ Every public `p-*` tag has a typed facade under `Pam\MobileUi\Material`.
 Low-level text and layout use PAM Native primitives rather than duplicate PAM
 UI components.
 
+## Consistent field validation
+
+The 14 composed field types share one validation-state interpretation:
+
+- `required` falls back to `isRequired` for the visible required indicator.
+- `error` falls back to `invalid`, then `isInvalid`. An explicit `false` takes
+  precedence over lower-priority aliases.
+- Nonempty validation messages make the field invalid. Copy is selected from
+  `errorMessage`, then `errorMessages`, then the legacy `messages` property.
+  Arrays display their nonempty scalar entries on separate lines; empty messages
+  do not create an error state. `helper`/`hint` remain non-error supporting text.
+
+The label, border, supporting text and native host receive the same state.
+Invalid does not mean disabled: users can still focus and correct the value.
+This normalizes application-supplied validation; it does not run backend rules.
+
 ## Password and clear actions
 
 Field clear actions use the same native vector close icon. Password visibility

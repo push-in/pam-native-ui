@@ -146,6 +146,7 @@ final class ComponentRenderer
         if (!isset(ComponentMap::IDS[$part]) && !isset(MaterialComponentMap::IDS[$part])) {
             throw new InvalidArgumentException("Unknown PAM Native UI component {$part}.");
         }
+        $props = MaterialFieldProps::normalize($part, $props);
         // Resolve the public alias before any composed controls are generated.
         // Explicit disabled=false retains precedence over isDisabled=true.
         if (!array_key_exists('disabled', $props) && array_key_exists('isDisabled', $props)) {

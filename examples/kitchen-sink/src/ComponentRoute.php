@@ -6682,6 +6682,23 @@ final class ComponentRoute extends Component
     /** @return list<array{label: string, props: array<string, mixed>}> */
     private function auditVariations(string $scenario): array
     {
+        if ($scenario === 'validation' && $this->tag === 'p-text-field') {
+            return [
+                ['label' => 'Required and invalid aliases', 'props' => [
+                    'label' => 'Account', 'modelValue' => 'Ada',
+                    'isRequired' => true, 'isInvalid' => true, 'helper' => 'Check your account name',
+                ]],
+                ['label' => 'Multiple error messages', 'props' => [
+                    'label' => 'Reference', 'modelValue' => 'ABC',
+                    'errorMessages' => ['Use at least six characters', 'Include a number'],
+                ]],
+                ['label' => 'Explicit false takes precedence', 'props' => [
+                    'label' => 'Optional', 'modelValue' => '',
+                    'required' => false, 'isRequired' => true,
+                    'error' => false, 'isInvalid' => true,
+                ]],
+            ];
+        }
         if ($scenario === 'controlled' && $this->tag === 'p-treeview') {
             return [[
                 'label' => 'Controlled selection and expansion',
