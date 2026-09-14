@@ -1630,3 +1630,42 @@ handlers for both disabled/isDisabled. Existing enabled gesture action regressio
 still passes; added disabled checks and a Locked item showcase example. Matrix
 passes. Existing Native gesture properties suffice; no Native workaround added.
 Physical swipe validation and accessible alternatives are still pending.
+
+### Swipe actions: visible alternatives and physical verification
+
+The previous gesture-only limitation is addressed with wrapping text buttons,
+48dp minimum targets, theme colors, and the same semantic callback as the pan
+gesture. Both disabled aliases suppress button handlers and disable the native
+controls. This is UI composition using existing PAM Native primitives.
+
+Matrix (114 components, 456 render cases, 32,832 style cases) and full configured
+PHPStan level 9 passed. Samsung APK
+`3a240ddec035a0f805bade563abb841f49725df5dcf89191b94f21a78c75e2e5`
+passed right-swipe Archive, visible Delete, visible Archive, and disabled swipe
+rejection in `/tmp/pam-ui-swipe-buttons-20260913/report.json`.
+`buttons-result.png` was inspected: action labels are aligned and separated,
+with no decorative nested surfaces. Build cleaned 88 MiB of intermediate files.
+
+The earlier APK `598a4378e2eaaf0283cefca350c1e24c740ae09c1e4f4d463c4c50e6f294ea9a`
+also passed enabled/disabled physical gestures; its first harness attempt failed
+because an artifact filename contained spaces, corrected in the retained script.
+These are scoped results, not full component approval: TalkBack, large text,
+dark themes, reduced motion and left-swipe physical verification remain pending.
+Reorderable-list non-drag alternatives remain a separate open implementation.
+
+### Reorderable List: adjacent move controls
+
+Added visible Up/Down controls outside the native drag region, with 48dp minimum
+targets and item-specific accessibility names. Drag remains supported. Controls
+emit a new controlled collection, reject boundary moves and disabled neighboring
+items, and respect both disabled aliases. Showcase adds locked-item and long-label
+examples. Matrix covers both directions and eight unavailable-control cases.
+
+Samsung APK `2292414365f89276e27d10ed6b4bbafe6b37f06d29877962d2d312aca1652ad3`
+passed real long-press drag, Down, Up, and tapping the disabled first-item Up
+control without changing order. Evidence:
+`/tmp/pam-ui-reorder-buttons-20260913/report.json` and `buttons-result.png`.
+The inspected default layout has aligned labels/buttons and full-width dividers,
+without nested cards. Build succeeded and cleaned 88 MiB of intermediates.
+Physical locked-item, long-label, large-font and TalkBack validation remain open;
+the report explicitly does not grant full approval.

@@ -3957,7 +3957,7 @@ final class ComponentRenderer
             : [];
         $theme = ThemeManager::current();
         $change = $events[EventKind::Change->value] ?? null;
-        $disabled = self::flag($props, 'disabled');
+        $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
         $compact = self::text($props, 'density', 'default') === 'compact';
         $rowHeight = $compact ? 48.0 : 56.0;
         $rows = [];
@@ -3995,8 +3995,6 @@ final class ComponentRenderer
                 paddingHorizontal: 12.0,
                 gap: 12.0,
                 alignItems: Align::Center,
-                borderBottomWidth: $index === count($source) - 1 ? 0.0 : 1.0,
-                borderColor: $theme->color(ColorToken::Border),
                 opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
             ));
             $region = InteractionRegion::make($content)
@@ -4007,7 +4005,7 @@ final class ComponentRenderer
                 ->accessibilityLabel('Reorder '.(string) $label)
                 ->accessibilityHint($itemDisabled
                     ? 'Reordering disabled'
-                    : 'Drag to change position');
+                    : 'Drag to change position, or use the move buttons');
             if (!$itemDisabled && $change instanceof Closure) {
                 $region = $region->onDrop(static function (string $dragged) use (
                     $change,
@@ -4036,7 +4034,48 @@ final class ComponentRenderer
                     $change($next);
                 });
             }
-            $rows[] = $region;
+            $controls = [];
+            foreach ([-1 => 'Up', 1 => 'Down'] as $offset => $direction) {
+                $destination = $index + $offset;
+                $neighbor = $source[$destination] ?? null;
+                $canMove = !$itemDisabled && array_key_exists($destination, $source)
+                    && !(is_array($neighbor) && self::flag(['disabled' => $neighbor['disabled'] ?? false], 'disabled'));
+                $control = Pressable::make(Text::make($direction)->style(new Style(
+                    fontSize: 14.0,
+                    lineHeight: 20.0,
+                    fontWeight: 600,
+                    textColor: $theme->color(ColorToken::Primary),
+                )))->style(new Style(
+                    minWidth: 48.0,
+                    minHeight: 48.0,
+                    paddingHorizontal: 8.0,
+                    paddingVertical: 8.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                    opacity: $canMove ? 1.0 : MaterialTokens::STATE_OPACITY[6],
+                ))->enabled($canMove)
+                    ->accessibilityRole(AccessibilityRole::Button)
+                    ->accessibilityLabel('Move '.(string) $label.' '.strtolower($direction));
+                if ($canMove && $change instanceof Closure) {
+                    $control = $control->onPress(static function () use ($source, $index, $destination, $change): void {
+                        $next = $source;
+                        [$next[$index], $next[$destination]] = [$next[$destination], $next[$index]];
+                        $change($next);
+                    });
+                }
+                $controls[] = $control;
+            }
+            $rows[] = Row::make(
+                $region->style(new Style(width: 0.0, flexGrow: 1.0, flexShrink: 1.0)),
+                ...$controls,
+            )->style(new Style(
+                widthPercent: 100.0,
+                gap: 8.0,
+                paddingRight: 8.0,
+                alignItems: Align::Center,
+                borderBottomWidth: $index === count($source) - 1 ? 0.0 : 1.0,
+                borderColor: $theme->color(ColorToken::Border),
+            ));
         }
         $list = Column::make(...$rows)
             ->style(new Style(widthPercent: 100.0, paddingVertical: 4.0))
@@ -4094,7 +4133,7 @@ final class ComponentRenderer
                 resetOnEnd: true,
             )
             ->accessibilityRole(AccessibilityRole::ListItem)
-            ->accessibilityHint($disabled ? 'Swipe actions disabled' : 'Swipe left or right to reveal actions');
+            ->accessibilityHint($disabled ? 'Swipe actions disabled' : 'Swipe to act, or use the action buttons below');
         if (!$disabled && $change instanceof Closure) {
             $gesture = $gesture->onEnd(static function (GestureEvent $event) use (
                 $change,
@@ -4135,7 +4174,41 @@ final class ComponentRenderer
             alignItems: Align::Center,
             justifyContent: Justify::SpaceBetween,
         ));
-        $row = View::make($actionRow, $gesture)->style(new Style(
+        $controls = [];
+        foreach ([$startLabel, $endLabel] as $index => $label) {
+            $control = Pressable::make(Text::make($label)->style(new Style(
+                fontSize: 14.0,
+                lineHeight: 20.0,
+                fontWeight: 600,
+                textColor: $theme->color($index === 0 ? ColorToken::Primary : ColorToken::Destructive),
+                flexShrink: 1.0,
+            )))->style(new Style(
+                minWidth: 48.0,
+                minHeight: 48.0,
+                maxWidthPercent: 100.0,
+                paddingHorizontal: 16.0,
+                paddingVertical: 8.0,
+                justifyContent: Justify::Center,
+                alignItems: Align::Center,
+                opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+            ))->enabled(!$disabled)
+                ->accessibilityRole(AccessibilityRole::Button)
+                ->accessibilityLabel($label);
+            if (!$disabled && $change instanceof Closure) {
+                $control = $control->onPress(static function () use ($change, $label): void {
+                    $change($label);
+                });
+            }
+            $controls[] = $control;
+        }
+        $controlRow = Row::make(...$controls)->style(new Style(
+            widthPercent: 100.0,
+            flexWrap: FlexWrap::Wrap,
+            gap: 8.0,
+            paddingHorizontal: 8.0,
+            justifyContent: Justify::End,
+        ));
+        $row = View::make($actionRow, $gesture, $controlRow)->style(new Style(
             widthPercent: 100.0,
             minHeight: 64.0,
             pointerEvents: PointerEvents::BoxNone,

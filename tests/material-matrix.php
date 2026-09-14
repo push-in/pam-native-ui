@@ -4327,12 +4327,12 @@ $reorderable = $tags['p-reorderable-list']::make([
 })->toElement();
 if (
     count($reorderable->children()) !== 3
-    || ($reorderable->children()[0]->properties()[PropKey::Draggable->value] ?? null) !== true
-    || ($reorderable->children()[0]->properties()[PropKey::DropEnabled->value] ?? null) !== true
+    || ($reorderable->children()[0]->children()[0]->properties()[PropKey::Draggable->value] ?? null) !== true
+    || ($reorderable->children()[0]->children()[0]->properties()[PropKey::DropEnabled->value] ?? null) !== true
 ) {
     throw new RuntimeException('p-reorderable-list must use PAM Native drag and drop regions.');
 }
-$reorderable->children()[0]->events()[EventKind::Drop->value](Wire::map(['data' => 'Build']));
+$reorderable->children()[0]->children()[0]->events()[EventKind::Drop->value](Wire::map(['data' => 'Build']));
 if ($reordered !== ['Build', 'Research', 'Prototype']) {
     throw new RuntimeException('p-reorderable-list must emit the reordered controlled collection.');
 }
@@ -4345,7 +4345,7 @@ $guardedList = $tags['p-reorderable-list']::make([
         ['value' => 3, 'label' => 'Last'],
     ],
 ])->onReorder(static function (array $items) use (&$dropCalls): void { $dropCalls++; })->toElement();
-$blockedRow = $guardedList->children()[1];
+$blockedRow = $guardedList->children()[1]->children()[0];
 if (
     ($blockedRow->properties()[PropKey::Enabled->value] ?? null) !== false
     || ($blockedRow->properties()[PropKey::Draggable->value] ?? null) !== false
@@ -4354,7 +4354,7 @@ if (
 ) {
     throw new RuntimeException('Disabled reorder items must neither drag nor accept drops.');
 }
-$drop = $guardedList->children()[0]->events()[EventKind::Drop->value];
+$drop = $guardedList->children()[0]->children()[0]->events()[EventKind::Drop->value];
 foreach (['unknown', '1', '2'] as $invalidDrop) {
     $drop(Wire::map(['data' => $invalidDrop]));
 }
@@ -4366,6 +4366,35 @@ $assertDropCalls = static function (int $actual, int $expected): void {
 $assertDropCalls($dropCalls, 0);
 $drop(Wire::map(['data' => '3']));
 $assertDropCalls($dropCalls, 1);
+$assertOrder = static function (?array $actual, array $expected): void {
+    if ($actual !== $expected) {
+        throw new RuntimeException('Move controls must emit the controlled adjacent order.');
+    }
+};
+$reorderable->children()[1]->children()[1]->events()[EventKind::Press->value]();
+$assertOrder($reordered, ['Prototype', 'Research', 'Build']);
+$reorderable->children()[1]->children()[2]->events()[EventKind::Press->value]();
+$assertOrder($reordered, ['Research', 'Build', 'Prototype']);
+$blockedMoveControls = [
+    $reorderable->children()[0]->children()[1],
+    $reorderable->children()[2]->children()[2],
+    $guardedList->children()[0]->children()[2],
+    $guardedList->children()[1]->children()[1],
+    $guardedList->children()[1]->children()[2],
+    $guardedList->children()[2]->children()[1],
+];
+foreach (['disabled', 'isDisabled'] as $disabledProp) {
+    $disabledList = $tags['p-reorderable-list']::make([
+        'items' => ['First', 'Last'], $disabledProp => true,
+    ])->onReorder(static function (array $items): void {})->toElement();
+    $blockedMoveControls[] = $disabledList->children()[0]->children()[2];
+}
+foreach ($blockedMoveControls as $control) {
+    if (($control->properties()[PropKey::Enabled->value] ?? null) !== false
+        || isset($control->events()[EventKind::Press->value])) {
+        throw new RuntimeException('Move controls must respect boundaries and disabled rows.');
+    }
+}
 $swipe = $tags['p-swipe-actions']::make([
     'title' => 'Design review',
     'startLabel' => 'Archive',
@@ -4374,7 +4403,7 @@ $swipe = $tags['p-swipe-actions']::make([
     $swipeAction = $action;
 })->toElement();
 if (
-    count($swipe->children()) !== 2
+    count($swipe->children()) !== 3
     || ($swipe->children()[1]->properties()[PropKey::GestureType->value] ?? null) !== 2
     || ($swipe->children()[1]->properties()[PropKey::GestureDirection->value] ?? null) !== 6
 ) {
@@ -4388,7 +4417,23 @@ $swipe->children()[1]->events()[EventKind::GestureEnd->value](Wire::map([
 if ($swipeAction !== 'Delete') {
     throw new RuntimeException('p-swipe-actions gesture must emit its semantic action.');
 }
+foreach (['Archive', 'Delete'] as $index => $expectedAction) {
+    $control = $swipe->children()[2]->children()[$index];
+    $control->events()[EventKind::Press->value]();
+    if ($swipeAction !== $expectedAction) {
+        throw new RuntimeException('Swipe action buttons must emit the same semantic action as gestures.');
+    }
+}
 foreach (['disabled', 'isDisabled'] as $disabledProp) {
+    $disabledControls = $tags['p-swipe-actions']::make([$disabledProp => true])
+        ->onAction(static function (string $action): void {})
+        ->toElement()->children()[2]->children();
+    foreach ($disabledControls as $control) {
+        if (($control->properties()[PropKey::Enabled->value] ?? null) !== false
+            || isset($control->events()[EventKind::Press->value])) {
+            throw new RuntimeException('Disabled swipe buttons must not expose actionable handlers.');
+        }
+    }
     $disabledSwipe = $tags['p-swipe-actions']::make([$disabledProp => true])
         ->onAction(static function (string $action): void {})
         ->toElement()->children()[1];

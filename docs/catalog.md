@@ -376,9 +376,22 @@ Every component below links to a screenshot captured from the verified Android s
 
 - `<p-reorderable-list />` · [Android screenshot](assets/android/components/p-reorderable-list.png)
 
+Each row offers Up/Down controls alongside its native drag region. Controls emit
+the reordered collection through `onReorder`, without mutating controlled items.
+Boundary moves, disabled items and moves into a disabled neighbor are unavailable.
+`disabled` / `isDisabled` disables both interaction paths. Supply the updated
+collection back as `items`. Gallery refresh and full accessibility review remain
+pending for these controls.
+
 ## `swipe-actions`
 
 - `<p-swipe-actions />` · [Android screenshot](assets/android/components/p-swipe-actions.png)
+
+Archive/start and Delete/end actions are also exposed as visible, wrapping text
+buttons with 48dp minimum touch targets. Buttons and horizontal gestures emit the
+same `onAction` value (`startLabel` or `endLabel`). `disabled` / `isDisabled`
+blocks both paths. Applications own confirmation or undo for destructive actions.
+The linked gallery screenshot predates these controls; refreshed publication is pending.
 
 ## `data-grid`
 

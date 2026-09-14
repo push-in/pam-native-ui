@@ -5582,6 +5582,15 @@ final class ComponentRoute extends Component
 
         if ($this->tag === 'p-reorderable-list') {
             $add($variations, 'Priorities', ['items' => ['Critical', 'High', 'Normal']]);
+            $add($variations, 'Locked item', ['items' => [
+                ['value' => 1, 'label' => 'Research'],
+                ['value' => 2, 'label' => 'Approved milestone', 'disabled' => true],
+                ['value' => 3, 'label' => 'Implementation'],
+            ]]);
+            $add($variations, 'Long labels', ['items' => [
+                'Review accessibility findings and supporting documentation',
+                'Prepare the next release for all supported platforms',
+            ]]);
             $add($variations, 'Compact', ['density' => 'compact']);
             $add($variations, 'Disabled', ['disabled' => true]);
         }

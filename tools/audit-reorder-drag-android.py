@@ -42,7 +42,22 @@ try:
     audit.screenshot('after')
     expected = 'Order: Build · Research · Prototype · Ship'
     assert any(n.attrib.get('text') == expected for n in root.iter('node')), 'Real drag did not update controlled order'
-    report['checks'].append({'result': 1, 'realDragUpdatesOrder': True})
+    for label, expected in [
+        ('Move Build down', 'Order: Research · Build · Prototype · Ship'),
+        ('Move Build up', 'Order: Build · Research · Prototype · Ship'),
+    ]:
+        control = next(n for n in root.iter('node') if n.attrib.get('content-desc') == label)
+        audit.tap(module.node_bounds(control))
+        root = audit.dump(label.replace(' ', '-'))
+        assert any(n.attrib.get('text') == expected for n in root.iter('node')), 'Move button failed: '+label
+    first_up = next(n for n in root.iter('node') if n.attrib.get('content-desc') == 'Move Build up')
+    assert first_up.attrib.get('enabled') == 'false', 'First item must not move up'
+    audit.tap(module.node_bounds(first_up))
+    root = audit.dump('boundary-result')
+    assert any(n.attrib.get('text') == expected for n in root.iter('node')), 'Boundary button changed order'
+    audit.screenshot('buttons-result')
+    report['checks'].append({'result': 1, 'realDragUpdatesOrder': True,
+                             'moveUpAndDown': True, 'boundaryRejected': True})
 finally:
     audit.restore()
     (args.output/'report.json').write_text(json.dumps(report, indent=2))
