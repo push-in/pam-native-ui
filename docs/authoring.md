@@ -55,6 +55,29 @@ Every public `p-*` tag has a typed facade under `Pam\MobileUi\Material`.
 Low-level text and layout use PAM Native primitives rather than duplicate PAM
 UI components.
 
+## Localized interval fields
+
+Date Range Picker and Time Range Picker accept `fromLabel`/`toLabel` for visible
+and accessible endpoint names. `placeholder` sets shared empty-state copy;
+`fromPlaceholder`/`toPlaceholder` override it for each endpoint. These change the
+display copy, not the controlled value format (ISO dates or 24-hour `HH:mm`).
+
+```php
+use Pam\MobileUi\Material\PDateRangePicker;
+
+$picker = PDateRangePicker::make([
+    'modelValue' => ['from' => '', 'to' => ''],
+    'fromLabel' => 'Saída',
+    'toLabel' => 'Retorno',
+    'fromPlaceholder' => 'Escolha a saída',
+    'toPlaceholder' => 'Escolha o retorno',
+])->onChange($updateRange);
+```
+
+The application supplies `$updateRange` and renders its updated range back as
+`modelValue`. Native calendar/clock dialog strings follow the device locale;
+these properties localize the library's field labels and hints only.
+
 ## A typed component used as a tag
 
 Reusable application components can expose a declarative surface:

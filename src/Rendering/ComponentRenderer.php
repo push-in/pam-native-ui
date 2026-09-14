@@ -4865,7 +4865,9 @@ final class ComponentRenderer
             string $current,
             bool $isStart,
         ) use ($change, $from, $to, $props, $theme, $disabled, $readOnly): Element {
-            $display = $current === '' ? 'Select time' : $current;
+            $placeholder = self::text($props, $isStart ? 'fromPlaceholder' : 'toPlaceholder',
+                self::text($props, 'placeholder', 'Select time'));
+            $display = $current === '' ? $placeholder : $current;
             if (
                 in_array(strtolower(self::scalarString($props['format'] ?? '')), ['12h', '12', 'ampm'], true)
                 && preg_match('/^(?<hour>[01]?\d|2[0-3]):(?<minute>[0-5]\d)$/D', $current, $match) === 1
@@ -4879,6 +4881,7 @@ final class ComponentRenderer
                 'modelValue' => $current,
                 'value' => $current,
                 'mode' => ComponentMode::Time->value,
+                'placeholder' => $placeholder,
                 'accessibilityLabel' => $label,
             ];
             unset($fieldProps['__materialComponent']);
@@ -4990,12 +4993,14 @@ final class ComponentRenderer
             string $current,
             bool $isStart,
         ) use ($change, $from, $to, $props, $theme, $disabledDates, $disabled, $readOnly, $minimum, $maximum): Element {
+            $placeholder = self::text($props, $isStart ? 'fromPlaceholder' : 'toPlaceholder',
+                self::text($props, 'placeholder', 'Select date'));
             $fieldProps = [
                 ...$props,
                 'mode' => ComponentMode::Date->value,
                 'modelValue' => $current,
                 'value' => $current,
-                'placeholder' => 'Select date',
+                'placeholder' => $placeholder,
                 'label' => $label,
                 'accessibilityLabel' => $label,
             ];
@@ -5034,7 +5039,7 @@ final class ComponentRenderer
                 self::render(
                     'DateTimePicker',
                     $fieldProps,
-                    [Text::make($current === '' ? 'Select date' : $current)->style(new Style(
+                    [Text::make($current === '' ? $placeholder : $current)->style(new Style(
                         widthPercent: 100.0,
                         fontSize: 15.0,
                         lineHeight: 24.0,

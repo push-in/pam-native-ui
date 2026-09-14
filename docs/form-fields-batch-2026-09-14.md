@@ -2,6 +2,14 @@
 
 ## Date range event bounds
 
+Copy customization follow-up: Date Range and Time Range now honor shared
+`placeholder` and endpoint-specific `fromPlaceholder`/`toPlaceholder` instead
+of forcing English empty text. Existing endpoint labels remain distinct in
+accessibility properties. Four PHP cases cover both components and precedence;
+the full render/style matrix and targeted level-9 analysis pass. Authoring docs
+show a controlled Portuguese example. This later copy change is not part of the
+bounded-date APK below; long translated text/layout still needs device coverage.
+
 The controlled Date Range Picker previously forwarded minimum/maximum dates to
 the native calendar but accepted out-of-bounds Change events at its PHP boundary.
 The new regression failed before implementation for both endpoints. The renderer

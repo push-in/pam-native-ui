@@ -4965,6 +4965,26 @@ foreach ([
     ], 'Date range bounds must be inclusive and retain the controlled opposite endpoint.');
 }
 foreach (['p-date-range-picker', 'p-time-range-picker'] as $rangeTag) {
+    foreach ([
+        ['placeholder' => 'Escolha', 'expected' => ['Escolha', 'Escolha']],
+        ['placeholder' => 'Escolha', 'fromPlaceholder' => 'Início', 'toPlaceholder' => 'Fim',
+            'expected' => ['Início', 'Fim']],
+    ] as $copyCase) {
+        $localizedRange = $tags[$rangeTag]::make([
+            ...$copyCase,
+            'modelValue' => ['from' => '', 'to' => ''],
+            'fromLabel' => 'Saída', 'toLabel' => 'Chegada',
+        ])->toElement();
+        foreach ($localizedRange->children() as $endpoint => $field) {
+            $picker = $field->children()[1];
+            if (($picker->children()[0]->properties()[PropKey::Text->value] ?? null)
+                    !== $copyCase['expected'][$endpoint]
+                || ($picker->properties()[PropKey::AccessibilityLabel->value] ?? null)
+                    !== ['Saída', 'Chegada'][$endpoint]) {
+                throw new RuntimeException('Range controls must honor shared/per-endpoint empty copy and preserve accessible labels.');
+            }
+        }
+    }
     foreach ([false, true] as $isDisabled) {
         $adaptiveRange = $tags[$rangeTag]::make(['disabled' => $isDisabled])->toElement();
         foreach ($adaptiveRange->children() as $field) {
