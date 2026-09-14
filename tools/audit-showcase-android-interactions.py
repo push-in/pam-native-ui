@@ -1105,6 +1105,51 @@ def exercise(
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 
+    if kind == InteractionKind.SELECT and tag == "p-pagination":
+        initial = [n for n in before.nodes()
+            if n.attrib.get("content-desc") == "Page 1 of 3" and enabled(n)]
+        if len(initial) != 1:
+            raise AuditFailure("single-page pagination fixture must be uniquely visible")
+        row_top = bounds(initial[0]).top
+
+        def page_control(snapshot: Hierarchy, label: str, top: int) -> ET.Element:
+            matches = [n for n in snapshot.nodes() if n.attrib.get("content-desc") == label
+                and abs(bounds(n).top - top) < 8]
+            if len(matches) != 1:
+                raise AuditFailure(f"pagination control must be unique within its row: {label}")
+            return matches[0]
+
+        after = before
+        for index, (label, expected_page, movable) in enumerate([
+            ("Next page", 2, True), ("Next page", 3, True),
+            ("Next page", 3, False), ("Previous page", 2, True),
+            ("Previous page", 1, True), ("Previous page", 1, False),
+        ]):
+            control = page_control(after, label, row_top)
+            if enabled(control) != movable:
+                raise AuditFailure("pagination navigation does not respect page boundaries")
+            audit.tap(bounds(control))
+            after = audit.dump(f"{evidence_name}-step-{index}")
+            assert_healthy(after, route)
+            current = page_control(after, f"Page {expected_page} of 3", row_top)
+            if current.attrib.get("selected") != "true":
+                raise AuditFailure("pagination navigation did not update its controlled page")
+        readonly = [n for n in after.nodes()
+            if n.attrib.get("content-desc") == "Page 2 of 3" and not enabled(n)]
+        if len(readonly) != 1:
+            raise AuditFailure("readonly pagination fixture must be uniquely visible")
+        readonly_top = bounds(readonly[0]).top
+        for label in ["Next page", "Previous page"]:
+            control = page_control(after, label, readonly_top)
+            if enabled(control):
+                raise AuditFailure("readonly pagination exposes enabled navigation")
+            audit.tap(bounds(control))
+            after = audit.dump(f"{evidence_name}-readonly-{label.replace(' ', '-')}")
+            if page_control(after, "Page 2 of 3", readonly_top).attrib.get("selected") != "true":
+                raise AuditFailure("readonly pagination changed page")
+        audit.settled_screenshot_hash(f"{evidence_name}-after")
+        return after, True
+
     if kind == InteractionKind.SELECT and tag == "p-data-grid":
         scrolls = [
             node for node in before.nodes()
