@@ -1585,3 +1585,15 @@ The audit route now delegates to the real tree variations, like the existing
 icon/image paths, restoring the prior scenario in finally. Matrix passes.
 The route fix must be installed before rerunning the scoped tree interaction
 test. No tree or reorder physical approval is claimed by this failed attempt.
+
+### Tree selection verified after audit-route correction
+
+Samsung APK `552152b95f616f0fdacb1b6bb003e57c69dd6372db87374e4235dfbef4db64f9`
+passes item-disabled rejection, additive multiple selection and collapse/reopen
+without losing selected state. Evidence:
+`/tmp/pam-ui-tree-variations-20260913/report.json` and selected.png.
+Visual inspection confirms long labels wrap within the indented row and selected
+surface, without colliding with selection indicators. Disabled billing remains
+distinct while its neighbors operate. This supersedes the failed fixture lookup,
+not the remaining enlarged-font/theme/service/performance checks. Reorderable
+List physical drag/drop is still pending. Build took 11s; cleanup removed 88MiB.
