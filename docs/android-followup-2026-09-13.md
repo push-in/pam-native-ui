@@ -1597,3 +1597,15 @@ surface, without colliding with selection indicators. Disabled billing remains
 distinct while its neighbors operate. This supersedes the failed fixture lookup,
 not the remaining enlarged-font/theme/service/performance checks. Reorderable
 List physical drag/drop is still pending. Build took 11s; cleanup removed 88MiB.
+
+### Reorderable List real drag on Samsung
+
+On the same APK, `tools/audit-reorder-drag-android.py` performed an Android
+long-press drag from Build onto Research. The displayed controlled order became
+Build · Research · Prototype · Ship, and the inspected after.png matches it.
+Evidence: `/tmp/pam-ui-reorder-drag-20260913/report.json`.
+Rows, handles and separators remain aligned in this default fixture. This
+closes the basic physical reorder check only; disabled-item drag, alternate
+densities, accessibility alternatives, themes and performance remain unverified.
+The audit route currently shows only Default for this component, unlike the
+full showcase matrix, and needs parity before the remaining variant checks.
