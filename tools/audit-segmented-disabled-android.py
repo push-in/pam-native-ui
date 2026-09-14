@@ -56,8 +56,24 @@ try:
                     '-d', 'pam-showcase://audit/p-segmented-button')
         time.sleep(1)
         width, height = audit.screenshot(f'launch-{scale}')
+        icons_checked = False
         for attempt in range(16):
             root = audit.dump(f'locate-{scale}-{attempt}')
+            headers = [n for n in root.iter('node') if n.attrib.get('text') == 'Icons']
+            if headers and not icons_checked:
+                header = module.node_bounds(headers[0])
+                candidates = [n for n in root.iter('node')
+                              if n.attrib.get('class') == 'android.widget.ToggleButton'
+                              and n.attrib.get('content-desc') in ('Day', 'Week', 'Month')
+                              and module.node_bounds(n).top >= header.bottom]
+                candidates.sort(key=lambda n: (module.node_bounds(n).top, module.node_bounds(n).left))
+                group = candidates[:3]
+                bounds = [module.node_bounds(n) for n in group]
+                if len(group) == 3 and min(b.top for b in bounds) > height*.1 and max(b.bottom for b in bounds) < height*.9:
+                    assert max(b.width for b in bounds)-min(b.width for b in bounds) <= 2, 'Icon segments have unequal widths'
+                    assert max(b.top for b in bounds)-min(b.top for b in bounds) <= 2, 'Icon segments are misaligned'
+                    audit.screenshot(f'icons-{scale}')
+                    icons_checked = True
             items = controls(root)
             if len(items) == 3 and all(
                 module.node_bounds(node).top > height * .1
@@ -69,6 +85,7 @@ try:
                         str(width//2), str(int(height*.5)), '350')
         else:
             raise AssertionError('Disabled-item fixture could not be fully revealed')
+        assert icons_checked, 'Icon segment layout was not captured'
         assert_selection(items, 'View')
         audit.screenshot(f'before-{scale}')
         for label, expected in (('Edit', 'View'), ('Share', 'Share')):
@@ -80,7 +97,8 @@ try:
             assert_selection(items, expected)
             audit.screenshot(f'after-{label}-{scale}')
         report['checks'].append({'fontScale': scale, 'status': 1,
-                                 'disabledRejected': True, 'enabledNeighborSelected': True})
+                                 'disabledRejected': True, 'enabledNeighborSelected': True,
+                                 'iconWidthsAligned': True})
         print(report['checks'][-1], flush=True)
         (args.output/'report.json').write_text(json.dumps(report, indent=2))
 finally:

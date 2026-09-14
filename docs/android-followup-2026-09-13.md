@@ -1718,3 +1718,17 @@ that per-label layout switch; text-only segments remain unchanged. Matrix checks
 the uniform column structure and retains natural control height/label wrapping.
 The new composition still requires physical large-font verification and is not
 included in the installed APK documented above.
+
+### Segmented uniform layout: emulator fallback verification
+
+The Samsung run stopped immediately when another application took foreground;
+it restored settings and did not continue touching that application. The same
+installed APK was transferred to emulator-5554 (which supports ARM64 translation)
+without a second build. The temporary transferred APK was removed afterwards.
+
+`/tmp/pam-ui-segmented-uniform-emulator-20260913/report.json` passed at font scales
+1.0 and 2.0: equal segment widths (within 2px), aligned top edges, rejected disabled
+Edit tap, and enabled Share selection. Both `icons-1.0.png` and `icons-2.0.png`
+were visually inspected: all icons remain above complete labels, without mixed
+horizontal/vertical placement. This closes that specific emulator layout defect,
+not Samsung, TalkBack, theme or full-library approval. Build cleaned 88.1 MiB.
