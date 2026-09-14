@@ -4393,6 +4393,10 @@ final class ComponentRenderer
                     : $definition;
                 if (!is_scalar($value) || !is_scalar($label)) continue;
                 $selected = $value === $active;
+                $itemDisabled = self::flag($props, 'disabled')
+                    || (is_array($definition) && self::flag([
+                        'disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false,
+                    ], 'disabled'));
                 $icon = self::render(
                     ['GlobeIcon', 'PaperclipIcon', 'SettingsIcon', 'InfoIcon'][$index % 4],
                     ['accessibilityElementsHidden' => true],
@@ -4402,10 +4406,10 @@ final class ComponentRenderer
                         width: 20.0,
                         height: 20.0,
                         tintColor: $selected
-                            ? $theme->color(ColorToken::PrimaryForeground)
+                            ? $theme->color(ColorToken::SecondaryForeground)
                             : $theme->color(ColorToken::MutedForeground),
                         textColor: $selected
-                            ? $theme->color(ColorToken::PrimaryForeground)
+                            ? $theme->color(ColorToken::SecondaryForeground)
                             : $theme->color(ColorToken::MutedForeground),
                     ),
                     'navigation-drawer-'.$drawerIdentity.'-icon-'.$index,
@@ -4413,6 +4417,7 @@ final class ComponentRenderer
                 $item = Pressable::make(Row::make(
                     $icon,
                     Text::make((string) $label)->style(new Style(
+                        width: 0.0,
                         flexGrow: 1.0,
                         textColor: $selected
                             ? $theme->color(ColorToken::SecondaryForeground)
@@ -4423,12 +4428,14 @@ final class ComponentRenderer
                     )),
                 )->style(new Style(
                     widthPercent: 100.0,
-                    gap: 14.0,
+                    gap: 12.0,
                     alignItems: Align::Center,
                 )))->style(new Style(
                     widthPercent: 100.0,
                     minHeight: 52.0,
                     paddingHorizontal: 16.0,
+                    paddingVertical: 12.0,
+                    opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
                     backgroundColor: $selected
                         ? $theme->color(ColorToken::Secondary)
                         : 0x00000000,
@@ -4436,16 +4443,17 @@ final class ComponentRenderer
                     alignItems: Align::Center,
                     justifyContent: Justify::Center,
                 ))->key('navigation-drawer-'.$drawerIdentity.'-item-'.$index)
+                    ->enabled(!$itemDisabled)
                     ->property(PropKey::Selected, $selected)
                     ->accessibilityRole(AccessibilityRole::Button)
                     ->accessibilityLabel((string) $label);
-                if ($change instanceof Closure && !$selected) {
+                if ($change instanceof Closure && !$selected && !$itemDisabled) {
                     $item = $item->onPress(static fn (): mixed => $change($value));
                 }
                 $itemViews[] = $item;
             }
             $drawer = SafeAreaView::make(
-                Column::make(
+                \Pam\Native\UI\Scroll::make(Column::make(
                     Row::make(
                         Column::make(Text::make('P')->key('navigation-drawer-'.$drawerIdentity.'-monogram-text')->style(new Style(
                             textColor: $theme->color(ColorToken::PrimaryForeground),
@@ -4473,7 +4481,7 @@ final class ComponentRenderer
                                 lineHeight: 16.0,
                                 textColor: $theme->color(ColorToken::MutedForeground),
                             )),
-                        )->style(new Style(gap: 1.0)),
+                        )->style(new Style(width: 0.0, flexGrow: 1.0, gap: 4.0)),
                     )->style(new Style(
                         widthPercent: 100.0,
                         gap: 12.0,
@@ -4487,7 +4495,7 @@ final class ComponentRenderer
                     paddingHorizontal: 12.0,
                     paddingVertical: 14.0,
                     gap: 4.0,
-                )),
+                )))->style(new Style(widthPercent: 100.0, heightPercent: 100.0)),
             )->collapsable(false)->style(new Style(
                 widthPercent: 100.0,
                 heightPercent: 100.0,

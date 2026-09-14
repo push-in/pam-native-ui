@@ -4051,9 +4051,13 @@ final class ComponentRoute extends Component
                 $drawerLabel = ($previewProps['position'] ?? null) === 'end'
                     ? 'End-edge'
                     : ucfirst(self::stringValue($previewProps['type'] ?? 'front'));
+                $adaptiveDrawer = array_key_exists('permanentBreakpoint', $previewProps);
+                if ($adaptiveDrawer) {
+                    $drawerLabel = 'Adaptive';
+                }
                 $permanentDrawer = ($previewProps['type'] ?? null) === 'permanent';
                 if ($permanentDrawer) {
-                    $previewProps['width'] ??= 216.0;
+                    $previewProps['width'] ??= 304.0;
                 }
                 $content = $permanentDrawer
                     ? Column::make(
@@ -4086,7 +4090,9 @@ final class ComponentRoute extends Component
                         fontWeight: 700,
                         textColor: $theme->color(ColorToken::OnSurface),
                     )),
-                    Text::make('Swipe from the edge or use the control below.')->style(new Style(
+                    Text::make($adaptiveDrawer
+                        ? 'Overlay on phones. Permanent beside content from 840 dp.'
+                        : 'Swipe from the edge or use the control below.')->style(new Style(
                         fontSize: 13.0,
                         lineHeight: 20.0,
                         textColor: $theme->color(ColorToken::MutedForeground),
@@ -4099,7 +4105,9 @@ final class ComponentRoute extends Component
                     )))->style(new Style(
                         alignSelf: Align::Start,
                         minHeight: 48.0,
+                        maxWidthPercent: 100.0,
                         paddingHorizontal: 18.0,
+                        paddingVertical: 12.0,
                         backgroundColor: $theme->color(ColorToken::Primary),
                         borderRadius: 16.0,
                         alignItems: Align::Center,
@@ -4409,8 +4417,8 @@ final class ComponentRoute extends Component
             if ($preview instanceof UiComponent && $this->tag === 'p-navigation-drawer') {
                 $preview = $preview->style(new Style(
                     widthPercent: 100.0,
-                    height: 280.0,
-                    minHeight: 280.0,
+                    height: 360.0,
+                    minHeight: 360.0,
                     borderRadius: 20.0,
                     overflow: \Pam\Native\Overflow::Hidden,
                 ));
@@ -6499,7 +6507,19 @@ final class ComponentRoute extends Component
                 ['label' => 'Front', 'props' => ['open' => true, 'type' => 'front', 'items' => ['Home', 'Explore', 'Settings'], 'modelValue' => 'Home']],
                 ['label' => 'Slide', 'props' => ['open' => false, 'type' => 'slide', 'items' => ['Home', 'Projects', 'Profile']]],
                 ['label' => 'End edge', 'props' => ['open' => false, 'position' => 'end', 'items' => ['Activity', 'Messages']]],
-                ['label' => 'Permanent', 'props' => ['open' => false, 'type' => 'permanent', 'items' => ['Dashboard', 'Reports']]],
+                ['label' => 'Adaptive permanent', 'props' => ['open' => false, 'type' => 'front', 'permanentBreakpoint' => 840.0, 'items' => ['Dashboard', 'Reports']]],
+                ['label' => 'Scrollable destinations', 'props' => [
+                    'open' => false, 'title' => 'Customer experience workspace',
+                    'subtitle' => 'Accessible navigation with long destination labels',
+                    'modelValue' => 1,
+                    'items' => array_map(static fn (int $destination): array => [
+                        'value' => $destination,
+                        'label' => $destination === 2
+                            ? 'Unavailable destination'
+                            : 'Workspace destination '.$destination,
+                        'disabled' => $destination === 2,
+                    ], range(1, 16)),
+                ]],
             ],
             'p-command-palette' => [
                 ['label' => 'Commands', 'props' => ['label' => 'Quick actions', 'open' => true, 'items' => ['New project', 'Open file', 'Publish']]],

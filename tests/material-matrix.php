@@ -4683,6 +4683,21 @@ if ($selectedChartPoint !== ['index' => 2, 'value' => 14.0]) {
     throw new RuntimeException('p-chart must emit its selected native data point.');
 }
 $drawerSelection = null;
+$drawerRoute = new \App\ComponentRoute('p-navigation-drawer', 'Drawer', $tags['p-navigation-drawer']);
+$drawerSamples = $catalogMethod->invoke($drawerRoute);
+if (!is_array($drawerSamples)) {
+    throw new RuntimeException('Drawer catalog must be an array of specimens.');
+}
+$adaptiveSample = null;
+foreach ($drawerSamples as $sample) {
+    if (is_array($sample) && ($sample['label'] ?? null) === 'Adaptive permanent') {
+        $adaptiveSample = $sample['props'] ?? null;
+    }
+}
+if (!is_array($adaptiveSample) || ($adaptiveSample['type'] ?? null) !== 'front'
+    || ($adaptiveSample['permanentBreakpoint'] ?? null) !== 840.0) {
+    throw new RuntimeException('Permanent drawer showcase must adapt instead of squeezing a fixed sidebar onto phones.');
+}
 $navigationDrawer = $tags['p-navigation-drawer']::make([
     'open' => true,
     'type' => 'front',
@@ -4722,6 +4737,38 @@ if (
 $drawerExplore->events()[EventKind::Press->value]();
 if ($drawerSelection !== 'Explore') {
     throw new RuntimeException('p-navigation-drawer destinations must emit selection.');
+}
+foreach (['disabled', 'isDisabled'] as $disabledAlias) {
+    foreach ([false, true] as $wholeDrawerDisabled) {
+        $guardedDrawer = $tags['p-navigation-drawer']::make([
+            $disabledAlias => $wholeDrawerDisabled,
+            'items' => [
+                ['value' => 1, 'label' => 'Available destination'],
+                ['value' => 2, 'label' => 'Unavailable destination', $disabledAlias => true],
+            ],
+        ])->onChange(static function (int $value): void {})->toElement();
+        $stack = [$guardedDrawer];
+        $destinations = 0;
+        $hasScroll = false;
+        while ($stack !== []) {
+            $candidate = array_pop($stack);
+            $hasScroll = $hasScroll || $candidate->kind() === NodeKind::Scroll;
+            $label = $candidate->properties()[PropKey::AccessibilityLabel->value] ?? null;
+            if (in_array($label, ['Available destination', 'Unavailable destination'], true)) {
+                $destinations++;
+                $enabled = !$wholeDrawerDisabled && $label === 'Available destination';
+                if (($candidate->properties()[PropKey::Enabled->value] ?? null) !== $enabled
+                    || isset($candidate->events()[EventKind::Press->value]) !== $enabled
+                    || ($candidate->properties()[PropKey::PaddingVertical->value] ?? null) !== 12.0) {
+                    throw new RuntimeException('Drawer destinations must respect item/global disabled aliases and retain padding.');
+                }
+            }
+            array_push($stack, ...$candidate->children());
+        }
+        if (!$hasScroll || $destinations !== 2) {
+            throw new RuntimeException('Drawer destinations must live in a scrollable surface.');
+        }
+    }
 }
 $commandPalette = $tags['p-command-palette']::make([
     'label' => 'Commands',
