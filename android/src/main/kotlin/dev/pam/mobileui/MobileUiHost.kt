@@ -304,6 +304,8 @@ internal class MobileUiHost(
     private var behavior = Behavior.CONTAINER
     private var sparklineTouchActive = false
     private var sparklineSelectedIndex = -1
+    private var sparklineSource: String? = null
+    private var sparklineValues: List<Float> = emptyList()
     private var component = 0
     private var expanded = false
     private var checked = false
@@ -3338,7 +3340,15 @@ internal class MobileUiHost(
 
     private fun drawSparkline(canvas: Canvas) {
         val points = sparklinePoints()
-        if (points.size < 2 || width <= 0 || height <= 0) return
+        if (points.isEmpty() || width <= 0 || height <= 0) return
+        if (points.size == 1) {
+            val pointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = fillPaint.color
+                style = Paint.Style.FILL
+            }
+            canvas.drawCircle(width / 2f, height / 2f, 4f * density, pointPaint)
+            return
+        }
         val low = points.minOrNull() ?: return
         val high = points.maxOrNull() ?: return
         val spread = (high - low).takeIf { it > 0f } ?: 1f
@@ -3357,7 +3367,8 @@ internal class MobileUiHost(
         val coordinates = points.mapIndexed { index, point ->
             val logicalX = inset + index * horizontal
             val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - logicalX else logicalX
-            val y = inset + drawableHeight - ((point - low) / spread * drawableHeight)
+            val fraction = if (high == low) 0.5f else (point - low) / spread
+            val y = inset + drawableHeight - fraction * drawableHeight
             x to y
         }
         val type = nativeProperties.text("type")?.lowercase().orEmpty()
@@ -3444,12 +3455,15 @@ internal class MobileUiHost(
         }
     }
 
-    private fun sparklinePoints(): List<Float> = (
-            nativeProperties.text("values")
-                ?: nativeProperties.text("value")
-                ?: ""
-        ).split(',', '\n', ';', ' ')
-            .mapNotNull(String::toFloatOrNull)
+    private fun sparklinePoints(): List<Float> {
+        val source = nativeProperties.text("values") ?: nativeProperties.text("value") ?: ""
+        if (source != sparklineSource) {
+            sparklineSource = source
+            sparklineValues = SparklineData.parse(source)
+            sparklineSelectedIndex = -1
+        }
+        return sparklineValues
+    }
 
     private fun updateSparklineSelection(x: Float, emit: Boolean = false) {
         val points = sparklinePoints()

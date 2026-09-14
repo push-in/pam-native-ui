@@ -5655,6 +5655,14 @@ final class ComponentRoute extends Component
             $add($variations, 'Line', ['type' => 'trend', 'fill' => false]);
             $add($variations, 'Area', ['type' => 'area', 'fill' => true]);
             $add($variations, 'Bars', ['type' => 'bar']);
+            $add($variations, 'Single observation', [
+                'values' => '42', 'fill' => false,
+                'accessibilityLabel' => 'One observation with value 42',
+            ]);
+            $add($variations, 'Constant series', [
+                'values' => '42,42,42,42', 'fill' => false,
+                'accessibilityLabel' => 'Four observations, all with value 42',
+            ]);
         }
 
         return $variations;

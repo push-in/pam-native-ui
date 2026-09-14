@@ -2138,13 +2138,14 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func drawSparkline(_ context: CGContext) {
-        let source = properties["values"]?.pamText
-            ?? properties["value"]?.pamText
-            ?? ""
-        let points = source
-            .split(whereSeparator: { $0 == "," || $0 == "\n" || $0 == ";" || $0 == " " })
-            .compactMap { Double($0).map { CGFloat($0) } }
-        guard points.count > 1, bounds.width > 0, bounds.height > 0,
+        let points = sparklineValues
+        guard !points.isEmpty, bounds.width > 0, bounds.height > 0 else { return }
+        if points.count == 1 {
+            fillColor.setFill()
+            context.fillEllipse(in: CGRect(x: bounds.midX - 4, y: bounds.midY - 4, width: 8, height: 8))
+            return
+        }
+        guard
               let low = points.min(), let high = points.max() else { return }
         let spread = max(0.000_001, high - low)
         let lineWidth = properties["lineWidth"]?.pamDecimal ?? 2.5
@@ -2155,7 +2156,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             let logicalX = inset + drawableWidth * CGFloat(index) / CGFloat(points.count - 1)
             let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
                 ? bounds.width - logicalX : logicalX
-            let y = inset + drawableHeight - (point - low) / spread * drawableHeight
+            let fraction: CGFloat = high == low ? 0.5 : (point - low) / spread
+            let y = inset + drawableHeight - fraction * drawableHeight
             return CGPoint(x: x, y: y)
         }
         let type = properties["type"]?.pamText?.lowercased() ?? ""
@@ -2256,7 +2258,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         return source
             .split(whereSeparator: { $0 == "," || $0 == "\n" || $0 == ";" || $0 == " " })
             .compactMap { point -> CGFloat? in
-                guard let value = Double(String(point)) else { return nil }
+                guard let value = Double(String(point)), value.isFinite else { return nil }
                 return CGFloat(value)
             }
     }

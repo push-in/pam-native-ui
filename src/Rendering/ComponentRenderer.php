@@ -7358,14 +7358,16 @@ final class ComponentRenderer
                 $events[EventKind::Change->value] =
                     static function (string $payload) use ($handler): void {
                         $point = json_decode($payload, true);
-                        if (!is_array($point) || !is_numeric($point['index'] ?? null)) {
+                        if (!is_array($point)
+                            || !is_int($point['index'] ?? null)
+                            || $point['index'] < 0
+                            || !is_numeric($point['value'] ?? null)
+                            || !is_finite((float) $point['value'])) {
                             return;
                         }
                         $handler([
-                            'index' => (int) $point['index'],
-                            'value' => is_numeric($point['value'] ?? null)
-                                ? (float) $point['value']
-                                : null,
+                            'index' => $point['index'],
+                            'value' => (float) $point['value'],
                         ]);
                     };
             }

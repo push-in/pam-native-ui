@@ -4820,6 +4820,10 @@ if (
     throw new RuntimeException('p-chart must render as an interactive native chart with an accessible summary.');
 }
 $chart->events()[EventKind::Change->value]('{"index":2,"value":14}');
+foreach (['not-json', '{}', '{"index":-1,"value":14}', '{"index":1.5,"value":14}',
+    '{"index":1,"value":null}', '{"index":1,"value":"NaN"}', '{"index":1,"value":1e999}'] as $invalidPoint) {
+    $chart->events()[EventKind::Change->value]($invalidPoint);
+}
 if ($selectedChartPoint !== ['index' => 2, 'value' => 14.0]) {
     throw new RuntimeException('p-chart must emit its selected native data point.');
 }
