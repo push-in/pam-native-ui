@@ -1443,3 +1443,16 @@ four-digit pages, two-page limit, padded filter labels and distinct disabled
 items at this scale. Clear wraps below the final filter row without overlap.
 This supersedes the pending scoped interaction checks above; it does not cover
 all font scales, themes, accessibility services, performance or full approval.
+
+### Shared read-only field action fix
+
+The field composition exposed a mutating clear action on read-only values.
+Clear now requires an editable, enabled field; composition recognizes readonly,
+readOnly, isReadOnly and editable=false consistently with the native input.
+Twenty regression combinations cover Text Field, Textarea, Password Field,
+Masked Field and Currency Field across those four spellings. Checks require a
+native Input with InputEditable=false and absence of the clear action. Existing
+editable clear-action tests still pass. Matrix and renderer PHPStan level 9
+passed. This is UI composition responsibility: Native already supports the
+required editing semantics. Not yet installed or physically validated; keep
+this change out of release approval until the device check is complete.

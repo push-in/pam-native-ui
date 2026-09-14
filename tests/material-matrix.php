@@ -1487,6 +1487,34 @@ if (count(($emptyField->children()[0] ?? null)?->children() ?? []) !== 1) {
 }
 
 $itemClass = $tags['p-item'];
+foreach (['p-text-field', 'p-textarea', 'p-password-field', 'p-masked-field', 'p-currency-field'] as $fieldTag) {
+    foreach ([['readonly' => true], ['readOnly' => true], ['isReadOnly' => true], ['editable' => false]] as $readOnlyProps) {
+        $readOnlyField = $tags[$fieldTag]::make([
+            ...$readOnlyProps,
+            'label' => 'Protected', 'modelValue' => '1234', 'clearable' => true,
+        ])->onChange(static function (string $value): void {
+            throw new RuntimeException('Read-only fields must not emit clear actions.');
+        })->toElement();
+        $pending = [$readOnlyField];
+        $hasReadOnlyInput = false;
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            if ($node->kind() === NodeKind::Input) {
+                if (($node->properties()[PropKey::InputEditable->value] ?? null) !== false) {
+                    throw new RuntimeException($fieldTag.' must retain native read-only editing semantics.');
+                }
+                $hasReadOnlyInput = true;
+            }
+            if (($node->properties()[PropKey::AccessibilityLabel->value] ?? null) === 'Clear Protected') {
+                throw new RuntimeException($fieldTag.' must not expose a mutating clear action when read-only.');
+            }
+            array_push($pending, ...$node->children());
+        }
+        if (!$hasReadOnlyInput) {
+            throw new RuntimeException('Read-only fixture must include a native input.');
+        }
+    }
+}
 $item = $itemClass::make([
     'label' => 'Grid view',
     'value' => 'grid',

@@ -1105,8 +1105,8 @@ final class ComponentRenderer
             $fieldReadOnly = self::flag(
                 $props,
                 'readonly',
-                self::flag($props, 'readOnly'),
-            );
+                self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')),
+            ) || (array_key_exists('editable', $props) && !self::flag($props, 'editable', true));
             $fieldFocused = self::flag(
                 $props,
                 'focused',
@@ -1144,7 +1144,8 @@ final class ComponentRenderer
             }
             $clearable = self::flag($props, 'clearable')
                 && $modelText !== ''
-                && !$fieldDisabled;
+                && !$fieldDisabled
+                && !$fieldReadOnly;
             $inputPaddingLeft = $prefix === '' ? 0.0 : 32.0;
             $inputPaddingRight = match (true) {
                 $materialComponent === 'PPasswordField' => 56.0,
