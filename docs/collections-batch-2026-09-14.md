@@ -1,5 +1,18 @@
 # Collections batch
 
+## Native accessibility scroll semantics restored
+
+The next native correction preserves RecyclerView's accessibility delegate when
+PAM applies roles/hints/actions. The integrated scroll branch now requires the
+native viewport to expose `scrollable=true`, in addition to proving touch-driven
+row movement in both directions. All three routes pass in
+`/tmp/pam-scroll-semantics-20260914.json`, candidate
+`ae46a7202efdad26432b8897967ec395f68cc5932ff34d48528c6adf99166ce2`.
+The separate native instrumented test invokes ACTION_SCROLL_FORWARD and confirms
+actual item movement without touch. See sibling Native documentation
+`docs/virtual-list-accessibility-delegate-2026-09-14.md`. This is not full TalkBack
+or platform approval; no UI implementation or publication was needed.
+
 ## Integrated native-scroll contract
 
 The integrated audit now targets the first usable RecyclerView rather than the

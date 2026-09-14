@@ -1073,6 +1073,8 @@ def exercise(
         if not scrolls:
             raise AuditFailure("no usable native list viewport is exposed")
         target = min(scrolls, key=lambda node: bounds(node).top)
+        if target.attrib.get("scrollable") != "true":
+            raise AuditFailure("native list does not expose accessibility scrolling")
         area = bounds(target)
 
         def visible_rows(node: ET.Element) -> list[tuple[str, str, str]]:
