@@ -71,7 +71,7 @@ $assertAuditScenario = static function (?string $scenario): void {
         throw new RuntimeException('Catalog lookup must restore the active audit scenario.');
     }
 };
-foreach (['p-reorderable-list', 'p-swipe-actions', 'p-tree-select', 'p-chart', 'p-result-state'] as $auditTag) {
+foreach (['p-reorderable-list', 'p-swipe-actions', 'p-tree-select', 'p-chart', 'p-result-state', 'p-data-grid'] as $auditTag) {
     $route = new \App\ComponentRoute($auditTag, 'Sample', MaterialComponentMap::TAGS[$auditTag]);
     $route->state->auditScenario = 'default';
     $normal = $catalogMethod->invoke($route);
@@ -3712,7 +3712,71 @@ if (
     );
 }
 
+foreach (['p-data-table', 'p-data-table-virtual', 'p-data-grid'] as $tableTag) {
+    foreach (['disabled', 'isDisabled', 'loading', 'readonly', 'readOnly', 'isReadOnly'] as $lock) {
+        $lockedTable = $tags[$tableTag]::make([
+            $lock => true, 'showSelect' => true,
+            'headers' => [['key' => 'name', 'title' => 'Name']],
+            'items' => [['id' => 1, 'name' => 'Ada']],
+        ])->onChange(static function (): void { throw new RuntimeException('Locked table changed.'); })->toElement();
+        $lockedStack = [$lockedTable];
+        $lockedControls = 0;
+        while ($lockedStack !== []) {
+            $node = array_pop($lockedStack);
+            if (($node->properties()[PropKey::AccessibilityRole->value] ?? null) === AccessibilityRole::Checkbox->value) {
+                $lockedControls++;
+                if (isset($node->events()[EventKind::Press->value])
+                    || ($node->properties()[PropKey::Enabled->value] ?? null) !== false) {
+                    throw new RuntimeException($tableTag.' must block selection for '.$lock);
+                }
+            }
+            array_push($lockedStack, ...$node->children());
+        }
+        if ($lockedControls === 0) {
+            throw new RuntimeException('Locked selection test must inspect actual controls.');
+        }
+    }
+}
 $dataTableClass = $tags['p-data-table'];
+foreach ([[2], [1, 2]] as $initialSelection) {
+    $bulkResult = null;
+    $bulkTable = $dataTableClass::make([
+        'showSelect' => true, 'modelValue' => $initialSelection,
+        'headers' => [['key' => 'name', 'title' => 'Name']],
+        'items' => [['id' => 1, 'name' => 'Available'], ['id' => 2, 'name' => 'Protected', 'disabled' => true]],
+    ])->onChange(static function (array $value) use (&$bulkResult): void { $bulkResult = $value; })->toElement();
+    $bulkStack = [$bulkTable];
+    $bulkPress = null;
+    while ($bulkStack !== []) {
+        $node = array_pop($bulkStack);
+        $nodeLabel = $node->properties()[PropKey::AccessibilityLabel->value] ?? null;
+        if ($nodeLabel === 'Select all rows') {
+            $bulkPress = $node->events()[EventKind::Press->value] ?? null;
+        }
+        if ($node->kind() === NodeKind::Row && count($node->children()) === 2) {
+            $selectionColumn = $node->children()[0]->properties();
+            $dataColumn = $node->children()[1]->properties();
+            if (($selectionColumn[PropKey::Width->value] ?? null) !== 48.0
+                || ($selectionColumn[PropKey::FlexGrow->value] ?? null) !== 0.0
+                || ($dataColumn[PropKey::Width->value] ?? null) !== 0.0
+                || ($dataColumn[PropKey::FlexGrow->value] ?? null) !== 1.0) {
+                throw new RuntimeException('Selection column must stay compact while data fills remaining width.');
+            }
+        }
+        if ($nodeLabel === 'Select row 2' && (isset($node->events()[EventKind::Press->value])
+            || ($node->properties()[PropKey::Enabled->value] ?? null) !== false)) {
+            throw new RuntimeException('Protected row selection must be disabled.');
+        }
+        array_push($bulkStack, ...$node->children());
+    }
+    if (!$bulkPress instanceof Closure) {
+        throw new RuntimeException('Available rows require a bulk selection action.');
+    }
+    $bulkPress();
+    if ($bulkResult !== (count($initialSelection) === 1 ? [2, 1] : [2])) {
+        throw new RuntimeException('Bulk selection must preserve protected selections.');
+    }
+}
 $selectedRows = null;
 $dataTable = $dataTableClass::make([
     'headers' => [

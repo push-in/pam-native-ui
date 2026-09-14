@@ -3933,7 +3933,9 @@ final class ComponentRoute extends Component
             } elseif ($this->tag === 'p-data-grid') {
                 $selectedRows = is_array($this->sampleValues[$index] ?? null)
                     ? array_values($this->sampleValues[$index])
-                    : [];
+                    : (is_array($previewProps['modelValue'] ?? null)
+                        ? array_values($previewProps['modelValue'])
+                        : []);
                 $previewProps['modelValue'] = $selectedRows;
                 $preview = Column::make(
                     $component::make($previewProps)->onChange(
@@ -5580,6 +5582,19 @@ final class ComponentRoute extends Component
             $add($variations, 'Selectable', ['showSelect' => true]);
             $add($variations, 'Compact', ['density' => 'compact']);
             $add($variations, 'Loading', ['loading' => true]);
+            $selectionRows = [
+                ['id' => 1, 'name' => 'Design workspace'],
+                ['id' => 2, 'name' => 'Protected workspace', 'disabled' => true],
+                ['id' => 3, 'name' => 'Research workspace'],
+            ];
+            $selectionProps = [
+                'showSelect' => true, 'modelValue' => [2],
+                'headers' => [['title' => 'Workspace', 'key' => 'name']],
+                'items' => $selectionRows, 'height' => 260.0,
+            ];
+            $add($variations, 'Protected selection', $selectionProps);
+            $add($variations, 'Read-only selection', ['readOnly' => true] + $selectionProps);
+            $add($variations, 'Disabled selection', ['disabled' => true] + $selectionProps);
         }
         if ($this->tag === 'p-tree-select') {
             $add($variations, 'Disabled item', [
@@ -6575,13 +6590,7 @@ final class ComponentRoute extends Component
         }
 
         if ($this->tag === 'p-data-grid') {
-            return [[
-                'label' => 'Selectable data grid',
-                'props' => [
-                    'showSelect' => true,
-                    'items' => $this->tableRows(6),
-                ],
-            ]];
+            return $this->catalogVariations();
         }
 
         if ($this->tag === 'p-item') {

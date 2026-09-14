@@ -2676,6 +2676,17 @@ final class ComponentRenderer
             return self::grid($props, $children);
         }
         if ($part === 'TableRow') {
+            if (self::flag($props, '__selectionColumn')) {
+                $cells = [];
+                foreach ($children as $index => $child) {
+                    $cells[] = View::make($child)->style(new Style(
+                        width: $index === 0 ? 48.0 : 0.0,
+                        flexGrow: $index === 0 ? 0.0 : 1.0,
+                        flexShrink: $index === 0 ? 0.0 : 1.0,
+                    ));
+                }
+                return Row::make(...$cells)->style(new Style(widthPercent: 100.0));
+            }
             $cells = array_map(
                 static fn (Element $child): Element => View::make($child)
                     ->property(PropKey::Value, 'pam:grid-item:1,1,1,1,1,1'),
@@ -10590,11 +10601,19 @@ final class ComponentRenderer
 
         $rows = [];
         $showSelect = self::flag($props, 'showSelect');
-        $selectionChange = $events[EventKind::Change->value] ?? null;
+        $selectionBlocked = self::flag($props, 'disabled')
+            || self::flag($props, 'loading')
+            || self::flag($props, 'readonly')
+            || self::flag($props, 'readOnly')
+            || self::flag($props, 'isReadOnly');
+        $selectionChange = $selectionBlocked ? null : ($events[EventKind::Change->value] ?? null);
         $selectedValues = self::selectedValues($props);
         $itemValue = self::text($props, 'itemValue', 'id');
         $selectableValues = [];
         foreach (array_values($source) as $rowIndex => $item) {
+            if (is_array($item) && self::flag(['disabled' => $item['disabled'] ?? $item['isDisabled'] ?? false], 'disabled')) {
+                continue;
+            }
             $candidate = is_array($item)
                 ? ($item[$itemValue] ?? $item['value'] ?? $rowIndex)
                 : $item;
@@ -10620,15 +10639,18 @@ final class ComponentRenderer
                         $allSelected,
                         $rowHeight,
                         'Select all rows',
-                        $selectionChange === null
+                        $selectionChange === null || $selectableValues === []
                             ? null
                             : static function () use (
                                 $selectionChange,
                                 $allSelected,
                                 $selectableValues,
+                                $selectedValues,
                             ): void {
                                 $selectionChange(
-                                    $allSelected ? [] : $selectableValues,
+                                    $allSelected
+                                        ? array_values(array_filter($selectedValues, static fn (mixed $value): bool => !in_array($value, $selectableValues, true)))
+                                        : array_values(array_unique([...$selectedValues, ...$selectableValues], SORT_REGULAR)),
                                 );
                             },
                     ),
@@ -10638,6 +10660,7 @@ final class ComponentRenderer
                 'TableRow',
                 [
                     'columns' => count($headerCells),
+                    '__selectionColumn' => $showSelect,
                     'header' => true,
                     'accessibilityLabel' => 'Table header',
                 ],
@@ -10706,6 +10729,7 @@ final class ComponentRenderer
                         $rowHeight,
                         'Select row '.($rowIndex + 1),
                         $selectionChange !== null && is_scalar($rowValue)
+                            && !(is_array($item) && self::flag(['disabled' => $item['disabled'] ?? $item['isDisabled'] ?? false], 'disabled'))
                             ? self::listSelectionHandler(
                                 $selectionChange,
                                 $rowValue,
@@ -10720,7 +10744,7 @@ final class ComponentRenderer
             }
             $rows[] = self::render(
                 'TableRow',
-                ['columns' => count($children)],
+                ['columns' => count($children), '__selectionColumn' => $showSelect],
                 $children,
                 [],
                 new Style(
@@ -10808,6 +10832,7 @@ final class ComponentRenderer
             ))
             ->accessibilityRole(AccessibilityRole::Checkbox)
             ->accessibilityLabel($label)
+            ->property(PropKey::Enabled, $handler !== null)
             ->accessibilityChecked(
                 $selected
                     ? AccessibilityCheckedState::Checked
