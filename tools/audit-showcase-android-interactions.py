@@ -935,6 +935,45 @@ def exercise(
                 raise AuditFailure("removing after reopen did not restore the original selection")
             assert_healthy(removed, route)
             audit.screenshot_hash(f"{evidence_name}-removed")
+            if tag == "p-tag-input":
+                fields = [n for n in removed.nodes()
+                    if n.attrib.get("class") == "android.widget.Spinner"
+                    and n.attrib.get("content-desc") == "Technologies"
+                    and n.attrib.get("clickable") == "true" and enabled(n)]
+                if len(fields) != 1:
+                    raise AuditFailure("custom tag fixture is not uniquely visible")
+                audit.tap(bounds(fields[0]))
+                custom_sheet = audit.dump(f"{evidence_name}-custom-sheet")
+                editors = [n for n in custom_sheet.nodes()
+                    if n.attrib.get("class") == "android.widget.EditText" and enabled(n)]
+                if len(editors) != 1:
+                    raise AuditFailure("custom tag search editor is not unique")
+                audit.tap(bounds(editors[0]))
+                audit.adb("shell", "input", "text", "Android")
+                collision = audit.dump(f"{evidence_name}-custom-collision")
+                actions = [n for n in collision.nodes()
+                    if n.attrib.get("content-desc") in {'Use "Android"', 'Use Android'} and enabled(n)]
+                if len(actions) != 1:
+                    raise AuditFailure("custom collision action was not exercised")
+                audit.tap(bounds(actions[0]))
+                # The custom action clears focus and hides the IME natively.
+                # Confirm the sheet survived before dismissing that one surface.
+                custom_applied = audit.dump(f"{evidence_name}-custom-applied")
+                if not any(n.attrib.get("class") == "android.widget.CheckedTextView"
+                    and n.attrib.get("content-desc") == "Managed platform"
+                    and n.attrib.get("checked") == "true" for n in custom_applied.nodes()):
+                    raise AuditFailure("custom event removed the protected selected option")
+                audit.back()
+                custom_closed = audit.dump(f"{evidence_name}-custom-protected")
+                retained_fields = [n for n in custom_closed.nodes()
+                    if n.attrib.get("class") == "android.widget.Spinner"
+                    and n.attrib.get("content-desc") == "Technologies"
+                    and n.attrib.get("clickable") == "true"]
+                if len(retained_fields) != 1 or "Managed platform" not in descendant_labels(retained_fields[0]):
+                    raise AuditFailure("custom value deselected the protected internal value")
+                assert_healthy(custom_closed, route)
+                audit.screenshot_hash(f"{evidence_name}-custom-protected")
+                removed = custom_closed
             return removed, True
         if tag in {"p-menu", "p-speed-dial"}:
             opened = audit.dump(f"{evidence_name}-open")

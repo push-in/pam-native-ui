@@ -1,5 +1,21 @@
 # Search family validation
 
+## Custom value collision: Android event path
+
+`/tmp/pam-tag-collision-final-20260914.json` passes the Tag Input flow on the
+Android emulator: search for `Android`, invoke `Use Android`, verify the protected
+`Managed platform` option remains checked, dismiss and verify the trigger still
+contains that label. The fixture deliberately uses different display/value text
+to exercise the custom action rather than the disabled option's touch handler.
+
+Two preceding attempts stopped in the harness before the custom press: duplicate
+semantic Spinner nodes required selecting the clickable one, and Android removes
+resource quoting from the action label. Their failing reports remain at
+`/tmp/pam-tag-collision-20260914.json` and
+`/tmp/pam-tag-collision-retry-20260914.json`. No product rebuild was needed for
+these locator corrections. This verifies one protected custom scalar path,
+not all custom entry, platforms or full component approval.
+
 ## Selection-lock Android batch
 
 Candidate `576ec564bb1ebbb7381f3e269d3d6e08a7d025f5baa6197df1cc9750e83f6eac`

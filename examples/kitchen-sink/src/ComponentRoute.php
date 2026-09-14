@@ -6527,7 +6527,10 @@ final class ComponentRoute extends Component
                     ['value' => 'PHP', 'label' => 'PHP', 'isDisabled' => true],
                     'Kotlin', ['value' => 'Swift', 'label' => 'Swift', 'disabled' => 'false'],
                 ], 'modelValue' => ['PHP', 'Kotlin']]],
-                ['label' => 'Create tag', 'props' => ['label' => 'Technologies', 'items' => ['Android', 'iOS'], 'modelValue' => ['Android']]],
+                ['label' => 'Create tag', 'props' => ['label' => 'Technologies', 'items' => [
+                    ['value' => 'Android', 'label' => 'Managed platform', 'isDisabled' => true],
+                    'iOS',
+                ], 'modelValue' => ['Android']]],
                 ['label' => 'Empty', 'props' => ['label' => 'Tags', 'placeholder' => 'Add tags', 'items' => ['Design', 'Code'], 'modelValue' => []]],
                 ['label' => 'Disabled', 'props' => ['label' => 'Tags', 'items' => ['Design'], 'disabled' => true]],
                 ['label' => 'Long tags', 'props' => ['label' => 'Specialties', 'items' => ['Accessible native application development', 'Design systems'], 'modelValue' => ['Accessible native application development', 'Design systems']]],
