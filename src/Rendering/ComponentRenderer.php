@@ -3769,7 +3769,7 @@ final class ComponentRenderer
         $multiple = self::flag($props, 'multiple');
         $disabled = self::flag($props, 'disabled');
         $compact = self::text($props, 'density', 'default') === 'compact';
-        $rowHeight = $compact ? 44.0 : 52.0;
+        $rowHeight = $compact ? 48.0 : 52.0;
         $opened = array_values(array_filter(
             is_array($props['opened'] ?? null) ? $props['opened'] : [],
             static fn (mixed $value): bool => is_scalar($value),
@@ -3777,6 +3777,8 @@ final class ComponentRenderer
         $selected = self::selectedValues($props);
         $change = $events[EventKind::Change->value] ?? null;
         $toggle = $events[EventKind::Toggle->value] ?? null;
+        $openedKeys = array_fill_keys(array_map('strval', $opened), true);
+        $selectedKeys = array_fill_keys(array_map('strval', $selected), true);
 
         $render = function (array $source, int $depth = 0) use (
             &$render,
@@ -3788,6 +3790,8 @@ final class ComponentRenderer
             $selected,
             $change,
             $toggle,
+            $openedKeys,
+            $selectedKeys,
         ): array {
             $rows = [];
             foreach (array_values($source) as $index => $definition) {
@@ -3798,10 +3802,8 @@ final class ComponentRenderer
                 if (!is_scalar($value) || !is_scalar($label)) continue;
                 $children = is_array($item['children'] ?? null) ? $item['children'] : [];
                 $hasChildren = $children !== [];
-                $expanded = in_array($value, $opened, true)
-                    || in_array((string) $value, array_map('strval', $opened), true);
-                $isSelected = in_array($value, $selected, true)
-                    || in_array((string) $value, array_map('strval', $selected), true);
+                $expanded = isset($openedKeys[(string) $value]);
+                $isSelected = isset($selectedKeys[(string) $value]);
                 $foreground = $isSelected
                     ? $theme->color(ColorToken::AccentForeground)
                     : $theme->color(ColorToken::OnSurface);

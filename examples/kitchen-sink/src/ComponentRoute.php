@@ -5596,6 +5596,25 @@ final class ComponentRoute extends Component
             $add($variations, 'Loading', ['loading' => true]);
         }
         if ($this->tag === 'p-tree-select') {
+            $add($variations, 'Disabled item', [
+                'items' => [
+                    ['value' => 1, 'title' => 'Project access', 'children' => [
+                        ['value' => 2, 'title' => 'Read project documents'],
+                        ['value' => 3, 'title' => 'Manage billing', 'disabled' => true],
+                        ['value' => 4, 'title' => 'Review changes'],
+                    ]],
+                ],
+                'opened' => [1], 'multiple' => true, 'modelValue' => [2],
+            ]);
+            $add($variations, 'Long labels', [
+                'items' => [
+                    ['value' => 1, 'title' => 'Documents shared with your organization', 'children' => [
+                        ['value' => 2, 'title' => 'Annual reports and supporting documentation for all regional teams'],
+                        ['value' => 3, 'title' => 'Product research and accessibility review notes'],
+                    ]],
+                ],
+                'opened' => [1], 'modelValue' => 2,
+            ]);
             $add($variations, 'Collapsed', [
                 'opened' => [],
                 'modelValue' => null,

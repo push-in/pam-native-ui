@@ -1555,3 +1555,11 @@ Regression checks cover open groups, selected leaves, item/group blocking and
 indented label constraints. Matrix passes. This is UI composition responsibility;
 no new Native primitive is needed. Physical tree interaction/layout verification
 and full accessibility-service testing remain pending.
+
+Tree follow-up adds explicit Disabled item and Long labels showcase specimens,
+retaining existing Collapsed/Multiple examples. Compact rows now keep a 48dp
+minimum target (regression checked). Expansion/selection membership maps are
+built once per render rather than converting and scanning the full arrays for
+every row; normalized identifier matching is preserved. Matrix passes. No
+device-performance improvement is claimed without measurement, and these tree
+changes are not yet installed on Samsung.

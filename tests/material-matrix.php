@@ -4350,6 +4350,12 @@ if ($dataGrid->kind() !== NodeKind::CustomView || count($dataGrid->children()) <
     throw new RuntimeException('p-data-grid must reuse the virtual native table contract.');
 }
 $treeSelectChanged = null;
+$compactTree = $tags['p-tree-select']::make([
+    'density' => 'compact', 'items' => [['value' => 1, 'label' => 'Compact leaf']],
+])->toElement();
+if (($compactTree->children()[0]->properties()[PropKey::MinHeight->value] ?? null) !== 48.0) {
+    throw new RuntimeException('Compact tree rows must retain the 48dp Android touch target.');
+}
 foreach ([false, true] as $treeDisabled) {
     $treeRows = $tags['p-tree-select']::make([
         'disabled' => $treeDisabled, 'opened' => [1], 'modelValue' => [2], 'multiple' => true,
