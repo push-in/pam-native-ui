@@ -33,6 +33,31 @@ not establish compatibility with two distinct Native versions.
 
 ## Publication is not yet allowed
 
+### UI run terminal result: PHP analysis memory failure
+
+Run `34838465633` completed with six successful Android/UIKit jobs and a
+successful lowest-dependency PHP job. PHP latest (`103958687654`) and the normal
+PHP job (`103958687984`) failed when PHPStan 2.2.14 exhausted its 2 GiB limit
+while analyzing the monolithic `tests/material-matrix.php`. This is not a native
+platform test failure and must not be reported as a green full verification.
+
+The new field-action and controlled-tree regressions have been extracted into
+separate, scope-isolated files, still required by the matrix. No assertions were
+removed, memory limits raised, baselines added or tests excluded. The runtime
+matrix passes after extraction; full analysis and corrected-revision CI results
+must be recorded separately before considering this issue closed.
+
+Local full level-9 debug analysis with PHPStan 2.2.9 then passed in 163.34 seconds,
+peak RSS 1,831,572 KiB, retaining the 2 GiB PHP memory limit. Its configuration
+includes all repository PHPStan paths and changes only cache location/worker
+count; the default local cache contains a root-owned subdirectory, so the
+writable existing audit cache was used without changing ownership or deleting
+user files. CI uses 2.2.14 and must still confirm the corrected revision.
+
+Native UIKit job `103957959244` also completed successfully: 69 simulator tests,
+zero failures. Android build/unit contracts passed; Android API 26/36 runtime
+jobs are subsequent checks, not implied by the library build result.
+
 ### Verified intermediate results
 
 UI UIKit current job `103957650930` completed successfully: 11 tests, zero

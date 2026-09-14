@@ -3427,49 +3427,8 @@ if ($selectedTreePath !== 'android') {
     );
 }
 
-foreach ([
-    [['alpha'], 'beta', ['alpha', 'beta']],
-    [['alpha', 'beta'], 'alpha', ['beta']],
-] as [$treeSelection, $treePressed, $expectedTreeSelection]) {
-    $treeSelectionResult = null;
-    $multipleTree = $treeClass::make([
-        'multiple' => true, 'modelValue' => $treeSelection,
-        'items' => [['title' => 'Alpha', 'value' => 'alpha'], ['title' => 'Beta', 'value' => 'beta']],
-    ])->onChange(static function (array $next) use (&$treeSelectionResult): void {
-        $treeSelectionResult = $next;
-    })->toElement();
-    $multipleTreePayload = $multipleTree->properties()[PropKey::HostProperties->value] ?? null;
-    if (!$multipleTreePayload instanceof BinaryValue
-        || (Wire::decodeMap($multipleTreePayload->bytes)['selectedPaths'] ?? null) !== implode("\n", $treeSelection)) {
-        throw new RuntimeException('Multiple Treeview must transmit every selected path to its native host.');
-    }
-    $multipleTree->events()[EventKind::Change->value]($treePressed);
-    $assertCustomSelection($treeSelectionResult, $expectedTreeSelection,
-        'Multiple Treeview must emit additive/removal arrays, never replace selection with a scalar.');
-}
+require __DIR__.'/material-tree-state.php';
 $imageClass = $tags['p-img'];
-foreach ([
-    [[], true, ['mobile']],
-    [['mobile', 'docs'], false, ['docs']],
-    [['mobile', 'docs'], true, ['docs', 'mobile']],
-] as [$openedTreePaths, $expandTreePath, $expectedOpenedPaths]) {
-    $openedResult = null;
-    $rawTreeEvents = [];
-    $controlledTree = $treeClass::make(['opened' => $openedTreePaths])
-        ->onToggle(static function (array $next) use (&$openedResult): void { $openedResult = $next; })
-        ->on(EventKind::Native, static function (string $raw) use (&$rawTreeEvents): void { $rawTreeEvents[] = $raw; })
-        ->toElement();
-    $treeNative = $controlledTree->events()[EventKind::Native->value];
-    $treeNative(Wire::map([
-        'action' => \Pam\MobileUi\Enum\FileTreeAction::Expanded->value,
-        'path' => 'mobile', 'expanded' => $expandTreePath,
-    ]));
-    $assertCustomSelection($openedResult, $expectedOpenedPaths, 'Treeview must forward expansion into its complete controlled opened set.');
-    $treeNative('invalid map');
-    $treeNative(Wire::map(['path' => 'mobile', 'expanded' => true]));
-    $assertCustomSelection($openedResult, $expectedOpenedPaths, 'Malformed tree events must not mutate controlled expansion.');
-    $assertCustomSelection(count($rawTreeEvents), 3, 'Treeview must retain the authored raw native event handler.');
-}
 foreach (['disabled', 'isDisabled'] as $treeDisabledAlias) {
     $lockedTree = $treeClass::make([
         'items' => [[
@@ -4781,59 +4740,7 @@ $passwordToggle->events()[EventKind::Press->value]();
 if ($passwordToggled !== true) {
     throw new RuntimeException('p-password-field reveal action must emit its next controlled state.');
 }
-foreach ([false, true] as $revealed) {
-    $localizedPassword = $tags['p-password-field']::make([
-        'modelValue' => 'secret', 'revealed' => $revealed,
-        'showLabel' => 'Mostrar senha', 'hideLabel' => 'Ocultar senha',
-    ])->toElement();
-    $stack = [$localizedPassword];
-    $found = false;
-    while ($stack !== []) {
-        $node = array_pop($stack);
-        if (($node->properties()[PropKey::AccessibilityLabel->value] ?? null)
-            === ($revealed ? 'Ocultar senha' : 'Mostrar senha')) {
-            $icon = $node->children()[0] ?? null;
-            $iconProps = $icon?->properties() ?? [];
-            $host = $iconProps[PropKey::HostProperties->value] ?? null;
-            $expected = \Pam\MobileUi\Generated\ComponentMap::IDS[$revealed ? 'EyeOffIcon' : 'EyeIcon'];
-            if (!$host instanceof BinaryValue
-                || (Wire::decodeMap($host->bytes)['icon'] ?? null) !== $expected
-                || ($iconProps[PropKey::Width->value] ?? null) !== 20.0
-                || ($iconProps[PropKey::Height->value] ?? null) !== 20.0
-                || ($iconProps[PropKey::AccessibilityImportance->value] ?? null)
-                    !== AccessibilityImportance::NoHideDescendants->value) {
-                throw new RuntimeException('Password actions must use decorative state-specific vector icons and localized labels.');
-            }
-            $found = true;
-        }
-        array_push($stack, ...$node->children());
-    }
-    if (!$found) {
-        throw new RuntimeException('Password visibility labels must be customizable in both states.');
-    }
-}
-foreach (['p-text-field', 'p-textarea', 'p-password-field', 'p-masked-field', 'p-currency-field'] as $clearTag) {
-    $stack = [$tags[$clearTag]::make([
-        'modelValue' => '123', 'clearable' => true, 'clearLabel' => 'Limpar campo',
-    ])->toElement()];
-    $found = false;
-    while ($stack !== []) {
-        $node = array_pop($stack);
-        if (($node->properties()[PropKey::AccessibilityLabel->value] ?? null) === 'Limpar campo') {
-            $icon = $node->children()[0] ?? null;
-            $host = $icon?->properties()[PropKey::HostProperties->value] ?? null;
-            if (!$host instanceof BinaryValue || (Wire::decodeMap($host->bytes)['icon'] ?? null)
-                !== \Pam\MobileUi\Generated\ComponentMap::IDS['CloseIcon']) {
-                throw new RuntimeException($clearTag.' must use the shared vector clear icon, not a font glyph.');
-            }
-            $found = true;
-        }
-        array_push($stack, ...$node->children());
-    }
-    if (!$found) {
-        throw new RuntimeException($clearTag.' must retain its localized clear action.');
-    }
-}
+require __DIR__.'/material-field-actions.php';
 $disabledPassword = $tags['p-password-field']::make([
     'label' => 'Password',
     'modelValue' => 'secret',
