@@ -3604,46 +3604,58 @@ final class ComponentRoute extends Component
                     ? array_values($previewProps['items'])
                     : [];
                 $rows = [];
+                $multiColumn = is_numeric($previewProps['numColumns'] ?? null)
+                    && (int) $previewProps['numColumns'] > 1;
                 foreach ($items as $itemIndex => $itemLabel) {
                     if (!is_scalar($itemLabel)) {
                         continue;
                     }
-                    $rows[] = Row::make(
-                        Text::make(str_pad((string) ($itemIndex + 1), 2, '0', STR_PAD_LEFT))
-                            ->style(new Style(
-                                width: 30.0,
-                                height: 30.0,
-                                borderRadius: 15.0,
-                                backgroundColor: $theme->color(ColorToken::Accent),
-                                textColor: $theme->color(ColorToken::Primary),
-                                fontSize: 11.0,
-                                lineHeight: 30.0,
-                                fontWeight: 700,
-                                textAlign: \Pam\Native\TextAlignment::Center,
-                            )),
-                        Text::make((string) $itemLabel)->style(new Style(
-                            flexGrow: 1.0,
-                            flexShrink: 1.0,
-                            fontSize: 14.0,
-                            lineHeight: 20.0,
-                            fontWeight: 600,
-                            textColor: $theme->color(ColorToken::OnSurface),
-                        )),
-                        Text::make('Ready')->style(new Style(
+                    $ordinal = Text::make(str_pad((string) ($itemIndex + 1), 2, '0', STR_PAD_LEFT))
+                        ->style(new Style(
+                            width: 30.0,
+                            height: 30.0,
+                            borderRadius: 15.0,
+                            backgroundColor: $theme->color(ColorToken::Accent),
+                            textColor: $theme->color(ColorToken::Primary),
                             fontSize: 11.0,
-                            lineHeight: 16.0,
+                            lineHeight: 30.0,
                             fontWeight: 700,
-                            textColor: $theme->color(ColorToken::Success),
-                        )),
-                    )->style(new Style(
+                            textAlign: \Pam\Native\TextAlignment::Center,
+                        ));
+                    $title = Text::make((string) $itemLabel)->style(new Style(
+                        flexGrow: $multiColumn ? 0.0 : 1.0,
+                        flexShrink: 1.0,
+                        fontSize: 14.0,
+                        lineHeight: 20.0,
+                        fontWeight: 600,
+                        textColor: $theme->color(ColorToken::OnSurface),
+                    ));
+                    $readiness = Text::make('Ready')->style(new Style(
+                        fontSize: 11.0,
+                        lineHeight: 16.0,
+                        fontWeight: 700,
+                        textColor: $theme->color(ColorToken::Success),
+                    ));
+                    $row = $multiColumn
+                        ? Column::make(
+                            Row::make($ordinal, $readiness)->style(new Style(
+                                widthPercent: 100.0,
+                                justifyContent: Justify::SpaceBetween,
+                                alignItems: Align::Center,
+                            )),
+                            $title,
+                        )
+                        : Row::make($ordinal, $title, $readiness);
+                    $rows[] = $row->style(new Style(
                         widthPercent: 100.0,
                         height: $rowHeight,
                         minHeight: $rowHeight,
                         paddingHorizontal: 14.0,
-                        gap: 10.0,
+                        paddingVertical: $multiColumn ? 12.0 : 0.0,
+                        gap: $multiColumn ? 8.0 : 10.0,
                         borderBottomWidth: 1.0,
                         borderColor: $theme->color(ColorToken::Border),
-                        alignItems: Align::Center,
+                        alignItems: $multiColumn ? Align::Stretch : Align::Center,
                     ));
                 }
                 $preview = $component::make($previewProps, ...$rows);
@@ -6420,7 +6432,7 @@ final class ComponentRoute extends Component
                 ]],
                 ['label' => 'Comfortable', 'props' => ['rowHeight' => 56, 'prefetch' => 8]],
                 ['label' => 'Compact', 'props' => ['rowHeight' => 48, 'prefetch' => 12]],
-                ['label' => 'Two Columns', 'props' => ['rowHeight' => 64, 'numColumns' => 2]],
+                ['label' => 'Two Columns', 'props' => ['rowHeight' => 104, 'numColumns' => 2]],
                 ['label' => 'No Indicator', 'props' => ['showsScrollIndicator' => false]],
             ],
             'p-section-list' => [

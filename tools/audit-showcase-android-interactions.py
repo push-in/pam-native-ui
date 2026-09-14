@@ -1095,6 +1095,25 @@ def exercise(
             if len(control) != 1 or control[0].attrib.get("checked") != expected_checked or len(summary) != 1:
                 raise AuditFailure("data grid checkbox and controlled selection summary disagree")
             audit.settled_screenshot_hash(f"{evidence_name}-checked-{expected_checked}")
+        header_controls = [n for n in after.nodes()
+            if n.attrib.get("content-desc") == "Select all rows"
+            and bounds(table).top <= bounds(n).top < control_bounds.top]
+        if len(header_controls) != 1:
+            raise AuditFailure("selectable grid lacks a unique select-all header")
+        header_bounds = bounds(header_controls[0])
+        for expected_checked, expected_summary in [("true", "6 row(s) selected"), ("false", "No rows selected")]:
+            audit.tap(header_bounds)
+            after = audit.dump(f"{evidence_name}-all-{expected_checked}")
+            assert_healthy(after, route, allow_overlay=True)
+            row_controls = [n for n in after.nodes()
+                if re.fullmatch(r"Select row [1-6]", n.attrib.get("content-desc", ""))
+                and control_bounds.top - 8 <= bounds(n).top < footer_top]
+            summaries = [n for n in after.nodes()
+                if n.attrib.get("text") == expected_summary
+                and abs(bounds(n).top - footer_top) < 8]
+            if len(row_controls) != 6 or any(n.attrib.get("checked") != expected_checked for n in row_controls) or len(summaries) != 1:
+                raise AuditFailure("select-all must update every row and its controlled summary")
+            audit.settled_screenshot_hash(f"{evidence_name}-all-{expected_checked}")
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 

@@ -1,5 +1,33 @@
 # Collections batch
 
+## Virtual-list composition follow-up
+
+After the native partial-row accessibility correction, the integrated report
+`/tmp/pam-lists-accessibility-regression-20260914.json` completed its three
+generic scenarios for Virtual List, Section List and Reorderable List on
+candidate `222f2dfd46e0b618ae1e9053db741a2cd2e8bc8dfeee276fb3ab829c28e67aca`.
+These are route/viewport smoke checks: the scroll locator can target the outer
+catalog, and the generic reorder check does not establish the resulting order.
+Do not convert them into full component approvals.
+
+Visual inspection exposed crowded two-column Virtual List cells: the ordinal,
+title and trailing readiness text shared one narrow row. The showcase now puts
+ordinal/readiness in a metadata row and gives the title the entire width below.
+The two-column row extent is 104 units; labels and fonts are unchanged, and no
+decorative card was introduced. This is UI showcase composition, not a new native
+list implementation. Single-column composition remains unchanged.
+
+Targeted PHPStan level 9 and the material matrix passed. The new candidate
+`e73add1a5806362152ad065a31ce6077d7489f0e1f27ab5cc80feb1644046af3` passed its
+Virtual List route/scroll smoke check in 12.041 seconds:
+`/tmp/pam-virtual-layout-20260914.json`. The after screenshot was inspected, then
+an additional swipe inside the two-column RecyclerView exposed its last row.
+`/tmp/pam-virtual-layout-20260914/two-column-end.png` and `.xml` retain that
+evidence: Accessibility and Performance are whole, with aligned metadata/title
+rows and consistent insets. Other previews remain clipped at their own scrolling
+viewport boundaries as expected. Large text, landscape, TalkBack and iOS remain
+open; this is not a publication-ready media capture or full list approval.
+
 The PHP renderer delegates Virtual List and Section List to PAM Native list
 primitives; UI does not implement a second recycling system.
 
