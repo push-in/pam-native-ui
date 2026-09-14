@@ -9549,8 +9549,10 @@ final class ComponentRenderer
             return self::materialSelectChildren($props, $events);
         }
         if ($part === 'FileTreeFile') {
-            return [self::themedText(
+            return [self::fileTreeItemHeader(
                 self::text($props, 'name', self::text($props, 'path')),
+                self::flag($props, 'selected') || self::flag($props, 'active'),
+                false,
             )];
         }
         if (in_array($part, ['CalendarWeekDay', 'CalendarWeekNumber'], true)) {
@@ -11269,15 +11271,24 @@ final class ComponentRenderer
             $path === '' ? 'Folder' : basename($path),
         );
         $selected = self::flag($props, 'selected') || self::flag($props, 'active');
+        return [
+            self::fileTreeItemHeader($name, $selected, true),
+            Column::make(...$children)
+                ->style(new Style(widthPercent: 100.0, paddingLeft: 24.0))
+                ->property(PropKey::Value, 'pam:file-tree-content'),
+        ];
+    }
+
+    private static function fileTreeItemHeader(string $name, bool $selected, bool $folder): Element
+    {
         $foreground = ThemeManager::current()->color(
             $selected
                 ? ColorToken::AccentForeground
                 : ColorToken::OnSurface,
         );
 
-        return [
-            Row::make(
-                self::themedText('›')
+        return Row::make(
+                ($folder ? self::themedText('›') : View::make())
                     ->style(new Style(
                         width: 24.0,
                         height: 24.0,
@@ -11291,6 +11302,8 @@ final class ComponentRenderer
                     ->property(PropKey::Value, 'pam:file-tree-chevron'),
                 self::themedText($name)
                     ->style(new Style(
+                        width: 0.0,
+                        minWidth: 0.0,
                         flexGrow: 1.0,
                         fontSize: 15.0,
                         lineHeight: 20.0,
@@ -11298,21 +11311,22 @@ final class ComponentRenderer
                         textColor: $foreground,
                     ))
                     ->property(PropKey::Value, 'pam:file-tree-name'),
+                View::make(self::fieldActionIcon(
+                    'check', ThemeManager::current()->color(ColorToken::AccentForeground),
+                ))->style(new Style(
+                    width: 20.0, height: 20.0, flexShrink: 0.0,
+                    opacity: $selected ? 1.0 : 0.0,
+                ))->property(PropKey::Value, 'pam:file-tree-selection-mark')
+                    ->accessibilityImportance(AccessibilityImportance::NoHideDescendants),
             )
                 ->style(new Style(
                     widthPercent: 100.0,
                     minHeight: 48.0,
                     gap: 8.0,
+                    paddingHorizontal: 12.0,
                     alignItems: Align::Center,
                 ))
-                ->property(PropKey::Value, 'pam:file-tree-header'),
-            Column::make(...$children)
-                ->style(new Style(
-                    widthPercent: 100.0,
-                    paddingLeft: 24.0,
-                ))
-                ->property(PropKey::Value, 'pam:file-tree-content'),
-        ];
+                ->property(PropKey::Value, 'pam:file-tree-header');
     }
 
     private static function fieldActionIcon(string $name, int $color): Element

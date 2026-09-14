@@ -12,6 +12,30 @@ require_once __DIR__.'/bootstrap.php';
 
 (static function (): void {
     $treeClass = MaterialComponentMap::TAGS['p-treeview'];
+    $visualTree = $treeClass::make([
+        'multiple' => true, 'modelValue' => ['beta'], 'opened' => ['group'],
+        'items' => [['title' => 'Group', 'value' => 'group', 'children' => [
+            ['title' => 'Alpha', 'value' => 'alpha'], ['title' => 'Beta', 'value' => 'beta'],
+        ]]],
+    ])->toElement();
+    $stack = [$visualTree];
+    $marks = [];
+    while ($stack !== []) {
+        $node = array_pop($stack);
+        $properties = $node->properties();
+        if (($properties[PropKey::Value->value] ?? null) === 'pam:file-tree-selection-mark') {
+            if (($properties[PropKey::Width->value] ?? null) !== 20.0
+                || ($properties[PropKey::Height->value] ?? null) !== 20.0) {
+                throw new RuntimeException('Tree selection markers must reserve stable geometry.');
+            }
+            $marks[] = $properties[PropKey::Opacity->value] ?? null;
+        }
+        array_push($stack, ...$node->children());
+    }
+    sort($marks);
+    if ($marks !== [0.0, 0.0, 1.0]) {
+        throw new RuntimeException('Folder and leaf rows must reserve non-color markers with the controlled initial state.');
+    }
     $assertCustomSelection = static function (mixed $actual, mixed $expected, string $message): void {
         if ($actual !== $expected) {
             throw new RuntimeException($message);

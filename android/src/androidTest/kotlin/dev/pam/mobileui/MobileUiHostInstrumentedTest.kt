@@ -102,6 +102,10 @@ class MobileUiHostInstrumentedTest {
             val beta = MobileUiHost(context) { _, _ -> }.apply {
                 update(mapOf("behavior" to WireValue.Integer(34), "path" to WireValue.Text("beta")))
             }
+            val alphaMark = View(context).apply { tag = "pam:file-tree-selection-mark" }
+            val betaMark = View(context).apply { tag = "pam:file-tree-selection-mark" }
+            alpha.addView(alphaMark)
+            beta.addView(betaMark)
             tree.addView(alpha)
             tree.addView(beta)
             try {
@@ -109,12 +113,17 @@ class MobileUiHostInstrumentedTest {
                     "selectedPaths" to WireValue.Text("alpha")))
                 assertTrue(alpha.isSelected)
                 assertFalse(beta.isSelected)
+                assertEquals(1f, alphaMark.alpha, 0f)
+                assertEquals(0f, betaMark.alpha, 0f)
                 assertTrue(beta.performClick())
                 assertTrue(alpha.isSelected)
                 assertTrue(beta.isSelected)
+                assertEquals(1f, betaMark.alpha, 0f)
                 assertTrue(alpha.performClick())
                 assertFalse(alpha.isSelected)
                 assertTrue(beta.isSelected)
+                assertEquals(0f, alphaMark.alpha, 0f)
+                assertEquals(1f, betaMark.alpha, 0f)
                 assertEquals(listOf("beta", "alpha"), events)
                 tree.update(mapOf("behavior" to WireValue.Integer(32), "multiple" to WireValue.Flag(true),
                     "selectedPaths" to WireValue.Text("")))

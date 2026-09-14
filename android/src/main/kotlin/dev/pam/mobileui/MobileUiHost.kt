@@ -7233,6 +7233,7 @@ internal class MobileUiHost(
             return
         }
         val target = findTaggedDescendant(this, FILE_TREE_HEADER_TAG) ?: this
+        findTaggedDescendant(target, "pam:file-tree-selection-mark")?.alpha = if (selected) 1f else 0f
         target.setBackgroundColor(
             if (selected) fileTreeSelectedContainerColor else Color.TRANSPARENT,
         )

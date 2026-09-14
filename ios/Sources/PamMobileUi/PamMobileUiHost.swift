@@ -1296,9 +1296,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                         item.isSelectedState = selected
                         item.accessibilityTraits = [.button]
                         if selected { item.accessibilityTraits.insert(.selected) }
-                        let header = item.behavior == .fileTreeFolder
-                            ? item.descendant(prefix: "pam:file-tree-header") : item
-                        header?.backgroundColor = selected
+                        let header = item.descendant(prefix: "pam:file-tree-header") ?? item
+                        item.descendant(prefix: "pam:file-tree-selection-mark")?.alpha = selected ? 1 : 0
+                        header.backgroundColor = selected
                             ? item.color(item.properties["selectedContainerColor"]?.pamInteger, fallback: .clear)
                             : .clear
                         let foreground = item.color(

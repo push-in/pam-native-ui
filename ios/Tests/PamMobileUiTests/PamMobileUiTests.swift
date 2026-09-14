@@ -13,6 +13,12 @@ final class PamMobileUiTests: XCTestCase {
         let beta = PamMobileUiHost { _, _ in }
         alpha.update(["behavior": .integer(34), "path": .text("alpha")])
         beta.update(["behavior": .integer(34), "path": .text("beta")])
+        let alphaMark = UIView()
+        let betaMark = UIView()
+        alphaMark.accessibilityIdentifier = "pam:file-tree-selection-mark"
+        betaMark.accessibilityIdentifier = "pam:file-tree-selection-mark"
+        alpha.addSubview(alphaMark)
+        beta.addSubview(betaMark)
         tree.addSubview(alpha)
         tree.addSubview(beta)
         defer {
@@ -24,9 +30,13 @@ final class PamMobileUiTests: XCTestCase {
         XCTAssertTrue(beta.accessibilityActivate())
         XCTAssertTrue(alpha.accessibilityTraits.contains(.selected))
         XCTAssertTrue(beta.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(alphaMark.alpha, 1)
+        XCTAssertEqual(betaMark.alpha, 1)
         XCTAssertTrue(alpha.accessibilityActivate())
         XCTAssertFalse(alpha.accessibilityTraits.contains(.selected))
         XCTAssertTrue(beta.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(alphaMark.alpha, 0)
+        XCTAssertEqual(betaMark.alpha, 1)
         XCTAssertEqual(changes, ["beta", "alpha"])
         tree.update(["behavior": .integer(32), "multiple": .flag(true), "selectedPaths": .text("")])
         tree.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
@@ -34,6 +44,8 @@ final class PamMobileUiTests: XCTestCase {
         tree.layoutIfNeeded()
         XCTAssertFalse(alpha.accessibilityTraits.contains(.selected))
         XCTAssertFalse(beta.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(alphaMark.alpha, 0)
+        XCTAssertEqual(betaMark.alpha, 0)
     }
 
     func testFileTreeActivationExpansionAndDisabledAncestry() {

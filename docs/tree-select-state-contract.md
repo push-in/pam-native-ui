@@ -1,5 +1,32 @@
 # Tree Select state contract
 
+## Non-color Treeview selection marker
+
+Folder and leaf headers now share the same composition: a disclosure lane,
+flexible name, and reserved 20-unit vector check lane, with 12-unit horizontal
+insets. The check is decorative; the item remains the accessibility target.
+Opacity changes preserve geometry rather than inserting/removing a child.
+Android and UIKit hosts update the check alongside their selected state, so
+uncontrolled native activation does not require a PHP rerender to show selection.
+This is UI component presentation over existing native view/icon primitives.
+
+The PHP matrix validates reserved markers and initial selection for folder/leaf
+rows. Targeted level-9 analysis passes. Android instrumentation
+`fileTreeMultipleSelectionRetainsOtherPathsWhenToggled` passes with explicit
+marker opacity assertions before and after selection changes (one test, zero
+failures/errors/skips; 7-second build/test command). Matching UIKit assertions
+are authored but not yet executed for this marker change.
+
+One 16-second showcase build produced APK SHA-256
+`d2a7615f9a8150309f3db107a026fa05298f26e80194421a53d8eb1aa426b0ab`.
+`/tmp/pam-treeview-selection-marker-20260914/report.json` passed add, remove,
+collapse/expand and controlled rerender retention on emulator-5554/API 36.
+The final screenshot was inspected: Beta and Shared files show vector checks,
+Alpha does not, and name/check lanes remain aligned and inset. The automatic
+build cleanup removed 96.8 MiB. This closes the observed color-only selection
+case on that Android specimen, not the full tree, all themes, large text or iOS
+visual gate. No publication was performed.
+
 ## Treeview disabled-branch parity
 
 Controlled expansion follow-up: `p-treeview` now translates the native expanded
