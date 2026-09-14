@@ -44,6 +44,26 @@ require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 $samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');
 $catalogMethod = new ReflectionMethod(\App\ComponentRoute::class, 'catalogVariations');
 $auditMethod = new ReflectionMethod(\App\ComponentRoute::class, 'auditVariations');
+foreach (MaterialComponentMap::TAGS as $catalogTag => $catalogClass) {
+    $catalogRoute = new \App\ComponentRoute($catalogTag, $catalogTag, $catalogClass);
+    $specimens = $catalogMethod->invoke($catalogRoute);
+    if (!is_array($specimens) || count($specimens) < 4) {
+        throw new RuntimeException($catalogTag.' must expose at least four catalog specimens.');
+    }
+    $configurations = [];
+    foreach ($specimens as $specimen) {
+        if (!is_array($specimen) || !is_string($specimen['label'] ?? null)
+            || trim($specimen['label']) === '' || !is_array($specimen['props'] ?? null)) {
+            throw new RuntimeException($catalogTag.' catalog specimens need a label and props.');
+        }
+        $configuration = $specimen['props'];
+        ksort($configuration);
+        $configurations[] = json_encode($configuration, JSON_THROW_ON_ERROR);
+    }
+    if (count(array_unique($configurations)) < 4) {
+        throw new RuntimeException($catalogTag.' must not count renamed identical props as distinct specimens.');
+    }
+}
 $assertAuditScenario = static function (?string $scenario): void {
     if ($scenario !== 'default') {
         throw new RuntimeException('Catalog lookup must restore the active audit scenario.');
