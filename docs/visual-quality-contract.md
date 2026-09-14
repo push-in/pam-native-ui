@@ -90,3 +90,8 @@ This mode requires every public component to have complete evidence and every
 approval report to match that exact APK digest. It rejects partial inventories
 and evidence from other builds. This is an additional Android evidence gate,
 not a replacement for the iOS, performance, visual review or publishing gates.
+
+The GitHub release publish job also runs `--require-complete` before publishing
+any assets. This rejects a partial catalog even if build/compatibility CI passed.
+Since that workflow distributes AAR/PHP/iOS packages rather than a showcase APK,
+this completeness check does not replace the exact-APK validation command above.

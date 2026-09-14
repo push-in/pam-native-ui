@@ -211,7 +211,7 @@ def validate_component(root: Path, component: str, evidence: object, release_bui
     validate_media(root, component, evidence, report)
 
 
-def validate(root: Path, manifest_path: Path, *, release_build_sha256: str | None = None) -> int:
+def validate(root: Path, manifest_path: Path, *, release_build_sha256: str | None = None, require_complete: bool = False) -> int:
     if release_build_sha256 is not None:
         expect_hash(release_build_sha256, "release APK hash")
     manifest = read_json(manifest_path)
@@ -242,7 +242,7 @@ def validate(root: Path, manifest_path: Path, *, release_build_sha256: str | Non
         raise ApprovalFailure("componentCount does not match the public Material inventory")
     if not set(approved) <= inventory:
         raise ApprovalFailure("approvedComponents contains a non-public component")
-    if release_build_sha256 is not None and set(approved) != inventory:
+    if (require_complete or release_build_sha256 is not None) and set(approved) != inventory:
         raise ApprovalFailure(f"release requires all component approvals: {len(approved)}/{component_count}")
     candidates = manifest.get("emulatorCandidateComponents")
     if not isinstance(candidates, list) or not all(
@@ -286,6 +286,7 @@ def parse_args() -> argparse.Namespace:
         default=Path("docs/android-component-audit.json"),
     )
     parser.add_argument("--release-build-sha256", help="Require the full catalog approved against this exact APK hash.")
+    parser.add_argument("--require-complete", action="store_true", help="Reject incomplete catalogs; does not certify a candidate APK hash.")
     return parser.parse_args()
 
 
@@ -295,7 +296,7 @@ def main() -> int:
     root = Path(__file__).resolve().parent.parent
     try:
         manifest.relative_to(root)
-        validate(root, manifest, release_build_sha256=args.release_build_sha256)
+        validate(root, manifest, release_build_sha256=args.release_build_sha256, require_complete=args.require_complete)
     except (ApprovalFailure, ValueError) as exception:
         print(f"FAIL Android component approvals: {exception}", file=sys.stderr)
         return 1

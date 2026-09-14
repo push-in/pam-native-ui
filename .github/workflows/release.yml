@@ -466,6 +466,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - name: Require complete physical component approvals before publishing
+        run: python3 tools/validate-android-component-approvals.py --require-complete
       - uses: actions/download-artifact@v8
         with:
           name: pam-mobile-ui-release

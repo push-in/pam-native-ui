@@ -24,6 +24,10 @@ SPEC.loader.exec_module(VALIDATOR)
 
 
 class AndroidComponentApprovalValidatorTest(unittest.TestCase):
+    def test_complete_inventory_gate_rejects_partial_approvals(self) -> None:
+        with self.assertRaisesRegex(VALIDATOR.ApprovalFailure, "5/114"):
+            VALIDATOR.validate(ROOT, ROOT / "docs/android-component-audit.json", require_complete=True)
+
     def test_partial_inventory_cannot_approve_a_release(self) -> None:
         with self.assertRaisesRegex(VALIDATOR.ApprovalFailure, "5/114"):
             VALIDATOR.validate(ROOT, ROOT / "docs/android-component-audit.json", release_build_sha256="a" * 64)
