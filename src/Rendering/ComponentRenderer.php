@@ -4014,7 +4014,7 @@ final class ComponentRenderer
             if (!is_scalar($value) || !is_scalar($label)) continue;
             $dragData = (string) $value;
             $itemDisabled = $disabled || (is_array($definition)
-                && self::flag(['disabled' => $definition['disabled'] ?? false], 'disabled'));
+                && self::flag(['disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false], 'disabled'));
             $content = $children[$index] ?? Row::make(
                 Text::make('⠿')->style(new Style(
                     width: 32.0,
@@ -4061,7 +4061,7 @@ final class ComponentRenderer
                             ? ($candidate['value'] ?? $candidate['id'] ?? $candidateIndex + 1)
                             : $candidate;
                         if (is_scalar($candidateValue) && (string) $candidateValue === $dragged) {
-                            if (is_array($candidate) && self::flag(['disabled' => $candidate['disabled'] ?? false], 'disabled')) {
+                            if (is_array($candidate) && self::flag(['disabled' => $candidate['disabled'] ?? $candidate['isDisabled'] ?? false], 'disabled')) {
                                 return;
                             }
                             $from = $candidateIndex;
@@ -4070,6 +4070,15 @@ final class ComponentRenderer
                     }
                     if ($from === null || $from === $index) {
                         return;
+                    }
+                    // Moving across a protected row would move that row too.
+                    // Match the adjacent move buttons' fixed-position policy.
+                    foreach (array_slice($source, min($from, $index), abs($from - $index) + 1) as $crossed) {
+                        if (is_array($crossed) && self::flag([
+                            'disabled' => $crossed['disabled'] ?? $crossed['isDisabled'] ?? false,
+                        ], 'disabled')) {
+                            return;
+                        }
                     }
                     $next = $source;
                     $moving = array_splice($next, $from, 1);
@@ -4082,7 +4091,7 @@ final class ComponentRenderer
                 $destination = $index + $offset;
                 $neighbor = $source[$destination] ?? null;
                 $canMove = !$itemDisabled && array_key_exists($destination, $source)
-                    && !(is_array($neighbor) && self::flag(['disabled' => $neighbor['disabled'] ?? false], 'disabled'));
+                    && !(is_array($neighbor) && self::flag(['disabled' => $neighbor['disabled'] ?? $neighbor['isDisabled'] ?? false], 'disabled'));
                 $control = Pressable::make(Text::make($direction)->style(new Style(
                     fontSize: 14.0,
                     lineHeight: 20.0,

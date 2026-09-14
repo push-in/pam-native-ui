@@ -4636,7 +4636,26 @@ $assertDropCalls = static function (int $actual, int $expected): void {
 };
 $assertDropCalls($dropCalls, 0);
 $drop(Wire::map(['data' => '3']));
-$assertDropCalls($dropCalls, 1);
+$assertDropCalls($dropCalls, 0);
+foreach (['disabled', 'isDisabled'] as $itemLock) {
+    $lockedMoves = 0;
+    $list = $tags['p-reorderable-list']::make(['items' => [
+        ['value' => 1, 'label' => 'First'],
+        ['value' => 2, 'label' => 'Fixed', $itemLock => true],
+        ['value' => 3, 'label' => 'Third'],
+        ['value' => 4, 'label' => 'Fourth'],
+    ]])->onReorder(static function (array $items) use (&$lockedMoves): void { $lockedMoves++; })->toElement();
+    foreach ([[0, '4'], [3, '1']] as [$target, $sourceValue]) {
+        $list->children()[$target]->children()[0]->events()[EventKind::Drop->value](Wire::map(['data' => $sourceValue]));
+    }
+    $assertDropCalls($lockedMoves, 0);
+    if (($list->children()[1]->children()[0]->properties()[PropKey::Draggable->value] ?? true) !== false
+        || ($list->children()[2]->children()[1]->properties()[PropKey::Enabled->value] ?? true) !== false) {
+        throw new RuntimeException('Protected reorder aliases must block dragging and adjacent moves.');
+    }
+    $list->children()[2]->children()[0]->events()[EventKind::Drop->value](Wire::map(['data' => '4']));
+    $assertDropCalls($lockedMoves, 1);
+}
 $assertOrder = static function (?array $actual, array $expected): void {
     if ($actual !== $expected) {
         throw new RuntimeException('Move controls must emit the controlled adjacent order.');

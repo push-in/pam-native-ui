@@ -33,3 +33,16 @@ current candidate and evidence; never delete unrelated user files or devices.
   count scripts, screenshots or individual assertions as completed components.
 - End each batch with a reviewable diff and evidence summary. Do not repeatedly
   rebuild for documentation-only changes or already validated unchanged code.
+
+## Current release checkpoint — 2026-09-14
+
+`python3 tools/validate-android-component-approvals.py --require-complete` fails
+with 5/114 formal approvals. Recent scoped Samsung checks must not be counted as
+additional full approvals or as proof that historical approvals cover a new APK.
+
+Latest completed behavioral batch covers protected reorder positions, both swipe
+directions with visible button alternatives and disabled rejection, and two
+controlled refresh cycles. Reports and exact APK identities are in
+`reorder-protected-positions.md`, `swipe-actions-validation-2026-09-14.md` and
+`pull-to-refresh-demo.md`. Broader visual, accessibility, performance and iOS
+requirements remain open. No publication is authorized by these partial results.

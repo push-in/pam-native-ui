@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--reverse-only', action='store_true')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('swipe_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 module = importlib.util.module_from_spec(spec)
@@ -49,6 +50,23 @@ try:
                 '-d', 'pam-showcase://audit/p-swipe-actions')
     width, height = audit.screenshot('start')
     root, bounds = locate('Quarterly design review')
+    if args.reverse_only:
+        before = feedback(root)
+        # The public action threshold is 48dp. Ten physical pixels is below it
+        # on every supported Android density and must not complete an action.
+        audit.assert_foreground('before short drag')
+        audit.shell('input', 'swipe', str(width//2), str(bounds.center[1]),
+            str(width//2-10), str(bounds.center[1]), '400')
+        root = audit.dump('short-drag')
+        assert feedback(root) == before, 'Short drag completed an action'
+        audit.assert_foreground('before reverse swipe')
+        audit.shell('input', 'swipe', str(int(width*.75)), str(bounds.center[1]),
+            str(int(width*.25)), str(bounds.center[1]), '400')
+        root = audit.dump('reverse-result')
+        assert 'Delete action completed' in feedback(root), 'Reverse swipe did not perform Delete'
+        audit.screenshot('reverse-result')
+        report['checks'].append({'reverseDelete': True, 'shortDragRejected': True})
+        sys.exit(0)
     swipe(bounds)
     root = audit.dump('enabled-result')
     assert 'Archive action completed' in feedback(root), 'Enabled swipe did not perform action'

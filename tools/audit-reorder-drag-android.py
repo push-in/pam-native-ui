@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--protected-only', action='store_true')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('reorder_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 module = importlib.util.module_from_spec(spec)
@@ -28,6 +29,35 @@ try:
                 '-d', 'pam-showcase://audit/p-reorderable-list')
     root = audit.dump('before')
     audit.screenshot('before')
+    if args.protected_only:
+        width, height = audit.screenshot('protected-start')
+        for attempt in range(16):
+            root = audit.dump('protected-reveal-'+str(attempt))
+            nodes = {n.attrib.get('content-desc'): n for n in root.iter('node')}
+            first = nodes.get('Reorder Planning')
+            last = nodes.get('Reorder Verification')
+            if first is not None and last is not None and module.node_bounds(first).top > height*.06 and module.node_bounds(last).bottom < height*.9:
+                break
+            audit.assert_foreground('reveal protected list')
+            audit.shell('input', 'swipe', str(int(width*.98)), str(int(height*.8)), str(int(width*.98)), str(int(height*.6)), '250')
+        else:
+            raise AssertionError('Protected list not visible')
+        original = 'Order: Planning · Approved milestone · Implementation · Verification'
+        for source_label, target_label, expected in [
+            ('Verification', 'Planning', original),
+            ('Planning', 'Verification', original),
+            ('Verification', 'Implementation', 'Order: Planning · Approved milestone · Verification · Implementation'),
+        ]:
+            nodes = {n.attrib.get('content-desc'): n for n in root.iter('node')}
+            source = module.node_bounds(nodes['Reorder '+source_label])
+            target = module.node_bounds(nodes['Reorder '+target_label])
+            audit.assert_foreground('protected drag')
+            audit.shell('input', 'touchscreen', 'draganddrop', str(source.center[0]), str(source.center[1]), str(target.center[0]), str(target.center[1]), '1000')
+            root = audit.dump('drag-'+source_label+'-to-'+target_label)
+            assert any(n.attrib.get('text') == expected for n in root.iter('node')), 'Incorrect protected order'
+        audit.screenshot('protected-result')
+        report['checks'].append({'crossingRejectedBothDirections': True, 'freeSegmentReorders': True})
+        sys.exit(0)
     nodes = {}
     for node in root.iter('node'):
         nodes.setdefault(node.attrib.get('content-desc'), node)

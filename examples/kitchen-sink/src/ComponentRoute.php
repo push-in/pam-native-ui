@@ -4227,6 +4227,27 @@ final class ComponentRoute extends Component
 
                         return true;
                     });
+                $isRefreshing = $previewProps['refreshing'] === true;
+                $finish = MaterialComponentMap::TAGS['p-btn'];
+                $preview = Column::make(
+                    $preview,
+                    Text::make($isRefreshing
+                        ? 'Refreshing — complete this controlled demo below.'
+                        : 'Ready to refresh. Pull down to start another cycle.')->style(new Style(
+                            fontSize: 14.0,
+                            lineHeight: 20.0,
+                            textColor: $theme->color(ColorToken::MutedForeground),
+                        )),
+                    $finish::make([
+                        'variant' => MaterialVariant::Text->value,
+                        'disabled' => !$isRefreshing,
+                        'accessibilityLabel' => 'Complete refresh',
+                    ], Text::make('Complete refresh'))->onPress(function () use ($index): bool {
+                        $this->setSampleValue($index, false);
+
+                        return true;
+                    }),
+                )->style(new Style(widthPercent: 100.0, gap: 8.0));
             } elseif ($this->tag === 'p-popover') {
                 // Leave open state uncontrolled so the native anchored-overlay
                 // host owns tap, outside-dismiss and placement behaviour.
@@ -5563,9 +5584,10 @@ final class ComponentRoute extends Component
         if ($this->tag === 'p-reorderable-list') {
             $add($variations, 'Priorities', ['items' => ['Critical', 'High', 'Normal']]);
             $add($variations, 'Locked item', ['items' => [
-                ['value' => 1, 'label' => 'Research'],
+                ['value' => 1, 'label' => 'Planning'],
                 ['value' => 2, 'label' => 'Approved milestone', 'disabled' => true],
                 ['value' => 3, 'label' => 'Implementation'],
+                ['value' => 4, 'label' => 'Verification'],
             ]]);
             $add($variations, 'Long labels', ['items' => [
                 'Review accessibility findings and supporting documentation',
