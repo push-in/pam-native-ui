@@ -20,3 +20,25 @@ color correction is not yet installed or visually verified; the earlier screensh
 must not be used as approval of its contrast. No publication or full navigation
 approval is claimed. A tap on Explore closed the drawer; selected-state retention
 still needs checking after reopening rather than inspecting the closed hierarchy.
+
+## Final color candidate
+
+API 36 APK `609907c97fa30768287ee1be65183f10f52d1152dd14ccf157770ff83d55e21c`
+includes the color correction. The build completed in 11 seconds and cleaned
+96.7 MiB of regenerable artifacts.
+
+- `/tmp/pam-navigation-colors-20260914/report.json`: Bar and Rail selected the
+  requested destination and rejected disabled destinations at font scale 1.0.
+  Selected screenshots were viewed: active icons use primary green and inactive
+  icons use muted foreground, matching their semantic state.
+- `/tmp/pam-drawer-colors-20260914/report.json`: long Drawer rejected disabled
+  selection, scrolled to its final destination and closed on selection.
+- `/tmp/pam-drawer-final.png` was viewed: the selected custom star is now white,
+  matching the selected label on its purple surface; inactive icons are muted.
+- A subsequent tap on Explore closed the front drawer. Reopening through its
+  labeled trigger exposed Home selected=false and Explore selected=true, asserted
+  from `/tmp/pam-drawer-reopened.xml`.
+
+This closes the earlier color and front-drawer retention checks for this emulator
+candidate. Large fonts, dark theme, full navigation/back-stack integration,
+TalkBack, Samsung, iOS and performance are not established by this scoped batch.
