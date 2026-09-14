@@ -1684,3 +1684,14 @@ container, with vertical padding and minimum touch height. Showcase includes
 long labels and disabled/loading result actions. This batch is code-level work;
 the installed Samsung APK from the preceding section does not contain it yet.
 No new device validation or gallery publication is claimed here.
+
+### Date/time range callback and labeling guards
+
+Both interval compositions now assign separate accessible labels from fromLabel
+and toLabel and omit Change callbacks when disabled. Date-range callbacks reject
+malformed or impossible calendar dates before changing the controlled interval,
+in addition to disabledDates. Matrix covers invalid dates (including non-leap
+February 29), both disabled aliases and distinct field labels. These changes use
+existing Native DateTimePicker capabilities and belong to UI composition.
+Large-font layout and native dialog interaction are still pending physical
+verification; no claim about fixed-height field scaling is made by this change.

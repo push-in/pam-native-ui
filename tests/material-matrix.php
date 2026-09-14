@@ -4275,12 +4275,29 @@ while ($blockedDateStack !== []) {
     $handler = $candidate->events()[EventKind::Change->value] ?? null;
     if ($candidate->kind() === NodeKind::CustomView && $handler instanceof Closure) {
         $handler('2026-09-10');
+        foreach (['2026-02-30', '2025-02-29', '2026-13-01', 'not-a-date', '2026-9-1'] as $invalidDate) {
+            $handler($invalidDate);
+        }
         break;
     }
     array_push($blockedDateStack, ...$candidate->children());
 }
 if ($blockedDateChanged !== null) {
     throw new RuntimeException('p-date-range-picker must reject disabled dates.');
+}
+foreach (['p-date-range-picker', 'p-time-range-picker'] as $rangeTag) {
+    foreach (['disabled', 'isDisabled'] as $disabledProp) {
+        $range = $tags[$rangeTag]::make([
+            $disabledProp => true, 'fromLabel' => 'Departure', 'toLabel' => 'Arrival',
+        ])->onChange(static function (array $value): void {})->toElement();
+        foreach ($range->children() as $index => $field) {
+            $picker = $field->children()[1];
+            if (isset($picker->events()[EventKind::Change->value])
+                || ($picker->properties()[PropKey::AccessibilityLabel->value] ?? null) !== ['Departure', 'Arrival'][$index]) {
+                throw new RuntimeException('Range pickers must retain distinct accessible labels and suppress disabled changes.');
+            }
+        }
+    }
 }
 $timeRangeChanged = null;
 $timeRange = $tags['p-time-range-picker']::make([

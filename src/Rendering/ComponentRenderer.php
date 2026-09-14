@@ -4593,10 +4593,11 @@ final class ComponentRenderer
                 'modelValue' => $current,
                 'value' => $current,
                 'mode' => ComponentMode::Time->value,
+                'accessibilityLabel' => $label,
             ];
             unset($fieldProps['__materialComponent']);
             $fieldEvents = [];
-            if ($change instanceof Closure) {
+            if (!$disabled && $change instanceof Closure) {
                 $fieldEvents[EventKind::Change->value] = static function (
                     mixed $next,
                 ) use ($change, $from, $to, $isStart): mixed {
@@ -4692,26 +4693,31 @@ final class ComponentRenderer
             : [];
         $change = $events[EventKind::Change->value] ?? null;
         $theme = ThemeManager::current();
+        $disabled = self::flag($props, 'disabled');
         $field = static function (
             string $label,
             string $current,
             bool $isStart,
-        ) use ($change, $from, $to, $props, $theme, $disabledDates): Element {
+        ) use ($change, $from, $to, $props, $theme, $disabledDates, $disabled): Element {
             $fieldProps = [
                 ...$props,
                 'mode' => ComponentMode::Date->value,
                 'modelValue' => $current,
                 'value' => $current,
                 'placeholder' => 'Select date',
+                'label' => $label,
+                'accessibilityLabel' => $label,
             ];
             unset($fieldProps['__materialComponent']);
             $fieldEvents = [];
-            if ($change instanceof Closure) {
+            if (!$disabled && $change instanceof Closure) {
                 $fieldEvents[EventKind::Change->value] = static function (
                     mixed $next,
                 ) use ($change, $from, $to, $isStart, $disabledDates): mixed {
                     $date = self::scalarString($next);
-                    if ($date === '' || in_array($date, $disabledDates, true)) {
+                    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $parts) !== 1
+                        || !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+                        || in_array($date, $disabledDates, true)) {
                         return false;
                     }
                     if ($isStart) {
