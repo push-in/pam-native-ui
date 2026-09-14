@@ -769,14 +769,16 @@ final class ComponentRenderer
             }
         }
         if (self::flag($props, '__progressButton')) {
-            foreach ($children as $index => $child) {
-                if (($child->properties()[PropKey::Value->value] ?? null) === 'pam:progress-button-track') {
-                    $children[$index] = $child->style(new Style(
+            $children = array_map(
+                static fn (Element $child): Element =>
+                    ($child->properties()[PropKey::Value->value] ?? null) === 'pam:progress-button-track'
+                    ? $child->style(new Style(
                         backgroundColor: $style->textColor
                             ?? ThemeManager::current()->color(ColorToken::PrimaryForeground),
-                    ));
-                }
-            }
+                    ))
+                    : $child,
+                $children,
+            );
         }
         $materialComponent = $props['__materialComponent'] ?? null;
         $materialLoading = self::flag(

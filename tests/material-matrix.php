@@ -4271,7 +4271,10 @@ if (
 }
 $secondPress();
 $selectionMark = ($selectedCell->children()[0] ?? null)?->children()[0] ?? null;
-$selectionMarkHost = $selectionMark?->properties()[PropKey::HostProperties->value] ?? null;
+if (!$selectionMark instanceof \Pam\Native\Element) {
+    throw new RuntimeException('Selected table cells must contain a vector selection mark.');
+}
+$selectionMarkHost = $selectionMark->properties()[PropKey::HostProperties->value] ?? null;
 if (!$selectionMarkHost instanceof BinaryValue
     || (Wire::decodeMap($selectionMarkHost->bytes)['color'] ?? null)
         !== \Pam\MobileUi\Theme\ThemeManager::current()->color(ColorToken::PrimaryForeground)
