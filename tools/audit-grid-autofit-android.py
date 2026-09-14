@@ -22,11 +22,14 @@ def main() -> None:
     parser.add_argument("--serial", required=True)
     parser.add_argument("--output", type=Path, default=Path("/tmp/pam-grid-autofit"))
     parser.add_argument("--responsive", action="store_true")
+    parser.add_argument("--font-scale", type=float, choices=(1.0, 1.3, 2.0), default=None)
     args = parser.parse_args()
     audit = M.AutocompleteAudit(args.serial, "dev.pam.mobileui.catalog",
         "dev.pam.nativeapp.PamActivity", args.output, "p-responsive-grid", "Responsive Grid")
     try:
         audit.prepare()
+        if args.font_scale is not None:
+            audit.set_setting("system", "font_scale", str(args.font_scale))
         audit.launch()
         width, height = audit.screenshot("initial")
         section = "Responsive columns and gutters" if args.responsive else "Up to four columns — adapts to width"

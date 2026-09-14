@@ -202,6 +202,13 @@ class AutocompleteAudit:
             self.start_task_lock()
         time.sleep(1.5)
         self.launch_count += 1
+        # The route title/tag grow with accessibility text size. Keep the route
+        # title anchored at the top, but allow the following heading to reflow.
+        raw_scale = self.setting("system", "font_scale")
+        try:
+            heading_limit = 460 * max(1.0, float(raw_scale))
+        except ValueError:
+            heading_limit = 460
         visible: list[str] = []
         for restore_attempt in range(4):
             root = self.dump(
@@ -213,13 +220,13 @@ class AutocompleteAudit:
             ]
             variation_headings = [
                 node for node in self.exact(root, "Variations")
-                if node_bounds(node).top < 460
+                if node_bounds(node).top < heading_limit
             ]
             if route_headings and variation_headings:
                 return
             visible = [
                 self.text(node) for node in self.nodes(root)
-                if self.text(node) and node_bounds(node).top < 460
+                if self.text(node) and node_bounds(node).top < heading_limit
             ]
             if restore_attempt < 3:
                 screen = max(

@@ -33,6 +33,20 @@ not establish compatibility with two distinct Native versions.
 
 ## Publication is not yet allowed
 
+### Verified intermediate results
+
+UI UIKit current job `103957650930` completed successfully: 11 tests, zero
+failures, including FileTree activation/disabled ancestry and multiple-selection
+retention. Both Android library build jobs, UIKit minimum and Android API 26
+behavior also completed successfully. Android API 36 and PHP graph checks were
+still running at this checkpoint; the overall UI run is not yet called green.
+
+Native contracts job `103957959288` completed successfully at `e963ef5`.
+Its logs confirm PHP SDK tests, deterministic tree fuzz (1,000 frames), and the
+core performance contract passed. This closes the earlier formatting failure
+for this revision. Native Android/UIKit jobs were still running; core timings
+are not proof of showcase gesture/frame performance.
+
 `python3 tools/validate-android-component-approvals.py --require-complete` currently
 fails with **5/114** complete recorded approvals. Historical approvals are not
 proof for this exact APK. Broad emulator smoke results from September 8 likewise
