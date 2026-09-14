@@ -6682,6 +6682,21 @@ final class ComponentRoute extends Component
     /** @return list<array{label: string, props: array<string, mixed>}> */
     private function auditVariations(string $scenario): array
     {
+        if ($scenario === 'controlled' && $this->tag === 'p-treeview') {
+            return [[
+                'label' => 'Controlled selection and expansion',
+                'props' => [
+                    'multiple' => true, 'modelValue' => ['alpha'], 'opened' => ['group'],
+                    'items' => [
+                        ['title' => 'Workspace', 'value' => 'group', 'children' => [
+                            ['title' => 'Alpha', 'value' => 'alpha'],
+                            ['title' => 'Beta', 'value' => 'beta'],
+                        ]],
+                        ['title' => 'Shared files', 'value' => 'shared'],
+                    ],
+                ],
+            ]];
+        }
         if ($scenario === 'bounded' && $this->tag === 'p-date-range-picker') {
             return [[
                 'label' => 'Bounded interval',

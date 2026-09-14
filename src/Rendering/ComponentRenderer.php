@@ -10848,6 +10848,7 @@ final class ComponentRenderer
                         'path' => $path,
                         'name' => $title,
                         'disabled' => $itemDisabled,
+                        'accessibilityLabel' => $title,
                         'expanded' => in_array($path, $opened, true),
                         'selected' => in_array($path, $selectedValues, true),
                     ],

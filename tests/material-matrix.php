@@ -3410,6 +3410,10 @@ if (
     );
 }
 $treeFilePress = $treeFile?->events()[EventKind::Press->value] ?? null;
+if (($treeFolder?->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Mobile'
+    || ($treeFile?->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Android') {
+    throw new RuntimeException('Treeview must expose authored labels, not internal paths, to accessibility.');
+}
 if (!$treeFilePress instanceof Closure) {
     throw new RuntimeException(
         'p-treeview must bind selection handling to generated tree items.',

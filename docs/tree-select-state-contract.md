@@ -16,6 +16,26 @@ level-9 analysis then passed in separate renderer/enum and test/showcase groups
 at the same limit, without suppressions or dependency changes.
 An end-to-end showcase rerender check is still required for this later change.
 
+Android showcase follow-up: `/tmp/pam-treeview-controlled-labels-20260914/report.json`
+passed add/remove selection and collapse/reopen through actual taps on API 36.
+Candidate SHA-256:
+`0d582ad891c2c5c42984f1d13f3ea6aa1c32a11a2af0e85e0c7d129ef4ca81e3`.
+The five saved XML states also show PHP selection summaries 2, 1, 2, 1, 2,
+confirming consumer rerenders rather than only optimistic host highlights. Those
+checks were subsequently made explicit in the reusable audit; no unchanged
+interaction was rerun merely for the new assertions. The final screenshot was
+viewed: labels and indentation remain readable and both selected rows visible.
+Selection still relies on the themed row highlight in this older Treeview;
+publication-quality visual refinement is not approved by this scoped result.
+
+The first attempt `/tmp/pam-treeview-controlled-20260914/report.json` stopped
+before tapping: generated items exposed internal paths as accessible labels.
+The renderer now supplies the authored title explicitly, verified by PHP and
+the device hierarchy. A 10-second corrective build followed the initial
+20-second integrated build; each automatically cleaned 96.8 MiB. Renderer/test
+and showcase PHPStan pass, as does Python script compilation. New UIKit
+multiple-selection/controlled-expansion integration still needs remote coverage.
+
 UIKit follow-up candidate `fca5827` implements folder expansion, leaf selection,
 selected traits/colors, chevron state and root-owned Change/Native expansion
 events. Touches are scoped to folder headers; accessibility activation uses the
