@@ -3856,6 +3856,19 @@ foreach ([false, true] as $disabled) {
     }
 }
 $selectedSegment = null;
+foreach ([false, true] as $selectedListItem) {
+    $item = $tags['p-list-item']::make(['selected' => $selectedListItem],
+        Text::make('Inherited label'),
+        Text::make('Custom label')->style(new Style(textColor: 0xFF123456)),
+    )->toElement();
+    $expectedForeground = \Pam\MobileUi\Theme\ThemeManager::current()->color($selectedListItem
+        ? \Pam\MobileUi\Enum\ColorToken::AccentForeground
+        : \Pam\MobileUi\Enum\ColorToken::OnSurface);
+    if (($item->children()[0]->properties()[PropKey::TextColor->value] ?? null) !== $expectedForeground
+        || ($item->children()[1]->properties()[PropKey::TextColor->value] ?? null) !== 0xFF123456) {
+        throw new RuntimeException('List Item direct text must inherit semantic foreground without replacing explicit colors.');
+    }
+}
 foreach (['p-navigation-bar', 'p-navigation-rail'] as $navigationTag) {
     $navigationRoute = new \App\ComponentRoute($navigationTag, 'Navigation', $tags[$navigationTag]);
     foreach ([[], ['modelValue' => 1], ['modelValue' => 3]] as $variation) {

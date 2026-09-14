@@ -756,6 +756,18 @@ final class ComponentRenderer
             $props['__pamChildCount'] = count($children);
         }
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
+        if (($props['__materialComponent'] ?? null) === 'PListItem') {
+            $foreground = $styleOverride->textColor ?? $style->textColor;
+            if ($foreground !== null) {
+                $children = array_map(
+                    static fn (Element $child): Element => $child->kind() === NodeKind::Text
+                        && !isset($child->properties()[PropKey::TextColor->value])
+                            ? $child->style(new Style(textColor: $foreground))
+                            : $child,
+                    $children,
+                );
+            }
+        }
         if (self::flag($props, '__progressButton')) {
             foreach ($children as $index => $child) {
                 if (($child->properties()[PropKey::Value->value] ?? null) === 'pam:progress-button-track') {
