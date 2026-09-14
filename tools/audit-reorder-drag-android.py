@@ -28,7 +28,9 @@ try:
                 '-d', 'pam-showcase://audit/p-reorderable-list')
     root = audit.dump('before')
     audit.screenshot('before')
-    nodes = {n.attrib.get('content-desc'): n for n in root.iter('node')}
+    nodes = {}
+    for node in root.iter('node'):
+        nodes.setdefault(node.attrib.get('content-desc'), node)
     source = module.node_bounds(nodes['Reorder Build'])
     target = module.node_bounds(nodes['Reorder Research'])
     audit.assert_foreground('before real drag')

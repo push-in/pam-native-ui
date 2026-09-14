@@ -42,6 +42,17 @@ require __DIR__.'/bootstrap.php';
 require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 
 $samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');
+$catalogMethod = new ReflectionMethod(\App\ComponentRoute::class, 'catalogVariations');
+$auditMethod = new ReflectionMethod(\App\ComponentRoute::class, 'auditVariations');
+foreach (['p-reorderable-list', 'p-swipe-actions', 'p-tree-select', 'p-chart', 'p-result-state'] as $auditTag) {
+    $route = new \App\ComponentRoute($auditTag, 'Sample', MaterialComponentMap::TAGS[$auditTag]);
+    $route->state->auditScenario = 'default';
+    $normal = $catalogMethod->invoke($route);
+    $audited = $auditMethod->invoke($route, 'default');
+    if (!is_array($normal) || count($normal) < 2 || $audited !== $normal || $route->state->auditScenario !== 'default') {
+        throw new RuntimeException($auditTag.' audit route must retain the complete catalog variations.');
+    }
+}
 foreach (['p-password-field', 'p-masked-field', 'p-currency-field', 'p-text-field', 'p-search-bar'] as $sampleTag) {
     $route = new \App\ComponentRoute($sampleTag, 'Sample', MaterialComponentMap::TAGS[$sampleTag]);
     foreach ([null, 'Custom accessible name'] as $explicitLabel) {

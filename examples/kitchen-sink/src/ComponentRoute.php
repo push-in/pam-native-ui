@@ -6490,6 +6490,18 @@ final class ComponentRoute extends Component
     }
 
     /** @return list<array{label: string, props: array<string, mixed>}> */
+    private function catalogVariations(): array
+    {
+        $auditScenario = $this->state->auditScenario;
+        $this->state->auditScenario = null;
+        try {
+            return $this->variations();
+        } finally {
+            $this->state->auditScenario = $auditScenario;
+        }
+    }
+
+    /** @return list<array{label: string, props: array<string, mixed>}> */
     private function auditVariations(string $scenario): array
     {
         $foundationVariations = $this->foundationVariations();
@@ -6519,13 +6531,7 @@ final class ComponentRoute extends Component
         if ($this->belongsTo(['p-icon', 'p-icon-btn', 'p-img', 'p-tree-select'])) {
             // These compact showcase matrices are deterministic and already
             // exercise the public catalog, so the Android audit uses them too.
-            $auditScenario = $this->state->auditScenario;
-            $this->state->auditScenario = null;
-            try {
-                return $this->variations();
-            } finally {
-                $this->state->auditScenario = $auditScenario;
-            }
+            return $this->catalogVariations();
         }
 
         if ($this->tag === 'p-list-item') {
@@ -7526,7 +7532,7 @@ final class ComponentRoute extends Component
         if (!in_array($this->tag, [
             'p-autocomplete', 'p-combobox', 'p-select',
         ], true)) {
-            return [['label' => 'Default', 'props' => []]];
+            return $this->catalogVariations();
         }
 
         if ($scenario === 'loading') {

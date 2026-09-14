@@ -1609,3 +1609,15 @@ closes the basic physical reorder check only; disabled-item drag, alternate
 densities, accessibility alternatives, themes and performance remain unverified.
 The audit route currently shows only Default for this component, unlike the
 full showcase matrix, and needs parity before the remaining variant checks.
+
+### Audit fallback parity corrected across the catalog
+
+Components without a dedicated audit scenario now reuse their catalog variations
+instead of silently falling back to a lone Default. Specialized input/list/grid
+audit scenarios remain unchanged. A shared helper restores auditScenario in
+finally, avoiding recursion/state loss. Regression compares complete variant
+arrays for Reorderable List, Swipe Actions, Tree Select, Chart and Result State,
+requiring multiple examples and preserved scenario state. Matrix passes.
+Reorder drag locator keeps the first matching row so later duplicate variation
+labels cannot redirect the default test to a disabled specimen. Route changes
+are not yet installed; existing device reports keep their original scope.
