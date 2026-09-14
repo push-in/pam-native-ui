@@ -49,16 +49,24 @@ $auditMethod = new ReflectionMethod(\App\ComponentRoute::class, 'auditVariations
 foreach (['p-menu', 'p-tooltip'] as $overlayTag) {
     $route = new \App\ComponentRoute($overlayTag, 'Overlay', MaterialComponentMap::TAGS[$overlayTag]);
     $placements = [];
-    foreach ($catalogMethod->invoke($route) as $specimen) {
+    $specimens = $catalogMethod->invoke($route);
+    if (!is_array($specimens)) {
+        throw new RuntimeException('Overlay catalog must return an array.');
+    }
+    foreach ($specimens as $specimen) {
+        if (!is_array($specimen) || !is_string($specimen['label'] ?? null)
+            || !is_array($specimen['props'] ?? null)) {
+            throw new RuntimeException('Overlay specimens require a label and properties.');
+        }
         if (!str_starts_with($specimen['label'], 'Location ')) {
             continue;
         }
-        $expected = $specimen['props']['placement'];
+        $expected = $specimen['props']['placement'] ?? null;
         if (!is_int($expected) || Placement::tryFrom($expected) === null) {
             throw new RuntimeException($overlayTag.' placement specimens must use supported enum codes.');
         }
         $resolved = $samplePropsMethod->invoke($route, $specimen['props']);
-        if ($resolved['placement'] !== $expected) {
+        if (!is_array($resolved) || ($resolved['placement'] ?? null) !== $expected) {
             throw new RuntimeException($overlayTag.' showcase must preserve each requested placement.');
         }
         $placements[] = $expected;
@@ -2171,6 +2179,11 @@ if ($createdTag !== ['Android', 'Rust']) {
 }
 
 $multipleAutocompleteValue = null;
+$assertCustomSelection = static function (mixed $actual, mixed $expected, string $message): void {
+    if ($actual !== $expected) {
+        throw new RuntimeException($message);
+    }
+};
 foreach (['p-tag-input', 'p-combobox'] as $customControlTag) {
     $customResult = null;
     $customControl = $tags[$customControlTag]::make([
@@ -2193,15 +2206,16 @@ foreach (['p-tag-input', 'p-combobox'] as $customControlTag) {
     if (!$portalChange instanceof Closure) throw new RuntimeException('Custom selection needs a portal event.');
     foreach ([1, '1', 2, '2'] as $protectedInput) {
         $portalChange($protectedInput);
-        if ($customResult !== null) throw new RuntimeException('Custom input must not bypass disabled options.');
+        $assertCustomSelection($customResult, null, 'Custom input must not bypass disabled options.');
     }
     $portalChange('New tag');
-    if ($customResult !== ($customControlTag === 'p-tag-input' ? [1, 'New tag'] : 'New tag')) {
-        throw new RuntimeException('Custom input must still accept an unprotected new value.');
-    }
+    $assertCustomSelection($customResult,
+        $customControlTag === 'p-tag-input' ? [1, 'New tag'] : 'New tag',
+        'Custom input must still accept an unprotected new value.');
     if ($customControlTag === 'p-tag-input') {
         $portalChange([2, 'New tag']);
-        if ($customResult !== ['New tag', 1]) throw new RuntimeException('Tag replacement must retain protected selections and reject unavailable additions.');
+        $assertCustomSelection($customResult, ['New tag', 1],
+            'Tag replacement must retain protected selections and reject unavailable additions.');
     }
 }
 $multipleAutocomplete = $tags['p-autocomplete']::make([
@@ -4261,8 +4275,8 @@ $selectionMarkHost = $selectionMark?->properties()[PropKey::HostProperties->valu
 if (!$selectionMarkHost instanceof BinaryValue
     || (Wire::decodeMap($selectionMarkHost->bytes)['color'] ?? null)
         !== \Pam\MobileUi\Theme\ThemeManager::current()->color(ColorToken::PrimaryForeground)
-    || ($selectionMark?->properties()[PropKey::Width->value] ?? null) !== 16.0
-    || ($selectionMark?->properties()[PropKey::Height->value] ?? null) !== 16.0
+    || ($selectionMark->properties()[PropKey::Width->value] ?? null) !== 16.0
+    || ($selectionMark->properties()[PropKey::Height->value] ?? null) !== 16.0
     || ($secondCell->children()[0] ?? null)?->children() !== []) {
     throw new RuntimeException('Table selection must use a bounded, contrasting vector mark only when selected.');
 }

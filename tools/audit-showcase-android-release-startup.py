@@ -69,13 +69,18 @@ def main() -> int:
     parser.add_argument("--package", default="dev.pam.mobileui.catalog")
     parser.add_argument("--activity", default="dev.pam.nativeapp.PamActivity")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--tags", nargs="+", help="Measure only these registered routes; reports remain explicitly partial")
     parser.add_argument("--settle-seconds", type=float, default=0.8)
     parser.add_argument("--p95-budget-ms", type=int, default=1_500)
     parser.add_argument("--max-budget-ms", type=int, default=2_500)
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parent.parent
-    tags = catalog_tags(root)
+    registered_tags = catalog_tags(root)
+    tags = list(dict.fromkeys(args.tags)) if args.tags else registered_tags
+    unknown = set(tags) - set(registered_tags)
+    if unknown:
+        raise AuditFailure(f"Unknown component routes: {sorted(unknown)}")
 
     adb = ["adb", "-s", args.serial]
     run(adb, "get-state")
@@ -173,6 +178,9 @@ def main() -> int:
         "platformCode": 1,
         "buildTypeCode": 2,
         "candidateOnly": True,
+        "fullCatalog": set(tags) == set(registered_tags),
+        "registeredRouteCount": len(registered_tags),
+        "samplesPerRoute": 1,
         "capturedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "package": args.package,
         "buildSha256": build_hash,

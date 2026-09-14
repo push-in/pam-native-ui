@@ -41,6 +41,77 @@ current candidate and evidence; never delete unrelated user files or devices.
 
 ## Current release checkpoint — 2026-09-14
 
+Native 1.0.28 preparation: candidate `e963ef5dd2cdbca9ea232a030dfc2e2a1a911776`
+aligns Rust workspace/lock and PHP SDK versions without creating a tag. UI
+Composer and plugin minimum now require 1.0.28; showcase path aliases and lock
+were updated after a successful targeted Composer dry-run, with `--no-install`
+and `--no-scripts`. Composer schema validation passes but strict mode reports
+the intentional exact showcase pins as warnings. Verify and Release workflow
+Native pins/aliases now target that candidate. YAML parsing and the UI matrix
+pass. These edits prepare compatibility; they do not claim the unpublished
+candidate is available on Packagist or that its remote CI has passed.
+
+UI candidate Verify run `34831423557`:
+https://github.com/push-in/pam-native-ui/actions/runs/34831423557
+was confirmed queued for `f35389a1ae47f65f1a7740c27278ff3aed4826bb`, on new audit
+branch `audit/ui-candidate-20260914`, with explicit input
+`native_ref=8e8c3524f63fae19c87630547d67942e43019d7e`.
+The minimum-Native matrix incompatibility described below remains expected;
+current-Native jobs are intended to identify additional Android/UIKit failures.
+The run completed with failure: current Android, both iOS jobs and Android
+API 26/36 behavior passed; minimum Android failed for the missing overlay API.
+PHP jobs reported static-analysis errors in material-matrix.php. Added runtime
+guards around reflected specimen arrays and moved callback-result comparisons
+into a strict assertion helper so callback writes do not create false dead-code
+inference. Removed two redundant nullsafe calls exposed after that correction.
+Targeted PHPStan on material-matrix.php and documented-composition.php now
+passes without suppressions; the matrix and executable docs example also pass.
+This run does not relax the minimum contract or authorize release. Inspect this
+run instead of dispatching another copy. Local test/docs follow-ups after
+`f35389a` are not included in this candidate; no runtime change followed it.
+
+Current Native candidate CI: run `34831107281` at
+https://github.com/push-in/pam-native/actions/runs/34831107281 was confirmed
+`in_progress` for exact SHA `8e8c3524f63fae19c87630547d67942e43019d7e`.
+The commit was pushed to the new non-release branch
+`audit/native-ui-candidate-20260914` and `ci.yml` was dispatched explicitly.
+No tag, merge, release workflow or package publishing was performed. Resume
+inspection of this run rather than dispatching a duplicate; a successful result
+still requires inspection of its actual platform/test coverage.
+The Rust/PHP job subsequently failed at `cargo fmt --all -- --check`, before
+tests, with formatting diffs in `crates/pam-native-engine/src/layout.rs`.
+Ran the official formatter locally; only that file changed and the formatting
+check now passes. Android and Swift/UIKit jobs remained running at the last
+poll. Keep their original run; rerunning the failed old SHA would reproduce
+the formatting failure rather than validate the corrected candidate.
+
+Remote infrastructure recheck: Verify run `34795441973` completed successfully
+for UI `0c9fe92ef836626d77536ed8212cb6727600f3fb`, including jobs named
+`iOS / PAM Native minimum` and `iOS / PAM Native current`. The macOS CI path
+therefore exists; lack of a local Mac is not by itself an infrastructure blocker.
+This historical run does not validate UI `f35389a1ae47f65f1a7740c27278ff3aed4826bb`
+or its Native pair `8e8c3524f63fae19c87630547d67942e43019d7e`.
+Use the non-publishing Verify workflow with the exact candidate revisions after
+checking remote availability; do not trigger release to obtain validation.
+Remote refs checked subsequently: UI topic branch still points to `0c9fe92`,
+68 commits behind local HEAD; Native topic branch points to `46bfe506` rather
+than `8e8c352`. Verify's minimum matrix remains pinned to `9468f8e3`, which
+predates the newly imported OverlayCollisionResolver API. Before release,
+resolve the minimum supported Native package/plugin contract and its CI matrix
+consistently. Passing only the current-Native job cannot establish compatibility
+with the declared minimum. Do not label this as missing macOS infrastructure.
+Dependency preflight additionally found that GitHub's immutable `v1.0.27`
+tag resolves to `a737904764a459d06169e241583815f856c2a1aa`, while Packagist's
+P2 metadata still lists `v1.0.26` as its newest stable entry. The Native workspace
+still declares 1.0.27 but contains later API additions. Do not move the existing
+tag or assume its code includes those additions. Prepare a new Native release
+version for the new plugin API, validate that candidate, then align UI Composer,
+plugin minimum, showcase lock and minimum/current CI references. Packagist
+freshness is a separate publication check. No dependency installation, tag
+mutation or package publication was performed during this preflight.
+Inspect job steps/results before treating job names as coverage of every
+required iOS interaction or visual condition.
+
 `python3 tools/validate-android-component-approvals.py --require-complete` fails
 with 5/114 formal approvals. Recent scoped Samsung checks must not be counted as
 additional full approvals or as proof that historical approvals cover a new APK.
@@ -53,6 +124,17 @@ controlled refresh cycles. Reports and exact APK identities are in
 requirements remain open. No publication is authorized by these partial results.
 
 ## Latest scoped deliveries and process blockers
+
+Data-family startup sample on emulator-5554/API 36:
+`/tmp/pam-data-startup-20260914.json` records one cold launch per route on APK
+`06492d475f7310589179b4c0a61d270064e1377afd2065c5caed6584ec2d8d02`:
+Chart 367 ms, Data Grid 277 ms, Virtual List 424 ms, Section List 336 ms.
+Each launch confirmed the route and Variations heading at the top. The sampled
+run passed the runner's existing startup budgets. It is not a repeated benchmark,
+frame-time measurement, physical-device result or full catalog approval.
+No new build was needed. The startup runner now accepts `--tags`, validates them
+against the full registry and records `fullCatalog`, `registeredRouteCount` and
+`samplesPerRoute` so a selected subset cannot be mistaken for catalog coverage.
 
 List configuration follow-up: the PHP matrix now explicitly covers Virtual List
 and Section List default foreground, custom packed foreground and transparent

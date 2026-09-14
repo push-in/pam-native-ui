@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "96599b159ac53bcd6eacbdff1cfef741",
+    "content-hash": "1d88aa071e1b7218b42c84f8a6305106",
     "packages": [
         {
             "name": "pushinbr/pam-native",
-            "version": "1.0.27",
+            "version": "1.0.28",
             "dist": {
                 "type": "path",
                 "url": "../../../pam-native/packages/native",
-                "reference": "e4647e7d9a47fbdc58ccd11c0a63b842ed29c652"
+                "reference": "105eebea9d256cdd656fde4feb8888d29e58ed0b"
             },
             "require": {
                 "php": "^8.5"
@@ -401,11 +401,11 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "c92962e5dd60b617f8094c7acb701f1a1243b536"
+                "reference": "f35389a1ae47f65f1a7740c27278ff3aed4826bb"
             },
             "require": {
                 "php": "^8.5",
-                "pushinbr/pam-native": "^1.0.27"
+                "pushinbr/pam-native": "^1.0.28"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1"
