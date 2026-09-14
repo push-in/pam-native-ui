@@ -47,3 +47,11 @@ across the header and visible rows; taller cells are rendered consistently. Its
 320-dp scrolling viewport cuts through the next row at the lower boundary, as
 expected for a scrollable list. Large-font and scroll interaction coverage remain
 pending. Empty/loading examples no longer reserve the original 360-dp viewport.
+
+Scroll follow-up on the same APK: `/tmp/pam-ui-grid-scroll-20260914/report.json`
+and `/tmp/pam-ui-grid-scroll-large-20260914/report.json` confirm the last tall row
+(`Studio 6`) is reachable inside the native grid viewport at font scales 1.0 and
+2.0. Both final captures were inspected. Fully visible rows remain vertically
+readable; the enlarged price column has little spare horizontal room. This is
+coverage of the supplied short dataset, not arbitrary long values, every density,
+or overall component approval. Device settings are restored after each run.
