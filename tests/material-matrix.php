@@ -2221,7 +2221,7 @@ if (
         'Read-only autocomplete must expose its value without an opening action.',
     );
 }
-foreach (['p-select', 'p-autocomplete', 'p-combobox', 'p-tag-input', 'p-multi-select'] as $lockedTag) {
+foreach (['p-select', 'p-autocomplete', 'p-combobox', 'p-tag-input', 'p-multi-select', 'p-command-palette'] as $lockedTag) {
     foreach (['readonly', 'readOnly', 'isReadOnly', 'disabled', 'isDisabled'] as $lockProp) {
         $lockedSelection = $tags[$lockedTag]::make([
             $lockProp => true, 'open' => true, 'items' => ['Locked option'],
@@ -3502,6 +3502,20 @@ $searchChange('navigation');
 if ($searchValue !== 'navigation') {
     throw new RuntimeException('p-search-bar must emit its native text change.');
 }
+foreach (['readonly', 'readOnly', 'isReadOnly', 'disabled', 'isDisabled'] as $searchLock) {
+    $lockedSearch = $searchClass::make([
+        $searchLock => true, 'modelValue' => 'Saved query',
+        'accessibilityLabel' => 'Search documents',
+    ])->toElement();
+    $inputs = array_values(array_filter($lockedSearch->children(),
+        static fn (\Pam\Native\Element $element): bool => $element->kind() === NodeKind::Input));
+    if (count($inputs) !== 1
+        || ($inputs[0]->properties()[PropKey::InputEditable->value] ?? true) !== false
+        || ($inputs[0]->properties()[PropKey::Value->value] ?? null) !== 'Saved query'
+        || ($inputs[0]->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Search documents') {
+        throw new RuntimeException('Locked search must preserve its query and accessible label without editing.');
+    }
+}
 
 $paginationClass = $tags['p-pagination'];
 $selectedPage = null;
@@ -4711,6 +4725,48 @@ if ($dataGrid->kind() !== NodeKind::CustomView || count($dataGrid->children()) <
     throw new RuntimeException('p-data-grid must reuse the virtual native table contract.');
 }
 $treeSelectChanged = null;
+foreach (['readonly', 'readOnly', 'isReadOnly'] as $treeLock) {
+    $treeOpened = null;
+    $treeRows = $tags['p-tree-select']::make([
+        $treeLock => true, 'opened' => [1], 'modelValue' => 2,
+        'items' => [['value' => 1, 'label' => 'Group', 'children' => [
+            ['value' => 2, 'label' => 'Selected leaf'],
+        ]]],
+    ])->onChange(static function (mixed $value): void {
+        throw new RuntimeException('Read-only tree must not change selection.');
+    })->onToggle(static function (array $value) use (&$treeOpened): void {
+        $treeOpened = $value;
+    })->toElement()->children();
+    if (count($treeRows) !== 2
+        || isset($treeRows[1]->events()[EventKind::Press->value])
+        || ($treeRows[1]->properties()[PropKey::Enabled->value] ?? true) !== false
+        || ($treeRows[1]->properties()[PropKey::Checked->value] ?? false) !== true) {
+        throw new RuntimeException('Read-only tree must preserve checked state without selectable leaves.');
+    }
+    $treeRows[0]->events()[EventKind::Press->value]();
+    if ($treeOpened !== []) {
+        throw new RuntimeException('Read-only tree must still allow browsing groups.');
+    }
+}
+foreach (['disabled', 'isDisabled'] as $treeItemLock) {
+    $treeRows = $tags['p-tree-select']::make([
+        'opened' => [1, 2],
+        'items' => [['value' => 1, $treeItemLock => true, 'children' => [
+            ['value' => 2, 'children' => [['value' => 3, 'label' => 'Nested leaf']]],
+        ]]],
+    ])->onChange(static function (mixed $value): void {})
+        ->onToggle(static function (array $value): void {})
+        ->toElement()->children();
+    if (count($treeRows) !== 3) {
+        throw new RuntimeException('Disabled expanded tree must retain visible descendants.');
+    }
+    foreach ($treeRows as $row) {
+        if (isset($row->events()[EventKind::Press->value])
+            || ($row->properties()[PropKey::Enabled->value] ?? true) !== false) {
+            throw new RuntimeException('Disabled tree branches must block all descendants.');
+        }
+    }
+}
 $compactTree = $tags['p-tree-select']::make([
     'density' => 'compact', 'items' => [['value' => 1, 'label' => 'Compact leaf']],
 ])->toElement();

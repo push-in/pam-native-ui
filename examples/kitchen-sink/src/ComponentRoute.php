@@ -5489,6 +5489,8 @@ final class ComponentRoute extends Component
         if ($this->tag === 'p-sparkline') {
             $add($variations, 'Line', ['type' => 'trend']);
             $add($variations, 'Bars', ['type' => 'bar']);
+            $add($variations, 'Mixed values', ['type' => 'bar', 'values' => '-20,10,-10,30', 'accessibilityLabel' => 'Mixed values from minus 20 to 30']);
+            $add($variations, 'Single bar', ['type' => 'bar', 'values' => '42', 'accessibilityLabel' => 'One bar with value 42']);
             $add($variations, 'Fill', ['fill' => true]);
             $add($variations, 'Smooth', ['smooth' => true]);
             $add($variations, 'Labels', ['showLabels' => true]);
@@ -5611,6 +5613,20 @@ final class ComponentRoute extends Component
             $add($variations, 'Disabled selection', ['disabled' => true] + $selectionProps);
         }
         if ($this->tag === 'p-tree-select') {
+            $protectedTree = [
+                'items' => [['value' => 1, 'title' => 'Access policies', 'children' => [
+                    ['value' => 2, 'title' => 'Read documents'],
+                    ['value' => 3, 'title' => 'Edit documents'],
+                ]]],
+                'opened' => [1], 'multiple' => true, 'modelValue' => [2],
+            ];
+            $add($variations, 'Read-only tree', ['readOnly' => true] + $protectedTree);
+            $add($variations, 'Disabled branch', [
+                'items' => [['value' => 1, 'title' => 'Archived policies', 'disabled' => true,
+                    'children' => [['value' => 2, 'title' => 'Archived document access']],
+                ]],
+                'opened' => [1], 'modelValue' => 2,
+            ]);
             $add($variations, 'Disabled item', [
                 'items' => [
                     ['value' => 1, 'title' => 'Project access', 'children' => [
@@ -5655,6 +5671,8 @@ final class ComponentRoute extends Component
             $add($variations, 'Line', ['type' => 'trend', 'fill' => false]);
             $add($variations, 'Area', ['type' => 'area', 'fill' => true]);
             $add($variations, 'Bars', ['type' => 'bar']);
+            $add($variations, 'Mixed values', ['type' => 'bar', 'values' => '-20,10,-10,30', 'accessibilityLabel' => 'Mixed values from minus 20 to 30']);
+            $add($variations, 'Single bar', ['type' => 'bar', 'values' => '42', 'accessibilityLabel' => 'One bar with value 42']);
             $add($variations, 'Single observation', [
                 'values' => '42', 'fill' => false,
                 'accessibilityLabel' => 'One observation with value 42',

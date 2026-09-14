@@ -3806,6 +3806,8 @@ final class ComponentRenderer
         $items = is_array($props['items'] ?? null) ? $props['items'] : [];
         $multiple = self::flag($props, 'multiple');
         $disabled = self::flag($props, 'disabled');
+        $readOnly = self::flag($props, 'readonly') || self::flag($props, 'readOnly')
+            || self::flag($props, 'isReadOnly');
         $compact = self::text($props, 'density', 'default') === 'compact';
         $rowHeight = $compact ? 48.0 : 52.0;
         $opened = array_values(array_filter(
@@ -3818,11 +3820,12 @@ final class ComponentRenderer
         $openedKeys = array_fill_keys(array_map('strval', $opened), true);
         $selectedKeys = array_fill_keys(array_map('strval', $selected), true);
 
-        $render = function (array $source, int $depth = 0) use (
+        $render = function (array $source, int $depth = 0, bool $parentDisabled = false) use (
             &$render,
             $theme,
             $multiple,
             $disabled,
+            $readOnly,
             $rowHeight,
             $opened,
             $selected,
@@ -3834,12 +3837,14 @@ final class ComponentRenderer
             $rows = [];
             foreach (array_values($source) as $index => $definition) {
                 $item = is_array($definition) ? $definition : ['title' => $definition];
-                $itemDisabled = $disabled || self::flag(['disabled' => $item['disabled'] ?? false], 'disabled');
+                $itemDisabled = $disabled || $parentDisabled
+                    || self::flag(['disabled' => $item['disabled'] ?? $item['isDisabled'] ?? false], 'disabled');
                 $value = $item['value'] ?? $item['id'] ?? $item['title'] ?? $index + 1;
                 $label = $item['label'] ?? $item['title'] ?? $value;
                 if (!is_scalar($value) || !is_scalar($label)) continue;
                 $children = is_array($item['children'] ?? null) ? $item['children'] : [];
                 $hasChildren = $children !== [];
+                $actionBlocked = $itemDisabled || ($readOnly && !$hasChildren);
                 $expanded = isset($openedKeys[(string) $value]);
                 $isSelected = isset($selectedKeys[(string) $value]);
                 $foreground = $isSelected
@@ -3904,7 +3909,7 @@ final class ComponentRenderer
                         ? $theme->color(ColorToken::Accent)
                         : 0x00000000,
                     opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
-                ))->property(PropKey::Enabled, !$itemDisabled)
+                ))->property(PropKey::Enabled, !$actionBlocked)
                     ->property(PropKey::Selected, $isSelected)
                     ->accessibilityRole($hasChildren
                         ? AccessibilityRole::Button
@@ -3943,7 +3948,7 @@ final class ComponentRenderer
                         if (!$expanded) $next[] = $value;
                         return $toggle($next);
                     });
-                } elseif (!$itemDisabled && !$hasChildren && $change instanceof Closure) {
+                } elseif (!$actionBlocked && !$hasChildren && $change instanceof Closure) {
                     $row = $row->onPress(static function () use (
                         $change,
                         $multiple,
@@ -3962,7 +3967,7 @@ final class ComponentRenderer
                 }
                 $rows[] = $row;
                 if ($hasChildren && $expanded) {
-                    array_push($rows, ...$render($children, $depth + 1));
+                    array_push($rows, ...$render($children, $depth + 1, $itemDisabled));
                 }
             }
 

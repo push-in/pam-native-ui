@@ -3341,7 +3341,9 @@ internal class MobileUiHost(
     private fun drawSparkline(canvas: Canvas) {
         val points = sparklinePoints()
         if (points.isEmpty() || width <= 0 || height <= 0) return
-        if (points.size == 1) {
+        val type = nativeProperties.text("type")?.lowercase().orEmpty()
+        val bars = type == "bar" || type == "bars"
+        if (points.size == 1 && !bars) {
             val pointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = fillPaint.color
                 style = Paint.Style.FILL
@@ -3349,9 +3351,7 @@ internal class MobileUiHost(
             canvas.drawCircle(width / 2f, height / 2f, 4f * density, pointPaint)
             return
         }
-        val low = points.minOrNull() ?: return
-        val high = points.maxOrNull() ?: return
-        val spread = (high - low).takeIf { it > 0f } ?: 1f
+        val scale = SparklineScale.from(points, bars)
         val lineWidth = nativeProperties.decimal("lineWidth", 2.5).toFloat() * density
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = fillPaint.color
@@ -3363,16 +3363,16 @@ internal class MobileUiHost(
         val inset = lineWidth / 2f
         val drawableWidth = (width - lineWidth).coerceAtLeast(1f)
         val drawableHeight = (height - lineWidth).coerceAtLeast(1f)
-        val horizontal = drawableWidth / (points.size - 1)
+        val horizontal = drawableWidth / (points.size - 1).coerceAtLeast(1)
         val coordinates = points.mapIndexed { index, point ->
             val logicalX = inset + index * horizontal
             val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - logicalX else logicalX
-            val fraction = if (high == low) 0.5f else (point - low) / spread
+            val fraction = scale.fraction(point)
             val y = inset + drawableHeight - fraction * drawableHeight
             x to y
         }
-        val type = nativeProperties.text("type")?.lowercase().orEmpty()
-        if (type == "bar" || type == "bars") {
+        if (bars) {
+            val baseline = inset + drawableHeight - scale.fraction(0f) * drawableHeight
             val barSlot = drawableWidth / points.size
             val barWidth = (barSlot * 0.58f).coerceAtLeast(3f * density)
             val radius = (barWidth / 2f).coerceAtMost(6f * density)
@@ -3382,9 +3382,9 @@ internal class MobileUiHost(
                 val x = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - logicalX else logicalX
                 canvas.drawRoundRect(
                     x - barWidth / 2f,
-                    y,
+                    minOf(y, baseline),
                     x + barWidth / 2f,
-                    height - inset,
+                    maxOf(y, baseline),
                     radius,
                     radius,
                     paint,
@@ -3469,9 +3469,13 @@ internal class MobileUiHost(
         val points = sparklinePoints()
         if (points.isEmpty() || width <= 0) return
         val logicalX = if (layoutDirection == LAYOUT_DIRECTION_RTL) width - x else x
-        val index = ((logicalX / width.coerceAtLeast(1)) * (points.size - 1))
-            .roundToInt()
-            .coerceIn(0, points.lastIndex)
+        val ratio = logicalX / width.coerceAtLeast(1)
+        val type = nativeProperties.text("type")?.lowercase().orEmpty()
+        val index = if (type == "bar" || type == "bars") {
+            SparklineData.barIndex(ratio, points.size)
+        } else {
+            (ratio * (points.size - 1)).roundToInt().coerceIn(0, points.lastIndex)
+        }
         if (sparklineSelectedIndex != index) {
             sparklineSelectedIndex = index
             invalidate()
@@ -7945,6 +7949,10 @@ internal class MobileUiHost(
         }
         val input = sheetSearchInput ?: android.widget.EditText(context).also { search ->
             search.isSingleLine = true
+            // Keep results visible while typing on landscape phone keyboards.
+            search.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH or
+                android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI or
+                android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN
             search.textSize = 16f
             search.setPadding(
                 (16f * resources.displayMetrics.density).roundToInt(),

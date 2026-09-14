@@ -2140,28 +2140,33 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func drawSparkline(_ context: CGContext) {
         let points = sparklineValues
         guard !points.isEmpty, bounds.width > 0, bounds.height > 0 else { return }
-        if points.count == 1 {
+        let type = properties["type"]?.pamText?.lowercased() ?? ""
+        let bars = type == "bar" || type == "bars"
+        if points.count == 1 && !bars {
             fillColor.setFill()
             context.fillEllipse(in: CGRect(x: bounds.midX - 4, y: bounds.midY - 4, width: 8, height: 8))
             return
         }
         guard
-              let low = points.min(), let high = points.max() else { return }
-        let spread = max(0.000_001, high - low)
+              let minimum = points.min(), let maximum = points.max() else { return }
+        let low = bars ? min(0, minimum) : minimum
+        let high = bars ? max(0, maximum) : maximum
+        let spread = high == low ? 1 : high - low
         let lineWidth = properties["lineWidth"]?.pamDecimal ?? 2.5
         let inset = lineWidth / 2
         let drawableWidth = max(1, bounds.width - lineWidth)
         let drawableHeight = max(1, bounds.height - lineWidth)
         let coordinates = points.enumerated().map { index, point -> CGPoint in
-            let logicalX = inset + drawableWidth * CGFloat(index) / CGFloat(points.count - 1)
+            let logicalX = inset + drawableWidth * CGFloat(index) / CGFloat(max(1, points.count - 1))
             let x = effectiveUserInterfaceLayoutDirection == .rightToLeft
                 ? bounds.width - logicalX : logicalX
             let fraction: CGFloat = high == low ? 0.5 : (point - low) / spread
             let y = inset + drawableHeight - fraction * drawableHeight
             return CGPoint(x: x, y: y)
         }
-        let type = properties["type"]?.pamText?.lowercased() ?? ""
-        if type == "bar" || type == "bars" {
+        if bars {
+            let zeroFraction: CGFloat = high == low ? 0.5 : (0 - low) / spread
+            let baseline = inset + drawableHeight - zeroFraction * drawableHeight
             let slot = drawableWidth / CGFloat(points.count)
             let barWidth = max(3, slot * 0.58)
             let radius = min(6, barWidth / 2)
@@ -2173,9 +2178,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 UIBezierPath(
                     roundedRect: CGRect(
                         x: x - barWidth / 2,
-                        y: point.y,
+                        y: min(point.y, baseline),
                         width: barWidth,
-                        height: max(0, bounds.height - inset - point.y)
+                        height: abs(baseline - point.y)
                     ),
                     cornerRadius: radius
                 ).fill()
@@ -2288,7 +2293,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         let logicalX = effectiveUserInterfaceLayoutDirection == .rightToLeft
             ? bounds.width - x : x
         let ratio = min(1, max(0, logicalX / bounds.width))
-        let index = min(points.count - 1, max(0, Int(round(ratio * CGFloat(points.count - 1)))))
+        let type = properties["type"]?.pamText?.lowercased() ?? ""
+        let position = type == "bar" || type == "bars"
+            ? floor(ratio * CGFloat(points.count))
+            : round(ratio * CGFloat(points.count - 1))
+        let index = min(points.count - 1, max(0, Int(position)))
         selectSparklineIndex(index, emitChange: emitChange)
     }
 
