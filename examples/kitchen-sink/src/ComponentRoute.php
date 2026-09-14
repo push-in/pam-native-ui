@@ -6461,6 +6461,8 @@ final class ComponentRoute extends Component
                 ['label' => 'Outlined', 'props' => ['outlined' => true]],
             ],
             'p-pagination' => [
+                ['label' => 'Read only', 'props' => ['modelValue' => 2, 'length' => 3, 'totalVisible' => 1, 'readonly' => true]],
+                ['label' => 'One visible page', 'props' => ['modelValue' => 1, 'length' => 3, 'totalVisible' => 1]],
                 ['label' => 'First page', 'props' => ['modelValue' => 1, 'length' => 5]],
                 ['label' => 'Middle page', 'props' => ['modelValue' => 3, 'length' => 7]],
                 ['label' => 'Last page', 'props' => ['modelValue' => 5, 'length' => 5]],
@@ -6470,6 +6472,7 @@ final class ComponentRoute extends Component
                 ['label' => 'Disabled', 'props' => ['modelValue' => 2, 'length' => 3, 'disabled' => true]],
             ],
             'p-segmented-button' => [
+                ['label' => 'Read only', 'props' => ['modelValue' => 1, 'readOnly' => true]],
                 ['label' => 'Single', 'props' => ['modelValue' => 1]],
                 ['label' => 'Multiple', 'props' => ['multiple' => true, 'modelValue' => [1, 3]]],
                 ['label' => 'Icons', 'props' => ['icons' => true]],
@@ -6537,6 +6540,9 @@ final class ComponentRoute extends Component
                 ['label' => 'Disabled', 'props' => ['disabled' => true]],
             ],
             'p-filter-bar' => [
+                ['label' => 'Read only', 'props' => ['modelValue' => [1], 'isReadOnly' => true, 'items' => [
+                    ['value' => 1, 'label' => 'Available'], ['value' => 2, 'label' => 'Recent'],
+                ]]],
                 ['label' => 'Orders', 'props' => ['items' => ['Open', 'Paid', 'Overdue'], 'modelValue' => ['Open']]],
                 ['label' => 'Long labels', 'props' => ['items' => [
                     'Available to everyone in your organization',

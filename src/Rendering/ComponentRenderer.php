@@ -3590,6 +3590,7 @@ final class ComponentRenderer
         ));
         $last = min($pageCount, $first + $visible - 1);
         $disabled = self::flag($props, 'disabled');
+        $readOnly = self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
         $change = $events[EventKind::Change->value] ?? null;
         $theme = ThemeManager::current();
         $reduceMotion = self::flag($props, 'reduceMotion');
@@ -3621,7 +3622,7 @@ final class ComponentRenderer
                     animationDurationMs: $reduceMotion ? 0 : 150,
                     animateChanges: !$reduceMotion,
                 ))
-                ->enabled(!$disabled)
+                ->enabled(!$disabled && !$readOnly)
                 ->property(PropKey::Selected, $selected)
                 ->accessibilityRole(AccessibilityRole::Button)
                 ->accessibilityLabel("Page {$page} of {$pageCount}")
@@ -3632,7 +3633,7 @@ final class ComponentRenderer
                     false,
                     MaterialTokens::STATE_OPACITY[4],
                 );
-            if (!$disabled && $change instanceof Closure && !$selected) {
+            if (!$disabled && !$readOnly && $change instanceof Closure && !$selected) {
                 $button = $button->onPress(
                     static function () use ($change, $page): mixed {
                         return $change($page);
@@ -3640,6 +3641,42 @@ final class ComponentRenderer
                 );
             }
             $items[] = $button;
+        }
+
+        // A one-page window has no alternative; a two-page window can put
+        // the current page at its trailing edge. Preserve navigation without
+        // increasing the requested number of numbered pages.
+        if ($visible < 3 && $pageCount > $visible) {
+            $navigation = static function (bool $forward) use (
+                $current, $pageCount, $disabled, $readOnly, $change, $theme,
+            ): Element {
+                $target = $forward ? min($pageCount, $current + 1) : max(1, $current - 1);
+                $enabled = !$disabled && !$readOnly && $target !== $current;
+                $button = Pressable::make(self::render(
+                    'Icon',
+                    ['icon' => $forward ? 'ChevronRightIcon' : 'ChevronLeftIcon',
+                        'color' => $theme->color(ColorToken::OnSurface)],
+                    [], [], new Style(width: 24.0, height: 24.0),
+                    $forward ? 'pagination-next' : 'pagination-previous',
+                ))->style(new Style(
+                    minWidth: 48.0,
+                    minHeight: 48.0,
+                    paddingHorizontal: 12.0,
+                    paddingVertical: 8.0,
+                    borderRadius: 24.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                    opacity: $enabled ? 1.0 : MaterialTokens::STATE_OPACITY[6],
+                ))->enabled($enabled)
+                    ->accessibilityRole(AccessibilityRole::Button)
+                    ->accessibilityLabel($forward ? 'Next page' : 'Previous page');
+                if ($enabled && $change instanceof Closure) {
+                    $button = $button->onPress(static fn (): mixed => $change($target));
+                }
+                return $button;
+            };
+            array_unshift($items, $navigation(false));
+            $items[] = $navigation(true);
         }
 
         return $items;
@@ -3658,6 +3695,7 @@ final class ComponentRenderer
             ? $props['items']
             : ['Day', 'Week', 'Month'];
         $multiple = self::flag($props, 'multiple');
+        $readOnly = self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
         $model = $props['modelValue'] ?? $props['value'] ?? null;
         $selectedValues = $multiple && is_array($model)
             ? array_values($model)
@@ -3671,7 +3709,7 @@ final class ComponentRenderer
         foreach ($source as $index => $definition) {
             $icon = null;
             $itemDisabled = $disabled || (is_array($definition) && self::flag(
-                ['disabled' => $definition['disabled'] ?? false],
+                ['disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false],
                 'disabled',
             ));
             if (is_array($definition)) {
@@ -3750,7 +3788,7 @@ final class ComponentRenderer
                 ))
                 ->property(PropKey::Selected, $selected)
                 ->property(PropKey::Checked, $selected)
-                ->property(PropKey::Enabled, !$itemDisabled)
+                ->property(PropKey::Enabled, !$itemDisabled && !$readOnly)
                 ->accessibilityRole(AccessibilityRole::ToggleButton)
                 ->accessibilityChecked($selected
                     ? AccessibilityCheckedState::Checked
@@ -3763,7 +3801,7 @@ final class ComponentRenderer
                     false,
                     MaterialTokens::STATE_OPACITY[4],
                 );
-            if (!$itemDisabled && $change instanceof Closure) {
+            if (!$itemDisabled && !$readOnly && $change instanceof Closure) {
                 $control = $control->onPress(static function () use (
                     $change,
                     $multiple,
@@ -4945,6 +4983,7 @@ final class ComponentRenderer
         $selected = is_array($model) ? array_values($model) : [$model];
         $change = $events[EventKind::Change->value] ?? null;
         $disabled = self::flag($props, 'disabled');
+        $readOnly = self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
         $theme = ThemeManager::current();
         $children = [];
         foreach ($source as $index => $definition) {
@@ -4956,7 +4995,7 @@ final class ComponentRenderer
                 : $definition;
             if (!is_scalar($value) || !is_scalar($label)) continue;
             $itemDisabled = $disabled || (is_array($definition) && self::flag(
-                ['disabled' => $definition['disabled'] ?? false],
+                ['disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false],
                 'disabled',
             ));
             $active = in_array($value, $selected, true);
@@ -4990,7 +5029,7 @@ final class ComponentRenderer
                 borderRadius: 24.0,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
-            ))->enabled(!$itemDisabled)
+            ))->enabled(!$itemDisabled && !$readOnly)
                 ->property(PropKey::Selected, $active)
                 ->property(PropKey::Checked, $active)
                 ->accessibilityRole(AccessibilityRole::ToggleButton)
@@ -4998,7 +5037,7 @@ final class ComponentRenderer
                     ? AccessibilityCheckedState::Checked
                     : AccessibilityCheckedState::Unchecked)
                 ->accessibilityLabel((string) $label);
-            if (!$itemDisabled && $change instanceof Closure) {
+            if (!$itemDisabled && !$readOnly && $change instanceof Closure) {
                 $button = $button->onPress(static function () use (
                     $active, $change, $selected, $value,
                 ): mixed {
@@ -5012,7 +5051,7 @@ final class ComponentRenderer
             }
             $children[] = $button;
         }
-        if ($selected !== [] && $change instanceof Closure && !$disabled) {
+        if ($selected !== [] && $change instanceof Closure && !$disabled && !$readOnly) {
             $children[] = Pressable::make(Text::make(
                 self::text($props, 'clearLabel', 'Clear'),
             )->style(new Style(

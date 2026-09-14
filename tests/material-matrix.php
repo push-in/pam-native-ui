@@ -3552,12 +3552,47 @@ if ($selectedPage !== 2) {
 }
 
 $segmentedClass = $tags['p-segmented-button'];
+foreach (['p-pagination', 'p-segmented-button', 'p-filter-bar'] as $lockedTag) {
+    foreach (['readonly', 'readOnly', 'isReadOnly'] as $alias) {
+        $locked = $tags[$lockedTag]::make([
+            'length' => 2,
+            'items' => [['value' => 1, 'label' => 'First'], ['value' => 2, 'label' => 'Second']],
+            'modelValue' => $lockedTag === 'p-filter-bar' ? [1] : 1,
+            $alias => true,
+        ])->onChange(static function (mixed $next): void {
+            throw new RuntimeException('Readonly control dispatched a mutation.');
+        })->toElement()->children();
+        if (count($locked) !== 2 || ($locked[0]->properties()[PropKey::Selected->value] ?? null) !== true) {
+            throw new RuntimeException($lockedTag.' must preserve selection without exposing clear-all when readonly.');
+        }
+        foreach ($locked as $control) {
+            if (($control->properties()[PropKey::Enabled->value] ?? null) !== false
+                || isset($control->events()[EventKind::Press->value])) {
+                throw new RuntimeException($lockedTag.' must block generated controls for '.$alias);
+            }
+        }
+    }
+}
+foreach (['p-segmented-button', 'p-filter-bar'] as $lockedTag) {
+    $controls = $tags[$lockedTag]::make([
+        'items' => [
+            ['value' => 1, 'label' => 'Locked', 'isDisabled' => true],
+            ['value' => 2, 'label' => 'Available', 'disabled' => false, 'isDisabled' => true],
+        ],
+    ])->onChange(static function (mixed $next): void {})->toElement()->children();
+    if (($controls[0]->properties()[PropKey::Enabled->value] ?? null) !== false
+        || isset($controls[0]->events()[EventKind::Press->value])
+        || ($controls[1]->properties()[PropKey::Enabled->value] ?? null) !== true
+        || !isset($controls[1]->events()[EventKind::Press->value])) {
+        throw new RuntimeException($lockedTag.' must honor item isDisabled with explicit disabled precedence.');
+    }
+}
 foreach ([1, 2, 3, 5] as $visiblePages) {
     $pages = $tags['p-pagination']::make([
         'length' => 2000, 'modelValue' => 1234, 'totalVisible' => $visiblePages,
     ])->toElement()->children();
-    if (count($pages) !== $visiblePages) {
-        throw new RuntimeException('Pagination must honor small totalVisible values.');
+    if (count($pages) !== $visiblePages + ($visiblePages < 3 ? 2 : 0)) {
+        throw new RuntimeException('Pagination must retain numbered-page count plus compact navigation.');
     }
     foreach ($pages as $page) {
         if (
@@ -3567,6 +3602,33 @@ foreach ([1, 2, 3, 5] as $visiblePages) {
             || ($page->properties()[PropKey::PaddingHorizontal->value] ?? null) !== 12.0
         ) {
             throw new RuntimeException('Large page labels must retain padding and grow beyond the minimum target.');
+        }
+    }
+}
+foreach ([1, 2] as $window) {
+    foreach ([1, 5, 10] as $currentPage) {
+        foreach ([false, true] as $locked) {
+            $emittedPages = [];
+            $controls = $paginationClass::make([
+                'length' => 10, 'modelValue' => $currentPage,
+                'totalVisible' => $window, 'readonly' => $locked,
+            ])->onChange(static function (int $page) use (&$emittedPages): void {
+                $emittedPages[] = $page;
+            })->toElement()->children();
+            foreach ([0 => max(1, $currentPage - 1), count($controls) - 1 => min(10, $currentPage + 1)] as $index => $target) {
+                $press = $controls[$index]->events()[EventKind::Press->value] ?? null;
+                $canMove = !$locked && $target !== $currentPage;
+                if (($press instanceof Closure) !== $canMove
+                    || ($controls[$index]->properties()[PropKey::Enabled->value] ?? null) !== $canMove) {
+                    throw new RuntimeException('Compact pagination must respect bounds and readonly.');
+                }
+                if ($press instanceof Closure) {
+                    $press();
+                    if (end($emittedPages) !== $target) {
+                        throw new RuntimeException('Compact navigation emitted the wrong page.');
+                    }
+                }
+            }
         }
     }
 }
