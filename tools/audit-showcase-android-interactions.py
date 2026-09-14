@@ -666,9 +666,7 @@ def exercise(
             "p-color-input", "p-currency-field", "p-masked-field",
             "p-number-input", "p-otp-input", "p-password-field",
         }:
-            audit.adb("shell", "input", "keyevent", "KEYCODE_MOVE_END")
-            for _ in range(16):
-                audit.adb("shell", "input", "keyevent", "DEL")
+            audit.adb("shell", "input", "keyevent", "KEYCODE_MOVE_END", *(["DEL"] * 16))
         audit.adb("shell", "input", "text", typed_value)
         time.sleep(0.8)
         after = audit.dump(f"{evidence_name}-after")
@@ -681,6 +679,7 @@ def exercise(
             expected_text in node.attrib.get("text", "")
             for node in after.nodes()
             if node.attrib.get("class") == "android.widget.EditText"
+            and node.attrib.get("focused") == "true"
         )
         if tag == "p-password-field":
             before_values = [
@@ -697,7 +696,7 @@ def exercise(
         if not retained:
             raise AuditFailure("typed text was not retained by the native input")
         if tag == "p-password-field":
-            for label, revealed in (("Show password", True), ("Hide password", False)):
+            for index, (label, revealed) in enumerate((("Show password", True), ("Hide password", False), ("Show password", True))):
                 toggles = [
                     node for node in after.nodes()
                     if enabled(node) and node.attrib.get("content-desc") == label
@@ -706,7 +705,7 @@ def exercise(
                     raise AuditFailure(f"password action is unavailable: {label}")
                 audit.tap(bounds(toggles[0]))
                 time.sleep(0.8)
-                after = audit.dump(f"{evidence_name}-{'revealed' if revealed else 'hidden'}")
+                after = audit.dump(f"{evidence_name}-{index}-{'revealed' if revealed else 'hidden'}")
                 assert_healthy(after, route)
                 editors = [
                     node for node in after.nodes()
@@ -720,6 +719,11 @@ def exercise(
                     raise AuditFailure("password visibility did not follow the toggle")
                 if revealed and editor.attrib.get("text") != typed_value:
                     raise AuditFailure("revealing the password did not preserve the typed value")
+                if index < 2:
+                    # Do not move the cursor: the visibility toggle must preserve
+                    # its position so subsequent typing appends, not prepends.
+                    audit.adb("shell", "input", "text", "X")
+                    typed_value += "X"
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         audit.back()
         return after, True
@@ -827,6 +831,50 @@ def exercise(
         changed = open_hash != before_hash
         if not changed:
             raise AuditFailure("overlay trigger produced no visual change")
+        if tag in {"p-tag-input", "p-multi-select"}:
+            option = "Swift" if tag == "p-tag-input" else "Engineering"
+            label = "Skills" if tag == "p-tag-input" else "Teams"
+
+            def selected_field(hierarchy: Hierarchy) -> ET.Element:
+                fields = [node for node in hierarchy.nodes()
+                    if node.attrib.get("class") == "android.widget.Spinner"
+                    and node.attrib.get("content-desc") == label
+                    and node.attrib.get("clickable") == "true"
+                    and enabled(node)]
+                if len(fields) != 1:
+                    raise AuditFailure("selection field identity changed or became ambiguous")
+                return fields[0]
+
+            initial_labels = descendant_labels(selected_field(before))
+            if option in initial_labels:
+                raise AuditFailure("selection audit requires an initially unselected option")
+
+            def toggle_option(hierarchy: Hierarchy) -> None:
+                options = [node for node in hierarchy.nodes()
+                    if (node.attrib.get("text") or node.attrib.get("content-desc")) == option
+                    and bounds(node).height > 0]
+                if not options:
+                    raise AuditFailure(f"selection option is missing: {option}")
+                audit.tap(bounds(options[-1]))
+
+            opened = audit.dump(f"{evidence_name}-open")
+            toggle_option(opened)
+            audit.back()
+            added = audit.dump(f"{evidence_name}-added")
+            field = selected_field(added)
+            if not initial_labels | {option} <= descendant_labels(field):
+                raise AuditFailure("added selection was not retained alongside existing values")
+            audit.screenshot_hash(f"{evidence_name}-added")
+            audit.tap(bounds(field))
+            reopened = audit.dump(f"{evidence_name}-reopened")
+            toggle_option(reopened)
+            audit.back()
+            removed = audit.dump(f"{evidence_name}-removed")
+            if descendant_labels(selected_field(removed)) != initial_labels:
+                raise AuditFailure("removing after reopen did not restore the original selection")
+            assert_healthy(removed, route)
+            audit.screenshot_hash(f"{evidence_name}-removed")
+            return removed, True
         if tag in {"p-menu", "p-speed-dial"}:
             opened = audit.dump(f"{evidence_name}-open")
             expected_action_labels = (
