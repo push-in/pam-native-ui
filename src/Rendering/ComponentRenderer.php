@@ -3792,6 +3792,7 @@ final class ComponentRenderer
             $rows = [];
             foreach (array_values($source) as $index => $definition) {
                 $item = is_array($definition) ? $definition : ['title' => $definition];
+                $itemDisabled = $disabled || self::flag(['disabled' => $item['disabled'] ?? false], 'disabled');
                 $value = $item['value'] ?? $item['id'] ?? $item['title'] ?? $index + 1;
                 $label = $item['label'] ?? $item['title'] ?? $value;
                 if (!is_scalar($value) || !is_scalar($label)) continue;
@@ -3842,14 +3843,17 @@ final class ComponentRenderer
                         lineHeight: 22.0,
                         fontWeight: $hasChildren || $isSelected ? 600 : 400,
                         textColor: $foreground,
+                        width: 0.0,
                         flexGrow: 1.0,
+                        flexShrink: 1.0,
                     )),
                 )->style(new Style(
                     widthPercent: 100.0,
                     minHeight: $rowHeight,
-                    paddingLeft: 10.0 + ($depth * 24.0),
+                    paddingLeft: 12.0 + ($depth * 24.0),
                     paddingRight: 12.0,
-                    gap: 10.0,
+                    paddingVertical: 8.0,
+                    gap: 12.0,
                     alignItems: Align::Center,
                 ));
                 $row = Pressable::make($rowContent)->style(new Style(
@@ -3859,8 +3863,8 @@ final class ComponentRenderer
                     backgroundColor: $isSelected
                         ? $theme->color(ColorToken::Accent)
                         : 0x00000000,
-                    opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
-                ))->property(PropKey::Enabled, !$disabled)
+                    opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+                ))->property(PropKey::Enabled, !$itemDisabled)
                     ->property(PropKey::Selected, $isSelected)
                     ->accessibilityRole($hasChildren
                         ? AccessibilityRole::Button
@@ -3877,13 +3881,15 @@ final class ComponentRenderer
                         MaterialTokens::STATE_OPACITY[4],
                     );
                 if (!$hasChildren) {
-                    $row = $row->accessibilityChecked(
+                    $row = $row->property(PropKey::Checked, $isSelected)->accessibilityChecked(
                         $isSelected
                             ? AccessibilityCheckedState::Checked
                             : AccessibilityCheckedState::Unchecked,
                     );
+                } else {
+                    $row = $row->accessibilityExpanded($expanded);
                 }
-                if (!$disabled && $hasChildren && $toggle instanceof Closure) {
+                if (!$itemDisabled && $hasChildren && $toggle instanceof Closure) {
                     $row = $row->onPress(static function () use (
                         $toggle,
                         $opened,
@@ -3897,7 +3903,7 @@ final class ComponentRenderer
                         if (!$expanded) $next[] = $value;
                         return $toggle($next);
                     });
-                } elseif (!$disabled && !$hasChildren && $change instanceof Closure) {
+                } elseif (!$itemDisabled && !$hasChildren && $change instanceof Closure) {
                     $row = $row->onPress(static function () use (
                         $change,
                         $multiple,

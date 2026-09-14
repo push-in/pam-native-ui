@@ -4350,6 +4350,45 @@ if ($dataGrid->kind() !== NodeKind::CustomView || count($dataGrid->children()) <
     throw new RuntimeException('p-data-grid must reuse the virtual native table contract.');
 }
 $treeSelectChanged = null;
+foreach ([false, true] as $treeDisabled) {
+    $treeRows = $tags['p-tree-select']::make([
+        'disabled' => $treeDisabled, 'opened' => [1], 'modelValue' => [2], 'multiple' => true,
+        'items' => [
+            ['value' => 1, 'label' => 'Group', 'children' => [
+                ['value' => 2, 'label' => 'Selected leaf'],
+                ['value' => 3, 'label' => 'Unavailable leaf', 'disabled' => true],
+            ]],
+        ],
+    ])->onChange(static function (array $value): void {})
+        ->onToggle(static function (array $value): void {})
+        ->toElement()->children();
+    if (count($treeRows) !== 3) {
+        throw new RuntimeException('Opened tree group must expose both leaves.');
+    }
+    foreach ($treeRows as $index => $row) {
+        $blocked = $treeDisabled || $index === 2;
+        if (
+            ($row->properties()[PropKey::Enabled->value] ?? null) !== !$blocked
+            || isset($row->events()[EventKind::Press->value]) === $blocked
+        ) {
+            throw new RuntimeException('Tree item and group disabled states must block actions.');
+        }
+    }
+    if (($treeRows[1]->properties()[PropKey::Checked->value] ?? null) !== true) {
+        throw new RuntimeException('Selected tree leaf must publish checked native state.');
+    }
+    if (($treeRows[0]->properties()[PropKey::AccessibilityExpanded->value] ?? null) !== true) {
+        throw new RuntimeException('Opened tree group must expose expanded accessibility state.');
+    }
+    $leafContent = $treeRows[1]->children()[0];
+    if (
+        ($leafContent->properties()[PropKey::PaddingLeft->value] ?? null) !== 36.0
+        || ($leafContent->properties()[PropKey::PaddingVertical->value] ?? null) !== 8.0
+        || ($leafContent->children()[1]->properties()[PropKey::Width->value] ?? null) !== 0.0
+    ) {
+        throw new RuntimeException('Tree labels must wrap inside padded, indented rows.');
+    }
+}
 $treeSelect = $tags['p-tree-select']::make([
     'items' => [['title' => 'Android', 'value' => 'android']],
 ])->onChange(static function (string $value) use (&$treeSelectChanged): void {

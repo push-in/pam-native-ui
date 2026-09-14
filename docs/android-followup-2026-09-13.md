@@ -1544,3 +1544,14 @@ directory. Added --search-only to avoid rerunning the unchanged picker flow.
 PHPStan level 9 passed. Build took 11s, installation succeeded and cleanup
 removed 88MiB. This closes the previous alignment recheck at Samsung font 1.1;
 it is not full multi-theme, enlarged-font or TalkBack approval.
+
+### Tree Select state and layout batch
+
+Generated tree rows now honor item.disabled as well as whole-tree disabled,
+omit blocked handlers, expose Checked on leaves and AccessibilityExpanded on
+groups. Long labels use remaining row width; padding/gap follow 12dp increments,
+with 8dp vertical breathing room and the existing 24dp depth indentation.
+Regression checks cover open groups, selected leaves, item/group blocking and
+indented label constraints. Matrix passes. This is UI composition responsibility;
+no new Native primitive is needed. Physical tree interaction/layout verification
+and full accessibility-service testing remain pending.
