@@ -1998,6 +1998,17 @@ final class ComponentRenderer
             $nativeBackground = null;
             $styleAppliedToContent = true;
         }
+        if (self::isIcon($part)) {
+            // Icons are custom hosts: native text/tint style alone cannot recolor
+            // their drawing payload. Keep the resolved style and host in sync.
+            $runtimeProps['color'] = $styleOverride->tintColor
+                ?? $styleOverride->textColor
+                ?? (isset($runtimeProps['color']) || isset($runtimeProps['action'])
+                    ? self::iconColor($runtimeProps) : null)
+                ?? $rootStyle->tintColor
+                ?? $rootStyle->textColor
+                ?? self::iconColor($runtimeProps);
+        }
         $element = self::primitive(
             $part,
             $runtimeProps,

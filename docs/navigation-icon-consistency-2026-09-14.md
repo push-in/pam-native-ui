@@ -42,3 +42,20 @@ includes the color correction. The build completed in 11 seconds and cleaned
 This closes the earlier color and front-drawer retention checks for this emulator
 candidate. Large fonts, dark theme, full navigation/back-stack integration,
 TalkBack, Samsung, iOS and performance are not established by this scoped batch.
+
+## Shared icon style propagation
+
+Reviewing other compositions found the same style-only tint pattern in Search
+and additional built-in icon slots. The shared icon rendering path now transfers
+color into the custom host payload before construction. Precedence is explicit
+style tint, explicit style text color, explicit color/action prop, resolved root
+tint/text color, then theme foreground. This preserves explicit component colors
+while allowing actual style overrides to win.
+
+Regression cases cover named native UI icons, generic Icon, PIcon, competing
+tint/text overrides, and an explicit packed color without a style override. The
+first implementation incorrectly let the default root text color override the
+explicit color prop; the regression caught this and precedence was corrected.
+The full material matrix passes. This shared follow-up has not yet been installed
+on Android: the APK and screenshots above prove the earlier navigation correction,
+not the newly generalized style path. No native platform code was duplicated.

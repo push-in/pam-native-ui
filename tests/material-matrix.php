@@ -678,6 +678,21 @@ $semanticIconStyle = MaterialStyleResolver::resolve([
     'color' => 'secondary',
 ], $iconTheme);
 $customIconColor = 0xFF7DD3FC;
+foreach ([
+    ['StarIcon', [], new Style(tintColor: 0xFF123456), 0xFF123456],
+    ['Icon', ['icon' => 'StarIcon'], new Style(textColor: 0xFF654321), 0xFF654321],
+    ['PIcon', ['icon' => 'StarIcon', 'color' => 'secondary'], new Style(tintColor: 0xFF123456, textColor: 0xFF654321), 0xFF123456],
+    ['Icon', ['icon' => 'StarIcon', 'color' => 0xFFABCDEF], null, 0xFFABCDEF],
+] as [$iconPart, $iconProps, $iconOverride, $expectedColor]) {
+    $styledIcon = \Pam\MobileUi\Rendering\ComponentRenderer::render(
+        $iconPart, $iconProps, [], [], $iconOverride, null,
+    );
+    $styledIconHost = $styledIcon->properties()[PropKey::HostProperties->value] ?? null;
+    if (!$styledIconHost instanceof BinaryValue
+        || (Wire::decodeMap($styledIconHost->bytes)['color'] ?? null) !== $expectedColor) {
+        throw new RuntimeException('Icon host must honor style color overrides without losing explicit colors.');
+    }
+}
 $customIconStyle = MaterialStyleResolver::resolve([
     '__materialComponent' => 'PIcon',
     'color' => $customIconColor,
