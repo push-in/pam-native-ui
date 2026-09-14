@@ -2188,6 +2188,43 @@ if (
         'Read-only autocomplete must expose its value without an opening action.',
     );
 }
+foreach (['p-select', 'p-autocomplete', 'p-combobox', 'p-tag-input', 'p-multi-select'] as $lockedTag) {
+    foreach (['readonly', 'readOnly', 'isReadOnly', 'disabled', 'isDisabled'] as $lockProp) {
+        $lockedSelection = $tags[$lockedTag]::make([
+            $lockProp => true, 'open' => true, 'items' => ['Locked option'],
+        ])->onChange(static fn (mixed $value): mixed => $value)->toElement();
+        $stack = [$lockedSelection];
+        $foundLockedOption = false;
+        while ($stack !== []) {
+            $candidate = array_pop($stack);
+            $properties = $candidate->properties();
+            $marker = $properties[PropKey::Value->value] ?? null;
+            if ($marker === 'Locked option') {
+                $foundLockedOption = true;
+                if (isset($candidate->events()[EventKind::Press->value])) {
+                    throw new RuntimeException("{$lockedTag} {$lockProp} must suppress option mutations.");
+                }
+            }
+            if ($candidate->kind() === NodeKind::Modal
+                && (($properties[PropKey::Visible->value] ?? false) !== false
+                    || isset($candidate->events()[EventKind::Change->value]))) {
+                throw new RuntimeException("{$lockedTag} {$lockProp} must not open or accept custom values.");
+            }
+            if (is_string($marker)
+                && (str_starts_with($marker, 'pam:readonly-select-trigger:')
+                    || str_starts_with($marker, 'pam:local-modal-trigger:'))
+                && (($properties[PropKey::Enabled->value] ?? true) !== false
+                    || ($properties[PropKey::AccessibilityExpanded->value] ?? false) !== false
+                    || isset($candidate->events()[EventKind::Press->value]))) {
+                throw new RuntimeException("{$lockedTag} {$lockProp} must block its field trigger.");
+            }
+            array_push($stack, ...$candidate->children());
+        }
+        if (!$foundLockedOption) {
+            throw new RuntimeException('Locked selection regression must inspect an actual option.');
+        }
+    }
+}
 $readOnlyTextField = $tags['p-text-field']::make([
     'label' => 'Name',
     'modelValue' => 'Ada',
@@ -4307,6 +4344,17 @@ if ($blockedDateChanged !== null) {
     throw new RuntimeException('p-date-range-picker must reject disabled dates.');
 }
 foreach (['p-date-range-picker', 'p-time-range-picker'] as $rangeTag) {
+    foreach ([false, true] as $isDisabled) {
+        $adaptiveRange = $tags[$rangeTag]::make(['disabled' => $isDisabled])->toElement();
+        foreach ($adaptiveRange->children() as $field) {
+            $pickerStyle = $field->children()[1]->properties();
+            if (isset($pickerStyle[PropKey::Height->value])
+                || ($pickerStyle[PropKey::MinHeight->value] ?? null) !== 56.0
+                || ($pickerStyle[PropKey::PaddingVertical->value] ?? null) !== 12.0) {
+                throw new RuntimeException('Range fields must grow with scaled/wrapped text and preserve vertical breathing room.');
+            }
+        }
+    }
     foreach (['disabled', 'isDisabled'] as $disabledProp) {
         $range = $tags[$rangeTag]::make([
             $disabledProp => true, 'fromLabel' => 'Departure', 'toLabel' => 'Arrival',
@@ -4599,6 +4647,19 @@ foreach (['disabled', 'isDisabled', 'loading'] as $blockedProp) {
     }
 }
 $selectedChartPoint = null;
+$loadingResult = $tags['p-result-state']::make([
+    'loading' => true, 'actionLabel' => 'Preparing',
+])->toElement();
+if ($loadingResult->children()[0]->children()[0]->kind() !== NodeKind::ActivityIndicator
+    || ($loadingResult->children()[1]->properties()[PropKey::Text->value] ?? null) !== 'In progress'
+    || ($loadingResult->children()[3]->properties()[PropKey::AccessibilityBusy->value] ?? false) !== true) {
+    throw new RuntimeException('Loading results must display native progress and announce a busy action, not success.');
+}
+foreach ([1, 2] as $copyIndex) {
+    if (($loadingResult->children()[$copyIndex]->properties()[PropKey::MaxWidthPercent->value] ?? null) !== 100.0) {
+        throw new RuntimeException('Result copy must wrap within its available width.');
+    }
+}
 $chart = $tags['p-chart']::make([
     'values' => '12,18,14,26',
     'accessibilityLabel' => 'Revenue trend',

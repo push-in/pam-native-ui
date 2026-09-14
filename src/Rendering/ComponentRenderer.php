@@ -1871,7 +1871,7 @@ final class ComponentRenderer
                 $readOnly = self::flag(
                     $props,
                     'readonly',
-                    self::flag($props, 'readOnly'),
+                    self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')),
                 );
                 $field = Pressable::make(...$visualChildren)
                     ->style($style)
@@ -1884,7 +1884,7 @@ final class ComponentRenderer
                         : ($materialComponent === 'PSelect'
                             ? 'Opens available options'
                             : 'Opens searchable options'))
-                    ->accessibilityExpanded(self::flag($props, 'open'));
+                    ->accessibilityExpanded(!$fieldDisabled && !$readOnly && self::flag($props, 'open'));
                 if ($triggerDescriptor instanceof Element) {
                     $marker = $triggerDescriptor->properties()[
                         PropKey::Value->value
@@ -4247,26 +4247,39 @@ final class ComponentRenderer
             'warning' => ColorToken::Warning,
             default => ColorToken::Success,
         };
+        $loading = self::flag($props, 'loading');
+        $foreground = match ($color) {
+            ColorToken::Destructive => ColorToken::DestructiveForeground,
+            ColorToken::Warning => ColorToken::WarningForeground,
+            default => ColorToken::SuccessForeground,
+        };
         $content = $children;
         if ($content === []) {
             $iconClass = MaterialComponentMap::TAGS['p-icon'];
-            $icon = $iconClass::make([
-                'icon' => $iconName,
-                'size' => 32,
-                'color' => 0xFFFFFFFF,
-                'decorative' => true,
-            ]);
+            $icon = $loading
+                ? ActivityIndicator::make()->color($theme->color(ColorToken::Primary))
+                    ->style(new Style(width: 32.0, height: 32.0))
+                : $iconClass::make([
+                    'icon' => $iconName,
+                    'size' => 32,
+                    'color' => $theme->color($foreground),
+                    'decorative' => true,
+                ]);
             $content[] = View::make($icon)->style(new Style(
                 width: 64.0, height: 64.0, borderRadius: 32.0,
-                backgroundColor: $theme->color($color),
+                backgroundColor: $theme->color($loading ? ColorToken::Accent : $color),
                 alignItems: Align::Center, justifyContent: Justify::Center,
             ));
-            $content[] = Text::make(self::text($props, 'title', 'All done'))->style(new Style(
+            $content[] = Text::make(self::text($props, 'title', $loading ? 'In progress' : 'All done'))->style(new Style(
+                maxWidthPercent: 100.0,
                 fontSize: 24.0, lineHeight: 32.0, fontWeight: 700,
                 textColor: $theme->color(ColorToken::OnSurface),
                 textAlign: TextAlignment::Center,
             ));
-            $content[] = Text::make(self::text($props, 'description', 'Your request was completed successfully.'))->style(new Style(
+            $content[] = Text::make(self::text($props, 'description', $loading
+                ? 'Your request is being processed.'
+                : 'Your request was completed successfully.'))->style(new Style(
+                maxWidthPercent: 100.0,
                 fontSize: 15.0, lineHeight: 22.0,
                 textColor: $theme->color(ColorToken::MutedForeground),
                 textAlign: TextAlignment::Center,
@@ -4286,7 +4299,8 @@ final class ComponentRenderer
                     backgroundColor: $theme->color(ColorToken::Primary),
                     alignItems: Align::Center, justifyContent: Justify::Center,
                 ))->enabled(!$actionDisabled)->accessibilityRole(AccessibilityRole::Button)
-                    ->accessibilityLabel((string) $actionLabel);
+                    ->accessibilityLabel((string) $actionLabel)
+                    ->accessibilityBusy($loading);
                 if (!$actionDisabled && isset($events[EventKind::Press->value])) {
                     $button = $button->onPress($events[EventKind::Press->value]);
                 }
@@ -4641,8 +4655,8 @@ final class ComponentRenderer
                     new Style(
                         widthPercent: 100.0,
                         minWidth: 0.0,
-                        height: 56.0,
                         minHeight: 56.0,
+                        paddingVertical: 12.0,
                         paddingHorizontal: 16.0,
                         backgroundColor: $theme->color($disabled
                             ? ColorToken::SurfaceSunken
@@ -4747,7 +4761,7 @@ final class ComponentRenderer
                         fontSize: 15.0,
                         lineHeight: 24.0,
                         fontWeight: 600,
-                        textColor: $current === ''
+                        textColor: $current === '' || $disabled
                             ? $theme->color(ColorToken::MutedForeground)
                             : $theme->color(ColorToken::OnSurface),
                         textAlign: TextAlignment::Center,
@@ -4756,11 +4770,15 @@ final class ComponentRenderer
                     new Style(
                         widthPercent: 100.0,
                         minWidth: 0.0,
-                        height: 56.0,
                         minHeight: 56.0,
+                        paddingVertical: 12.0,
                         paddingHorizontal: 12.0,
-                        backgroundColor: $theme->color(ColorToken::SurfaceElevated),
-                        borderColor: $theme->color(ColorToken::Outline),
+                        backgroundColor: $theme->color($disabled
+                            ? ColorToken::SurfaceSunken
+                            : ColorToken::SurfaceElevated),
+                        borderColor: $theme->color($disabled
+                            ? ColorToken::Border
+                            : ColorToken::Outline),
                         borderWidth: 1.0,
                         borderRadius: 16.0,
                         alignItems: Align::Center,
@@ -9560,6 +9578,10 @@ final class ComponentRenderer
         $theme = ThemeManager::current();
         $componentValue = $props['__materialComponent'] ?? 'PSelect';
         $component = is_string($componentValue) ? $componentValue : 'PSelect';
+        $readOnly = self::flag($props, 'readonly',
+            self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
+        $disabled = self::flag($props, 'disabled');
+        $interactionBlocked = $disabled || $readOnly;
         $compoundProps = $props;
         unset($compoundProps['__materialComponent']);
         $rawSelectedValue = $props['modelValue']
@@ -9674,7 +9696,7 @@ final class ComponentRenderer
         }
 
         $contentChildren = [];
-        $change = $events[EventKind::Change->value] ?? null;
+        $change = $interactionBlocked ? null : ($events[EventKind::Change->value] ?? null);
         $instanceIdentity = $props['id']
             ?? $props['name']
             ?? $props['instanceKey']
@@ -9691,7 +9713,7 @@ final class ComponentRenderer
                 'value' => $item['value'],
                 'checked' => $selected,
                 'selected' => $selected,
-                'disabled' => $item['disabled'],
+                'disabled' => $interactionBlocked || $item['disabled'],
                 'closeOnSelect' => !$multiple,
                 'accessibilityLabel' => $item['label'],
             ];
@@ -9744,7 +9766,7 @@ final class ComponentRenderer
         // protocol text node here would produce two announcements and, when
         // there are no sheet items to anchor the native layout pass, could
         // place both labels over the search field.
-        $initiallyOpen = self::flag($props, 'open');
+        $initiallyOpen = !$interactionBlocked && self::flag($props, 'open');
         $sheetProps = [
             ...$compoundProps,
             'selectedValue' => $selectedValue,
@@ -9887,21 +9909,16 @@ final class ComponentRenderer
             ->property(PropKey::Visible, $initiallyOpen);
 
         $triggerEvents = [];
-        $readOnly = self::flag(
-            $props,
-            'readonly',
-            self::flag($props, 'readOnly'),
-        );
         $toggle = $events[EventKind::Toggle->value] ?? null;
-        if (!$readOnly && $toggle !== null) {
+        if (!$interactionBlocked && $toggle !== null) {
             $triggerEvents[EventKind::Press->value] =
                 static fn () => $toggle(true);
-        } elseif (!$readOnly && isset($events[EventKind::Press->value])) {
+        } elseif (!$interactionBlocked && isset($events[EventKind::Press->value])) {
             $triggerEvents[EventKind::Press->value] =
                 $events[EventKind::Press->value];
         }
-        $disabled = self::flag($props, 'disabled');
         $displayContent = self::themedText($display)->style(new Style(
+            width: 0.0,
             flexGrow: 1.0,
             textColor: $theme->color(
                 $hasDisplayValue ? ColorToken::OnSurface : ColorToken::MutedForeground,
@@ -9917,12 +9934,14 @@ final class ComponentRenderer
             $tagVisuals = array_map(
                 static fn (string $tag): Element => View::make(
                     Text::make($tag)->style(new Style(
+                        maxWidthPercent: 100.0,
                         textColor: $theme->color(ColorToken::Primary),
                         fontSize: 12.0,
                         lineHeight: 20.0,
                         fontWeight: 600,
                     )),
                 )->style(new Style(
+                    maxWidthPercent: 100.0,
                     minHeight: 28.0,
                     paddingHorizontal: 10.0,
                     paddingVertical: 4.0,
@@ -9944,6 +9963,7 @@ final class ComponentRenderer
                 ));
             }
             $displayContent = Row::make(...$tagVisuals)->style(new Style(
+                width: 0.0,
                 flexGrow: 1.0,
                 gap: 6.0,
                 flexWrap: \Pam\Native\FlexWrap::Wrap,
@@ -10019,7 +10039,7 @@ final class ComponentRenderer
                 : ($component === 'PSelect'
                     ? 'Opens available options'
                     : 'Opens searchable options'))
-            ->accessibilityExpanded(self::flag($props, 'open'))
+            ->accessibilityExpanded($initiallyOpen)
             ->property(
                 PropKey::Value,
                 ($readOnly

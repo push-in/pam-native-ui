@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--results-only', action='store_true')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('interval_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 module = importlib.util.module_from_spec(spec)
@@ -54,9 +55,15 @@ try:
         audit.tap(module.node_bounds(node))
         root = audit.dump(name+'-after')
         assert any(n.attrib.get('content-desc') == label for n in root.iter('node')), name+' changed action'
+        if name == 'loading-result':
+            # PAM's indicator is a custom native host, not necessarily an
+            # android.widget.ProgressBar in the accessibility hierarchy.
+            # Its visual presence requires inspection of the saved capture.
+            assert any(n.attrib.get('text') == 'Preparing report' for n in root.iter('node')), 'Loading result lacks its progress message'
         audit.screenshot(name)
     report['checks'].append({'component': 'result-state', 'enabledAction': True, 'disabledAndLoadingRejected': True})
-    for tag in ['p-date-range-picker', 'p-time-range-picker']:
+    range_tags = [] if args.results_only else ['p-date-range-picker', 'p-time-range-picker']
+    for tag in range_tags:
         launch(tag)
         node = locate('From', tag+'-from')
         before = node.attrib.get('content-desc')
@@ -68,6 +75,17 @@ try:
         root = audit.dump(tag+'-cancelled')
         assert any(n.attrib.get('content-desc') == before for n in root.iter('node')), tag+' did not return to field'
         report['checks'].append({'component': tag, 'opensNativeDialog': True, 'returnsAfterCancel': True})
+    if range_tags:
+        audit.set_setting('system', 'font_scale', '2.0')
+    for tag in range_tags:
+        launch(tag)
+        node = locate('From', tag+'-large-font')
+        audit.screenshot(tag+'-large-font')
+        audit.tap(module.node_bounds(node))
+        root = audit.dump(tag+'-large-font-dialog')
+        assert any(n.attrib.get('resource-id') == 'android:id/button1' for n in root.iter('node')), tag+' did not open with large font'
+        audit.back()
+        report['checks'].append({'component': tag, 'fontScale': 2.0, 'opensNativeDialog': True})
 finally:
     audit.restore()
     (args.output/'report.json').write_text(json.dumps(report, indent=2))
