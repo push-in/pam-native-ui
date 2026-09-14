@@ -6471,9 +6471,12 @@ final class ComponentRoute extends Component
             'p-search-bar' => [
                 ['label' => 'Resting', 'props' => ['placeholder' => 'Search components']],
                 ['label' => 'Focused', 'props' => ['placeholder' => 'Search components', 'focused' => true]],
-                ['label' => 'With query', 'props' => ['modelValue' => 'Navigation']],
+                ['label' => 'With query', 'props' => ['modelValue' => 'Navigation', 'clearable' => true]],
                 ['label' => 'Long query', 'props' => ['modelValue' => 'Search invoices, customers and documents across all workspaces']],
                 ['label' => 'Outlined', 'props' => ['outlined' => true]],
+                ['label' => 'Clearable empty', 'props' => ['modelValue' => '', 'clearable' => true]],
+                ['label' => 'Read only', 'props' => ['modelValue' => 'Saved query', 'clearable' => true, 'readonly' => true]],
+                ['label' => 'Disabled', 'props' => ['modelValue' => 'Unavailable query', 'clearable' => true, 'disabled' => true]],
             ],
             'p-pagination' => [
                 ['label' => 'Read only', 'props' => ['modelValue' => 2, 'length' => 3, 'totalVisible' => 1, 'readonly' => true]],

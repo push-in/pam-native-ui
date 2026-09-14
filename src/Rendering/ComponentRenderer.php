@@ -3497,7 +3497,34 @@ final class ComponentRenderer
             null,
         );
 
-        return [$icon, $input];
+        $children = [$icon, $input];
+        if (self::flag($props, 'clearable')) {
+            $query = self::text($props, 'modelValue', self::text($props, 'value'));
+            $change = $events[EventKind::Change->value] ?? null;
+            $locked = self::flag($props, 'disabled', self::flag($props, 'isDisabled'))
+                || self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
+            $enabled = !$locked && $query !== '' && $change instanceof Closure;
+            // Reserve the action's width so typing/clearing never shifts the editor.
+            $clear = Pressable::make(self::render('Icon', [
+                'icon' => 'CloseIcon',
+                'color' => $theme->color(ColorToken::OnSurface),
+                'accessibilityHidden' => true,
+            ], [], [], new Style(width: 20.0, height: 20.0), null))
+                ->style(new Style(
+                    width: 48.0, height: 48.0, minWidth: 48.0, flexShrink: 0.0,
+                    borderRadius: 24.0, alignItems: Align::Center,
+                    justifyContent: Justify::Center,
+                    opacity: $enabled ? 1.0 : MaterialTokens::STATE_OPACITY[6],
+                ))->enabled($enabled)
+                ->accessibilityRole(AccessibilityRole::Button)
+                ->accessibilityLabel(self::text($props, 'clearLabel', 'Clear search'));
+            if ($enabled) {
+                $clear = $clear->onPress(static fn (): mixed => $change(''));
+            }
+            $children[] = $clear;
+        }
+
+        return $children;
     }
 
     /**

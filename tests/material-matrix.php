@@ -3539,12 +3539,15 @@ if (
 
 $searchClass = $tags['p-search-bar'];
 $searchValue = null;
+$submittedQuery = null;
 $search = $searchClass::make([
     'modelValue' => 'native',
     'placeholder' => 'Search components',
     'accessibilityLabel' => 'Search components',
 ])->onChange(static function (string $value) use (&$searchValue): void {
     $searchValue = $value;
+})->onSubmit(static function (string $value) use (&$submittedQuery): void {
+    $submittedQuery = $value;
 })->toElement();
 $searchInput = null;
 foreach ($search->children() as $child) {
@@ -3573,6 +3576,39 @@ if (
     );
 }
 $searchChange('navigation');
+$searchSubmit = $searchInput->events()[EventKind::Submit->value] ?? null;
+if (!$searchSubmit instanceof Closure) {
+    throw new RuntimeException('Search must forward native keyboard submission to its consumer.');
+}
+$searchSubmit('navigation');
+if ($submittedQuery !== 'navigation') {
+    throw new RuntimeException('Search submission must preserve the query payload.');
+}
+foreach ([[], ['disabled' => true], ['isDisabled' => true], ['readonly' => true],
+    ['readOnly' => true], ['isReadOnly' => true], ['modelValue' => '']] as $clearCase) {
+    $clearedValue = null;
+    $clearSearch = $searchClass::make([
+        'clearable' => true, 'clearLabel' => 'Limpar busca', 'modelValue' => 'query', ...$clearCase,
+    ])->onChange(static function (string $value) use (&$clearedValue): void {
+        $clearedValue = $value;
+    })->toElement();
+    $clearButton = $clearSearch->children()[2] ?? null;
+    $clearAction = $clearButton?->events()[EventKind::Press->value] ?? null;
+    $canClear = $clearCase === [];
+    if (!$clearButton instanceof \Pam\Native\Element
+        || ($clearButton->properties()[PropKey::Enabled->value] ?? null) !== $canClear
+        || ($clearButton->properties()[PropKey::Width->value] ?? null) !== 48.0
+        || ($clearButton->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Limpar busca'
+        || ($clearAction instanceof Closure) !== $canClear) {
+        throw new RuntimeException('Search clear action must retain its touch area and honor all editing locks.');
+    }
+    if ($clearAction instanceof Closure) {
+        $clearAction();
+        if ($clearedValue !== '') {
+            throw new RuntimeException('Search clear must publish an empty controlled query.');
+        }
+    }
+}
 if ($searchValue !== 'navigation') {
     throw new RuntimeException('p-search-bar must emit its native text change.');
 }

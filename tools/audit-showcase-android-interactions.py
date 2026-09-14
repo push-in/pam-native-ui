@@ -644,6 +644,32 @@ def exercise(
         return after, True
 
     if kind == InteractionKind.INPUT:
+        if tag == "p-search-bar":
+            clear_controls = [n for n in before.nodes()
+                if n.attrib.get("content-desc") == "Clear search" and enabled(n)]
+            if len(clear_controls) != 1:
+                raise AuditFailure("search preview must expose one enabled clear action")
+            clear_bounds = bounds(clear_controls[0])
+            query_fields = [n for n in before.nodes()
+                if n.attrib.get("class") == "android.widget.EditText"
+                and abs(bounds(n).center[1] - clear_bounds.center[1]) < 20
+                and n.attrib.get("text") == "Navigation"]
+            if len(query_fields) != 1:
+                raise AuditFailure("clear action has no unique populated search field")
+            field_bounds = bounds(query_fields[0])
+            audit.tap(clear_bounds)
+            before = audit.dump(f"{evidence_name}-cleared")
+            cleared_fields = [n for n in before.nodes()
+                if n.attrib.get("class") == "android.widget.EditText"
+                and bounds(n) == field_bounds]
+            cleared_actions = [n for n in before.nodes()
+                if n.attrib.get("content-desc") == "Clear search"
+                and bounds(n) == clear_bounds]
+            if len(cleared_fields) != 1 or cleared_fields[0].attrib.get("text") not in ("", "Search components"):
+                raise AuditFailure("clearing search failed or changed the editor bounds")
+            if len(cleared_actions) != 1 or enabled(cleared_actions[0]):
+                raise AuditFailure("empty search must disable its clear action without shifting")
+            audit.settled_screenshot_hash(f"{evidence_name}-cleared")
         candidates = [
             node for node in before.nodes()
             if enabled(node)

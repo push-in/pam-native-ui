@@ -1,5 +1,29 @@
 # Search family validation
 
+## Opt-in controlled clear action
+
+Search Bar now accepts `clearable: true` and an optional localized `clearLabel`
+(default `Clear search`). The trailing action reserves 48×48 layout space even
+for an empty query, preventing editor width changes. Pressing it emits `onChange`
+with an empty string; the consumer must update `modelValue`, as with text entry.
+Without a change handler, with an empty query, or under any supported editing
+lock, the action is disabled and has no press handler. Default anatomy is unchanged.
+
+PHP regressions cover empty/nonempty queries, the five lock aliases, translated
+label, stable width and the empty change payload. The render matrix passes.
+The new Android scenario passed on emulator-5554 (Android 16/API 36), candidate
+`f91f06bafeecf23fca02838419f64797aebb1094460b4ec3a6643a7368d50e98`.
+Report: `/tmp/pam-search-clear-20260914.json` (17.831 seconds, one pass).
+It clears the populated controlled instance, checks identical editor/action
+bounds and a disabled empty action, then checks native text entry. The cleared
+screenshot was inspected: the trailing icon is aligned and the hint is restored.
+The build took 10 seconds and its cleanup removed 100.5 MiB of generated artifacts.
+
+Keyboard submit forwarding is covered by PHP, not a new device IME assertion.
+Locked-action behavior is covered by PHP; the new read-only/disabled showcase
+examples still need device interaction coverage. Large text, RTL, dark theme,
+iOS and full component approval remain open. No publication is implied.
+
 PHP regression checks now include Command Palette in the shared selection-lock
 matrix (readonly/readOnly/isReadOnly/disabled/isDisabled) and verify that Search
 Bar preserves its query and accessible label with editing disabled for each alias.
