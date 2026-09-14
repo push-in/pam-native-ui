@@ -125,7 +125,9 @@ for pass in 1 2; do
       and .package == $package
       and .device == $serial
       and .resultStatus == 1
-      and ([.checks[]] | all)' \
+      and (.checks | type == "object")
+      and (.checks | length > 0)
+      and ([.checks[] | type == "boolean" and . == true] | all)' \
     "${pass_output}/report.json" >/dev/null
 done
 

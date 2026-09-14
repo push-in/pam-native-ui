@@ -79,6 +79,7 @@ class AndroidPhysicalGateTest(unittest.TestCase):
             fake_bin / "python3",
             """
             import json
+            import os
             import sys
             from pathlib import Path
 
@@ -93,7 +94,7 @@ class AndroidPhysicalGateTest(unittest.TestCase):
                 "device": serial,
                 "package": package,
                 "resultStatus": 1,
-                "checks": {"fixturePassed": True},
+                "checks": json.loads(os.environ.get("PAM_FAKE_CHECKS", '{"fixturePassed": true}')),
                 "evidence": [{"path": str(output)}],
             }
             (output / "report.json").write_text(json.dumps(report) + "\\n", encoding="utf-8")
@@ -141,6 +142,21 @@ class AndroidPhysicalGateTest(unittest.TestCase):
                 ["manualVisualReview", "realInteractionRecording"],
                 gate["approvalPending"],
             )
+
+    def test_empty_or_non_boolean_checks_cannot_pass(self) -> None:
+        for checks in [{}, [], {"passed": "false"}, {"passed": 1}, {"passed": {}}, {"passed": False}]:
+            with self.subTest(checks=checks), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                environment, apk = self.fixture(directory)
+                environment["PAM_FAKE_CHECKS"] = json.dumps(checks)
+                output = directory / "evidence"
+                result = subprocess.run(
+                    ["bash", str(GATE), "p-range-slider", "physical-samsung", str(apk),
+                     "dev.pam.mobileui.catalog", str(HARNESS), str(output)],
+                    cwd=ROOT, env=environment, check=False, capture_output=True, text=True,
+                )
+                self.assertNotEqual(0, result.returncode)
+                self.assertFalse((output / "two-pass-gate.json").exists())
 
     def test_emulator_identity_is_rejected_before_evidence_is_created(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
