@@ -6,6 +6,10 @@ PAM Native primitive.
 
 ## Native primitives, not duplicated
 
+This policy distinguishes removed aliases from the current 114-component catalog.
+Visual compositions may wrap native capabilities; they must not replace the
+underlying navigation, scrolling, picking or rendering engines.
+
 These removed aliases must use the existing PAM Native implementation:
 
 | Removed alias | Native capability |
@@ -13,9 +17,7 @@ These removed aliases must use the existing PAM Native implementation:
 | `p-app` | `App`, `Screen`, `SafeAreaView` |
 | `p-container` | Screen content owns its native width, insets and responsive constraints. |
 | `p-layout`, `p-layout-item`, `p-main` | `Screen`, native routers and safe-area layout |
-| `p-navigation-drawer` | `DrawerRouter`, `DrawerNavigator`, `DrawerLayoutAndroid` |
 | `p-bottom-navigation` | `TabRouter`, `TabNavigator` |
-| `p-pull-to-refresh` | `RefreshControl` |
 | `p-virtual-scroll` | `VirtualizedList`, `FlatList`, `SectionList`, `VirtualGrid` |
 | `p-system-bar` | `StatusBar` |
 | `p-table` | `p-data-table` and native virtualized rows |
@@ -23,6 +25,23 @@ These removed aliases must use the existing PAM Native implementation:
 The retained `p-infinite-scroll` and `p-data-table-virtual` components add
 mobile-facing loading and presentation behavior on top of native
 virtualization; they do not implement a second scrolling engine.
+
+## Current universal compositions
+
+These public components are intentionally retained in the current catalog:
+
+| UI component | UI responsibility | PAM Native responsibility |
+| --- | --- | --- |
+| `p-app-scaffold` | Themed application composition | Screens, safe areas and platform layout |
+| `p-navigation-drawer` | Themed drawer content and presentation API | Drawer layout, gestures and navigation primitives |
+| `p-pull-to-refresh` | Consistent refresh presentation and event API | Native refresh control and scrolling |
+| `p-virtual-list`, `p-section-list` | Themed collection composition | Virtualization, recycling and scroll behavior |
+| `p-pagination` | Explicit page selection for paged collections | Native interactive controls; data fetching remains application-owned |
+| `p-file-input` | File selection trigger, filename and visual state | Document picker and platform file access; upload orchestration remains application-owned |
+
+Use the [catalog](catalog.md) for registered tags and the
+[ownership guide](platform-ownership.md) for implementation boundaries. Catalog
+membership does not imply that all visual and interaction release gates passed.
 
 ## Removed web-oriented surface
 
@@ -37,7 +56,6 @@ The following Vuetify concepts do not justify a mobile component API:
 | `p-footer` | Web document semantics do not map to a distinct native control. |
 | `p-responsive` | PAM Native layout and image sizing already provide responsive constraints. |
 | `p-breadcrumbs` | Native stack navigation, back actions and screen titles communicate hierarchy. |
-| `p-pagination` | Mobile collections use native virtualization, infinite loading or an explicit load-more action. |
 | `p-lazy` | Visibility-aware mounting belongs to the native renderer rather than a visual component. |
 | `p-window` | Routers, tabs, carousels and steppers already own mobile screen transitions. |
 | `p-data-iterator` | Data orchestration belongs to application state and repositories. |
@@ -47,10 +65,10 @@ The following Vuetify concepts do not justify a mobile component API:
 | `p-list-group` | It did not provide disclosure anatomy; nested disclosure uses the operational `p-expansion-panels` family. |
 | Date/time picker anatomy parts | Mobile date/time controls own their complete native surface; fake `controls`, `header`, `month`, `years` and `clock` aliases were removed. |
 
-File picking and uploads are not UI components. Applications use PAM Native
-document, media, camera or share capabilities and render progress with the
-existing progress, list and feedback components. `p-file-input`,
-`p-file-upload` and `p-file-upload-item` are not part of PAM UI.
+File access and upload execution are not UI responsibilities. `p-file-input`
+provides presentation on top of PAM Native document picking. Applications own
+upload orchestration and render progress with existing feedback components.
+`p-file-upload` and `p-file-upload-item` remain outside this catalog.
 
 ## Retention rule
 
