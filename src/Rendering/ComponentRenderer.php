@@ -10166,21 +10166,31 @@ final class ComponentRenderer
             $change !== null
             && in_array($component, ['PCombobox', 'PTagInput'], true)
         ) {
+            $isProtected = static function (mixed $value) use ($normalized): bool {
+                foreach ($normalized as $item) {
+                    if ($item['disabled'] && self::sameScalar($item['value'], $value)) return true;
+                }
+                return false;
+            };
             // The native selection sheet emits the scalar row/custom value.
             // TagInput is a collection control, so keep its public contract
             // array-shaped and merge/toggle here instead of replacing every
             // existing tag with the last tapped value.
             $portalEvents[EventKind::Change->value] = $component === 'PTagInput'
-                ? static function (mixed $value) use ($change, $selectedValues): void {
+                ? static function (mixed $value) use ($change, $selectedValues, $isProtected): void {
                     if (is_array($value)) {
-                        $change(array_values(array_filter(
+                        $next = array_values(array_filter(
                             $value,
-                            static fn (mixed $item): bool => is_scalar($item),
-                        )));
+                            static fn (mixed $item): bool => is_scalar($item) && !$isProtected($item),
+                        ));
+                        foreach ($selectedValues as $selected) {
+                            if ($isProtected($selected)) $next[] = $selected;
+                        }
+                        $change($next);
 
                         return;
                     }
-                    if (!is_scalar($value)) {
+                    if (!is_scalar($value) || $isProtected($value)) {
                         return;
                     }
                     self::listSelectionHandler(
@@ -10189,7 +10199,9 @@ final class ComponentRenderer
                         $selectedValues,
                     )();
                 }
-                : $change;
+                : static function (mixed $value) use ($change, $isProtected): void {
+                    if (is_scalar($value) && !$isProtected($value)) $change($value);
+                };
         }
         if (isset($events[EventKind::Native->value])) {
             $portalEvents[EventKind::Native->value] =

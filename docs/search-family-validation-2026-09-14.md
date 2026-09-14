@@ -1,5 +1,14 @@
 # Search family validation
 
+## Custom-value protection
+
+Tag Input and Combobox now reject scalar custom-value events matching disabled
+options, using the same scalar identity comparison as selection. Tag Input array
+replacement also rejects new disabled values while retaining already-selected
+protected values. Valid custom values remain accepted. PHP regressions exercise
+integer/string identities, valid additions and protected collection replacement.
+Device reproduction/coverage for this event path is still pending.
+
 ## Shared option lock normalization
 
 Select, Autocomplete, Combobox, Tag Input and Multi Select now normalize individual

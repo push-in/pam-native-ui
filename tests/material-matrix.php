@@ -2124,6 +2124,39 @@ if ($createdTag !== ['Android', 'Rust']) {
 }
 
 $multipleAutocompleteValue = null;
+foreach (['p-tag-input', 'p-combobox'] as $customControlTag) {
+    $customResult = null;
+    $customControl = $tags[$customControlTag]::make([
+        'items' => [
+            ['value' => 1, 'label' => 'Required', 'disabled' => true],
+            ['value' => 2, 'label' => 'Unavailable', 'disabled' => true],
+        ],
+        'modelValue' => $customControlTag === 'p-tag-input' ? [1] : 1,
+    ])->onChange(static function (mixed $value) use (&$customResult): void {
+        $customResult = $value;
+    })->toElement();
+    $pendingCustomNodes = [$customControl];
+    $portalChange = null;
+    while ($pendingCustomNodes !== []) {
+        $customNode = array_pop($pendingCustomNodes);
+        $customChange = $customNode->events()[EventKind::Change->value] ?? null;
+        if ($customChange instanceof Closure) $portalChange = $customChange;
+        array_push($pendingCustomNodes, ...$customNode->children());
+    }
+    if (!$portalChange instanceof Closure) throw new RuntimeException('Custom selection needs a portal event.');
+    foreach ([1, '1', 2, '2'] as $protectedInput) {
+        $portalChange($protectedInput);
+        if ($customResult !== null) throw new RuntimeException('Custom input must not bypass disabled options.');
+    }
+    $portalChange('New tag');
+    if ($customResult !== ($customControlTag === 'p-tag-input' ? [1, 'New tag'] : 'New tag')) {
+        throw new RuntimeException('Custom input must still accept an unprotected new value.');
+    }
+    if ($customControlTag === 'p-tag-input') {
+        $portalChange([2, 'New tag']);
+        if ($customResult !== ['New tag', 1]) throw new RuntimeException('Tag replacement must retain protected selections and reject unavailable additions.');
+    }
+}
 $multipleAutocomplete = $tags['p-autocomplete']::make([
     'label' => 'Team',
     'items' => ['Design', 'Engineering', 'Product'],
