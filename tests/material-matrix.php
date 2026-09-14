@@ -5066,6 +5066,9 @@ $assertGeometry('PBottomAppBar', [], [
     'justifyContent' => Justify::SpaceBetween,
 ]);
 $assertGeometry('PSearchBar', [], [
+    'flexDirection' => FlexDirection::Row,
+    'alignItems' => Align::Center,
+    'gap' => 12.0,
     'widthPercent' => 100.0,
     'height' => 56.0,
     'minHeight' => 56.0,

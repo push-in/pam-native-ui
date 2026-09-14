@@ -1640,6 +1640,9 @@ final class MaterialStyleResolver
 
         if ($part === 'PSearchBar') {
             return new Style(
+                flexDirection: FlexDirection::Row,
+                alignItems: Align::Center,
+                gap: 12.0,
                 widthPercent: 100.0,
                 height: 56.0,
                 minHeight: 56.0,

@@ -1520,3 +1520,16 @@ reserved for adjacent affordances. Added long-query/filename showcase specimens
 and matrix checks for these layout contracts. Matrix passes; physical long-text
 and picker/keyboard interaction validation is pending. Native layout primitives
 already provide the needed capability, so these changes remain in UI composition.
+
+### Samsung search and file-picker check
+
+APK `0c0907e9607af5a0e3ad73545053001829cb220df4d065689f54b21119db9305`:
+search accepts editing a long query; file trigger opens Android DocumentsUI;
+Back cancels and retains the long filename. No personal file was selected and
+picker contents were not captured. Report: `/tmp/pam-ui-search-file-20260913/report.json`.
+Inspected file-long.png: long filename ellipsizes in the middle while icon,
+Replace action and gutters remain intact. Search inspection exposed a separate
+alignment defect: root style lacked explicit center alignment and icon gap.
+Added row direction, center alignment and 12dp gap, with matrix regression.
+Matrix passes; this final search alignment change still needs device inspection.
+The interaction pass does not establish full theme/font/accessibility approval.
