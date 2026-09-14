@@ -7584,7 +7584,18 @@ final class ComponentRoute extends Component
             $defaults['selected'] = true;
         }
 
-        return $variation + $this->componentFixture() + $defaults;
+        $props = $variation + $this->componentFixture();
+        // A preview fallback must not replace the visible field label for
+        // screen readers. Explicit accessibility labels remain authoritative.
+        if (
+            !array_key_exists('accessibilityLabel', $props)
+            && is_string($props['label'] ?? null)
+            && $props['label'] !== ''
+        ) {
+            $props['accessibilityLabel'] = $props['label'];
+        }
+
+        return $props + $defaults;
     }
 
     /** @return array<string, mixed> */

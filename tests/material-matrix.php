@@ -39,6 +39,23 @@ use Pam\Native\ScrollIndicatorStyle;
 use Pam\Native\UI\Text;
 
 require __DIR__.'/bootstrap.php';
+require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
+
+$samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');
+foreach (['p-password-field', 'p-masked-field', 'p-currency-field', 'p-text-field', 'p-search-bar'] as $sampleTag) {
+    $route = new \App\ComponentRoute($sampleTag, 'Sample', MaterialComponentMap::TAGS[$sampleTag]);
+    foreach ([null, 'Custom accessible name'] as $explicitLabel) {
+        $props = ['label' => 'Account field'];
+        if ($explicitLabel !== null) {
+            $props['accessibilityLabel'] = $explicitLabel;
+        }
+        $resolved = $samplePropsMethod->invoke($route, $props);
+        $expectedLabel = $explicitLabel ?? ($sampleTag === 'p-search-bar' ? 'Search components' : 'Account field');
+        if (!is_array($resolved) || ($resolved['accessibilityLabel'] ?? null) !== $expectedLabel) {
+            throw new RuntimeException('Showcase must preserve field labels and explicit accessible names.');
+        }
+    }
+}
 
 $layoutTokens = [
     MaterialTokens::SPACE_EXTRA_SMALL,

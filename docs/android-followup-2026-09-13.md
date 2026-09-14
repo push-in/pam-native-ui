@@ -1487,3 +1487,13 @@ respectively, to share the reveal control's center at 24dp. Matrix regression
 asserts that center. This last vertical adjustment is not yet in the tested APK;
 visual approval remains pending. Other field families are not physically approved
 by this password-only test.
+
+### Showcase accessible field names
+
+Resolved the generic preview-label issue in sampleProps: a visible field label
+now supplies the accessible name when neither the variation nor the component
+fixture defines an explicit accessibilityLabel. Explicit names retain priority,
+including Search components. Ten regression cases cover Password, Masked,
+Currency, Text and Search examples. The PHP matrix passes. This showcase-only
+change and the previous vertical action adjustment still await a combined
+device build/check; no TalkBack approval is implied by property-level tests.
