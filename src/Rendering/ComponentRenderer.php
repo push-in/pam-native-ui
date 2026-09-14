@@ -4562,8 +4562,7 @@ final class ComponentRenderer
             }
             if (!$rail || $expanded || !is_string($icon) || $icon === '') {
                 $content[] = Text::make((string) $label)
-                    ->numberOfLines($rail ? 0 : 1)
-                    ->ellipsize(\Pam\Native\TextEllipsizeMode::Tail)
+                    ->numberOfLines(0)
                     ->style(new Style(
                     width: $expanded ? 0.0 : null,
                     flexGrow: $expanded ? 1.0 : 0.0,
@@ -4577,10 +4576,10 @@ final class ComponentRenderer
             }
             $layout = $expanded ? Row::make(...$content) : Column::make(...$content);
             $control = Pressable::make($layout->style(new Style(
-                widthPercent: 100.0, gap: $expanded ? 12.0 : 4.0,
-                alignItems: Align::Center, justifyContent: Justify::Center,
+                widthPercent: $rail ? 100.0 : null, gap: $expanded ? 12.0 : 4.0,
+                alignItems: Align::Center, justifyContent: $rail ? Justify::Center : Justify::Start,
             )))->style(new Style(
-                width: $rail ? null : 0.0,
+                minWidth: $rail ? null : 64.0,
                 widthPercent: $rail ? 100.0 : null,
                 flexGrow: $rail ? 0.0 : 1.0,
                 minHeight: $compact ? 48.0 : 64.0, paddingVertical: 8.0,

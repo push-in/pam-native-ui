@@ -1,5 +1,32 @@
 # Consolidated form review
 
+## Current consolidated candidate
+
+The integrated run `/tmp/pam-form-controls-batch-20260914.json` completed
+7/7 scoped scenarios with no failures on emulator-5554 (Android 16/API 36,
+font scale 1.0), without rebuilding or changing dependencies. APK SHA-256:
+`ad9367fe9acecb49a648d9639eabaec35f6571795ee2701ee9e6f3958ed7b15a`.
+
+- Password Field: reveal/hide and appended input retain the cursor/value.
+- Masked Field and Currency Field: formatted typing retains expected values.
+- Tag Input and Multi Select: protected selections, add/reopen/remove retention.
+- Date Range Picker and Time Range Picker: readonly protection and open/cancel
+  retention; this run does not prove confirmation of new range values.
+
+Password, masked, currency, added-tag and added-selection screenshots were
+visually inspected. The two range screenshots are not counted as visually
+reviewed in this record. Evidence is local under
+`/tmp/pam-form-controls-batch-20260914`; temporary artifacts are not published
+documentation assets. Animations were disabled, so this run proves neither
+animation smoothness nor performance. It is not seven full component approvals.
+
+Delivery cadence: batch related implementation changes, build once when code
+changes require it, run the integrated scenarios, and rerun only failures or
+checks affected by subsequent shared changes. Do not repeat passing scenarios
+on an unchanged candidate merely to produce another progress update.
+
+## Earlier candidates
+
 Initial Samsung batch `/tmp/pam-fields-consolidated-20260914.json` exercised Text
 Field, Textarea, Password Field, Masked Field, Currency Field, Tag Input and Multi
 Select on the auto-fit candidate. The first five retained input; password reveal/

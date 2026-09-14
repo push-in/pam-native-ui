@@ -1603,6 +1603,7 @@ final class MaterialStyleResolver
                 borderRadius: MaterialTokens::radius(MaterialShape::Large),
                 elevation: self::resolvedElevation($props, $variant === MaterialVariant::Elevated ? 3.0 : 0.0),
                 flexDirection: FlexDirection::Row,
+                flexWrap: FlexWrap::Wrap,
                 alignItems: Align::Stretch,
                 justifyContent: Justify::SpaceAround,
             );

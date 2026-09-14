@@ -12,12 +12,21 @@ Explicit children still take precedence for fully custom composition. This is
 UI composition over PAM Native primitives, not an additional navigation runtime.
 
 The rail uses icons with accessible labels when compact, and visible labels
-when expanded (text-only items remain visible). Horizontal navigation labels
-are single-line, ellipsized when necessary, with the complete accessible name.
+when expanded (text-only items remain visible). Navigation Bar labels wrap and
+retain their complete accessible name. Each generated destination uses its native
+intrinsic content width with a minimum of 64dp; the bar wraps
+whole destinations onto additional rows when the available width is insufficient.
+Its height is content-driven, so applications must not impose a fixed height when
+using enlarged text. Explicit custom children keep their own sizing policy.
 The font is not reduced to fit. Text/plain/outlined/tonal surfaces and compact
 density now have distinct styling; explicit elevation remains an override.
 
 ## Scoped evidence, not complete approval
+
+The reports below document earlier candidates, including the now-superseded
+single-line policy. Current adaptive-layout evidence is tracked in
+`navigation-search-batch-2026-09-14.md`; do not treat these historical captures as
+validation of the current composition.
 
 `/tmp/pam-ui-navigation-items-20260914/report.json`, API 36 emulator APK
 `7d35b0b957ce24a7577087f8911d9c2b1816bdb6d5f8b71a138c168854a509cc`:

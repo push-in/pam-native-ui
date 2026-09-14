@@ -5341,10 +5341,13 @@ foreach (['p-navigation-bar', 'p-navigation-rail'] as $navigationTag) {
         $destinations[1]->events()[EventKind::Press->value]();
         if ($navigationTag === 'p-navigation-bar') {
             $labelProperties = $destinations[1]->children()[0]->children()[1]->properties();
-            if (($labelProperties[PropKey::NumberOfLines->value] ?? null) !== 1
-                || ($labelProperties[PropKey::TextEllipsizeMode->value] ?? null) !== \Pam\Native\TextEllipsizeMode::Tail->value
+            if (($labelProperties[PropKey::NumberOfLines->value] ?? null) !== 0
+                || ($destinations[1]->properties()[PropKey::MinWidth->value] ?? null) !== 64.0
+                || isset($destinations[1]->properties()[PropKey::Width->value])
+                || isset($destinations[1]->children()[0]->properties()[PropKey::WidthPercent->value])
+                || ($destinations[1]->children()[0]->properties()[PropKey::JustifyContent->value] ?? null) !== Justify::Start->value
                 || ($destinations[1]->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Browse all destinations') {
-                throw new RuntimeException('Navigation bar labels must stay on one line while retaining the full accessible name.');
+                throw new RuntimeException('Navigation bar labels must wrap with top-aligned content and the full accessible name.');
             }
         }
         if ($navigationValue !== 2) {
@@ -6126,6 +6129,7 @@ $assertGeometry('PNavigationBar', [], [
     'paddingVertical' => 8.0,
     'gap' => 4.0,
     'flexDirection' => FlexDirection::Row,
+    'flexWrap' => FlexWrap::Wrap,
     'alignItems' => Align::Stretch,
     'justifyContent' => Justify::SpaceAround,
 ]);
