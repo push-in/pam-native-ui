@@ -4341,13 +4341,14 @@ $drop = $guardedList->children()[0]->events()[EventKind::Drop->value];
 foreach (['unknown', '1', '2'] as $invalidDrop) {
     $drop(Wire::map(['data' => $invalidDrop]));
 }
-if ($dropCalls !== 0) {
-    throw new RuntimeException('Unknown, same-position and disabled source drops must not emit changes.');
-}
+$assertDropCalls = static function (int $actual, int $expected): void {
+    if ($actual !== $expected) {
+        throw new RuntimeException('Only valid reorder operations may emit a change.');
+    }
+};
+$assertDropCalls($dropCalls, 0);
 $drop(Wire::map(['data' => '3']));
-if ($dropCalls !== 1) {
-    throw new RuntimeException('Valid neighboring items must remain reorderable.');
-}
+$assertDropCalls($dropCalls, 1);
 $swipe = $tags['p-swipe-actions']::make([
     'title' => 'Design review',
     'startLabel' => 'Archive',
