@@ -4216,10 +4216,8 @@ final class ComponentRoute extends Component
                     )->style(new Style(
                         widthPercent: 100.0,
                         minHeight: 144.0,
-                        padding: 20.0,
+                        paddingVertical: 16.0,
                         gap: 8.0,
-                        backgroundColor: $theme->color(ColorToken::SurfaceContainerLow),
-                        borderRadius: 20.0,
                     )),
                 )->style(new Style(widthPercent: 100.0, height: 176.0))
                     ->onRefresh(function () use ($index): bool {

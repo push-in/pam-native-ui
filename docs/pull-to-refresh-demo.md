@@ -19,3 +19,16 @@ each followed by tapping Complete refresh and observing the ready state and
 disabled completion button. Reproduce with `tools/audit-refresh-cycle-android.py`.
 This verifies the controlled demo cycle, not network requests, refresh-error
 handling, performance or full cross-platform component approval.
+
+Visual follow-up: the decorative rounded background around Today was removed.
+The title and description now align with the page gutter, with 16dp vertical
+padding and the same refresh gesture area. This follows the showcase rule against
+decorative preview cards. The earlier APK screenshots predate this visual edit;
+the render matrix passes.
+
+Updated Samsung evidence: APK
+`09d27d213b6367f0eee65cddf0cde3f9b0f1a171449186ba655673f5092ebf6b`,
+`/tmp/pam-ui-refresh-canvas-20260914/report.json` passes both refresh cycles.
+The ready-again capture was inspected: title and description share the page's
+left gutter and the decorative surface is absent. The tall gesture area remains
+intentional; this is not a full visual approval across device sizes.
