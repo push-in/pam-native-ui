@@ -9,6 +9,14 @@ use Pam\Native\PropKey;
 require_once __DIR__.'/bootstrap.php';
 
 (static function (): void {
+    foreach ([false, true] as $refreshing) {
+        $refresh = MaterialComponentMap::TAGS['p-pull-to-refresh']::make([
+            'refreshing' => $refreshing,
+        ])->toElement();
+        if (($refresh->properties()[PropKey::AccessibilityBusy->value] ?? null) !== $refreshing) {
+            throw new RuntimeException('Refresh busy semantics must follow the controlled refresh state.');
+        }
+    }
     foreach (['p-data-table', 'p-data-table-virtual', 'p-data-grid'] as $tag) {
         foreach ([['density' => 'compact'], ['rowHeight' => 24.0], ['itemHeight' => 32.0]] as $sizing) {
             $stack = [MaterialComponentMap::TAGS[$tag]::make($sizing + [

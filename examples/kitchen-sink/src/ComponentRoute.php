@@ -4011,7 +4011,7 @@ final class ComponentRoute extends Component
                         },
                     ),
                     Text::make($lastAction === ''
-                        ? 'Swipe horizontally to choose an action'
+                        ? $this->swipeActionHint($previewProps)
                         : $lastAction.' action completed')->style(new Style(
                             fontSize: 12.0,
                             lineHeight: 18.0,
@@ -8170,6 +8170,22 @@ final class ComponentRoute extends Component
             'p-icon' => 'star',
             default => $this->title,
         };
+    }
+
+    /** @param array<string, mixed> $props */
+    private function swipeActionHint(array $props): string
+    {
+        if ($this->isEnabledValue($props['disabled'] ?? $props['isDisabled'] ?? false)) {
+            return 'Actions unavailable for this item';
+        }
+        if ($this->isEnabledValue($props['loading'] ?? $props['isLoading'] ?? false)) {
+            return 'Synchronizing — actions temporarily unavailable';
+        }
+        if ($this->isEnabledValue($props['readonly'] ?? $props['readOnly'] ?? $props['isReadOnly'] ?? false)) {
+            return 'Read only — this item cannot be changed';
+        }
+
+        return 'Swipe horizontally or use the action buttons';
     }
 
     private function isEnabledValue(mixed $value): bool

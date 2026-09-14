@@ -43,6 +43,7 @@ use Pam\Native\UI\Text;
 require __DIR__.'/bootstrap.php';
 require __DIR__.'/material-field-state.php';
 require __DIR__.'/material-list-mutation.php';
+require __DIR__.'/showcase-list-hints.php';
 require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 
 $samplePropsMethod = new ReflectionMethod(\App\ComponentRoute::class, 'sampleProps');
@@ -3592,6 +3593,7 @@ $refreshEvent = $refresh->events()[EventKind::Refresh->value] ?? null;
 if (
     $refresh->kind() !== NodeKind::RefreshControl
     || ($refresh->properties()[PropKey::Refreshing->value] ?? null) !== true
+    || ($refresh->properties()[PropKey::AccessibilityBusy->value] ?? null) !== true
     || ($refresh->properties()[PropKey::RefreshProgressViewOffset->value] ?? null) !== 24.0
     || !$refreshEvent instanceof Closure
 ) {

@@ -33,8 +33,12 @@ Swipe Actions passed on API 36 emulator-5554 in
 `/tmp/pam-list-swipe-locks-20260914/report.json`: active swipe and both buttons,
 then actual swipe/taps against disabled, readonly and loading specimens. The
 readonly capture was inspected: content is readable and action buttons muted.
-An existing showcase caption still suggests swiping on blocked specimens; keep
-that copy correction pending rather than treating the preview as final media.
+That APK's showcase caption still suggests swiping on blocked specimens. The
+subsequent source correction supplies state-specific disabled, readonly and
+synchronizing instructions; the enabled hint mentions both swipe and buttons.
+Eleven isolated PHP regression cases cover aliases and explicit-false precedence.
+This caption-only change is not in the above APK; capture wrapping and final
+media remain pending for the next integrated showcase build.
 
 The first reorder audit stopped before interaction because its diagnostic name
 contained spaces; the script now uses hyphenated names. No component failure was
@@ -46,3 +50,26 @@ was inspected. No second build was required.
 
 No full component approval, iOS verification of this change or publication is
 claimed. Device reports remain diagnostic evidence, not public showcase media.
+
+## Vector controls and state instructions follow-up
+
+Reorderable List now uses the existing GripVertical, ArrowUp and ArrowDown vector
+icons instead of a font-dependent grip and visible English Up/Down text. The
+32 dp grip lane, 48 dp action hit areas, semantic colors and accessible action
+labels are retained. Icons use the existing decorative accessibility treatment.
+This follows the UI/UX consistency guidance without introducing native code.
+
+The material matrix and focused level-9 PHPStan passed. One 10-second optimized
+build includes these icons and the state-specific Swipe Actions instructions;
+cleanup removed 96.8 MiB. APK:
+`0b19ba4315aa19c2a41299a1938ef0b56f33c27a5ce8f5e975b899f667adee55`.
+`/tmp/pam-reorder-vectors-20260914/report.json` passed real drag reordering,
+move-down/move-up button callbacks and first-item boundary rejection. The
+buttons-result capture was inspected: grips, labels and arrows align, including
+muted boundary controls. Full variant/theme/a11y approval is still separate.
+
+On that same APK, `/tmp/pam-swipe-state-copy-20260914/report.json` also passed
+enabled swipe/buttons and rejection of disabled/readonly/loading actions. The
+synchronizing capture was inspected for the new state-specific instructions.
+This supersedes the earlier caption-only source checkpoint for this Android
+candidate; it is not published media or full device/platform approval.

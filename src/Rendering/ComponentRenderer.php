@@ -2676,10 +2676,12 @@ final class ComponentRenderer
             );
         }
         if ($part === 'RefreshControl') {
+            $refreshing = self::flag($props, 'refreshing');
             $control = RefreshControl::make(
                 self::oneChild($children),
-                self::flag($props, 'refreshing'),
+                $refreshing,
             )
+                ->accessibilityBusy($refreshing)
                 ->enabled(self::flag($props, 'enabled', true))
                 ->progressViewOffset(
                     self::number($props, 'progressViewOffset', 0.0),
@@ -4161,12 +4163,12 @@ final class ComponentRenderer
                 && self::flag(['disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false], 'disabled'));
             $itemBlocked = $blocked || $itemDisabled;
             $content = $children[$index] ?? Row::make(
-                Text::make('⠿')->style(new Style(
+                View::make(self::actionIcon('GripVerticalIcon', $theme->color(ColorToken::MutedForeground)))->style(new Style(
                     width: 32.0,
-                    fontSize: 22.0,
-                    lineHeight: 24.0,
-                    textColor: $theme->color(ColorToken::MutedForeground),
-                    textAlign: TextAlignment::Center,
+                    height: 24.0,
+                    flexShrink: 0.0,
+                    alignItems: Align::Center,
+                    justifyContent: Justify::Center,
                 )),
                 Text::make((string) $label)->style(new Style(
                     fontSize: 16.0,
@@ -4237,12 +4239,10 @@ final class ComponentRenderer
                 $neighbor = $source[$destination] ?? null;
                 $canMove = !$itemBlocked && array_key_exists($destination, $source)
                     && !(is_array($neighbor) && self::flag(['disabled' => $neighbor['disabled'] ?? $neighbor['isDisabled'] ?? false], 'disabled'));
-                $control = Pressable::make(Text::make($direction)->style(new Style(
-                    fontSize: 14.0,
-                    lineHeight: 20.0,
-                    fontWeight: 600,
-                    textColor: $theme->color(ColorToken::Primary),
-                )))->style(new Style(
+                $control = Pressable::make(self::actionIcon(
+                    $offset < 0 ? 'ArrowUpIcon' : 'ArrowDownIcon',
+                    $theme->color(ColorToken::Primary),
+                ))->style(new Style(
                     minWidth: 48.0,
                     minHeight: 48.0,
                     paddingHorizontal: 8.0,

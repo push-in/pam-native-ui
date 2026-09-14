@@ -32,3 +32,17 @@ Updated Samsung evidence: APK
 The ready-again capture was inspected: title and description share the page's
 left gutter and the decorative surface is absent. The tall gesture area remains
 intentional; this is not a full visual approval across device sizes.
+
+## Controlled busy semantics
+
+The UI RefreshControl composition now sets native AccessibilityBusy directly
+from `refreshing`, including explicit false when the refresh finishes. This
+reuses PAM Native's existing semantic property; no new runtime capability or
+gesture workaround was added. Android's existing refresh container already
+rejects new pull recognition while refreshing, so that behavior was not rewritten.
+
+The material matrix and focused renderer PHPStan level 9 passed. A separate
+regression checks both idle and refreshing property values. This verifies the
+emitted semantic contract, not TalkBack/VoiceOver announcement behavior. The
+change awaits the next integrated build and platform assistive-technology check;
+earlier two-cycle device results do not validate this new semantic property.
