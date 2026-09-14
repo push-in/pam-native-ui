@@ -4,6 +4,59 @@ import XCTest
 @testable import PamMobileUi
 
 final class PamMobileUiTests: XCTestCase {
+    func testFileTreeActivationExpansionAndDisabledAncestry() {
+        var events: [(NativeViewEventKind, Data)] = []
+        let tree = PamMobileUiHost { events.append(($0, $1)) }
+        let folder = PamMobileUiHost { _, _ in XCTFail("Tree owns emitted changes") }
+        let file = PamMobileUiHost { _, _ in XCTFail("Tree owns emitted changes") }
+        tree.update(["behavior": .integer(32), "expandedPaths": .text("/src")])
+        folder.update(["behavior": .integer(33), "path": .text("/src")])
+        file.update(["behavior": .integer(34), "path": .text("/src/app.php")])
+        let content = UIView()
+        content.accessibilityIdentifier = "pam:file-tree-content"
+        content.addSubview(file)
+        folder.addSubview(content)
+        tree.addSubview(folder)
+        defer {
+            tree.releaseCallbacks()
+            folder.releaseCallbacks()
+            file.releaseCallbacks()
+        }
+
+        tree.isUserInteractionEnabled = false
+        XCTAssertFalse(folder.accessibilityActivate())
+        XCTAssertFalse(file.accessibilityActivate())
+        tree.isUserInteractionEnabled = true
+        folder.isUserInteractionEnabled = false
+        XCTAssertFalse(file.accessibilityActivate())
+        folder.isUserInteractionEnabled = true
+        file.update(["behavior": .integer(34), "path": .text("/src/app.php"), "enabled": .flag(false)])
+        XCTAssertFalse(file.accessibilityActivate())
+        XCTAssertTrue(events.isEmpty)
+        file.update(["behavior": .integer(34), "path": .text("/src/app.php"), "enabled": .flag(true)])
+
+        XCTAssertTrue(folder.accessibilityActivate())
+        XCTAssertTrue(content.isHidden)
+        XCTAssertTrue(content.accessibilityElementsHidden)
+        XCTAssertEqual(folder.accessibilityValue, "Collapsed")
+        XCTAssertTrue(folder.accessibilityActivate())
+        XCTAssertFalse(content.isHidden)
+        XCTAssertEqual(folder.accessibilityValue, "Expanded")
+        XCTAssertTrue(file.accessibilityActivate())
+        XCTAssertTrue(file.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(folder.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(file.accessibilityActivate(), "Selecting the same path must not emit twice")
+        XCTAssertEqual(events.filter { $0.0 == .change }.map { String(decoding: $0.1, as: UTF8.self) },
+                       ["/src", "/src", "/src/app.php"])
+        XCTAssertEqual(events.filter { $0.0 == .native }.count, 2)
+
+        tree.update(["behavior": .integer(32), "expandedPaths": .text("")])
+        tree.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
+        tree.setNeedsLayout()
+        tree.layoutIfNeeded()
+        XCTAssertTrue(content.isHidden, "An explicitly empty controlled set must collapse all folders")
+    }
+
     func testSelectionDismissalHonorsCloseOnSelectBeforeLegacyCloseOnPress() {
         let factory = MobileUiHostFactory()
         let view = factory.create(context: nil) { _ in }

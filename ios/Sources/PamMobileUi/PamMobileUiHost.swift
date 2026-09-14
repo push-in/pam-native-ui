@@ -84,6 +84,10 @@ private enum PamHostAction: Int64 {
     case open = 2
 }
 
+private enum PamFileTreeAction: Int64 {
+    case expanded = 1
+}
+
 final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     typealias EventEmitter = (NativeViewEventKind, Data) -> Void
 
@@ -103,6 +107,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var isSelectedState = false
     private var buttonToggleItem = false
     private var isExpanded = false
+    private var fileTreeExpandedPaths = Set<String>()
+    private var fileTreeSelectedPath: String?
     private var minimum: CGFloat = 0
     private var maximum: CGFloat = 100
     private var step: CGFloat = 1
@@ -233,6 +239,14 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         isExpanded = next["expanded"]?.pamFlag
             ?? next["isExpanded"]?.pamFlag
             ?? isExpanded
+        if behavior == .fileTree {
+            if next["expandedPaths"] != nil || previousBehavior != behavior {
+                let paths = next["expandedPaths"]?.pamText
+                    ?? next["defaultExpandedPaths"]?.pamText ?? ""
+                fileTreeExpandedPaths = Set(paths.split(separator: "\n").map(String.init))
+            }
+            fileTreeSelectedPath = next["selectedPath"]?.pamText ?? fileTreeSelectedPath
+        }
         minimum = next["minimum"]?.pamDecimal ?? next["min"]?.pamDecimal ?? minimum
         maximum = max(minimum, next["maximum"]?.pamDecimal ?? next["max"]?.pamDecimal ?? maximum)
         step = max(0.000_001, next["step"]?.pamDecimal ?? step)
@@ -511,8 +525,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .tabTrigger:
             tabsAncestor()?.selectTab(self)
             emit?(.press, Data())
-        case .sheetItem, .menuItem, .inputSlot,
-             .fileTreeFolder, .fileTreeFile:
+        case .fileTreeFolder, .fileTreeFile:
+            _ = activateFileTreeItem()
+        case .sheetItem, .menuItem, .inputSlot:
             emit?(.press, Data())
             if behavior == .sheetItem,
                closesSheetOnSelection {
@@ -1263,23 +1278,91 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func layoutFileTree() {
-        let expanded = Set(
-            properties["expandedPaths"]?.pamText?
-                .split(separator: "\n")
-                .map(String.init) ?? []
-        )
-        for folder in descendants(prefix: "pam:file-tree-folder") {
-            guard let identifier = folder.accessibilityIdentifier else { continue }
-            let path = identifier.split(separator: ":", maxSplits: 2).last.map(String.init) ?? ""
-            let open = expanded.isEmpty
-                ? (folder.accessibilityValue == "Expanded")
-                : expanded.contains(path)
-            folder.accessibilityValue = open ? "Expanded" : "Collapsed"
-            folder.subviews.dropFirst().forEach {
-                $0.isHidden = !open
-                $0.accessibilityElementsHidden = !open
+        func visit(_ view: UIView) {
+            for child in view.subviews {
+                if let item = child as? PamMobileUiHost {
+                    if item.behavior == .fileTree { continue }
+                    if item.behavior == .fileTreeFolder || item.behavior == .fileTreeFile {
+                        let path = item.properties["path"]?.pamText ?? ""
+                        let selected = !path.isEmpty && path == fileTreeSelectedPath
+                        item.isSelectedState = selected
+                        item.accessibilityTraits = [.button]
+                        if selected { item.accessibilityTraits.insert(.selected) }
+                        let header = item.behavior == .fileTreeFolder
+                            ? item.descendant(prefix: "pam:file-tree-header") : item
+                        header?.backgroundColor = selected
+                            ? item.color(item.properties["selectedContainerColor"]?.pamInteger, fallback: .clear)
+                            : .clear
+                        let foreground = item.color(
+                            item.properties[selected ? "selectedForegroundColor" : "foregroundColor"]?.pamInteger,
+                            fallback: .label
+                        )
+                        if let label = item.descendant(prefix: "pam:file-tree-name") as? UILabel {
+                            label.textColor = foreground
+                        } else if item.behavior == .fileTreeFile {
+                            item.subviews.compactMap { $0 as? UILabel }.forEach { $0.textColor = foreground }
+                        }
+                        if !item.isUserInteractionEnabled || item.properties["enabled"]?.pamFlag == false {
+                            item.accessibilityTraits.insert(.notEnabled)
+                        }
+                        if item.behavior == .fileTreeFolder {
+                            let open = fileTreeExpandedPaths.contains(path)
+                            item.isExpanded = open
+                            item.accessibilityValue = open ? "Expanded" : "Collapsed"
+                            if let content = item.descendant(prefix: "pam:file-tree-content") {
+                                content.isHidden = !open
+                                content.accessibilityElementsHidden = !open
+                            }
+                            item.descendant(prefix: "pam:file-tree-chevron")?.transform =
+                                CGAffineTransform(rotationAngle: open ? .pi / 2 : 0)
+                        }
+                    }
+                }
+                visit(child)
             }
         }
+        visit(self)
+    }
+
+    override func accessibilityActivate() -> Bool {
+        if behavior == .fileTreeFolder || behavior == .fileTreeFile {
+            return activateFileTreeItem()
+        }
+        return super.accessibilityActivate()
+    }
+
+    private func activateFileTreeItem() -> Bool {
+        guard let tree = ancestor(where: { $0.behavior == .fileTree }),
+              let path = properties["path"]?.pamText, !path.isEmpty else { return false }
+        var candidate: UIView? = self
+        while let view = candidate {
+            if !view.isUserInteractionEnabled || view.isHidden { return false }
+            if view !== self && view.accessibilityElementsHidden { return false }
+            if let host = view as? PamMobileUiHost, host.properties["enabled"]?.pamFlag == false {
+                return false
+            }
+            if view === tree { break }
+            candidate = view.superview
+        }
+        if behavior == .fileTreeFolder {
+            let open = !tree.fileTreeExpandedPaths.contains(path)
+            if open { tree.fileTreeExpandedPaths.insert(path) }
+            else { tree.fileTreeExpandedPaths.remove(path) }
+            tree.fileTreeSelectedPath = path
+            tree.layoutFileTree()
+            tree.emit?(.change, Data(path.utf8))
+            tree.emitMap([
+                "action": .integer(PamFileTreeAction.expanded.rawValue),
+                "path": .text(path),
+                "expanded": .flag(open),
+            ])
+        } else {
+            guard tree.fileTreeSelectedPath != path else { return false }
+            tree.fileTreeSelectedPath = path
+            tree.layoutFileTree()
+            tree.emit?(.change, Data(path.utf8))
+        }
+        return true
     }
 
     private func applyInputState() {
@@ -2638,6 +2721,17 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func emitMap(_ values: [String: WireValue]) {
         guard let payload = try? WireMap.encode(values) else { return }
         emit?(.native, payload)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldReceive touch: UITouch
+    ) -> Bool {
+        if behavior == .fileTreeFolder,
+           let header = descendant(prefix: "pam:file-tree-header") {
+            return header.bounds.contains(touch.location(in: header))
+        }
+        return true
     }
 
     func gestureRecognizer(
