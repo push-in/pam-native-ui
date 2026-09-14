@@ -2,6 +2,21 @@
 
 ## Interactive Popover follow-up
 
+Remaining-placement run: `/tmp/pam-popover-placements-20260914/report.json`
+passes Top, Left and Right on the same APK below, without rebuilding or rerunning
+Bottom. Each scenario invokes the internal action twice, dismisses outside,
+reopens and verifies that acknowledgement count 2 is retained. The dedicated
+runner collects failures across the batch instead of stopping on the first one.
+Python syntax and diff checks pass.
+
+Top/Left reopened and Right acknowledged screenshots were viewed. The content
+fits inside the viewport with readable action/feedback and internal padding.
+Left resolves to the right side in this narrow layout; both lateral examples
+partially overlap the trigger's trailing edge. This run proves interaction and
+retention for the requested configurations, not exact placement geometry or a
+collision-free positioning policy. Lateral placement/anchor overlap remains a
+separate visual issue to assess; do not publish these as final polished media.
+
 The showcase now includes an existing text-variant UI button and a controlled
 acknowledgement counter inside each Popover, not just static copy. The integrated
 audit opens the overlay, invokes the action, requires the counter to change from
