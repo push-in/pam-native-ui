@@ -10833,6 +10833,8 @@ final class ComponentRenderer
             if ($showSelect) {
                 $allSelected = $selectableValues !== []
                     && array_diff($selectableValues, $selectedValues) === [];
+                $partiallySelected = !$allSelected
+                    && array_intersect($selectableValues, $selectedValues) !== [];
                 array_unshift(
                     $headerCells,
                     self::materialDataTableSelectionCell(
@@ -10853,6 +10855,7 @@ final class ComponentRenderer
                                         : array_values(array_unique([...$selectedValues, ...$selectableValues], SORT_REGULAR)),
                                 );
                             },
+                        $partiallySelected,
                     ),
                 );
             }
@@ -11014,11 +11017,13 @@ final class ComponentRenderer
         float $height,
         string $label,
         ?Closure $handler,
+        bool $indeterminate = false,
     ): Element {
         $theme = ThemeManager::current();
-        $mark = View::make(...($selected ? [
+        $marked = $selected || $indeterminate;
+        $mark = View::make(...($marked ? [
             self::render('Icon', [
-                'icon' => 'CheckIcon',
+                'icon' => $indeterminate ? 'RemoveIcon' : 'CheckIcon',
                 'color' => $theme->color(ColorToken::PrimaryForeground),
                 'accessibilityHidden' => true,
             ], [], [], new Style(
@@ -11033,10 +11038,10 @@ final class ComponentRenderer
             height: 20.0,
             borderRadius: 3.0,
             borderWidth: 2.0,
-            borderColor: $selected
+            borderColor: $marked
                 ? $theme->color(ColorToken::Primary)
                 : $theme->color(ColorToken::MutedForeground),
-            backgroundColor: $selected
+            backgroundColor: $marked
                 ? $theme->color(ColorToken::Primary)
                 : 0x00000000,
             alignItems: Align::Center,
@@ -11057,9 +11062,9 @@ final class ComponentRenderer
             ->accessibilityLabel($label)
             ->property(PropKey::Enabled, $handler !== null)
             ->accessibilityChecked(
-                $selected
-                    ? AccessibilityCheckedState::Checked
-                    : AccessibilityCheckedState::Unchecked,
+                $indeterminate
+                    ? AccessibilityCheckedState::Mixed
+                    : ($selected ? AccessibilityCheckedState::Checked : AccessibilityCheckedState::Unchecked),
             )
             ->ripple(
                 $theme->color(ColorToken::Primary),

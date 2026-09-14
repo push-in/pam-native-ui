@@ -4167,6 +4167,34 @@ if ($selectedRows !== [1, 2]) {
 }
 
 $virtualTableClass = $tags['p-data-table-virtual'];
+foreach ([
+    [[], AccessibilityCheckedState::Unchecked],
+    [[1], AccessibilityCheckedState::Mixed],
+    [[1, 2], AccessibilityCheckedState::Checked],
+] as [$headerSelection, $expectedHeaderState]) {
+    $headerTable = $tags['p-data-table']::make([
+        'headers' => [['title' => 'Name', 'key' => 'name']],
+        'items' => [['id' => 1, 'name' => 'Ada'], ['id' => 2, 'name' => 'Grace']],
+        'showSelect' => true, 'modelValue' => $headerSelection,
+    ])->toElement();
+    $headerStack = [$headerTable];
+    $headerMatches = 0;
+    while ($headerStack !== []) {
+        $headerNode = array_pop($headerStack);
+        if (($headerNode->properties()[PropKey::AccessibilityLabel->value] ?? null) === 'Select all rows') {
+            $headerMatches++;
+            if (($headerNode->properties()[PropKey::AccessibilityCheckedState->value] ?? null) !== $expectedHeaderState->value) {
+                throw new RuntimeException('Table select-all must distinguish none, partial and complete selection.');
+            }
+            $headerMark = ($headerNode->children()[0] ?? null)?->children() ?? [];
+            if (count($headerMark) !== ($headerSelection === [] ? 0 : 1)) {
+                throw new RuntimeException('Partial and complete table selection must have a visible mark.');
+            }
+        }
+        array_push($headerStack, ...$headerNode->children());
+    }
+    if ($headerMatches !== 1) throw new RuntimeException('Table must expose exactly one select-all header.');
+}
 $virtualTable = $virtualTableClass::make([
     'headers' => [
         ['title' => 'Name', 'key' => 'name'],
