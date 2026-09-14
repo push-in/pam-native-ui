@@ -66,3 +66,28 @@ selection, constraint combinations, all themes, RTL, accessibility and iOS.
 No full component approval or publication is claimed. Build cleanup removed
 88.1 MiB (Samsung) and 96.8 MiB (emulator) of regenerable artifacts; 22 GiB remained
 available after the builds.
+
+## Confirmed endpoint interactions (same emulator candidate)
+
+`tools/audit-interval-confirmation-android.py` now exercises actual native picker
+choices, confirms with OK, verifies both endpoint values in the first interactive
+range (not text anywhere on the screen), reopens and cancels, then verifies retained
+values again. No new build was needed; the APK hash is the same as above.
+
+- Date: choosing September 15 clears the earlier September 14 endpoint; choosing
+  September 20 as the end produces `2026-09-15` to `2026-09-20`.
+- Time: choosing 10 AM retains the 18:00 end; choosing 7 PM as the end produces
+  `10:00` to `19:00`.
+
+Both date checks passed in `/tmp/pam-interval-confirmation-20260914/report.json`.
+That run then stopped on a harness selector: clock numbers are accessibility
+descriptions, not text nodes. After correcting that selector, `--time-only`
+repeated just the unfinished time flows; both passed in
+`/tmp/pam-time-confirmation-20260914/report.json`. Final confirmed screenshots
+were viewed for both ranges: values remained aligned and inside their fields.
+
+This closes basic changed-value confirmation and in-route retention for the API
+36 candidate. It does not prove persistence across process death, all constraints,
+minute editing, locale differences, iOS, or current Samsung behavior. File
+selection beyond cancellation remains pending. These scoped reports are not full
+component approval or published media.
