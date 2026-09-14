@@ -1456,3 +1456,15 @@ editable clear-action tests still pass. Matrix and renderer PHPStan level 9
 passed. This is UI composition responsibility: Native already supports the
 required editing semantics. Not yet installed or physically validated; keep
 this change out of release approval until the device check is complete.
+
+### Compound field trailing-action collisions
+
+Code inspection found clear, password reveal and loading indicator all placed
+at right=0. Their shared composition now allocates independent trailing slots:
+56dp reveal, 40dp clear, 32dp loading, plus suffix reservation. Visible controls
+have at least 8dp separation; inline affixes retain measured widths and reserve
+the complete action area. Eight regression combinations exercise clear with/
+without loading across Text, Password, Masked and Currency fields and require
+every requested action to remain present with non-overlapping bounds. The PHP
+matrix passes. This is a UI layout change, not a Native workaround. Device
+validation remains pending alongside the read-only field batch above.

@@ -2197,12 +2197,48 @@ foreach (['p-text-field', 'p-masked-field', 'p-currency-field'] as $affixTag) {
         || isset($leading->properties()[PropKey::Height->value])
         || ($editable->properties()[PropKey::PaddingLeft->value] ?? null) !== 0.0
         || ($editable->properties()[PropKey::PaddingRight->value] ?? null) !== 0.0
-        || ($adornedRow->properties()[PropKey::PaddingRight->value] ?? null) !== 32.0
+        || ($adornedRow->properties()[PropKey::PaddingRight->value] ?? null) !== 40.0
     ) {
         throw new RuntimeException($affixTag.' must measure affixes in flow and reserve its clear action.');
     }
 }
 
+foreach (['p-text-field', 'p-password-field', 'p-masked-field', 'p-currency-field'] as $actionTag) {
+    foreach ([false, true] as $loading) {
+        $field = $tags[$actionTag]::make([
+            'label' => 'Actions', 'modelValue' => '1234',
+            'clearable' => true, 'loading' => $loading,
+        ])->toElement();
+        $stack = [$field];
+        $slots = [];
+        while ($stack !== []) {
+            $node = array_pop($stack);
+            $properties = $node->properties();
+            if (
+                ($properties[PropKey::PositionType->value] ?? null) === PositionType::Absolute->value
+                && isset($properties[PropKey::Right->value], $properties[PropKey::Width->value])
+            ) {
+                $right = $properties[PropKey::Right->value];
+                $width = $properties[PropKey::Width->value];
+                if (!is_float($right) || !is_float($width)) {
+                    throw new RuntimeException('Field action bounds must be numeric layout values.');
+                }
+                $slots[] = [$right, $width];
+            }
+            array_push($stack, ...$node->children());
+        }
+        $expectedSlots = 1 + ($actionTag === 'p-password-field' ? 1 : 0) + ($loading ? 1 : 0);
+        if (count($slots) !== $expectedSlots) {
+            throw new RuntimeException('Field action fixture must retain every requested action.');
+        }
+        usort($slots, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+        for ($i = 1; $i < count($slots); $i++) {
+            if ($slots[$i][0] < $slots[$i - 1][0] + $slots[$i - 1][1] + 8.0) {
+                throw new RuntimeException($actionTag.' trailing actions must have separate slots with 8dp clearance.');
+            }
+        }
+    }
+}
 $textareaAffixes = $tags['p-textarea']::make([
     'label' => 'Message',
     'modelValue' => 'Hello',

@@ -6389,6 +6389,9 @@ final class ComponentRoute extends Component
                 ['label' => 'Revealed', 'props' => ['label' => 'Password', 'modelValue' => 'PAM-native-2026', 'revealed' => true]],
                 ['label' => 'Error', 'props' => ['label' => 'Password', 'error' => true, 'errorMessage' => 'Use at least 12 characters']],
                 ['label' => 'Disabled', 'props' => ['label' => 'Password', 'disabled' => true]],
+                ['label' => 'Clear and reveal', 'props' => ['label' => 'Editable secret', 'modelValue' => 'PAM-native-2026', 'clearable' => true]],
+                ['label' => 'Loading with actions', 'props' => ['label' => 'Checking secret', 'modelValue' => 'PAM-native-2026', 'clearable' => true, 'loading' => true]],
+                ['label' => 'Read only', 'props' => ['label' => 'Protected secret', 'modelValue' => 'PAM-native-2026', 'clearable' => true, 'readonly' => true]],
             ],
             'p-masked-field' => [
                 ['label' => 'Phone', 'props' => ['label' => 'Mobile phone', 'pattern' => '(##) #####-####', 'modelValue' => '11987654321']],

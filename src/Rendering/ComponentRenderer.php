@@ -1147,12 +1147,12 @@ final class ComponentRenderer
                 && !$fieldDisabled
                 && !$fieldReadOnly;
             $inputPaddingLeft = $prefix === '' ? 0.0 : 32.0;
+            $revealSlot = $materialComponent === 'PPasswordField' ? 56.0 : 0.0;
+            $clearSlot = $clearable ? 40.0 : 0.0;
+            $loadingSlot = $fieldLoading ? 32.0 : 0.0;
+            $actionPadding = $revealSlot + $clearSlot + $loadingSlot;
             $inputPaddingRight = match (true) {
-                $materialComponent === 'PPasswordField' => 56.0,
-                $fieldLoading && ($clearable || $suffix !== '') => 64.0,
-                $fieldLoading => 32.0,
-                $clearable && $suffix !== '' => 64.0,
-                $clearable || $suffix !== '' => 32.0,
+                $actionPadding > 0.0 || $suffix !== '' => $actionPadding + ($suffix !== '' ? 32.0 : 0.0),
                 in_array(
                     $props['__materialComponent'],
                     ['PAutocomplete', 'PCombobox', 'PTagInput', 'PMultiSelect'],
@@ -1666,7 +1666,7 @@ final class ComponentRenderer
             if ($suffix !== '') {
                 $suffixElement = Text::make($suffix)->style(new Style(
                     positionType: PositionType::Absolute,
-                    right: $clearable ? 32.0 : 0.0,
+                    right: $actionPadding,
                     top: $materialComponent === 'PTextarea' ? 13.0 : null,
                     bottom: $materialComponent === 'PTextarea' ? null : 0.0,
                     minWidth: 28.0,
@@ -1690,7 +1690,7 @@ final class ComponentRenderer
                     ->enabled(true)
                     ->style(new Style(
                         positionType: PositionType::Absolute,
-                        right: 0.0,
+                        right: $revealSlot,
                         top: $materialComponent === 'PTextarea' ? 20.0 : null,
                         bottom: $materialComponent === 'PTextarea' ? null : 0.0,
                         width: 32.0,
@@ -1766,7 +1766,7 @@ final class ComponentRenderer
                     ->color($theme->color(ColorToken::Primary))
                     ->style(new Style(
                         positionType: PositionType::Absolute,
-                        right: 0.0,
+                        right: $revealSlot + $clearSlot,
                         top: $materialComponent === 'PTextarea' ? 24.0 : null,
                         bottom: $materialComponent === 'PTextarea' ? null : 4.0,
                         width: 24.0,
