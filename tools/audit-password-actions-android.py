@@ -53,11 +53,15 @@ try:
     else:
         raise AssertionError('Cannot reveal password fixtures')
     assert not named(root, 'Clear Protected secret'), 'Read-only clear action exposed'
+    for label in ('Editable secret', 'Checking secret', 'Protected secret'):
+        fields = named(root, label)
+        assert any(n.attrib.get('class') == 'android.widget.EditText' for n in fields), f'Missing accessible field name: {label}'
     audit.screenshot('combined-actions')
     clear_bounds = module.node_bounds(clear[0])
     reveals = named(root, 'Show password')
     reveal = min(reveals, key=lambda n: abs(module.node_bounds(n).center[1] - clear_bounds.center[1]))
     assert clear_bounds.right < module.node_bounds(reveal).left, 'Clear/reveal actions overlap'
+    assert abs(clear_bounds.center[1] - module.node_bounds(reveal).center[1]) <= 2, 'Clear/reveal vertical centers differ'
     tap(reveal)
     root = audit.dump('revealed')
     editable = editable_input(root)

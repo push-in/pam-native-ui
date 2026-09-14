@@ -1497,3 +1497,16 @@ including Search components. Ten regression cases cover Password, Masked,
 Currency, Text and Search examples. The PHP matrix passes. This showcase-only
 change and the previous vertical action adjustment still await a combined
 device build/check; no TalkBack approval is implied by property-level tests.
+
+### Combined Samsung verification: labels and action alignment
+
+APK `794382612c8d44ae30bbc22db461d24f74eb46694d7a3bc963602a08674150bf`
+includes the vertical alignment and showcase naming fixes. The strengthened
+password audit passed native EditText names for Editable/Checking/Protected
+secret, clear/reveal centers within 2 pixels, reveal, controlled clearing and
+absence of the read-only clear action. Report:
+`/tmp/pam-ui-password-aligned-20260913/report.json`.
+Inspected combined-actions.png: clear and Show align without overlap; the
+loading indicator occupies its own slot. This supersedes the pending combined
+check above, not remaining theme/font-scale/TalkBack/performance requirements.
+Build completed in 11s, installation succeeded and cleanup removed 88MiB.
