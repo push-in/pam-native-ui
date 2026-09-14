@@ -40,9 +40,36 @@ current candidate and evidence; never delete unrelated user files or devices.
 with 5/114 formal approvals. Recent scoped Samsung checks must not be counted as
 additional full approvals or as proof that historical approvals cover a new APK.
 
-Latest completed behavioral batch covers protected reorder positions, both swipe
+An earlier completed behavioral batch covers protected reorder positions, both swipe
 directions with visible button alternatives and disabled rejection, and two
 controlled refresh cycles. Reports and exact APK identities are in
 `reorder-protected-positions.md`, `swipe-actions-validation-2026-09-14.md` and
 `pull-to-refresh-demo.md`. Broader visual, accessibility, performance and iOS
 requirements remain open. No publication is authorized by these partial results.
+
+## Latest scoped deliveries and process blockers
+
+Do not restart these scopes merely because their evidence is not a full approval:
+
+| Delivery | Code identity | Evidence and remaining scope |
+| --- | --- | --- |
+| Responsive row-grid integration | UI `b2bd825`, Native `6a54f53` | `collections-batch-2026-09-14.md`; engine/PHP coverage and emulator 2×2 visual check. Resize, RTL, large text and iOS remain open. |
+| Result defaults and loading aliases | UI `9edd6aa` | `feedback-batch-2026-09-14.md`; result actions and Progress Button cycle at font scales 1×/2×. Wider a11y/theme/platform checks remain open. |
+
+The approval validator currently hard-codes `twoConsecutivePhysicalPasses`,
+requires exactly two distinct physical reports, and rejects emulator identities.
+This differs from the user's newer request for one consolidated test round and
+authorized emulator fallback. Clarification has been requested before changing
+the approval policy. **No gate has been relaxed and no approval was added.**
+Even with a changed pass-count/device policy, missing scenario, visual,
+accessibility or runtime evidence must still fail approval.
+
+The release check was executed after `9edd6aa` and stopped with:
+`Material release gate ios is not verified for 92 modules.` This is the first
+reported failure, not an exhaustive list of remaining release failures. The
+current Linux/Android evidence cannot establish iOS completion. Do not repeatedly
+run this unchanged gate or describe an Android-only batch as ready to publish.
+
+Next execution should address uncovered acceptance scopes or shared defects,
+not regenerate already-passing screenshots. Keep historical physical approvals
+separate from validation of the current candidate APK.
