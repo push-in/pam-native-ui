@@ -4174,10 +4174,7 @@ final class ComponentRoute extends Component
                     height: 184.0,
                     minHeight: 184.0,
                     maxHeight: 184.0,
-                    backgroundColor: $theme->color(ColorToken::SurfaceElevated),
-                    borderColor: $theme->color(ColorToken::OutlineVariant),
-                    borderWidth: 1.0,
-                    borderRadius: 20.0,
+                    backgroundColor: $theme->color(ColorToken::Background),
                     overflow: \Pam\Native\Overflow::Hidden,
                 ));
             } elseif ($this->tag === 'p-responsive-grid') {
