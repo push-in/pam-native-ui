@@ -12,6 +12,34 @@ require_once __DIR__.'/bootstrap.php';
 
 (static function (): void {
     $tags = MaterialComponentMap::TAGS;
+    foreach (['p-chip', 'p-alert'] as $tag) {
+        foreach ([null, 'disabled', 'isDisabled', 'readonly', 'readOnly', 'isReadOnly', 'loading', 'isLoading'] as $lock) {
+            $closed = false;
+            $props = ['text' => 'Protected content', 'closable' => true, 'closeLabel' => 'Close specimen'];
+            if ($lock !== null) $props[$lock] = true;
+            $stack = [$tags[$tag]::make($props)->onClose(static function () use (&$closed): void {
+                $closed = true;
+            })->toElement()];
+            $found = false;
+            while ($stack !== []) {
+                $node = array_pop($stack);
+                if (($node->properties()[PropKey::AccessibilityLabel->value] ?? null) === 'Close specimen') {
+                    $found = true;
+                    $press = $node->events()[\Pam\Native\EventKind::Press->value] ?? null;
+                    if (($node->properties()[PropKey::Enabled->value] ?? true) !== ($lock === null)
+                        || ($press instanceof Closure) !== ($lock === null)) {
+                        throw new RuntimeException($tag.' close action must mirror its blocked state.');
+                    }
+                    $press?->__invoke();
+                    if ($closed !== ($lock === null)) {
+                        throw new RuntimeException($tag.' must preserve active close callbacks and reject blocked ones.');
+                    }
+                }
+                array_push($stack, ...$node->children());
+            }
+            if (!$found) throw new RuntimeException('Missing close action for '.$tag);
+        }
+    }
     foreach ([false, true] as $revealed) {
         $localizedPassword = $tags['p-password-field']::make([
             'modelValue' => 'secret', 'revealed' => $revealed,

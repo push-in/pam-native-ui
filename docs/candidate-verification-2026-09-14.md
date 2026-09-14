@@ -54,6 +54,13 @@ count; the default local cache contains a root-owned subdirectory, so the
 writable existing audit cache was used without changing ownership or deleting
 user files. CI uses 2.2.14 and must still confirm the corrected revision.
 
+Follow-up run `34839419510`, UI `d052b97`, has now completed both formerly failing
+PHP jobs successfully (`103961996021`, `103961996069`). The latest-dependency log
+confirms PHPStan 2.2.14 and `[OK] No errors`. All six Android/UIKit jobs also
+passed; the lowest-dependency PHP job was still running at this checkpoint.
+This closes the observed analysis-memory failure for `d052b97`, not the later
+Treeview marker/dismissal changes or the full component approval inventory.
+
 Native UIKit job `103957959244` also completed successfully: 69 simulator tests,
 zero failures. Android build/unit contracts passed; Android API 26/36 runtime
 jobs are subsequent checks, not implied by the library build result.

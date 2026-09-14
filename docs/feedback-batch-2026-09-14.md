@@ -1,5 +1,27 @@
 # Feedback batch — 2026-09-14
 
+## Explicit dismissal-action locks
+
+Chips now use the shared vector CloseIcon instead of a font glyph. Chip and
+Alert close children explicitly expose disabled semantics and omit their Press
+callback when disabled/isDisabled, readonly/readOnly/isReadOnly or
+loading/isLoading. Active close callbacks remain unchanged. Root disabling is
+not used as a substitute for the child action's own state contract.
+
+The field-action regression file covers active behavior and all seven lock
+aliases on both components. The material matrix and targeted level-9 PHPStan
+pass. The disabled chip showcase now includes a closable specimen with a real
+callback, so an incorrectly enabled close action would visibly remove it.
+
+One 11-second Android build produced APK
+`3fb5c5ad3c1b44c9ca543c07dcd19d1b99dc1d2bd8640b31eae8d81b5262c984`.
+`/tmp/pam-chip-dismissal-20260914/report.json` passed real taps on disabled and
+active removal controls on emulator-5554. The disabled chip remained; the active
+chip disappeared with controlled confirmation text. The actions screenshot was
+inspected: vector close marks are aligned with labels and within the chip bounds.
+This is scoped chip evidence; Alert device interaction, every alias on-device,
+themes, dynamic text and UIKit remain outside this check. No media was published.
+
 Ownership: changes in this batch belong to PAM Native UI. No native primitive or
 CLI change was required. The UI/UX review focused on truthful state feedback,
 semantic theme colors, existing typography and unframed page composition.

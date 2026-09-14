@@ -60,6 +60,8 @@ final class ChipInteractionPreview extends Component
                 'text' => 'Unavailable',
                 'variant' => 'tonal',
                 'disabled' => true,
+                'closable' => true,
+                'closeLabel' => 'Remove unavailable filter',
                 'accessibilityLabel' => 'Unavailable action',
             ],
             'long' => [
@@ -108,7 +110,7 @@ final class ChipInteractionPreview extends Component
 
                 return true;
             });
-        } elseif ($this->profile === 'input') {
+        } elseif (in_array($this->profile, ['input', 'disabled'], true)) {
             $control = $control->onClose(function (): bool {
                 $this->state->visible = false;
                 $this->state->message = 'Filter removed';

@@ -1754,7 +1754,7 @@ final class ComponentRenderer
             }
             if ($clearable) {
                 $clear = Pressable::make(
-                    self::fieldActionIcon('close', $theme->color(ColorToken::MutedForeground)),
+                    self::actionIcon('close', $theme->color(ColorToken::MutedForeground)),
                 )
                     ->enabled(true)
                     ->style(new Style(
@@ -1789,7 +1789,7 @@ final class ComponentRenderer
             if ($materialComponent === 'PPasswordField') {
                 $revealed = self::flag($props, 'revealed');
                 $toggle = Pressable::make(
-                    self::fieldActionIcon(
+                    self::actionIcon(
                         $revealed ? 'eye-off' : 'eye',
                         $theme->color(
                             $fieldDisabled ? ColorToken::MutedForeground : ColorToken::Primary,
@@ -9626,14 +9626,9 @@ final class ComponentRenderer
                 ?? $theme->color(ColorToken::Primary))
             : (MaterialStyleResolver::semanticForeground($props, $theme)
                 ?? $theme->color(ColorToken::SecondaryForeground));
-        $close = Pressable::make(
-            Text::make('×')->style(new Style(
-                textColor: $closeColor,
-                fontSize: 18.0,
-                lineHeight: 20.0,
-                textAlign: TextAlignment::Center,
-            )),
-        )
+        $closeBlocked = self::dismissalBlocked($props);
+        $close = Pressable::make(self::actionIcon('close', $closeColor))
+            ->enabled(!$closeBlocked)
             ->style(new Style(
                 width: 32.0,
                 height: 32.0,
@@ -9645,7 +9640,7 @@ final class ComponentRenderer
             ->accessibilityRole(AccessibilityRole::Button)
             ->accessibilityLabel($closeLabel);
         $handler = $events[EventKind::Native->value] ?? null;
-        if ($handler !== null) {
+        if ($handler !== null && !$closeBlocked) {
             $close = $close->on(
                 EventKind::Press,
                 static function () use ($handler): void {
@@ -9861,7 +9856,9 @@ final class ComponentRenderer
             null,
             'alert-close-icon',
         );
+        $closeBlocked = self::dismissalBlocked($props);
         $close = Pressable::make($closeIcon)
+            ->enabled(!$closeBlocked)
             ->style(new Style(
                 width: 40.0,
                 height: 40.0,
@@ -9877,7 +9874,7 @@ final class ComponentRenderer
             ->accessibilityRole(AccessibilityRole::Button)
             ->accessibilityLabel($closeLabel);
         $handler = $events[EventKind::Native->value] ?? null;
-        if ($handler !== null) {
+        if ($handler !== null && !$closeBlocked) {
             $close = $close->on(
                 EventKind::Press,
                 static function () use ($handler): void {
@@ -11311,7 +11308,7 @@ final class ComponentRenderer
                         textColor: $foreground,
                     ))
                     ->property(PropKey::Value, 'pam:file-tree-name'),
-                View::make(self::fieldActionIcon(
+                View::make(self::actionIcon(
                     'check', ThemeManager::current()->color(ColorToken::AccentForeground),
                 ))->style(new Style(
                     width: 20.0, height: 20.0, flexShrink: 0.0,
@@ -11329,7 +11326,15 @@ final class ComponentRenderer
                 ->property(PropKey::Value, 'pam:file-tree-header');
     }
 
-    private static function fieldActionIcon(string $name, int $color): Element
+    /** @param array<string, mixed> $props */
+    private static function dismissalBlocked(array $props): bool
+    {
+        return self::flag($props, 'disabled', self::flag($props, 'isDisabled'))
+            || self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')))
+            || self::flag($props, 'loading', self::flag($props, 'isLoading'));
+    }
+
+    private static function actionIcon(string $name, int $color): Element
     {
         return self::render('Icon', ['icon' => $name, 'color' => $color], [], [], null, null)
             ->style(new Style(width: 20.0, height: 20.0))
