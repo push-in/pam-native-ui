@@ -44,6 +44,7 @@ require __DIR__.'/bootstrap.php';
 require __DIR__.'/material-field-state.php';
 require __DIR__.'/material-list-mutation.php';
 require __DIR__.'/material-selection-colors.php';
+require __DIR__.'/material-tree-expansion.php';
 require __DIR__.'/showcase-list-hints.php';
 require_once dirname(__DIR__).'/examples/kitchen-sink/src/ComponentRoute.php';
 

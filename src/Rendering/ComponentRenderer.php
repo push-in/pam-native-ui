@@ -10820,6 +10820,7 @@ final class ComponentRenderer
             $opened,
             $selectedValues,
             $change,
+            $events,
         ): array {
             $rendered = [];
             foreach (array_values($source) as $index => $item) {
@@ -10859,6 +10860,7 @@ final class ComponentRenderer
                         'disabled' => $itemDisabled,
                         'accessibilityLabel' => $title,
                         'expanded' => in_array($path, $opened, true),
+                        '__treeControlledExpansion' => isset($events[EventKind::Toggle->value]),
                         'selected' => in_array($path, $selectedValues, true),
                     ],
                     $nested,
@@ -11277,11 +11279,15 @@ final class ComponentRenderer
             $path === '' ? 'Folder' : basename($path),
         );
         $selected = self::flag($props, 'selected') || self::flag($props, 'active');
+        $content = Column::make(...$children)
+            ->style(new Style(widthPercent: 100.0, paddingLeft: 24.0))
+            ->property(PropKey::Value, 'pam:file-tree-content');
+        if (self::flag($props, '__treeControlledExpansion')) {
+            $content = $content->visible(self::flag($props, 'expanded'));
+        }
         return [
             self::fileTreeItemHeader($name, $selected, true),
-            Column::make(...$children)
-                ->style(new Style(widthPercent: 100.0, paddingLeft: 24.0))
-                ->property(PropKey::Value, 'pam:file-tree-content'),
+            $content,
         ];
     }
 
