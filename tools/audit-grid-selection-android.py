@@ -12,6 +12,7 @@ parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--row-layout-only', action='store_true')
 parser.add_argument('--font-scale', choices=['1.0', '2.0'], default='1.0')
+parser.add_argument('--long-values-only', action='store_true')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('grid_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 base = importlib.util.module_from_spec(spec)
@@ -49,8 +50,8 @@ try:
     apk = audit.shell('pm', 'path', audit.package).strip().splitlines()[0].removeprefix('package:')
     report['apkSha256'] = audit.shell('sha256sum', apk).split()[0]
     width, height = audit.screenshot('start')
-    if args.row_layout_only:
-        for title in ['Loading', 'Empty', 'Comfortable rows']:
+    if args.row_layout_only or args.long_values_only:
+        for title in (['Long values'] if args.long_values_only else ['Loading', 'Empty', 'Comfortable rows']):
             found = False
             for attempt in range(24):
                 root = audit.dump('layout-'+title.replace(' ', '-')+str(attempt))
@@ -63,6 +64,12 @@ try:
                 audit.shell('input', 'swipe', str(int(width*.98)), str(int(height*.8)),
                             str(int(width*.98)), str(int(height*.6)), '250')
             assert found, 'Cannot reveal '+title
+        if args.long_values_only:
+            for value in ['International product research and accessibility', 'R$ 1.234.567,89',
+                          'Customer experience operations', 'R$ 987.654,32']:
+                assert any(n.attrib.get('content-desc') == value for n in root.iter('node')), 'Full accessible value missing: '+value
+            report['checks'].append({'fullAccessibleValuesRetained': True, 'manualReviewRequired': True})
+            sys.exit(0)
         viewport = next(n for n in root.iter('node')
             if n.attrib.get('class') == 'androidx.recyclerview.widget.RecyclerView'
             and any(child.attrib.get('text') == 'Aurora 1' for child in n.iter('node')))

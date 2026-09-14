@@ -55,3 +55,20 @@ and `/tmp/pam-ui-grid-scroll-large-20260914/report.json` confirm the last tall r
 readable; the enlarged price column has little spare horizontal room. This is
 coverage of the supplied short dataset, not arbitrary long values, every density,
 or overall component approval. Device settings are restored after each run.
+
+## Long values and column spacing
+
+All generated data rows now use native Row/View composition, not the custom grid
+which resets cell widths after internal layout. Text is constrained to the cell,
+uses explicit tail ellipsis, and retains the complete accessible label.
+The showcase includes long workspace names and monetary values.
+
+Initial APK `50bfee08ccbc7ba0b0bbda745064bc18124477bbb19b50ffd77b4ed7be82bdad`
+preserved accessible values at fonts 1/2 but its custom-grid composition left text
+touching the next column (`/tmp/pam-ui-grid-long-20260914` and `...-long-large-20260914`).
+Follow-up APK `2a7a30ee66368aaeeca7b847a4e5c64cb7f687a05cab1f918e42ba2f55ca7758`
+uses native rows. `/tmp/pam-ui-grid-row-long-20260914/report.json` confirms complete
+accessible values at font 2.0; its PNG was inspected and shows separated columns.
+There is substantial truncation at this font scale. A visual way to inspect full
+values is still needed; accessible labels alone are not a complete solution.
+No full approval, TalkBack verification or publication is claimed.

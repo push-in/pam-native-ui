@@ -5584,6 +5584,17 @@ final class ComponentRoute extends Component
             $add($variations, 'Loading', ['loading' => true, 'height' => 144.0]);
             $add($variations, 'Empty', ['items' => [], 'height' => 144.0, 'noDataText' => 'No workspaces yet']);
             $add($variations, 'Comfortable rows', ['rowHeight' => 72.0, 'height' => 320.0]);
+            $add($variations, 'Long values', [
+                'height' => 216.0, 'rowHeight' => 72.0,
+                'headers' => [
+                    ['title' => 'Workspace name', 'key' => 'name'],
+                    ['title' => 'Monthly budget', 'key' => 'budget'],
+                ],
+                'items' => [
+                    ['id' => 1, 'name' => 'International product research and accessibility', 'budget' => 'R$ 1.234.567,89'],
+                    ['id' => 2, 'name' => 'Customer experience operations', 'budget' => 'R$ 987.654,32'],
+                ],
+            ]);
             $selectionRows = [
                 ['id' => 1, 'name' => 'Design workspace'],
                 ['id' => 2, 'name' => 'Protected workspace', 'disabled' => true],

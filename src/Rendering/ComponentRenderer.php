@@ -2676,13 +2676,14 @@ final class ComponentRenderer
             return self::grid($props, $children);
         }
         if ($part === 'TableRow') {
-            if (self::flag($props, '__selectionColumn')) {
+            if (self::flag($props, '__tableCells')) {
                 $cells = [];
                 foreach ($children as $index => $child) {
+                    $selection = $index === 0 && self::flag($props, '__selectionColumn');
                     $cells[] = View::make($child)->style(new Style(
-                        width: $index === 0 ? 48.0 : 0.0,
-                        flexGrow: $index === 0 ? 0.0 : 1.0,
-                        flexShrink: $index === 0 ? 0.0 : 1.0,
+                        width: $selection ? 48.0 : 0.0,
+                        flexGrow: $selection ? 0.0 : 1.0,
+                        flexShrink: $selection ? 0.0 : 1.0,
                     ));
                 }
                 return Row::make(...$cells)->style(new Style(widthPercent: 100.0));
@@ -10665,6 +10666,7 @@ final class ComponentRenderer
                 'TableRow',
                 [
                     'columns' => count($headerCells),
+                    '__tableCells' => true,
                     '__selectionColumn' => $showSelect,
                     'header' => true,
                     'accessibilityLabel' => 'Table header',
@@ -10749,7 +10751,7 @@ final class ComponentRenderer
             }
             $rows[] = self::render(
                 'TableRow',
-                ['columns' => count($children), '__selectionColumn' => $showSelect],
+                ['columns' => count($children), '__tableCells' => true, '__selectionColumn' => $showSelect],
                 $children,
                 [],
                 new Style(
@@ -10778,13 +10780,16 @@ final class ComponentRenderer
         bool $header,
     ): Element {
         return \Pam\Native\UI\Column::make(
-            self::themedText($value)->style(new Style(
-                widthPercent: 100.0,
-                fontSize: 14.0,
-                lineHeight: 20.0,
-                fontWeight: $header ? 600 : 400,
-                numberOfLines: 1,
-            )),
+            self::themedText($value)
+                ->accessibilityLabel($value)
+                ->ellipsize(TextEllipsizeMode::Tail)
+                ->style(new Style(
+                    maxWidthPercent: 100.0,
+                    fontSize: 14.0,
+                    lineHeight: 20.0,
+                    fontWeight: $header ? 600 : 400,
+                    numberOfLines: 1,
+                )),
         )->style(new Style(
             height: $height,
             minHeight: $height,
