@@ -3937,23 +3937,32 @@ final class ComponentRenderer
                     : $theme->color(ColorToken::OnSurface);
 
                 if ($hasChildren) {
-                    $indicator = Text::make($expanded ? '⌄' : '›')->style(new Style(
+                    $indicator = self::render('Icon', [
+                        'icon' => $expanded ? 'ChevronDownIcon' : 'ChevronRightIcon',
+                        'color' => $theme->color(ColorToken::MutedForeground),
+                        'accessibilityHidden' => true,
+                    ], [], [], new Style(
                         width: 24.0,
-                        fontSize: 20.0,
-                        lineHeight: 24.0,
-                        fontWeight: 600,
-                        textColor: $theme->color(ColorToken::MutedForeground),
-                        textAlign: TextAlignment::Center,
-                    ));
+                        height: 24.0,
+                        flexShrink: 0.0,
+                    ), null);
                 } else {
-                    $indicator = View::make(...($isSelected ? [View::make()->style(new Style(
-                        width: $multiple ? 10.0 : 8.0,
-                        height: $multiple ? 10.0 : 8.0,
-                        borderRadius: $multiple ? 2.0 : 4.0,
+                    $selectionMark = !$isSelected ? null : ($multiple
+                        ? self::render('Icon', [
+                            'icon' => 'CheckIcon',
+                            'color' => $theme->color(ColorToken::PrimaryForeground),
+                            'accessibilityHidden' => true,
+                        ], [], [], new Style(width: 16.0, height: 16.0, flexShrink: 0.0), null)
+                        : View::make()->style(new Style(
+                        width: 8.0,
+                        height: 8.0,
+                        borderRadius: 4.0,
                         backgroundColor: $theme->color(ColorToken::PrimaryForeground),
-                    ))] : []))->style(new Style(
+                    )));
+                    $indicator = View::make(...($selectionMark !== null ? [$selectionMark] : []))->style(new Style(
                         width: 20.0,
                         height: 20.0,
+                        flexShrink: 0.0,
                         borderRadius: $multiple ? 4.0 : 10.0,
                         borderWidth: 2.0,
                         borderColor: $isSelected

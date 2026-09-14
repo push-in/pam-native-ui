@@ -34,3 +34,24 @@ Still pending: screen-reader use, iOS, larger text/landscape coverage, deep-tree
 layout and performance. The current disclosure glyph and geometric selection
 markers also require the family visual review; this is not final showcase media
 or complete component approval.
+
+## Vector indicator refinement
+
+Disclosure now uses the existing 24-unit ChevronDown/ChevronRight vector icons
+instead of font characters. Selected multiple-choice leaves use the same
+16-unit CheckIcon as table selection; single-choice leaves retain the radio dot.
+Indicators cannot shrink, use theme colors and remain decorative for accessibility
+because the containing row already exposes checked/expanded semantics. Unselected
+leaves do not construct a selection mark. This is UI composition only.
+
+PHP regressions cover expanded/collapsed vector hosts, fixed dimensions and
+selected/unselected multiple-choice marks. The material matrix and targeted
+PHPStan level 9 pass. Candidate
+`8ba90170d03b28ca91f9578d6681906040c4d4d9406b39368dd5546eaacc1c97` passes
+`/tmp/pam-tree-vector-20260914/report.json` on emulator-5554/API 36: read-only
+selection rejects taps, group collapse/expand preserves selection, and disabled
+descendants reject selection. `tree-locks-verified.png` was inspected: chevrons,
+checks, radio dots and row labels are aligned, with consistent indentation.
+The disabled example is partly below that capture; the report/XML, not that
+single screenshot, establishes its interaction check. Large text, deep trees,
+landscape, screen-reader traversal and iOS remain open. No publication occurred.

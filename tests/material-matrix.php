@@ -5082,6 +5082,29 @@ if ($dataGrid->kind() !== NodeKind::CustomView || count($dataGrid->children()) <
     throw new RuntimeException('p-data-grid must reuse the virtual native table contract.');
 }
 $treeSelectChanged = null;
+foreach ([false, true] as $expandedTree) {
+    $visualTree = $tags['p-tree-select']::make([
+        'opened' => $expandedTree ? [1] : [], 'modelValue' => [2], 'multiple' => true,
+        'items' => [['value' => 1, 'label' => 'Group', 'children' => [
+            ['value' => 2, 'label' => 'Selected'], ['value' => 3, 'label' => 'Unselected'],
+        ]]],
+    ])->toElement()->children();
+    $disclosure = $visualTree[0]->children()[0]->children()[0];
+    if ($disclosure->kind() !== NodeKind::CustomView
+        || ($disclosure->properties()[PropKey::Width->value] ?? null) !== 24.0
+        || ($disclosure->properties()[PropKey::Height->value] ?? null) !== 24.0) {
+        throw new RuntimeException('Tree disclosure must use a fixed vector, not a font glyph.');
+    }
+    if ($expandedTree) {
+        $selectedIndicator = $visualTree[1]->children()[0]->children()[0];
+        $mark = $selectedIndicator->children()[0];
+        if ($mark->kind() !== NodeKind::CustomView
+            || ($mark->properties()[PropKey::Width->value] ?? null) !== 16.0
+            || $visualTree[2]->children()[0]->children()[0]->children() !== []) {
+            throw new RuntimeException('Tree multiselect must show a vector check only when selected.');
+        }
+    }
+}
 foreach (['readonly', 'readOnly', 'isReadOnly'] as $treeLock) {
     $treeOpened = null;
     $treeRows = $tags['p-tree-select']::make([
