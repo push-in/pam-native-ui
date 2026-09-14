@@ -5142,6 +5142,30 @@ foreach (['disabled', 'isDisabled'] as $disabledAlias) {
         }
     }
 }
+$customDrawer = $tags['p-navigation-drawer']::make([
+    'modelValue' => '1',
+    'items' => [['value' => 1, 'label' => 'Custom destination', 'icon' => 'StarIcon']],
+])->onChange(static function (int $value): void {})->toElement();
+$stack = [$customDrawer];
+$customDestinationFound = false;
+while ($stack !== []) {
+    $candidate = array_pop($stack);
+    if (($candidate->properties()[PropKey::AccessibilityLabel->value] ?? null) === 'Custom destination') {
+        $customDestinationFound = true;
+        $iconHost = $candidate->children()[0]->children()[0]->properties()[PropKey::HostProperties->value] ?? null;
+        $expectedIconHost = $iconClass::make(['name' => 'StarIcon'])->toElement()->properties()[PropKey::HostProperties->value] ?? null;
+        if (!$iconHost instanceof BinaryValue || !$expectedIconHost instanceof BinaryValue
+            || Wire::decodeMap($iconHost->bytes)['icon'] !== Wire::decodeMap($expectedIconHost->bytes)['icon']
+            || ($candidate->properties()[PropKey::Selected->value] ?? null) !== true
+            || isset($candidate->events()[EventKind::Press->value])) {
+            throw new RuntimeException('Drawer must honor custom icons and share navigation scalar selection semantics.');
+        }
+    }
+    array_push($stack, ...$candidate->children());
+}
+if (!$customDestinationFound) {
+    throw new RuntimeException('Custom drawer destination was not rendered.');
+}
 $commandPalette = $tags['p-command-palette']::make([
     'label' => 'Commands',
     'items' => ['New project', 'Open file', 'Publish'],

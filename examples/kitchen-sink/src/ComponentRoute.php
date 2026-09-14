@@ -6567,7 +6567,11 @@ final class ComponentRoute extends Component
                 ], 'modelValue' => [1]]],
             ],
             'p-navigation-drawer' => [
-                ['label' => 'Front', 'props' => ['open' => true, 'type' => 'front', 'items' => ['Home', 'Explore', 'Settings'], 'modelValue' => 'Home']],
+                ['label' => 'Front', 'props' => ['open' => true, 'type' => 'front', 'items' => [
+                    ['value' => 'Home', 'label' => 'Home', 'icon' => 'StarIcon'],
+                    ['value' => 'Explore', 'label' => 'Explore', 'icon' => 'GlobeIcon'],
+                    ['value' => 'Settings', 'label' => 'Settings', 'icon' => 'SettingsIcon'],
+                ], 'modelValue' => 'Home']],
                 ['label' => 'Slide', 'props' => ['open' => false, 'type' => 'slide', 'items' => ['Home', 'Projects', 'Profile']]],
                 ['label' => 'End edge', 'props' => ['open' => false, 'position' => 'end', 'items' => ['Activity', 'Messages']]],
                 ['label' => 'Adaptive permanent', 'props' => ['open' => false, 'type' => 'front', 'permanentBreakpoint' => 840.0, 'items' => ['Dashboard', 'Reports']]],

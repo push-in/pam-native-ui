@@ -4471,6 +4471,7 @@ final class ComponentRenderer
             if (is_string($icon) && $icon !== '') {
                 $content[] = View::make(self::render('Icon', [
                     'icon' => $icon, 'accessibilityHidden' => true,
+                    'color' => $theme->color($selected ? ColorToken::Primary : ColorToken::MutedForeground),
                 ], [], [], new Style(
                     width: 24.0, height: 24.0,
                     tintColor: $theme->color($selected ? ColorToken::Primary : ColorToken::MutedForeground),
@@ -4551,14 +4552,23 @@ final class ComponentRenderer
                     ? ($definition['label'] ?? $definition['title'] ?? $value)
                     : $definition;
                 if (!is_scalar($value) || !is_scalar($label)) continue;
-                $selected = $value === $active;
+                $selected = self::sameScalar($value, $active);
                 $itemDisabled = self::flag($props, 'disabled')
                     || (is_array($definition) && self::flag([
                         'disabled' => $definition['disabled'] ?? $definition['isDisabled'] ?? false,
                     ], 'disabled'));
+                $itemIcon = is_array($definition) ? ($definition['icon'] ?? null) : null;
                 $icon = self::render(
-                    ['GlobeIcon', 'PaperclipIcon', 'SettingsIcon', 'InfoIcon'][$index % 4],
-                    ['accessibilityElementsHidden' => true],
+                    'Icon',
+                    [
+                        'icon' => is_string($itemIcon) && $itemIcon !== ''
+                            ? $itemIcon
+                            : ['GlobeIcon', 'PaperclipIcon', 'SettingsIcon', 'InfoIcon'][$index % 4],
+                        'accessibilityElementsHidden' => true,
+                        'color' => $theme->color($selected
+                            ? ColorToken::SecondaryForeground
+                            : ColorToken::MutedForeground),
+                    ],
                     [],
                     [],
                     new Style(
