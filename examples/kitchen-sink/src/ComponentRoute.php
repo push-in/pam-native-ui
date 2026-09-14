@@ -5585,6 +5585,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Empty', ['items' => [], 'height' => 144.0, 'noDataText' => 'No workspaces yet']);
             $add($variations, 'Comfortable rows', ['rowHeight' => 72.0, 'height' => 320.0]);
             $add($variations, 'Long values', [
+                'inspectable' => true,
                 'height' => 216.0, 'rowHeight' => 72.0,
                 'headers' => [
                     ['title' => 'Workspace name', 'key' => 'name'],

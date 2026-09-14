@@ -10713,7 +10713,7 @@ final class ComponentRenderer
                 )
                 : (is_array($item) ? array_values($item) : [$item]);
             $children = [];
-            foreach (array_slice($cells, 0, 16) as $cell) {
+            foreach (array_slice($cells, 0, 16) as $cellIndex => $cell) {
                 if (!is_scalar($cell) && $cell !== null) {
                     continue;
                 }
@@ -10721,6 +10721,8 @@ final class ComponentRenderer
                     (string) ($cell ?? ''),
                     $rowHeight,
                     false,
+                    self::flag($props, 'inspectable') && !self::flag($props, 'disabled') && !self::flag($props, 'loading'),
+                    $headers[$cellIndex]['title'] ?? 'Cell value',
                 );
             }
             if ($showSelect) {
@@ -10778,8 +10780,10 @@ final class ComponentRenderer
         string $value,
         float $height,
         bool $header,
+        bool $inspectable = false,
+        string $title = 'Cell value',
     ): Element {
-        return \Pam\Native\UI\Column::make(
+        $cell = \Pam\Native\UI\Column::make(
             self::themedText($value)
                 ->accessibilityLabel($value)
                 ->ellipsize(TextEllipsizeMode::Tail)
@@ -10797,6 +10801,18 @@ final class ComponentRenderer
             justifyContent: \Pam\Native\Justify::Center,
             flexGrow: 1.0,
         ));
+        if (!$inspectable) {
+            return $cell;
+        }
+
+        return Pressable::make($cell)
+            ->style(new Style(widthPercent: 100.0, height: $height))
+            ->accessibilityRole(AccessibilityRole::Button)
+            ->accessibilityLabel($title.': '.$value)
+            ->property(PropKey::AccessibilityHint, 'Show full value')
+            ->on(EventKind::Press, static function () use ($title, $value): void {
+                \Pam\Native\System\Alert::show($title, $value);
+            });
     }
 
     private static function materialDataTableSelectionCell(

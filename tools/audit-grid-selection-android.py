@@ -68,7 +68,18 @@ try:
             for value in ['International product research and accessibility', 'R$ 1.234.567,89',
                           'Customer experience operations', 'R$ 987.654,32']:
                 assert any(n.attrib.get('content-desc') == value for n in root.iter('node')), 'Full accessible value missing: '+value
-            report['checks'].append({'fullAccessibleValuesRetained': True, 'manualReviewRequired': True})
+            value = 'International product research and accessibility'
+            label = 'Workspace name: '+value
+            action = next(n for n in root.iter('node') if n.attrib.get('content-desc') == label)
+            audit.tap(base.node_bounds(action))
+            dialog = audit.dump('full-value-dialog')
+            assert any(n.attrib.get('text') == value for n in dialog.iter('node')), 'Full cell value not shown'
+            audit.screenshot('full-value-dialog')
+            dismiss = next(n for n in dialog.iter('node') if n.attrib.get('resource-id') == 'android:id/button1')
+            audit.tap(base.node_bounds(dismiss))
+            returned = audit.dump('full-value-returned')
+            assert any(n.attrib.get('content-desc') == label for n in returned.iter('node')), 'Did not return to cell'
+            report['checks'].append({'fullAccessibleValuesRetained': True, 'fullValueDialogOpensAndCloses': True, 'manualReviewRequired': True})
             sys.exit(0)
         viewport = next(n for n in root.iter('node')
             if n.attrib.get('class') == 'androidx.recyclerview.widget.RecyclerView'

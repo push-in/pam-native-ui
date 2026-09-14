@@ -3745,6 +3745,13 @@ if (!$longCell instanceof \Pam\Native\Element) {
     throw new RuntimeException('Table cell must render an element.');
 }
 $longText = $longCell->children()[0]->properties();
+$inspectableCell = $longCellMethod->invoke(null, $longCellValue, 72.0, false, true, 'Workspace');
+if (!$inspectableCell instanceof \Pam\Native\Element
+    || !isset($inspectableCell->events()[EventKind::Press->value])
+    || ($inspectableCell->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Workspace: '.$longCellValue
+    || ($inspectableCell->properties()[PropKey::AccessibilityRole->value] ?? null) !== AccessibilityRole::Button->value) {
+    throw new RuntimeException('Inspectable cells must expose a named action for the full value.');
+}
 if (($longText[PropKey::AccessibilityLabel->value] ?? null) !== $longCellValue
     || ($longText[PropKey::TextEllipsizeMode->value] ?? null) !== \Pam\Native\TextEllipsizeMode::Tail->value
     || ($longText[PropKey::MaxWidthPercent->value] ?? null) !== 100.0

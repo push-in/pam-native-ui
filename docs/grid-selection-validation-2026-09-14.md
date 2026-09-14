@@ -72,3 +72,20 @@ accessible values at font 2.0; its PNG was inspected and shows separated columns
 There is substantial truncation at this font scale. A visual way to inspect full
 values is still needed; accessible labels alone are not a complete solution.
 No full approval, TalkBack verification or publication is claimed.
+
+## Inspect full cell values
+
+Set `inspectable => true` on Data Grid, Data Table or Virtual Data Table to make
+data cells open the existing PAM Native system alert with their column title and
+complete value. Default behavior is unchanged; disabled/loading tables do not
+offer inspection. Read-only tables can still be inspected without changing data.
+No new native implementation or CLI capability was needed.
+
+Example: `PDataGrid::make(['headers' => $headers, 'items' => $items, 'inspectable' => true])`.
+
+APK `d09b8c036ce426b9945462188cdadbaf9710aa67fbac602826b0054431abf8f2`:
+`/tmp/pam-ui-grid-inspect-20260914/report.json` verifies tapping a long-name cell,
+showing the exact full text, dismissing with OK and returning to the same cell on
+API 36 emulator at font 2.0. The dialog capture was inspected: title, full value
+and dismissal control are readable. This closes the visual full-value access gap
+for the tested opt-in example, not every table state or platform.
