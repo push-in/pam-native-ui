@@ -10969,14 +10969,17 @@ final class ComponentRenderer
     ): Element {
         $theme = ThemeManager::current();
         $mark = View::make(...($selected ? [
-            Text::make('✓')->style(new Style(
-                width: 18.0,
-                fontSize: 14.0,
-                lineHeight: 18.0,
-                fontWeight: 700,
-                textColor: $theme->color(ColorToken::PrimaryForeground),
-                textAlign: TextAlignment::Center,
-            )),
+            self::render('Icon', [
+                'icon' => 'CheckIcon',
+                'color' => $theme->color(ColorToken::PrimaryForeground),
+                'accessibilityHidden' => true,
+            ], [], [], new Style(
+                width: 16.0,
+                height: 16.0,
+                minWidth: 16.0,
+                minHeight: 16.0,
+                flexShrink: 0.0,
+            ), null),
         ] : []))->style(new Style(
             width: 20.0,
             height: 20.0,

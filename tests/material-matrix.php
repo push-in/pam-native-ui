@@ -4007,6 +4007,16 @@ if (
     );
 }
 $secondPress();
+$selectionMark = ($selectedCell->children()[0] ?? null)?->children()[0] ?? null;
+$selectionMarkHost = $selectionMark?->properties()[PropKey::HostProperties->value] ?? null;
+if (!$selectionMarkHost instanceof BinaryValue
+    || (Wire::decodeMap($selectionMarkHost->bytes)['color'] ?? null)
+        !== \Pam\MobileUi\Theme\ThemeManager::current()->color(ColorToken::PrimaryForeground)
+    || ($selectionMark?->properties()[PropKey::Width->value] ?? null) !== 16.0
+    || ($selectionMark?->properties()[PropKey::Height->value] ?? null) !== 16.0
+    || ($secondCell->children()[0] ?? null)?->children() !== []) {
+    throw new RuntimeException('Table selection must use a bounded, contrasting vector mark only when selected.');
+}
 if ($selectedRows !== [1, 2]) {
     throw new RuntimeException(
         'p-data-table row selection must emit the updated model value.',

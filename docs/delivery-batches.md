@@ -108,3 +108,42 @@ These are scoped interaction results, **not full component approvals** or
 publication-quality media. Animations were disabled; no motion-performance,
 iOS, RTL or comprehensive accessibility claim is made. Temporary evidence paths
 are local diagnostic artifacts, not durable online documentation assets.
+
+### Selection mark follow-up: visual failure remains
+
+The text check was replaced with the existing native vector icon, explicitly
+16×16 with PrimaryForeground. The UI matrix and targeted renderer PHPStan passed.
+Staging initially still contained the old renderer; it was explicitly synchronized
+before rebuilding the tested candidate. Future builds must compare staged UI PHP
+sources too, not just Native SDK sources.
+
+Candidate `8e4eb4012a99b969c899d13b37222abcabff02233dcf7962700a4b9ab80e0df6`
+passed select/deselect in `/tmp/pam-grid-vector-20260914.json`, but inspection of
+`pass-01-p-data-grid-checked-true.png` **still shows no contrasting check**.
+Therefore replacing the glyph alone does not resolve the defect. Keep the visual
+case open and inspect native child layout/painting of the selection cell next;
+do not rebuild or repeat the same unchanged interaction expecting a different
+visual result. No component approval or release is supported by this run.
+
+### Native insertion correction: check now visible
+
+The cause was deferred native view creation inside virtual rows: adding a child
+does not change the row ID/extent, so RecyclerView's content comparison skips
+rebinding. PAM Native now collects created node IDs during the mutation batch,
+resolves their unique virtual cell roots after frames arrive, and materializes
+missing descendants in already-mounted affected cells. Offscreen rows remain lazy.
+
+An 18-second Android build succeeded. The focused select/deselect run passed in
+`/tmp/pam-grid-insertion-20260914.json`; inspection of its
+`pass-01-p-data-grid-checked-true.png` confirms the white vector check is now
+visible and centered. This closes the observed check-visibility failure on the
+tested emulator, not the whole Data Grid audit.
+
+Native commit `8338bec` adds the implementation and the instrumented regression
+`richVirtualCellMountsInsertedChildrenWithoutChangingRowExtent`. Its Android 16
+JUnit report records one test, zero failures/errors/skips, exercising two
+insert/remove cycles while retaining the holder and rejecting duplicate children.
+The test body took 0.368 seconds; the filtered build/test command took 17 seconds.
+See the sibling Native document `docs/virtual-cell-insertion-2026-09-14.md`.
+Broader virtualization/platform coverage remains open. Do not restart this fixed
+case unless subsequent changes invalidate its evidence.
