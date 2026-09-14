@@ -1,5 +1,23 @@
 # Consolidated candidate verification
 
+## Latest terminal checkpoint
+
+- UI run `34839419510` finished **successfully**, all nine jobs, at
+  `d052b97cf9453b60fca17c3c6691c4fd1ae6daca`. This includes the lowest PHP graph
+  and closes the analysis-memory regression on the corrected test structure.
+- Native run `34838564521` finished **successfully**, all six jobs, at
+  `e963ef5dd2cdbca9ea232a030dfc2e2a1a911776`. Its exact-revision accessibility
+  artifact `10345169624` was downloaded, inspected and retained in Native docs.
+- Later UI tree-marker and dismissal changes are now under verification in
+  [run 34840530667](https://github.com/push-in/pam-native-ui/actions/runs/34840530667),
+  revision `8661e8e4a3709e27b267f892491f74860af0658c`, against the same Native
+  candidate. This run was confirmed in progress; do not transfer earlier green
+  results to these later implementations or start a duplicate run.
+
+The release evidence inventory is still incomplete. Green build/contract CI
+does not establish full visual, interaction, accessibility or performance
+approval of all 114 components. The records below retain earlier checkpoints.
+
 ## Exact revisions under verification
 
 - UI: `902cd5d820f0a5a267512f3445251fc55252e2e6`, audit branch
