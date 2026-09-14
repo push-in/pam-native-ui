@@ -1708,3 +1708,13 @@ button, without clipping. The same screenshot exposed misleading loading/ready
 sample copy; corrected in the showcase after this build (not yet reinstalled).
 The sample no longer asserts that every native validation passed. Build cleaned
 88.1 MiB of intermediates. Full approval and publication remain gated.
+
+### Segmented icon layout consistency
+
+Icon segments now use a consistent vertical icon/label composition rather than
+independently wrapping horizontal rows. The prior large-font device capture had
+Day beside its icon while Week/Month wrapped below theirs. This change removes
+that per-label layout switch; text-only segments remain unchanged. Matrix checks
+the uniform column structure and retains natural control height/label wrapping.
+The new composition still requires physical large-font verification and is not
+included in the installed APK documented above.

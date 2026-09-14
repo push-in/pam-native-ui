@@ -3600,8 +3600,9 @@ foreach ($iconSegments as $control) {
         isset($control->properties()[PropKey::Height->value])
         || ($control->properties()[PropKey::PaddingVertical->value] ?? null) !== 8.0
         || ($control->properties()[PropKey::FlexShrink->value] ?? null) !== 1.0
+        || ($control->properties()[PropKey::Width->value] ?? null) !== 0.0
         || ($label->properties()[PropKey::FlexShrink->value] ?? null) !== 0.0
-        || ($row->properties()[PropKey::FlexWrap->value] ?? null) !== FlexWrap::Wrap->value
+        || $row->kind() !== NodeKind::Column
     ) {
         throw new RuntimeException('Segment labels must wrap inside padded, naturally growing controls.');
     }
@@ -3612,12 +3613,12 @@ if (
         $iconSegments,
         static fn (\Pam\Native\Element $control): bool =>
             count($control->children()) !== 1
-            || $control->children()[0]->kind() !== NodeKind::Row
+            || $control->children()[0]->kind() !== NodeKind::Column
             || count($control->children()[0]->children()) !== 2,
     )
 ) {
     throw new RuntimeException(
-        'p-segmented-button icons variation must render one icon beside every label.',
+        'p-segmented-button icons variation must keep every icon above its label consistently.',
     );
 }
 

@@ -3678,7 +3678,7 @@ final class ComponentRenderer
                     flexShrink: 0.0,
                     maxWidthPercent: 100.0,
                 ));
-                $content = Row::make(
+                $content = Column::make(
                     self::render(
                         'Icon',
                         ['icon' => $icon, 'size' => 'small', 'color' => $foreground],
@@ -3691,7 +3691,6 @@ final class ComponentRenderer
                 )->style(new Style(
                     widthPercent: 100.0,
                     gap: 8.0,
-                    flexWrap: FlexWrap::Wrap,
                     alignItems: Align::Center,
                     justifyContent: Justify::Center,
                 ));
@@ -3708,6 +3707,7 @@ final class ComponentRenderer
                         ? $theme->color(ColorToken::Secondary)
                         : 0x00000000,
                     opacity: $itemDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+                    width: 0.0,
                     flexGrow: 1.0,
                     flexShrink: 1.0,
                     alignItems: Align::Center,
