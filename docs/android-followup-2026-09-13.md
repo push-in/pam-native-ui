@@ -1621,3 +1621,12 @@ requiring multiple examples and preserved scenario state. Matrix passes.
 Reorder drag locator keeps the first matching row so later duplicate variation
 labels cannot redirect the default test to a disabled specimen. Route changes
 are not yet installed; existing device reports keep their original scope.
+
+### Swipe Actions disabled gesture guard
+
+The inner pan detector remained enabled for disabled components. UI composition
+now disables GestureEnabled, Enabled and native translation, and omits GestureEnd
+handlers for both disabled/isDisabled. Existing enabled gesture action regression
+still passes; added disabled checks and a Locked item showcase example. Matrix
+passes. Existing Native gesture properties suffice; no Native workaround added.
+Physical swipe validation and accessible alternatives are still pending.

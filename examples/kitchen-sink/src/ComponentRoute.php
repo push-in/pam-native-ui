@@ -5586,6 +5586,7 @@ final class ComponentRoute extends Component
             $add($variations, 'Disabled', ['disabled' => true]);
         }
         if ($this->tag === 'p-swipe-actions') {
+            $add($variations, 'Disabled', ['disabled' => true, 'title' => 'Locked item']);
             $add($variations, 'Mail', ['title' => 'Inbox message', 'startLabel' => 'Read', 'endLabel' => 'Delete']);
             $add($variations, 'Tasks', ['title' => 'Design review', 'startLabel' => 'Done', 'endLabel' => 'Later']);
             $add($variations, 'Reduced Motion', ['reduceMotion' => true]);

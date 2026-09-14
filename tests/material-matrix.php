@@ -4388,6 +4388,19 @@ $swipe->children()[1]->events()[EventKind::GestureEnd->value](Wire::map([
 if ($swipeAction !== 'Delete') {
     throw new RuntimeException('p-swipe-actions gesture must emit its semantic action.');
 }
+foreach (['disabled', 'isDisabled'] as $disabledProp) {
+    $disabledSwipe = $tags['p-swipe-actions']::make([$disabledProp => true])
+        ->onAction(static function (string $action): void {})
+        ->toElement()->children()[1];
+    foreach ([PropKey::GestureEnabled, PropKey::Enabled, PropKey::GestureNativeTransform] as $property) {
+        if (($disabledSwipe->properties()[$property->value] ?? null) !== false) {
+            throw new RuntimeException('Disabled swipe actions must block recognition and native movement.');
+        }
+    }
+    if (isset($disabledSwipe->events()[EventKind::GestureEnd->value])) {
+        throw new RuntimeException('Disabled swipe actions must not expose completion handlers.');
+    }
+}
 $dataGrid = $tags['p-data-grid']::make([
     'headers' => [['title' => 'Name', 'key' => 'name']],
     'items' => [['name' => 'Aurora']],

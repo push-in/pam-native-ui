@@ -4060,6 +4060,7 @@ final class ComponentRenderer
         $change = $events[EventKind::Change->value] ?? null;
         $startLabel = self::text($props, 'startLabel', 'Archive');
         $endLabel = self::text($props, 'endLabel', 'Delete');
+        $disabled = self::flag($props, 'disabled', self::flag($props, 'isDisabled'));
         $foregroundContent = $children[0] ?? Text::make(
             self::text($props, 'title', 'Swipe this item'),
         )->style(new Style(
@@ -4076,6 +4077,8 @@ final class ComponentRenderer
             alignItems: Align::Center,
         ));
         $gesture = GestureDetector::make(GestureType::Pan, $foreground)
+            ->gestureEnabled(!$disabled)
+            ->enabled(!$disabled)
             ->style(new Style(
                 widthPercent: 100.0,
                 minHeight: 64.0,
@@ -4086,13 +4089,13 @@ final class ComponentRenderer
             ->direction(GestureDirection::Horizontal)
             ->minimumDistance(24.0)
             ->nativeTransform(
-                enabled: !self::flag($props, 'reduceMotion'),
+                enabled: !$disabled && !self::flag($props, 'reduceMotion'),
                 translationLimitX: self::number($props, 'revealWidth', 96.0),
                 resetOnEnd: true,
             )
             ->accessibilityRole(AccessibilityRole::ListItem)
-            ->accessibilityHint('Swipe left or right to reveal actions');
-        if ($change instanceof Closure) {
+            ->accessibilityHint($disabled ? 'Swipe actions disabled' : 'Swipe left or right to reveal actions');
+        if (!$disabled && $change instanceof Closure) {
             $gesture = $gesture->onEnd(static function (GestureEvent $event) use (
                 $change,
                 $startLabel,
