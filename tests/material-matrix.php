@@ -2068,6 +2068,32 @@ foreach ([
 }
 
 $createdTag = null;
+foreach (['p-select', 'p-autocomplete', 'p-combobox', 'p-tag-input', 'p-multi-select'] as $optionTag) {
+    foreach ([['isDisabled' => true], ['disabled' => 'false'],
+        ['disabled' => false, 'isDisabled' => true]] as $optionLock) {
+        $expectedLocked = $optionLock === ['isDisabled' => true];
+        $optionControl = $tags[$optionTag]::make([
+            'items' => [['value' => 73, 'label' => 'Option lock fixture', ...$optionLock]],
+        ])->onChange(static function (mixed $value): void {})->toElement();
+        $optionStack = [$optionControl];
+        $matchedOptions = 0;
+        while ($optionStack !== []) {
+            $optionNode = array_pop($optionStack);
+            $optionProperties = $optionNode->properties();
+            if (in_array($optionProperties[PropKey::Value->value] ?? null, [73, '73'], true)) {
+                $matchedOptions++;
+                if (($optionProperties[PropKey::Enabled->value] ?? true) !== !$expectedLocked
+                    || isset($optionNode->events()[EventKind::Press->value]) === $expectedLocked) {
+                    throw new RuntimeException($optionTag.' option locks must honor aliases, false strings and canonical precedence.');
+                }
+            }
+            array_push($optionStack, ...$optionNode->children());
+        }
+        if ($matchedOptions !== 1) {
+            throw new RuntimeException('Option-lock regression must inspect exactly one selectable option.');
+        }
+    }
+}
 $tagInput = $tags['p-tag-input']::make([
     'label' => 'Technologies',
     'items' => ['Android', 'iOS'],

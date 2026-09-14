@@ -1,5 +1,16 @@
 # Search family validation
 
+## Shared option lock normalization
+
+Select, Autocomplete, Combobox, Tag Input and Multi Select now normalize individual
+option `disabled` values with the common boolean parser and accept `isDisabled`.
+Explicit `disabled: false` wins over `isDisabled: true`; the string `"false"`
+does not accidentally disable an option through PHP's boolean cast.
+Fifteen PHP cases verify option enabled state and press-handler presence across
+the five public facades. Matrix and targeted renderer PHPStan pass. Device
+coverage for these option-lock cases remains pending; existing APK results do
+not cover this later normalization change.
+
 ## Native editor contract follow-up
 
 Search Bar forwards all eight native editor events, including end-editing,

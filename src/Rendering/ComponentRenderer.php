@@ -9922,7 +9922,7 @@ final class ComponentRenderer
                     ?? $item['label']
                     ?? $item['name']
                     ?? $value;
-                $disabled = (bool) ($item['disabled'] ?? false);
+                $disabled = self::flag($item, 'disabled', self::flag($item, 'isDisabled'));
             } else {
                 $value = $item;
                 $label = $item;
