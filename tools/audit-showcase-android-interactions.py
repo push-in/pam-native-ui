@@ -860,6 +860,9 @@ def exercise(
                 raise AuditFailure(f"{tag} action produced no visible result")
             return selected, True
         if tag == "p-popover":
+            opened = audit.dump(f"{evidence_name}-open")
+            if "Native overlay" not in opened.all_text():
+                raise AuditFailure("p-popover trigger did not expose its content")
             # Dismiss through the component's scrim. Android Back can finish
             # the freshly deep-linked Activity and reveal another installed
             # build, which tests task history rather than popover behavior.
@@ -868,6 +871,8 @@ def exercise(
             audit.back()
         closed = audit.dump(f"{evidence_name}-closed")
         assert_healthy(closed, route)
+        if tag == "p-popover" and "Native overlay" in closed.all_text():
+            raise AuditFailure("p-popover content remained accessible after outside dismissal")
         audit.screenshot_hash(f"{evidence_name}-closed")
         return closed, True
 

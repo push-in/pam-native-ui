@@ -119,10 +119,10 @@ class DialogAudit(AutocompleteAudit):
 
     def run(self) -> dict[str, object]:
         self.original_font_scale = self.setting("system", "font_scale")
-        self.set_setting("system", "font_scale", "1.0")
         self.prepare()
         metrics: dict[str, object] = {"density": self.density(), "profiles": {}}
         try:
+            self.set_setting("system", "font_scale", "1.0")
             self.launch()
             width, height = self.screenshot("device-precondition")
             density = self.density()
@@ -236,6 +236,7 @@ class DialogAudit(AutocompleteAudit):
                 "device": self.serial,
                 "package": self.package,
                 "resultStatus": 1,
+                "fullApproval": False,
                 "checks": checks,
                 "metrics": metrics,
                 "evidence": self.evidence,

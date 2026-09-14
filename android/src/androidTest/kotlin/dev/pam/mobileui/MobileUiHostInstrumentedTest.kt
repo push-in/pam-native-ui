@@ -44,6 +44,43 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
     @Test
+    fun anchoredContentPreservesRendererDimensionsIncludingTrailingPadding() {
+        onMain {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val host = MobileUiHost(context) { _, _ -> }
+            try {
+                host.update(mapOf(
+                    "behavior" to WireValue.Integer(14),
+                    "isOpen" to WireValue.Flag(true),
+                ))
+                host.addView(View(context).apply {
+                    tag = "pam:overlay-trigger"
+                    layoutParams = FrameLayout.LayoutParams(176, 48)
+                })
+                val content = FrameLayout(context).apply {
+                    tag = "pam:overlay-content"
+                    layoutParams = FrameLayout.LayoutParams(248, 120)
+                    // Renderer-owned positions include padding; Android
+                    // FrameLayout.padding remains zero to avoid doubling it.
+                    addView(View(context), FrameLayout.LayoutParams(216, 88).apply {
+                        leftMargin = 16
+                        topMargin = 16
+                    })
+                }
+                host.addView(content)
+                host.measure(
+                    View.MeasureSpec.makeMeasureSpec(360, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(56, View.MeasureSpec.EXACTLY),
+                )
+                assertEquals(248, content.measuredWidth)
+                assertEquals(120, content.measuredHeight)
+            } finally {
+                host.release()
+            }
+        }
+    }
+
+    @Test
     fun bottomSheetDetentsGrowOnlyWhenTheirContentWouldBeClipped() {
         assertEquals(
             1_632 to 816,

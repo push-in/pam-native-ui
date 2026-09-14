@@ -1679,9 +1679,22 @@ internal class MobileUiHost(
             } - screenMargin
         ).coerceAtLeast(0)
         contentBranch?.takeUnless { it.visibility == GONE }?.let { child ->
+            // The renderer's dimensions already include authored padding and
+            // intrinsic text layout. Measuring a FrameLayout with AT_MOST
+            // alone discards its own layoutParams and shrinks it to child
+            // extents, dropping the trailing/bottom authored inset.
+            val params = child.layoutParams
             child.measure(
-                MeasureSpec.makeMeasureSpec(overlayWidth, MeasureSpec.AT_MOST),
-                MeasureSpec.makeMeasureSpec(overlayHeight, MeasureSpec.AT_MOST),
+                getChildMeasureSpec(
+                    MeasureSpec.makeMeasureSpec(overlayWidth, MeasureSpec.AT_MOST),
+                    0,
+                    if (params.width >= 0) params.width.coerceAtMost(overlayWidth) else params.width,
+                ),
+                getChildMeasureSpec(
+                    MeasureSpec.makeMeasureSpec(overlayHeight, MeasureSpec.AT_MOST),
+                    0,
+                    if (params.height >= 0) params.height.coerceAtMost(overlayHeight) else params.height,
+                ),
             )
             desiredWidth = max(
                 desiredWidth,
