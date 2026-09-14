@@ -3448,6 +3448,18 @@ $spanningGrid = $gridClass::make(
     ['columns' => 3],
     Text::make('Spanning')->property(PropKey::Value, 'pam:grid-item:2,2,2,2,2,2'),
 )->toElement();
+$autoFitGrid = $gridClass::make(['columns' => 4, 'minColumnWidth' => 120], Text::make('Adaptive'))->toElement();
+if (($autoFitGrid->properties()[PropKey::GridMinColumnWidth->value] ?? null) !== 120.0) {
+    throw new RuntimeException('Minimum column width must be delegated to native layout, not a host-only resize.');
+}
+try {
+    $gridClass::make(['columns' => ['default' => 1, 'md' => 4], 'minColumnWidth' => 120], Text::make('Mixed'))->toElement();
+    throw new RuntimeException('Unsupported auto-fit/breakpoint combinations must not silently discard the minimum width.');
+} catch (InvalidArgumentException $exception) {
+    if (!str_contains($exception->getMessage(), 'minColumnWidth')) {
+        throw $exception;
+    }
+}
 if (($spanningGrid->children()[0]->properties()[PropKey::GridSpan->value] ?? null) !== 2) {
     throw new RuntimeException('Fixed GridItem spans must reach the shared layout engine.');
 }

@@ -8481,11 +8481,18 @@ final class ComponentRenderer
             }
             $engineChildren[] = $child->property(PropKey::GridSpan, $span);
         }
+        $minimum = max(0.0, self::number($props, 'minColumnWidth', 0.0));
+        if ($minimum > 0.0 && !$fixedGrid) {
+            throw new InvalidArgumentException('minColumnWidth currently requires fixed columns, gutters and spans with row direction.');
+        }
         if ($fixedGrid) {
-            return Column::make(...$engineChildren)
+            $grid = Column::make(...$engineChildren)
                 ->property(PropKey::GridColumns, $columns[0])
                 ->property(PropKey::GridColumnGap, (float) $columnGaps[0])
                 ->property(PropKey::GridRowGap, (float) $rowGaps[0]);
+            return $minimum > 0.0
+                ? $grid->property(PropKey::GridMinColumnWidth, $minimum)
+                : $grid;
         }
         $grid = CustomView::make(
             'pam.mobile_ui.grid',

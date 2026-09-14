@@ -6400,7 +6400,7 @@ final class ComponentRoute extends Component
                 ['label' => 'Single Column', 'props' => ['columns' => 1]],
                 ['label' => 'Two Columns', 'props' => ['columns' => 2]],
                 ['label' => 'Three Columns', 'props' => ['columns' => 3]],
-                ['label' => 'Four Columns', 'props' => ['columns' => 4]],
+                ['label' => 'Up to four columns — adapts to width', 'props' => ['columns' => 4, 'minColumnWidth' => 120]],
             ],
             'p-virtual-list' => [
                 ['label' => '1,000 items — near the end', 'props' => [

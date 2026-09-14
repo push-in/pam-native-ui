@@ -84,3 +84,21 @@ titles aligned and the header badge still centered. Chip press feedback also
 passed in this candidate. Native's `docs/intrinsic-text-baseline-2026-09-14.md`
 records the implementation and remaining metric limitations. Four-column word
 breaks and adaptive layout integration are still not approved for showcase release.
+
+## Auto-fit capability and Samsung evidence
+
+The showcase's final variation now requests up to four columns with a 120-unit
+minimum, via the new PAM Native GridMinColumnWidth primitive. No labels or fonts
+were shortened/shrunk. Shared layout computes count and height together.
+
+`/tmp/pam-grid-autofit-20260914/report.json` records Samsung API 31, font scale
+1.1, SHA `6f426e5d0cd206edde27f81620635de09e3f5bae53b45bd99ab266eb6d8c6b2e`.
+The dedicated audit scrolled the real screen, asserted 2x2 label positions and
+visibility, and retained XML/PNG. The viewed image confirms full Discover,
+Create, Review and Ship labels, aligned starts and consistent gutters.
+
+Engine (79), protocol (12), PHP SDK, Android unit tests, protocol parity, UI
+material matrix and focused PHPStan 9 passed. Auto-fit plus breakpoint/reversed
+configurations are explicitly rejected for now. See `adaptive-grid.md` for the
+candidate API. Large font/RTL/iOS/device resize and full responsive migration
+remain unapproved. No release or online media publication was performed.
