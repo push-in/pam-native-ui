@@ -754,6 +754,47 @@ def exercise(
         audit.back()
         return after, True
 
+    if kind == InteractionKind.GESTURE and tag == "p-reorderable-list":
+        def reorder_control(snapshot: Hierarchy, label: str) -> ET.Element:
+            matches = [n for n in snapshot.nodes() if n.attrib.get("content-desc") == label]
+            if len(matches) != 1:
+                raise AuditFailure(f"reorder control must be unique: {label}")
+            return matches[0]
+
+        def require_order(snapshot: Hierarchy, expected: str) -> None:
+            assert_healthy(snapshot, route)
+            summaries = [n for n in snapshot.nodes() if n.attrib.get("text") == expected]
+            if len(summaries) != 1:
+                raise AuditFailure(f"reorder did not publish expected controlled order: {expected}")
+
+        require_order(before, "Order: Research · Prototype · Build · Ship")
+        source = bounds(reorder_control(before, "Reorder Build"))
+        destination = bounds(reorder_control(before, "Reorder Research"))
+        audit.assert_foreground("before reorder drag")
+        audit.shell("input", "touchscreen", "draganddrop",
+            str(source.center[0]), str(source.center[1]),
+            str(destination.center[0]), str(destination.center[1]), "1000")
+        after = audit.dump(f"{evidence_name}-dragged")
+        require_order(after, "Order: Build · Research · Prototype · Ship")
+        for label, expected in [
+            ("Move Build down", "Order: Research · Build · Prototype · Ship"),
+            ("Move Build up", "Order: Build · Research · Prototype · Ship"),
+        ]:
+            control = reorder_control(after, label)
+            if not enabled(control):
+                raise AuditFailure(f"reorder action unexpectedly disabled: {label}")
+            audit.tap(bounds(control))
+            after = audit.dump(f"{evidence_name}-{label.replace(' ', '-').lower()}")
+            require_order(after, expected)
+        boundary = reorder_control(after, "Move Build up")
+        if enabled(boundary):
+            raise AuditFailure("first row must disable its move-up action")
+        audit.tap(bounds(boundary))
+        after = audit.dump(f"{evidence_name}-boundary")
+        require_order(after, "Order: Build · Research · Prototype · Ship")
+        audit.settled_screenshot_hash(f"{evidence_name}-after")
+        return after, True
+
     if kind == InteractionKind.GESTURE:
         previews = [
             node for node in before.nodes()
@@ -770,10 +811,6 @@ def exercise(
         area = bounds(previews[0])
         if tag == "p-pull-to-refresh":
             audit.swipe(area.center, (area.center[0], area.bottom - 20), 800)
-        elif tag == "p-reorderable-list":
-            start = (area.left + 70, area.top + min(70, area.height // 4))
-            end = (start[0], min(area.bottom - 40, start[1] + 300))
-            audit.swipe(start, end, 1400)
         else:
             audit.swipe(
                 (area.right - 80, area.center[1]),
