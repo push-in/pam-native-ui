@@ -6516,7 +6516,7 @@ final class ComponentRoute extends Component
             return $this->virtualDataTableVariations();
         }
 
-        if ($this->belongsTo(['p-icon', 'p-icon-btn', 'p-img'])) {
+        if ($this->belongsTo(['p-icon', 'p-icon-btn', 'p-img', 'p-tree-select'])) {
             // These compact showcase matrices are deterministic and already
             // exercise the public catalog, so the Android audit uses them too.
             $auditScenario = $this->state->auditScenario;

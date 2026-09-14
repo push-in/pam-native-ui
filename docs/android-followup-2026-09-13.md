@@ -1573,3 +1573,15 @@ retain the existing controlled reorder behavior. Generated labels use remaining
 row width. Regression invokes wire-level drop callbacks for all four cases and
 checks disabled native properties. Matrix passes; physical drag/drop validation
 remains pending and no accessibility alternative is approved by these checks.
+
+### Tree audit route mismatch found on Samsung
+
+Tree/reorder build installed successfully (13s build, 88MiB cleanup), APK
+`c08b8d5243d3b4f545765068b878e02df12407a0f542b1b9c9d3e08b5698fe7c`.
+Physical tree test failed to locate Project access because auditVariations
+returned only Default for this tag, bypassing the actual showcase variations.
+Report: `/tmp/pam-ui-tree-selection-20260913/report.json` (no passed checks).
+The audit route now delegates to the real tree variations, like the existing
+icon/image paths, restoring the prior scenario in finally. Matrix passes.
+The route fix must be installed before rerunning the scoped tree interaction
+test. No tree or reorder physical approval is claimed by this failed attempt.
