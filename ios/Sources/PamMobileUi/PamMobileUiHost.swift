@@ -109,6 +109,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var isExpanded = false
     private var fileTreeExpandedPaths = Set<String>()
     private var fileTreeSelectedPath: String?
+    private var fileTreeSelectedPaths = Set<String>()
+    private var fileTreeMultiple = false
     private var minimum: CGFloat = 0
     private var maximum: CGFloat = 100
     private var step: CGFloat = 1
@@ -240,6 +242,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? next["isExpanded"]?.pamFlag
             ?? isExpanded
         if behavior == .fileTree {
+            fileTreeMultiple = next["multiple"]?.pamFlag ?? false
+            if next["selectedPaths"] != nil || previousBehavior != behavior {
+                fileTreeSelectedPaths = Set((next["selectedPaths"]?.pamText ?? "")
+                    .split(separator: "\n").map(String.init))
+            }
             if next["expandedPaths"] != nil || previousBehavior != behavior {
                 let paths = next["expandedPaths"]?.pamText
                     ?? next["defaultExpandedPaths"]?.pamText ?? ""
@@ -1284,7 +1291,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                     if item.behavior == .fileTree { continue }
                     if item.behavior == .fileTreeFolder || item.behavior == .fileTreeFile {
                         let path = item.properties["path"]?.pamText ?? ""
-                        let selected = !path.isEmpty && path == fileTreeSelectedPath
+                        let selected = !path.isEmpty && (fileTreeMultiple
+                            ? fileTreeSelectedPaths.contains(path) : path == fileTreeSelectedPath)
                         item.isSelectedState = selected
                         item.accessibilityTraits = [.button]
                         if selected { item.accessibilityTraits.insert(.selected) }
@@ -1348,7 +1356,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             let open = !tree.fileTreeExpandedPaths.contains(path)
             if open { tree.fileTreeExpandedPaths.insert(path) }
             else { tree.fileTreeExpandedPaths.remove(path) }
-            tree.fileTreeSelectedPath = path
+            tree.updateFileTreeSelection(path)
             tree.layoutFileTree()
             tree.emit?(.change, Data(path.utf8))
             tree.emitMap([
@@ -1357,12 +1365,21 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 "expanded": .flag(open),
             ])
         } else {
-            guard tree.fileTreeSelectedPath != path else { return false }
-            tree.fileTreeSelectedPath = path
+            guard tree.fileTreeMultiple || tree.fileTreeSelectedPath != path else { return false }
+            tree.updateFileTreeSelection(path)
             tree.layoutFileTree()
             tree.emit?(.change, Data(path.utf8))
         }
         return true
+    }
+
+    private func updateFileTreeSelection(_ path: String) {
+        if fileTreeMultiple {
+            if fileTreeSelectedPaths.contains(path) { fileTreeSelectedPaths.remove(path) }
+            else { fileTreeSelectedPaths.insert(path) }
+        } else {
+            fileTreeSelectedPath = path
+        }
     }
 
     private func applyInputState() {

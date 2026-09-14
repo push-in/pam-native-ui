@@ -89,6 +89,46 @@ class MobileUiHostInstrumentedTest {
     }
 
     @Test
+    fun fileTreeMultipleSelectionRetainsOtherPathsWhenToggled() {
+        onMain {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val events = ArrayList<String>()
+            val tree = MobileUiHost(context) { kind, payload ->
+                if (kind == NativeViewEventKind.CHANGE) events += payload.decodeToString()
+            }
+            val alpha = MobileUiHost(context) { _, _ -> }.apply {
+                update(mapOf("behavior" to WireValue.Integer(34), "path" to WireValue.Text("alpha")))
+            }
+            val beta = MobileUiHost(context) { _, _ -> }.apply {
+                update(mapOf("behavior" to WireValue.Integer(34), "path" to WireValue.Text("beta")))
+            }
+            tree.addView(alpha)
+            tree.addView(beta)
+            try {
+                tree.update(mapOf("behavior" to WireValue.Integer(32), "multiple" to WireValue.Flag(true),
+                    "selectedPaths" to WireValue.Text("alpha")))
+                assertTrue(alpha.isSelected)
+                assertFalse(beta.isSelected)
+                assertTrue(beta.performClick())
+                assertTrue(alpha.isSelected)
+                assertTrue(beta.isSelected)
+                assertTrue(alpha.performClick())
+                assertFalse(alpha.isSelected)
+                assertTrue(beta.isSelected)
+                assertEquals(listOf("beta", "alpha"), events)
+                tree.update(mapOf("behavior" to WireValue.Integer(32), "multiple" to WireValue.Flag(true),
+                    "selectedPaths" to WireValue.Text("")))
+                assertFalse(alpha.isSelected)
+                assertFalse(beta.isSelected)
+            } finally {
+                alpha.release()
+                beta.release()
+                tree.release()
+            }
+        }
+    }
+
+    @Test
     fun gridOnlyResizesExplicitGridItemWrapperContent() {
         onMain {
             val context = InstrumentationRegistry.getInstrumentation().targetContext

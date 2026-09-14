@@ -3422,6 +3422,26 @@ if ($selectedTreePath !== 'android') {
     );
 }
 
+foreach ([
+    [['alpha'], 'beta', ['alpha', 'beta']],
+    [['alpha', 'beta'], 'alpha', ['beta']],
+] as [$treeSelection, $treePressed, $expectedTreeSelection]) {
+    $treeSelectionResult = null;
+    $multipleTree = $treeClass::make([
+        'multiple' => true, 'modelValue' => $treeSelection,
+        'items' => [['title' => 'Alpha', 'value' => 'alpha'], ['title' => 'Beta', 'value' => 'beta']],
+    ])->onChange(static function (array $next) use (&$treeSelectionResult): void {
+        $treeSelectionResult = $next;
+    })->toElement();
+    $multipleTreePayload = $multipleTree->properties()[PropKey::HostProperties->value] ?? null;
+    if (!$multipleTreePayload instanceof BinaryValue
+        || (Wire::decodeMap($multipleTreePayload->bytes)['selectedPaths'] ?? null) !== implode("\n", $treeSelection)) {
+        throw new RuntimeException('Multiple Treeview must transmit every selected path to its native host.');
+    }
+    $multipleTree->events()[EventKind::Change->value]($treePressed);
+    $assertCustomSelection($treeSelectionResult, $expectedTreeSelection,
+        'Multiple Treeview must emit additive/removal arrays, never replace selection with a scalar.');
+}
 $imageClass = $tags['p-img'];
 foreach (['disabled', 'isDisabled'] as $treeDisabledAlias) {
     $lockedTree = $treeClass::make([

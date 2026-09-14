@@ -439,6 +439,25 @@ final class ComponentRenderer
                 ?? $props['selected']
                 ?? $props['value']
                 ?? null;
+            if (self::flag($props, 'multiple')) {
+                $selectedPaths = array_values(array_filter(
+                    is_array($selected) ? $selected : ($selected === null ? [] : [$selected]),
+                    static fn (mixed $path): bool => is_scalar($path),
+                ));
+                $props['selectedPaths'] = implode("\n", array_map('strval', $selectedPaths));
+                $selectionChange = $events[EventKind::Change->value] ?? null;
+                if ($selectionChange instanceof Closure) {
+                    $events[EventKind::Change->value] = static function (mixed $path) use ($selectionChange, $selectedPaths): mixed {
+                        if (!is_scalar($path)) return false;
+                        $next = array_values(array_filter(
+                            $selectedPaths,
+                            static fn (mixed $selectedPath): bool => (string) $selectedPath !== (string) $path,
+                        ));
+                        if (count($next) === count($selectedPaths)) $next[] = $path;
+                        return $selectionChange($next);
+                    };
+                }
+            }
             if (is_array($selected)) {
                 $selected = reset($selected);
             }

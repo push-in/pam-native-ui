@@ -4,6 +4,38 @@ import XCTest
 @testable import PamMobileUi
 
 final class PamMobileUiTests: XCTestCase {
+    func testFileTreeMultipleSelectionRetainsOtherPaths() {
+        var changes: [String] = []
+        let tree = PamMobileUiHost { kind, data in
+            if kind == .change { changes.append(String(decoding: data, as: UTF8.self)) }
+        }
+        let alpha = PamMobileUiHost { _, _ in }
+        let beta = PamMobileUiHost { _, _ in }
+        alpha.update(["behavior": .integer(34), "path": .text("alpha")])
+        beta.update(["behavior": .integer(34), "path": .text("beta")])
+        tree.addSubview(alpha)
+        tree.addSubview(beta)
+        defer {
+            tree.releaseCallbacks()
+            alpha.releaseCallbacks()
+            beta.releaseCallbacks()
+        }
+        tree.update(["behavior": .integer(32), "multiple": .flag(true), "selectedPaths": .text("alpha")])
+        XCTAssertTrue(beta.accessibilityActivate())
+        XCTAssertTrue(alpha.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(beta.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(alpha.accessibilityActivate())
+        XCTAssertFalse(alpha.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(beta.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(changes, ["beta", "alpha"])
+        tree.update(["behavior": .integer(32), "multiple": .flag(true), "selectedPaths": .text("")])
+        tree.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
+        tree.setNeedsLayout()
+        tree.layoutIfNeeded()
+        XCTAssertFalse(alpha.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(beta.accessibilityTraits.contains(.selected))
+    }
+
     func testFileTreeActivationExpansionAndDisabledAncestry() {
         var events: [(NativeViewEventKind, Data)] = []
         let tree = PamMobileUiHost { events.append(($0, $1)) }

@@ -2,6 +2,30 @@
 
 ## Treeview disabled-branch parity
 
+UIKit follow-up candidate `fca5827` implements folder expansion, leaf selection,
+selected traits/colors, chevron state and root-owned Change/Native expansion
+events. Touches are scoped to folder headers; accessibility activation uses the
+same state transition. Disabled/hidden ancestry rejects activation. Explicitly
+empty controlled expanded paths collapse folders; nested independent trees are
+excluded from traversal. A new UIKit test covers activation, blocked ancestors,
+selection deduplication and controlled collapse. Both iOS jobs passed in Verify
+run `34835373543`; current job `103947877428` explicitly reports this new test
+passed and ten UIKit tests with zero failures. This is not full iOS approval; real layout
+reflow, nested-touch routing and screen-reader traversal remain to be checked.
+
+Multiple selection follow-up: the Treeview renderer now emits the complete
+controlled selection array when a native path is toggled, and transmits all
+selected paths to the host rather than only the first one. Android and UIKit
+hosts keep a set in multiple mode and preserve the original single-mode behavior.
+PHP regressions cover add/remove payloads. Android's multiple-state test verifies
+both visual selected flags, retention of the other item, removal and controlled
+empty reset. Together with the disabled-ancestry regression, two Android tests
+passed with zero failures/errors/skips in an eight-second filtered build/test.
+Matrix and targeted PHPStan level 9 pass. The additional UIKit multiple-state
+test is not in `fca5827` and still needs remote execution; the earlier ten-test
+success must not be used as evidence for this follow-up. Showcase touch flows
+and controlled expansion across rerenders remain separate acceptance cases.
+
 The older `p-treeview` composition now propagates a disabled item/ancestor into
 all generated folders and files, removes their selection callbacks and honors
 the `isDisabled` item alias. An explicit enabled child cannot escape a disabled

@@ -558,6 +558,8 @@ internal class MobileUiHost(
     private var dragging = false
     private var accordionTouchActive = false
     private val fileTreeExpandedPaths = LinkedHashSet<String>()
+    private val fileTreeSelectedPaths = LinkedHashSet<String>()
+    private var fileTreeMultiple = false
     private var fileTreeSelectedPath: String? = null
     private var fileTreePath = ""
     private var fileTreeFolderExpanded = false
@@ -804,6 +806,12 @@ internal class MobileUiHost(
             tabValue = properties.scalarText("value") ?: tabValue
         }
         if (behavior == Behavior.FILE_TREE) {
+            fileTreeMultiple = properties.flag("multiple", false)
+            if (properties.containsKey("selectedPaths") || previousBehavior != behavior) {
+                fileTreeSelectedPaths.clear()
+                properties.text("selectedPaths")?.lineSequence()?.filter(String::isNotEmpty)
+                    ?.forEach(fileTreeSelectedPaths::add)
+            }
             if (
                 properties.containsKey("expandedPaths")
                 || previousBehavior != behavior
@@ -7071,7 +7079,8 @@ internal class MobileUiHost(
         if (behavior != Behavior.FILE_TREE) return
         fileTreeItems().forEach { item ->
             val selected = item.fileTreePath != ""
-                && item.fileTreePath == fileTreeSelectedPath
+                && if (fileTreeMultiple) fileTreeSelectedPaths.contains(item.fileTreePath)
+                   else item.fileTreePath == fileTreeSelectedPath
             if (item.behavior == Behavior.FILE_TREE_FOLDER) {
                 item.applyFileTreeFolderState(
                     expanded = fileTreeExpandedPaths.contains(item.fileTreePath),
@@ -7160,7 +7169,7 @@ internal class MobileUiHost(
             fileTreeExpandedPaths.add(path)
             true
         }
-        fileTreeSelectedPath = path
+        updateFileTreeSelection(path)
         applyFileTreeState(announce = true)
         emitter.emit(
             NativeViewEventKind.CHANGE,
@@ -7181,14 +7190,22 @@ internal class MobileUiHost(
 
     private fun selectFileTreeItem(item: MobileUiHost): Boolean {
         if (behavior != Behavior.FILE_TREE || item.fileTreePath == "" || !canActivateFileTreeItem(item)) return false
-        if (fileTreeSelectedPath == item.fileTreePath) return false
-        fileTreeSelectedPath = item.fileTreePath
+        if (!fileTreeMultiple && fileTreeSelectedPath == item.fileTreePath) return false
+        updateFileTreeSelection(item.fileTreePath)
         applyFileTreeState(announce = true)
         emitter.emit(
             NativeViewEventKind.CHANGE,
             item.fileTreePath.encodeToByteArray(),
         )
         return true
+    }
+
+    private fun updateFileTreeSelection(path: String) {
+        if (fileTreeMultiple) {
+            if (!fileTreeSelectedPaths.remove(path)) fileTreeSelectedPaths.add(path)
+        } else {
+            fileTreeSelectedPath = path
+        }
     }
 
     private fun canActivateFileTreeItem(item: MobileUiHost): Boolean {
