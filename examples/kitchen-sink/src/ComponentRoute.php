@@ -6561,6 +6561,10 @@ final class ComponentRoute extends Component
                 ['label' => 'Disabled', 'props' => ['disabled' => true]],
             ],
             'p-filter-bar' => [
+                ['label' => 'Protected selection', 'props' => ['items' => [
+                    ['label' => 'Required scope', 'value' => 1, 'disabled' => true],
+                    ['label' => 'Optional scope', 'value' => 2],
+                ], 'modelValue' => [1, 2]]],
                 ['label' => 'Read only', 'props' => ['modelValue' => [1], 'isReadOnly' => true, 'items' => [
                     ['value' => 1, 'label' => 'Available'], ['value' => 2, 'label' => 'Recent'],
                 ]]],

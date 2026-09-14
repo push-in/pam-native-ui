@@ -1045,6 +1045,32 @@ def exercise(
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 
+    if kind == InteractionKind.SELECT and tag == "p-filter-bar":
+        def scope(snapshot: Hierarchy, label: str) -> ET.Element:
+            matches = [n for n in snapshot.nodes() if n.attrib.get("content-desc") == label]
+            if len(matches) != 1:
+                raise AuditFailure(f"filter scope must be unique: {label}")
+            return matches[0]
+        required = scope(before, "Required scope")
+        optional = scope(before, "Optional scope")
+        if enabled(required) or required.attrib.get("checked") != "true" or optional.attrib.get("checked") != "true":
+            raise AuditFailure("protected filter fixture has incorrect initial state")
+        clears = [n for n in before.nodes() if n.attrib.get("content-desc") == "Clear filters"
+            and enabled(n) and bounds(n).top >= bounds(required).top]
+        if not clears:
+            raise AuditFailure("protected filter group lacks its clear action")
+        audit.tap(bounds(min(clears, key=lambda n: bounds(n).top)))
+        after = audit.dump(f"{evidence_name}-cleared")
+        assert_healthy(after, route)
+        if scope(after, "Required scope").attrib.get("checked") != "true" or scope(after, "Optional scope").attrib.get("checked") != "false":
+            raise AuditFailure("clear must preserve required scope and remove optional scope")
+        audit.tap(bounds(scope(after, "Required scope")))
+        after = audit.dump(f"{evidence_name}-locked")
+        if scope(after, "Required scope").attrib.get("checked") != "true":
+            raise AuditFailure("disabled scope was deselected by touch")
+        audit.settled_screenshot_hash(f"{evidence_name}-after")
+        return after, True
+
     if kind == InteractionKind.SELECT and tag == "p-chart":
         charts = [
             node for node in before.nodes()

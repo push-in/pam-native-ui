@@ -5059,6 +5059,7 @@ final class ComponentRenderer
         $readOnly = self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
         $theme = ThemeManager::current();
         $children = [];
+        $protectedValues = [];
         foreach ($source as $index => $definition) {
             $value = is_array($definition)
                 ? ($definition['value'] ?? $definition['id'] ?? $index + 1)
@@ -5072,6 +5073,7 @@ final class ComponentRenderer
                 'disabled',
             ));
             $active = in_array($value, $selected, true);
+            if ($itemDisabled && $active) $protectedValues[] = $value;
             $button = Pressable::make(Text::make((string) $label)->style(new Style(
                 textColor: $itemDisabled
                     ? $theme->color(ColorToken::MutedForeground)
@@ -5124,7 +5126,9 @@ final class ComponentRenderer
             }
             $children[] = $button;
         }
-        if ($selected !== [] && $change instanceof Closure && !$disabled && !$readOnly) {
+        $retained = array_values(array_filter($selected,
+            static fn (mixed $value): bool => in_array($value, $protectedValues, true)));
+        if ($retained !== $selected && $change instanceof Closure && !$disabled && !$readOnly) {
             $children[] = Pressable::make(Text::make(
                 self::text($props, 'clearLabel', 'Clear'),
             )->style(new Style(
@@ -5139,7 +5143,7 @@ final class ComponentRenderer
                 justifyContent: Justify::Center,
             ))->accessibilityRole(AccessibilityRole::Button)
                 ->accessibilityLabel('Clear filters')
-                ->onPress(static fn (): mixed => $change([]));
+                ->onPress(static fn (): mixed => $change($retained));
         }
         return $children;
     }

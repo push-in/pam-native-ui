@@ -3797,6 +3797,33 @@ foreach ([false, true] as $disabled) {
     }
 }
 $selectedSegment = null;
+foreach ([[2, 1], [2]] as $filterSelection) {
+    $clearedFilters = null;
+    $protectedFilters = $tags['p-filter-bar']::make([
+        'items' => [
+            ['value' => 1, 'label' => 'Editable'],
+            ['value' => 2, 'label' => 'Required', 'disabled' => true],
+        ],
+        'modelValue' => $filterSelection,
+    ])->onChange(static function (array $next) use (&$clearedFilters): void {
+        $clearedFilters = $next;
+    })->toElement()->children();
+    $clearFilters = $protectedFilters[2] ?? null;
+    if ($filterSelection === [2]) {
+        if ($clearFilters !== null) {
+            throw new RuntimeException('Protected-only filters must not offer a no-op clear action.');
+        }
+    } else {
+        $clearFiltersHandler = $clearFilters?->events()[EventKind::Press->value] ?? null;
+        if (!$clearFiltersHandler instanceof Closure) {
+            throw new RuntimeException('Editable selected filters must expose a clear action.');
+        }
+        $clearFiltersHandler();
+        if ($clearedFilters !== [2]) {
+            throw new RuntimeException('Clearing filters must preserve disabled selections.');
+        }
+    }
+}
 foreach (['p-pagination', 'p-filter-bar', 'p-segmented-button', 'p-tree-select'] as $disabledTag) {
     foreach ([true, false] as $disabledValue) {
         $props = [
