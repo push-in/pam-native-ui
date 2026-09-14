@@ -3443,6 +3443,28 @@ foreach ([
         'Multiple Treeview must emit additive/removal arrays, never replace selection with a scalar.');
 }
 $imageClass = $tags['p-img'];
+foreach ([
+    [[], true, ['mobile']],
+    [['mobile', 'docs'], false, ['docs']],
+    [['mobile', 'docs'], true, ['docs', 'mobile']],
+] as [$openedTreePaths, $expandTreePath, $expectedOpenedPaths]) {
+    $openedResult = null;
+    $rawTreeEvents = [];
+    $controlledTree = $treeClass::make(['opened' => $openedTreePaths])
+        ->onToggle(static function (array $next) use (&$openedResult): void { $openedResult = $next; })
+        ->on(EventKind::Native, static function (string $raw) use (&$rawTreeEvents): void { $rawTreeEvents[] = $raw; })
+        ->toElement();
+    $treeNative = $controlledTree->events()[EventKind::Native->value];
+    $treeNative(Wire::map([
+        'action' => \Pam\MobileUi\Enum\FileTreeAction::Expanded->value,
+        'path' => 'mobile', 'expanded' => $expandTreePath,
+    ]));
+    $assertCustomSelection($openedResult, $expectedOpenedPaths, 'Treeview must forward expansion into its complete controlled opened set.');
+    $treeNative('invalid map');
+    $treeNative(Wire::map(['path' => 'mobile', 'expanded' => true]));
+    $assertCustomSelection($openedResult, $expectedOpenedPaths, 'Malformed tree events must not mutate controlled expansion.');
+    $assertCustomSelection(count($rawTreeEvents), 3, 'Treeview must retain the authored raw native event handler.');
+}
 foreach (['disabled', 'isDisabled'] as $treeDisabledAlias) {
     $lockedTree = $treeClass::make([
         'items' => [[

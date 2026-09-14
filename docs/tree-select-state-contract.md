@@ -2,6 +2,20 @@
 
 ## Treeview disabled-branch parity
 
+Controlled expansion follow-up: `p-treeview` now translates the native expanded
+event into `onToggle(array $opened)`, preserving other open paths, removing
+collapsed paths and avoiding duplicates. Raw Native subscribers still receive
+the original payload; malformed maps do not change the opened set. The action
+code is the existing shared integer 1, represented by FileTreeAction::Expanded.
+The showcase now maintains both `modelValue` and `opened`, using the same state
+flow as Tree Select instead of relying solely on transient host state. PHP
+regressions cover expand/collapse, duplicate prevention and raw-handler retention.
+Matrix and public-surface validation pass. A combined analysis initially exhausted
+the 2 GiB limit; event translation was extracted from the main render method and
+level-9 analysis then passed in separate renderer/enum and test/showcase groups
+at the same limit, without suppressions or dependency changes.
+An end-to-end showcase rerender check is still required for this later change.
+
 UIKit follow-up candidate `fca5827` implements folder expansion, leaf selection,
 selected traits/colors, chevron state and root-owned Change/Native expansion
 events. Touches are scoped to folder headers; accessibility activation uses the

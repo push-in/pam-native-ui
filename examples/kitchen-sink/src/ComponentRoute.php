@@ -3899,7 +3899,7 @@ final class ComponentRoute extends Component
                         ),
                     )),
                 )->style(new Style(widthPercent: 100.0, gap: 6.0));
-            } elseif ($this->tag === 'p-tree-select') {
+            } elseif ($this->belongsTo(['p-tree-select', 'p-treeview'])) {
                 $selected = $this->sampleValues[$index]
                     ?? $previewProps['modelValue']
                     ?? ($previewProps['multiple'] ?? false ? [] : null);

@@ -12,6 +12,7 @@ use Pam\MobileUi\Enum\CalendarDayState;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentMode;
 use Pam\MobileUi\Enum\ComponentSize;
+use Pam\MobileUi\Enum\FileTreeAction;
 use Pam\MobileUi\Enum\InputSlotAction;
 use Pam\MobileUi\Enum\MaterialDensity;
 use Pam\MobileUi\Enum\MaterialVariant;
@@ -425,6 +426,7 @@ final class ComponentRenderer
             && ($props['__materialComponent'] ?? null) === 'PTreeview'
         ) {
             $opened = $props['opened'] ?? $props['expanded'] ?? [];
+            $events = self::materialTreeviewExpansionEvents($props, $events);
             if (is_array($opened)) {
                 $props['expandedPaths'] ??= implode(
                     "\n",
@@ -10726,6 +10728,44 @@ final class ComponentRenderer
             ));
 
         return [$header, $weekdays, $grid];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return array<int, Closure>
+     */
+    private static function materialTreeviewExpansionEvents(array $props, array $events): array
+    {
+        $toggle = $events[EventKind::Toggle->value] ?? null;
+        if (!$toggle instanceof Closure || self::flag($props, 'disabled')) return $events;
+        $native = $events[EventKind::Native->value] ?? null;
+        $opened = $props['opened'] ?? $props['expanded'] ?? [];
+        $source = is_string($props['expandedPaths'] ?? null)
+            ? explode("\n", $props['expandedPaths']) : $opened;
+        $openedValues = array_values(array_filter(
+            is_array($source) ? $source : [],
+            static fn (mixed $path): bool => is_scalar($path) && (string) $path !== '',
+        ));
+        $events[EventKind::Native->value] = static function (string $payload) use ($toggle, $native, $openedValues): void {
+            $native?->__invoke($payload);
+            try {
+                $event = Wire::decodeMap($payload);
+            } catch (\Throwable) {
+                return;
+            }
+            $path = $event['path'] ?? null;
+            $expanded = $event['expanded'] ?? null;
+            if (($event['action'] ?? null) !== FileTreeAction::Expanded->value
+                || !is_string($path) || $path === '' || !is_bool($expanded)) return;
+            $next = array_values(array_filter(
+                $openedValues,
+                static fn (mixed $openedPath): bool => (string) $openedPath !== $path,
+            ));
+            if ($expanded) $next[] = $path;
+            $toggle($next);
+        };
+        return $events;
     }
 
     /**

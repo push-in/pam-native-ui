@@ -78,6 +78,13 @@ The application supplies `$updateRange` and renders its updated range back as
 `modelValue`. Native calendar/clock dialog strings follow the device locale;
 these properties localize the library's field labels and hints only.
 
+## Controlled trees
+
+For a controlled Treeview, feed `onChange` back into `modelValue` and `onToggle`
+back into `opened`. With `multiple: true`, `onChange` supplies the full selection
+array; with single selection it supplies the selected path. Expansion emits the
+complete opened-path array independently of selection, matching Tree Select.
+
 ## A typed component used as a tag
 
 Reusable application components can expose a declarative surface:
