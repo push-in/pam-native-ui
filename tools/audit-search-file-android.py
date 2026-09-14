@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--search-only', action='store_true', help='Do not repeat the already validated file-picker flow.')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('search_file_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 module = importlib.util.module_from_spec(spec)
@@ -50,6 +51,8 @@ try:
     assert any('XYZ' in n.attrib.get('text', '') for n in root.iter('node')), 'Search editing did not update native value'
     audit.shell('input', 'keyevent', 'KEYCODE_BACK')
     report['checks'].append({'component': 'search', 'result': 1})
+    if args.search_only:
+        sys.exit(0)
     launch('p-file-input')
     root = audit.dump('file-before')
     audit.screenshot('file-long')

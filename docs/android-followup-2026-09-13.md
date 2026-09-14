@@ -1533,3 +1533,14 @@ alignment defect: root style lacked explicit center alignment and icon gap.
 Added row direction, center alignment and 12dp gap, with matrix regression.
 Matrix passes; this final search alignment change still needs device inspection.
 The interaction pass does not establish full theme/font/accessibility approval.
+
+### Search alignment verified on Samsung
+
+APK `bea034b070c9f182b81c4954b3473a0b67bc956c98eaf017b09a971d4af6beaa`
+includes the explicit row alignment and gap. Search-only audit passed editing;
+inspected `/tmp/pam-ui-search-aligned-20260913/search-long.png`: all five search
+fixtures now center icon and editor with a visible gap. Report is in the same
+directory. Added --search-only to avoid rerunning the unchanged picker flow.
+PHPStan level 9 passed. Build took 11s, installation succeeded and cleanup
+removed 88MiB. This closes the previous alignment recheck at Samsung font 1.1;
+it is not full multi-theme, enlarged-font or TalkBack approval.
