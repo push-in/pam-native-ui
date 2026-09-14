@@ -32,3 +32,18 @@ Not full approval: large fonts, multiple data columns, Samsung, iOS, assistive
 technology and performance remain unverified for this candidate. The loading
 showcase still leaves excessive empty space inside its fixed-height viewport;
 these captures are diagnostic evidence, not publication-ready promotional media.
+
+## Row-height follow-up
+
+Cells now use the same `rowHeight` / `itemHeight` as the virtual list. Density
+defaults are consistent (44 compact, 48 comfortable, 52 default). The showcase
+adds 72-dp rows and compact 144-dp loading/empty viewports. Matrix regressions
+verify explicit heights and aliases; updated PHPStan level 9 passes.
+
+APK `f39861715e7883ca0c5c87b47893ac94d2f05d6f67a7505a77588b2c1660ce2d`:
+`/tmp/pam-ui-grid-row-layout-20260914/report.json` records captures, not interaction
+approval. The comfortable-row capture was inspected: three data columns align
+across the header and visible rows; taller cells are rendered consistently. Its
+320-dp scrolling viewport cuts through the next row at the lower boundary, as
+expected for a scrollable list. Large-font and scroll interaction coverage remain
+pending. Empty/loading examples no longer reserve the original 360-dp viewport.

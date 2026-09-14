@@ -248,11 +248,11 @@ final class ComponentRenderer
             ], true)
             && !array_key_exists('rowHeight', $props)
         ) {
-            $props['rowHeight'] = match ($props['density'] ?? 'default') {
-                MaterialDensity::Comfortable->value, 'comfortable' => 44.0,
-                MaterialDensity::Compact->value, 'compact' => 36.0,
+            $props['rowHeight'] = self::number($props, 'itemHeight', match ($props['density'] ?? 'default') {
+                MaterialDensity::Comfortable->value, 'comfortable' => 48.0,
+                MaterialDensity::Compact->value, 'compact' => 44.0,
                 default => 52.0,
-            };
+            });
         }
 
         if ($part === 'PBottomSheet') {
@@ -10564,11 +10564,16 @@ final class ComponentRenderer
         }
 
         $density = $props['density'] ?? 'default';
-        $rowHeight = match ($density) {
+        $defaultRowHeight = match ($density) {
             'compact', 3 => 44.0,
             'comfortable', 2 => 48.0,
             default => 52.0,
         };
+        $rowHeight = max(1.0, self::number(
+            $props,
+            'rowHeight',
+            self::number($props, 'itemHeight', $defaultRowHeight),
+        ));
         $headers = [];
         $headerSource = $props['headers'] ?? [];
         if (is_array($headerSource)) {

@@ -5581,7 +5581,9 @@ final class ComponentRoute extends Component
         if ($this->tag === 'p-data-grid') {
             $add($variations, 'Selectable', ['showSelect' => true]);
             $add($variations, 'Compact', ['density' => 'compact']);
-            $add($variations, 'Loading', ['loading' => true]);
+            $add($variations, 'Loading', ['loading' => true, 'height' => 144.0]);
+            $add($variations, 'Empty', ['items' => [], 'height' => 144.0, 'noDataText' => 'No workspaces yet']);
+            $add($variations, 'Comfortable rows', ['rowHeight' => 72.0, 'height' => 320.0]);
             $selectionRows = [
                 ['id' => 1, 'name' => 'Design workspace'],
                 ['id' => 2, 'name' => 'Protected workspace', 'disabled' => true],

@@ -10,6 +10,7 @@ import sys
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--row-layout-only', action='store_true')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('grid_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 base = importlib.util.module_from_spec(spec)
@@ -46,6 +47,22 @@ try:
     apk = audit.shell('pm', 'path', audit.package).strip().splitlines()[0].removeprefix('package:')
     report['apkSha256'] = audit.shell('sha256sum', apk).split()[0]
     width, height = audit.screenshot('start')
+    if args.row_layout_only:
+        for title in ['Loading', 'Empty', 'Comfortable rows']:
+            found = False
+            for attempt in range(24):
+                root = audit.dump('layout-'+title.replace(' ', '-')+str(attempt))
+                heading = next((n for n in root.iter('node') if n.attrib.get('text') == title), None)
+                if heading is not None and height*.15 < base.node_bounds(heading).top < height*.5:
+                    audit.screenshot('layout-'+title.replace(' ', '-'))
+                    found = True
+                    break
+                audit.assert_foreground('layout section')
+                audit.shell('input', 'swipe', str(int(width*.98)), str(int(height*.8)),
+                            str(int(width*.98)), str(int(height*.6)), '250')
+            assert found, 'Cannot reveal '+title
+        report['checks'].append({'layoutSectionsCaptured': True, 'manualReviewRequired': True})
+        sys.exit(0)
     controls = section('Protected selection')
     bulk, first, protected, third = controls
     assert protected.attrib.get('enabled') == 'false' and protected.attrib.get('checked') == 'true'

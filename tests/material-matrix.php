@@ -3738,6 +3738,30 @@ foreach (['p-data-table', 'p-data-table-virtual', 'p-data-grid'] as $tableTag) {
     }
 }
 $dataTableClass = $tags['p-data-table'];
+foreach (['rowHeight', 'itemHeight'] as $heightProp) {
+    $tallGrid = $tags['p-data-grid']::make([
+        $heightProp => 72.0, 'showSelect' => true,
+        'headers' => [['key' => 'name', 'title' => 'Name']],
+        'items' => [['id' => 1, 'name' => 'Workspace']],
+    ])->toElement();
+    $tallStack = [$tallGrid];
+    $foundVirtualHeight = false;
+    $foundCellHeight = false;
+    while ($tallStack !== []) {
+        $node = array_pop($tallStack);
+        $properties = $node->properties();
+        if (isset($properties[PropKey::ListRowHeight->value])) {
+            $foundVirtualHeight = $properties[PropKey::ListRowHeight->value] === 72.0;
+        }
+        if (($properties[PropKey::AccessibilityLabel->value] ?? null) === 'Select row 1') {
+            $foundCellHeight = ($properties[PropKey::Height->value] ?? null) === 72.0;
+        }
+        array_push($tallStack, ...$node->children());
+    }
+    if (!$foundVirtualHeight || !$foundCellHeight) {
+        throw new RuntimeException('Grid cells and virtual rows must honor the same explicit row height.');
+    }
+}
 foreach ([[2], [1, 2]] as $initialSelection) {
     $bulkResult = null;
     $bulkTable = $dataTableClass::make([
