@@ -7877,7 +7877,7 @@ final class ComponentRoute extends Component
                 'accessibilityLabel' => 'Search components',
             ],
             'p-pagination' => ['modelValue' => 3, 'length' => 7, 'totalVisible' => 5],
-            'p-segmented-button' => ['modelValue' => 'week'],
+            'p-segmented-button' => ['modelValue' => 2],
             'p-password-field' => [
                 'label' => 'Password',
                 'modelValue' => 'PAM-native-2026',

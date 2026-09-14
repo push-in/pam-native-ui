@@ -3856,6 +3856,11 @@ foreach ([false, true] as $disabled) {
     }
 }
 $selectedSegment = null;
+$segmentedRoute = new \App\ComponentRoute('p-segmented-button', 'Segmented Button', $tags['p-segmented-button']);
+$segmentedDefaults = $samplePropsMethod->invoke($segmentedRoute, []);
+if (!is_array($segmentedDefaults) || ($segmentedDefaults['modelValue'] ?? null) !== 2) {
+    throw new RuntimeException('Segmented showcase defaults must match the integer item values.');
+}
 foreach ([[2, 1], [2]] as $filterSelection) {
     $clearedFilters = null;
     $protectedFilters = $tags['p-filter-bar']::make([

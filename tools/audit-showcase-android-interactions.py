@@ -1266,6 +1266,63 @@ def exercise(
         audit.settled_screenshot_hash(f"{evidence_name}-after")
         return after, True
 
+    if kind == InteractionKind.SELECT and tag == "p-segmented-button":
+        labels = ("Day", "Week", "Month")
+
+        def segments(snapshot: Hierarchy, index: int) -> dict[str, ET.Element]:
+            days = sorted([n for n in snapshot.nodes()
+                if n.attrib.get("content-desc") == "Day"], key=lambda n: bounds(n).top)
+            if len(days) != 5:
+                raise AuditFailure("segmented fixtures must expose five Day groups")
+            top = bounds(days[index]).top
+            nodes = [n for n in snapshot.nodes()
+                if n.attrib.get("content-desc") in labels and abs(bounds(n).top-top) <= 3]
+            result = {n.attrib["content-desc"]: n for n in nodes}
+            if len(nodes) != 3 or set(result) != set(labels):
+                raise AuditFailure("segmented group must contain three unique destinations")
+            return result
+
+        def selected(snapshot: Hierarchy, index: int, expected: set[str]) -> None:
+            group = segments(snapshot, index)
+            for label, node in group.items():
+                state = "true" if label in expected else "false"
+                if node.attrib.get("checked") != state or node.attrib.get("selected") != state:
+                    raise AuditFailure(f"segment {index}/{label} has incorrect controlled state")
+
+        selected(before, 0, {"Day"})
+        selected(before, 1, {"Day"})
+        selected(before, 3, {"Week"})
+        selected(before, 4, {"Week"})
+        audit.tap(bounds(segments(before, 1)["Week"]))
+        after = audit.dump(f"{evidence_name}-single")
+        assert_healthy(after, route)
+        selected(after, 1, {"Week"})
+        selected(after, 2, {"Day", "Month"})
+        audit.tap(bounds(segments(after, 2)["Month"]))
+        after = audit.dump(f"{evidence_name}-multiple-remove")
+        selected(after, 2, {"Day"})
+        audit.tap(bounds(segments(after, 2)["Week"]))
+        after = audit.dump(f"{evidence_name}-multiple-add")
+        selected(after, 2, {"Day", "Week"})
+        for index, expected in ((0, {"Day"}), (4, {"Week"})):
+            group = segments(after, index)
+            if any(enabled(n) for n in group.values()):
+                raise AuditFailure("readonly/disabled segment group exposes enabled controls")
+            audit.tap(bounds(group["Month"]))
+            after = audit.dump(f"{evidence_name}-blocked-{index}")
+            selected(after, index, expected)
+        edits = [n for n in after.nodes() if n.attrib.get("content-desc") == "Edit"]
+        if len(edits) != 1 or enabled(edits[0]):
+            raise AuditFailure("disabled Edit segment must be unique and disabled")
+        audit.tap(bounds(edits[0]))
+        after = audit.dump(f"{evidence_name}-disabled-item")
+        views = [n for n in after.nodes() if n.attrib.get("content-desc") == "View"]
+        if len(views) != 1 or views[0].attrib.get("checked") != "true":
+            raise AuditFailure("disabled item press changed the selected destination")
+        assert_healthy(after, route)
+        audit.settled_screenshot_hash(f"{evidence_name}-after")
+        return after, True
+
     if kind == InteractionKind.SELECT and tag == "p-filter-bar":
         def scope(snapshot: Hierarchy, label: str) -> ET.Element:
             matches = [n for n in snapshot.nodes() if n.attrib.get("content-desc") == label]
