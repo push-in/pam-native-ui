@@ -40,7 +40,7 @@ STATIC = {
     "p-skeleton-loader", "p-sparkline", "p-timeline",
     "p-expansion-panel-text",
     "p-stepper-header", "p-stepper-window", "p-stepper-window-item",
-    "p-app-scaffold", "p-responsive-grid", "p-result-state",
+    "p-responsive-grid", "p-result-state",
 }
 PRESS = {
     "p-app-bar", "p-app-bar-nav-icon", "p-banner-actions", "p-btn",
@@ -56,7 +56,7 @@ TOGGLE = {
 }
 INPUT = {
     "p-color-input", "p-form", "p-number-input", "p-otp-input",
-    "p-text-field", "p-textarea",
+    "p-text-field", "p-textarea", "p-app-scaffold",
     "p-currency-field", "p-masked-field", "p-password-field", "p-search-bar",
 }
 ADJUST = {"p-range-slider", "p-rating", "p-slider"}
@@ -670,6 +670,19 @@ def exercise(
             if len(cleared_actions) != 1 or enabled(cleared_actions[0]):
                 raise AuditFailure("empty search must disable its clear action without shifting")
             audit.settled_screenshot_hash(f"{evidence_name}-cleared")
+        if tag == "p-app-scaffold":
+            for attempt in range(6):
+                fields = [n for n in before.nodes()
+                    if n.attrib.get("class") == "android.widget.EditText" and enabled(n)]
+                if fields and bounds(fields[0]).height >= 80:
+                    break
+                pages = [n for n in before.nodes() if n.attrib.get("scrollable") == "true"]
+                if not pages:
+                    raise AuditFailure("scaffold editor is not reachable")
+                viewport = bounds(max(pages, key=lambda n: bounds(n).height))
+                audit.swipe((viewport.right - 12, viewport.bottom - 150),
+                    (viewport.right - 12, viewport.top + 180), 500)
+                before = audit.dump(f"{evidence_name}-reveal-{attempt}")
         candidates = [
             node for node in before.nodes()
             if enabled(node)
@@ -696,7 +709,7 @@ def exercise(
         audit.adb("shell", "input", "text", typed_value)
         time.sleep(0.8)
         after = audit.dump(f"{evidence_name}-after")
-        assert_healthy(after, route)
+        assert_healthy(after, route, allow_overlay=tag == "p-app-scaffold")
         expected_text = {
             "p-currency-field": "731,25",
             "p-masked-field": "(21) 91234-5678",

@@ -4124,6 +4124,15 @@ final class ComponentRoute extends Component
                         return true;
                     });
             } elseif ($this->tag === 'p-app-scaffold') {
+                $keyboardAware = ($previewProps['keyboardAware'] ?? false) === true;
+                $scaffoldInput = $keyboardAware ? [\Pam\MobileUi\Material\PTextField::make([
+                    'label' => 'Workspace note',
+                    'placeholder' => 'Write a note',
+                    'modelValue' => $this->sampleValues[$index] ?? '',
+                ])->onChange(function (mixed $value) use ($index): bool {
+                    $this->setSampleValue($index, is_scalar($value) ? (string) $value : '');
+                    return true;
+                })] : [];
                 $preview = $component::make(
                     $previewProps,
                     Column::make(
@@ -4162,6 +4171,7 @@ final class ComponentRoute extends Component
                                 lineHeight: 20.0,
                                 textColor: $theme->color(ColorToken::MutedForeground),
                             )),
+                        ...$scaffoldInput,
                     )->style(new Style(
                         widthPercent: 100.0,
                         heightPercent: 100.0,
@@ -4171,9 +4181,9 @@ final class ComponentRoute extends Component
                     )),
                 )->style(new Style(
                     widthPercent: 100.0,
-                    height: 184.0,
-                    minHeight: 184.0,
-                    maxHeight: 184.0,
+                    height: $keyboardAware ? 280.0 : 184.0,
+                    minHeight: $keyboardAware ? 280.0 : 184.0,
+                    maxHeight: $keyboardAware ? 280.0 : 184.0,
                     backgroundColor: $theme->color(ColorToken::Background),
                     overflow: \Pam\Native\Overflow::Hidden,
                 ));

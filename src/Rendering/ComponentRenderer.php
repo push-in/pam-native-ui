@@ -337,6 +337,14 @@ final class ComponentRenderer
                 default => Placement::Bottom->value,
             };
         }
+        if ($part === 'PAppScaffold' && self::flag($props, 'keyboardAware')) {
+            $children = [KeyboardAvoidingView::make(
+                self::oneChild($children),
+                self::keyboardAvoidingBehavior($props),
+            )->verticalOffset(self::number($props, 'keyboardVerticalOffset', 0.0))
+                ->avoidingEnabled(self::flag($props, 'keyboardAvoidingEnabled', true))
+                ->style(new Style(widthPercent: 100.0, heightPercent: 100.0, flexGrow: 1.0))];
+        }
         $part = self::legacyMaterialPart($part);
         $props = self::withDefaults($part, $props);
         if (

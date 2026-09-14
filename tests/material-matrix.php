@@ -5082,6 +5082,26 @@ if ($dataGrid->kind() !== NodeKind::CustomView || count($dataGrid->children()) <
     throw new RuntimeException('p-data-grid must reuse the virtual native table contract.');
 }
 $treeSelectChanged = null;
+foreach ([false, true, 'false', 'true'] as $keyboardAware) {
+    $scaffold = $tags['p-app-scaffold']::make([
+        'keyboardAware' => $keyboardAware,
+        'behavior' => \Pam\Native\KeyboardAvoidingBehavior::Padding->value,
+        'keyboardVerticalOffset' => 24,
+        'keyboardAvoidingEnabled' => false,
+    ], \Pam\Native\UI\Text::make('Keyboard content'))->toElement();
+    $content = $scaffold->children()[0];
+    $expectedAvoidance = $keyboardAware === true || $keyboardAware === 'true';
+    if (($content->kind() === NodeKind::KeyboardAvoidingView) !== $expectedAvoidance) {
+        throw new RuntimeException('Scaffold keyboardAware must opt into the native keyboard primitive.');
+    }
+    if ($expectedAvoidance && (
+        ($content->properties()[PropKey::KeyboardBehavior->value] ?? null) !== \Pam\Native\KeyboardAvoidingBehavior::Padding->value
+        || ($content->properties()[PropKey::KeyboardVerticalOffset->value] ?? null) !== 24.0
+        || ($content->properties()[PropKey::KeyboardAvoidingEnabled->value] ?? null) !== false
+    )) {
+        throw new RuntimeException('Scaffold must forward native keyboard behavior, offset and enabled state.');
+    }
+}
 foreach ([false, true] as $expandedTree) {
     $visualTree = $tags['p-tree-select']::make([
         'opened' => $expandedTree ? [1] : [], 'modelValue' => [2], 'multiple' => true,
