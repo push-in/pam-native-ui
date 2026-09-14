@@ -4938,6 +4938,32 @@ while ($blockedDateStack !== []) {
 if ($blockedDateChanged !== null) {
     throw new RuntimeException('p-date-range-picker must reject disabled dates.');
 }
+foreach ([
+    ['minDate' => '2026-09-05', 'maxDate' => '2026-09-20'],
+    ['minimumDate' => '2026-09-05', 'maximumDate' => '2026-09-20'],
+] as $dateBounds) {
+    $boundedChanges = [];
+    $boundedRange = $tags['p-date-range-picker']::make([
+        ...$dateBounds,
+        'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14'],
+    ])->onChange(static function (array $next) use (&$boundedChanges): void {
+        $boundedChanges[] = $next;
+    })->toElement();
+    foreach ($boundedRange->children() as $field) {
+        $boundedHandler = $field->children()[1]->events()[EventKind::Change->value];
+        $boundedHandler('2026-09-04');
+        $boundedHandler('2026-09-21');
+    }
+    if ($boundedChanges !== []) {
+        throw new RuntimeException('Date range endpoints must reject events outside either supported date-bound alias.');
+    }
+    $boundedRange->children()[0]->children()[1]->events()[EventKind::Change->value]('2026-09-05');
+    $boundedRange->children()[1]->children()[1]->events()[EventKind::Change->value]('2026-09-20');
+    $assertCustomSelection($boundedChanges, [
+        ['from' => '2026-09-05', 'to' => '2026-09-14'],
+        ['from' => '2026-09-08', 'to' => '2026-09-20'],
+    ], 'Date range bounds must be inclusive and retain the controlled opposite endpoint.');
+}
 foreach (['p-date-range-picker', 'p-time-range-picker'] as $rangeTag) {
     foreach ([false, true] as $isDisabled) {
         $adaptiveRange = $tags[$rangeTag]::make(['disabled' => $isDisabled])->toElement();

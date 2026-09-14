@@ -4971,6 +4971,10 @@ final class ComponentRenderer
             : [];
         $from = self::scalarString($value['from'] ?? $value[0] ?? $props['from'] ?? '');
         $to = self::scalarString($value['to'] ?? $value[1] ?? $props['to'] ?? '');
+        $minimum = self::scalarString($props['minDate'] ?? $props['minimumDate'] ?? '');
+        $maximum = self::scalarString($props['maxDate'] ?? $props['maximumDate'] ?? '');
+        $minimum = self::isCalendarDate($minimum) ? $minimum : '';
+        $maximum = self::isCalendarDate($maximum) ? $maximum : '';
         $disabledDates = is_array($props['disabledDates'] ?? null)
             ? array_values(array_filter(
                 $props['disabledDates'],
@@ -4985,7 +4989,7 @@ final class ComponentRenderer
             string $label,
             string $current,
             bool $isStart,
-        ) use ($change, $from, $to, $props, $theme, $disabledDates, $disabled, $readOnly): Element {
+        ) use ($change, $from, $to, $props, $theme, $disabledDates, $disabled, $readOnly, $minimum, $maximum): Element {
             $fieldProps = [
                 ...$props,
                 'mode' => ComponentMode::Date->value,
@@ -5000,10 +5004,11 @@ final class ComponentRenderer
             if (!$disabled && !$readOnly && $change instanceof Closure) {
                 $fieldEvents[EventKind::Change->value] = static function (
                     mixed $next,
-                ) use ($change, $from, $to, $isStart, $disabledDates): mixed {
+                ) use ($change, $from, $to, $isStart, $disabledDates, $minimum, $maximum): mixed {
                     $date = self::scalarString($next);
-                    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $parts) !== 1
-                        || !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+                    if (!self::isCalendarDate($date)
+                        || ($minimum !== '' && $date < $minimum)
+                        || ($maximum !== '' && $date > $maximum)
                         || in_array($date, $disabledDates, true)) {
                         return false;
                     }
@@ -5071,6 +5076,12 @@ final class ComponentRenderer
             $field(self::text($props, 'fromLabel', 'From'), $from, true),
             $field(self::text($props, 'toLabel', 'To'), $to, false),
         ];
+    }
+
+    private static function isCalendarDate(string $date): bool
+    {
+        return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $parts) === 1
+            && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
     }
 
     /**

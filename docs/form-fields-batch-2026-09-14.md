@@ -1,5 +1,21 @@
 # Consolidated form review
 
+## Date range event bounds
+
+The controlled Date Range Picker previously forwarded minimum/maximum dates to
+the native calendar but accepted out-of-bounds Change events at its PHP boundary.
+The new regression failed before implementation for both endpoints. The renderer
+now rejects those events using `minDate`/`maxDate` and
+`minimumDate`/`maximumDate`, with inclusive bounds. Calendar-invalid bounds are
+ignored, matching the native host's parsed-bound behavior. Existing invalid-date,
+disabled-date and ordered-interval guards remain in place.
+
+The matrix passes rejection on both endpoints and acceptance at each exact bound,
+preserving the other controlled endpoint. This is UI composition policy over the
+existing native picker, not a new PAM Native primitive or CLI feature. It is
+code-level regression evidence; no new device interaction or visual approval is
+claimed for this follow-up. Include it in the next consolidated Android candidate.
+
 ## Current consolidated candidate
 
 The integrated run `/tmp/pam-form-controls-batch-20260914.json` completed
