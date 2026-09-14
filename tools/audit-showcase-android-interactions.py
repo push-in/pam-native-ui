@@ -905,7 +905,21 @@ def exercise(
                 audit.tap(bounds(options[-1]))
 
             opened = audit.dump(f"{evidence_name}-open")
-            toggle_option(opened)
+            protected_label = "PHP" if tag == "p-tag-input" else "Design"
+            protected_options = [n for n in opened.nodes()
+                if n.attrib.get("class") == "android.widget.CheckedTextView"
+                and n.attrib.get("content-desc") == protected_label]
+            if len(protected_options) != 1 or enabled(protected_options[0]) or protected_options[0].attrib.get("checked") != "true":
+                raise AuditFailure("selected option must honor isDisabled and retain its checked state")
+            audit.tap(bounds(protected_options[0]))
+            protected_result = audit.dump(f"{evidence_name}-protected")
+            retained_protected = [n for n in protected_result.nodes()
+                if n.attrib.get("class") == "android.widget.CheckedTextView"
+                and n.attrib.get("content-desc") == protected_label
+                and n.attrib.get("checked") == "true"]
+            if len(retained_protected) != 1:
+                raise AuditFailure("touch deselected a protected option")
+            toggle_option(protected_result)
             audit.back()
             added = audit.dump(f"{evidence_name}-added")
             field = selected_field(added)

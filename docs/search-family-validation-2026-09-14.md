@@ -1,5 +1,21 @@
 # Search family validation
 
+## Selection-lock Android batch
+
+Candidate `576ec564bb1ebbb7381f3e269d3d6e08a7d025f5baa6197df1cc9750e83f6eac`
+passed the Tag Input and Multi Select scenarios on emulator-5554, Android 16/API
+36, in `/tmp/pam-selection-locks-20260914.json`. Each opens the field, verifies a
+selected `isDisabled` option rejects a tap, adds a `disabled: "false"` option,
+closes/reopens, removes it and confirms restoration of the original selection.
+Durations: 23.857 and 23.472 seconds. One build took 10 seconds; automatic cleanup
+removed 96.8 MiB of generated artifacts.
+
+Added-state screenshots were inspected for both routes: selected chips remain
+inside their fields and visible long-label examples wrap onto another row.
+This does not validate custom-value collision entry, all five selector facades,
+large text, dark theme, RTL, screen readers or iOS. Those scopes remain open;
+the PHP custom-value guards must not be presented as device-tested.
+
 ## Custom-value protection
 
 Tag Input and Combobox now reject scalar custom-value events matching disabled

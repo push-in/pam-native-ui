@@ -6523,7 +6523,10 @@ final class ComponentRoute extends Component
                 ['label' => 'Error', 'props' => ['label' => 'Amount', 'prefix' => 'R$ ', 'locale' => 'pt-BR', 'error' => true, 'errorMessage' => 'Check the amount and try again']],
             ],
             'p-tag-input' => [
-                ['label' => 'Skills', 'props' => ['label' => 'Skills', 'items' => ['PHP', 'Kotlin', 'Swift'], 'modelValue' => ['PHP', 'Kotlin']]],
+                ['label' => 'Skills', 'props' => ['label' => 'Skills', 'items' => [
+                    ['value' => 'PHP', 'label' => 'PHP', 'isDisabled' => true],
+                    'Kotlin', ['value' => 'Swift', 'label' => 'Swift', 'disabled' => 'false'],
+                ], 'modelValue' => ['PHP', 'Kotlin']]],
                 ['label' => 'Create tag', 'props' => ['label' => 'Technologies', 'items' => ['Android', 'iOS'], 'modelValue' => ['Android']]],
                 ['label' => 'Empty', 'props' => ['label' => 'Tags', 'placeholder' => 'Add tags', 'items' => ['Design', 'Code'], 'modelValue' => []]],
                 ['label' => 'Disabled', 'props' => ['label' => 'Tags', 'items' => ['Design'], 'disabled' => true]],
@@ -6531,7 +6534,11 @@ final class ComponentRoute extends Component
                 ['label' => 'Read only', 'props' => ['label' => 'Protected tags', 'items' => ['Design', 'Code'], 'modelValue' => ['Design'], 'isReadOnly' => true]],
             ],
             'p-multi-select' => [
-                ['label' => 'Teams', 'props' => ['label' => 'Teams', 'items' => ['Design', 'Engineering', 'Product'], 'modelValue' => ['Design', 'Product']]],
+                ['label' => 'Teams', 'props' => ['label' => 'Teams', 'items' => [
+                    ['value' => 'Design', 'label' => 'Design', 'isDisabled' => true],
+                    ['value' => 'Engineering', 'label' => 'Engineering', 'disabled' => 'false'],
+                    'Product',
+                ], 'modelValue' => ['Design', 'Product']]],
                 ['label' => 'Searchable', 'props' => ['label' => 'People', 'items' => ['Ana', 'Bruno', 'Carla'], 'modelValue' => ['Ana']]],
                 ['label' => 'Empty', 'props' => ['label' => 'Categories', 'placeholder' => 'Choose categories', 'items' => ['Mobile', 'Web'], 'modelValue' => []]],
                 ['label' => 'Error', 'props' => ['label' => 'Categories', 'items' => ['Mobile'], 'modelValue' => [], 'error' => true, 'errorMessage' => 'Select at least one category']],
