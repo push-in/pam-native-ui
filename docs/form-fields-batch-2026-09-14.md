@@ -14,7 +14,22 @@ The matrix passes rejection on both endpoints and acceptance at each exact bound
 preserving the other controlled endpoint. This is UI composition policy over the
 existing native picker, not a new PAM Native primitive or CLI feature. It is
 code-level regression evidence; no new device interaction or visual approval is
-claimed for this follow-up. Include it in the next consolidated Android candidate.
+claimed by those PHP checks alone.
+
+Android follow-up: `--date-bounds` in the interval-confirmation audit passed on
+emulator-5554/API 36, candidate SHA-256
+`1751f2c8915dd37a14babb9877f59f1afe72e42d4cd8f163055572fc8a5518d9`.
+The native dialog exposes September 4 and 21 as disabled for a September 5–20
+window. Both exact boundaries were selected and confirmed, then reopened and
+cancelled without losing the controlled interval. Final capture was inspected:
+labels and values align, remain within the two fields and have clear separation.
+Report: `/tmp/pam-date-bounds-20260914/report.json`. No new time-picker run was
+needed: its implementation and existing confirmation evidence were unchanged.
+The build synchronized UI renderer/showcase sources and confirmed the copied
+Kotlin host hash; Rust compilation took 10.11s and Gradle 10s. Installation passed
+and automatic cleanup removed 96.8 MiB. Showcase PHPStan and script compilation
+also pass. Dark mode, large text, alternate locales and iOS bounds remain outside
+this scoped check; these captures are diagnostic, not publication-ready media.
 
 ## Current consolidated candidate
 

@@ -6682,6 +6682,16 @@ final class ComponentRoute extends Component
     /** @return list<array{label: string, props: array<string, mixed>}> */
     private function auditVariations(string $scenario): array
     {
+        if ($scenario === 'bounded' && $this->tag === 'p-date-range-picker') {
+            return [[
+                'label' => 'Bounded interval',
+                'props' => [
+                    'modelValue' => ['from' => '2026-09-08', 'to' => '2026-09-14'],
+                    'minDate' => '2026-09-05',
+                    'maxDate' => '2026-09-20',
+                ],
+            ]];
+        }
         if ($scenario === 'gestures' && $this->belongsTo(['p-menu', 'p-tooltip'])) {
             return [
                 ['label' => 'Tap only', 'props' => ['openOnClick' => true, 'openOnLongPress' => false]],

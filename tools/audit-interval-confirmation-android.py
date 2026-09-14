@@ -10,7 +10,9 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
-parser.add_argument('--time-only', action='store_true', help='Repeat only time interactions after date confirmation has passed.')
+scope = parser.add_mutually_exclusive_group()
+scope.add_argument('--time-only', action='store_true', help='Repeat only time interactions after date confirmation has passed.')
+scope.add_argument('--date-bounds', action='store_true', help='Check inclusive date bounds without repeating unchanged time flows.')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('interval_confirmation_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 base = importlib.util.module_from_spec(spec)
@@ -53,13 +55,25 @@ try:
     ]:
         if args.time_only and tag == 'p-date-range-picker':
             continue
+        if args.date_bounds and tag == 'p-time-range-picker':
+            continue
+        if args.date_bounds:
+            edits = [
+                ('From', '5', ['2026-09-05', '2026-09-14']),
+                ('To', '20', ['2026-09-05', '2026-09-20']),
+            ]
         audit.component_tag, audit.component_label = tag, title
-        audit.launch()
+        audit.launch('bounded' if args.date_bounds else 'interactive')
         current = audit.dump(tag + '-initial')
         for label, choice, expected in edits:
             name = tag + '-' + label.lower()
             audit.tap(base.node_bounds(field(current, label)))
             opened = audit.dump(name + '-dialog')
+            if args.date_bounds:
+                for rejected in ('4', '21'):
+                    unavailable = [n for n in opened.iter('node') if n.get('text') == rejected]
+                    if not unavailable or any(n.get('enabled') != 'false' for n in unavailable):
+                        raise AssertionError('Out-of-bounds day must be exposed as disabled: ' + rejected)
             choice_attribute = 'content-desc' if tag == 'p-time-range-picker' else 'text'
             audit.tap(base.node_bounds(unique(opened, choice_attribute, choice)))
             chosen = audit.dump(name + '-chosen')
