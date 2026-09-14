@@ -38,6 +38,17 @@ def trigger(root, index):
     return triggers[index]
 
 
+def assert_anchor_clear(root, anchor):
+    parents = {child: parent for parent in root.iter() for child in parent}
+    titles = [node for node in root.iter('node') if node.get('text') == 'Native overlay']
+    if len(titles) != 1 or titles[0] not in parents:
+        raise AssertionError('Expected one overlay surface')
+    surface = base.node_bounds(parents[titles[0]])
+    if (min(surface.right, anchor.right) > max(surface.left, anchor.left)
+            and min(surface.bottom, anchor.bottom) > max(surface.top, anchor.top)):
+        raise AssertionError('Overlay surface overlaps its trigger')
+
+
 try:
     audit.prepare()
     apk = audit.shell('pm', 'path', audit.package).strip().splitlines()[0].removeprefix('package:')
@@ -49,9 +60,11 @@ try:
         try:
             audit.launch()
             root = audit.dump(placement+'-before')
-            audit.tap(base.node_bounds(trigger(root, index)))
+            anchor = base.node_bounds(trigger(root, index))
+            audit.tap(anchor)
             root = audit.dump(placement+'-open')
             assert_counter(root, 0)
+            assert_anchor_clear(root, anchor)
             for count in (1, 2):
                 actions = labelled(root, 'Acknowledge popover details')
                 if len(actions) != 1 or actions[0].get('enabled') != 'true':
@@ -67,6 +80,7 @@ try:
             audit.tap(base.node_bounds(trigger(root, index)))
             root = audit.dump(placement+'-reopened')
             assert_counter(root, 2)
+            assert_anchor_clear(root, anchor)
             audit.screenshot(placement+'-reopened')
             audit.shell('input', 'tap', '72', '308')
             report['checks'].append(placement)

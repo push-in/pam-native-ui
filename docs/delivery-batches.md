@@ -9,6 +9,11 @@ For each batch:
 1. Inspect the current diff and existing evidence; do not repeat completed work.
 2. Implement related fixes and regression cases together.
 3. Run the render matrix and static analysis once against the batch.
+   Before building a staged showcase, compare changed source files with their
+   staged copies, including UI Kotlin under vendor/pushinbr/pam-native-ui/android,
+   not just PHP. Native template synchronization does not refresh a copied UI
+   dependency. A successful APK build alone does not prove it contains current
+   worktree source; synchronize mismatches and verify hashes before the build.
 4. Build one Android candidate and exercise the changed interactions and layouts.
 5. Retest failed or subsequently changed scopes, not unrelated successful cases.
 6. Record the candidate identity, actual coverage, remaining gaps and deliverable.

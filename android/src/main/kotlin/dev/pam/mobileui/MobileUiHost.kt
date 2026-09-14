@@ -1,5 +1,9 @@
 package dev.pam.mobileui
 
+import dev.pam.nativeapp.views.OverlayBounds
+import dev.pam.nativeapp.views.OverlayCollisionResolver
+import dev.pam.nativeapp.views.OverlayPlacement
+
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.animation.ObjectAnimator
@@ -8803,7 +8807,7 @@ internal class MobileUiHost(
             content.height.toFloat(),
             available,
         )
-        val selected = if (
+        var selected = if (
             shouldFlip
             && oppositePlacement != placement
             && oppositeOverflow < requestedOverflow
@@ -8813,6 +8817,24 @@ internal class MobileUiHost(
         } else {
             resolvedPlacement = placement
             requested
+        }
+        if (shouldFlip && !shouldOverlapWithTrigger && placement != OverlayPlacement.Center.code) {
+            val candidatePlacements = listOf(placement, oppositePlacement,
+                OverlayPlacement.Bottom.code, OverlayPlacement.Top.code,
+                OverlayPlacement.Right.code, OverlayPlacement.Left.code).distinct()
+            val candidates = candidatePlacements.map { candidatePlacement ->
+                anchoredPlacementCandidate(candidatePlacement, triggerBounds,
+                    content.width.toFloat(), content.height.toFloat())
+            }
+            val selectedIndex = OverlayCollisionResolver.selectCandidate(
+                OverlayBounds(triggerBounds.left, triggerBounds.top,
+                    triggerBounds.right, triggerBounds.bottom),
+                OverlayBounds(available.left, available.top,
+                    available.right, available.bottom),
+                content.width.toFloat(), content.height.toFloat(), candidates,
+            )
+            resolvedPlacement = candidatePlacements[selectedIndex]
+            selected = candidates[selectedIndex]
         }
         val targetX = selected.first.coerceIn(
             available.left,

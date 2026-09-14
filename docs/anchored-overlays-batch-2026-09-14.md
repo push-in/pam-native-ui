@@ -1,5 +1,32 @@
 # Anchored overlays — scoped Samsung batch
 
+## Anchor collision correction
+
+PAM Native's new Android plugin API selects an origin using clamped anchor
+intersection and viewport overflow. The UI host supplies requested/opposite and
+perpendicular alternatives, respecting shouldFlip, explicit overlap and Center.
+This keeps reusable geometry in Native and visual/candidate policy in UI.
+
+Final APK `e171ef62098dea8641d8309685f3391ea1681f2ef0accfb20f045fa6372928ff`
+passes Top, Left and Right in
+`/tmp/pam-popover-collision-final-20260914/report.json`: internal actions,
+dismiss/reopen retention and newly asserted zero intersection between the
+overlay surface and its own trigger. Viewed Left/Right reopened captures confirm
+vertical fallback with a visible gap instead of covering the trigger edge.
+Native's four targeted JVM regressions pass. Final Android build took 17 seconds
+and cleaned 96.8 MiB of old generated artifacts.
+
+The first collision report (`/tmp/pam-popover-collision-20260914/report.json`,
+APK `5005a12b324aa18631fc63bb7d4ddabea1666b36aafe14fc1781fd7254d69a31`)
+retains lateral failures. Staging contained the new Native API but the old UI
+Kotlin host. The UI host was copied and matching source/staging SHA-256 verified
+before the final build. This was not evidence against the new host algorithm.
+
+The observed lateral collision is resolved in these Android examples. Full
+Menu/Tooltip shared-host regression, arrows, explicit overlap/flip-disabled
+device cases, large fonts, keyboard, RTL, motion and iOS remain open. This is not
+release approval; UI publication depends on the new Native plugin API release.
+
 ## Interactive Popover follow-up
 
 Remaining-placement run: `/tmp/pam-popover-placements-20260914/report.json`
