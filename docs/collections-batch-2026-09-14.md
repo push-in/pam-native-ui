@@ -76,3 +76,11 @@ withheld: `Create` has a lower text baseline than its neighbors (Android centers
 text vertically within its engine-measured box), and the narrow word breaks are
 not showcase-quality. Next work must reconcile text measurement/vertical alignment
 and complete responsive constraints rather than declaring this screenshot finished.
+
+The baseline issue is corrected in the subsequent PAM Native candidate
+`186e4582e80da13fc343826cbf3d2974ecf78dee8273b473f01e0b7e4330f43a`.
+Samsung evidence `/tmp/pam-text-baseline-final-20260914` shows all four first-line
+titles aligned and the header badge still centered. Chip press feedback also
+passed in this candidate. Native's `docs/intrinsic-text-baseline-2026-09-14.md`
+records the implementation and remaining metric limitations. Four-column word
+breaks and adaptive layout integration are still not approved for showcase release.
