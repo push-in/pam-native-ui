@@ -44,6 +44,32 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 class MobileUiHostInstrumentedTest {
     @Test
+    fun fileTreeFolderAccessibilityBoundsExcludeChildRows() {
+        onMain {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val folder = MobileUiHost(context) { _, _ -> }
+            val header = View(context).apply { tag = "pam:file-tree-header" }
+            folder.update(mapOf("behavior" to WireValue.Integer(33)))
+            folder.addView(header)
+            folder.layout(10, 20, 310, 420)
+            header.layout(8, 4, 292, 52)
+            val info = AccessibilityNodeInfo.obtain()
+            try {
+                folder.onInitializeAccessibilityNodeInfo(info)
+                val bounds = android.graphics.Rect()
+                info.getBoundsInParent(bounds)
+                assertEquals(android.graphics.Rect(18, 24, 302, 72), bounds)
+                info.getBoundsInScreen(bounds)
+                assertEquals(284, bounds.width())
+                assertEquals(48, bounds.height())
+            } finally {
+                info.recycle()
+                folder.release()
+            }
+        }
+    }
+
+    @Test
     fun fileTreeRejectsActivationThroughDisabledItemsAndAncestors() {
         onMain {
             val context = InstrumentationRegistry.getInstrumentation().targetContext

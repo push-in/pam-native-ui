@@ -2547,6 +2547,23 @@ internal class MobileUiHost(
             info.contentDescription = contentDescription
             info.isSelected = isSelected
             info.isClickable = isEnabled
+            if (behavior == Behavior.FILE_TREE_FOLDER) {
+                val header = findTaggedDescendant(this, FILE_TREE_HEADER_TAG)
+                if (header != null && header.width > 0 && header.height > 0) {
+                    // The folder host also contains its descendants. Its action
+                    // belongs to the header, not the union of every child row.
+                    val location = IntArray(2)
+                    header.getLocationOnScreen(location)
+                    info.setBoundsInScreen(Rect(
+                        location[0], location[1],
+                        location[0] + header.width, location[1] + header.height,
+                    ))
+                    val parentBounds = Rect()
+                    boundsInHost(header).roundOut(parentBounds)
+                    parentBounds.offset(left, top)
+                    info.setBoundsInParent(parentBounds)
+                }
+            }
             if (isEnabled) {
                 info.addAction(AccessibilityNodeInfo.ACTION_CLICK)
             } else {
@@ -7426,7 +7443,7 @@ internal class MobileUiHost(
             fillPaint.style = Paint.Style.FILL
             canvas.drawRoundRect(bounds, radius, radius, fillPaint)
         }
-        val outlinePaint = if (invalid && !checked && !indeterminate) {
+        val outlinePaint = if (invalid || checked || indeterminate) {
             fillPaint
         } else {
             trackPaint

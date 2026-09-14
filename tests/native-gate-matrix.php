@@ -34,7 +34,7 @@ $nativeBehaviorSources = [
     dirname(__DIR__).'/ios/Sources/PamMobileUi/PamMobileUiHost.swift'
         => [
             'pattern' => '/^    case ([a-zA-Z]+) = (\d+)$/m',
-            'start' => 'private enum PamMobileBehavior',
+            'start' => 'enum PamMobileBehavior',
             'end' => '    var isOverlay',
             'aliases' => [
                 'tabtrigger' => 'tabstrigger',
