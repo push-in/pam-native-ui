@@ -1423,6 +1423,23 @@ instead of fixed 48dp boxes, allowing large page numbers and enlarged text to
 grow. Regression coverage exercises totalVisible 1/2/3/5 with page 1234 of 2000.
 The matrix passes, including existing filter additive-selection and clear-action
 checks. Showcase now includes two visible pages, large page numbers, disabled
-pagination and an individually disabled filter. This batch is UI-only and has
-not yet been rebuilt onto Samsung; physical layout/interaction checks for these
-new fixtures remain pending. No gallery publication is approved by these tests.
+pagination and an individually disabled filter. This batch is UI-only. PHPStan
+level 9 passed; the release build completed in 11s and was installed/launched on
+Samsung (1053ms cold launch, not a controlled performance benchmark). Cleanup
+removed 88MiB of development artifacts. Physical layout/interaction checks for
+these new fixtures remain pending. No gallery publication is approved by these tests.
+
+### Samsung pagination/filter interactions completed
+
+`tools/audit-pagination-filter-android.py` passed on Samsung with the existing
+font scale 1.1, restored after the run. Report and screenshots:
+`/tmp/pam-ui-pagination-filter-20260913/report.json`.
+APK SHA-256: `92afa25eb9c13cd41ec7224d03a201c4eab14439e67dcf6e61d35ed830849ba8`.
+
+Verified real taps selecting page 2, rejecting a disabled page while retaining
+page 2, rejecting Unavailable, adding Featured without clearing Available,
+then clearing both selected filters. Visual inspection confirms readable
+four-digit pages, two-page limit, padded filter labels and distinct disabled
+items at this scale. Clear wraps below the final filter row without overlap.
+This supersedes the pending scoped interaction checks above; it does not cover
+all font scales, themes, accessibility services, performance or full approval.
