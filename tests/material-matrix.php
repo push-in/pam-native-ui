@@ -4862,6 +4862,46 @@ if (
         'p-progress-button must retain its action label and expose determinate native progress.',
     );
 }
+foreach ([-20, 0, 42, 100, 120] as $progressInput) {
+    $expectedProgress = max(0.0, min(100.0, (float) $progressInput));
+    $progressProperties = $tags['p-progress-button']::make([
+        'progress' => $progressInput,
+        'text' => 'Upload',
+    ])->toElement()->properties();
+    if (
+        ($progressProperties[PropKey::AccessibilityBusy->value] ?? null)
+            !== ($expectedProgress > 0.0 && $expectedProgress < 100.0)
+        || ($progressProperties[PropKey::AccessibilityValueMin->value] ?? null) !== 0.0
+        || ($progressProperties[PropKey::AccessibilityValueMax->value] ?? null) !== 100.0
+        || ($progressProperties[PropKey::AccessibilityValueNow->value] ?? null) !== $expectedProgress
+    ) {
+        throw new RuntimeException('Progress button must expose a bounded percentage and accurate busy state.');
+    }
+}
+foreach ([MaterialVariant::Text, MaterialVariant::Outlined, MaterialVariant::Tonal, MaterialVariant::Elevated] as $progressVariant) {
+    $variantButton = $tags['p-progress-button']::make([
+        'progress' => 42, 'text' => 'Upload', 'variant' => $progressVariant->value,
+    ])->toElement();
+    $variantStack = [$variantButton];
+    $variantTrack = null;
+    while ($variantStack !== []) {
+        $candidate = array_pop($variantStack);
+        if (($candidate->properties()[PropKey::Value->value] ?? null) === 'pam:progress-button-track') {
+            $variantTrack = $candidate;
+            break;
+        }
+        array_push($variantStack, ...$candidate->children());
+    }
+    $expectedStyle = MaterialStyleResolver::resolve([
+        '__materialComponent' => 'PBtn', 'variant' => $progressVariant->value,
+    ], ThemeManager::current());
+    if (!$variantTrack instanceof \Pam\Native\Element
+        || ($variantTrack->properties()[PropKey::BackgroundColor->value] ?? null) !== $expectedStyle?->textColor
+        || ($variantTrack->properties()[PropKey::WidthPercent->value] ?? null) !== 42.0
+    ) {
+        throw new RuntimeException('Progress track must preserve geometry and follow the variant foreground.');
+    }
+}
 $assertGeometry('PDialog', [], [
     'margin' => 24.0,
     'borderRadius' => 28.0,

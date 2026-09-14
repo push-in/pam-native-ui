@@ -216,6 +216,9 @@ final class ComponentRenderer
         } elseif ($part === 'PProgressButton') {
             $props['__progressButton'] = true;
             $progress = $props['progress'] ?? $props['modelValue'] ?? null;
+            $progressValue = is_numeric($progress) && is_finite((float) $progress)
+                ? max(0.0, min(100.0, (float) $progress)) : null;
+            $props['progress'] = $progressValue;
             $props['loading'] = self::flag($props, 'indeterminate')
                 || self::flag($props, 'loading');
             $props['accessibilityState'] = [
@@ -225,8 +228,14 @@ final class ComponentRenderer
                         : []
                 ),
                 'busy' => $props['loading']
-                    || (is_numeric($progress) && (float) $progress < 100.0),
+                    || ($progressValue !== null && $progressValue > 0.0 && $progressValue < 100.0),
             ];
+            if ($progressValue !== null && !self::flag($props, 'indeterminate')) {
+                $props['accessibilityValue'] = [
+                    ...(is_array($props['accessibilityValue'] ?? null) ? $props['accessibilityValue'] : []),
+                    'min' => 0.0, 'max' => 100.0, 'now' => $progressValue,
+                ];
+            }
             $part = 'PBtn';
         }
 
@@ -688,9 +697,11 @@ final class ComponentRenderer
                     ->property(PropKey::Value, 'pam:progress-filled-track'),
             ];
         }
+        $buttonProgress = $props['progress'] ?? $props['modelValue'] ?? null;
         if (
             self::flag($props, '__progressButton')
-            && is_numeric($props['progress'] ?? $props['modelValue'] ?? null)
+            && is_numeric($buttonProgress)
+            && is_finite((float) $buttonProgress)
             && !self::flag($props, 'indeterminate')
         ) {
             $progress = max(0.0, min(
@@ -704,9 +715,6 @@ final class ComponentRenderer
                 bottom: 0.0,
                 widthPercent: $progress,
                 height: 4.0,
-                backgroundColor: ThemeManager::current()->color(
-                    ColorToken::PrimaryForeground,
-                ),
                 borderRadius: 2.0,
                 animationDurationMs: $reduceMotion ? 0 : 250,
                 animateChanges: !$reduceMotion,
@@ -736,6 +744,16 @@ final class ComponentRenderer
             $props['__pamChildCount'] = count($children);
         }
         $style = StyleResolver::resolve($part, $props, ThemeManager::current());
+        if (self::flag($props, '__progressButton')) {
+            foreach ($children as $index => $child) {
+                if (($child->properties()[PropKey::Value->value] ?? null) === 'pam:progress-button-track') {
+                    $children[$index] = $child->style(new Style(
+                        backgroundColor: $style->textColor
+                            ?? ThemeManager::current()->color(ColorToken::PrimaryForeground),
+                    ));
+                }
+            }
+        }
         $materialComponent = $props['__materialComponent'] ?? null;
         $materialLoading = self::flag(
             $props,
