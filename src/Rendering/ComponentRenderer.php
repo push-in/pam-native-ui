@@ -3541,7 +3541,7 @@ final class ComponentRenderer
 
         $icon = self::render(
             'SearchIcon',
-            ['size' => 'md', 'accessibilityLabel' => 'Search'],
+            ['size' => 'md', 'accessibilityHidden' => true],
             [],
             [],
             new Style(
@@ -3552,6 +3552,7 @@ final class ComponentRenderer
             null,
         );
 
+        $icon = $icon->accessibilityImportance(AccessibilityImportance::NoHideDescendants);
         $children = [$icon, $input];
         if (self::flag($props, 'clearable')) {
             $query = self::text($props, 'modelValue', self::text($props, 'value'));

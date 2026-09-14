@@ -168,3 +168,12 @@ This batch does not establish custom tag creation, search, all variants, larger
 fonts, readonly/disabled interactions, RTL, IME composition, iOS or performance
 approval. Existing dedicated scripts cover additional flows but their historical
 results are not promoted to current-candidate proof. No publication was performed.
+# Search Bar decorative semantics follow-up
+
+The magnifier no longer carries a separate Search label and explicitly uses
+NoHideDescendants accessibility importance. The labeled native editor remains
+the search semantic target. The material matrix checks the emitted importance;
+the first regression exposed that the hidden alias alone did not set that exact
+property, so the explicit existing native API is now used. No layout or query
+behavior changed. Assistive-technology behavior still requires device review;
+this is not a TalkBack/VoiceOver approval.

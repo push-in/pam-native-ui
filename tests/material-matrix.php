@@ -3708,6 +3708,10 @@ if (
 }
 
 $searchClass = $tags['p-search-bar'];
+if (($searchClass::make()->toElement()->children()[0]->properties()[PropKey::AccessibilityImportance->value] ?? null)
+    !== AccessibilityImportance::NoHideDescendants->value) {
+    throw new RuntimeException('Decorative search icons must not duplicate the labeled search field.');
+}
 foreach ([
     [EventKind::InputEndEditing, 'onEndEditing'],
     [EventKind::InputSelectionChange, 'onSelectionChange'],
