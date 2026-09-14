@@ -73,3 +73,11 @@ run this unchanged gate or describe an Android-only batch as ready to publish.
 Next execution should address uncovered acceptance scopes or shared defects,
 not regenerate already-passing screenshots. Keep historical physical approvals
 separate from validation of the current candidate APK.
+
+Native SDK checkpoint: the accumulated TemplateRenderer validation batches now
+pass the targeted PHPStan level-9 check with zero file errors, plus the SDK suite
+and UI matrix. See `pam-native/docs/template-renderer-static-closure-2026-09-14.md`
+in the sibling repository. This closes that particular code gate, not the whole
+native SDK audit. Before the next Android build, explicitly sync the current PHP
+TemplateRenderer into staging; the installed feedback candidate predates these
+native PHP changes. Do not repeat the resolved static-diagnostic investigation.
