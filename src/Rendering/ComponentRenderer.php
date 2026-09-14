@@ -3071,6 +3071,7 @@ final class ComponentRenderer
             );
         }
         $values['abstractSelectionItem'] = $materialComponent === 'PItem';
+        $values['controlledExpansion'] = self::flag($props, '__treeControlledExpansion');
         $values['preserveChildForeground'] = $materialComponent === 'PStepperItem'
             || $materialComponent === 'PStepperVerticalItem';
         $values['navigationKind'] = match ($materialComponent) {

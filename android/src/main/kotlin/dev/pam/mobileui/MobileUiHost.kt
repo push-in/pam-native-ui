@@ -1,6 +1,7 @@
 package dev.pam.mobileui
 
 import dev.pam.nativeapp.views.OverlayBounds
+import dev.pam.nativeapp.views.NativeChildVisibilityHost
 import dev.pam.nativeapp.views.OverlayCollisionResolver
 import dev.pam.nativeapp.views.OverlayPlacement
 
@@ -176,7 +177,8 @@ internal fun descendantContentBottomPx(group: ViewGroup): Int =
 internal class MobileUiHost(
     context: Context,
     private val emitter: NativeViewEmitter,
-) : FrameLayout(context) {
+) : FrameLayout(context), NativeChildVisibilityHost {
+    override var onChildVisibilityChanged: ((View, Boolean) -> Unit)? = null
     private enum class Behavior(val value: Int) {
         CONTAINER(1),
         ACCORDION(2),
@@ -3012,6 +3014,7 @@ internal class MobileUiHost(
     }
 
     fun release() {
+        onChildVisibilityChanged = null
         removeAnchoredTouchDelegate()
         animator?.cancel()
         animator = null
@@ -7129,6 +7132,9 @@ internal class MobileUiHost(
         applyFileTreeSelectionVisual(selected)
         val content = findTaggedDescendant(this, FILE_TREE_CONTENT_TAG)
         if (content != null && changed) {
+            if (!nativeProperties.flag("controlledExpansion", false)) {
+                onChildVisibilityChanged?.invoke(content, expanded)
+            }
             content.animate().cancel()
             content.importantForAccessibility = if (expanded) {
                 IMPORTANT_FOR_ACCESSIBILITY_AUTO

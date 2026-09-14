@@ -88,7 +88,8 @@ private enum PamFileTreeAction: Int64 {
     case expanded = 1
 }
 
-final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
+final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate, NativeChildVisibilityHost {
+    var onChildVisibilityChanged: ((UIView, Bool) -> Void)?
     typealias EventEmitter = (NativeViewEventKind, Data) -> Void
 
     private var emit: EventEmitter?
@@ -108,6 +109,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var buttonToggleItem = false
     private var isExpanded = false
     private var fileTreeExpandedPaths = Set<String>()
+    private weak var fileTreeLayoutContent: UIView?
+    private var fileTreeLayoutExpanded: Bool?
     private var fileTreeSelectedPath: String?
     private var fileTreeSelectedPaths = Set<String>()
     private var fileTreeMultiple = false
@@ -351,6 +354,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     func releaseCallbacks() {
+        onChildVisibilityChanged = nil
         restoreAnchoredPortalContent()
         pressAnimator?.stopAnimation(true)
         pressAnimator = nil
@@ -1318,6 +1322,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                             item.isExpanded = open
                             item.accessibilityValue = open ? "Expanded" : "Collapsed"
                             if let content = item.descendant(prefix: "pam:file-tree-content") {
+                                if item.fileTreeLayoutContent !== content || item.fileTreeLayoutExpanded != open {
+                                    item.fileTreeLayoutContent = content
+                                    item.fileTreeLayoutExpanded = open
+                                    if item.properties["controlledExpansion"]?.pamFlag != true {
+                                        item.onChildVisibilityChanged?(content, open)
+                                    }
+                                }
                                 content.isHidden = !open
                                 content.accessibilityElementsHidden = !open
                             }

@@ -103,6 +103,11 @@ final class PamMobileUiTests: XCTestCase {
         let content = UIView()
         content.accessibilityIdentifier = "pam:file-tree-content"
         content.addSubview(file)
+        var visibilityRequests: [Bool] = []
+        folder.onChildVisibilityChanged = { child, visible in
+            XCTAssertTrue(child === content)
+            visibilityRequests.append(visible)
+        }
         folder.addSubview(content)
         tree.addSubview(folder)
         defer {
@@ -137,12 +142,22 @@ final class PamMobileUiTests: XCTestCase {
         XCTAssertEqual(events.filter { $0.0 == .change }.map { String(decoding: $0.1, as: UTF8.self) },
                        ["/src", "/src", "/src/app.php"])
         XCTAssertEqual(events.filter { $0.0 == .native }.count, 2)
+        XCTAssertEqual(visibilityRequests, [false, true], "Selection must not request duplicate layout updates")
+
+        folder.update([
+            "behavior": .integer(Int64(PamMobileBehavior.fileTreeFolder.rawValue)),
+            "path": .text("/src"),
+            "controlledExpansion": .flag(true),
+        ])
 
         tree.update(["behavior": .integer(32), "expandedPaths": .text("")])
         tree.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
         tree.setNeedsLayout()
         tree.layoutIfNeeded()
         XCTAssertTrue(content.isHidden, "An explicitly empty controlled set must collapse all folders")
+        XCTAssertEqual(visibilityRequests, [false, true], "Controlled expansion belongs to the authored tree")
+        folder.releaseCallbacks()
+        XCTAssertNil(folder.onChildVisibilityChanged)
     }
 
     func testSelectionDismissalHonorsCloseOnSelectBeforeLegacyCloseOnPress() {
