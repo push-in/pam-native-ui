@@ -1468,3 +1468,22 @@ without loading across Text, Password, Masked and Currency fields and require
 every requested action to remain present with non-overlapping bounds. The PHP
 matrix passes. This is a UI layout change, not a Native workaround. Device
 validation remains pending alongside the read-only field batch above.
+
+### Samsung compound password actions
+
+Release APK `5a4993c4d7bd6a971abfca604a39a93521a0fac0916302ddd56a4a19e34ef8d3`
+installed successfully; build took 11s and cleanup removed 88MiB. Scoped test
+`tools/audit-password-actions-android.py` passed: reveal unmasks the native input,
+clear empties the controlled value, and the read-only example never exposes a
+clear action. Evidence: `/tmp/pam-ui-password-actions-labeled-20260913/report.json`.
+The first locator attempt failed because showcase inputs share the generic
+Password Field preview accessibility label; this is a separate showcase naming
+issue, not an interaction pass. The corrected locator uses the visible fixture
+label and the nearby native editor.
+
+Visual inspection confirmed separated horizontal actions but found clear and
+loading lower than reveal. Password clear/loading now use bottom offsets 8/12dp,
+respectively, to share the reveal control's center at 24dp. Matrix regression
+asserts that center. This last vertical adjustment is not yet in the tested APK;
+visual approval remains pending. Other field families are not physically approved
+by this password-only test.

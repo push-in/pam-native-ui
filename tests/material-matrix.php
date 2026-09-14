@@ -2224,6 +2224,13 @@ foreach (['p-text-field', 'p-password-field', 'p-masked-field', 'p-currency-fiel
                     throw new RuntimeException('Field action bounds must be numeric layout values.');
                 }
                 $slots[] = [$right, $width];
+                if ($actionTag === 'p-password-field') {
+                    $bottom = $properties[PropKey::Bottom->value] ?? null;
+                    $height = $properties[PropKey::Height->value] ?? null;
+                    if (!is_float($bottom) || !is_float($height) || $bottom + $height / 2.0 !== 24.0) {
+                        throw new RuntimeException('Password trailing actions must share their vertical center.');
+                    }
+                }
             }
             array_push($stack, ...$node->children());
         }

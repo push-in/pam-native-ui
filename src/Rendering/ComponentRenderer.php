@@ -1692,7 +1692,7 @@ final class ComponentRenderer
                         positionType: PositionType::Absolute,
                         right: $revealSlot,
                         top: $materialComponent === 'PTextarea' ? 20.0 : null,
-                        bottom: $materialComponent === 'PTextarea' ? null : 0.0,
+                        bottom: $materialComponent === 'PTextarea' ? null : ($materialComponent === 'PPasswordField' ? 8.0 : 0.0),
                         width: 32.0,
                         height: 32.0,
                         borderRadius: 16.0,
@@ -1768,7 +1768,7 @@ final class ComponentRenderer
                         positionType: PositionType::Absolute,
                         right: $revealSlot + $clearSlot,
                         top: $materialComponent === 'PTextarea' ? 24.0 : null,
-                        bottom: $materialComponent === 'PTextarea' ? null : 4.0,
+                        bottom: $materialComponent === 'PTextarea' ? null : ($materialComponent === 'PPasswordField' ? 12.0 : 4.0),
                         width: 24.0,
                         height: 24.0,
                     ));
