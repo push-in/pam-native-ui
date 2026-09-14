@@ -1732,3 +1732,25 @@ Edit tap, and enabled Share selection. Both `icons-1.0.png` and `icons-2.0.png`
 were visually inspected: all icons remain above complete labels, without mixed
 horizontal/vertical placement. This closes that specific emulator layout defect,
 not Samsung, TalkBack, theme or full-library approval. Build cleaned 88.1 MiB.
+
+### Integration gate revalidated against GitHub
+
+Native run https://github.com/push-in/pam-native/actions/runs/34790637153
+is terminal **failure**, at Native SHA
+`69ee5cc7dad6918be6224a5a7b7d752b703cd5ff`. Swift/UIKit contracts,
+Rust/PHP/protocol contracts, and Android renderer build/unit contracts passed.
+Both Android API 26 and API 36 instrumentation jobs failed only
+`rendererKeepsPersistentHorizontalIndicatorVisibleBelowContent`; the downstream
+cross-platform accessibility evidence job was skipped.
+
+Both logs report the same assertion: initial-window fixture child pixel expected
+LTGRAY (-3355444), actual WHITE (-1), at fixture [42,1754], size 788x136.
+The later shown-frame gray check passed; failure occurs at the initial-frame
+content check before the initial-indicator assertions. This narrows investigation
+to initial frame visibility/readiness, but does not prove timing is the cause or
+that the renderer is correct. Do not remove the assertion or approve this gate.
+
+UI PR 46 remains draft at remote SHA
+`fe8ffa44efed738781d6b635a5851fd8998d7991`; local d1d4d5b has 30 commits beyond its
+tracking branch. Existing remote checks therefore do not validate the current
+local UI. No merge, release, push, or rerun was performed during this inspection.
