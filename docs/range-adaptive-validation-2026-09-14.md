@@ -91,3 +91,22 @@ This closes basic changed-value confirmation and in-route retention for the API
 minute editing, locale differences, iOS, or current Samsung behavior. File
 selection beyond cancellation remains pending. These scoped reports are not full
 component approval or published media.
+
+## Single document selection
+
+On the same API 36 APK, a 92-byte non-personal text fixture named
+`pam-ui-file-selection-proof.txt` was pushed to emulator Downloads. Tapping the
+Contract field opened Android DocumentsUI; selecting that exact fixture returned
+to the showcase. The Contract button's descendant text was asserted to be exactly
+`Contract`, `pam-ui-file-selection-proof.txt`, `Replace` in
+`/tmp/pam-file-proof-selected.xml`. The raw screenshot
+`/tmp/pam-file-proof-selected.png` was viewed: filename and replacement action fit
+inside the field without overlap. This verifies real single-file selection, not
+just picker opening. It does not verify file bytes or multiple selection.
+
+An additional manual reopen/Back attempt left the showcase task; its retention
+assertion failed and is not counted as passed. Future repetitions must use the
+existing task/foreground guards and wait for the picker before dismissal. No UI
+defect is inferred from that unguarded attempt. The emulator Downloads fixture
+and this attempt's remote hierarchy files were removed; the 92-byte source fixture
+remains locally in `/tmp`. No personal document was selected. No publication.
