@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--scenario', choices=('interactive', 'uncontrolled'), default='interactive')
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location('tree_layout_base', Path(__file__).with_name('audit-autocomplete-android.py'))
 if spec is None or spec.loader is None:
@@ -20,7 +21,7 @@ sys.modules[spec.name] = base
 spec.loader.exec_module(base)
 audit = base.AutocompleteAudit(args.serial, 'dev.pam.mobileui.catalog',
     'dev.pam.nativeapp.PamActivity', args.output, 'p-treeview', 'Treeview')
-report = {'fullApproval': False, 'checks': []}
+report = {'fullApproval': False, 'scenario': args.scenario, 'checks': []}
 signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
 
 def named(root, label):
@@ -38,7 +39,7 @@ def toggle(tree):
 
 try:
     audit.prepare()
-    audit.launch()
+    audit.launch(args.scenario)
     apk = audit.shell('pm', 'path', audit.package).strip().splitlines()[0].removeprefix('package:')
     report['apkSha256'] = audit.shell('sha256sum', apk).split()[0]
     before = audit.dump('expanded-before')

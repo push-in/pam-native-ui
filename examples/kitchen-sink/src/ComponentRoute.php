@@ -3899,6 +3899,10 @@ final class ComponentRoute extends Component
                         ),
                     )),
                 )->style(new Style(widthPercent: 100.0, gap: 6.0));
+            } elseif ($this->tag === 'p-treeview' && $this->state->auditScenario === 'uncontrolled') {
+                // Intentionally omit PHP callbacks: this fixture must exercise
+                // native-owned expansion without showcase state reconciliation.
+                $preview = $component::make($previewProps);
             } elseif ($this->belongsTo(['p-tree-select', 'p-treeview'])) {
                 $selected = $this->sampleValues[$index]
                     ?? $previewProps['modelValue']
