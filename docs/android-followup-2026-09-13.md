@@ -1414,3 +1414,15 @@ cases passed. Inspection of after-Share-2.0.png confirms complete Week/Month
 labels and retained padding. The short Day label remains beside its icon while
 longer labels flow below: legibility is improved, but uniform icon alignment at
 large font remains a visual refinement, not a fully approved gallery image.
+
+### Pagination and filter batch: API fidelity and showcase coverage
+
+Pagination no longer silently raises totalVisible=1/2 to three controls. Page
+buttons use minimum 48dp targets with 12dp horizontal and 8dp vertical padding
+instead of fixed 48dp boxes, allowing large page numbers and enlarged text to
+grow. Regression coverage exercises totalVisible 1/2/3/5 with page 1234 of 2000.
+The matrix passes, including existing filter additive-selection and clear-action
+checks. Showcase now includes two visible pages, large page numbers, disabled
+pagination and an individually disabled filter. This batch is UI-only and has
+not yet been rebuilt onto Samsung; physical layout/interaction checks for these
+new fixtures remain pending. No gallery publication is approved by these tests.

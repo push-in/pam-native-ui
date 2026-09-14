@@ -3343,6 +3343,24 @@ if ($selectedPage !== 2) {
 }
 
 $segmentedClass = $tags['p-segmented-button'];
+foreach ([1, 2, 3, 5] as $visiblePages) {
+    $pages = $tags['p-pagination']::make([
+        'length' => 2000, 'modelValue' => 1234, 'totalVisible' => $visiblePages,
+    ])->toElement()->children();
+    if (count($pages) !== $visiblePages) {
+        throw new RuntimeException('Pagination must honor small totalVisible values.');
+    }
+    foreach ($pages as $page) {
+        if (
+            isset($page->properties()[PropKey::Width->value])
+            || isset($page->properties()[PropKey::Height->value])
+            || ($page->properties()[PropKey::MinWidth->value] ?? null) !== 48.0
+            || ($page->properties()[PropKey::PaddingHorizontal->value] ?? null) !== 12.0
+        ) {
+            throw new RuntimeException('Large page labels must retain padding and grow beyond the minimum target.');
+        }
+    }
+}
 foreach ([false, true] as $disabled) {
     $pages = $tags['p-pagination']::make([
         'length' => 3, 'modelValue' => 1, 'disabled' => $disabled,

@@ -6369,6 +6369,9 @@ final class ComponentRoute extends Component
                 ['label' => 'Middle page', 'props' => ['modelValue' => 3, 'length' => 7]],
                 ['label' => 'Last page', 'props' => ['modelValue' => 5, 'length' => 5]],
                 ['label' => 'Compact', 'props' => ['modelValue' => 4, 'length' => 12, 'totalVisible' => 5]],
+                ['label' => 'Two visible pages', 'props' => ['modelValue' => 4, 'length' => 12, 'totalVisible' => 2]],
+                ['label' => 'Large page numbers', 'props' => ['modelValue' => 1234, 'length' => 2000, 'totalVisible' => 3]],
+                ['label' => 'Disabled', 'props' => ['modelValue' => 2, 'length' => 3, 'disabled' => true]],
             ],
             'p-segmented-button' => [
                 ['label' => 'Single', 'props' => ['modelValue' => 1]],
@@ -6434,6 +6437,11 @@ final class ComponentRoute extends Component
                 ['label' => 'Multiple', 'props' => ['items' => ['Android', 'iOS', 'Web'], 'modelValue' => ['Android', 'iOS']]],
                 ['label' => 'Empty', 'props' => ['items' => ['Recent', 'Popular', 'Saved'], 'modelValue' => []]],
                 ['label' => 'Disabled', 'props' => ['items' => ['Active', 'Archived'], 'modelValue' => [], 'disabled' => true]],
+                ['label' => 'Disabled item', 'props' => ['items' => [
+                    ['label' => 'Available', 'value' => 1],
+                    ['label' => 'Unavailable', 'value' => 2, 'disabled' => true],
+                    ['label' => 'Featured', 'value' => 3],
+                ], 'modelValue' => [1]]],
             ],
             'p-navigation-drawer' => [
                 ['label' => 'Front', 'props' => ['open' => true, 'type' => 'front', 'items' => ['Home', 'Explore', 'Settings'], 'modelValue' => 'Home']],

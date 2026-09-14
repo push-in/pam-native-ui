@@ -3539,7 +3539,7 @@ final class ComponentRenderer
         );
         $visible = min(
             $pageCount,
-            max(3, self::integer($props, 'totalVisible', 5)),
+            max(1, self::integer($props, 'totalVisible', 5)),
         );
         $first = max(1, min(
             $current - intdiv($visible, 2),
@@ -3565,10 +3565,10 @@ final class ComponentRenderer
                 )),
             )
                 ->style(new Style(
-                    width: 48.0,
-                    height: 48.0,
                     minWidth: 48.0,
                     minHeight: 48.0,
+                    paddingHorizontal: 12.0,
+                    paddingVertical: 8.0,
                     backgroundColor: $selected
                         ? $theme->color(ColorToken::Primary)
                         : 0x00000000,
