@@ -1510,3 +1510,13 @@ Inspected combined-actions.png: clear and Show align without overlap; the
 loading indicator occupies its own slot. This supersedes the pending combined
 check above, not remaining theme/font-scale/TalkBack/performance requirements.
 Build completed in 11s, installation succeeded and cleanup removed 88MiB.
+
+### Search and file-input width constraints
+
+Search editors and file-input copy now begin at zero flex basis (width=0), grow
+into the remaining row space and may shrink. File icon and Browse/Replace action
+retain their widths. This prevents intrinsic long content from requesting space
+reserved for adjacent affordances. Added long-query/filename showcase specimens
+and matrix checks for these layout contracts. Matrix passes; physical long-text
+and picker/keyboard interaction validation is pending. Native layout primitives
+already provide the needed capability, so these changes remain in UI composition.

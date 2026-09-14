@@ -3405,7 +3405,9 @@ final class ComponentRenderer
         $props['returnKeyType'] ??= ReturnKeyType::Search->value;
         $props['autoCapitalize'] ??= InputAutoCapitalize::None->value;
         $input = self::input('InputField', $props)->style(new Style(
+            width: 0.0,
             flexGrow: 1.0,
+            flexShrink: 1.0,
             minWidth: 0.0,
             minHeight: 48.0,
             paddingHorizontal: 0.0,
@@ -3481,6 +3483,7 @@ final class ComponentRenderer
             Column::make($icon)->style(new Style(
                 width: 44.0,
                 height: 44.0,
+                flexShrink: 0.0,
                 borderRadius: 14.0,
                 backgroundColor: $theme->color(ColorToken::Accent),
                 alignItems: Align::Center,
@@ -3505,8 +3508,9 @@ final class ComponentRenderer
                         fontWeight: 700,
                         textColor: $theme->color(ColorToken::OnSurface),
                     )),
-            )->style(new Style(flexGrow: 1.0, minWidth: 0.0, gap: 2.0)),
+            )->style(new Style(width: 0.0, flexGrow: 1.0, flexShrink: 1.0, minWidth: 0.0, gap: 2.0)),
             Text::make($selected ? 'Replace' : 'Browse')->style(new Style(
+                flexShrink: 0.0,
                 fontSize: 12.0,
                 lineHeight: 16.0,
                 fontWeight: 700,

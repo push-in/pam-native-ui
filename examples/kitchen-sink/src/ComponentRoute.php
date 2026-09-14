@@ -6362,6 +6362,7 @@ final class ComponentRoute extends Component
                 ['label' => 'Resting', 'props' => ['placeholder' => 'Search components']],
                 ['label' => 'Focused', 'props' => ['placeholder' => 'Search components', 'focused' => true]],
                 ['label' => 'With query', 'props' => ['modelValue' => 'Navigation']],
+                ['label' => 'Long query', 'props' => ['modelValue' => 'Search invoices, customers and documents across all workspaces']],
                 ['label' => 'Outlined', 'props' => ['outlined' => true]],
             ],
             'p-pagination' => [
@@ -6421,6 +6422,7 @@ final class ComponentRoute extends Component
                 ['label' => 'Single file', 'props' => ['label' => 'Contract', 'text' => 'Choose document']],
                 ['label' => 'Multiple files', 'props' => ['label' => 'Attachments', 'multiple' => true, 'text' => 'Choose files', 'limit' => 5]],
                 ['label' => 'Selected', 'props' => ['label' => 'Resume', 'text' => 'resume.pdf']],
+                ['label' => 'Long filename', 'props' => ['label' => 'Annual report', 'text' => 'annual-financial-report-consolidated-reviewed-final-2026.pdf']],
                 ['label' => 'Disabled', 'props' => ['label' => 'Attachments', 'disabled' => true]],
             ],
             'p-date-range-picker' => [

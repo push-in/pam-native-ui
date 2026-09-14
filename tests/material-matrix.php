@@ -4147,6 +4147,30 @@ if (
 ) {
     throw new RuntimeException('Creating a custom tag must preserve the open modal identity.');
 }
+$longFile = $tags['p-file-input']::make([
+    'label' => 'Attachments', 'text' => str_repeat('long-file-name-', 20).'.pdf',
+])->toElement();
+$fileRow = $longFile->children()[0];
+[$fileIcon, $fileCopy, $fileAction] = $fileRow->children();
+if (
+    ($fileCopy->properties()[PropKey::Width->value] ?? null) !== 0.0
+    || ($fileCopy->properties()[PropKey::FlexGrow->value] ?? null) !== 1.0
+    || ($fileCopy->properties()[PropKey::FlexShrink->value] ?? null) !== 1.0
+    || ($fileIcon->properties()[PropKey::FlexShrink->value] ?? null) !== 0.0
+    || ($fileAction->properties()[PropKey::FlexShrink->value] ?? null) !== 0.0
+) {
+    throw new RuntimeException('File labels must consume remaining width without squeezing icon or action.');
+}
+$longSearch = $tags['p-search-bar']::make(['modelValue' => str_repeat('long query ', 30)])->toElement();
+$searchEditor = $longSearch->children()[1];
+if (
+    $searchEditor->kind() !== NodeKind::Input
+    || ($searchEditor->properties()[PropKey::Width->value] ?? null) !== 0.0
+    || ($searchEditor->properties()[PropKey::FlexGrow->value] ?? null) !== 1.0
+    || ($searchEditor->properties()[PropKey::FlexShrink->value] ?? null) !== 1.0
+) {
+    throw new RuntimeException('Search editor must remain constrained to the available row width.');
+}
 $fileInput = $tags['p-file-input']::make(['label' => 'Attachments'])
     ->onPick(static function (mixed $files): void {})
     ->toElement();
