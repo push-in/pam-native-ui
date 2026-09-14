@@ -145,6 +145,11 @@ final class ComponentRenderer
         if (!isset(ComponentMap::IDS[$part]) && !isset(MaterialComponentMap::IDS[$part])) {
             throw new InvalidArgumentException("Unknown PAM Native UI component {$part}.");
         }
+        // Resolve the public alias before any composed controls are generated.
+        // Explicit disabled=false retains precedence over isDisabled=true.
+        if (!array_key_exists('disabled', $props) && array_key_exists('isDisabled', $props)) {
+            $props['disabled'] = self::flag($props, 'isDisabled');
+        }
         if ($part === 'PNavigationDrawer') {
             return self::materialNavigationDrawer(
                 $props,
@@ -4268,17 +4273,21 @@ final class ComponentRenderer
             ));
             $actionLabel = $props['actionLabel'] ?? null;
             if (is_scalar($actionLabel) && (string) $actionLabel !== '') {
+                $actionDisabled = self::flag($props, 'disabled') || self::flag($props, 'loading');
                 $button = Pressable::make(Text::make((string) $actionLabel)->style(new Style(
                     fontSize: 14.0, lineHeight: 20.0, fontWeight: 700,
                     textColor: $theme->color(ColorToken::PrimaryForeground),
+                    flexShrink: 1.0, textAlign: TextAlignment::Center,
                 )))->style(new Style(
                     minWidth: 120.0, minHeight: 48.0, paddingHorizontal: 20.0,
+                    maxWidthPercent: 100.0, paddingVertical: 12.0,
+                    opacity: $actionDisabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
                     borderRadius: 24.0,
                     backgroundColor: $theme->color(ColorToken::Primary),
                     alignItems: Align::Center, justifyContent: Justify::Center,
-                ))->accessibilityRole(AccessibilityRole::Button)
+                ))->enabled(!$actionDisabled)->accessibilityRole(AccessibilityRole::Button)
                     ->accessibilityLabel((string) $actionLabel);
-                if (isset($events[EventKind::Press->value])) {
+                if (!$actionDisabled && isset($events[EventKind::Press->value])) {
                     $button = $button->onPress($events[EventKind::Press->value]);
                 }
                 $content[] = $button;
@@ -4807,9 +4816,13 @@ final class ComponentRenderer
                 fontSize: 14.0,
                 lineHeight: 20.0,
                 fontWeight: $active ? 700 : 500,
+                flexShrink: 1.0,
+                textAlign: TextAlignment::Center,
             )))->style(new Style(
                 minHeight: 48.0,
+                maxWidthPercent: 100.0,
                 paddingHorizontal: 16.0,
+                paddingVertical: 12.0,
                 backgroundColor: $itemDisabled
                     ? $theme->color(ColorToken::SurfaceSunken)
                     : ($active

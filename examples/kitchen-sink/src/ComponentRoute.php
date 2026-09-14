@@ -5636,6 +5636,9 @@ final class ComponentRoute extends Component
             $add($variations, 'Compact', ['density' => 'compact']);
         }
         if ($this->tag === 'p-result-state') {
+            $add($variations, 'Disabled action', ['disabled' => true, 'actionLabel' => 'Continue']);
+            $add($variations, 'Loading action', ['loading' => true, 'actionLabel' => 'Preparing your report']);
+            $add($variations, 'Long action', ['actionLabel' => 'Continue with the next stage of your application']);
             $add($variations, 'Success', ['status' => 'success', 'title' => 'Payment complete']);
             $add($variations, 'Warning', ['status' => 'warning', 'title' => 'Review required']);
             $add($variations, 'Error', ['status' => 'error', 'title' => 'Something went wrong']);
@@ -6468,6 +6471,10 @@ final class ComponentRoute extends Component
             ],
             'p-filter-bar' => [
                 ['label' => 'Orders', 'props' => ['items' => ['Open', 'Paid', 'Overdue'], 'modelValue' => ['Open']]],
+                ['label' => 'Long labels', 'props' => ['items' => [
+                    'Available to everyone in your organization',
+                    'Requires an accessibility and security review',
+                ], 'modelValue' => []]],
                 ['label' => 'Multiple', 'props' => ['items' => ['Android', 'iOS', 'Web'], 'modelValue' => ['Android', 'iOS']]],
                 ['label' => 'Empty', 'props' => ['items' => ['Recent', 'Popular', 'Saved'], 'modelValue' => []]],
                 ['label' => 'Disabled', 'props' => ['items' => ['Active', 'Archived'], 'modelValue' => [], 'disabled' => true]],

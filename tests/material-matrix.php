@@ -3500,6 +3500,36 @@ foreach ([false, true] as $disabled) {
     }
 }
 $selectedSegment = null;
+foreach (['p-pagination', 'p-filter-bar', 'p-segmented-button', 'p-tree-select'] as $disabledTag) {
+    foreach ([true, false] as $disabledValue) {
+        $props = [
+            'length' => 2,
+            'items' => [['value' => 1, 'label' => 'First'], ['value' => 2, 'label' => 'Second']],
+            'modelValue' => 1,
+            'isDisabled' => $disabledValue,
+        ];
+        $aliased = $tags[$disabledTag]::make($props)
+            ->onChange(static function (mixed $next): void {})->toElement();
+        foreach (array_slice($aliased->children(), 0, 2) as $control) {
+            if (($control->properties()[PropKey::Enabled->value] ?? null) !== !$disabledValue) {
+                throw new RuntimeException($disabledTag.' must apply isDisabled to every generated control.');
+            }
+            if ($disabledValue && isset($control->events()[EventKind::Press->value])) {
+                throw new RuntimeException($disabledTag.' disabled alias must suppress child handlers.');
+            }
+        }
+        if ($disabledValue && $disabledTag === 'p-filter-bar' && count($aliased->children()) !== 2) {
+            throw new RuntimeException('Disabled filters must not expose a clear-all action.');
+        }
+    }
+}
+$explicitEnabled = $tags['p-pagination']::make([
+    'length' => 2, 'modelValue' => 1, 'disabled' => false, 'isDisabled' => true,
+])->onChange(static function (int $page): void {})->toElement()->children()[1];
+if (($explicitEnabled->properties()[PropKey::Enabled->value] ?? null) !== true
+    || !isset($explicitEnabled->events()[EventKind::Press->value])) {
+    throw new RuntimeException('Explicit disabled=false must take precedence over the compatibility alias.');
+}
 $segmented = $segmentedClass::make([
     'items' => [
         ['label' => 'Day', 'value' => 1],
@@ -4519,6 +4549,16 @@ $result = $tags['p-result-state']::make([
 $result->children()[3]->events()[EventKind::Press->value]();
 if (!$resultPressed || count($result->children()) !== 4) {
     throw new RuntimeException('p-result-state must expose a directly actionable result layout.');
+}
+foreach (['disabled', 'isDisabled', 'loading'] as $blockedProp) {
+    $blockedResult = $tags['p-result-state']::make([
+        'actionLabel' => 'Continue with the next stage of your application', $blockedProp => true,
+    ])->onPress(static function (): void {})->toElement()->children()[3];
+    if (($blockedResult->properties()[PropKey::Enabled->value] ?? null) !== false
+        || isset($blockedResult->events()[EventKind::Press->value])
+        || ($blockedResult->properties()[PropKey::MaxWidthPercent->value] ?? null) !== 100.0) {
+        throw new RuntimeException('Result actions must fit their container and block disabled/loading interaction.');
+    }
 }
 $selectedChartPoint = null;
 $chart = $tags['p-chart']::make([
