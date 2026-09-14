@@ -1,5 +1,14 @@
 # Search family validation
 
+## Native editor contract follow-up
+
+Search Bar forwards all eight native editor events, including end-editing,
+selection, content-size and key-press events, preserving handler identity and
+payload. `editable: false` also disables the clear action, matching the editor's
+own lock. PHP regressions cover the four previously dropped events and this
+additional lock. These follow-up contracts have not yet received device-event
+coverage; the earlier clear-action APK predates these changes.
+
 ## Opt-in controlled clear action
 
 Search Bar now accepts `clearable: true` and an optional localized `clearLabel`

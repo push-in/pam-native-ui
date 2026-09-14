@@ -3473,14 +3473,18 @@ final class ComponentRenderer
             lineHeight: 24.0,
         ))->accessibilityRole(AccessibilityRole::Search);
         foreach ([
-            [EventKind::Change, 'onChange'],
-            [EventKind::Focus, 'onFocus'],
-            [EventKind::Blur, 'onBlur'],
-            [EventKind::Submit, 'onSubmit'],
-        ] as [$event, $method]) {
+            EventKind::Change,
+            EventKind::Focus,
+            EventKind::Blur,
+            EventKind::Submit,
+            EventKind::InputEndEditing,
+            EventKind::InputSelectionChange,
+            EventKind::InputContentSizeChange,
+            EventKind::InputKeyPress,
+        ] as $event) {
             $handler = $events[$event->value] ?? null;
             if ($handler instanceof Closure) {
-                $input = $input->{$method}($handler);
+                $input = $input->on($event, $handler);
             }
         }
 
@@ -3502,6 +3506,7 @@ final class ComponentRenderer
             $query = self::text($props, 'modelValue', self::text($props, 'value'));
             $change = $events[EventKind::Change->value] ?? null;
             $locked = self::flag($props, 'disabled', self::flag($props, 'isDisabled'))
+                || !self::flag($props, 'editable', true)
                 || self::flag($props, 'readonly', self::flag($props, 'readOnly', self::flag($props, 'isReadOnly')));
             $enabled = !$locked && $query !== '' && $change instanceof Closure;
             // Reserve the action's width so typing/clearing never shifts the editor.

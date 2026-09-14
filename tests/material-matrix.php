@@ -3538,6 +3538,25 @@ if (
 }
 
 $searchClass = $tags['p-search-bar'];
+foreach ([EventKind::InputEndEditing, EventKind::InputSelectionChange,
+    EventKind::InputContentSizeChange, EventKind::InputKeyPress] as $searchNativeEvent) {
+    $nativePayload = null;
+    $nativeHandler = static function (mixed $payload) use (&$nativePayload): void {
+        $nativePayload = $payload;
+    };
+    $eventSearch = \Pam\MobileUi\Rendering\ComponentRenderer::render(
+        'PSearchBar', [], [], [$searchNativeEvent->value => $nativeHandler], null, null,
+    );
+    $nativeEditor = $eventSearch->children()[1] ?? null;
+    $forwarded = $nativeEditor?->events()[$searchNativeEvent->value] ?? null;
+    if ($forwarded !== $nativeHandler) {
+        throw new RuntimeException('Search must preserve all native input event handlers.');
+    }
+    $forwarded(['selectionStart' => 2]);
+    if ($nativePayload !== ['selectionStart' => 2]) {
+        throw new RuntimeException('Search must not transform native event payloads.');
+    }
+}
 $searchValue = null;
 $submittedQuery = null;
 $search = $searchClass::make([
@@ -3585,7 +3604,7 @@ if ($submittedQuery !== 'navigation') {
     throw new RuntimeException('Search submission must preserve the query payload.');
 }
 foreach ([[], ['disabled' => true], ['isDisabled' => true], ['readonly' => true],
-    ['readOnly' => true], ['isReadOnly' => true], ['modelValue' => '']] as $clearCase) {
+    ['readOnly' => true], ['isReadOnly' => true], ['editable' => false], ['modelValue' => '']] as $clearCase) {
     $clearedValue = null;
     $clearSearch = $searchClass::make([
         'clearable' => true, 'clearLabel' => 'Limpar busca', 'modelValue' => 'query', ...$clearCase,
