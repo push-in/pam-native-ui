@@ -59,3 +59,19 @@ explicit color prop; the regression caught this and precedence was corrected.
 The full material matrix passes. This shared follow-up has not yet been installed
 on Android: the APK and screenshots above prove the earlier navigation correction,
 not the newly generalized style path. No native platform code was duplicated.
+
+### Generalized path Android check
+
+API 36 candidate `954822241970db851cd69f8cfc09cee5938f13bbc637db85bf722d9910c2b478`
+now includes the shared propagation change. One build completed in 11 seconds.
+`/tmp/pam-icon-search-20260914/report.json` records successful Search Bar editing;
+its raw `search-long.png` was viewed for icon/editor alignment. The long-query
+editor starts horizontally scrolled to the end: this remains a separate UX review
+item, not a color regression or proof of ideal initial presentation.
+
+`/tmp/pam-icons-final.png` was also viewed on the Icon route: the visible black,
+blue, green and orange specimens retain their semantic colors and small/large
+glyph sizes. These are scoped visual checks of existing specimens; the exact
+style-override precedence combinations are proven by PHP regression tests, not
+by these screenshots. Dark mode, every icon-bearing component and platform parity
+remain unverified. Build cleanup removed 96.7 MiB of regenerable artifacts.
