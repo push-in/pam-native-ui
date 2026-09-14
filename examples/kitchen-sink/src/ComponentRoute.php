@@ -6,6 +6,7 @@ namespace App;
 
 use Pam\MobileUi\Component\UiComponent;
 use Pam\MobileUi\Enum\ColorToken;
+use Pam\MobileUi\Enum\MaterialVariant;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Material\PTreeview;
 use Pam\MobileUi\Theme\MaterialTokens;
@@ -3732,6 +3733,9 @@ final class ComponentRoute extends Component
                             : ($progress === 0 ? 'Upload' : 'Uploading '.$progress.'%');
                     }
                 }
+                if (!array_key_exists('accessibilityLabel', $variation['props'])) {
+                    $previewProps['accessibilityLabel'] = $previewProps['text'] ?? 'Upload';
+                }
                 $preview = $component::make($previewProps);
                 if (($previewProps['indeterminate'] ?? false) !== true) {
                     $preview = $preview->onPress(
@@ -6501,6 +6505,11 @@ final class ComponentRoute extends Component
                 ['label' => 'Uploading', 'props' => ['text' => 'Uploading 42%', 'progress' => 42]],
                 ['label' => 'Almost done', 'props' => ['text' => 'Publishing 88%', 'progress' => 88]],
                 ['label' => 'Indeterminate', 'props' => ['text' => 'Preparing', 'indeterminate' => true]],
+                ['label' => 'Text', 'props' => ['text' => 'Syncing 42%', 'progress' => 42, 'variant' => MaterialVariant::Text->value]],
+                ['label' => 'Outlined', 'props' => ['text' => 'Exporting 42%', 'progress' => 42, 'variant' => MaterialVariant::Outlined->value]],
+                ['label' => 'Tonal', 'props' => ['text' => 'Saving 42%', 'progress' => 42, 'variant' => MaterialVariant::Tonal->value]],
+                ['label' => 'Complete', 'props' => ['text' => 'Complete', 'progress' => 100]],
+                ['label' => 'Disabled', 'props' => ['text' => 'Upload unavailable', 'progress' => 42, 'disabled' => true]],
             ],
             default => null,
         };
@@ -7637,6 +7646,13 @@ final class ComponentRoute extends Component
             && $props['label'] !== ''
         ) {
             $props['accessibilityLabel'] = $props['label'];
+        }
+        if (
+            !array_key_exists('accessibilityLabel', $props)
+            && is_string($props['text'] ?? null)
+            && $props['text'] !== ''
+        ) {
+            $props['accessibilityLabel'] = $props['text'];
         }
 
         return $props + $defaults;

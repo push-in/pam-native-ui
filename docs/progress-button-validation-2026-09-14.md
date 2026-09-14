@@ -27,3 +27,19 @@ Remaining: replace the generic showcase accessible name, display and inspect the
 light variants on device, Samsung/iOS coverage, assistive-technology announcements,
 motion/performance measurements and release-grade media. This is not full approval
 and does not update the formal component approval inventory.
+
+## Showcase follow-up
+
+APK `fe1baee257da65f6b983d6dd34827ff373f8a3cbacaf834a70e5ea575c9b2556`
+adds Text, Outlined, Tonal, Complete and Disabled specimens. Action sample defaults
+now use visible text when no explicit accessible name or field label is supplied;
+the progress sample updates that name when its percentage changes.
+
+`/tmp/pam-ui-progress-variants-20260914/report.json` records the scoped
+`--variants-only` run on emulator-5554: all three new style specimens advance from
+42 to 67 on tap, update their accessible names, and the disabled specimen rejects
+the tap, at font scales 1.0 and 2.0. Outlined captures at both scales were inspected
+and also show Text and Tonal: distinct surfaces, readable text and visible tracks.
+This closes the earlier generic-name and light-variant inspection gaps for this
+Android candidate, not TalkBack announcements, Samsung/iOS or measured performance.
+The complete/reset cycle was not repeated for this follow-up candidate.

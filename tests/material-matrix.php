@@ -96,6 +96,37 @@ foreach (['p-password-field', 'p-masked-field', 'p-currency-field', 'p-text-fiel
     }
 }
 
+foreach (['p-btn', 'p-progress-button'] as $actionTag) {
+    $route = new \App\ComponentRoute($actionTag, 'Sample', MaterialComponentMap::TAGS[$actionTag]);
+    foreach ([null, 'Explicit action name'] as $explicitName) {
+        $actionProps = ['text' => 'Publish changes'];
+        if ($explicitName !== null) {
+            $actionProps['accessibilityLabel'] = $explicitName;
+        }
+        $resolved = $samplePropsMethod->invoke($route, $actionProps);
+        if (!is_array($resolved) || ($resolved['accessibilityLabel'] ?? null) !== ($explicitName ?? 'Publish changes')) {
+            throw new RuntimeException('Showcase actions must use their visible text unless explicitly named.');
+        }
+    }
+}
+$progressRoute = new \App\ComponentRoute('p-progress-button', 'Progress Button', MaterialComponentMap::TAGS['p-progress-button']);
+$progressSpecimens = $catalogMethod->invoke($progressRoute);
+if (!is_array($progressSpecimens)) {
+    throw new RuntimeException('Progress showcase requires catalog specimens.');
+}
+foreach ([MaterialVariant::Text, MaterialVariant::Outlined, MaterialVariant::Tonal] as $requiredVariant) {
+    $hasVariant = false;
+    foreach ($progressSpecimens as $specimen) {
+        if (is_array($specimen) && is_array($specimen['props'] ?? null)
+            && ($specimen['props']['variant'] ?? null) === $requiredVariant->value
+            && ($specimen['props']['progress'] ?? null) === 42) {
+            $hasVariant = true;
+        }
+    }
+    if (!$hasVariant) {
+        throw new RuntimeException('Progress showcase must demonstrate light variants with visible partial progress.');
+    }
+}
 $layoutTokens = [
     MaterialTokens::SPACE_EXTRA_SMALL,
     MaterialTokens::SPACE_SMALL,
