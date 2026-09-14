@@ -1695,3 +1695,16 @@ February 29), both disabled aliases and distinct field labels. These changes use
 existing Native DateTimePicker capabilities and belong to UI composition.
 Large-font layout and native dialog interaction are still pending physical
 verification; no claim about fixed-height field scaling is made by this change.
+
+### Consolidated Result/Range Samsung round
+
+Installed UI 2305126 with APK
+`8dea5410bd324acb391666310e5045f9a51b3608c0ba5402362169269e08ec79`.
+`/tmp/pam-ui-result-range-20260913/report.json` verifies the enabled result action,
+disabled/loading action rejection, and opening/cancelling the native date and
+time dialogs. It does not verify confirming interval changes or large fonts.
+Inspected `loading-result.png`: long action text wraps on two lines within the
+button, without clipping. The same screenshot exposed misleading loading/ready
+sample copy; corrected in the showcase after this build (not yet reinstalled).
+The sample no longer asserts that every native validation passed. Build cleaned
+88.1 MiB of intermediates. Full approval and publication remain gated.

@@ -3872,7 +3872,11 @@ final class ComponentRoute extends Component
                     ),
                     Text::make($actionCompleted
                         ? 'Primary action completed'
-                        : 'Primary action ready')->style(new Style(
+                        : (!empty($previewProps['loading'])
+                            ? 'Action unavailable while preparing'
+                            : (!empty($previewProps['disabled'])
+                                ? 'Primary action disabled'
+                                : 'Primary action ready')))->style(new Style(
                             fontSize: 12.0,
                             lineHeight: 18.0,
                             fontWeight: $actionCompleted ? 600 : 400,
@@ -5637,7 +5641,10 @@ final class ComponentRoute extends Component
         }
         if ($this->tag === 'p-result-state') {
             $add($variations, 'Disabled action', ['disabled' => true, 'actionLabel' => 'Continue']);
-            $add($variations, 'Loading action', ['loading' => true, 'actionLabel' => 'Preparing your report']);
+            $add($variations, 'Loading action', [
+                'loading' => true, 'actionLabel' => 'Preparing your report',
+                'title' => 'Preparing report', 'description' => 'The action becomes available when preparation finishes.',
+            ]);
             $add($variations, 'Long action', ['actionLabel' => 'Continue with the next stage of your application']);
             $add($variations, 'Success', ['status' => 'success', 'title' => 'Payment complete']);
             $add($variations, 'Warning', ['status' => 'warning', 'title' => 'Review required']);
@@ -7819,7 +7826,7 @@ final class ComponentRoute extends Component
             'p-result-state' => [
                 'status' => 'success',
                 'title' => 'Ready to launch',
-                'description' => 'Every validation passed on the native runtime.',
+                'description' => 'Your report is ready. Open it to review the details.',
                 'actionLabel' => 'View report',
             ],
             'p-chart' => [
