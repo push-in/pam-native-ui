@@ -272,6 +272,9 @@ final class ComponentRenderer
         if ($part === 'PPagination' && $children === []) {
             $children = self::materialPaginationChildren($props, $events);
         }
+        if (in_array($part, ['PNavigationBar', 'PNavigationRail'], true) && $children === []) {
+            $children = self::materialNavigationChildren($props, $events);
+        }
         if ($part === 'PTagInput') {
             $props['multiple'] = true;
             $props['allowCustomValue'] = true;
@@ -4359,6 +4362,80 @@ final class ComponentRenderer
 
     /**
      * @param array<string, mixed> $props
+     * @param array<int, Closure> $events
+     * @return list<Element>
+     */
+    private static function materialNavigationChildren(array $props, array $events): array
+    {
+        $items = $props['items'] ?? [];
+        if (!is_array($items)) return [];
+        $theme = ThemeManager::current();
+        $rail = ($props['__materialComponent'] ?? null) === 'PNavigationRail';
+        $compact = in_array($props['density'] ?? null, [MaterialDensity::Compact->value, 'compact'], true);
+        $expanded = $rail && self::flag($props, 'expanded');
+        $active = $props['modelValue'] ?? $props['value'] ?? null;
+        $change = $events[EventKind::Change->value] ?? null;
+        $controls = [];
+        foreach ($items as $index => $item) {
+            $value = is_array($item) ? ($item['value'] ?? $item['id'] ?? $index + 1) : $item;
+            $label = is_array($item) ? ($item['label'] ?? $item['title'] ?? $value) : $item;
+            if (!is_scalar($value) || !is_scalar($label)) continue;
+            $selected = self::sameScalar($value, $active);
+            $disabled = self::flag($props, 'disabled') || (is_array($item) && self::flag([
+                'disabled' => $item['disabled'] ?? $item['isDisabled'] ?? false,
+            ], 'disabled'));
+            $content = [];
+            $icon = is_array($item) ? ($item['icon'] ?? null) : null;
+            if (is_string($icon) && $icon !== '') {
+                $content[] = View::make(self::render('Icon', [
+                    'icon' => $icon, 'accessibilityHidden' => true,
+                ], [], [], new Style(
+                    width: 24.0, height: 24.0,
+                    tintColor: $theme->color($selected ? ColorToken::Primary : ColorToken::MutedForeground),
+                ), null))->style(new Style(
+                    width: $expanded ? 40.0 : 48.0, height: 32.0,
+                    flexShrink: 0.0, borderRadius: 16.0,
+                    backgroundColor: $selected ? $theme->color(ColorToken::Accent) : 0x00000000,
+                    alignItems: Align::Center, justifyContent: Justify::Center,
+                ));
+            }
+            if (!$rail || $expanded || !is_string($icon) || $icon === '') {
+                $content[] = Text::make((string) $label)
+                    ->numberOfLines($rail ? 0 : 1)
+                    ->ellipsize(\Pam\Native\TextEllipsizeMode::Tail)
+                    ->style(new Style(
+                    width: $expanded ? 0.0 : null,
+                    flexGrow: $expanded ? 1.0 : 0.0,
+                    maxWidthPercent: 100.0,
+                    fontSize: $expanded ? 14.0 : 12.0,
+                    lineHeight: $expanded ? 20.0 : 16.0,
+                    fontWeight: $selected ? 700 : 500,
+                    textColor: $theme->color($selected ? ColorToken::Primary : ColorToken::OnSurface),
+                    textAlign: $expanded ? TextAlignment::Start : TextAlignment::Center,
+                ));
+            }
+            $layout = $expanded ? Row::make(...$content) : Column::make(...$content);
+            $control = Pressable::make($layout->style(new Style(
+                widthPercent: 100.0, gap: $expanded ? 12.0 : 4.0,
+                alignItems: Align::Center, justifyContent: Justify::Center,
+            )))->style(new Style(
+                width: $rail ? null : 0.0,
+                widthPercent: $rail ? 100.0 : null,
+                flexGrow: $rail ? 0.0 : 1.0,
+                minHeight: $compact ? 48.0 : 64.0, paddingVertical: 8.0,
+                opacity: $disabled ? MaterialTokens::STATE_OPACITY[6] : 1.0,
+            ))->enabled(!$disabled)->accessibilityRole(AccessibilityRole::Tab)
+                ->accessibilityLabel((string) $label)->property(PropKey::Selected, $selected);
+            if (!$disabled && !$selected && $change instanceof Closure) {
+                $control = $control->onPress(static fn (): mixed => $change($value));
+            }
+            $controls[] = $control;
+        }
+        return $controls;
+    }
+
+    /**
+     * @param array<string, mixed> $props
      * @param list<Element> $children
      * @param array<int, Closure> $events
      */
@@ -5187,6 +5264,7 @@ final class ComponentRenderer
         }
 
         $materialRole = match ($props['__materialComponent'] ?? null) {
+            'PNavigationBar', 'PNavigationRail' => AccessibilityRole::TabList,
             'PAppBar', 'PToolbar' => AccessibilityRole::Toolbar,
             'PAutocomplete', 'PCombobox', 'PSelect',
             'PTagInput', 'PMultiSelect' => AccessibilityRole::ComboBox,

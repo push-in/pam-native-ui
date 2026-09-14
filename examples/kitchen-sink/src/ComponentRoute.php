@@ -3745,10 +3745,23 @@ final class ComponentRoute extends Component
                         },
                     );
                 }
-            } elseif ($this->belongsTo([
-                'p-navigation-bar', 'p-navigation-rail', 'p-bottom-app-bar',
-            ])) {
-                $button = MaterialComponentMap::TAGS['p-btn'];
+            } elseif ($this->belongsTo(['p-navigation-bar', 'p-navigation-rail'])) {
+                $destinationCountValue = $previewProps['destinations'] ?? 3;
+                $destinationCount = max(3, min(5, is_numeric($destinationCountValue)
+                    ? (int) $destinationCountValue : 3));
+                $previewProps['items'] ??= array_slice([
+                    ['value' => 1, 'label' => 'Home', 'icon' => 'StarIcon'],
+                    ['value' => 2, 'label' => 'Explore', 'icon' => 'SearchIcon'],
+                    ['value' => 3, 'label' => 'Create', 'icon' => 'AddIcon'],
+                    ['value' => 4, 'label' => 'Activity', 'icon' => 'BellIcon'],
+                    ['value' => 5, 'label' => 'Account', 'icon' => 'SettingsIcon'],
+                ], 0, $destinationCount);
+                $previewProps['modelValue'] = $this->sampleValues[$index] ?? 2;
+                $preview = $component::make($previewProps)->onChange(function (mixed $value) use ($index): bool {
+                    $this->setSampleValue($index, $value);
+                    return true;
+                });
+            } elseif ($this->tag === 'p-bottom-app-bar') {
                 $iconButton = MaterialComponentMap::TAGS['p-icon-btn'];
                 $allDestinations = [
                     ['Home', 'StarIcon'],
@@ -3757,7 +3770,7 @@ final class ComponentRoute extends Component
                     ['Activity', 'BellIcon'],
                     ['Account', 'SettingsIcon'],
                 ];
-                if ($this->tag === 'p-bottom-app-bar' && ($previewProps['fab'] ?? false)) {
+                if ($previewProps['fab'] ?? false) {
                     $allDestinations = array_values(array_filter(
                         $allDestinations,
                         static fn (array $destination): bool => $destination[0] !== 'Create',
@@ -3772,70 +3785,17 @@ final class ComponentRoute extends Component
                 $controls = [];
                 foreach ($destinations as [$label, $iconName]) {
                     $selected = $active === $label;
-                    if ($this->tag === 'p-navigation-rail' && !($previewProps['expanded'] ?? false)) {
-                        $controls[] = $iconButton::make(
-                            [
-                                'variant' => $selected ? 'tonal' : 'text',
-                                'icon' => $iconName,
-                                'accessibilityLabel' => $label,
-                                'selected' => $selected,
-                            ],
-                        )->onPress(function () use ($index, $label): bool {
-                            $this->setSampleValue($index, $label);
-
-                            return true;
-                        });
-                        continue;
-                    }
-                    if ($this->tag === 'p-bottom-app-bar') {
-                        $controls[] = $iconButton::make(
-                            [
-                                'variant' => $selected ? 'tonal' : 'text',
-                                'icon' => $iconName,
-                                'accessibilityLabel' => $label,
-                                'selected' => $selected,
-                            ],
-                        )->onPress(function () use ($index, $label): bool {
-                            $this->setSampleValue($index, $label);
-
-                            return true;
-                        });
-                        continue;
-                    }
-                    $controls[] = Column::make(
-                            $iconButton::make([
-                                'variant' => $selected ? 'tonal' : 'text',
-                                'icon' => $iconName,
-                                'size' => 'small',
-                                'selected' => $selected,
-                                'accessibilityLabel' => $label,
-                            ])->onPress(function () use ($index, $label): bool {
-                                $this->setSampleValue($index, $label);
-
-                                return true;
-                            }),
-                            Text::make($label)->style(new Style(
-                                fontSize: 11.0,
-                                lineHeight: 16.0,
-                                fontWeight: $selected ? 700 : 500,
-                                textColor: $theme->color(
-                                    $selected ? ColorToken::Primary : ColorToken::MutedForeground,
-                                ),
-                                textAlign: \Pam\Native\TextAlignment::Center,
-                            )),
-                        )->style(new Style(
-                            gap: 2.0,
-                            alignItems: Align::Center,
-                            justifyContent: Justify::Center,
-                        ))->style(new Style(
-                        flexGrow: 1.0,
-                        minWidth: 48.0,
-                        minHeight: 56.0,
-                        alignItems: Align::Center,
-                        justifyContent: Justify::Center,
-                    ));
+                    $controls[] = $iconButton::make([
+                        'variant' => $selected ? 'tonal' : 'text',
+                        'icon' => $iconName,
+                        'accessibilityLabel' => $label,
+                        'selected' => $selected,
+                    ])->onPress(function () use ($index, $label): bool {
+                        $this->setSampleValue($index, $label);
+                        return true;
+                    });
                 }
-                if ($this->tag === 'p-bottom-app-bar' && ($previewProps['fab'] ?? false)) {
+                if ($previewProps['fab'] ?? false) {
                     $fab = MaterialComponentMap::TAGS['p-fab'];
                     $createSelected = $active === 'Create';
                     $controls[] = $fab::make(
@@ -6392,11 +6352,20 @@ final class ComponentRoute extends Component
                 ['label' => 'Four destinations', 'props' => ['destinations' => 4]],
                 ['label' => 'Five destinations', 'props' => ['destinations' => 5]],
                 ['label' => 'Tonal', 'props' => ['variant' => 'tonal']],
+                ['label' => 'Disabled destination', 'props' => ['items' => [
+                    ['value' => 1, 'label' => 'Available', 'icon' => 'StarIcon'],
+                    ['value' => 2, 'label' => 'Current', 'icon' => 'SearchIcon'],
+                    ['value' => 3, 'label' => 'Unavailable', 'icon' => 'SettingsIcon', 'disabled' => true],
+                ]]],
             ],
             'p-navigation-rail' => [
                 ['label' => 'Standard', 'props' => ['expanded' => false]],
                 ['label' => 'Expanded', 'props' => ['expanded' => true]],
-                ['label' => 'With FAB', 'props' => ['fab' => true]],
+                ['label' => 'Disabled destination', 'props' => ['items' => [
+                    ['value' => 1, 'label' => 'Available', 'icon' => 'StarIcon'],
+                    ['value' => 2, 'label' => 'Current', 'icon' => 'SearchIcon'],
+                    ['value' => 3, 'label' => 'Unavailable', 'icon' => 'SettingsIcon', 'disabled' => true],
+                ]]],
                 ['label' => 'Compact', 'props' => ['density' => 'compact']],
             ],
             'p-bottom-app-bar' => [

@@ -1583,20 +1583,27 @@ final class MaterialStyleResolver
             );
         }
 
+        $navigationSurface = match ($variant) {
+            MaterialVariant::Text, MaterialVariant::Plain, MaterialVariant::Outlined => $transparent,
+            MaterialVariant::Tonal => $theme->color(ColorToken::SurfaceContainerHigh),
+            default => $theme->color(ColorToken::SurfaceElevated),
+        };
         if ($part === 'PNavigationBar') {
             return new Style(
                 widthPercent: 100.0,
-                minHeight: 80.0,
+                minHeight: $density === MaterialDensity::Compact ? 64.0 : 80.0,
                 paddingHorizontal: 8.0,
                 paddingVertical: 8.0,
                 gap: 4.0,
-                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                backgroundColor: $navigationSurface,
+                borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
+                borderColor: $theme->color(ColorToken::Outline),
                 textColor: $theme->color(ColorToken::OnSurface),
                 tintColor: $theme->color(ColorToken::OnSurface),
                 borderRadius: MaterialTokens::radius(MaterialShape::Large),
-                elevation: self::resolvedElevation($props, 3.0),
+                elevation: self::resolvedElevation($props, $variant === MaterialVariant::Elevated ? 3.0 : 0.0),
                 flexDirection: FlexDirection::Row,
-                alignItems: Align::Center,
+                alignItems: Align::Stretch,
                 justifyContent: Justify::SpaceAround,
             );
         }
@@ -1605,15 +1612,17 @@ final class MaterialStyleResolver
             $railExpanded = ($props['expanded'] ?? false) === true;
             return new Style(
                 width: $railExpanded ? 200.0 : 80.0,
-                minHeight: 280.0,
+                minHeight: $density === MaterialDensity::Compact ? 240.0 : 280.0,
                 paddingHorizontal: 12.0,
-                paddingVertical: 16.0,
-                gap: 12.0,
-                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                paddingVertical: $density === MaterialDensity::Compact ? 12.0 : 16.0,
+                gap: $density === MaterialDensity::Compact ? 8.0 : 12.0,
+                backgroundColor: $navigationSurface,
+                borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
+                borderColor: $theme->color(ColorToken::Outline),
                 textColor: $theme->color(ColorToken::OnSurface),
                 tintColor: $theme->color(ColorToken::OnSurface),
                 borderRadius: MaterialTokens::radius(MaterialShape::Large),
-                elevation: self::resolvedElevation($props, 1.0),
+                elevation: self::resolvedElevation($props, $variant === MaterialVariant::Elevated ? 1.0 : 0.0),
                 flexDirection: FlexDirection::Column,
                 alignItems: Align::Center,
                 justifyContent: Justify::Center,
@@ -1627,11 +1636,13 @@ final class MaterialStyleResolver
                 paddingHorizontal: 16.0,
                 paddingVertical: 12.0,
                 gap: 8.0,
-                backgroundColor: $theme->color(ColorToken::SurfaceElevated),
+                backgroundColor: $navigationSurface,
+                borderWidth: $variant === MaterialVariant::Outlined ? 1.0 : 0.0,
+                borderColor: $theme->color(ColorToken::Outline),
                 textColor: $theme->color(ColorToken::OnSurface),
                 tintColor: $theme->color(ColorToken::OnSurface),
                 borderRadius: MaterialTokens::radius(MaterialShape::Large),
-                elevation: self::resolvedElevation($props, 3.0),
+                elevation: self::resolvedElevation($props, $variant === MaterialVariant::Elevated ? 3.0 : 0.0),
                 flexDirection: FlexDirection::Row,
                 alignItems: Align::Center,
                 justifyContent: Justify::SpaceBetween,

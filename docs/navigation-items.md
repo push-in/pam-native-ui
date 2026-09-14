@@ -1,0 +1,41 @@
+# Controlled navigation items
+
+Navigation Bar and Navigation Rail accept `items` when explicit children are
+not supplied. Each item has `value` (or `id`), `label` (or `title`), optional
+`icon`, and `disabled`/`isDisabled`. The component emits the destination value
+through `onChange`; the application owns navigation and updates `modelValue`.
+Use domain enums backed by sequential integers for destination identifiers.
+
+The whole destination is a native pressable tab, including its visible label.
+Selected destinations and disabled destinations do not emit another selection.
+Explicit children still take precedence for fully custom composition. This is
+UI composition over PAM Native primitives, not an additional navigation runtime.
+
+The rail uses icons with accessible labels when compact, and visible labels
+when expanded (text-only items remain visible). Horizontal navigation labels
+are single-line, ellipsized when necessary, with the complete accessible name.
+The font is not reduced to fit. Text/plain/outlined/tonal surfaces and compact
+density now have distinct styling; explicit elevation remains an override.
+
+## Scoped evidence, not complete approval
+
+`/tmp/pam-ui-navigation-items-20260914/report.json`, API 36 emulator APK
+`7d35b0b957ce24a7577087f8911d9c2b1816bdb6d5f8b71a138c168854a509cc`:
+both components passed selection and disabled-item rejection at font 1.0/2.0.
+The bar was activated by tapping its label. Compact rail uses the icon target.
+
+Screenshot review found `Activity` wrapping mid-word in four-destination bars
+at 2.0. The subsequent single-line/ellipsis correction passed the material
+matrix but is **not included in this APK evidence** and still needs visual
+verification. Do not claim all layouts, variants, themes, TalkBack, expanded
+rail behavior, Samsung or iOS are approved from this scoped test.
+
+Follow-up APK `a0f60526641c65a6f4b3121c30446d85fcb93a00faea2cb6a1f5c459fa1aad7a`:
+`/tmp/pam-ui-navigation-labels-20260914/report.json` passed selection/disabled
+checks for the bar at 2.0. Inspected the new capture: labels no longer break
+mid-word onto a second line, and four/five-destination rows remain aligned.
+Narrow labels use visible ellipses, rather than smaller text. This is the intended
+single-line behavior, not a claim that every label fits in full visually.
+The complete label remains on the tab accessibility node; TalkBack was not run.
+Configured PHPStan level 9 and the material matrix passed. No release or public
+media publication was performed.

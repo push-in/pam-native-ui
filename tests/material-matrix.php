@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentMode;
+use Pam\MobileUi\Enum\MaterialVariant;
+use Pam\MobileUi\Enum\MaterialDensity;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Generated\MaterialComponentMap;
@@ -4683,6 +4685,46 @@ if ($selectedChartPoint !== ['index' => 2, 'value' => 14.0]) {
     throw new RuntimeException('p-chart must emit its selected native data point.');
 }
 $drawerSelection = null;
+foreach (['p-navigation-bar', 'p-navigation-rail'] as $navigationTag) {
+    foreach ([false, true] as $expanded) {
+        $navigationValue = null;
+        $navigation = $tags[$navigationTag]::make([
+            'expanded' => $expanded, 'modelValue' => 1,
+            'items' => [
+                ['value' => 1, 'label' => 'Home', 'icon' => 'StarIcon'],
+                ['value' => 2, 'label' => 'Browse all destinations', 'icon' => 'SearchIcon'],
+                ['value' => 3, 'label' => 'Unavailable', 'disabled' => true],
+            ],
+        ])->onChange(static function (int $value) use (&$navigationValue): void {
+            $navigationValue = $value;
+        })->toElement();
+        $destinations = $navigation->children();
+        if (count($destinations) !== 3
+            || ($destinations[0]->properties()[PropKey::Selected->value] ?? false) !== true
+            || ($destinations[2]->properties()[PropKey::Enabled->value] ?? true) !== false
+            || isset($destinations[0]->events()[EventKind::Press->value])
+            || isset($destinations[2]->events()[EventKind::Press->value])
+            || ($destinations[1]->properties()[PropKey::AccessibilityRole->value] ?? null) !== \Pam\Native\AccessibilityRole::Tab->value) {
+            throw new RuntimeException('Navigation items must compose selected, actionable and disabled semantic tabs.');
+        }
+        $destinations[1]->events()[EventKind::Press->value]();
+        if ($navigationTag === 'p-navigation-bar') {
+            $labelProperties = $destinations[1]->children()[0]->children()[1]->properties();
+            if (($labelProperties[PropKey::NumberOfLines->value] ?? null) !== 1
+                || ($labelProperties[PropKey::TextEllipsizeMode->value] ?? null) !== \Pam\Native\TextEllipsizeMode::Tail->value
+                || ($destinations[1]->properties()[PropKey::AccessibilityLabel->value] ?? null) !== 'Browse all destinations') {
+                throw new RuntimeException('Navigation bar labels must stay on one line while retaining the full accessible name.');
+            }
+        }
+        if ($navigationValue !== 2) {
+            throw new RuntimeException('Navigation must emit the destination value, not its label.');
+        }
+        $custom = $tags[$navigationTag]::make(['items' => ['Ignored']], Text::make('Custom destination'))->toElement();
+        if (count($custom->children()) !== 1 || $custom->children()[0]->kind() !== NodeKind::Text) {
+            throw new RuntimeException('Navigation must preserve explicit custom children.');
+        }
+    }
+}
 $drawerRoute = new \App\ComponentRoute('p-navigation-drawer', 'Drawer', $tags['p-navigation-drawer']);
 $drawerSamples = $catalogMethod->invoke($drawerRoute);
 if (!is_array($drawerSamples)) {
@@ -5378,7 +5420,7 @@ $assertGeometry('PNavigationBar', [], [
     'paddingVertical' => 8.0,
     'gap' => 4.0,
     'flexDirection' => FlexDirection::Row,
-    'alignItems' => Align::Center,
+    'alignItems' => Align::Stretch,
     'justifyContent' => Justify::SpaceAround,
 ]);
 $assertGeometry('PNavigationRail', [], [
@@ -5389,6 +5431,21 @@ $assertGeometry('PNavigationRail', [], [
     'gap' => 12.0,
     'flexDirection' => FlexDirection::Column,
     'alignItems' => Align::Center,
+]);
+foreach (['PNavigationBar', 'PNavigationRail', 'PBottomAppBar'] as $navigationPart) {
+    $assertGeometry($navigationPart, ['variant' => MaterialVariant::Text->value], [
+        'backgroundColor' => 0x00000000, 'elevation' => 0.0, 'borderWidth' => 0.0,
+    ]);
+    $assertGeometry($navigationPart, ['variant' => MaterialVariant::Outlined->value], [
+        'backgroundColor' => 0x00000000, 'elevation' => 0.0, 'borderWidth' => 1.0,
+    ]);
+    $assertGeometry($navigationPart, ['variant' => MaterialVariant::Tonal->value], [
+        'backgroundColor' => $themes[0]['theme']->color(\Pam\MobileUi\Enum\ColorToken::SurfaceContainerHigh),
+        'elevation' => 0.0,
+    ]);
+}
+$assertGeometry('PNavigationRail', ['density' => MaterialDensity::Compact->value], [
+    'minHeight' => 240.0, 'gap' => 8.0, 'paddingVertical' => 12.0,
 ]);
 $assertGeometry('PBottomAppBar', [], [
     'widthPercent' => 100.0,
