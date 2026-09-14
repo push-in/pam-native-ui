@@ -3868,7 +3868,17 @@ foreach ([[2, 1], [2]] as $filterSelection) {
         $clearedFilters = $next;
     })->toElement()->children();
     $clearFilters = $protectedFilters[2] ?? null;
+    $protectedContent = $protectedFilters[1]->children()[0];
+    $selectionMark = $protectedContent->children()[0] ?? null;
+    if (count($protectedContent->children()) !== 2
+        || ($selectionMark?->properties()[PropKey::Width->value] ?? null) !== 16.0
+        || ($selectionMark?->properties()[PropKey::Height->value] ?? null) !== 16.0) {
+        throw new RuntimeException('Selected protected filters must retain a visible selection mark beside their label.');
+    }
     if ($filterSelection === [2]) {
+        if ($protectedFilters[0]->children()[0]->kind() !== NodeKind::Text) {
+            throw new RuntimeException('Unselected filters must not display a selection mark.');
+        }
         if ($clearFilters !== null) {
             throw new RuntimeException('Protected-only filters must not offer a no-op clear action.');
         }

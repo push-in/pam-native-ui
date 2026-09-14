@@ -5090,7 +5090,7 @@ final class ComponentRenderer
             ));
             $active = in_array($value, $selected, true);
             if ($itemDisabled && $active) $protectedValues[] = $value;
-            $button = Pressable::make(Text::make((string) $label)->style(new Style(
+            $labelElement = Text::make((string) $label)->style(new Style(
                 textColor: $itemDisabled
                     ? $theme->color(ColorToken::MutedForeground)
                     : ($active
@@ -5101,7 +5101,20 @@ final class ComponentRenderer
                 fontWeight: $active ? 700 : 500,
                 flexShrink: 1.0,
                 textAlign: TextAlignment::Center,
-            )))->style(new Style(
+            ));
+            $content = $labelElement;
+            if ($active) {
+                $content = Row::make(
+                    self::render('Icon', [
+                        'icon' => 'CheckIcon',
+                        'accessibilityHidden' => true,
+                        'color' => $theme->color($itemDisabled
+                            ? ColorToken::MutedForeground : ColorToken::SecondaryForeground),
+                    ], [], [], new Style(width: 16.0, height: 16.0, flexShrink: 0.0), null),
+                    $labelElement,
+                )->style(new Style(gap: 8.0, alignItems: Align::Center, maxWidthPercent: 100.0));
+            }
+            $button = Pressable::make($content)->style(new Style(
                 minHeight: 48.0,
                 maxWidthPercent: 100.0,
                 paddingHorizontal: 16.0,
