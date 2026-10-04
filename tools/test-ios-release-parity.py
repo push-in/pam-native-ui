@@ -57,6 +57,13 @@ class IosReleaseParityTests(unittest.TestCase):
         self.manifest["modules"][0]["verification"][3] = 4
         self.assertEqual(self.check_copy(), (1, 92))
 
+    def test_non_integer_verified_status_cannot_pass(self):
+        for module in self.manifest["modules"]:
+            module["verification"][3] = 3
+        self.manifest["modules"][0]["verification"][3] = 3.0
+        with self.assertRaisesRegex(ValueError, "Invalid verification statuses"):
+            self.check_copy()
+
     def test_release_workflow_has_no_ios_ci_override(self):
         workflow = (ROOT / ".github/workflows/release.yml").read_text()
         self.assertNotIn("PAM_CI_VERIFIED_GATES", workflow)

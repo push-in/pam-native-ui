@@ -14,9 +14,15 @@ def check(manifest_path: Path) -> tuple[int, int]:
     reference = manifest["reference"]
     modules = manifest["modules"]
     gates = manifest["gateDefinitions"]
-    if reference["moduleCount"] != 92 or len(modules) != 92:
+    if (
+        type(reference["moduleCount"]) is not int
+        or reference["moduleCount"] != 92
+        or len(modules) != 92
+    ):
         raise ValueError("Material release inventory must contain 92 modules")
-    if [module["type"] for module in modules] != list(range(1, 93)):
+    if any(type(module["type"]) is not int for module in modules) or [
+        module["type"] for module in modules
+    ] != list(range(1, 93)):
         raise ValueError("Material module IDs must be sequential from 1 to 92")
     ios_gates = [gate["id"] for gate in gates if gate["name"] == "ios"]
     if ios_gates != [4]:
@@ -24,7 +30,10 @@ def check(manifest_path: Path) -> tuple[int, int]:
     pending = 0
     for module in modules:
         verification = module["verification"]
-        if len(verification) != len(gates) or any(value not in (1, 2, 3, 4) for value in verification):
+        if len(verification) != len(gates) or any(
+            type(value) is not int or value not in (1, 2, 3, 4)
+            for value in verification
+        ):
             raise ValueError(f"Invalid verification statuses for {module['module']}")
         if verification[3] != 3:
             pending += 1
