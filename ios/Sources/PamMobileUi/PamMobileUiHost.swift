@@ -236,6 +236,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 .forEach { $0.minimumPressDuration = TimeInterval(delay) / 1_000 }
         }
         if previousBehavior != behavior {
+            if previousBehavior == .calendar { accessibilityElements = nil }
             openDefaultInitialized = false
             fileTreeInitialized = false
             fileTreeExpandedPaths.removeAll()
@@ -508,6 +509,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutTimelineItem()
         case .fileTree:
             layoutFileTree()
+        case .calendar:
+            updateCalendarAccessibilityElements()
         default:
             break
         }
@@ -2434,6 +2437,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         calendarYear = year
         calendarMonth = month
         updateCalendarTitle()
+        updateCalendarAccessibilityElements()
         setNeedsDisplay()
         emitMap([
             "action": .integer(PamHostAction.navigate.rawValue),
@@ -2460,6 +2464,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         calendarYear = (key - 1) / 12
         calendarMonth = (key - 1) % 12 + 1
         updateCalendarTitle()
+        updateCalendarAccessibilityElements()
         setNeedsDisplay()
         emitMap([
             "action": .integer(PamHostAction.navigate.rawValue),
@@ -2502,6 +2507,90 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    private func updateCalendarAccessibilityElements() {
+        guard behavior == .calendar else { return }
+        let grid = calendarGridFrame()
+        guard grid.width > 0, grid.height > 0 else { return }
+        let calendar = configuredCalendar()
+        let first = calendarFirstDate()
+        let offset = (calendar.component(.weekday, from: first)
+            - calendar.firstWeekday + 7) % 7
+        guard let firstVisible = calendar.date(
+            byAdding: .day, value: -offset, to: first
+        ) else { return }
+        let rows = calendarRowCount(first: first, offset: offset, calendar: calendar)
+        let showWeek = properties["showWeek"]?.pamFlag == true
+        let showOutside = properties["showOutsideDays"]?.pamFlag ?? true
+        let columns = showWeek ? 8 : 7
+        let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
+        let cellWidth = grid.width / CGFloat(columns)
+        let cellHeight = grid.height / CGFloat(rows)
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = calendar
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let labelFormatter = DateFormatter()
+        labelFormatter.calendar = calendar
+        labelFormatter.locale = calendar.locale
+        labelFormatter.dateStyle = .full
+        let disabled = Set(
+            (properties["disabledDates"]?.pamText ?? "")
+                .split(whereSeparator: \.isNewline).map(String.init)
+        )
+        let minimumDate = properties["minDate"]?.pamText
+            ?? properties["minimumDate"]?.pamText
+        let maximumDate = properties["maxDate"]?.pamText
+            ?? properties["maximumDate"]?.pamText
+        var elements: [Any] = subviews
+        elements.reserveCapacity(subviews.count + rows * 7)
+        for index in 0..<(rows * 7) {
+            guard let date = calendar.date(
+                byAdding: .day, value: index, to: firstVisible
+            ) else { continue }
+            let outside = !calendar.isDate(date, equalTo: first, toGranularity: .month)
+            if outside && !showOutside { continue }
+            let key = dateFormatter.string(from: date)
+            let year = calendar.component(.year, from: date)
+            let unavailable = disabled.contains(key)
+                || minimumDate.map({ key < String($0.prefix(10)) }) == true
+                || maximumDate.map({ key > String($0.prefix(10)) }) == true
+                || (properties["minYear"]?.pamInteger).map({ year < $0 }) == true
+                || (properties["maxYear"]?.pamInteger).map({ year > $0 }) == true
+                || !(properties["enabled"]?.pamFlag ?? true)
+                || (properties["disabled"]?.pamFlag ?? false)
+                || (properties["isDisabled"]?.pamFlag ?? false)
+                || (properties["interactionDisabled"]?.pamFlag ?? false)
+                || (properties["readOnly"]?.pamFlag ?? false)
+            let dayColumn = index % 7
+            let visualColumn = (rtl ? 6 - dayColumn : dayColumn)
+                + (showWeek && !rtl ? 1 : 0)
+            let row = index / 7
+            let element = PamCalendarDayAccessibilityElement(
+                accessibilityContainer: self, host: self, dateKey: key
+            )
+            element.accessibilityIdentifier = "pam:calendar-day:\(key)"
+            element.accessibilityLabel = labelFormatter.string(from: date)
+            element.accessibilityFrameInContainerSpace = CGRect(
+                x: grid.minX + CGFloat(visualColumn) * cellWidth,
+                y: grid.minY + CGFloat(row) * cellHeight,
+                width: cellWidth,
+                height: cellHeight
+            )
+            var traits: UIAccessibilityTraits = [.button]
+            let withinRange = calendarRangeFrom.flatMap { from in
+                calendarRangeTo.map { to in key > from && key < to }
+            } ?? false
+            if calendarSelectedDates.contains(key)
+                || key == calendarRangeFrom || key == calendarRangeTo || withinRange {
+                traits.insert(.selected)
+            }
+            if unavailable { traits.insert(.notEnabled) }
+            element.accessibilityTraits = traits
+            elements.append(element)
+        }
+        accessibilityElements = elements
+    }
+
     func selectCalendarDate(_ key: String) -> Bool {
         let formatter = DateFormatter()
         formatter.calendar = configuredCalendar()
@@ -2513,6 +2602,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
               !(properties["disabled"]?.pamFlag ?? false),
               !(properties["isDisabled"]?.pamFlag ?? false),
               !(properties["interactionDisabled"]?.pamFlag ?? false),
+              (properties["enabled"]?.pamFlag ?? true),
               isUserInteractionEnabled else { return false }
         let disabled = Set(
             (properties["disabledDates"]?.pamText ?? "")
@@ -2563,6 +2653,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             calendarMonth = selectedMonth
             updateCalendarTitle()
         }
+        updateCalendarAccessibilityElements()
         emit?(.change, Data(payload.utf8))
         setNeedsDisplay()
         UIAccessibility.post(notification: .layoutChanged, argument: self)
@@ -3301,5 +3392,20 @@ private final class PamCalendarSelectorController: UIViewController,
         let row = picker.selectedRow(inComponent: 0)
         if values.indices.contains(row) { onSelect(values[row]) }
         dismiss(animated: true)
+    }
+}
+
+private final class PamCalendarDayAccessibilityElement: UIAccessibilityElement {
+    private weak var host: PamMobileUiHost?
+    private let dateKey: String
+
+    init(accessibilityContainer: Any, host: PamMobileUiHost, dateKey: String) {
+        self.host = host
+        self.dateKey = dateKey
+        super.init(accessibilityContainer: accessibilityContainer)
+    }
+
+    override func accessibilityActivate() -> Bool {
+        host?.selectCalendarDate(dateKey) ?? false
     }
 }

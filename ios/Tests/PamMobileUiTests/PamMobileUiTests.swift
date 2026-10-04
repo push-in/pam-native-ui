@@ -204,6 +204,50 @@ final class PamMobileUiTests: XCTestCase {
         host.releaseCallbacks()
     }
 
+    func testCalendarDaysAreAccessibleButtonsWithNativeActivation() {
+        var changes: [String] = []
+        let host = PamMobileUiHost { kind, payload in
+            if kind == .change { changes.append(String(decoding: payload, as: UTF8.self)) }
+        }
+        host.frame = CGRect(x: 0, y: 0, width: 336, height: 336)
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "locale": .text("en_US"),
+            "firstDayOfWeek": .integer(1),
+            "showOutsideDays": .flag(false),
+            "disabledDates": .text("2026-10-02"),
+        ])
+        let grid = UIView(frame: CGRect(x: 0, y: 96, width: 336, height: 240))
+        grid.accessibilityIdentifier = "pam:calendar-grid"
+        host.addSubview(grid)
+        host.setNeedsLayout()
+        host.layoutIfNeeded()
+
+        let days = host.accessibilityElements?.compactMap { $0 as? UIAccessibilityElement } ?? []
+        XCTAssertEqual(days.count, 31)
+        XCTAssertFalse(days.contains {
+            $0.accessibilityIdentifier == "pam:calendar-day:2026-09-30"
+        })
+        let first = days.first {
+            $0.accessibilityIdentifier == "pam:calendar-day:2026-10-01"
+        }
+        XCTAssertTrue(first?.accessibilityTraits.contains(.button) == true)
+        XCTAssertTrue(first?.accessibilityLabel?.contains("October") == true)
+        XCTAssertEqual(first?.accessibilityFrameInContainerSpace.minY, 96)
+        XCTAssertTrue(first?.accessibilityActivate() == true)
+        XCTAssertEqual(changes, ["2026-10-01"])
+
+        let disabled = days.first {
+            $0.accessibilityIdentifier == "pam:calendar-day:2026-10-02"
+        }
+        XCTAssertTrue(disabled?.accessibilityTraits.contains(.notEnabled) == true)
+        XCTAssertFalse(disabled?.accessibilityActivate() == true)
+        XCTAssertEqual(changes.count, 1)
+        host.releaseCallbacks()
+    }
+
     func testDatePickerAppliesBoundsAndClockMode() {
         let host = PamMobileUiHost { _, _ in }
         host.update([
