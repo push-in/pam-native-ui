@@ -61,8 +61,10 @@ jobs:
 
       - name: Preflight candidate dependency graph
         run: |
-          composer show pushinbr/pam-native --all | head -25
-          composer show pushinbr/pam-native-ui --all | head -25
+          composer show pushinbr/pam-native --all --format=json >"${RUNNER_TEMP}/pam-native-metadata.json"
+          composer show pushinbr/pam-native-ui --all --format=json >"${RUNNER_TEMP}/pam-native-ui-metadata.json"
+          jq '{name, versions, requires}' "${RUNNER_TEMP}/pam-native-metadata.json"
+          jq '{name, versions, requires}' "${RUNNER_TEMP}/pam-native-ui-metadata.json"
           composer config --working-dir="${FIXTURE_APP}" repositories.pam-native-candidate \
             "{\"type\":\"path\",\"url\":\"${PAM_NATIVE_HOME}/packages/native\",\"options\":{\"symlink\":false,\"versions\":{\"pushinbr/pam-native\":\"1.0.33\"}}}"
           composer config --working-dir="${FIXTURE_APP}" repositories.pam-native-ui-candidate \

@@ -13,8 +13,10 @@ final class FixtureUITests: XCTestCase {
         let trigger = app.descendants(matching: .any)
             .matching(identifier: "fixture-autocomplete").firstMatch
         XCTAssertTrue(trigger.waitForExistence(timeout: 10))
-        XCTAssertEqual(trigger.label, "Component")
-        trigger.tap()
+        let labeledTrigger = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Component")).firstMatch
+        XCTAssertTrue(labeledTrigger.waitForExistence(timeout: 10))
+        labeledTrigger.tap()
 
         let search = app.textFields["Find a component"]
         XCTAssertTrue(search.waitForExistence(timeout: 10))
@@ -32,8 +34,10 @@ final class FixtureUITests: XCTestCase {
         let trigger = app.descendants(matching: .any)
             .matching(identifier: "fixture-combobox").firstMatch
         XCTAssertTrue(trigger.waitForExistence(timeout: 10))
-        XCTAssertEqual(trigger.label, "Capability")
-        trigger.tap()
+        let labeledTrigger = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Capability")).firstMatch
+        XCTAssertTrue(labeledTrigger.waitForExistence(timeout: 10))
+        labeledTrigger.tap()
 
         let search = app.textFields["Find a capability"]
         XCTAssertTrue(search.waitForExistence(timeout: 10))
@@ -48,7 +52,10 @@ final class FixtureUITests: XCTestCase {
     }
 
     func testOtpAcceptsSixDigitsAndExposesInputSemantics() {
-        let input = app.textFields["fixture-otp"]
+        let host = app.descendants(matching: .any)
+            .matching(identifier: "fixture-otp").firstMatch
+        XCTAssertTrue(host.waitForExistence(timeout: 10))
+        let input = app.textFields["Verification code"]
         XCTAssertTrue(input.waitForExistence(timeout: 10))
         XCTAssertTrue(input.isEnabled)
         input.tap()

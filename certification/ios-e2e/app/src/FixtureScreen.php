@@ -11,6 +11,9 @@ final class FixtureScreen extends Component
 {
     public function render(): View
     {
-        return View::make('fixtures');
+        return View::make('fixtures', [
+            'autocompleteItems' => ['Button', 'Card', 'Dialog'],
+            'comboboxItems' => ['Payments', 'Realtime', 'Media'],
+        ]);
     }
 }

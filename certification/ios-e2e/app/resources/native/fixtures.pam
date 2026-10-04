@@ -7,14 +7,14 @@
                     testId="fixture-autocomplete"
                     label="Component"
                     value="Button"
-                    items="Button,Card,Dialog"
+                    :items="$autocompleteItems"
                     searchPlaceholder="Find a component"
                 />
                 <p-combobox
                     testId="fixture-combobox"
                     label="Capability"
                     value="Payments"
-                    items="Payments,Realtime,Media"
+                    :items="$comboboxItems"
                     searchPlaceholder="Find a capability"
                 />
                 <p-otp-input
