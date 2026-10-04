@@ -636,6 +636,117 @@ final class PamMobileUiTests: XCTestCase {
         factory.close()
     }
 
+    func testTabsControlledValueOverridesTriggerStateAndKeepsContentWrapperVisible() {
+        var changes: [String] = []
+        let tabs = PamMobileUiHost { kind, payload in
+            if kind == .change { changes.append(String(decoding: payload, as: UTF8.self)) }
+        }
+        tabs.frame = CGRect(x: 0, y: 0, width: 320, height: 240)
+        tabs.update([
+            "behavior": .integer(6),
+            "value": .text("account"),
+            "activationMode": .integer(2),
+        ])
+        let account = PamMobileUiHost { _, _ in }
+        account.update(["behavior": .integer(23), "value": .text("account")])
+        let security = PamMobileUiHost { _, _ in }
+        security.update(["behavior": .integer(23), "value": .text("security"), "selected": .flag(true)])
+        tabs.addSubview(account)
+        tabs.addSubview(security)
+        let wrapper = UIView()
+        wrapper.accessibilityIdentifier = "pam:tabs-content-wrapper"
+        let accountContent = UIView()
+        accountContent.accessibilityIdentifier = "pam:tabs-content:account"
+        let securityContent = UIView()
+        securityContent.accessibilityIdentifier = "pam:tabs-content:security"
+        let forcedContent = UIView()
+        forcedContent.accessibilityIdentifier = "pam:tabs-content-force:help"
+        wrapper.addSubview(accountContent)
+        wrapper.addSubview(securityContent)
+        wrapper.addSubview(forcedContent)
+        tabs.addSubview(wrapper)
+        tabs.setNeedsLayout()
+        tabs.layoutIfNeeded()
+
+        XCTAssertTrue(account.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(security.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(wrapper.isHidden)
+        XCTAssertFalse(accountContent.isHidden)
+        XCTAssertTrue(securityContent.isHidden)
+        XCTAssertFalse(forcedContent.isHidden)
+
+        XCTAssertTrue(tabs.selectTab(security, emitChange: true))
+        XCTAssertEqual(changes, ["security"])
+        XCTAssertFalse(account.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(security.accessibilityTraits.contains(.selected))
+        tabs.layoutIfNeeded()
+        XCTAssertTrue(accountContent.isHidden)
+        XCTAssertFalse(securityContent.isHidden)
+
+        tabs.update(["behavior": .integer(6), "value": .text("account")])
+        tabs.layoutIfNeeded()
+        XCTAssertTrue(account.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(security.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(accountContent.isHidden)
+        XCTAssertTrue(securityContent.isHidden)
+        XCTAssertEqual(changes, ["security"])
+        account.releaseCallbacks()
+        security.releaseCallbacks()
+        tabs.releaseCallbacks()
+    }
+
+    func testTabsKeyboardFocusHonorsManualAndAutomaticActivation() {
+        var changes: [String] = []
+        let tabs = PamMobileUiHost { kind, payload in
+            if kind == .change { changes.append(String(decoding: payload, as: UTF8.self)) }
+        }
+        tabs.frame = CGRect(x: 0, y: 0, width: 320, height: 120)
+        tabs.update([
+            "behavior": .integer(6),
+            "defaultValue": .text("first"),
+            "activationMode": .integer(2),
+        ])
+        let first = PamMobileUiHost { _, _ in }
+        first.update(["behavior": .integer(23), "value": .text("first")])
+        let second = PamMobileUiHost { _, _ in }
+        second.update(["behavior": .integer(23), "value": .text("second")])
+        let disabled = PamMobileUiHost { _, _ in }
+        disabled.update([
+            "behavior": .integer(23), "value": .text("disabled"), "enabled": .flag(false),
+        ])
+        tabs.addSubview(first)
+        tabs.addSubview(second)
+        tabs.addSubview(disabled)
+        tabs.setNeedsLayout()
+        tabs.layoutIfNeeded()
+
+        XCTAssertTrue(first.canBecomeFirstResponder)
+        XCTAssertFalse(disabled.canBecomeFirstResponder)
+        XCTAssertTrue(first.keyCommands?.contains(where: {
+            $0.input == UIKeyCommand.inputRightArrow
+        }) == true)
+        XCTAssertTrue(tabs.moveTabFocus(from: first, direction: 1))
+        XCTAssertTrue(first.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(second.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(changes.isEmpty)
+        XCTAssertTrue(tabs.selectTab(second, emitChange: true))
+        XCTAssertEqual(changes, ["second"])
+
+        tabs.update(["behavior": .integer(6), "activationMode": .integer(1)])
+        tabs.layoutIfNeeded()
+        XCTAssertTrue(tabs.moveTabFocus(from: second, direction: 1))
+        XCTAssertTrue(first.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(changes, ["second", "first"])
+        XCTAssertTrue(tabs.moveTabFocus(from: first, direction: Int.max))
+        XCTAssertTrue(second.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(changes, ["second", "first", "second"])
+        XCTAssertFalse(tabs.selectTab(disabled, emitChange: true))
+        first.releaseCallbacks()
+        second.releaseCallbacks()
+        disabled.releaseCallbacks()
+        tabs.releaseCallbacks()
+    }
+
     func testEveryCuratedNativeBehaviorUpdatesLayoutsAndReleases() {
         let factory = MobileUiHostFactory()
 
