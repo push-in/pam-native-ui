@@ -267,6 +267,67 @@ final class PamMobileUiTests: XCTestCase {
         host.releaseCallbacks()
     }
 
+    func testDateTimePickerUsesNativeValueFormatsAndInitialSelection() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(4),
+            "value": .text("2026-07-23"),
+            "minimumDate": .text("2026-07-01"),
+            "maximumDate": .text("2026-07-31"),
+        ])
+        let datePicker = host.configuredDatePicker()
+        XCTAssertEqual(datePicker.datePickerMode, .date)
+        XCTAssertEqual(host.pickerValue(for: datePicker.date), "2026-07-23")
+
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(5),
+            "value": .text("14:35"),
+            "timeZoneOffsetInMinutes": .integer(-180),
+            "is24Hour": .flag(true),
+        ])
+        let timePicker = host.configuredDatePicker()
+        XCTAssertEqual(timePicker.datePickerMode, .time)
+        XCTAssertEqual(host.pickerValue(for: timePicker.date), "14:35")
+        XCTAssertNil(timePicker.minimumDate)
+        XCTAssertNil(timePicker.maximumDate)
+
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(6),
+            "value": .text("2026-10-04T14:35-03:00"),
+            "timeZoneOffsetInMinutes": .integer(-180),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+        ])
+        let dateTimePicker = host.configuredDatePicker()
+        XCTAssertEqual(dateTimePicker.datePickerMode, .dateAndTime)
+        XCTAssertEqual(
+            host.pickerValue(for: dateTimePicker.date),
+            "2026-10-04T14:35-03:00"
+        )
+        XCTAssertEqual(
+            host.pickerValue(for: dateTimePicker.maximumDate!),
+            "2026-10-31T23:59-03:00"
+        )
+        host.releaseCallbacks()
+    }
+
+    func testDateTimePickerDefaultsToDateTimeAndClampsInitialValue() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(17),
+            "value": .text("2026-11-01T09:30"),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+        ])
+        let picker = host.configuredDatePicker()
+        XCTAssertEqual(picker.datePickerMode, .dateAndTime)
+        XCTAssertEqual(host.pickerValue(for: picker.date), "2026-10-31T23:59")
+        host.releaseCallbacks()
+    }
+
     func testNativePropertyAliasesReachUIKitBehavior() {
         let host = PamMobileUiHost { _, _ in }
         host.update([

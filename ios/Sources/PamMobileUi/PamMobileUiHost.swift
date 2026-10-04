@@ -134,6 +134,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var calendarSelectedDates: Set<String> = []
     private var calendarRangeFrom: String?
     private var calendarRangeTo: String?
+    private weak var activeDateTimePicker: PamDateTimePickerController?
     private weak var sheetSearchField: UITextField?
     private weak var sheetCustomAction: UIButton?
     private weak var sheetEmptyState: UILabel?
@@ -445,6 +446,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     func releaseCallbacks() {
+        activeDateTimePicker?.dismissSilently()
+        activeDateTimePicker = nil
         restoreAnchoredPortalContent()
         pressAnimator?.stopAnimation(true)
         pressAnimator = nil
@@ -597,7 +600,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     @objc private func onTap(_ recognizer: UITapGestureRecognizer) {
         guard isUserInteractionEnabled,
-              !(properties["interactionDisabled"]?.pamFlag ?? false) else { return }
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
+              (properties["enabled"]?.pamFlag ?? true) else { return }
         let point = recognizer.location(in: self)
         if behavior.isOverlay {
             if let content = overlayContent(),
@@ -1752,7 +1756,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     func configuredDatePicker() -> UIDatePicker {
         let picker = UIDatePicker()
         picker.preferredDatePickerStyle = .wheels
-        picker.datePickerMode = switch properties["mode"]?.pamInteger {
+        picker.datePickerMode = switch pickerMode {
         case 5: .time
         case 6: .dateAndTime
         default: .date
@@ -1760,45 +1764,124 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         let locale = properties["locale"]?.pamText ?? Locale.current.identifier
         picker.locale = Locale(identifier: (properties["is24Hour"]?.pamFlag ?? false)
             ? "\(locale)@hours=h23" : locale)
-        let dateFormatter = DateFormatter()
-        dateFormatter.calendar = Calendar(identifier: .gregorian)
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy-MM-dd"
+        picker.timeZone = pickerTimeZone()
+        let dateFormatter = pickerFormatter("yyyy-MM-dd")
         let lower = properties["minDate"]?.pamText
             ?? properties["minimumDate"]?.pamText
         let upper = properties["maxDate"]?.pamText
             ?? properties["maximumDate"]?.pamText
-        picker.minimumDate = lower.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
-        picker.maximumDate = upper.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+        if picker.datePickerMode != .time {
+            picker.minimumDate = lower.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+            picker.maximumDate = upper.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+            if picker.datePickerMode == .dateAndTime,
+               let upperDate = picker.maximumDate {
+                picker.maximumDate = pickerCalendar().date(
+                    byAdding: DateComponents(day: 1, second: -1), to: upperDate
+                )
+            }
+        }
+        if let initial = pickerInitialDate() {
+            picker.date = min(picker.maximumDate ?? initial,
+                              max(picker.minimumDate ?? initial, initial))
+        }
         return picker
     }
 
-    private func presentDateTimePicker() {
-        guard let controller = nearestViewController() else {
-            emit?(.press, Data())
-            return
+    private func pickerTimeZone() -> TimeZone {
+        guard let minutes = properties["timeZoneOffsetInMinutes"]?.pamInteger,
+              (-1_080...1_080).contains(minutes) else { return .current }
+        return TimeZone(secondsFromGMT: minutes * 60) ?? .current
+    }
+
+    private var pickerMode: Int {
+        properties["mode"]?.pamInteger ?? properties["type"]?.pamInteger ?? 6
+    }
+
+    private func pickerCalendar() -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = pickerTimeZone()
+        return calendar
+    }
+
+    private func pickerFormatter(_ pattern: String) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.calendar = pickerCalendar()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = pickerTimeZone()
+        formatter.dateFormat = pattern
+        formatter.isLenient = false
+        return formatter
+    }
+
+    func pickerInitialDate() -> Date? {
+        guard let raw = properties["value"]?.pamText
+            ?? properties["modelValue"]?.pamText,
+            !raw.isEmpty else { return nil }
+        if pickerMode == 5 {
+            let fields = raw.split(separator: ":", omittingEmptySubsequences: false)
+            let parts = fields.compactMap { Int($0) }
+            guard parts.count == fields.count, parts.count >= 2, parts.count <= 3,
+                  (0...23).contains(parts[0]), (0...59).contains(parts[1]),
+                  parts.count < 3 || (0...59).contains(parts[2]) else { return nil }
+            return pickerCalendar().date(
+                bySettingHour: parts[0], minute: parts[1],
+                second: parts.count == 3 ? parts[2] : 0, of: Date()
+            )
         }
-        let alert = UIAlertController(
-            title: properties["label"]?.pamText ?? "Select date",
-            message: nil,
-            preferredStyle: .actionSheet
-        )
-        let picker = configuredDatePicker()
-        alert.view.addSubview(picker)
-        picker.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            picker.leadingAnchor.constraint(equalTo: alert.view.leadingAnchor, constant: 8),
-            picker.trailingAnchor.constraint(equalTo: alert.view.trailingAnchor, constant: -8),
-            picker.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 48),
-            picker.heightAnchor.constraint(equalToConstant: 216),
+        if raw.count == 10 { return pickerFormatter("yyyy-MM-dd").date(from: raw) }
+        for pattern in [
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX",
+            "yyyy-MM-dd'T'HH:mm:ssXXXXX",
+            "yyyy-MM-dd'T'HH:mmXXXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm",
+        ] {
+            if let date = pickerFormatter(pattern).date(from: raw) { return date }
+        }
+        return nil
+    }
+
+    func pickerValue(for date: Date) -> String {
+        switch pickerMode {
+        case 4: return pickerFormatter("yyyy-MM-dd").string(from: date)
+        case 5: return pickerFormatter("HH:mm").string(from: date)
+        default:
+            let suffix = properties["timeZoneOffsetInMinutes"]?.pamInteger == nil
+                ? "" : "XXXXX"
+            return pickerFormatter("yyyy-MM-dd'T'HH:mm\(suffix)").string(from: date)
+        }
+    }
+
+    private func pickerDismissed() {
+        activeDateTimePicker = nil
+        emitMap([
+            "action": .integer(PamHostAction.dismiss.rawValue),
+            "dismissed": .flag(true),
         ])
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Done", style: .default) { [weak self, weak picker] _ in
-            guard let self, let picker else { return }
-            let formatter = ISO8601DateFormatter()
-            self.emit?(.change, Data(formatter.string(from: picker.date).utf8))
-        })
-        controller.present(alert, animated: animationsEnabled)
+    }
+
+    private func presentDateTimePicker() {
+        guard behavior == .dateTimePicker,
+              properties["readOnly"]?.pamFlag != true,
+              properties["isReadOnly"]?.pamFlag != true,
+              properties["interactionDisabled"]?.pamFlag != true,
+              properties["enabled"]?.pamFlag != false,
+              activeDateTimePicker == nil,
+              let controller = nearestViewController() else { return }
+        let picker = configuredDatePicker()
+        let sheet = PamDateTimePickerController(
+            picker: picker,
+            title: properties["label"]?.pamText ?? "Select date",
+            onDone: { [weak self] date in
+                guard let self else { return }
+                self.activeDateTimePicker = nil
+                self.emit?(.change, Data(self.pickerValue(for: date).utf8))
+            },
+            onDismiss: { [weak self] in self?.pickerDismissed() }
+        )
+        activeDateTimePicker = sheet
+        controller.present(sheet, animated: animationsEnabled)
     }
 
     private func panSheet(_ recognizer: UIPanGestureRecognizer) {
@@ -3466,5 +3549,101 @@ private final class PamCalendarDayAccessibilityElement: UIAccessibilityElement {
 
     override func accessibilityActivate() -> Bool {
         host?.selectCalendarDate(dateKey) ?? false
+    }
+}
+private final class PamDateTimePickerController: UIViewController,
+    UIAdaptivePresentationControllerDelegate {
+    private let picker: UIDatePicker
+    private let pickerTitle: String
+    private let onDone: (Date) -> Void
+    private let onDismiss: () -> Void
+    private var resolved = false
+
+    init(
+        picker: UIDatePicker,
+        title: String,
+        onDone: @escaping (Date) -> Void,
+        onDismiss: @escaping () -> Void
+    ) {
+        self.picker = picker
+        pickerTitle = title
+        self.onDone = onDone
+        self.onDismiss = onDismiss
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .pageSheet
+        preferredContentSize = CGSize(width: 360, height: 300)
+        sheetPresentationController?.detents = [.medium()]
+        sheetPresentationController?.prefersGrabberVisible = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        let toolbar = UIToolbar()
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        let titleLabel = UILabel()
+        titleLabel.text = pickerTitle
+        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.accessibilityTraits = .header
+        toolbar.items = [
+            UIBarButtonItem(barButtonSystemItem: .cancel, target: self,
+                            action: #selector(cancelTapped)),
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace,
+                            target: nil, action: nil),
+            UIBarButtonItem(customView: titleLabel),
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace,
+                            target: nil, action: nil),
+            UIBarButtonItem(barButtonSystemItem: .done, target: self,
+                            action: #selector(doneTapped)),
+        ]
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toolbar)
+        view.addSubview(picker)
+        NSLayoutConstraint.activate([
+            toolbar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            toolbar.heightAnchor.constraint(equalToConstant: 52),
+            picker.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: 8),
+            picker.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
+            picker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            picker.heightAnchor.constraint(equalToConstant: 216),
+        ])
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        presentationController?.delegate = self
+    }
+
+    @objc private func cancelTapped() {
+        guard !resolved else { return }
+        resolved = true
+        dismiss(animated: true) { [onDismiss] in onDismiss() }
+    }
+
+    @objc private func doneTapped() {
+        guard !resolved else { return }
+        resolved = true
+        let selected = picker.date
+        dismiss(animated: true) { [onDone] in onDone(selected) }
+    }
+
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        guard !resolved else { return }
+        resolved = true
+        onDismiss()
+    }
+
+    func dismissSilently() {
+        resolved = true
+        dismiss(animated: false)
     }
 }
