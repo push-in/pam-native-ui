@@ -2,6 +2,8 @@
     "behaviorTests": {
         "testButtonAndFabKeepA44PointTouchTargetWhenPooled": ["button", "fab"],
         "testSelectItemHasSelectionSemanticsAndGenericSheetItemDoesNot": ["select"],
+        "testSelectItemVoiceOverActivationUsesPressAndDismissPolicy": ["select"],
+        "testSelectItemRejectsDisabledActivationAndRefreshesPooledLabel": ["select"],
         "testDefaultCheckedAndSelectedContainerColorReachUIKit": ["checkbox", "button-toggle"],
         "testCalendarSelectionHonorsDisabledDatesAndNativePayloadModes": ["calendar"],
         "testCalendarNavigationAndHeaderKeepNativePayloadAndBounds": ["calendar"],
