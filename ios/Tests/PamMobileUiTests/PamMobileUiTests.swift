@@ -426,6 +426,43 @@ final class PamMobileUiTests: XCTestCase {
         slider.releaseCallbacks()
     }
 
+    func testSliderStopsDragWhenItBecomesReadOnlyMidGesture() {
+        var changes: [String] = []
+        var ends: [String] = []
+        let slider = PamMobileUiHost { kind, payload in
+            let value = String(decoding: payload, as: UTF8.self)
+            if kind == .change { changes.append(value) }
+            if kind == .native { ends.append(value) }
+        }
+        slider.frame = CGRect(x: 0, y: 0, width: 320, height: 48)
+        let configuration: [String: WireValue] = [
+            "behavior": .integer(5), "range": .flag(true),
+            "lowerValue": .decimal(20), "upperValue": .decimal(80),
+            "thumbWidth": .decimal(20),
+        ]
+        slider.update(configuration)
+        slider.updateSliderGesture(state: .began, at: CGPoint(x: 100, y: 24))
+        XCTAssertEqual(slider.accessibilityValue, "30 to 80")
+
+        slider.update(configuration)
+        XCTAssertEqual(slider.accessibilityValue, "30 to 80")
+
+        slider.update(configuration.merging(["readOnly": .flag(true)]) { _, new in new })
+        XCTAssertEqual(slider.accessibilityValue, "20 to 80")
+        slider.updateSliderGesture(state: .ended, at: CGPoint(x: 220, y: 24))
+        XCTAssertTrue(changes.isEmpty)
+        XCTAssertTrue(ends.isEmpty)
+
+        slider.update(configuration.merging([
+            "lowerValue": .decimal(40), "upperValue": .decimal(60),
+        ]) { _, new in new })
+        XCTAssertEqual(slider.accessibilityValue, "40 to 60")
+        XCTAssertTrue(slider.activateSlider(at: CGPoint(x: 160, y: 24)))
+        XCTAssertEqual(changes, ["[50,60]"])
+        XCTAssertEqual(ends, changes)
+        slider.releaseCallbacks()
+    }
+
     func testSliderInputUsesVisibleThumbInsetInBothOrientations() {
         let slider = PamMobileUiHost { _, _ in }
         slider.frame = CGRect(x: 0, y: 0, width: 100, height: 48)
@@ -449,6 +486,14 @@ final class PamMobileUiTests: XCTestCase {
         ])
         XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 24, y: 10)), 100)
         XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 24, y: 190)), 0)
+
+        slider.frame = CGRect(x: 0, y: 0, width: 100, height: 48)
+        slider.update([
+            "behavior": .integer(5), "min": .decimal(0), "max": .decimal(100),
+            "thumbWidth": .decimal(20),
+        ])
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 10, y: 24)), 0)
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 90, y: 24)), 100)
         slider.releaseCallbacks()
     }
 
@@ -459,12 +504,18 @@ final class PamMobileUiTests: XCTestCase {
             "behavior": .integer(4), "value": .decimal(40),
             "min": .decimal(0), "max": .decimal(100),
         ])
-        XCTAssertEqual(progress.accessibilityValue, "40")
+        XCTAssertEqual(progress.accessibilityValue, "40%")
         XCTAssertFalse(progress.accessibilityTraits.contains(.adjustable))
         progress.accessibilityIncrement()
         progress.accessibilityDecrement()
-        XCTAssertEqual(progress.accessibilityValue, "40")
+        XCTAssertEqual(progress.accessibilityValue, "40%")
         XCTAssertEqual(events, 0)
+
+        progress.update([
+            "behavior": .integer(4), "value": .decimal(15),
+            "min": .decimal(10), "max": .decimal(30),
+        ])
+        XCTAssertEqual(progress.accessibilityValue, "25%")
         progress.releaseCallbacks()
     }
 

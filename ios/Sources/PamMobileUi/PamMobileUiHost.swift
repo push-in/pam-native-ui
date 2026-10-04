@@ -258,6 +258,14 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
         component = next["component"]?.pamInteger ?? 0
+        if sliderGestureActive && (behavior != .slider
+            || next["enabled"]?.pamFlag == false
+            || next["interactionDisabled"]?.pamFlag == true
+            || next["readOnly"]?.pamFlag == true
+            || next["isReadOnly"]?.pamFlag == true) {
+            sliderGestureActive = false
+            cancelSliderChange()
+        }
         if activeDateTimePicker != nil,
            (behavior != .dateTimePicker
                 || next["enabled"]?.pamFlag == false
@@ -363,10 +371,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             upperValue = max(lowerValue, clamped(upperValue))
             if rangeEnabled { value = upperValue }
         }
-        orientation = next["orientation"]?.pamInteger ?? orientation
-        reversed = next["reversed"]?.pamFlag
-            ?? next["isReversed"]?.pamFlag
-            ?? reversed
+        orientation = next["orientation"]?.pamInteger ?? 1
+        reversed = next["isReversed"]?.pamFlag
+            ?? next["reversed"]?.pamFlag
+            ?? next["reverse"]?.pamFlag
+            ?? false
         showSliderTicks = next["showTicks"]?.pamFlag == true
             || next["alwaysShowTicks"]?.pamFlag == true
         sliderTickSize = max(0, next["tickSize"]?.pamDecimal ?? 4)
@@ -1117,7 +1126,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                     : formatted(value))
         case .progress:
             isAccessibilityElement = true
-            accessibilityValue = formatted(value)
+            let fraction = min(1, max(0, (value - minimum) / (maximum - minimum)))
+            accessibilityValue = "\(Int((fraction * 100).rounded()))%"
         case .sparkline where properties["interactive"]?.pamFlag == true:
             isAccessibilityElement = true
             traits = [.adjustable]
@@ -2112,28 +2122,38 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func panSlider(_ recognizer: UIPanGestureRecognizer) {
-        guard sliderCanInteract, bounds.width > 0, bounds.height > 0 else { return }
-        switch recognizer.state {
+        updateSliderGesture(state: recognizer.state, at: recognizer.location(in: self))
+    }
+
+    func updateSliderGesture(state: UIGestureRecognizer.State, at point: CGPoint) {
+        if state == .cancelled || state == .failed {
+            sliderGestureActive = false
+            cancelSliderChange()
+            return
+        }
+        guard sliderCanInteract, bounds.width > 0, bounds.height > 0 else {
+            sliderGestureActive = false
+            cancelSliderChange()
+            return
+        }
+        switch state {
         case .began:
             sliderGestureActive = true
-            let requested = sliderValue(at: recognizer.location(in: self))
+            let requested = sliderValue(at: point)
             if rangeEnabled { selectNearestRangeThumb(to: requested) }
             if updateSliderValue(requested) { scheduleSliderChange() }
         case .changed where sliderGestureActive:
-            if updateSliderValue(sliderValue(at: recognizer.location(in: self))) {
+            if updateSliderValue(sliderValue(at: point)) {
                 scheduleSliderChange()
             }
         case .ended where sliderGestureActive:
-            if updateSliderValue(sliderValue(at: recognizer.location(in: self))) {
+            if updateSliderValue(sliderValue(at: point)) {
                 scheduleSliderChange()
             }
             let finalPayload = sliderPayload()
             sliderGestureActive = false
             flushSliderChange()
             emit?(.native, finalPayload)
-        case .cancelled, .failed:
-            sliderGestureActive = false
-            cancelSliderChange()
         default:
             break
         }
