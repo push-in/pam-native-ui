@@ -1,0 +1,19 @@
+{
+    "name": "pam/certification-ui-ios-e2e",
+    "type": "project",
+    "license": "Apache-2.0",
+    "require": {
+        "php": "^8.5",
+        "pushinbr/pam-native": "^1.0.33",
+        "pushinbr/pam-native-ui": "^1.0.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Certification\\": "src/"
+        }
+    },
+    "config": {
+        "platform-check": true,
+        "sort-packages": true
+    }
+}

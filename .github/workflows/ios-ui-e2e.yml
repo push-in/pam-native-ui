@@ -1,0 +1,149 @@
+name: iOS UI end-to-end fixtures
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+env:
+  PAM_HOME: ${{ github.workspace }}/pam
+  PAM_NATIVE_HOME: ${{ github.workspace }}/pam/pam-native
+  PAM_NATIVE_ROOT: ${{ github.workspace }}/pam/pam-native
+  FIXTURE_APP: ${{ github.workspace }}/certification/ios-e2e/app
+
+jobs:
+  ios-ui-e2e:
+    name: PHP/.pam → iOS app → XCUITest
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - name: Checkout PAM Native UI candidate
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Checkout PAM CLI v2.2.7 source
+        uses: actions/checkout@v7
+        with:
+          repository: push-in/pam
+          ref: b1073668c74d4682ec8b00cba101554086aa4926
+          path: pam
+          persist-credentials: false
+
+      - name: Checkout PAM Native v1.0.33 source
+        uses: actions/checkout@v7
+        with:
+          repository: push-in/pam-native
+          ref: 9339d4f11f8176039efb12c7e15aa78e5baaa28f
+          path: pam/pam-native
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate public PHP/.pam fixtures
+        run: |
+          php certification/ios-e2e/check-fixtures.php
+          composer validate --working-dir="${FIXTURE_APP}" --strict --no-check-publish
+
+      - name: Preflight candidate dependency graph
+        run: |
+          composer show pushinbr/pam-native --all | head -25
+          composer show pushinbr/pam-native-ui --all | head -25
+          composer config --working-dir="${FIXTURE_APP}" repositories.pam-native-candidate \
+            "{\"type\":\"path\",\"url\":\"${PAM_NATIVE_HOME}/packages/native\",\"options\":{\"symlink\":false,\"versions\":{\"pushinbr/pam-native\":\"1.0.33\"}}}"
+          composer config --working-dir="${FIXTURE_APP}" repositories.pam-native-ui-candidate \
+            "{\"type\":\"path\",\"url\":\"${GITHUB_WORKSPACE}\",\"options\":{\"symlink\":false,\"versions\":{\"pushinbr/pam-native-ui\":\"1.0.9\"}}}"
+          composer update --working-dir="${FIXTURE_APP}" \
+            --no-dev --no-interaction --prefer-dist --dry-run
+
+      - name: Install candidate dependency graph
+        run: |
+          composer update --working-dir="${FIXTURE_APP}" \
+            --no-dev --no-interaction --prefer-dist
+          composer show --working-dir="${FIXTURE_APP}" pushinbr/pam-native
+          composer show --working-dir="${FIXTURE_APP}" pushinbr/pam-native-ui
+
+      - name: Restore verified PHP/XCFramework runtime
+        id: runtime-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            pam/runtime/ios/8.5.8-r1
+            pam/runtime/macos/8.5.8-r1
+          key: ios-ui-e2e-runtime-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pam/runtime/catalog.json', 'pam/runtime-builder/ios/build.sh', 'pam/pam-native/Cargo.lock') }}
+
+      - name: Build verified PHP and engine XCFrameworks
+        if: steps.runtime-cache.outputs.cache-hit != 'true'
+        working-directory: pam
+        run: runtime-builder/ios/build.sh --php 8.5 all
+
+      - name: Build PAM CLI against verified runtime
+        working-directory: pam
+        run: |
+          php_config="${PAM_HOME}/runtime/macos/8.5.8-r1/bin/php-config"
+          test -x "${php_config}"
+          test -f "${PAM_HOME}/runtime/ios/8.5.8-r1/PamPhp.xcframework/Info.plist"
+          test -f "${PAM_HOME}/runtime/ios/8.5.8-r1/PamNativeEngine.xcframework/Info.plist"
+          php_sdk=$(dirname "$(dirname "${php_config}")")
+          PHP_CONFIG="${php_config}" PAM_PHP_LIB_DIR="${php_sdk}/lib" cargo build --locked
+          printf 'DYLD_LIBRARY_PATH=%s\n' "${php_sdk}/lib" >>"${GITHUB_ENV}"
+
+      - name: Prepare real PHP/.pam iOS application
+        run: |
+          "${PAM_HOME}/target/debug/pam" mobile ios:prepare "${FIXTURE_APP}"
+          project="${FIXTURE_APP}/.pam-native/ios/App"
+          python3 certification/ios-e2e/attach-uitests.py "${project}"
+          plutil -lint "${project}/PamNativeApp.xcodeproj/project.pbxproj"
+          xcodebuild -list -project "${project}/PamNativeApp.xcodeproj"
+
+      - name: Run simulator interaction and accessibility tests
+        run: |
+          udid=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')
+          test -n "${udid}"
+          project="${FIXTURE_APP}/.pam-native/ios/App"
+          xcodebuild \
+            -project "${project}/PamNativeApp.xcodeproj" \
+            -scheme PamNativeApp \
+            -configuration Debug \
+            -derivedDataPath "${RUNNER_TEMP}/ios-ui-derived" \
+            -destination "platform=iOS Simulator,id=${udid}" \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "${RUNNER_TEMP}/ios-ui-e2e.xcresult" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Export screenshot attachments and checksums
+        if: always()
+        run: |
+          result="${RUNNER_TEMP}/ios-ui-e2e.xcresult"
+          output="${RUNNER_TEMP}/ios-ui-e2e-evidence"
+          mkdir -p "${output}/screenshots"
+          if [[ -d "${result}" ]]; then
+            xcrun xcresulttool export attachments \
+              --path "${result}" --output-path "${output}/screenshots"
+            cp -R "${result}" "${output}/result.xcresult"
+          fi
+          python3 certification/ios-e2e/hash-evidence.py "${output}"
+          cat "${output}/SHA256SUMS" >>"${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload XCUITest result, captures and SHA-256 manifest
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-ui-e2e-${{ github.sha }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/ios-ui-e2e-evidence
+          if-no-files-found: error
+          retention-days: 14
