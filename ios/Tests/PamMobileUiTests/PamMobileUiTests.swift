@@ -611,6 +611,17 @@ final class PamMobileUiTests: XCTestCase {
         XCTAssertEqual(file.backgroundColor, UIColor(red: 34.0 / 255,
                                                      green: 51.0 / 255,
                                                      blue: 68.0 / 255, alpha: 1))
+        let plainFile = PamMobileUiHost { _, _ in }
+        plainFile.update([
+            "behavior": .integer(34),
+            "path": .text("docs/plain.md"),
+        ])
+        tree.addSubview(plainFile)
+        tree.activateFileTreeItem(plainFile)
+        XCTAssertEqual(plainFile.backgroundColor, .clear)
+        XCTAssertEqual(file.backgroundColor, .clear)
+        XCTAssertEqual(plainFile.accessibilityLabel, "plain.md")
+        plainFile.releaseCallbacks()
         file.releaseCallbacks()
         folder.releaseCallbacks()
         tree.releaseCallbacks()

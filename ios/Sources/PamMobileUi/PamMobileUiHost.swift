@@ -1691,6 +1691,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             item.applySemantics()
             let header = item.descendant(tag: "pam:file-tree-header") ?? item
             header.backgroundColor = item.isSelectedState
+                && item.properties["selectedContainerColor"]?.pamInteger != nil
                 ? item.selectedContainerColor : .clear
             item.setTextColor(
                 in: header,
