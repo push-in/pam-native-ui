@@ -230,6 +230,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
         component = next["component"]?.pamInteger ?? 0
+        if activeDateTimePicker != nil,
+           (behavior != .dateTimePicker
+                || next["enabled"]?.pamFlag == false
+                || next["interactionDisabled"]?.pamFlag == true
+                || next["readOnly"]?.pamFlag == true
+                || next["isReadOnly"]?.pamFlag == true) {
+            activeDateTimePicker?.dismissSilently()
+            activeDateTimePicker = nil
+        }
         if behavior == .tooltip {
             let delay = max(500, next["openDelay"]?.pamInteger ?? 500)
             gestureRecognizers?
@@ -644,6 +653,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             emit?(.press, Data())
         case .inputSlot:
             activateInputSlot()
+        case .formControl, .inputGroup:
+            _ = focusInputFromLabel(at: point)
+            emit?(.press, Data())
         case .menuItem:
             activateMenuItem()
         case .fileTreeFolder, .fileTreeFile:
@@ -886,6 +898,30 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
            properties["focusOnPress"]?.pamFlag ?? true {
             field.becomeFirstResponder()
         }
+    }
+
+    func focusInputFromLabel(at point: CGPoint) -> Bool {
+        guard behavior == .formControl || behavior == .inputGroup,
+              properties["readOnly"]?.pamFlag != true,
+              properties["isReadOnly"]?.pamFlag != true,
+              let field = allDescendants().first(where: {
+                  $0 is UITextField || $0 is UITextView
+              }),
+              (field as? UITextField)?.isEnabled ?? true,
+              field.isUserInteractionEnabled else { return false }
+        let label: UIView?
+        if behavior == .formControl {
+            label = descendant(tag: "pam:form-label")
+        } else {
+            let inputTop = convert(field.bounds, from: field).minY
+            label = allDescendants().compactMap { $0 as? UILabel }.first { candidate in
+                let bounds = convert(candidate.bounds, from: candidate)
+                return bounds.height > 0 && bounds.maxY <= inputTop + 1
+            }
+        }
+        guard let label,
+              convert(label.bounds, from: label).contains(point) else { return false }
+        return field.becomeFirstResponder()
     }
 
     func activateMenuItem() {

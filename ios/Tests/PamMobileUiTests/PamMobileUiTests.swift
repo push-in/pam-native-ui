@@ -382,6 +382,34 @@ final class PamMobileUiTests: XCTestCase {
         slot.releaseCallbacks()
     }
 
+    func testFormAndInputGroupLabelsFocusTheirNativeFields() {
+        for behavior in [27, 29] {
+            let host = PamMobileUiHost { _, _ in }
+            host.frame = CGRect(x: 0, y: 0, width: 320, height: 100)
+            host.update(["behavior": .integer(Int64(behavior))])
+            let label = UILabel(frame: CGRect(x: 8, y: 0, width: 200, height: 32))
+            label.text = "Email"
+            if behavior == 29 { label.accessibilityIdentifier = "pam:form-label" }
+            host.addSubview(label)
+            let field = FocusProbeField(frame: CGRect(x: 8, y: 40, width: 200, height: 44))
+            host.addSubview(field)
+
+            XCTAssertFalse(host.focusInputFromLabel(at: CGPoint(x: 20, y: 70)))
+            XCTAssertFalse(field.didFocus)
+            XCTAssertTrue(host.focusInputFromLabel(at: CGPoint(x: 20, y: 16)))
+            XCTAssertTrue(field.didFocus)
+
+            host.update([
+                "behavior": .integer(Int64(behavior)),
+                "readOnly": .flag(true),
+            ])
+            field.didFocus = false
+            XCTAssertFalse(host.focusInputFromLabel(at: CGPoint(x: 20, y: 16)))
+            XCTAssertFalse(field.didFocus)
+            host.releaseCallbacks()
+        }
+    }
+
     func testMenuSingleSelectionUpdatesUIKitSemantics() {
         let menu = PamMobileUiHost { _, _ in }
         menu.update([
@@ -756,5 +784,14 @@ final class PamMobileUiTests: XCTestCase {
         }
 
         return (layer.sublayers ?? []).contains(where: hasAnimations)
+    }
+}
+
+private final class FocusProbeField: UITextField {
+    var didFocus = false
+
+    override func becomeFirstResponder() -> Bool {
+        didFocus = true
+        return true
     }
 }
