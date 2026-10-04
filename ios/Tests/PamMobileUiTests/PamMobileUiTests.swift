@@ -267,6 +267,67 @@ final class PamMobileUiTests: XCTestCase {
         host.releaseCallbacks()
     }
 
+    func testDateTimePickerUsesNativeValueFormatsAndInitialSelection() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(4),
+            "value": .text("2026-07-23"),
+            "minimumDate": .text("2026-07-01"),
+            "maximumDate": .text("2026-07-31"),
+        ])
+        let datePicker = host.configuredDatePicker()
+        XCTAssertEqual(datePicker.datePickerMode, .date)
+        XCTAssertEqual(host.pickerValue(for: datePicker.date), "2026-07-23")
+
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(5),
+            "value": .text("14:35"),
+            "timeZoneOffsetInMinutes": .integer(-180),
+            "is24Hour": .flag(true),
+        ])
+        let timePicker = host.configuredDatePicker()
+        XCTAssertEqual(timePicker.datePickerMode, .time)
+        XCTAssertEqual(host.pickerValue(for: timePicker.date), "14:35")
+        XCTAssertNil(timePicker.minimumDate)
+        XCTAssertNil(timePicker.maximumDate)
+
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(6),
+            "value": .text("2026-10-04T14:35-03:00"),
+            "timeZoneOffsetInMinutes": .integer(-180),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+        ])
+        let dateTimePicker = host.configuredDatePicker()
+        XCTAssertEqual(dateTimePicker.datePickerMode, .dateAndTime)
+        XCTAssertEqual(
+            host.pickerValue(for: dateTimePicker.date),
+            "2026-10-04T14:35-03:00"
+        )
+        XCTAssertEqual(
+            host.pickerValue(for: dateTimePicker.maximumDate!),
+            "2026-10-31T23:59-03:00"
+        )
+        host.releaseCallbacks()
+    }
+
+    func testDateTimePickerDefaultsToDateTimeAndClampsInitialValue() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(17),
+            "value": .text("2026-11-01T09:30"),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+        ])
+        let picker = host.configuredDatePicker()
+        XCTAssertEqual(picker.datePickerMode, .dateAndTime)
+        XCTAssertEqual(host.pickerValue(for: picker.date), "2026-10-31T23:59")
+        host.releaseCallbacks()
+    }
+
     func testNativePropertyAliasesReachUIKitBehavior() {
         let host = PamMobileUiHost { _, _ in }
         host.update([
@@ -319,6 +380,34 @@ final class PamMobileUiTests: XCTestCase {
         XCTAssertEqual(field.text, "")
         group.releaseCallbacks()
         slot.releaseCallbacks()
+    }
+
+    func testFormAndInputGroupLabelsFocusTheirNativeFields() {
+        for behavior in [27, 29] {
+            let host = PamMobileUiHost { _, _ in }
+            host.frame = CGRect(x: 0, y: 0, width: 320, height: 100)
+            host.update(["behavior": .integer(Int64(behavior))])
+            let label = UILabel(frame: CGRect(x: 8, y: 0, width: 200, height: 32))
+            label.text = "Email"
+            if behavior == 29 { label.accessibilityIdentifier = "pam:form-label" }
+            host.addSubview(label)
+            let field = FocusProbeField(frame: CGRect(x: 8, y: 40, width: 200, height: 44))
+            host.addSubview(field)
+
+            XCTAssertFalse(host.focusInputFromLabel(at: CGPoint(x: 20, y: 70)))
+            XCTAssertFalse(field.didFocus)
+            XCTAssertTrue(host.focusInputFromLabel(at: CGPoint(x: 20, y: 16)))
+            XCTAssertTrue(field.didFocus)
+
+            host.update([
+                "behavior": .integer(Int64(behavior)),
+                "readOnly": .flag(true),
+            ])
+            field.didFocus = false
+            XCTAssertFalse(host.focusInputFromLabel(at: CGPoint(x: 20, y: 16)))
+            XCTAssertFalse(field.didFocus)
+            host.releaseCallbacks()
+        }
     }
 
     func testMenuSingleSelectionUpdatesUIKitSemantics() {
@@ -695,5 +784,14 @@ final class PamMobileUiTests: XCTestCase {
         }
 
         return (layer.sublayers ?? []).contains(where: hasAnimations)
+    }
+}
+
+private final class FocusProbeField: UITextField {
+    var didFocus = false
+
+    override func becomeFirstResponder() -> Bool {
+        didFocus = true
+        return true
     }
 }
