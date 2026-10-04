@@ -150,6 +150,7 @@ jobs:
 
       - name: Test release evidence
         run: |
+          python3 -m unittest tools/test-ios-release-parity.py
           python3 -m unittest discover -s benchmarks/package -p 'test_*.py'
           python3 -m unittest discover -s benchmarks -p 'test_*device_evidence.py'
           python3 -m unittest tools/test-android-component-approvals.py tools/test-android-audit-device-lock.py tools/test-android-physical-gate.py
