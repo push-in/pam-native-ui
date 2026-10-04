@@ -501,7 +501,7 @@ final class PamMobileUiTests: XCTestCase {
         var events = 0
         let progress = PamMobileUiHost { _, _ in events += 1 }
         progress.update([
-            "behavior": .integer(4), "value": .decimal(40),
+            "behavior": .integer(12), "value": .decimal(40),
             "min": .decimal(0), "max": .decimal(100),
         ])
         XCTAssertEqual(progress.accessibilityValue, "40%")
@@ -512,7 +512,7 @@ final class PamMobileUiTests: XCTestCase {
         XCTAssertEqual(events, 0)
 
         progress.update([
-            "behavior": .integer(4), "value": .decimal(15),
+            "behavior": .integer(12), "value": .decimal(15),
             "min": .decimal(10), "max": .decimal(30),
         ])
         XCTAssertEqual(progress.accessibilityValue, "25%")
@@ -1063,7 +1063,7 @@ final class PamMobileUiTests: XCTestCase {
     func testAdjustableBehaviorsExposeNativeAccessibilityActions() {
         let factory = MobileUiHostFactory()
 
-        for behavior in [3, 5, 12] {
+        for behavior in [3, 5] {
             let view = factory.create(context: nil) { _ in }
             factory.update(
                 view: view,
