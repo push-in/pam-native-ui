@@ -145,6 +145,90 @@ final class PamMobileUiTests: XCTestCase {
         host.releaseCallbacks()
     }
 
+    func testNativePropertyAliasesReachUIKitBehavior() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(5),
+            "minValue": .decimal(10),
+            "maxValue": .decimal(20),
+            "value": .decimal(15),
+            "step": .decimal(10),
+            "sliderTrackHeight": .decimal(8),
+        ])
+        host.accessibilityIncrement()
+        XCTAssertEqual(host.accessibilityValue, "20")
+
+        host.update([
+            "behavior": .integer(31),
+            "isHeaderRow": .flag(true),
+        ])
+        XCTAssertTrue(host.accessibilityTraits.contains(.header))
+
+        let input = UITextField()
+        host.addSubview(input)
+        host.update([
+            "behavior": .integer(27),
+            "interactionDisabled": .flag(true),
+        ])
+        XCTAssertFalse(input.isUserInteractionEnabled)
+
+        host.update([
+            "behavior": .integer(3),
+            "focusScope": .flag(false),
+        ])
+        XCTAssertFalse(host.accessibilityViewIsModal)
+        host.releaseCallbacks()
+    }
+
+    func testInputSlotClearActionUpdatesItsNativeField() {
+        let group = PamMobileUiHost { _, _ in }
+        group.update(["behavior": .integer(27)])
+        let field = UITextField()
+        field.text = "Draft"
+        group.addSubview(field)
+        let slot = PamMobileUiHost { _, _ in }
+        slot.update([
+            "behavior": .integer(28),
+            "slotAction": .integer(2),
+            "focusOnPress": .flag(false),
+        ])
+        group.addSubview(slot)
+        slot.activateInputSlot()
+        XCTAssertEqual(field.text, "")
+        group.releaseCallbacks()
+        slot.releaseCallbacks()
+    }
+
+    func testMenuSingleSelectionUpdatesUIKitSemantics() {
+        let menu = PamMobileUiHost { _, _ in }
+        menu.update([
+            "behavior": .integer(15),
+            "open": .flag(true),
+            "selectionMode": .integer(1),
+        ])
+        let first = PamMobileUiHost { _, _ in }
+        first.update([
+            "behavior": .integer(25),
+            "closeOnSelect": .flag(false),
+        ])
+        let second = PamMobileUiHost { _, _ in }
+        second.update([
+            "behavior": .integer(25),
+            "closeOnSelect": .flag(false),
+        ])
+        menu.addSubview(first)
+        menu.addSubview(second)
+        second.activateMenuItem()
+        XCTAssertFalse(first.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(second.accessibilityTraits.contains(.selected))
+        first.activateMenuItem()
+        XCTAssertTrue(first.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(second.accessibilityTraits.contains(.selected))
+        first.releaseCallbacks()
+        second.releaseCallbacks()
+        menu.releaseCallbacks()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),

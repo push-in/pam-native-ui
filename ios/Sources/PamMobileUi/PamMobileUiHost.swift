@@ -135,6 +135,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var switchActiveThumbColor = UIColor.white
     private var selectedForegroundColor = UIColor.white
     private var selectedContainerColor = UIColor.tintColor
+    private var sliderActiveTickColor = UIColor.white
+    private var sliderInactiveTickColor = UIColor.secondaryLabel
+    private var sliderTickLabelColor = UIColor.secondaryLabel
+    private var sliderThumbLabelTextColor = UIColor.white
+    private var sliderTickSize: CGFloat = 4
+    private var sliderStopIndicatorSize: CGFloat = 0
+    private var sliderTickLabels: [String] = []
     private var pressAnimator: UIViewPropertyAnimator?
     private var shimmerLayer: CAGradientLayer?
     private var progressTrackLayer: CAShapeLayer?
@@ -237,8 +244,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         isExpanded = next["expanded"]?.pamFlag
             ?? next["isExpanded"]?.pamFlag
             ?? isExpanded
-        minimum = next["minimum"]?.pamDecimal ?? next["min"]?.pamDecimal ?? minimum
-        maximum = max(minimum, next["maximum"]?.pamDecimal ?? next["max"]?.pamDecimal ?? maximum)
+        minimum = next["minimum"]?.pamDecimal
+            ?? next["min"]?.pamDecimal
+            ?? next["minValue"]?.pamDecimal
+            ?? minimum
+        maximum = max(minimum + 0.000_001,
+            next["maximum"]?.pamDecimal
+                ?? next["max"]?.pamDecimal
+                ?? next["maxValue"]?.pamDecimal
+                ?? maximum)
         step = max(0.000_001, next["step"]?.pamDecimal ?? step)
         value = clamped(next["value"]?.pamDecimal ?? next["modelValue"]?.pamDecimal ?? value)
         rangeEnabled = next["range"]?.pamFlag ?? rangeEnabled
@@ -255,6 +269,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? reversed
         showSliderTicks = next["showTicks"]?.pamFlag == true
             || next["alwaysShowTicks"]?.pamFlag == true
+        sliderTickSize = max(0, next["tickSize"]?.pamDecimal ?? 4)
+        sliderStopIndicatorSize = max(0,
+            next["stopIndicatorSize"]?.pamDecimal ?? 0)
+        if let data = next["tickLabels"]?.pamText?.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data),
+           let labels = object as? [String] {
+            sliderTickLabels = Array(labels.prefix(101))
+        } else {
+            sliderTickLabels = []
+        }
         showThumbLabel = next["showThumbLabel"]?.pamFlag == true
             || next["alwaysShowThumbLabel"]?.pamFlag == true
         let legacyThumbSize = next["thumbSize"]?.pamDecimal
@@ -272,7 +296,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         )
         sliderTrackThickness = max(
             1,
-            next["trackThickness"]?.pamDecimal ?? sliderTrackThickness
+            next["trackThickness"]?.pamDecimal
+                ?? next["sliderTrackHeight"]?.pamDecimal
+                ?? sliderTrackThickness
         )
         navigationKind = next["navigationKind"]?.pamInteger ?? navigationKind
         carouselCycle = next["cycle"]?.pamFlag ?? false
@@ -348,6 +374,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         selectedContainerColor = color(
             next["selectedContainerColor"]?.pamInteger,
             fallback: fillColor
+        )
+        sliderActiveTickColor = color(
+            next["activeTickColor"]?.pamInteger,
+            fallback: fillColor
+        )
+        sliderInactiveTickColor = color(
+            next["inactiveTickColor"]?.pamInteger,
+            fallback: trackColor
+        )
+        sliderTickLabelColor = color(
+            next["tickLabelColor"]?.pamInteger,
+            fallback: stateLayerColor
+        )
+        sliderThumbLabelTextColor = color(
+            next["thumbLabelTextColor"]?.pamInteger,
+            fallback: selectedForegroundColor
         )
 
         applySemantics()
@@ -509,7 +551,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     @objc private func onTap(_ recognizer: UITapGestureRecognizer) {
-        guard isUserInteractionEnabled else { return }
+        guard isUserInteractionEnabled,
+              !(properties["interactionDisabled"]?.pamFlag ?? false) else { return }
         let point = recognizer.location(in: self)
         if behavior.isOverlay, let backdrop = overlayBackdrop(), backdrop.frame.contains(point) {
             requestDismiss()
@@ -543,7 +586,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .tabTrigger:
             tabsAncestor()?.selectTab(self)
             emit?(.press, Data())
-        case .sheetItem, .menuItem, .inputSlot,
+        case .inputSlot:
+            activateInputSlot()
+        case .menuItem:
+            activateMenuItem()
+        case .sheetItem,
              .fileTreeFolder, .fileTreeFile:
             emit?(.press, Data())
             if behavior == .sheetItem,
@@ -717,6 +764,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func applyTabTextVisualState() {
         guard behavior == .tabTrigger else { return }
+        if properties["preserveChildForeground"]?.pamFlag == true { return }
         setTextColor(
             in: self,
             color: isSelectedState ? selectedForegroundColor : stateLayerColor
@@ -729,6 +777,60 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             (child as? UIButton)?.setTitleColor(color, for: .normal)
             setTextColor(in: child, color: color)
         }
+    }
+
+    func activateInputSlot() {
+        emit?(.press, Data())
+        let group = ancestor { $0.behavior == .inputGroup }
+        guard let field = group?.allDescendants().compactMap({ $0 as? UITextField }).first,
+              field.isEnabled else { return }
+        let action = properties["slotAction"]?.pamInteger ?? 1
+        let readOnly = group?.properties["readOnly"]?.pamFlag == true
+            || group?.properties["interactionDisabled"]?.pamFlag == true
+        switch action {
+        case 2:
+            if !readOnly {
+                field.text = ""
+                field.sendActions(for: .editingChanged)
+            }
+        case 3:
+            if !readOnly {
+                let selection = field.selectedTextRange
+                field.isSecureTextEntry.toggle()
+                field.selectedTextRange = selection
+            }
+        case 4:
+            break
+        default:
+            field.becomeFirstResponder()
+        }
+        if action == 2 || action == 3,
+           properties["focusOnPress"]?.pamFlag ?? true {
+            field.becomeFirstResponder()
+        }
+    }
+
+    func activateMenuItem() {
+        guard let menu = ancestor(where: { $0.behavior == .menu }),
+              menu.isOpen, isUserInteractionEnabled else {
+            emit?(.press, Data())
+            return
+        }
+        let mode = menu.properties["selectionMode"]?.pamInteger ?? 3
+        if mode == 1 {
+            for candidate in menu.allDescendants().compactMap({ $0 as? PamMobileUiHost })
+                where candidate.behavior == .menuItem {
+                candidate.isSelectedState = candidate === self
+                candidate.applySemantics()
+            }
+        } else if mode == 2 {
+            isSelectedState.toggle()
+            applySemantics()
+        }
+        if properties["closeOnSelect"]?.pamFlag ?? true {
+            menu.requestDismiss()
+        }
+        emit?(.press, Data())
     }
 
     @objc private func onPan(_ recognizer: UIPanGestureRecognizer) {
@@ -791,7 +893,21 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             traits = [.button]
             if isChecked || isSelectedState { traits.insert(.selected) }
             accessibilityValue = isChecked || isSelectedState ? "Selected" : "Not selected"
-        case .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
+        case .tableRow where properties["isHeaderRow"]?.pamFlag == true:
+            isAccessibilityElement = true
+            traits = [.header]
+        case .menuItem:
+            isAccessibilityElement = true
+            traits = [.button]
+            let selectable = (ancestor(where: { $0.behavior == .menu })?
+                .properties["selectionMode"]?.pamInteger ?? 3) != 3
+            if selectable {
+                if isSelectedState { traits.insert(.selected) }
+                accessibilityValue = isSelectedState ? "Selected" : "Not selected"
+            } else {
+                accessibilityValue = nil
+            }
+        case .sheetItem, .overlayDismiss, .inputSlot,
              .fileTreeFolder, .fileTreeFile:
             isAccessibilityElement = true
             traits = [.button]
@@ -824,6 +940,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         if behavior.isOverlay {
             isHidden = !isOpen
             accessibilityViewIsModal = isOpen
+                && (properties["trapFocus"]?.pamFlag
+                    ?? properties["focusScope"]?.pamFlag
+                    ?? true)
             if !isOpen {
                 restoreAnchoredPortalContent()
             }
@@ -1324,7 +1443,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func applyInputState() {
-        let readOnly = properties["readOnly"]?.pamFlag ?? false
+        let readOnly = properties["readOnly"]?.pamFlag == true
+            || properties["interactionDisabled"]?.pamFlag == true
         let enabled = properties["enabled"]?.pamFlag ?? true
         let invalid = properties["invalid"]?.pamFlag
             ?? properties["error"]?.pamFlag
@@ -1345,9 +1465,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 : field.text
         }
         let indicatorOnly = properties["indicatorOnly"]?.pamFlag ?? false
+        layer.cornerRadius = max(0,
+            properties["outlineRadius"]?.pamDecimal ?? layer.cornerRadius)
         layer.borderWidth = indicatorOnly
             ? 0
-            : (invalid ? 2 : (properties["focused"]?.pamFlag == true ? 2 : 0))
+            : (invalid ? 2 : (properties["focused"]?.pamFlag == true
+                ? 2 : max(0, properties["outlineWidth"]?.pamDecimal ?? 0)))
         layer.borderColor = color(
             invalid
                 ? properties["invalidColor"]?.pamInteger
@@ -1394,6 +1517,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         let identity = properties["toastId"]?.pamText
             ?? properties["id"]?.pamText
             ?? ""
+        let action = min(6, max(1, properties["action"]?.pamInteger ?? 1))
         let signature = "\(identity)\u{0}\(duration)\u{0}\(persistent)\u{0}\(isOpen)"
 
         guard isOpen else {
@@ -1411,7 +1535,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         isHidden = false
         accessibilityElementsHidden = false
         let announcement = accessibilityLabel ?? findFirstText(in: self) ?? "Notification"
-        let announcementSignature = "\(identity)\u{0}\(announcement)"
+        let announcementSignature = "\(identity)\u{0}\(action)\u{0}\(announcement)"
         if announcementSignature != toastAnnouncementSignature {
             toastAnnouncementSignature = announcementSignature
             UIAccessibility.post(
@@ -1574,6 +1698,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func panSheet(_ recognizer: UIPanGestureRecognizer) {
+        guard properties["enablePanDownToClose"]?.pamFlag ?? true else { return }
         guard let content = overlayContent() else { return }
         let translation = max(0, recognizer.translation(in: self).y)
         switch recognizer.state {
@@ -1693,7 +1818,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func requestDismiss() {
-        guard properties["dismissible"]?.pamFlag ?? true else { return }
+        guard properties["dismissible"]?.pamFlag
+            ?? properties["isDismissable"]?.pamFlag
+            ?? true else { return }
         setOpen(false, shouldEmit: false)
         emitMap([
             "action": .integer(PamHostAction.dismiss.rawValue),
@@ -1872,19 +1999,51 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         context.addLine(to: upper)
         context.strokePath()
 
-        if showSliderTicks {
+        if showSliderTicks && sliderTickSize > 0 {
             let intervals = min(100, max(1, Int(round((maximum - minimum) / step))))
-            context.setFillColor(trackColor.cgColor)
             for index in 0...intervals {
                 let tickValue = minimum
                     + (maximum - minimum) * CGFloat(index) / CGFloat(intervals)
                 let point = sliderPoint(tickValue, in: track)
+                context.setFillColor((tickValue <= value
+                    ? sliderActiveTickColor : sliderInactiveTickColor).cgColor)
                 context.fillEllipse(in: CGRect(
-                    x: point.x - 1.5,
-                    y: point.y - 1.5,
-                    width: 3,
-                    height: 3
+                    x: point.x - sliderTickSize / 2,
+                    y: point.y - sliderTickSize / 2,
+                    width: sliderTickSize,
+                    height: sliderTickSize
                 ))
+            }
+        }
+
+        if sliderStopIndicatorSize > 0 {
+            context.setFillColor(sliderInactiveTickColor.cgColor)
+            for endpoint in [minimum, maximum] {
+                let point = sliderPoint(endpoint, in: track)
+                context.fillEllipse(in: CGRect(
+                    x: point.x - sliderStopIndicatorSize / 2,
+                    y: point.y - sliderStopIndicatorSize / 2,
+                    width: sliderStopIndicatorSize,
+                    height: sliderStopIndicatorSize
+                ))
+            }
+        }
+
+        if !sliderTickLabels.isEmpty {
+            let last = max(1, sliderTickLabels.count - 1)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.preferredFont(forTextStyle: .caption2),
+                .foregroundColor: sliderTickLabelColor,
+            ]
+            for (index, label) in sliderTickLabels.enumerated() {
+                let tickValue = minimum
+                    + (maximum - minimum) * CGFloat(index) / CGFloat(last)
+                let point = sliderPoint(tickValue, in: track)
+                let size = (label as NSString).size(withAttributes: attributes)
+                let origin = orientation == 2
+                    ? CGPoint(x: track.maxX + 8, y: point.y - size.height / 2)
+                    : CGPoint(x: point.x - size.width / 2, y: track.maxY + 8)
+                (label as NSString).draw(at: origin, withAttributes: attributes)
             }
         }
 
@@ -1974,7 +2133,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     ) {
         let attributes: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
-            .foregroundColor: selectedForegroundColor,
+            .foregroundColor: sliderThumbLabelTextColor,
         ]
         let size = (text as NSString).size(withAttributes: attributes)
         let width = max(32, size.width + 16)

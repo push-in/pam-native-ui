@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add typed PHP constructors for common Material components while preserving
+  the raw property escape hatch.
+- Generate the UIKit component ID registry from the same catalog as Android.
+- Align UIKit calendar selection, menu selection, input slot actions, slider
+  labels and tick styling, and native property aliases with the Android host.
+- Add UIKit interaction tests for the newly aligned behaviors.
+
 ## 1.0.9
 
 - Expand the premium native catalog to 114 public components across 92
