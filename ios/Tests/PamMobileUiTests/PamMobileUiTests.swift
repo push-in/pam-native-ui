@@ -4,6 +4,66 @@ import XCTest
 @testable import PamMobileUi
 
 final class PamMobileUiTests: XCTestCase {
+    func testGeneratedComponentIDsMatchTheAndroidContract() {
+        XCTAssertEqual(GeneratedComponents.BUTTON, 20)
+        XCTAssertEqual(GeneratedComponents.FAB, 48)
+        XCTAssertEqual(GeneratedComponents.SELECT_ITEM, 87)
+        XCTAssertEqual(GeneratedComponents.SELECT_PORTAL, 88)
+        XCTAssertEqual(
+            GeneratedComponents.allIds.sorted(),
+            Array(1...GeneratedComponents.allIds.count)
+        )
+    }
+
+    func testButtonAndFabKeepA44PointTouchTargetWhenPooled() {
+        let factory = MobileUiHostFactory()
+        let view = factory.create(context: nil) { _ in }
+        view.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+
+        for component in [GeneratedComponents.BUTTON, GeneratedComponents.FAB] {
+            factory.update(view: view, properties: [
+                "behavior": .integer(1),
+                "component": .integer(Int64(component)),
+            ])
+            XCTAssertTrue(view.point(inside: CGPoint(x: -11, y: 10), with: nil))
+            XCTAssertFalse(view.point(inside: CGPoint(x: -13, y: 10), with: nil))
+        }
+
+        factory.update(view: view, properties: [
+            "behavior": .integer(1),
+            "component": .integer(0),
+        ])
+        XCTAssertFalse(view.point(inside: CGPoint(x: -11, y: 10), with: nil))
+        factory.release(view: view)
+        factory.close()
+    }
+
+    func testSelectItemHasSelectionSemanticsAndGenericSheetItemDoesNot() {
+        let factory = MobileUiHostFactory()
+        let view = factory.create(context: nil) { _ in }
+        factory.update(view: view, properties: [
+            "behavior": .integer(24),
+            "component": .integer(Int64(GeneratedComponents.SELECT_ITEM)),
+            "checked": .flag(true),
+            "accessibilityLabel": .text("First option"),
+        ])
+        XCTAssertTrue(view.accessibilityTraits.contains(.button))
+        XCTAssertTrue(view.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(view.accessibilityValue, "Selected")
+
+        factory.update(view: view, properties: [
+            "behavior": .integer(24),
+            "component": .integer(0),
+            "checked": .flag(false),
+            "accessibilityLabel": .text("Generic action"),
+        ])
+        XCTAssertTrue(view.accessibilityTraits.contains(.button))
+        XCTAssertFalse(view.accessibilityTraits.contains(.selected))
+        XCTAssertNil(view.accessibilityValue)
+        factory.release(view: view)
+        factory.close()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),

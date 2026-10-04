@@ -55,6 +55,25 @@ Every public `p-*` tag has a typed facade under `Pam\MobileUi\Material`.
 Low-level text and layout use PAM Native primitives rather than duplicate PAM
 UI components.
 
+Common controls also offer named, typed constructors. These produce the same
+native tree as `make()` and keep its array escape hatch for advanced props:
+
+```php
+use Pam\MobileUi\Enum\ComponentSize;
+use Pam\MobileUi\Enum\MaterialVariant;
+use Pam\MobileUi\Material\PBtn;
+use Pam\MobileUi\Material\PCheckbox;
+use Pam\MobileUi\Material\PTextField;
+
+$submit = PBtn::labeled(
+    text: 'Continue',
+    variant: MaterialVariant::Filled,
+    size: ComponentSize::Large,
+)->onPress($submitForm);
+$email = PTextField::input(value: '', label: 'Email');
+$terms = PCheckbox::control(checked: false, label: 'I agree');
+```
+
 ## A typed component used as a tag
 
 Reusable application components can expose a declarative surface:

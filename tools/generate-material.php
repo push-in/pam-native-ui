@@ -76,6 +76,54 @@ foreach ($facadeTags as $tag => $class) {
         $facades .= "    use \\Pam\\MobileUi\\Component\\Concerns\\HandlesFilePicking;\n\n";
     }
     $facades .= "    protected const string COMPONENT = ".var_export($class, true).";\n";
+    if ($class === 'PBtn') {
+        $facades .= <<<'PHP'
+
+    public static function labeled(
+        string $text,
+        ?\Pam\MobileUi\Enum\MaterialVariant $variant = null,
+        ?\Pam\MobileUi\Enum\ComponentSize $size = null,
+    ): static {
+        $props = ['text' => $text];
+        if ($variant !== null) {
+            $props['variant'] = $variant;
+        }
+        if ($size !== null) {
+            $props['size'] = $size;
+        }
+
+        return self::make($props);
+    }
+PHP;
+        $facades .= "\n";
+    }
+    if ($class === 'PTextField') {
+        $facades .= <<<'PHP'
+
+    public static function input(
+        string $value = '',
+        string $label = '',
+        bool $disabled = false,
+    ): static {
+        return self::make([
+            'value' => $value,
+            'label' => $label,
+            'disabled' => $disabled,
+        ]);
+    }
+PHP;
+        $facades .= "\n";
+    }
+    if ($class === 'PCheckbox') {
+        $facades .= <<<'PHP'
+
+    public static function control(bool $checked = false, string $label = ''): static
+    {
+        return self::make(['checked' => $checked, 'label' => $label]);
+    }
+PHP;
+        $facades .= "\n";
+    }
     $facades .= "}\n\n";
 }
 

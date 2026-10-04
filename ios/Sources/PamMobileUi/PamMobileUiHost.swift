@@ -89,6 +89,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private var emit: EventEmitter?
     private var behavior = PamMobileBehavior.container
+    private var component = 0
     private var properties: [String: WireValue] = [:]
     private var isOpen = true
     private var isControlled = false
@@ -200,6 +201,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         behavior = PamMobileBehavior(
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
+        component = next["component"]?.pamInteger ?? 0
         if previousBehavior != behavior {
             openDefaultInitialized = false
         }
@@ -281,8 +283,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 ?? snapIndex),
             max(0, snapPoints.count - 1)
         )
-        sheetSearchable = next["searchable"]?.pamFlag ?? false
-        sheetAllowCustomValue = next["allowCustomValue"]?.pamFlag ?? false
+        sheetSearchable = component == GeneratedComponents.SELECT_PORTAL
+            && (next["searchable"]?.pamFlag ?? false)
+        sheetAllowCustomValue = component == GeneratedComponents.SELECT_PORTAL
+            && (next["allowCustomValue"]?.pamFlag ?? false)
         sheetSearchPlaceholder = next["searchPlaceholder"]?.pamText
             ?? "Search options"
         fillColor = color(next["fillColor"]?.pamInteger, fallback: fillColor)
@@ -509,7 +513,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
              .fileTreeFolder, .fileTreeFile:
             emit?(.press, Data())
             if behavior == .sheetItem,
-               properties["closeOnPress"]?.pamFlag ?? true {
+               properties["closeOnSelect"]?.pamFlag
+                   ?? properties["closeOnPress"]?.pamFlag
+                   ?? (component == GeneratedComponents.SELECT_ITEM) {
                 sheetAncestor()?.clearSheetSearch()
                 sheetAncestor()?.requestDismiss()
             }
@@ -742,10 +748,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             isAccessibilityElement = true
             traits = [.button]
             if isSelectedState { traits.insert(.selected) }
+        case .sheetItem where component == GeneratedComponents.SELECT_ITEM:
+            isAccessibilityElement = true
+            traits = [.button]
+            if isChecked || isSelectedState { traits.insert(.selected) }
+            accessibilityValue = isChecked || isSelectedState ? "Selected" : "Not selected"
         case .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
              .fileTreeFolder, .fileTreeFile:
             isAccessibilityElement = true
             traits = [.button]
+            accessibilityValue = nil
         default:
             isAccessibilityElement = accessibilityLabel != nil
         }
@@ -756,6 +768,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private var requiresMinimumTouchTarget: Bool {
+        if component == GeneratedComponents.BUTTON || component == GeneratedComponents.FAB {
+            return true
+        }
         switch behavior {
         case .accordion, .slider, .checkbox, .radio, .switchControl,
              .tabTrigger, .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
