@@ -126,6 +126,128 @@ final class PamMobileUiTests: XCTestCase {
         calendar.releaseCallbacks()
     }
 
+    func testCalendarNavigationAndHeaderKeepNativePayloadAndBounds() throws {
+        var payloads: [[String: WireValue]] = []
+        let host = PamMobileUiHost { kind, data in
+            if kind == .native, let values = try? WireMap.decode(data) {
+                payloads.append(values)
+            }
+        }
+        host.frame = CGRect(x: 0, y: 0, width: 336, height: 336)
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "minDate": .text("2026-09-01"),
+            "maxDate": .text("2026-11-30"),
+        ])
+        let previous = UIView(frame: CGRect(x: 0, y: 0, width: 48, height: 48))
+        previous.accessibilityIdentifier = "pam:calendar-prev"
+        host.addSubview(previous)
+        let title = UILabel(frame: CGRect(x: 48, y: 0, width: 160, height: 48))
+        title.accessibilityIdentifier = "pam:calendar-title"
+        host.addSubview(title)
+
+        XCTAssertTrue(host.handleCalendarHeaderTap(at: CGPoint(x: 24, y: 24)))
+        XCTAssertEqual(payloads.last?["action"], .integer(3))
+        XCTAssertEqual(payloads.last?["year"], .integer(2026))
+        XCTAssertEqual(payloads.last?["month"], .integer(9))
+        XCTAssertTrue(title.text?.localizedCaseInsensitiveContains("2026") == true)
+        XCTAssertFalse(host.navigateCalendar(months: -1))
+        XCTAssertEqual(payloads.count, 1)
+
+        XCTAssertTrue(host.selectCalendarMonthOrYear(month: true, value: 12))
+        XCTAssertEqual(payloads.last?["month"], .integer(11))
+        XCTAssertTrue(host.selectCalendarMonthOrYear(month: false, value: 2025))
+        XCTAssertEqual(payloads.last?["month"], .integer(9))
+        XCTAssertEqual(payloads.last?["year"], .integer(2026))
+        host.releaseCallbacks()
+    }
+
+    func testCalendarHitTestingUsesTaggedGridAndActualRowCount() {
+        let host = PamMobileUiHost { _, _ in }
+        host.frame = CGRect(x: 0, y: 0, width: 336, height: 336)
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "firstDayOfWeek": .integer(1),
+            "showOutsideDays": .flag(false),
+        ])
+        let grid = UIView(frame: CGRect(x: 0, y: 96, width: 336, height: 240))
+        grid.accessibilityIdentifier = "pam:calendar-grid"
+        host.addSubview(grid)
+
+        XCTAssertNil(host.calendarDate(at: CGPoint(x: 168, y: 48)))
+        XCTAssertNil(host.calendarDate(at: CGPoint(x: 24, y: 120)))
+        XCTAssertEqual(host.calendarDate(at: CGPoint(x: 168, y: 120)), "2026-10-01")
+        XCTAssertEqual(host.calendarDate(at: CGPoint(x: 24, y: 168)), "2026-10-05")
+        host.releaseCallbacks()
+    }
+
+    func testCalendarAdjacentMonthSelectionUpdatesVisibleTitle() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "locale": .text("en_US"),
+            "showOutsideDays": .flag(true),
+        ])
+        let title = UILabel()
+        title.accessibilityIdentifier = "pam:calendar-title"
+        host.addSubview(title)
+        XCTAssertTrue(host.selectCalendarDate("2026-11-01"))
+        XCTAssertEqual(title.text, "November 2026")
+        XCTAssertTrue(host.navigateCalendar(months: -1))
+        XCTAssertEqual(title.text, "October 2026")
+        host.releaseCallbacks()
+    }
+
+    func testCalendarDaysAreAccessibleButtonsWithNativeActivation() {
+        var changes: [String] = []
+        let host = PamMobileUiHost { kind, payload in
+            if kind == .change { changes.append(String(decoding: payload, as: UTF8.self)) }
+        }
+        host.frame = CGRect(x: 0, y: 0, width: 336, height: 336)
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "locale": .text("en_US"),
+            "firstDayOfWeek": .integer(1),
+            "showOutsideDays": .flag(false),
+            "disabledDates": .text("2026-10-02"),
+        ])
+        let grid = UIView(frame: CGRect(x: 0, y: 96, width: 336, height: 240))
+        grid.accessibilityIdentifier = "pam:calendar-grid"
+        host.addSubview(grid)
+        host.setNeedsLayout()
+        host.layoutIfNeeded()
+
+        let days = host.accessibilityElements?.compactMap { $0 as? UIAccessibilityElement } ?? []
+        XCTAssertEqual(days.count, 31)
+        XCTAssertFalse(days.contains {
+            $0.accessibilityIdentifier == "pam:calendar-day:2026-09-30"
+        })
+        let first = days.first {
+            $0.accessibilityIdentifier == "pam:calendar-day:2026-10-01"
+        }
+        XCTAssertTrue(first?.accessibilityTraits.contains(.button) == true)
+        XCTAssertTrue(first?.accessibilityLabel?.contains("October") == true)
+        XCTAssertEqual(first?.accessibilityFrameInContainerSpace.minY, 96)
+        XCTAssertTrue(first?.accessibilityActivate() == true)
+        XCTAssertEqual(changes, ["2026-10-01"])
+
+        let disabled = days.first {
+            $0.accessibilityIdentifier == "pam:calendar-day:2026-10-02"
+        }
+        XCTAssertTrue(disabled?.accessibilityTraits.contains(.notEnabled) == true)
+        XCTAssertFalse(disabled?.accessibilityActivate() == true)
+        XCTAssertEqual(changes.count, 1)
+        host.releaseCallbacks()
+    }
+
     func testDatePickerAppliesBoundsAndClockMode() {
         let host = PamMobileUiHost { _, _ in }
         host.update([
