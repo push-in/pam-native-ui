@@ -351,6 +351,102 @@ final class PamMobileUiTests: XCTestCase {
         menu.releaseCallbacks()
     }
 
+    func testPortaledMenuItemsKeepSelectionAndDismissTheirOwner() {
+        var menuEvents = 0
+        var presses = 0
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 640))
+        let menu = PamMobileUiHost { kind, _ in
+            if kind == .native { menuEvents += 1 }
+        }
+        menu.frame = window.bounds
+        menu.update([
+            "behavior": .integer(15),
+            "initiallyOpen": .flag(true),
+            "selectionMode": .integer(1),
+        ])
+        let trigger = UIView(frame: CGRect(x: 20, y: 30, width: 80, height: 44))
+        trigger.accessibilityIdentifier = "pam:overlay-trigger"
+        let content = UIView(frame: CGRect(x: 20, y: 82, width: 160, height: 100))
+        content.accessibilityIdentifier = "pam:overlay-content"
+        let first = PamMobileUiHost { kind, _ in
+            if kind == .press { presses += 1 }
+        }
+        first.update(["behavior": .integer(25), "closeOnSelect": .flag(false)])
+        let second = PamMobileUiHost { kind, _ in
+            if kind == .press { presses += 1 }
+        }
+        second.update(["behavior": .integer(25), "closeOnSelect": .flag(true)])
+        content.addSubview(first)
+        content.addSubview(second)
+        menu.addSubview(trigger)
+        menu.addSubview(content)
+        window.addSubview(menu)
+        menu.setNeedsLayout()
+        menu.layoutIfNeeded()
+
+        XCTAssertTrue(content.superview === window)
+        first.activateMenuItem()
+        XCTAssertTrue(first.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(second.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(presses, 1)
+        XCTAssertEqual(menuEvents, 0)
+
+        second.activateMenuItem()
+        XCTAssertTrue(second.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(first.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(presses, 2)
+        XCTAssertEqual(menuEvents, 1)
+        XCTAssertTrue(content.superview === menu)
+        first.releaseCallbacks()
+        second.releaseCallbacks()
+        menu.releaseCallbacks()
+    }
+
+    func testAnchoredBackdropAndEscapeRespectDismissalSettings() {
+        var dismissals = 0
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 640))
+        let menu = PamMobileUiHost { kind, _ in
+            if kind == .native { dismissals += 1 }
+        }
+        menu.frame = window.bounds
+        menu.update([
+            "behavior": .integer(15),
+            "initiallyOpen": .flag(true),
+            "closeOnOverlayClick": .flag(false),
+            "isKeyboardDismissable": .flag(false),
+        ])
+        let trigger = UIView(frame: CGRect(x: 20, y: 30, width: 80, height: 44))
+        trigger.accessibilityIdentifier = "pam:overlay-trigger"
+        let content = UIView(frame: CGRect(x: 20, y: 82, width: 160, height: 100))
+        content.accessibilityIdentifier = "pam:overlay-content"
+        menu.addSubview(trigger)
+        menu.addSubview(content)
+        window.addSubview(menu)
+        menu.setNeedsLayout()
+        menu.layoutIfNeeded()
+        XCTAssertTrue(content.superview === window)
+
+        let catcher = window.subviews.compactMap { $0 as? UIControl }.first
+        XCTAssertNotNil(catcher)
+        catcher?.sendActions(for: .touchUpInside)
+        XCTAssertEqual(dismissals, 0)
+        XCTAssertTrue(content.superview === window)
+        XCTAssertFalse(menu.accessibilityPerformEscape())
+
+        menu.update([
+            "behavior": .integer(15),
+            "initiallyOpen": .flag(true),
+            "closeOnOverlayClick": .flag(true),
+            "isKeyboardDismissable": .flag(true),
+        ])
+        XCTAssertTrue(menu.accessibilityPerformEscape())
+        XCTAssertEqual(dismissals, 1)
+        XCTAssertTrue(content.superview === menu)
+        XCTAssertFalse(menu.accessibilityPerformEscape())
+        XCTAssertEqual(dismissals, 1)
+        menu.releaseCallbacks()
+    }
+
     func testFileTreeFolderExpandsAndEmitsPathChange() {
         var changes: [String] = []
         let tree = PamMobileUiHost { kind, data in
