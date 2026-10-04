@@ -126,6 +126,65 @@ final class PamMobileUiTests: XCTestCase {
         calendar.releaseCallbacks()
     }
 
+    func testCalendarNavigationAndHeaderKeepNativePayloadAndBounds() throws {
+        var payloads: [[String: WireValue]] = []
+        let host = PamMobileUiHost { kind, data in
+            if kind == .native, let values = try? WireMap.decode(data) {
+                payloads.append(values)
+            }
+        }
+        host.frame = CGRect(x: 0, y: 0, width: 336, height: 336)
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "minDate": .text("2026-09-01"),
+            "maxDate": .text("2026-11-30"),
+        ])
+        let previous = UIView(frame: CGRect(x: 0, y: 0, width: 48, height: 48))
+        previous.accessibilityIdentifier = "pam:calendar-prev"
+        host.addSubview(previous)
+        let title = UILabel(frame: CGRect(x: 48, y: 0, width: 160, height: 48))
+        title.accessibilityIdentifier = "pam:calendar-title"
+        host.addSubview(title)
+
+        XCTAssertTrue(host.handleCalendarHeaderTap(at: CGPoint(x: 24, y: 24)))
+        XCTAssertEqual(payloads.last?["action"], .integer(3))
+        XCTAssertEqual(payloads.last?["year"], .integer(2026))
+        XCTAssertEqual(payloads.last?["month"], .integer(9))
+        XCTAssertTrue(title.text?.localizedCaseInsensitiveContains("2026") == true)
+        XCTAssertFalse(host.navigateCalendar(months: -1))
+        XCTAssertEqual(payloads.count, 1)
+
+        XCTAssertTrue(host.selectCalendarMonthOrYear(month: true, value: 12))
+        XCTAssertEqual(payloads.last?["month"], .integer(11))
+        XCTAssertTrue(host.selectCalendarMonthOrYear(month: false, value: 2025))
+        XCTAssertEqual(payloads.last?["month"], .integer(9))
+        XCTAssertEqual(payloads.last?["year"], .integer(2026))
+        host.releaseCallbacks()
+    }
+
+    func testCalendarHitTestingUsesTaggedGridAndActualRowCount() {
+        let host = PamMobileUiHost { _, _ in }
+        host.frame = CGRect(x: 0, y: 0, width: 336, height: 336)
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "firstDayOfWeek": .integer(1),
+            "showOutsideDays": .flag(false),
+        ])
+        let grid = UIView(frame: CGRect(x: 0, y: 96, width: 336, height: 240))
+        grid.accessibilityIdentifier = "pam:calendar-grid"
+        host.addSubview(grid)
+
+        XCTAssertNil(host.calendarDate(at: CGPoint(x: 168, y: 48)))
+        XCTAssertNil(host.calendarDate(at: CGPoint(x: 24, y: 120)))
+        XCTAssertEqual(host.calendarDate(at: CGPoint(x: 168, y: 120)), "2026-10-01")
+        XCTAssertEqual(host.calendarDate(at: CGPoint(x: 24, y: 168)), "2026-10-05")
+        host.releaseCallbacks()
+    }
+
     func testDatePickerAppliesBoundsAndClockMode() {
         let host = PamMobileUiHost { _, _ in }
         host.update([

@@ -82,6 +82,14 @@ private enum PamMobileBehavior: Int {
 private enum PamHostAction: Int64 {
     case dismiss = 1
     case open = 2
+    case navigate = 3
+}
+
+private enum CalendarHeaderAction {
+    case previous
+    case next
+    case month
+    case year
 }
 
 final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
@@ -121,6 +129,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var sheetAllowCustomValue = false
     private var sheetSearchPlaceholder = "Search options"
     private var calendarMode = 1
+    private var calendarYear = Calendar.current.component(.year, from: Date())
+    private var calendarMonth = Calendar.current.component(.month, from: Date())
     private var calendarSelectedDates: Set<String> = []
     private var calendarRangeFrom: String?
     private var calendarRangeTo: String?
@@ -351,6 +361,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         sheetSearchPlaceholder = next["searchPlaceholder"]?.pamText
             ?? "Search options"
         if behavior == .calendar {
+            calendarYear = next["year"]?.pamInteger ?? calendarYear
+            calendarMonth = min(12, max(1, next["month"]?.pamInteger ?? calendarMonth))
             let nextMode = next["mode"]?.pamInteger ?? 1
             if previousBehavior != .calendar || nextMode != calendarMode {
                 calendarSelectedDates.removeAll()
@@ -646,6 +658,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .dateTimePicker:
             presentDateTimePicker()
         case .calendar:
+            if handleCalendarHeaderTap(at: point) {
+                break
+            }
             if let date = calendarDate(at: point) {
                 _ = selectCalendarDate(date)
             }
@@ -2304,6 +2319,189 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         return calendar
     }
 
+    private func calendarFirstDate() -> Date {
+        configuredCalendar().date(from: DateComponents(
+            year: calendarYear, month: calendarMonth, day: 1
+        )) ?? Date()
+    }
+
+    @discardableResult
+    func handleCalendarHeaderTap(at point: CGPoint) -> Bool {
+        guard behavior == .calendar else { return false }
+        let targets: [(String, CalendarHeaderAction)] = [
+            ("pam:calendar-prev", .previous),
+            ("pam:calendar-next", .next),
+            ("pam:calendar-month-select", .month),
+            ("pam:calendar-year-select", .year),
+        ]
+        for (tag, action) in targets {
+            guard let target = descendant(tag: tag),
+                  convert(target.bounds, from: target)
+                    .insetBy(dx: -8, dy: -8).contains(point) else { continue }
+            switch action {
+            case .previous: _ = navigateCalendar(months: -1)
+            case .next: _ = navigateCalendar(months: 1)
+            case .month: presentCalendarSelector(month: true)
+            case .year: presentCalendarSelector(month: false)
+            }
+            return true
+        }
+        return false
+    }
+
+    private func presentCalendarSelector(month: Bool) {
+        guard isUserInteractionEnabled,
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["disabled"]?.pamFlag ?? false),
+              let presenter = nearestViewController() else { return }
+        let values: [Int]
+        let labels: [String]
+        if month {
+            values = Array(1...12)
+            let formatter = DateFormatter()
+            formatter.locale = configuredCalendar().locale
+            labels = formatter.monthSymbols
+        } else {
+            let bounds = calendarMonthBounds()
+            let lower = max(1, max((bounds.lowerBound - 1) / 12,
+                calendarYear - 100))
+            let upper = min(9_999, min((bounds.upperBound - 1) / 12,
+                calendarYear + 100))
+            guard lower <= upper else { return }
+            values = Array(lower...upper)
+            labels = values.map(String.init)
+        }
+        let selector = PamCalendarSelectorController(
+            title: month ? "Select month" : "Select year",
+            values: values,
+            labels: labels,
+            selected: month ? calendarMonth : calendarYear
+        ) { [weak self] value in
+            _ = self?.selectCalendarMonthOrYear(month: month, value: value)
+        }
+        let navigation = UINavigationController(rootViewController: selector)
+        navigation.modalPresentationStyle = .formSheet
+        navigation.preferredContentSize = CGSize(width: 320, height: 320)
+        presenter.present(navigation, animated: true)
+    }
+
+    private func calendarGridFrame() -> CGRect {
+        guard let grid = descendant(tag: "pam:calendar-grid") else { return bounds }
+        return convert(grid.bounds, from: grid)
+    }
+
+    private func calendarRowCount(first: Date, offset: Int, calendar: Calendar) -> Int {
+        if properties["fixedWeeks"]?.pamFlag == true { return 6 }
+        let days = calendar.range(of: .day, in: .month, for: first)?.count ?? 31
+        return min(6, max(4, (offset + days + 6) / 7))
+    }
+
+    private func calendarMonthBounds() -> ClosedRange<Int> {
+        func monthKey(_ raw: String?) -> Int? {
+            guard let raw, raw.count >= 7,
+                  let year = Int(raw.prefix(4)),
+                  let month = Int(raw.dropFirst(5).prefix(2)),
+                  (1...12).contains(month) else { return nil }
+            return year * 12 + month
+        }
+        let minimum = max(
+            (properties["minYear"]?.pamInteger ?? 1) * 12 + 1,
+            monthKey(properties["minDate"]?.pamText
+                ?? properties["minimumDate"]?.pamText) ?? 13
+        )
+        let maximum = min(
+            (properties["maxYear"]?.pamInteger ?? 9_999) * 12 + 12,
+            monthKey(properties["maxDate"]?.pamText
+                ?? properties["maximumDate"]?.pamText) ?? 119_999
+        )
+        return minimum...max(minimum, maximum)
+    }
+
+    @discardableResult
+    func navigateCalendar(months: Int) -> Bool {
+        guard behavior == .calendar,
+              isUserInteractionEnabled,
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["disabled"]?.pamFlag ?? false),
+              let requested = configuredCalendar().date(
+                  byAdding: .month, value: months, to: calendarFirstDate()
+              ) else { return false }
+        let components = configuredCalendar().dateComponents([.year, .month], from: requested)
+        guard let year = components.year, let month = components.month,
+              calendarMonthBounds().contains(year * 12 + month) else { return false }
+        calendarYear = year
+        calendarMonth = month
+        updateCalendarTitle()
+        setNeedsDisplay()
+        emitMap([
+            "action": .integer(PamHostAction.navigate.rawValue),
+            "year": .integer(Int64(year)),
+            "month": .integer(Int64(month)),
+        ])
+        UIAccessibility.post(notification: .layoutChanged, argument: self)
+        return true
+    }
+
+    @discardableResult
+    func selectCalendarMonthOrYear(month: Bool, value: Int) -> Bool {
+        guard behavior == .calendar,
+              isUserInteractionEnabled,
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["disabled"]?.pamFlag ?? false) else { return false }
+        let selectedYear = month ? calendarYear : value
+        let selectedMonth = month ? value : calendarMonth
+        guard (1...12).contains(selectedMonth) else { return false }
+        let bounds = calendarMonthBounds()
+        let key = min(bounds.upperBound, max(bounds.lowerBound,
+            selectedYear * 12 + selectedMonth))
+        calendarYear = (key - 1) / 12
+        calendarMonth = (key - 1) % 12 + 1
+        updateCalendarTitle()
+        setNeedsDisplay()
+        emitMap([
+            "action": .integer(PamHostAction.navigate.rawValue),
+            "year": .integer(Int64(calendarYear)),
+            "month": .integer(Int64(calendarMonth)),
+        ])
+        UIAccessibility.post(notification: .layoutChanged, argument: self)
+        return true
+    }
+
+    private func updateCalendarTitle() {
+        let first = calendarFirstDate()
+        let formatter = DateFormatter()
+        formatter.calendar = configuredCalendar()
+        formatter.locale = configuredCalendar().locale
+        formatter.dateFormat = "LLLL"
+        let month = formatter.string(from: first)
+        let year = String(calendarYear)
+        for (tag, label) in [
+            ("pam:calendar-title", "\(month) \(year)"),
+            ("pam:calendar-month-select", month),
+            ("pam:calendar-year-select", year),
+        ] {
+            guard let view = descendant(tag: tag) else { continue }
+            setFirstCalendarLabel(in: view, text: label)
+            view.accessibilityValue = label
+        }
+    }
+
+    private func setFirstCalendarLabel(in view: UIView, text: String) {
+        if let label = view as? UILabel {
+            label.text = text
+            return
+        }
+        for child in view.subviews {
+            if findFirstText(in: child) != nil {
+                setFirstCalendarLabel(in: child, text: text)
+                return
+            }
+        }
+    }
+
     func selectCalendarDate(_ key: String) -> Bool {
         let formatter = DateFormatter()
         formatter.calendar = configuredCalendar()
@@ -2364,30 +2562,25 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         return true
     }
 
-    private func calendarDate(at point: CGPoint) -> String? {
-        guard bounds.width > 0, bounds.height > 0,
-              bounds.contains(point) else { return nil }
+    func calendarDate(at point: CGPoint) -> String? {
+        let grid = calendarGridFrame()
+        guard grid.width > 0, grid.height > 0,
+              grid.contains(point) else { return nil }
         let calendar = configuredCalendar()
         let showWeek = properties["showWeek"]?.pamFlag == true
         let columns = showWeek ? 8 : 7
-        let column = Int(point.x / (bounds.width / CGFloat(columns)))
-        let row = Int(point.y / (bounds.height / 7)) - 1
-        guard (0..<6).contains(row), (0..<columns).contains(column) else {
-            return nil
-        }
+        let column = Int((point.x - grid.minX) / (grid.width / CGFloat(columns)))
         let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
         let dayColumn = rtl ? 6 - column : column - (showWeek ? 1 : 0)
         guard (0..<7).contains(dayColumn) else { return nil }
-        let now = calendar.date(from: DateComponents(
-            year: properties["year"]?.pamInteger,
-            month: properties["month"]?.pamInteger,
-            day: 1
-        )) ?? Date()
-        let first = calendar.date(
-            from: calendar.dateComponents([.year, .month], from: now)
-        ) ?? now
+        let first = calendarFirstDate()
         let offset = (calendar.component(.weekday, from: first)
             - calendar.firstWeekday + 7) % 7
+        let rows = calendarRowCount(first: first, offset: offset, calendar: calendar)
+        let hasGrid = descendant(tag: "pam:calendar-grid") != nil
+        let row = Int((point.y - grid.minY) /
+            (grid.height / CGFloat(rows + (hasGrid ? 0 : 1)))) - (hasGrid ? 0 : 1)
+        guard (0..<rows).contains(row), (0..<columns).contains(column) else { return nil }
         guard let firstVisible = calendar.date(byAdding: .day, value: -offset, to: first),
               let date = calendar.date(
                 byAdding: .day, value: row * 7 + dayColumn, to: firstVisible
@@ -2405,16 +2598,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func drawCalendar(_ context: CGContext) {
         let calendar = configuredCalendar()
-        let requestedYear = properties["year"]?.pamInteger
-        let requestedMonth = properties["month"]?.pamInteger
-        let now = calendar.date(from: DateComponents(
-            year: requestedYear,
-            month: requestedMonth,
-            day: 1
-        )) ?? Date()
-        let first = calendar.date(
-            from: calendar.dateComponents([.year, .month], from: now)
-        ) ?? now
+        let first = calendarFirstDate()
         let offset = (
             calendar.component(.weekday, from: first)
             - calendar.firstWeekday
@@ -2427,9 +2611,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         ) ?? first
         let showWeek = properties["showWeek"]?.pamFlag == true
         let showOutside = properties["showOutsideDays"]?.pamFlag ?? true
+        let grid = calendarGridFrame()
+        guard grid.width > 0, grid.height > 0 else { return }
+        let hasGrid = descendant(tag: "pam:calendar-grid") != nil
+        let rows = calendarRowCount(first: first, offset: offset, calendar: calendar)
         let columns = showWeek ? 8 : 7
-        let cellWidth = bounds.width / CGFloat(columns)
-        let cellHeight = bounds.height / 7
+        let cellWidth = grid.width / CGFloat(columns)
+        let cellHeight = grid.height / CGFloat(rows + (hasGrid ? 0 : 1))
         let font = UIFont.preferredFont(forTextStyle: .body)
         let mutedAttributes: [NSAttributedString.Key: Any] = [
             .font: UIFont.preferredFont(forTextStyle: .caption1),
@@ -2449,32 +2637,34 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
 
-        for dayIndex in 0..<7 {
-            let dayColumn = effectiveUserInterfaceLayoutDirection == .rightToLeft
-                ? 6 - dayIndex : dayIndex
-            let visualColumn = dayColumn + (
-                showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
-                    ? 1 : 0
-            )
-            let symbolIndex = (dayIndex + calendar.firstWeekday - 1) % 7
-            let symbol = calendar.veryShortWeekdaySymbols[symbolIndex] as NSString
-            let frame = CGRect(
-                x: CGFloat(visualColumn) * cellWidth,
-                y: 0,
-                width: cellWidth,
-                height: cellHeight
-            )
-            let size = symbol.size(withAttributes: mutedAttributes)
-            symbol.draw(
-                at: CGPoint(
-                    x: frame.midX - size.width / 2,
-                    y: frame.midY - size.height / 2
-                ),
-                withAttributes: mutedAttributes
-            )
+        if !hasGrid {
+            for dayIndex in 0..<7 {
+                let dayColumn = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                    ? 6 - dayIndex : dayIndex
+                let visualColumn = dayColumn + (
+                    showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
+                        ? 1 : 0
+                )
+                let symbolIndex = (dayIndex + calendar.firstWeekday - 1) % 7
+                let symbol = calendar.veryShortWeekdaySymbols[symbolIndex] as NSString
+                let frame = CGRect(
+                    x: grid.minX + CGFloat(visualColumn) * cellWidth,
+                    y: grid.minY,
+                    width: cellWidth,
+                    height: cellHeight
+                )
+                let size = symbol.size(withAttributes: mutedAttributes)
+                symbol.draw(
+                    at: CGPoint(
+                        x: frame.midX - size.width / 2,
+                        y: frame.midY - size.height / 2
+                    ),
+                    withAttributes: mutedAttributes
+                )
+            }
         }
 
-        for index in 0..<42 {
+        for index in 0..<(rows * 7) {
             guard let date = calendar.date(
                 byAdding: .day,
                 value: index,
@@ -2487,10 +2677,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
                     ? 1 : 0
             )
-            let row = index / 7 + 1
+            let row = index / 7 + (hasGrid ? 0 : 1)
             let frame = CGRect(
-                x: CGFloat(visualColumn) * cellWidth,
-                y: CGFloat(row) * cellHeight,
+                x: grid.minX + CGFloat(visualColumn) * cellWidth,
+                y: grid.minY + CGFloat(row) * cellHeight,
                 width: cellWidth,
                 height: cellHeight
             )
@@ -2527,7 +2717,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
 
         if showWeek {
-            for row in 0..<6 {
+            for row in 0..<rows {
                 guard let date = calendar.date(
                     byAdding: .day,
                     value: row * 7,
@@ -2537,8 +2727,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 let column = effectiveUserInterfaceLayoutDirection == .rightToLeft
                     ? 7 : 0
                 let frame = CGRect(
-                    x: CGFloat(column) * cellWidth,
-                    y: CGFloat(row + 1) * cellHeight,
+                    x: grid.minX + CGFloat(column) * cellWidth,
+                    y: grid.minY + CGFloat(row + (hasGrid ? 0 : 1)) * cellHeight,
                     width: cellWidth,
                     height: cellHeight
                 )
@@ -3036,5 +3226,73 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
         behavior == .bottomSheet || behavior == .slider || behavior == .sparkline
+    }
+}
+
+private final class PamCalendarSelectorController: UIViewController,
+    UIPickerViewDataSource, UIPickerViewDelegate {
+    private let values: [Int]
+    private let labels: [String]
+    private let selected: Int
+    private let onSelect: (Int) -> Void
+    private let picker = UIPickerView()
+
+    init(title: String, values: [Int], labels: [String], selected: Int,
+         onSelect: @escaping (Int) -> Void) {
+        self.values = values
+        self.labels = labels
+        self.selected = selected
+        self.onSelect = onSelect
+        super.init(nibName: nil, bundle: nil)
+        self.title = title
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        picker.dataSource = self
+        picker.delegate = self
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(picker)
+        NSLayoutConstraint.activate([
+            picker.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            picker.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            picker.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            picker.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+        ])
+        if let index = values.firstIndex(of: selected) {
+            picker.selectRow(index, inComponent: 0, animated: false)
+        }
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .cancel, target: self, action: #selector(cancel)
+        )
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .done, target: self, action: #selector(confirm)
+        )
+    }
+
+    func numberOfComponents(in pickerView: UIPickerView) -> Int { 1 }
+
+    func pickerView(_ pickerView: UIPickerView,
+                    numberOfRowsInComponent component: Int) -> Int {
+        values.count
+    }
+
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int,
+                    forComponent component: Int) -> String? {
+        labels[row]
+    }
+
+    @objc private func cancel() { dismiss(animated: true) }
+
+    @objc private func confirm() {
+        let row = picker.selectedRow(inComponent: 0)
+        if values.indices.contains(row) { onSelect(values[row]) }
+        dismiss(animated: true)
     }
 }
