@@ -593,7 +593,7 @@ final class PamMobileUiTests: XCTestCase {
         XCTAssertEqual(header.backgroundColor, UIColor(red: 34.0 / 255,
                                                        green: 51.0 / 255,
                                                        blue: 68.0 / 255, alpha: 1))
-        XCTAssertEqual(name.textColor, .white)
+        XCTAssertEqual(name.textColor, UIColor(red: 1, green: 1, blue: 1, alpha: 1))
 
         let file = PamMobileUiHost { _, _ in }
         file.update([
