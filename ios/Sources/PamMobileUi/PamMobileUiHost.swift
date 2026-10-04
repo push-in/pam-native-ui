@@ -171,6 +171,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var anchoredPortalIndex = 0
     private var anchoredPortalFrame = CGRect.zero
     private var navigationKind = 0
+    private var tabsValue: String?
+    private var tabsActivationMode = 1
     private var carouselCycle = false
     private var carouselContinuous = true
     private var carouselInterval: TimeInterval = 6
@@ -222,6 +224,29 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         fatalError("init(coder:) is unavailable")
     }
 
+    override var canBecomeFirstResponder: Bool {
+        behavior == .tabTrigger
+            && (properties["enabled"]?.pamFlag ?? true)
+            && isUserInteractionEnabled
+    }
+
+    override var keyCommands: [UIKeyCommand]? {
+        guard behavior == .tabTrigger else { return super.keyCommands }
+        let inputs = [
+            UIKeyCommand.inputLeftArrow,
+            UIKeyCommand.inputRightArrow,
+            UIKeyCommand.inputUpArrow,
+            UIKeyCommand.inputDownArrow,
+            "\u{F729}", // Home
+            "\u{F72B}", // End
+            " ",
+            "\r",
+        ]
+        return inputs.map {
+            UIKeyCommand(input: $0, modifierFlags: [], action: #selector(onTabKeyCommand(_:)))
+        }
+    }
+
     func update(_ next: [String: WireValue]) {
         let previousBehavior = behavior
         let wasControlled = isControlled
@@ -254,6 +279,17 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             fileTreeSelectedPath = nil
             tooltipCloseWorkItem?.cancel()
             tooltipCloseWorkItem = nil
+        }
+        if behavior == .tabs {
+            tabsActivationMode = min(2, max(1,
+                next["activationMode"]?.pamInteger ?? tabsActivationMode
+            ))
+            if let controlled = next["value"]?.pamText
+                ?? next["modelValue"]?.pamText {
+                tabsValue = controlled
+            } else if previousBehavior != .tabs {
+                tabsValue = next["defaultValue"]?.pamText
+            }
         }
         if behavior == .fileTree {
             let controlled = next["expandedPaths"]?.pamText
@@ -649,8 +685,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             setRangeValue(next, emitChange: true)
             emit?(.native, Data(formatted(value).utf8))
         case .tabTrigger:
-            tabsAncestor()?.selectTab(self)
-            emit?(.press, Data())
+            _ = tabsAncestor()?.selectTab(self, emitChange: true)
         case .inputSlot:
             activateInputSlot()
         case .formControl, .inputGroup:
@@ -751,29 +786,75 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         return nil
     }
 
-    private func selectTab(_ trigger: PamMobileUiHost) {
-        let target = trigger.properties["value"]?.pamText
-        let previous = tabTriggers(in: self)
-            .first(where: \.isSelectedState)?
-            .properties["value"]?
-            .pamText
-        tabTriggers(in: self).forEach { item in
-            item.isSelectedState = item.properties["value"]?.pamText == target
-            item.applyButtonToggleVisualState()
-            item.applyTabTextVisualState()
-            item.applySemantics()
-        }
-        if let target, target != previous {
-            emit?(.change, Data(target.utf8))
-        }
+    @discardableResult
+    func selectTab(_ trigger: PamMobileUiHost, emitChange: Bool) -> Bool {
+        guard behavior == .tabs,
+              properties["enabled"]?.pamFlag ?? true,
+              trigger.properties["enabled"]?.pamFlag ?? true,
+              trigger.isUserInteractionEnabled,
+              trigger.tabsAncestor() === self,
+              let target = trigger.properties["value"]?.pamText else { return false }
+        let changed = target != tabsValue
+        tabsValue = target
+        if trigger.window != nil { trigger.becomeFirstResponder() }
         setNeedsLayout()
         UIView.animate(
-            withDuration: animationsEnabled ? 0.2 : 0,
+            withDuration: changed && animationsEnabled ? 0.2 : 0,
             delay: 0,
             options: [.beginFromCurrentState, .curveEaseInOut, .allowUserInteraction]
         ) {
             self.layoutTabs()
         }
+        if changed {
+            UIAccessibility.post(notification: .layoutChanged, argument: trigger)
+            if trigger.window != nil { UISelectionFeedbackGenerator().selectionChanged() }
+        }
+        if emitChange { emit?(.change, Data(target.utf8)) }
+        return true
+    }
+
+    @discardableResult
+    func moveTabFocus(from trigger: PamMobileUiHost, direction: Int) -> Bool {
+        guard behavior == .tabs,
+              properties["enabled"]?.pamFlag ?? true else { return false }
+        let triggers = tabTriggers(in: self).filter {
+            ($0.properties["enabled"]?.pamFlag ?? true) && $0.isUserInteractionEnabled
+        }
+        guard !triggers.isEmpty,
+              let current = triggers.firstIndex(of: trigger) else { return false }
+        let nextIndex: Int
+        switch direction {
+        case Int.min: nextIndex = 0
+        case Int.max: nextIndex = triggers.count - 1
+        default: nextIndex = (current + direction % triggers.count + triggers.count) % triggers.count
+        }
+        let next = triggers[nextIndex]
+        if next.window != nil { next.becomeFirstResponder() }
+        if tabsActivationMode == 1 {
+            _ = selectTab(next, emitChange: next.properties["value"]?.pamText != tabsValue)
+        }
+        return true
+    }
+
+    @objc private func onTabKeyCommand(_ command: UIKeyCommand) {
+        guard behavior == .tabTrigger,
+              let tabs = tabsAncestor(),
+              let input = command.input else { return }
+        let horizontal = tabs.orientation == 1
+        let direction: Int
+        switch input {
+        case UIKeyCommand.inputLeftArrow where horizontal: direction = -1
+        case UIKeyCommand.inputRightArrow where horizontal: direction = 1
+        case UIKeyCommand.inputUpArrow where !horizontal: direction = -1
+        case UIKeyCommand.inputDownArrow where !horizontal: direction = 1
+        case "\u{F729}": direction = Int.min
+        case "\u{F72B}": direction = Int.max
+        case " ", "\r":
+            _ = tabs.selectTab(self, emitChange: true)
+            return
+        default: return
+        }
+        _ = tabs.moveTabFocus(from: self, direction: direction)
     }
 
     private func scheduleCarousel() {
@@ -789,7 +870,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             let current = triggers.firstIndex(where: { $0.isSelectedState }) ?? 0
             let next = current + 1
             guard next < triggers.count || self.carouselContinuous else { return }
-            self.selectTab(triggers[next % triggers.count])
+            self.selectTab(triggers[next % triggers.count], emitChange: true)
             self.scheduleCarousel()
         }
         carouselWorkItem = workItem
@@ -820,7 +901,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             target = min(triggers.count - 1, max(0, requested))
         }
         guard target != current else { return }
-        selectTab(triggers[target])
+        selectTab(triggers[target], emitChange: true)
         scheduleCarousel()
     }
 
@@ -1397,33 +1478,42 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func layoutTabs() {
         let triggers = tabTriggers(in: self)
-        let controlled = properties["value"]?.pamText
-            ?? properties["modelValue"]?.pamText
-        let selectedTrigger = triggers.first(where: { $0.isSelectedState })
-            ?? triggers.first(where: {
-                $0.properties["value"]?.pamText == controlled
-            })
-            ?? triggers.first
-        let selected = selectedTrigger?.properties["value"]?.pamText
-            ?? controlled
+        let selectedTrigger = tabsValue.flatMap { value in
+            triggers.first { $0.properties["value"]?.pamText == value }
+        }
+        for trigger in triggers {
+            let selected = trigger === selectedTrigger
+            if trigger.isSelectedState != selected {
+                trigger.isSelectedState = selected
+                trigger.applyButtonToggleVisualState()
+                trigger.applyTabTextVisualState()
+                trigger.applySemantics()
+            }
+        }
         if navigationKind == 1 {
             triggers.forEach { trigger in
-                let visible = selected == nil
-                    || trigger.properties["value"]?.pamText == selected
+                let visible = trigger === selectedTrigger
                 trigger.isHidden = !visible
                 trigger.accessibilityElementsHidden = !visible
             }
         }
-        descendants(prefix: "pam:tabs-content").forEach { child in
-            let value = child.accessibilityIdentifier?.split(separator: ":").last.map(String.init)
-            let visible = selected == nil || value == selected
+        descendants(prefix: "pam:tabs-content:").forEach { child in
+            let value = child.accessibilityIdentifier.map {
+                String($0.dropFirst("pam:tabs-content:".count))
+            }
+            let visible = value == tabsValue
             child.isHidden = !visible
             child.accessibilityElementsHidden = !visible
+        }
+        descendants(prefix: "pam:tabs-content-force:").forEach { child in
+            child.isHidden = false
+            child.accessibilityElementsHidden = false
         }
         guard
             let trigger = selectedTrigger,
             let indicator = descendant(tag: "pam:tabs-indicator")
         else {
+            descendant(tag: "pam:tabs-indicator")?.isHidden = true
             return
         }
         let triggerFrame = trigger.convert(trigger.bounds, to: self)
