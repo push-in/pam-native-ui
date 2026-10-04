@@ -548,6 +548,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutTabs()
         case .tableRow:
             layoutTableRow()
+        case .table:
+            applyTableHeaderSemantics()
         case .chipGroup:
             layoutChipGroup()
         case .listItem:
@@ -614,7 +616,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override func accessibilityIncrement() {
-        if behavior == .sparkline, properties["interactive"]?.pamFlag == true {
+        if behavior == .sparkline, properties["interactive"]?.pamFlag == true,
+           properties["enabled"]?.pamFlag ?? true {
             selectSparklineIndex(sparklineSelectedIndex + 1, emitChange: true)
             return
         }
@@ -629,7 +632,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override func accessibilityDecrement() {
-        if behavior == .sparkline, properties["interactive"]?.pamFlag == true {
+        if behavior == .sparkline, properties["interactive"]?.pamFlag == true,
+           properties["enabled"]?.pamFlag ?? true {
             selectSparklineIndex(sparklineSelectedIndex - 1, emitChange: true)
             return
         }
@@ -1541,6 +1545,28 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    private func applyTableHeaderSemantics() {
+        guard behavior == .table else { return }
+        for row in descendants(prefix: "pam:table-row") {
+            let tag = row.accessibilityIdentifier
+            guard tag == "pam:table-row" || tag == "pam:table-row:header" else {
+                continue
+            }
+            let heading = tag == "pam:table-row:header"
+            func update(_ view: UIView) {
+                if let label = view as? UILabel {
+                    if heading {
+                        label.accessibilityTraits.insert(.header)
+                    } else {
+                        label.accessibilityTraits.remove(.header)
+                    }
+                }
+                view.subviews.forEach(update)
+            }
+            update(row)
+        }
+    }
+
     private func layoutListItem() {
         let visible = subviews.filter { !$0.isHidden }
         guard !visible.isEmpty else { return }
@@ -1663,6 +1689,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             guard let path = item.properties["path"]?.pamText else { continue }
             item.isSelectedState = path == fileTreeSelectedPath
             item.applySemantics()
+            let header = item.descendant(tag: "pam:file-tree-header") ?? item
+            header.backgroundColor = item.isSelectedState
+                ? item.selectedContainerColor : .clear
+            item.setTextColor(
+                in: header,
+                color: item.isSelectedState
+                    ? item.selectedForegroundColor : item.stateLayerColor
+            )
+            if item.accessibilityLabel?.isEmpty ?? true {
+                let name = item.descendant(tag: "pam:file-tree-name") ?? header
+                item.accessibilityLabel = item.findFirstText(in: name)
+                    ?? path.split(separator: "/").last.map(String.init)
+                    ?? (item.behavior == .fileTreeFolder ? "Folder" : "File")
+            }
             if item.behavior == .fileTreeFolder {
                 let expanded = fileTreeExpandedPaths.contains(path)
                 item.accessibilityValue = expanded ? "Expanded" : "Collapsed"

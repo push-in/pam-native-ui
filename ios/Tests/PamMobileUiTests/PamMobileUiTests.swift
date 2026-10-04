@@ -565,6 +565,113 @@ final class PamMobileUiTests: XCTestCase {
         tree.releaseCallbacks()
     }
 
+    func testFileTreeSelectionAppliesAuthoredColorsAndNativeNames() {
+        let tree = PamMobileUiHost { _, _ in }
+        tree.update(["behavior": .integer(32)])
+        let folder = PamMobileUiHost { _, _ in }
+        folder.update([
+            "behavior": .integer(33),
+            "path": .text("docs"),
+            "foregroundColor": .integer(Int64(0xFF102030)),
+            "selectedForegroundColor": .integer(Int64(0xFFFFFFFF)),
+            "selectedContainerColor": .integer(Int64(0xFF223344)),
+        ])
+        let header = UIView()
+        header.accessibilityIdentifier = "pam:file-tree-header"
+        let name = UILabel()
+        name.text = "Documents"
+        name.accessibilityIdentifier = "pam:file-tree-name"
+        header.addSubview(name)
+        folder.addSubview(header)
+        tree.addSubview(folder)
+        tree.layoutIfNeeded()
+
+        XCTAssertEqual(folder.accessibilityLabel, "Documents")
+        XCTAssertEqual(name.textColor, UIColor(red: 16.0 / 255, green: 32.0 / 255,
+                                               blue: 48.0 / 255, alpha: 1))
+        tree.activateFileTreeItem(folder)
+        XCTAssertEqual(header.backgroundColor, UIColor(red: 34.0 / 255,
+                                                       green: 51.0 / 255,
+                                                       blue: 68.0 / 255, alpha: 1))
+        XCTAssertEqual(name.textColor, .white)
+
+        let file = PamMobileUiHost { _, _ in }
+        file.update([
+            "behavior": .integer(34),
+            "path": .text("docs/guide.md"),
+            "selectedContainerColor": .integer(Int64(0xFF223344)),
+        ])
+        let fileName = UILabel()
+        fileName.text = "Guide"
+        file.addSubview(fileName)
+        tree.addSubview(file)
+        tree.activateFileTreeItem(file)
+        XCTAssertEqual(file.accessibilityLabel, "Guide")
+        XCTAssertEqual(header.backgroundColor, .clear)
+        XCTAssertEqual(file.backgroundColor, UIColor(red: 34.0 / 255,
+                                                     green: 51.0 / 255,
+                                                     blue: 68.0 / 255, alpha: 1))
+        file.releaseCallbacks()
+        folder.releaseCallbacks()
+        tree.releaseCallbacks()
+    }
+
+    func testTableHeaderCellsExposeHeadingSemantics() {
+        let table = PamMobileUiHost { _, _ in }
+        table.update(["behavior": .integer(30)])
+        let headerRow = UIView()
+        headerRow.accessibilityIdentifier = "pam:table-row:header"
+        let headerCell = UILabel()
+        headerCell.text = "Name"
+        headerRow.addSubview(headerCell)
+        let bodyRow = UIView()
+        bodyRow.accessibilityIdentifier = "pam:table-row"
+        let bodyCell = UILabel()
+        bodyCell.text = "PAM Native"
+        bodyRow.addSubview(bodyCell)
+        table.addSubview(headerRow)
+        table.addSubview(bodyRow)
+        table.layoutIfNeeded()
+
+        XCTAssertTrue(headerCell.accessibilityTraits.contains(.header))
+        XCTAssertFalse(bodyCell.accessibilityTraits.contains(.header))
+        headerRow.accessibilityIdentifier = "pam:table-row"
+        table.setNeedsLayout()
+        table.layoutIfNeeded()
+        XCTAssertFalse(headerCell.accessibilityTraits.contains(.header))
+        table.releaseCallbacks()
+    }
+
+    func testDisabledSparklineRejectsVoiceOverAdjustment() {
+        var changes: [Data] = []
+        let chart = PamMobileUiHost { kind, payload in
+            if kind == .change { changes.append(payload) }
+        }
+        chart.update([
+            "behavior": .integer(35),
+            "interactive": .flag(true),
+            "enabled": .flag(false),
+            "values": .text("2,4,6"),
+        ])
+        chart.accessibilityIncrement()
+        chart.accessibilityDecrement()
+        XCTAssertTrue(changes.isEmpty)
+        XCTAssertTrue(chart.accessibilityTraits.contains(.notEnabled))
+
+        chart.update([
+            "behavior": .integer(35),
+            "interactive": .flag(true),
+            "enabled": .flag(true),
+            "values": .text("2,4,6"),
+        ])
+        chart.accessibilityIncrement()
+        XCTAssertEqual(changes.count, 1)
+        let event = try? JSONSerialization.jsonObject(with: changes[0]) as? [String: Any]
+        XCTAssertEqual(event?["index"] as? Int, 0)
+        XCTAssertEqual(event?["value"] as? Double, 2)
+        chart.releaseCallbacks()
+    }
+
     func testTooltipRespectsConfiguredLongPressDelay() {
         let tooltip = PamMobileUiHost { _, _ in }
         tooltip.update([
