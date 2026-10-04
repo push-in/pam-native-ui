@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.9
 
 - Add typed PHP constructors for common Material components while preserving
   the raw property escape hatch.
@@ -9,11 +9,8 @@
   actions, slider labels and tick styling, tooltip timing, and native property
   aliases with the Android host.
 - Add UIKit interaction tests for the newly aligned behaviors.
-
-## 1.0.9
-
 - Expand the premium native catalog to 114 public components across 92
-  modules, with complete Android/iOS, accessibility, style and render gates.
+  modules, with Android, iOS, accessibility, style and render gate coverage.
 - Redesign the showcase as a polished five-destination product and component
   studio with direct canvas presentation, responsive spacing and native PAM
   navigation.
