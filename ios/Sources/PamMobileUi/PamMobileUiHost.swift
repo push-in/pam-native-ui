@@ -654,7 +654,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .inputSlot:
             activateInputSlot()
         case .formControl, .inputGroup:
-            _ = focusInputFromLabel(at: point)
+            guard focusInputFromLabel(at: point) else { return }
             emit?(.press, Data())
         case .menuItem:
             activateMenuItem()
@@ -921,7 +921,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
         guard let label,
               convert(label.bounds, from: label).contains(point) else { return false }
-        return field.becomeFirstResponder()
+        _ = field.becomeFirstResponder()
+        return true
     }
 
     func activateMenuItem() {
