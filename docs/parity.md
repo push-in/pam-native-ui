@@ -68,6 +68,14 @@ A module reaches status `3` (`verified`) only when all applicable gates pass:
 - cold start, mount, update, event and frame-time benchmark evidence.
 
 The iOS gate currently remains `2` (`implemented`) in the checked-in manifest.
+The tagged UI release workflow now reads that manifest before starting platform
+builds and stops unless the iOS gate is `3` for all 92 modules. Its PHP release
+checks also run without the CI override used by PR verification. A passing iOS
+simulator suite produces candidate behavior evidence only; it does not mark the
+manifest verified. Physical Android and iOS interaction, visual review and
+frame-time evidence must be collected and reviewed separately for the relevant
+public `p-*` tags before their modules can be promoted. The checked-in Android
+physical audit currently approves 5 of 114 tags; the remainder are candidates.
 `python3 tools/ios-parity-report.py` validates the 92 module IDs and 114 public
 tags against the generated PHP map, verifies that linked UIKit test names still
 exist, and prints a per-module inventory. The existing iOS CI simulator job

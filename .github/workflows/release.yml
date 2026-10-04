@@ -22,12 +22,26 @@ env:
   PAM_NATIVE_COMMIT: 9468f8e3a6f20d77c0384d463494560792f09843
 
 jobs:
+  release-parity:
+    name: Require verified iOS Material parity
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - name: Check the checked-in Material release gate
+        run: |
+          python3 -m unittest tools/test-ios-release-parity.py
+          python3 tools/check-ios-release-parity.py
+
   ecosystem-compatibility:
     name: Certify the complete PAM Native ecosystem
+    needs: release-parity
     uses: push-in/pam/.github/workflows/ecosystem-compatibility.yml@main
 
   android-minimum:
     name: Android / PAM Native minimum
+    needs: release-parity
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -59,6 +73,7 @@ jobs:
 
   ios-minimum:
     name: iOS / PAM Native minimum
+    needs: release-parity
     runs-on: macos-15
     timeout-minutes: 25
     steps:
@@ -213,7 +228,6 @@ jobs:
       - name: Resolve and verify dependency graph
         env:
           PAM_NATIVE_ROOT: ${{ github.workspace }}/vendor/pushinbr/pam-native
-          PAM_CI_VERIFIED_GATES: ios
         run: |
           arguments=(--no-interaction --no-progress --prefer-dist)
           if [[ '${{ matrix.graph }}' == lowest ]]; then
@@ -269,7 +283,6 @@ jobs:
       - name: Validate release version and package
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-          PAM_CI_VERIFIED_GATES: ios
         run: |
           tools/distribution-package.sh validate-tag "${RELEASE_TAG}"
           composer install \
