@@ -16,9 +16,9 @@ developers:
         <p-text-field
             value="{{ $email }}"
             keyboardType="email"
-            on:change="setEmail"
+            @change="setEmail"
         />
-        <p-btn on:press="submit"><Text>Continue</Text></p-btn>
+        <p-btn @press="submit"><Text>Continue</Text></p-btn>
     </VStack>
 </SafeAreaView>
 ```

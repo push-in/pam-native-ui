@@ -1,6 +1,6 @@
 <AppScreen title="Component audit" subtitle="Complete native Material coverage">
     <template #actions>
-        <p-icon-btn class="w-12 h-12 rounded-full text-primary" color="primary" variant="text" on:press="back" accessibilityLabel="Open component navigation">
+        <p-icon-btn class="w-12 h-12 rounded-full text-primary" color="primary" variant="text" @press="back" accessibilityLabel="Open component navigation">
             <p-icon icon="menu" color="primary" />
         </p-icon-btn>
     </template>
@@ -206,19 +206,19 @@
             <p-rating value="4" maximum="5" />
         </Row>
         <p-btn-toggle value="{{ $selection }}">
-            <p-btn value="native" on:press="selectNative"><Text>Native</Text></p-btn>
-            <p-btn value="typed" on:press="selectTyped"><Text>Typed</Text></p-btn>
+            <p-btn value="native" @press="selectNative"><Text>Native</Text></p-btn>
+            <p-btn value="typed" @press="selectTyped"><Text>Typed</Text></p-btn>
         </p-btn-toggle>
         <Column class="gap-3">
             <Column class="gap-3">
-                <p-checkbox checked="{{ $checked }}" on:change="toggle">
+                <p-checkbox checked="{{ $checked }}" @change="toggle">
                     <Text>Checkbox</Text>
                 </p-checkbox>
                 <p-radio-group value="{{ $selection }}">
                     <p-radio value="native"><Text>Android and iOS</Text></p-radio>
                     <p-radio value="typed"><Text>Typed protocol</Text></p-radio>
                 </p-radio-group>
-                <p-switch checked="{{ $checked }}" on:change="toggle">
+                <p-switch checked="{{ $checked }}" @change="toggle">
                     <Text>Motion and haptics</Text>
                 </p-switch>
             </Column>
@@ -279,7 +279,7 @@
         <p-progress-linear value="{{ $range }}" />
         <Row class="items-center gap-4">
             <p-progress-circular value="{{ $range }}" size="lg" />
-            <p-slider value="{{ $range }}" on:change="changeRange" class="flex-1" />
+            <p-slider value="{{ $range }}" @change="changeRange" class="flex-1" />
         </Row>
         <p-range-slider value="28" maximumValue="{{ $range }}" />
         <p-skeleton-loader class="h-24 rounded-2xl" />
@@ -518,8 +518,8 @@
     <Column class="gap-3">
         <Text size="lg">Overlays</Text>
         <Row class="gap-2">
-            <p-btn on:press="openDialog"><Text>Dialog</Text></p-btn>
-            <p-btn variant="outline" on:press="openSheet"><Text>Bottom sheet</Text></p-btn>
+            <p-btn @press="openDialog"><Text>Dialog</Text></p-btn>
+            <p-btn variant="outline" @press="openSheet"><Text>Bottom sheet</Text></p-btn>
             <p-tooltip text="Native tooltip"><p-icon-btn><p-icon icon="info" /></p-icon-btn></p-tooltip>
         </Row>
         <p-menu>
@@ -534,16 +534,16 @@
         <p-snackbar open="true"><Text>Native snackbar with live-region semantics.</Text></p-snackbar>
     </Column>
 
-    <p-dialog open="{{ $dialogOpen }}" on:event="closeDialog">
+    <p-dialog open="{{ $dialogOpen }}" @event="closeDialog">
         <Text>Production dialog</Text>
         <Text>Focus trapping, Back, scrim and motion are platform-owned.</Text>
-        <p-card-actions><p-btn on:press="closeDialog"><Text>Close</Text></p-btn></p-card-actions>
+        <p-card-actions><p-btn @press="closeDialog"><Text>Close</Text></p-btn></p-card-actions>
     </p-dialog>
 
-    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" on:requestClose="closeSheet">
+    <p-bottom-sheet open="{{ $sheetOpen }}" snapPoints="35,65" snapToIndex="1" @requestClose="closeSheet">
         <p-list-item><Text>Inspect component</Text></p-list-item>
         <p-list-item><Text>View accessibility</Text></p-list-item>
-        <p-list-item on:press="closeSheet"><Text>Close</Text></p-list-item>
+        <p-list-item @press="closeSheet"><Text>Close</Text></p-list-item>
     </p-bottom-sheet>
 
     <Column class="gap-3">

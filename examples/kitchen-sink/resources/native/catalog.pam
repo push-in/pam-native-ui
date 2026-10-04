@@ -44,14 +44,14 @@
                         <Text size="sm">Motion and haptics</Text>
                         <Text class="ui-text-muted">Platform-aware feedback</Text>
                     </Column>
-                    <p-switch checked="{{ $checked }}" on:change="toggle" />
+                    <p-switch checked="{{ $checked }}" @change="toggle" />
                 </Row>
                 <p-progress-linear value="{{ $progress }}" />
                 <Row class="gap-2">
-                    <p-btn class="flex-1" on:press="toggleModal">
+                    <p-btn class="flex-1" @press="toggleModal">
                         <Text>Open modal</Text>
                     </p-btn>
-                    <p-btn class="flex-1" variant="outline" on:press="toggleSheet">
+                    <p-btn class="flex-1" variant="outline" @press="toggleSheet">
                         <Text>Open sheet</Text>
                     </p-btn>
                 </Row>
@@ -90,20 +90,20 @@
         </Column>
     </p-alert>
 
-    <p-btn on:press="openComponents" class="w-full">
+    <p-btn @press="openComponents" class="w-full">
         <p-icon icon="widgets" />
         <Text>Explore all native components</Text>
     </p-btn>
 
-    <p-dialog open="{{ $modalOpen }}" on:event="closeModal">
+    <p-dialog open="{{ $modalOpen }}" @event="closeModal">
         <Column class="gap-4">
             <Row class="items-center justify-between">
                 <Text size="lg">Native by default</Text>
-                <p-icon-btn on:press="closeModal"><p-icon icon="close" /></p-icon-btn>
+                <p-icon-btn @press="closeModal"><p-icon icon="close" /></p-icon-btn>
             </Row>
             <Text>Focus, Back and accessibility remain owned by the platform.</Text>
             <p-card-actions>
-                <p-btn on:press="closeModal"><Text>Got it</Text></p-btn>
+                <p-btn @press="closeModal"><Text>Got it</Text></p-btn>
             </p-card-actions>
         </Column>
     </p-dialog>
@@ -112,11 +112,11 @@
         open="{{ $sheetOpen }}"
         snapPoints="30,55"
         snapToIndex="1"
-        on:event="closeSheet"
+        @event="closeSheet"
     >
         <p-divider />
-        <p-list-item on:press="closeSheet"><Text>Inspect tree</Text></p-list-item>
-        <p-list-item on:press="closeSheet"><Text>View metrics</Text></p-list-item>
-        <p-list-item on:press="closeSheet"><Text>Close</Text></p-list-item>
+        <p-list-item @press="closeSheet"><Text>Inspect tree</Text></p-list-item>
+        <p-list-item @press="closeSheet"><Text>View metrics</Text></p-list-item>
+        <p-list-item @press="closeSheet"><Text>Close</Text></p-list-item>
     </p-bottom-sheet>
 </AppScreen>

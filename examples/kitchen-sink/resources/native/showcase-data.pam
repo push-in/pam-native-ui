@@ -1,5 +1,5 @@
 <AppScreen title="Data" subtitle="Lists, tables and visualization">
-    <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
+    <template #actions><p-btn variant="text" @press="openDrawer"><Text>Menu</Text></p-btn></template>
     <Column class="gap-6">
 
     <Row class="items-center gap-3">
