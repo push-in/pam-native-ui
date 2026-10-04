@@ -68,6 +68,15 @@ A module reaches status `3` (`verified`) only when all applicable gates pass:
 - cold start, mount, update, event and frame-time benchmark evidence.
 
 The iOS gate currently remains `2` (`implemented`) in the checked-in manifest.
+`python3 tools/ios-parity-report.py` validates the 92 module IDs and 114 public
+tags against the generated PHP map, verifies that linked UIKit test names still
+exist, and prints a per-module inventory. The existing iOS CI simulator job
+publishes that inventory after its XCTest run. Linked tests identify specific
+behaviors exercised by the suite; an unlinked module shows the next test gap.
+The report does not promote a status or certify visual, interaction,
+accessibility, theme, or performance parity. The captured 115 native component
+IDs are a separate inventory from the 114 public PAM Material tags and must not
+be treated as a one-to-one mapping.
 The UIKit suite checks every native behavior and now checks component IDs,
 button/FAB hit targets, select-item semantics, calendar selection payloads,
 disabled date bounds, date-picker configuration, menu selection, file-tree
