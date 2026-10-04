@@ -1,6 +1,6 @@
 <AppScreen title="PAM Native UI" subtitle="A native design system for PHP">
     <template #actions>
-        <Pressable class="w-12 h-12 rounded-full items-center justify-center" on:press="openDrawer" accessibilityRole="button" accessibilityLabel="Open component navigation">
+        <Pressable class="w-12 h-12 rounded-full items-center justify-center" @press="openDrawer" accessibilityRole="button" accessibilityLabel="Open component navigation">
             <p-icon icon="menu" color="primary" />
         </Pressable>
     </template>
@@ -37,7 +37,7 @@
                 </Column>
             </Row>
 
-            <p-btn block="true" on:press="goAll">
+            <p-btn block="true" @press="goAll">
                 <p-icon icon="settings" />
                 <Text>Browse all components</Text>
             </p-btn>
@@ -51,7 +51,7 @@
         </Column>
 
         <p-list>
-            <p-list-item lines="two" on:press="goActions">
+            <p-list-item lines="two" @press="goActions">
                 <p-icon icon="play" color="primary" />
                 <Column>
                     <Text size="base" class="font-medium">Actions</Text>
@@ -60,7 +60,7 @@
                 <p-icon icon="chevron-right" />
             </p-list-item>
             <p-divider />
-            <p-list-item lines="two" on:press="goForms">
+            <p-list-item lines="two" @press="goForms">
                 <p-icon icon="edit" color="secondary" />
                 <Column>
                     <Text size="base" class="font-medium">Forms</Text>
@@ -69,7 +69,7 @@
                 <p-icon icon="chevron-right" />
             </p-list-item>
             <p-divider />
-            <p-list-item lines="two" on:press="goData">
+            <p-list-item lines="two" @press="goData">
                 <p-icon icon="calendar-days" color="info" />
                 <Column>
                     <Text size="base" class="font-medium">Data</Text>
@@ -78,7 +78,7 @@
                 <p-icon icon="chevron-right" />
             </p-list-item>
             <p-divider />
-            <p-list-item lines="two" on:press="goOverlays">
+            <p-list-item lines="two" @press="goOverlays">
                 <p-icon icon="copy" color="warning" />
                 <Column>
                     <Text size="base" class="font-medium">Overlays</Text>

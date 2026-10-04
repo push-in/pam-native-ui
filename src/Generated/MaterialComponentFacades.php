@@ -59,6 +59,22 @@ final class PBottomSheet extends UiComponent
 final class PBtn extends UiComponent
 {
     protected const string COMPONENT = 'PBtn';
+
+    public static function labeled(
+        string $text,
+        ?\Pam\MobileUi\Enum\MaterialVariant $variant = null,
+        ?\Pam\MobileUi\Enum\ComponentSize $size = null,
+    ): static {
+        $props = ['text' => $text];
+        if ($variant !== null) {
+            $props['variant'] = $variant;
+        }
+        if ($size !== null) {
+            $props['size'] = $size;
+        }
+
+        return self::make($props);
+    }
 }
 
 final class PBtnGroup extends UiComponent
@@ -104,6 +120,11 @@ final class PCarouselItem extends UiComponent
 final class PCheckbox extends UiComponent
 {
     protected const string COMPONENT = 'PCheckbox';
+
+    public static function control(bool $checked = false, string $label = ''): static
+    {
+        return self::make(['checked' => $checked, 'label' => $label]);
+    }
 }
 
 final class PChip extends UiComponent
@@ -389,6 +410,18 @@ final class PTab extends UiComponent
 final class PTextField extends UiComponent
 {
     protected const string COMPONENT = 'PTextField';
+
+    public static function input(
+        string $value = '',
+        string $label = '',
+        bool $disabled = false,
+    ): static {
+        return self::make([
+            'value' => $value,
+            'label' => $label,
+            'disabled' => $disabled,
+        ]);
+    }
 }
 
 final class PTextarea extends UiComponent

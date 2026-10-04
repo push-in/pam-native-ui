@@ -1,6 +1,6 @@
 <AppScreen title="Components" subtitle="84 native Material components">
     <template #actions>
-        <p-icon-btn class="w-12 h-12 rounded-full text-primary" color="primary" variant="text" on:press="back" accessibilityLabel="Open component navigation">
+        <p-icon-btn class="w-12 h-12 rounded-full text-primary" color="primary" variant="text" @press="back" accessibilityLabel="Open component navigation">
             <p-icon icon="menu" color="primary" />
         </p-icon-btn>
     </template>
@@ -9,7 +9,7 @@
         <p-chip variant="tonal"><Text>Android + UIKit</Text></p-chip>
         <Text size="2xl">Built to feel native.</Text>
         <Text size="md" class="ui-text-muted">Browse every component from the navigation menu. Each route includes focused variations, states and real interactions.</Text>
-        <p-btn on:press="back" class="w-full">
+        <p-btn @press="back" class="w-full">
             <p-icon icon="widgets" />
             <Text>Open all components</Text>
         </p-btn>
@@ -23,15 +23,15 @@
     </Column>
 
     <p-list>
-        <p-list-item on:press="back"><p-icon icon="play" /><Column class="flex-1 gap-1"><Text>Actions and identity</Text><Text class="ui-text-muted">Buttons, chips, icons, avatars and ratings</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="check-circle" /><Column class="flex-1 gap-1"><Text>Selection controls</Text><Text class="ui-text-muted">Checkboxes, radios, switches and sliders</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="edit" /><Column class="flex-1 gap-1"><Text>Forms and inputs</Text><Text class="ui-text-muted">Fields, autocomplete, combobox and validation</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="calendar-days" /><Column class="flex-1 gap-1"><Text>Pickers and editing</Text><Text class="ui-text-muted">Date, time, calendar and color controls</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="repeat" /><Column class="flex-1 gap-1"><Text>Data display</Text><Text class="ui-text-muted">Lists, tables, trees and timelines</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="favourite" /><Column class="flex-1 gap-1"><Text>Media and motion</Text><Text class="ui-text-muted">Images, skeletons and visualization</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="bell" /><Column class="flex-1 gap-1"><Text>Feedback and overlays</Text><Text class="ui-text-muted">Alerts, dialogs, sheets and progress</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="arrow-right" /><Column class="flex-1 gap-1"><Text>Navigation</Text><Text class="ui-text-muted">App bars, tabs, steppers and carousels</Text></Column><p-icon icon="chevron-right" /></p-list-item>
-        <p-list-item on:press="back"><p-icon icon="settings" /><Column class="flex-1 gap-1"><Text>Layout and content</Text><Text class="ui-text-muted">Surfaces, dividers and composition primitives</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="play" /><Column class="flex-1 gap-1"><Text>Actions and identity</Text><Text class="ui-text-muted">Buttons, chips, icons, avatars and ratings</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="check-circle" /><Column class="flex-1 gap-1"><Text>Selection controls</Text><Text class="ui-text-muted">Checkboxes, radios, switches and sliders</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="edit" /><Column class="flex-1 gap-1"><Text>Forms and inputs</Text><Text class="ui-text-muted">Fields, autocomplete, combobox and validation</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="calendar-days" /><Column class="flex-1 gap-1"><Text>Pickers and editing</Text><Text class="ui-text-muted">Date, time, calendar and color controls</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="repeat" /><Column class="flex-1 gap-1"><Text>Data display</Text><Text class="ui-text-muted">Lists, tables, trees and timelines</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="favourite" /><Column class="flex-1 gap-1"><Text>Media and motion</Text><Text class="ui-text-muted">Images, skeletons and visualization</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="bell" /><Column class="flex-1 gap-1"><Text>Feedback and overlays</Text><Text class="ui-text-muted">Alerts, dialogs, sheets and progress</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="arrow-right" /><Column class="flex-1 gap-1"><Text>Navigation</Text><Text class="ui-text-muted">App bars, tabs, steppers and carousels</Text></Column><p-icon icon="chevron-right" /></p-list-item>
+        <p-list-item @press="back"><p-icon icon="settings" /><Column class="flex-1 gap-1"><Text>Layout and content</Text><Text class="ui-text-muted">Surfaces, dividers and composition primitives</Text></Column><p-icon icon="chevron-right" /></p-list-item>
     </p-list>
 
     <p-alert action="success" variant="tonal">

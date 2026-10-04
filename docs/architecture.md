@@ -105,7 +105,7 @@ host. The host switches its Android axis without changing the
 public node kind and accepts one Row/Column content container. Drag, fling,
 snap/paging, deceleration, overscroll, nested scrolling, fading edges,
 persistent scrollbars and keyboard dismissal remain native. It emits the
-active-axis offset at most once per display frame and only when an `on:scroll`
+active-axis offset at most once per display frame and only when an `@scroll`
 handler exists. No gesture sample crosses PHP.
 
 `Grid` is a dedicated `pam.mobile_ui.grid` ViewGroup rather than a simulated
@@ -206,7 +206,7 @@ Compound `Input`, `Textarea` and `FormControl` keep their authored slots,
 icons, label, helper and error as ordinary PAM children around a core Android
 `EditText`. A lightweight native ancestor observes focus without replacing the
 field's core callbacks, paints focus/invalid outlines, enforces read-only state
-and performs clear/password actions locally. The root `on:change` is bound
+and performs clear/password actions locally. The root `@change` is bound
 directly to the field during PHP composition, so it has the same event path as
 an explicitly authored `InputField`.
 
@@ -255,7 +255,7 @@ public function selectTab(string $value): void
 ```
 
 Multi-field native lifecycle events such as dismiss, zoom and image navigation
-remain bounded binary maps on `on:event`. This keeps ordinary form/state code
+remain bounded binary maps on `@event`. This keeps ordinary form/state code
 simple while preserving structured detail for advanced native interactions.
 Tab trigger values are stored as scalar semantic tags on their Android views,
 so reordering or styling a tab never changes the value delivered to PHP.
@@ -268,7 +268,7 @@ wrappers, icons and arbitrary panel content remain normal PAM children while
 all transient tab motion and focus work stays on the UI thread.
 
 Compound events are routed while PHP composes the immutable tree. A single
-`on:change` on `Select`, `RadioGroup`, `CheckboxGroup`, `Accordion` or `Menu`
+`@change` on `Select`, `RadioGroup`, `CheckboxGroup`, `Accordion` or `Menu`
 is bound to the relevant descendant item, even through layout wrappers. The
 bound closure captures the authored scalar value (or computes the next
 controlled value list), so Android emits only the normal press/toggle event and

@@ -5,11 +5,15 @@ declare(strict_types=1);
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentMode;
+use Pam\MobileUi\Enum\ComponentSize;
+use Pam\MobileUi\Enum\MaterialVariant;
 use Pam\MobileUi\Enum\NativeBehavior;
 use Pam\MobileUi\Enum\Placement;
 use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Material\PAlert;
 use Pam\MobileUi\Material\PBtn;
+use Pam\MobileUi\Material\PCheckbox;
+use Pam\MobileUi\Material\PTextField;
 use Pam\MobileUi\PamUI;
 use Pam\MobileUi\Rendering\MaterialStyleResolver;
 use Pam\MobileUi\Rendering\StyleResolver;
@@ -203,6 +207,30 @@ if (
         'Semantic banners must use a readable tonal surface instead of ignoring or flooding the requested color.',
     );
 }
+$typedButton = PBtn::labeled(
+    text: 'Text action',
+    variant: MaterialVariant::Text,
+    size: ComponentSize::Small,
+)->toElement();
+$rawButton = PBtn::make([
+    'text' => 'Text action',
+    'variant' => MaterialVariant::Text,
+    'size' => ComponentSize::Small,
+])->toElement();
+if ($typedButton->properties() != $rawButton->properties()) {
+    throw new RuntimeException('Typed button factory must preserve raw facade rendering.');
+}
+$typedField = PTextField::input(value: 'Ada', label: 'Name', disabled: true);
+$rawField = PTextField::make(['value' => 'Ada', 'label' => 'Name', 'disabled' => true]);
+if ($typedField->toElement()->properties() != $rawField->toElement()->properties()) {
+    throw new RuntimeException('Typed field factory must preserve raw facade rendering.');
+}
+$typedCheckbox = PCheckbox::control(checked: true, label: 'Agree');
+$rawCheckbox = PCheckbox::make(['checked' => true, 'label' => 'Agree']);
+if ($typedCheckbox->toElement()->properties() != $rawCheckbox->toElement()->properties()) {
+    throw new RuntimeException('Typed checkbox factory must preserve raw facade rendering.');
+}
+
 $textButton = PBtn::make(
     ['variant' => 'text'],
     Text::make('Text action'),

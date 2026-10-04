@@ -453,6 +453,15 @@ foreach ($ids as $tag => $id) {
 
 $kotlin .= "\n}\n";
 
+$swiftComponents = "// Generated from resources/pam-ui-components.json.\n"
+    ."internal enum GeneratedComponents {\n";
+foreach ($ids as $tag => $id) {
+    $constant = strtoupper((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $tag));
+    $swiftComponents .= "    static let {$constant} = {$id}\n";
+}
+$swiftComponents .= "    static let allIds: [Int] = ["
+    .implode(', ', array_values($ids))."]\n}\n";
+
 $iconContents = file_get_contents($root.'/resources/icons.json');
 
 if ($iconContents === false) {
@@ -695,6 +704,7 @@ $targets = [
     $root.'/src/Generated/ComponentMap.php' => $map,
     $root.'/src/Generated/StyleRecipes.php' => $styleRecipes,
     $root.'/android/src/main/kotlin/dev/pam/mobileui/GeneratedComponents.kt' => $kotlin,
+    $root.'/ios/Sources/PamMobileUi/GeneratedComponents.swift' => $swiftComponents,
     $root.'/android/src/main/kotlin/dev/pam/mobileui/GeneratedIcons.kt' => $kotlinIcons,
     $root.'/ios/Sources/PamMobileUi/GeneratedIcons.swift' => $swiftIcons,
     $root.'/resources/parity.json' => $parity,

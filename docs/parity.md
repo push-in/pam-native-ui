@@ -67,6 +67,15 @@ A module reaches status `3` (`verified`) only when all applicable gates pass:
 - Android unit/instrumentation and iOS package/application tests;
 - cold start, mount, update, event and frame-time benchmark evidence.
 
+The iOS gate currently remains `2` (`implemented`) in the checked-in manifest.
+The UIKit suite checks every native behavior and now checks component IDs,
+button/FAB hit targets, select-item semantics, calendar selection payloads,
+disabled date bounds, date-picker configuration, menu selection, file-tree
+expansion, input slot actions and native property aliases on a simulator. A passing
+simulator run certifies those cases; it does not by itself promote every module
+to verified. Each remaining interaction and visual case needs corresponding
+Android and iOS evidence before its manifest status changes.
+
 Alpha upstream components remain labeled `alpha` but are not excluded from PAM
 parity.
 

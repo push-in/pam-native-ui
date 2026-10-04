@@ -89,6 +89,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private var emit: EventEmitter?
     private var behavior = PamMobileBehavior.container
+    private var component = 0
     private var properties: [String: WireValue] = [:]
     private var isOpen = true
     private var isControlled = false
@@ -119,6 +120,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var sheetSearchable = false
     private var sheetAllowCustomValue = false
     private var sheetSearchPlaceholder = "Search options"
+    private var calendarMode = 1
+    private var calendarSelectedDates: Set<String> = []
+    private var calendarRangeFrom: String?
+    private var calendarRangeTo: String?
     private weak var sheetSearchField: UITextField?
     private weak var sheetCustomAction: UIButton?
     private weak var sheetEmptyState: UILabel?
@@ -129,11 +134,23 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var switchThumbColor = UIColor.secondaryLabel
     private var switchActiveThumbColor = UIColor.white
     private var selectedForegroundColor = UIColor.white
+    private var selectedContainerColor = UIColor.tintColor
+    private var sliderActiveTickColor = UIColor.white
+    private var sliderInactiveTickColor = UIColor.secondaryLabel
+    private var sliderTickLabelColor = UIColor.secondaryLabel
+    private var sliderThumbLabelTextColor = UIColor.white
+    private var sliderTickSize: CGFloat = 4
+    private var sliderStopIndicatorSize: CGFloat = 0
+    private var sliderTickLabels: [String] = []
+    private var fileTreeExpandedPaths: Set<String> = []
+    private var fileTreeSelectedPath: String?
+    private var fileTreeInitialized = false
     private var pressAnimator: UIViewPropertyAnimator?
     private var shimmerLayer: CAGradientLayer?
     private var progressTrackLayer: CAShapeLayer?
     private var progressFillLayer: CAShapeLayer?
     private var toastDismissWorkItem: DispatchWorkItem?
+    private var tooltipCloseWorkItem: DispatchWorkItem?
     private var toastScheduleSignature: String?
     private var toastAnnouncementSignature: String?
     private weak var anchoredPortalParent: UIView?
@@ -200,8 +217,32 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         behavior = PamMobileBehavior(
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
+        component = next["component"]?.pamInteger ?? 0
+        if behavior == .tooltip {
+            let delay = max(500, next["openDelay"]?.pamInteger ?? 500)
+            gestureRecognizers?
+                .compactMap { $0 as? UILongPressGestureRecognizer }
+                .filter { $0.minimumPressDuration > 0 }
+                .forEach { $0.minimumPressDuration = TimeInterval(delay) / 1_000 }
+        }
         if previousBehavior != behavior {
             openDefaultInitialized = false
+            fileTreeInitialized = false
+            fileTreeExpandedPaths.removeAll()
+            fileTreeSelectedPath = nil
+            tooltipCloseWorkItem?.cancel()
+            tooltipCloseWorkItem = nil
+        }
+        if behavior == .fileTree {
+            let controlled = next["expandedPaths"]?.pamText
+            if let paths = controlled ?? (!fileTreeInitialized
+                ? next["defaultExpandedPaths"]?.pamText : nil) {
+                fileTreeExpandedPaths = Set(paths.split(separator: "\n").map(String.init))
+                fileTreeInitialized = true
+            }
+            if let selected = next["selectedPath"]?.pamText {
+                fileTreeSelectedPath = selected
+            }
         }
         isControlled = next["open"] != nil || next["isOpen"] != nil
         if isControlled {
@@ -216,10 +257,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         } else if previousBehavior != behavior {
             isOpen = !(behavior == .popover || behavior == .menu || behavior == .tooltip)
         }
+        let defaultChecked = behavior == .switchControl
+            ? (next["value"]?.pamFlag ?? next["defaultValue"]?.pamFlag ?? isChecked)
+            : (next["defaultIsChecked"]?.pamFlag ?? isChecked)
         isChecked = next["checked"]?.pamFlag
             ?? next["isChecked"]?.pamFlag
             ?? next["modelValue"]?.pamFlag
-            ?? isChecked
+            ?? defaultChecked
         isSelectedState = next["selected"]?.pamFlag
             ?? next["isSelected"]?.pamFlag
             ?? isSelectedState
@@ -227,8 +271,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         isExpanded = next["expanded"]?.pamFlag
             ?? next["isExpanded"]?.pamFlag
             ?? isExpanded
-        minimum = next["minimum"]?.pamDecimal ?? next["min"]?.pamDecimal ?? minimum
-        maximum = max(minimum, next["maximum"]?.pamDecimal ?? next["max"]?.pamDecimal ?? maximum)
+        minimum = next["minimum"]?.pamDecimal
+            ?? next["min"]?.pamDecimal
+            ?? next["minValue"]?.pamDecimal
+            ?? minimum
+        maximum = max(minimum + 0.000_001,
+            next["maximum"]?.pamDecimal
+                ?? next["max"]?.pamDecimal
+                ?? next["maxValue"]?.pamDecimal
+                ?? maximum)
         step = max(0.000_001, next["step"]?.pamDecimal ?? step)
         value = clamped(next["value"]?.pamDecimal ?? next["modelValue"]?.pamDecimal ?? value)
         rangeEnabled = next["range"]?.pamFlag ?? rangeEnabled
@@ -245,6 +296,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             ?? reversed
         showSliderTicks = next["showTicks"]?.pamFlag == true
             || next["alwaysShowTicks"]?.pamFlag == true
+        sliderTickSize = max(0, next["tickSize"]?.pamDecimal ?? 4)
+        sliderStopIndicatorSize = max(0,
+            next["stopIndicatorSize"]?.pamDecimal ?? 0)
+        if let data = next["tickLabels"]?.pamText?.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data),
+           let labels = object as? [String] {
+            sliderTickLabels = Array(labels.prefix(101))
+        } else {
+            sliderTickLabels = []
+        }
         showThumbLabel = next["showThumbLabel"]?.pamFlag == true
             || next["alwaysShowThumbLabel"]?.pamFlag == true
         let legacyThumbSize = next["thumbSize"]?.pamDecimal
@@ -262,7 +323,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         )
         sliderTrackThickness = max(
             1,
-            next["trackThickness"]?.pamDecimal ?? sliderTrackThickness
+            next["trackThickness"]?.pamDecimal
+                ?? next["sliderTrackHeight"]?.pamDecimal
+                ?? sliderTrackThickness
         )
         navigationKind = next["navigationKind"]?.pamInteger ?? navigationKind
         carouselCycle = next["cycle"]?.pamFlag ?? false
@@ -281,10 +344,34 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 ?? snapIndex),
             max(0, snapPoints.count - 1)
         )
-        sheetSearchable = next["searchable"]?.pamFlag ?? false
-        sheetAllowCustomValue = next["allowCustomValue"]?.pamFlag ?? false
+        sheetSearchable = component == GeneratedComponents.SELECT_PORTAL
+            && (next["searchable"]?.pamFlag ?? false)
+        sheetAllowCustomValue = component == GeneratedComponents.SELECT_PORTAL
+            && (next["allowCustomValue"]?.pamFlag ?? false)
         sheetSearchPlaceholder = next["searchPlaceholder"]?.pamText
             ?? "Search options"
+        if behavior == .calendar {
+            let nextMode = next["mode"]?.pamInteger ?? 1
+            if previousBehavior != .calendar || nextMode != calendarMode {
+                calendarSelectedDates.removeAll()
+                calendarRangeFrom = nil
+                calendarRangeTo = nil
+            }
+            calendarMode = nextMode
+            if nextMode == 2, let values = next["selectedValues"]?.pamText {
+                calendarSelectedDates = Set(values.split(whereSeparator: \.isNewline).map(String.init))
+            } else if nextMode == 3 {
+                if let from = next["rangeFrom"]?.pamText {
+                    calendarRangeFrom = from
+                }
+                if let to = next["rangeTo"]?.pamText {
+                    calendarRangeTo = to
+                }
+            } else if let value = next["value"]?.pamText
+                ?? next["defaultValue"]?.pamText {
+                calendarSelectedDates = [String(value.prefix(10))]
+            }
+        }
         fillColor = color(next["fillColor"]?.pamInteger, fallback: fillColor)
         trackColor = color(next["trackColor"]?.pamInteger, fallback: trackColor)
         if behavior == .switchControl {
@@ -311,6 +398,26 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             next["selectedForegroundColor"]?.pamInteger,
             fallback: selectedForegroundColor
         )
+        selectedContainerColor = color(
+            next["selectedContainerColor"]?.pamInteger,
+            fallback: fillColor
+        )
+        sliderActiveTickColor = color(
+            next["activeTickColor"]?.pamInteger,
+            fallback: fillColor
+        )
+        sliderInactiveTickColor = color(
+            next["inactiveTickColor"]?.pamInteger,
+            fallback: trackColor
+        )
+        sliderTickLabelColor = color(
+            next["tickLabelColor"]?.pamInteger,
+            fallback: stateLayerColor
+        )
+        sliderThumbLabelTextColor = color(
+            next["thumbLabelTextColor"]?.pamInteger,
+            fallback: selectedForegroundColor
+        )
 
         applySemantics()
         applyVisibility()
@@ -332,6 +439,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         shimmerLayer = nil
         toastDismissWorkItem?.cancel()
         toastDismissWorkItem = nil
+        tooltipCloseWorkItem?.cancel()
+        tooltipCloseWorkItem = nil
         carouselWorkItem?.cancel()
         carouselWorkItem = nil
         removeProgressLayers()
@@ -471,7 +580,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     @objc private func onTap(_ recognizer: UITapGestureRecognizer) {
-        guard isUserInteractionEnabled else { return }
+        guard isUserInteractionEnabled,
+              !(properties["interactionDisabled"]?.pamFlag ?? false) else { return }
         let point = recognizer.location(in: self)
         if behavior.isOverlay, let backdrop = overlayBackdrop(), backdrop.frame.contains(point) {
             requestDismiss()
@@ -505,11 +615,25 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .tabTrigger:
             tabsAncestor()?.selectTab(self)
             emit?(.press, Data())
-        case .sheetItem, .menuItem, .inputSlot,
-             .fileTreeFolder, .fileTreeFile:
+        case .inputSlot:
+            activateInputSlot()
+        case .menuItem:
+            activateMenuItem()
+        case .fileTreeFolder, .fileTreeFile:
+            if let tree = ancestor(where: { $0.behavior == .fileTree }) {
+                tree.activateFileTreeItem(self)
+            } else {
+                if behavior == .fileTreeFolder { isExpanded.toggle() }
+                isSelectedState = true
+                applySemantics()
+                emit?(.press, Data())
+            }
+        case .sheetItem:
             emit?(.press, Data())
             if behavior == .sheetItem,
-               properties["closeOnPress"]?.pamFlag ?? true {
+               properties["closeOnSelect"]?.pamFlag
+                   ?? properties["closeOnPress"]?.pamFlag
+                   ?? (component == GeneratedComponents.SELECT_ITEM) {
                 sheetAncestor()?.clearSheetSearch()
                 sheetAncestor()?.requestDismiss()
             }
@@ -521,6 +645,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             }
         case .dateTimePicker:
             presentDateTimePicker()
+        case .calendar:
+            if let date = calendarDate(at: point) {
+                _ = selectCalendarDate(date)
+            }
         case .sparkline where properties["interactive"]?.pamFlag == true:
             updateSparklineSelection(at: point.x, emitChange: true)
         case .overlayDismiss:
@@ -551,9 +679,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
         switch recognizer.state {
         case .began:
+            tooltipCloseWorkItem?.cancel()
+            tooltipCloseWorkItem = nil
             setOpen(true, shouldEmit: true)
         case .ended, .cancelled, .failed:
-            setOpen(false, shouldEmit: true)
+            tooltipCloseWorkItem?.cancel()
+            let delay = max(0, properties["closeDelay"]?.pamInteger ?? 100)
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.requestDismiss()
+            }
+            tooltipCloseWorkItem = workItem
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + TimeInterval(delay) / 1_000,
+                execute: workItem
+            )
         default:
             break
         }
@@ -663,7 +802,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func applyButtonToggleVisualState() {
         guard buttonToggleItem, behavior == .tabTrigger else { return }
-        backgroundColor = isSelectedState ? fillColor : .clear
+        backgroundColor = isSelectedState ? selectedContainerColor : .clear
         layer.cornerRadius = CGFloat(
             properties["selectionCornerRadius"]?.pamDecimal ?? 8
         )
@@ -673,6 +812,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func applyTabTextVisualState() {
         guard behavior == .tabTrigger else { return }
+        if properties["preserveChildForeground"]?.pamFlag == true { return }
         setTextColor(
             in: self,
             color: isSelectedState ? selectedForegroundColor : stateLayerColor
@@ -684,6 +824,85 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             (child as? UILabel)?.textColor = color
             (child as? UIButton)?.setTitleColor(color, for: .normal)
             setTextColor(in: child, color: color)
+        }
+    }
+
+    func activateInputSlot() {
+        emit?(.press, Data())
+        let group = ancestor { $0.behavior == .inputGroup }
+        guard let field = group?.allDescendants().compactMap({ $0 as? UITextField }).first,
+              field.isEnabled else { return }
+        let action = properties["slotAction"]?.pamInteger ?? 1
+        let readOnly = group?.properties["readOnly"]?.pamFlag == true
+            || group?.properties["interactionDisabled"]?.pamFlag == true
+        switch action {
+        case 2:
+            if !readOnly {
+                field.text = ""
+                field.sendActions(for: .editingChanged)
+            }
+        case 3:
+            if !readOnly {
+                let selection = field.selectedTextRange
+                field.isSecureTextEntry.toggle()
+                field.selectedTextRange = selection
+            }
+        case 4:
+            break
+        default:
+            field.becomeFirstResponder()
+        }
+        if action == 2 || action == 3,
+           properties["focusOnPress"]?.pamFlag ?? true {
+            field.becomeFirstResponder()
+        }
+    }
+
+    func activateMenuItem() {
+        guard let menu = ancestor(where: { $0.behavior == .menu }),
+              menu.isOpen, isUserInteractionEnabled else {
+            emit?(.press, Data())
+            return
+        }
+        let mode = menu.properties["selectionMode"]?.pamInteger ?? 3
+        if mode == 1 {
+            for candidate in menu.allDescendants().compactMap({ $0 as? PamMobileUiHost })
+                where candidate.behavior == .menuItem {
+                candidate.isSelectedState = candidate === self
+                candidate.applySemantics()
+            }
+        } else if mode == 2 {
+            isSelectedState.toggle()
+            applySemantics()
+        }
+        if properties["closeOnSelect"]?.pamFlag ?? true {
+            menu.requestDismiss()
+        }
+        emit?(.press, Data())
+    }
+
+    func activateFileTreeItem(_ item: PamMobileUiHost) {
+        guard behavior == .fileTree,
+              let path = item.properties["path"]?.pamText,
+              !path.isEmpty else { return }
+        if item.behavior == .fileTreeFolder {
+            if fileTreeExpandedPaths.contains(path) {
+                fileTreeExpandedPaths.remove(path)
+            } else {
+                fileTreeExpandedPaths.insert(path)
+            }
+            fileTreeSelectedPath = path
+            layoutFileTree()
+            emit?(.change, Data(path.utf8))
+            emitMap([
+                "action": .integer(1),
+                "path": .text(path),
+                "expanded": .flag(fileTreeExpandedPaths.contains(path)),
+            ])
+        } else if item.behavior == .fileTreeFile, fileTreeSelectedPath != path {
+            fileTreeSelectedPath = path
+            layoutFileTree()
+            emit?(.change, Data(path.utf8))
         }
     }
 
@@ -742,10 +961,33 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             isAccessibilityElement = true
             traits = [.button]
             if isSelectedState { traits.insert(.selected) }
-        case .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
-             .fileTreeFolder, .fileTreeFile:
+        case .sheetItem where component == GeneratedComponents.SELECT_ITEM:
             isAccessibilityElement = true
             traits = [.button]
+            if isChecked || isSelectedState { traits.insert(.selected) }
+            accessibilityValue = isChecked || isSelectedState ? "Selected" : "Not selected"
+        case .tableRow where properties["isHeaderRow"]?.pamFlag == true:
+            isAccessibilityElement = true
+            traits = [.header]
+        case .menuItem:
+            isAccessibilityElement = true
+            traits = [.button]
+            let selectable = (ancestor(where: { $0.behavior == .menu })?
+                .properties["selectionMode"]?.pamInteger ?? 3) != 3
+            if selectable {
+                if isSelectedState { traits.insert(.selected) }
+                accessibilityValue = isSelectedState ? "Selected" : "Not selected"
+            } else {
+                accessibilityValue = nil
+            }
+        case .fileTreeFolder, .fileTreeFile:
+            isAccessibilityElement = true
+            traits = [.button]
+            if isSelectedState { traits.insert(.selected) }
+        case .sheetItem, .overlayDismiss, .inputSlot:
+            isAccessibilityElement = true
+            traits = [.button]
+            accessibilityValue = nil
         default:
             isAccessibilityElement = accessibilityLabel != nil
         }
@@ -756,14 +998,17 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private var requiresMinimumTouchTarget: Bool {
+        if component == GeneratedComponents.BUTTON || component == GeneratedComponents.FAB {
+            return true
+        }
         switch behavior {
         case .accordion, .slider, .checkbox, .radio, .switchControl,
              .tabTrigger, .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
              .fileTreeFolder, .fileTreeFile,
              .calendar, .dateTimePicker, .sparkline:
-            true
+            return true
         default:
-            false
+            return false
         }
     }
 
@@ -771,6 +1016,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         if behavior.isOverlay {
             isHidden = !isOpen
             accessibilityViewIsModal = isOpen
+                && (properties["trapFocus"]?.pamFlag
+                    ?? properties["focusScope"]?.pamFlag
+                    ?? true)
             if !isOpen {
                 restoreAnchoredPortalContent()
             }
@@ -1251,27 +1499,29 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func layoutFileTree() {
-        let expanded = Set(
-            properties["expandedPaths"]?.pamText?
-                .split(separator: "\n")
-                .map(String.init) ?? []
-        )
-        for folder in descendants(prefix: "pam:file-tree-folder") {
-            guard let identifier = folder.accessibilityIdentifier else { continue }
-            let path = identifier.split(separator: ":", maxSplits: 2).last.map(String.init) ?? ""
-            let open = expanded.isEmpty
-                ? (folder.accessibilityValue == "Expanded")
-                : expanded.contains(path)
-            folder.accessibilityValue = open ? "Expanded" : "Collapsed"
-            folder.subviews.dropFirst().forEach {
-                $0.isHidden = !open
-                $0.accessibilityElementsHidden = !open
+        guard behavior == .fileTree else { return }
+        for item in allDescendants().compactMap({ $0 as? PamMobileUiHost })
+            where item.behavior == .fileTreeFolder || item.behavior == .fileTreeFile {
+            guard let path = item.properties["path"]?.pamText else { continue }
+            item.isSelectedState = path == fileTreeSelectedPath
+            item.applySemantics()
+            if item.behavior == .fileTreeFolder {
+                let expanded = fileTreeExpandedPaths.contains(path)
+                item.accessibilityValue = expanded ? "Expanded" : "Collapsed"
+                if let content = item.descendant(tag: "pam:file-tree-content") {
+                    content.isHidden = !expanded
+                    content.accessibilityElementsHidden = !expanded
+                }
+                if let chevron = item.descendant(tag: "pam:file-tree-chevron") {
+                    chevron.transform = CGAffineTransform(rotationAngle: expanded ? .pi / 2 : 0)
+                }
             }
         }
     }
 
     private func applyInputState() {
-        let readOnly = properties["readOnly"]?.pamFlag ?? false
+        let readOnly = properties["readOnly"]?.pamFlag == true
+            || properties["interactionDisabled"]?.pamFlag == true
         let enabled = properties["enabled"]?.pamFlag ?? true
         let invalid = properties["invalid"]?.pamFlag
             ?? properties["error"]?.pamFlag
@@ -1292,9 +1542,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 : field.text
         }
         let indicatorOnly = properties["indicatorOnly"]?.pamFlag ?? false
+        layer.cornerRadius = max(0,
+            properties["outlineRadius"]?.pamDecimal ?? layer.cornerRadius)
         layer.borderWidth = indicatorOnly
             ? 0
-            : (invalid ? 2 : (properties["focused"]?.pamFlag == true ? 2 : 0))
+            : (invalid ? 2 : (properties["focused"]?.pamFlag == true
+                ? 2 : max(0, properties["outlineWidth"]?.pamDecimal ?? 0)))
         layer.borderColor = color(
             invalid
                 ? properties["invalidColor"]?.pamInteger
@@ -1341,6 +1594,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         let identity = properties["toastId"]?.pamText
             ?? properties["id"]?.pamText
             ?? ""
+        let action = min(6, max(1, properties["action"]?.pamInteger ?? 1))
         let signature = "\(identity)\u{0}\(duration)\u{0}\(persistent)\u{0}\(isOpen)"
 
         guard isOpen else {
@@ -1358,7 +1612,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         isHidden = false
         accessibilityElementsHidden = false
         let announcement = accessibilityLabel ?? findFirstText(in: self) ?? "Notification"
-        let announcementSignature = "\(identity)\u{0}\(announcement)"
+        let announcementSignature = "\(identity)\u{0}\(action)\u{0}\(announcement)"
         if announcementSignature != toastAnnouncementSignature {
             toastAnnouncementSignature = announcementSignature
             UIAccessibility.post(
@@ -1468,6 +1722,30 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         shimmerLayer = gradient
     }
 
+    func configuredDatePicker() -> UIDatePicker {
+        let picker = UIDatePicker()
+        picker.preferredDatePickerStyle = .wheels
+        picker.datePickerMode = switch properties["mode"]?.pamInteger {
+        case 5: .time
+        case 6: .dateAndTime
+        default: .date
+        }
+        let locale = properties["locale"]?.pamText ?? Locale.current.identifier
+        picker.locale = Locale(identifier: (properties["is24Hour"]?.pamFlag ?? false)
+            ? "\(locale)@hours=h23" : locale)
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = Calendar(identifier: .gregorian)
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let lower = properties["minDate"]?.pamText
+            ?? properties["minimumDate"]?.pamText
+        let upper = properties["maxDate"]?.pamText
+            ?? properties["maximumDate"]?.pamText
+        picker.minimumDate = lower.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+        picker.maximumDate = upper.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+        return picker
+    }
+
     private func presentDateTimePicker() {
         guard let controller = nearestViewController() else {
             emit?(.press, Data())
@@ -1478,13 +1756,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             message: nil,
             preferredStyle: .actionSheet
         )
-        let picker = UIDatePicker()
-        picker.preferredDatePickerStyle = .wheels
-        picker.datePickerMode = switch properties["mode"]?.pamInteger {
-        case 5: .time
-        case 6: .dateAndTime
-        default: .date
-        }
+        let picker = configuredDatePicker()
         alert.view.addSubview(picker)
         picker.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -1503,6 +1775,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func panSheet(_ recognizer: UIPanGestureRecognizer) {
+        guard properties["enablePanDownToClose"]?.pamFlag ?? true else { return }
         guard let content = overlayContent() else { return }
         let translation = max(0, recognizer.translation(in: self).y)
         switch recognizer.state {
@@ -1622,7 +1895,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func requestDismiss() {
-        guard properties["dismissible"]?.pamFlag ?? true else { return }
+        guard properties["dismissible"]?.pamFlag
+            ?? properties["isDismissable"]?.pamFlag
+            ?? true else { return }
         setOpen(false, shouldEmit: false)
         emitMap([
             "action": .integer(PamHostAction.dismiss.rawValue),
@@ -1801,19 +2076,51 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         context.addLine(to: upper)
         context.strokePath()
 
-        if showSliderTicks {
+        if showSliderTicks && sliderTickSize > 0 {
             let intervals = min(100, max(1, Int(round((maximum - minimum) / step))))
-            context.setFillColor(trackColor.cgColor)
             for index in 0...intervals {
                 let tickValue = minimum
                     + (maximum - minimum) * CGFloat(index) / CGFloat(intervals)
                 let point = sliderPoint(tickValue, in: track)
+                context.setFillColor((tickValue <= value
+                    ? sliderActiveTickColor : sliderInactiveTickColor).cgColor)
                 context.fillEllipse(in: CGRect(
-                    x: point.x - 1.5,
-                    y: point.y - 1.5,
-                    width: 3,
-                    height: 3
+                    x: point.x - sliderTickSize / 2,
+                    y: point.y - sliderTickSize / 2,
+                    width: sliderTickSize,
+                    height: sliderTickSize
                 ))
+            }
+        }
+
+        if sliderStopIndicatorSize > 0 {
+            context.setFillColor(sliderInactiveTickColor.cgColor)
+            for endpoint in [minimum, maximum] {
+                let point = sliderPoint(endpoint, in: track)
+                context.fillEllipse(in: CGRect(
+                    x: point.x - sliderStopIndicatorSize / 2,
+                    y: point.y - sliderStopIndicatorSize / 2,
+                    width: sliderStopIndicatorSize,
+                    height: sliderStopIndicatorSize
+                ))
+            }
+        }
+
+        if !sliderTickLabels.isEmpty {
+            let last = max(1, sliderTickLabels.count - 1)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.preferredFont(forTextStyle: .caption2),
+                .foregroundColor: sliderTickLabelColor,
+            ]
+            for (index, label) in sliderTickLabels.enumerated() {
+                let tickValue = minimum
+                    + (maximum - minimum) * CGFloat(index) / CGFloat(last)
+                let point = sliderPoint(tickValue, in: track)
+                let size = (label as NSString).size(withAttributes: attributes)
+                let origin = orientation == 2
+                    ? CGPoint(x: track.maxX + 8, y: point.y - size.height / 2)
+                    : CGPoint(x: point.x - size.width / 2, y: track.maxY + 8)
+                (label as NSString).draw(at: origin, withAttributes: attributes)
             }
         }
 
@@ -1903,7 +2210,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     ) {
         let attributes: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
-            .foregroundColor: selectedForegroundColor,
+            .foregroundColor: sliderThumbLabelTextColor,
         ]
         let size = (text as NSString).size(withAttributes: attributes)
         let width = max(32, size.width + 16)
@@ -1986,9 +2293,118 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         context.fill(bounds)
     }
 
+    func configuredCalendar() -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(
+            identifier: properties["locale"]?.pamText ?? Locale.current.identifier
+        )
+        calendar.firstWeekday = min(6, max(0,
+            properties["firstDayOfWeek"]?.pamInteger ?? 0
+        )) + 1
+        return calendar
+    }
+
+    func selectCalendarDate(_ key: String) -> Bool {
+        let formatter = DateFormatter()
+        formatter.calendar = configuredCalendar()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.isLenient = false
+        guard formatter.date(from: key) != nil,
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["disabled"]?.pamFlag ?? false),
+              !(properties["isDisabled"]?.pamFlag ?? false),
+              isUserInteractionEnabled else { return false }
+        let disabled = Set(
+            (properties["disabledDates"]?.pamText ?? "")
+                .split(whereSeparator: \.isNewline).map(String.init)
+        )
+        let minDate = properties["minDate"]?.pamText
+            ?? properties["minimumDate"]?.pamText
+        let maxDate = properties["maxDate"]?.pamText
+            ?? properties["maximumDate"]?.pamText
+        let year = Int(key.prefix(4)) ?? 0
+        if disabled.contains(key)
+            || minDate.map({ key < String($0.prefix(10)) }) == true
+            || maxDate.map({ key > String($0.prefix(10)) }) == true
+            || (properties["minYear"]?.pamInteger).map({ year < $0 }) == true
+            || (properties["maxYear"]?.pamInteger).map({ year > $0 }) == true {
+            return false
+        }
+
+        let payload: String
+        switch calendarMode {
+        case 2:
+            if !calendarSelectedDates.insert(key).inserted {
+                calendarSelectedDates.remove(key)
+            }
+            payload = "M\n" + calendarSelectedDates.sorted().joined(separator: "\n")
+            accessibilityValue = "\(calendarSelectedDates.count) dates selected"
+        case 3:
+            if calendarRangeFrom == nil || calendarRangeTo != nil {
+                calendarRangeFrom = key
+                calendarRangeTo = nil
+            } else {
+                let start = calendarRangeFrom ?? key
+                calendarRangeFrom = min(start, key)
+                calendarRangeTo = max(start, key)
+            }
+            payload = "R\n\(calendarRangeFrom ?? "")\n\(calendarRangeTo ?? "")"
+            accessibilityValue = calendarRangeTo == nil
+                ? "Range starts \(calendarRangeFrom ?? "")"
+                : "\(calendarRangeFrom ?? "") to \(calendarRangeTo ?? "")"
+        default:
+            calendarSelectedDates = [key]
+            payload = key
+            accessibilityValue = key
+        }
+        emit?(.change, Data(payload.utf8))
+        setNeedsDisplay()
+        UIAccessibility.post(notification: .layoutChanged, argument: self)
+        return true
+    }
+
+    private func calendarDate(at point: CGPoint) -> String? {
+        guard bounds.width > 0, bounds.height > 0,
+              bounds.contains(point) else { return nil }
+        let calendar = configuredCalendar()
+        let showWeek = properties["showWeek"]?.pamFlag == true
+        let columns = showWeek ? 8 : 7
+        let column = Int(point.x / (bounds.width / CGFloat(columns)))
+        let row = Int(point.y / (bounds.height / 7)) - 1
+        guard (0..<6).contains(row), (0..<columns).contains(column) else {
+            return nil
+        }
+        let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
+        let dayColumn = rtl ? 6 - column : column - (showWeek ? 1 : 0)
+        guard (0..<7).contains(dayColumn) else { return nil }
+        let now = calendar.date(from: DateComponents(
+            year: properties["year"]?.pamInteger,
+            month: properties["month"]?.pamInteger,
+            day: 1
+        )) ?? Date()
+        let first = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: now)
+        ) ?? now
+        let offset = (calendar.component(.weekday, from: first)
+            - calendar.firstWeekday + 7) % 7
+        guard let firstVisible = calendar.date(byAdding: .day, value: -offset, to: first),
+              let date = calendar.date(
+                byAdding: .day, value: row * 7 + dayColumn, to: firstVisible
+              ) else { return nil }
+        if !(properties["showOutsideDays"]?.pamFlag ?? true)
+            && !calendar.isDate(date, equalTo: first, toGranularity: .month) {
+            return nil
+        }
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
     private func drawCalendar(_ context: CGContext) {
-        var calendar = Calendar.autoupdatingCurrent
-        calendar.firstWeekday = 1
+        let calendar = configuredCalendar()
         let requestedYear = properties["year"]?.pamInteger
         let requestedMonth = properties["month"]?.pamInteger
         let now = calendar.date(from: DateComponents(
@@ -2023,10 +2439,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             .font: font,
             .foregroundColor: stateLayerColor,
         ]
-        let selected = Set(
-            (properties["selectedValues"]?.pamText ?? "")
-                .split(whereSeparator: \.isNewline)
-                .map(String.init)
+        let selected = calendarSelectedDates
+        let disabled = Set(
+            (properties["disabledDates"]?.pamText ?? "")
+                .split(whereSeparator: \.isNewline).map(String.init)
         )
         let formatter = DateFormatter()
         formatter.calendar = calendar
@@ -2040,7 +2456,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
                     ? 1 : 0
             )
-            let symbol = calendar.veryShortWeekdaySymbols[dayIndex] as NSString
+            let symbolIndex = (dayIndex + calendar.firstWeekday - 1) % 7
+            let symbol = calendar.veryShortWeekdaySymbols[symbolIndex] as NSString
             let frame = CGRect(
                 x: CGFloat(visualColumn) * cellWidth,
                 y: 0,
@@ -2081,7 +2498,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             if outside && !showOutside { continue }
             let text = String(calendar.component(.day, from: date)) as NSString
             let dateKey = formatter.string(from: date)
+            let withinRange = calendarRangeFrom.flatMap { from in
+                calendarRangeTo.map { to in dateKey > from && dateKey < to }
+            } ?? false
             let isSelected = selected.contains(dateKey)
+                || dateKey == calendarRangeFrom
+                || dateKey == calendarRangeTo
+                || withinRange
             if isSelected {
                 context.setFillColor(fillColor.cgColor)
                 context.fillEllipse(in: frame.insetBy(
@@ -2089,7 +2512,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                     dy: max(2, (cellHeight - cellWidth * 0.64) / 2)
                 ))
             }
-            var attributes = outside ? mutedAttributes : normalAttributes
+            let unavailable = disabled.contains(dateKey)
+                || properties["minDate"]?.pamText.map({ dateKey < String($0.prefix(10)) }) == true
+                || properties["maxDate"]?.pamText.map({ dateKey > String($0.prefix(10)) }) == true
+            var attributes = outside || unavailable ? mutedAttributes : normalAttributes
             if isSelected {
                 attributes[.foregroundColor] = selectedForegroundColor
             }

@@ -1,5 +1,5 @@
 <AppScreen title="Forms" subtitle="Thoughtful inputs for real product flows">
-    <template #actions><p-btn variant="text" on:press="openDrawer"><Text>Menu</Text></p-btn></template>
+    <template #actions><p-btn variant="text" @press="openDrawer"><Text>Menu</Text></p-btn></template>
 
     <Column class="gap-2">
         <Text size="2xl" class="font-bold">Shape your next native product.</Text>

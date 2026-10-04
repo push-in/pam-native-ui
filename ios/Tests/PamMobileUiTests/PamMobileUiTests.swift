@@ -4,6 +4,274 @@ import XCTest
 @testable import PamMobileUi
 
 final class PamMobileUiTests: XCTestCase {
+    func testGeneratedComponentIDsMatchTheAndroidContract() {
+        XCTAssertEqual(GeneratedComponents.BUTTON, 20)
+        XCTAssertEqual(GeneratedComponents.FAB, 48)
+        XCTAssertEqual(GeneratedComponents.SELECT_ITEM, 87)
+        XCTAssertEqual(GeneratedComponents.SELECT_PORTAL, 88)
+        XCTAssertEqual(
+            GeneratedComponents.allIds.sorted(),
+            Array(1...GeneratedComponents.allIds.count)
+        )
+    }
+
+    func testButtonAndFabKeepA44PointTouchTargetWhenPooled() {
+        let factory = MobileUiHostFactory()
+        let view = factory.create(context: nil) { _ in }
+        view.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+
+        for component in [GeneratedComponents.BUTTON, GeneratedComponents.FAB] {
+            factory.update(view: view, properties: [
+                "behavior": .integer(1),
+                "component": .integer(Int64(component)),
+            ])
+            XCTAssertTrue(view.point(inside: CGPoint(x: -11, y: 10), with: nil))
+            XCTAssertFalse(view.point(inside: CGPoint(x: -13, y: 10), with: nil))
+        }
+
+        factory.update(view: view, properties: [
+            "behavior": .integer(1),
+            "component": .integer(0),
+        ])
+        XCTAssertFalse(view.point(inside: CGPoint(x: -11, y: 10), with: nil))
+        factory.release(view: view)
+        factory.close()
+    }
+
+    func testSelectItemHasSelectionSemanticsAndGenericSheetItemDoesNot() {
+        let factory = MobileUiHostFactory()
+        let view = factory.create(context: nil) { _ in }
+        factory.update(view: view, properties: [
+            "behavior": .integer(24),
+            "component": .integer(Int64(GeneratedComponents.SELECT_ITEM)),
+            "checked": .flag(true),
+            "accessibilityLabel": .text("First option"),
+        ])
+        XCTAssertTrue(view.accessibilityTraits.contains(.button))
+        XCTAssertTrue(view.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(view.accessibilityValue, "Selected")
+
+        factory.update(view: view, properties: [
+            "behavior": .integer(24),
+            "component": .integer(0),
+            "checked": .flag(false),
+            "accessibilityLabel": .text("Generic action"),
+        ])
+        XCTAssertTrue(view.accessibilityTraits.contains(.button))
+        XCTAssertFalse(view.accessibilityTraits.contains(.selected))
+        XCTAssertNil(view.accessibilityValue)
+        factory.release(view: view)
+        factory.close()
+    }
+
+    func testDefaultCheckedAndSelectedContainerColorReachUIKit() {
+        let factory = MobileUiHostFactory()
+        let checkbox = factory.create(context: nil) { _ in }
+        factory.update(view: checkbox, properties: [
+            "behavior": .integer(9),
+            "defaultIsChecked": .flag(true),
+            "accessibilityLabel": .text("Remember me"),
+        ])
+        XCTAssertTrue(checkbox.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(checkbox.accessibilityValue, "On")
+
+        let toggle = factory.create(context: nil) { _ in }
+        factory.update(view: toggle, properties: [
+            "behavior": .integer(23),
+            "buttonToggleItem": .flag(true),
+            "selected": .flag(true),
+            "selectedContainerColor": .integer(Int64(0xFFFF0000)),
+        ])
+        XCTAssertEqual(
+            toggle.backgroundColor,
+            UIColor(red: 1, green: 0, blue: 0, alpha: 1)
+        )
+        factory.release(view: checkbox)
+        factory.release(view: toggle)
+        factory.close()
+    }
+
+    func testCalendarSelectionHonorsDisabledDatesAndNativePayloadModes() {
+        var payloads: [String] = []
+        let calendar = PamMobileUiHost { _, payload in
+            payloads.append(String(decoding: payload, as: UTF8.self))
+        }
+        calendar.update([
+            "behavior": .integer(7),
+            "mode": .integer(2),
+            "disabledDates": .text("2026-10-04"),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+            "firstDayOfWeek": .integer(1),
+            "locale": .text("pt_BR"),
+        ])
+        XCTAssertEqual(calendar.configuredCalendar().firstWeekday, 2)
+        XCTAssertEqual(calendar.configuredCalendar().locale?.identifier, "pt_BR")
+        XCTAssertFalse(calendar.selectCalendarDate("2026-09-30"))
+        XCTAssertFalse(calendar.selectCalendarDate("2026-10-04"))
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-05"))
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-06"))
+        XCTAssertEqual(payloads, ["M\n2026-10-05", "M\n2026-10-05\n2026-10-06"])
+
+        calendar.update([
+            "behavior": .integer(7),
+            "mode": .integer(3),
+        ])
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-10"))
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-08"))
+        XCTAssertEqual(Array(payloads.suffix(2)), [
+            "R\n2026-10-10\n",
+            "R\n2026-10-08\n2026-10-10",
+        ])
+        calendar.releaseCallbacks()
+    }
+
+    func testDatePickerAppliesBoundsAndClockMode() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(6),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+            "is24Hour": .flag(true),
+        ])
+        let picker = host.configuredDatePicker()
+        XCTAssertEqual(picker.datePickerMode, .dateAndTime)
+        guard let minimum = picker.minimumDate, let maximum = picker.maximumDate else {
+            XCTFail("The picker must retain both requested date bounds")
+            return
+        }
+        XCTAssertLessThan(minimum, maximum)
+        host.releaseCallbacks()
+    }
+
+    func testNativePropertyAliasesReachUIKitBehavior() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(5),
+            "minValue": .decimal(10),
+            "maxValue": .decimal(20),
+            "value": .decimal(15),
+            "step": .decimal(10),
+            "sliderTrackHeight": .decimal(8),
+        ])
+        host.accessibilityIncrement()
+        XCTAssertEqual(host.accessibilityValue, "20")
+
+        host.update([
+            "behavior": .integer(31),
+            "isHeaderRow": .flag(true),
+        ])
+        XCTAssertTrue(host.accessibilityTraits.contains(.header))
+
+        let input = UITextField()
+        host.addSubview(input)
+        host.update([
+            "behavior": .integer(27),
+            "interactionDisabled": .flag(true),
+        ])
+        XCTAssertFalse(input.isUserInteractionEnabled)
+
+        host.update([
+            "behavior": .integer(3),
+            "focusScope": .flag(false),
+        ])
+        XCTAssertFalse(host.accessibilityViewIsModal)
+        host.releaseCallbacks()
+    }
+
+    func testInputSlotClearActionUpdatesItsNativeField() {
+        let group = PamMobileUiHost { _, _ in }
+        group.update(["behavior": .integer(27)])
+        let field = UITextField()
+        field.text = "Draft"
+        group.addSubview(field)
+        let slot = PamMobileUiHost { _, _ in }
+        slot.update([
+            "behavior": .integer(28),
+            "slotAction": .integer(2),
+            "focusOnPress": .flag(false),
+        ])
+        group.addSubview(slot)
+        slot.activateInputSlot()
+        XCTAssertEqual(field.text, "")
+        group.releaseCallbacks()
+        slot.releaseCallbacks()
+    }
+
+    func testMenuSingleSelectionUpdatesUIKitSemantics() {
+        let menu = PamMobileUiHost { _, _ in }
+        menu.update([
+            "behavior": .integer(15),
+            "open": .flag(true),
+            "selectionMode": .integer(1),
+        ])
+        let first = PamMobileUiHost { _, _ in }
+        first.update([
+            "behavior": .integer(25),
+            "closeOnSelect": .flag(false),
+        ])
+        let second = PamMobileUiHost { _, _ in }
+        second.update([
+            "behavior": .integer(25),
+            "closeOnSelect": .flag(false),
+        ])
+        menu.addSubview(first)
+        menu.addSubview(second)
+        second.activateMenuItem()
+        XCTAssertFalse(first.accessibilityTraits.contains(.selected))
+        XCTAssertTrue(second.accessibilityTraits.contains(.selected))
+        first.activateMenuItem()
+        XCTAssertTrue(first.accessibilityTraits.contains(.selected))
+        XCTAssertFalse(second.accessibilityTraits.contains(.selected))
+        first.releaseCallbacks()
+        second.releaseCallbacks()
+        menu.releaseCallbacks()
+    }
+
+    func testFileTreeFolderExpandsAndEmitsPathChange() {
+        var changes: [String] = []
+        let tree = PamMobileUiHost { kind, data in
+            if kind == .change { changes.append(String(decoding: data, as: UTF8.self)) }
+        }
+        tree.update(["behavior": .integer(32), "defaultExpandedPaths": .text("")])
+        let folder = PamMobileUiHost { _, _ in }
+        folder.update(["behavior": .integer(33), "path": .text("docs")])
+        let content = UIView()
+        content.accessibilityIdentifier = "pam:file-tree-content"
+        folder.addSubview(content)
+        tree.addSubview(folder)
+        tree.layoutIfNeeded()
+        XCTAssertTrue(content.isHidden)
+
+        tree.activateFileTreeItem(folder)
+        XCTAssertFalse(content.isHidden)
+        XCTAssertEqual(folder.accessibilityValue, "Expanded")
+        XCTAssertTrue(folder.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(changes, ["docs"])
+
+        tree.activateFileTreeItem(folder)
+        XCTAssertTrue(content.isHidden)
+        XCTAssertEqual(folder.accessibilityValue, "Collapsed")
+        XCTAssertEqual(changes, ["docs", "docs"])
+        folder.releaseCallbacks()
+        tree.releaseCallbacks()
+    }
+
+    func testTooltipRespectsConfiguredLongPressDelay() {
+        let tooltip = PamMobileUiHost { _, _ in }
+        tooltip.update([
+            "behavior": .integer(16),
+            "openDelay": .integer(750),
+            "closeDelay": .integer(125),
+        ])
+        let durations = tooltip.gestureRecognizers?
+            .compactMap { $0 as? UILongPressGestureRecognizer }
+            .map(\.minimumPressDuration) ?? []
+        XCTAssertTrue(durations.contains(0.75))
+        tooltip.releaseCallbacks()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),

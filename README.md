@@ -138,7 +138,7 @@ are an advanced interoperability path; PAM is the supported application workflow
             <Text>Retained native Material UI</Text>
             <Text>One component contract, two native renderers.</Text>
             <p-card-actions>
-                <p-btn on:press="continue">Continue</p-btn>
+                <p-btn @press="continue">Continue</p-btn>
             </p-card-actions>
         </p-card>
 </AppScreen>
