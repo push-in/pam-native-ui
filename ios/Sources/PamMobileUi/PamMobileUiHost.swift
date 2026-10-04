@@ -166,6 +166,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private weak var anchoredPortalParent: UIView?
     private weak var anchoredPortalContent: UIView?
     private weak var anchoredPortalCatcher: UIControl?
+    private weak var anchoredOverlayOwner: PamMobileUiHost?
     private var anchoredPortalIndex = 0
     private var anchoredPortalFrame = CGRect.zero
     private var navigationKind = 0
@@ -598,9 +599,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         guard isUserInteractionEnabled,
               !(properties["interactionDisabled"]?.pamFlag ?? false) else { return }
         let point = recognizer.location(in: self)
-        if behavior.isOverlay, let backdrop = overlayBackdrop(), backdrop.frame.contains(point) {
-            requestDismiss()
-            return
+        if behavior.isOverlay {
+            if let content = overlayContent(),
+               content.convert(content.bounds, to: self).contains(point) {
+                return
+            }
+            if let backdrop = overlayBackdrop(),
+               backdrop.convert(backdrop.bounds, to: self).contains(point) {
+                requestBackdropDismiss()
+                return
+            }
         }
 
         switch behavior {
@@ -877,15 +885,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     func activateMenuItem() {
-        guard let menu = ancestor(where: { $0.behavior == .menu }),
-              menu.isOpen, isUserInteractionEnabled else {
-            emit?(.press, Data())
-            return
-        }
+        guard let menu = ancestor(where: { $0.behavior == .menu })
+            ?? anchoredOverlayOwner,
+              menu.behavior == .menu, menu.isOpen,
+              menu.properties["enabled"]?.pamFlag ?? true,
+              properties["enabled"]?.pamFlag ?? true,
+              isUserInteractionEnabled else { return }
         let mode = menu.properties["selectionMode"]?.pamInteger ?? 3
         if mode == 1 {
-            for candidate in menu.allDescendants().compactMap({ $0 as? PamMobileUiHost })
-                where candidate.behavior == .menuItem {
+            for candidate in menu.menuItems() {
                 candidate.isSelectedState = candidate === self
                 candidate.applySemantics()
             }
@@ -990,7 +998,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         case .menuItem:
             isAccessibilityElement = true
             traits = [.button]
-            let selectable = (ancestor(where: { $0.behavior == .menu })?
+            let selectable = ((ancestor(where: { $0.behavior == .menu })
+                ?? anchoredOverlayOwner)?
                 .properties["selectionMode"]?.pamInteger ?? 3) != 3
             if selectable {
                 if isSelectedState { traits.insert(.selected) }
@@ -1913,6 +1922,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func requestDismiss() {
+        guard behavior.isOverlay, isOpen else { return }
         guard properties["dismissible"]?.pamFlag
             ?? properties["isDismissable"]?.pamFlag
             ?? true else { return }
@@ -1921,6 +1931,23 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             "action": .integer(PamHostAction.dismiss.rawValue),
             "dismissed": .flag(true),
         ])
+    }
+
+    private func requestBackdropDismiss() {
+        guard properties["closeOnOverlayClick"]?.pamFlag
+            ?? properties["closeOnOverlay"]?.pamFlag
+            ?? true else { return }
+        requestDismiss()
+    }
+
+    override func accessibilityPerformEscape() -> Bool {
+        guard behavior.isOverlay, isOpen,
+              properties["isKeyboardDismissable"]?.pamFlag ?? true,
+              properties["dismissible"]?.pamFlag
+                ?? properties["isDismissable"]?.pamFlag
+                ?? true else { return false }
+        requestDismiss()
+        return true
     }
 
     private func drawProgress(_ context: CGContext) {
@@ -3056,6 +3083,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         anchoredPortalContent ?? descendant(tag: "pam:overlay-content")
     }
 
+    private func menuItems() -> [PamMobileUiHost] {
+        allDescendantHosts(in: overlayContent() ?? self).filter { $0.behavior == .menuItem }
+    }
+
+    private func allDescendantHosts(in root: UIView) -> [PamMobileUiHost] {
+        var result: [PamMobileUiHost] = []
+        func walk(_ view: UIView) {
+            for child in view.subviews {
+                if let host = child as? PamMobileUiHost { result.append(host) }
+                walk(child)
+            }
+        }
+        walk(root)
+        return result
+    }
+
     private func presentAnchoredPortalContent() {
         if anchoredPortalContent != nil { return }
         guard let window,
@@ -3080,6 +3123,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         anchoredPortalContent = content
         anchoredPortalIndex = parent.subviews.firstIndex(of: content) ?? parent.subviews.count
         anchoredPortalFrame = content.frame
+        for host in allDescendantHosts(in: content) {
+            host.anchoredOverlayOwner = self
+        }
 
         let catcher = UIControl(frame: window.bounds)
         catcher.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -3170,7 +3216,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     @objc
     private func onAnchoredPortalBackdrop() {
-        requestDismiss()
+        requestBackdropDismiss()
     }
 
     private func restoreAnchoredPortalContent() {
@@ -3181,6 +3227,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
         content.removeFromSuperview()
         content.layer.zPosition = 0
+        for host in allDescendantHosts(in: content) {
+            if host.anchoredOverlayOwner === self { host.anchoredOverlayOwner = nil }
+        }
         if let parent = anchoredPortalParent {
             parent.insertSubview(
                 content,
@@ -3283,7 +3332,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func overlayAncestor() -> PamMobileUiHost? {
-        ancestor { $0.behavior.isOverlay }
+        ancestor { $0.behavior.isOverlay } ?? anchoredOverlayOwner
     }
 
     private func clamped(_ candidate: CGFloat) -> CGFloat {
@@ -3317,6 +3366,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private func emitMap(_ values: [String: WireValue]) {
         guard let payload = try? WireMap.encode(values) else { return }
         emit?(.native, payload)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldReceive touch: UITouch
+    ) -> Bool {
+        guard behavior.isOverlay,
+              gestureRecognizer is UITapGestureRecognizer,
+              let content = overlayContent() else { return true }
+        return !content.convert(content.bounds, to: self).contains(touch.location(in: self))
     }
 
     func gestureRecognizer(
