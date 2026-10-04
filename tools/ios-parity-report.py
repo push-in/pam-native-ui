@@ -15,7 +15,10 @@ TAG_PATTERN = re.compile(r"^\s*'(p-[a-z0-9-]+)'\s*=>", re.MULTILINE)
 def build_report(root=ROOT):
     manifest = json.loads((root / "resources/material-parity.json").read_text())
     evidence = json.loads((root / "resources/ios-parity-evidence.json").read_text())
-    test_source = (root / "ios/Tests/PamMobileUiTests/PamMobileUiTests.swift").read_text()
+    test_files = sorted((root / "ios/Tests/PamMobileUiTests").glob("*Tests.swift"))
+    if not test_files:
+        raise ValueError("The UIKit XCTest suite has no test source files")
+    test_source = "\n".join(path.read_text() for path in test_files)
     generated_map = (root / "src/Generated/MaterialComponentMap.php").read_text()
 
     modules = manifest["modules"]
@@ -69,6 +72,7 @@ def build_report(root=ROOT):
             "tags": len(tags),
             "linkedBehaviorTests": len(evidence["behaviorTests"]),
             "modulesWithLinkedBehaviorTests": sum(bool(row["linkedBehaviorTests"]) for row in rows),
+            "modulesWithoutLinkedBehaviorTests": sum(not row["linkedBehaviorTests"] for row in rows),
             "iosImplemented": sum(row["iosStatus"] == 2 for row in rows),
             "iosVerified": sum(row["iosStatus"] == 3 for row in rows),
         },
