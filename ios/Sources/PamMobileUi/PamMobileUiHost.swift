@@ -114,6 +114,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var lowerValue: CGFloat = 0
     private var upperValue: CGFloat = 100
     private var activeRangeThumb = 1
+    private var sliderGestureActive = false
+    private var sliderChangePending = false
+    private var sliderChangeWorkItem: DispatchWorkItem?
     private var orientation = 1
     private var reversed = false
     private var showSliderTicks = false
@@ -255,6 +258,14 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
         component = next["component"]?.pamInteger ?? 0
+        if sliderGestureActive && (behavior != .slider
+            || next["enabled"]?.pamFlag == false
+            || next["interactionDisabled"]?.pamFlag == true
+            || next["readOnly"]?.pamFlag == true
+            || next["isReadOnly"]?.pamFlag == true) {
+            sliderGestureActive = false
+            cancelSliderChange()
+        }
         if activeDateTimePicker != nil,
            (behavior != .dateTimePicker
                 || next["enabled"]?.pamFlag == false
@@ -272,6 +283,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 .forEach { $0.minimumPressDuration = TimeInterval(delay) / 1_000 }
         }
         if previousBehavior != behavior {
+            if previousBehavior == .slider {
+                sliderGestureActive = false
+                cancelSliderChange()
+            }
             if previousBehavior == .calendar { accessibilityElements = nil }
             openDefaultInitialized = false
             fileTreeInitialized = false
@@ -338,20 +353,29 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 ?? next["max"]?.pamDecimal
                 ?? next["maxValue"]?.pamDecimal
                 ?? maximum)
-        step = max(0.000_001, next["step"]?.pamDecimal ?? step)
-        value = clamped(next["value"]?.pamDecimal ?? next["modelValue"]?.pamDecimal ?? value)
-        rangeEnabled = next["range"]?.pamFlag ?? rangeEnabled
-        lowerValue = clamped(next["lowerValue"]?.pamDecimal ?? lowerValue)
-        upperValue = clamped(next["upperValue"]?.pamDecimal ?? upperValue)
-        if rangeEnabled {
-            lowerValue = min(lowerValue, upperValue)
-            upperValue = max(lowerValue, upperValue)
-            value = upperValue
+        step = max(0.000_001, next["step"]?.pamDecimal ?? 1)
+        rangeEnabled = next["range"]?.pamFlag ?? false
+        if !sliderGestureActive {
+            value = snapped(next["value"]?.pamDecimal
+                ?? next["modelValue"]?.pamDecimal
+                ?? next["defaultValue"]?.pamDecimal
+                ?? value)
+            let requestedLower = snapped(next["lowerValue"]?.pamDecimal ?? minimum)
+            let requestedUpper = snapped(next["upperValue"]?.pamDecimal ?? maximum)
+            lowerValue = min(requestedLower, requestedUpper)
+            upperValue = max(requestedLower, requestedUpper)
+            if rangeEnabled { value = upperValue }
+        } else {
+            value = clamped(value)
+            lowerValue = clamped(lowerValue)
+            upperValue = max(lowerValue, clamped(upperValue))
+            if rangeEnabled { value = upperValue }
         }
-        orientation = next["orientation"]?.pamInteger ?? orientation
-        reversed = next["reversed"]?.pamFlag
-            ?? next["isReversed"]?.pamFlag
-            ?? reversed
+        orientation = next["orientation"]?.pamInteger ?? 1
+        reversed = next["isReversed"]?.pamFlag
+            ?? next["reversed"]?.pamFlag
+            ?? next["reverse"]?.pamFlag
+            ?? false
         showSliderTicks = next["showTicks"]?.pamFlag == true
             || next["alwaysShowTicks"]?.pamFlag == true
         sliderTickSize = max(0, next["tickSize"]?.pamDecimal ?? 4)
@@ -505,6 +529,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         tooltipCloseWorkItem = nil
         carouselWorkItem?.cancel()
         carouselWorkItem = nil
+        sliderGestureActive = false
+        cancelSliderChange()
         removeProgressLayers()
         emit = nil
         gestureRecognizers?.forEach(removeGestureRecognizer)
@@ -621,13 +647,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             selectSparklineIndex(sparklineSelectedIndex + 1, emitChange: true)
             return
         }
-        guard behavior == .slider || behavior == .progress || behavior == .bottomSheet else {
+        guard behavior == .slider || behavior == .bottomSheet else {
             return
         }
         if behavior == .bottomSheet {
             settleSheet(to: snapIndex + 1, emitChange: true)
-        } else {
-            setRangeValue(value + step, emitChange: true)
+        } else if behavior == .slider {
+            adjustSliderForAccessibility(by: step)
         }
     }
 
@@ -637,13 +663,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             selectSparklineIndex(sparklineSelectedIndex - 1, emitChange: true)
             return
         }
-        guard behavior == .slider || behavior == .progress || behavior == .bottomSheet else {
+        guard behavior == .slider || behavior == .bottomSheet else {
             return
         }
         if behavior == .bottomSheet {
             settleSheet(to: snapIndex - 1, emitChange: true)
-        } else {
-            setRangeValue(value - step, emitChange: true)
+        } else if behavior == .slider {
+            adjustSliderForAccessibility(by: -step)
         }
     }
 
@@ -680,14 +706,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             applyAccordion()
             emit?(.toggle, Data((isExpanded ? "1" : "0").utf8))
         case .slider:
-            let requested = sliderValue(at: point)
-            let next = properties["rating"]?.pamFlag == true
-                && properties["clearable"]?.pamFlag == true
-                && requested == value
-                ? minimum
-                : requested
-            setRangeValue(next, emitChange: true)
-            emit?(.native, Data(formatted(value).utf8))
+            guard activateSlider(at: point) else { return }
         case .tabTrigger:
             _ = tabsAncestor()?.selectTab(self, emitChange: true)
         case .inputSlot:
@@ -1097,7 +1116,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             traits = [.button]
             if isChecked { traits.insert(.selected) }
             accessibilityValue = isChecked ? "On" : "Off"
-        case .slider, .progress, .bottomSheet:
+        case .slider, .bottomSheet:
             isAccessibilityElement = true
             traits = [.adjustable]
             accessibilityValue = behavior == .bottomSheet
@@ -1105,6 +1124,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 : (rangeEnabled && behavior == .slider
                     ? "\(formatted(lowerValue)) to \(formatted(upperValue))"
                     : formatted(value))
+        case .progress:
+            isAccessibilityElement = true
+            let fraction = min(1, max(0, (value - minimum) / (maximum - minimum)))
+            accessibilityValue = "\(Int((fraction * 100).rounded()))%"
         case .sparkline where properties["interactive"]?.pamFlag == true:
             isAccessibilityElement = true
             traits = [.adjustable]
@@ -2099,38 +2122,84 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func panSlider(_ recognizer: UIPanGestureRecognizer) {
-        guard bounds.width > 0, bounds.height > 0 else { return }
-        let point = recognizer.location(in: self)
-        let requested = sliderValue(at: point)
-        if rangeEnabled {
-            if recognizer.state == .began {
-                activeRangeThumb = abs(requested - lowerValue) <= abs(requested - upperValue)
-                    ? 0 : 1
-            }
-            if activeRangeThumb == 0 {
-                lowerValue = min(requested, upperValue)
-            } else {
-                upperValue = max(requested, lowerValue)
-                value = upperValue
-            }
-            setNeedsDisplay()
-            accessibilityValue = "\(formatted(lowerValue)) to \(formatted(upperValue))"
-            emit?(.change, rangePayload())
-        } else {
-            setRangeValue(requested, emitChange: true)
+        updateSliderGesture(state: recognizer.state, at: recognizer.location(in: self))
+    }
+
+    func updateSliderGesture(state: UIGestureRecognizer.State, at point: CGPoint) {
+        if state == .cancelled || state == .failed {
+            sliderGestureActive = false
+            cancelSliderChange()
+            return
         }
-        if recognizer.state == .ended || recognizer.state == .cancelled {
-            emit?(.native, rangeEnabled ? rangePayload() : Data(formatted(value).utf8))
+        guard sliderCanInteract, bounds.width > 0, bounds.height > 0 else {
+            sliderGestureActive = false
+            cancelSliderChange()
+            return
+        }
+        switch state {
+        case .began:
+            sliderGestureActive = true
+            let requested = sliderValue(at: point)
+            if rangeEnabled { selectNearestRangeThumb(to: requested) }
+            if updateSliderValue(requested) { scheduleSliderChange() }
+        case .changed where sliderGestureActive:
+            if updateSliderValue(sliderValue(at: point)) {
+                scheduleSliderChange()
+            }
+        case .ended where sliderGestureActive:
+            if updateSliderValue(sliderValue(at: point)) {
+                scheduleSliderChange()
+            }
+            let finalPayload = sliderPayload()
+            sliderGestureActive = false
+            flushSliderChange()
+            emit?(.native, finalPayload)
+        default:
+            break
         }
     }
 
-    private func sliderValue(at point: CGPoint) -> CGFloat {
+    private var sliderCanInteract: Bool {
+        behavior == .slider
+            && isUserInteractionEnabled
+            && (properties["enabled"]?.pamFlag ?? true)
+            && !(properties["interactionDisabled"]?.pamFlag ?? false)
+            && !(properties["readOnly"]?.pamFlag
+                ?? properties["isReadOnly"]?.pamFlag
+                ?? false)
+    }
+
+    @discardableResult
+    func activateSlider(at point: CGPoint) -> Bool {
+        guard sliderCanInteract, bounds.width > 0, bounds.height > 0 else { return false }
+        let requested = sliderValue(at: point)
+        if rangeEnabled {
+            selectNearestRangeThumb(to: requested)
+        } else if properties["rating"]?.pamFlag == true
+            && properties["clearable"]?.pamFlag == true
+            && value != minimum
+            && requested == value {
+            _ = updateSliderValue(minimum)
+            let payload = sliderPayload()
+            emit?(.change, payload)
+            emit?(.native, payload)
+            return true
+        }
+        let changed = updateSliderValue(requested)
+        let payload = sliderPayload()
+        if changed { emit?(.change, payload) }
+        emit?(.native, payload)
+        return true
+    }
+
+    func sliderValue(at point: CGPoint) -> CGFloat {
         guard bounds.width > 0, bounds.height > 0 else { return value }
+        let track = sliderTrackRect()
         var fraction: CGFloat
         if orientation == 2 {
-            fraction = 1 - point.y / bounds.height
+            fraction = (track.maxY - point.y) / max(1, track.height)
         } else {
-            fraction = point.x / bounds.width
+            fraction = (point.x - track.minX) / max(1, track.width)
             if effectiveUserInterfaceLayoutDirection == .rightToLeft {
                 fraction = 1 - fraction
             }
@@ -2149,13 +2218,75 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         Data("[\(formatted(lowerValue)),\(formatted(upperValue))]".utf8)
     }
 
-    private func setRangeValue(_ requested: CGFloat, emitChange: Bool) {
-        value = snapped(requested)
-        setNeedsDisplay()
-        accessibilityValue = formatted(value)
-        if emitChange {
-            emit?(.change, Data(formatted(value).utf8))
+    private func sliderPayload() -> Data {
+        rangeEnabled ? rangePayload() : Data(formatted(value).utf8)
+    }
+
+    private func selectNearestRangeThumb(to requested: CGFloat) {
+        activeRangeThumb = abs(requested - lowerValue) <= abs(requested - upperValue) ? 0 : 1
+    }
+
+    @discardableResult
+    private func updateSliderValue(_ requested: CGFloat) -> Bool {
+        let next = snapped(requested)
+        let changed: Bool
+        if rangeEnabled {
+            if activeRangeThumb == 0 {
+                let lower = min(next, upperValue)
+                changed = lower != lowerValue
+                lowerValue = lower
+            } else {
+                let upper = max(next, lowerValue)
+                changed = upper != upperValue
+                upperValue = upper
+                value = upper
+            }
+            accessibilityValue = "\(formatted(lowerValue)) to \(formatted(upperValue))"
+        } else {
+            changed = next != value
+            value = next
+            accessibilityValue = formatted(value)
         }
+        setNeedsDisplay()
+        return changed
+    }
+
+    private func adjustSliderForAccessibility(by delta: CGFloat) {
+        guard sliderCanInteract else { return }
+        if rangeEnabled { activeRangeThumb = 1 }
+        let current = rangeEnabled ? upperValue : value
+        guard updateSliderValue(current + delta) else { return }
+        let payload = sliderPayload()
+        emit?(.change, payload)
+        emit?(.native, payload)
+    }
+
+    private func scheduleSliderChange() {
+        sliderChangePending = true
+        guard sliderChangeWorkItem == nil else { return }
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.sliderChangeWorkItem = nil
+            guard self.sliderChangePending else { return }
+            self.sliderChangePending = false
+            self.emit?(.change, self.sliderPayload())
+        }
+        sliderChangeWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(16), execute: workItem)
+    }
+
+    private func flushSliderChange() {
+        sliderChangeWorkItem?.cancel()
+        sliderChangeWorkItem = nil
+        guard sliderChangePending else { return }
+        sliderChangePending = false
+        emit?(.change, sliderPayload())
+    }
+
+    private func cancelSliderChange() {
+        sliderChangeWorkItem?.cancel()
+        sliderChangeWorkItem = nil
+        sliderChangePending = false
     }
 
     private func setOpen(_ requested: Bool, shouldEmit: Bool) {
@@ -2334,17 +2465,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         progressFillLayer = nil
     }
 
-    private func drawSlider(_ context: CGContext) {
-        let rating = properties["rating"]?.pamFlag == true
-        subviews.forEach { $0.isHidden = rating }
-        if rating {
-            drawRating(context)
-            return
-        }
+    private func sliderTrackRect() -> CGRect {
         let trackInset = orientation == 2
             ? sliderThumbHeight / 2
             : sliderThumbWidth / 2
-        let track = orientation == 2
+        return orientation == 2
             ? CGRect(
                 x: bounds.midX - sliderTrackThickness / 2,
                 y: trackInset,
@@ -2357,6 +2482,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 width: max(1, bounds.width - sliderThumbWidth),
                 height: sliderTrackThickness
             )
+    }
+
+    private func drawSlider(_ context: CGContext) {
+        let rating = properties["rating"]?.pamFlag == true
+        subviews.forEach { $0.isHidden = rating }
+        if rating {
+            drawRating(context)
+            return
+        }
+        let track = sliderTrackRect()
         context.setFillColor(trackColor.cgColor)
         UIBezierPath(
             roundedRect: track,
