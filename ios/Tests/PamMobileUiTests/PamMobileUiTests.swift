@@ -185,6 +185,25 @@ final class PamMobileUiTests: XCTestCase {
         host.releaseCallbacks()
     }
 
+    func testCalendarAdjacentMonthSelectionUpdatesVisibleTitle() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(7),
+            "year": .integer(2026),
+            "month": .integer(10),
+            "locale": .text("en_US"),
+            "showOutsideDays": .flag(true),
+        ])
+        let title = UILabel()
+        title.accessibilityIdentifier = "pam:calendar-title"
+        host.addSubview(title)
+        XCTAssertTrue(host.selectCalendarDate("2026-11-01"))
+        XCTAssertEqual(title.text, "November 2026")
+        XCTAssertTrue(host.navigateCalendar(months: -1))
+        XCTAssertEqual(title.text, "October 2026")
+        host.releaseCallbacks()
+    }
+
     func testDatePickerAppliesBoundsAndClockMode() {
         let host = PamMobileUiHost { _, _ in }
         host.update([

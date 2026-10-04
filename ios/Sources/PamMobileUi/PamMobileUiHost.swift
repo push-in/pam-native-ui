@@ -2512,6 +2512,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
               !(properties["readOnly"]?.pamFlag ?? false),
               !(properties["disabled"]?.pamFlag ?? false),
               !(properties["isDisabled"]?.pamFlag ?? false),
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
               isUserInteractionEnabled else { return false }
         let disabled = Set(
             (properties["disabledDates"]?.pamText ?? "")
@@ -2555,6 +2556,12 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             calendarSelectedDates = [key]
             payload = key
             accessibilityValue = key
+        }
+        let selectedMonth = Int(key.dropFirst(5).prefix(2)) ?? calendarMonth
+        if year != calendarYear || selectedMonth != calendarMonth {
+            calendarYear = year
+            calendarMonth = selectedMonth
+            updateCalendarTitle()
         }
         emit?(.change, Data(payload.utf8))
         setNeedsDisplay()
