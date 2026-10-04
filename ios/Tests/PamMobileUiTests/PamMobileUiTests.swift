@@ -64,6 +64,85 @@ final class PamMobileUiTests: XCTestCase {
         factory.close()
     }
 
+    func testSelectItemVoiceOverActivationUsesPressAndDismissPolicy() {
+        var presses = 0
+        var dismissals: [[String: WireValue]] = []
+        let sheet = PamMobileUiHost { kind, payload in
+            if kind == .native, let map = try? WireMap.decode(payload) {
+                dismissals.append(map)
+            }
+        }
+        sheet.update(["behavior": .integer(3), "open": .flag(true)])
+        let content = UIView()
+        content.accessibilityIdentifier = "pam:overlay-content"
+        sheet.addSubview(content)
+        let option = PamMobileUiHost { kind, _ in
+            if kind == .press { presses += 1 }
+        }
+        option.update([
+            "behavior": .integer(24),
+            "component": .integer(Int64(GeneratedComponents.SELECT_ITEM)),
+            "closeOnSelect": .flag(true),
+        ])
+        let label = UILabel()
+        label.text = "Engineering"
+        option.addSubview(label)
+        content.addSubview(option)
+        option.frame = CGRect(x: 0, y: 0, width: 200, height: 56)
+        option.layoutIfNeeded()
+
+        XCTAssertEqual(option.accessibilityLabel, "Engineering")
+        XCTAssertTrue(option.keyCommands?.contains(where: { $0.input == "\r" }) == true)
+        XCTAssertTrue(option.keyCommands?.contains(where: { $0.input == " " }) == true)
+        XCTAssertTrue(option.canBecomeFirstResponder)
+        XCTAssertTrue(option.accessibilityActivate())
+        XCTAssertEqual(presses, 1)
+        XCTAssertEqual(dismissals.last?["action"], .integer(1))
+
+        sheet.releaseCallbacks()
+        option.releaseCallbacks()
+    }
+
+    func testSelectItemRejectsDisabledActivationAndRefreshesPooledLabel() {
+        var presses = 0
+        let option = PamMobileUiHost { kind, _ in
+            if kind == .press { presses += 1 }
+        }
+        option.update([
+            "behavior": .integer(24),
+            "component": .integer(Int64(GeneratedComponents.SELECT_ITEM)),
+            "accessibilityLabel": .text("Old option"),
+            "enabled": .flag(false),
+        ])
+        XCTAssertTrue(option.accessibilityTraits.contains(.notEnabled))
+        XCTAssertFalse(option.accessibilityActivate())
+        XCTAssertFalse(option.canBecomeFirstResponder)
+
+        let label = UILabel()
+        label.text = "New option"
+        option.addSubview(label)
+        option.frame = CGRect(x: 0, y: 0, width: 200, height: 56)
+        option.update([
+            "behavior": .integer(24),
+            "component": .integer(Int64(GeneratedComponents.SELECT_ITEM)),
+            "enabled": .flag(true),
+            "closeOnSelect": .flag(false),
+        ])
+        option.layoutIfNeeded()
+        XCTAssertEqual(option.accessibilityLabel, "New option")
+        XCTAssertTrue(option.accessibilityActivate())
+        XCTAssertEqual(presses, 1)
+
+        option.update([
+            "behavior": .integer(24),
+            "component": .integer(Int64(GeneratedComponents.SELECT_ITEM)),
+            "readOnly": .flag(true),
+        ])
+        XCTAssertFalse(option.accessibilityActivate())
+        XCTAssertEqual(presses, 1)
+        option.releaseCallbacks()
+    }
+
     func testDefaultCheckedAndSelectedContainerColorReachUIKit() {
         let factory = MobileUiHostFactory()
         let checkbox = factory.create(context: nil) { _ in }

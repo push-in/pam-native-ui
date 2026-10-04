@@ -228,12 +228,24 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override var canBecomeFirstResponder: Bool {
-        behavior == .tabTrigger
+        (behavior == .tabTrigger || behavior == .sheetItem)
             && (properties["enabled"]?.pamFlag ?? true)
+            && !(properties["interactionDisabled"]?.pamFlag ?? false)
+            && !(properties["readOnly"]?.pamFlag ?? false)
+            && !(properties["isReadOnly"]?.pamFlag ?? false)
             && isUserInteractionEnabled
     }
 
     override var keyCommands: [UIKeyCommand]? {
+        if behavior == .sheetItem {
+            return [" ", "\r"].map {
+                UIKeyCommand(
+                    input: $0,
+                    modifierFlags: [],
+                    action: #selector(onSheetItemKeyCommand(_:))
+                )
+            }
+        }
         guard behavior == .tabTrigger else { return super.keyCommands }
         let inputs = [
             UIKeyCommand.inputLeftArrow,
@@ -588,6 +600,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             layoutFileTree()
         case .calendar:
             updateCalendarAccessibilityElements()
+        case .sheetItem:
+            applySemantics()
         default:
             break
         }
@@ -726,14 +740,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 emit?(.press, Data())
             }
         case .sheetItem:
-            emit?(.press, Data())
-            if behavior == .sheetItem,
-               properties["closeOnSelect"]?.pamFlag
-                   ?? properties["closeOnPress"]?.pamFlag
-                   ?? (component == GeneratedComponents.SELECT_ITEM) {
-                sheetAncestor()?.clearSheetSearch()
-                sheetAncestor()?.requestDismiss()
-            }
+            guard activateSheetItem() else { return }
         case .popover, .menu:
             setOpen(!isOpen, shouldEmit: true)
         case .tooltip:
@@ -757,6 +764,36 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             emit?(.press, Data())
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    override func accessibilityActivate() -> Bool {
+        if behavior == .sheetItem { return activateSheetItem() }
+        return super.accessibilityActivate()
+    }
+
+    @objc private func onSheetItemKeyCommand(_ command: UIKeyCommand) {
+        guard command.input == " " || command.input == "\r" else { return }
+        if activateSheetItem() {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    }
+
+    @discardableResult
+    func activateSheetItem() -> Bool {
+        guard behavior == .sheetItem,
+              isUserInteractionEnabled,
+              properties["enabled"]?.pamFlag ?? true,
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["isReadOnly"]?.pamFlag ?? false) else { return false }
+        emit?(.press, Data())
+        if properties["closeOnSelect"]?.pamFlag
+            ?? properties["closeOnPress"]?.pamFlag
+            ?? (component == GeneratedComponents.SELECT_ITEM) {
+            sheetAncestor()?.clearSheetSearch()
+            sheetAncestor()?.requestDismiss()
+        }
+        return true
     }
 
     @objc private func onPressState(_ recognizer: UILongPressGestureRecognizer) {
@@ -1141,6 +1178,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             traits = [.button]
             if isChecked || isSelectedState { traits.insert(.selected) }
             accessibilityValue = isChecked || isSelectedState ? "Selected" : "Not selected"
+            accessibilityLabel = properties["accessibilityLabel"]?.pamText
+                ?? properties["ariaLabel"]?.pamText
+                ?? findFirstText(in: self)
         case .tableRow where properties["isHeaderRow"]?.pamFlag == true:
             isAccessibilityElement = true
             traits = [.header]
@@ -1164,6 +1204,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             isAccessibilityElement = true
             traits = [.button]
             accessibilityValue = nil
+            if behavior == .sheetItem {
+                accessibilityLabel = properties["accessibilityLabel"]?.pamText
+                    ?? properties["ariaLabel"]?.pamText
+                    ?? findFirstText(in: self)
+            }
         default:
             isAccessibilityElement = accessibilityLabel != nil
         }
