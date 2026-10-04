@@ -130,6 +130,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var switchThumbColor = UIColor.secondaryLabel
     private var switchActiveThumbColor = UIColor.white
     private var selectedForegroundColor = UIColor.white
+    private var selectedContainerColor = UIColor.tintColor
     private var pressAnimator: UIViewPropertyAnimator?
     private var shimmerLayer: CAGradientLayer?
     private var progressTrackLayer: CAShapeLayer?
@@ -218,10 +219,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         } else if previousBehavior != behavior {
             isOpen = !(behavior == .popover || behavior == .menu || behavior == .tooltip)
         }
+        let defaultChecked = behavior == .switchControl
+            ? (next["value"]?.pamFlag ?? next["defaultValue"]?.pamFlag ?? isChecked)
+            : (next["defaultIsChecked"]?.pamFlag ?? isChecked)
         isChecked = next["checked"]?.pamFlag
             ?? next["isChecked"]?.pamFlag
             ?? next["modelValue"]?.pamFlag
-            ?? isChecked
+            ?? defaultChecked
         isSelectedState = next["selected"]?.pamFlag
             ?? next["isSelected"]?.pamFlag
             ?? isSelectedState
@@ -314,6 +318,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         selectedForegroundColor = color(
             next["selectedForegroundColor"]?.pamInteger,
             fallback: selectedForegroundColor
+        )
+        selectedContainerColor = color(
+            next["selectedContainerColor"]?.pamInteger,
+            fallback: fillColor
         )
 
         applySemantics()
@@ -669,7 +677,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     private func applyButtonToggleVisualState() {
         guard buttonToggleItem, behavior == .tabTrigger else { return }
-        backgroundColor = isSelectedState ? fillColor : .clear
+        backgroundColor = isSelectedState ? selectedContainerColor : .clear
         layer.cornerRadius = CGFloat(
             properties["selectionCornerRadius"]?.pamDecimal ?? 8
         )
@@ -776,9 +784,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
              .tabTrigger, .sheetItem, .menuItem, .overlayDismiss, .inputSlot,
              .fileTreeFolder, .fileTreeFile,
              .calendar, .dateTimePicker, .sparkline:
-            true
+            return true
         default:
-            false
+            return false
         }
     }
 

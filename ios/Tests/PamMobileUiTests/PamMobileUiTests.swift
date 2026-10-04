@@ -64,6 +64,33 @@ final class PamMobileUiTests: XCTestCase {
         factory.close()
     }
 
+    func testDefaultCheckedAndSelectedContainerColorReachUIKit() {
+        let factory = MobileUiHostFactory()
+        let checkbox = factory.create(context: nil) { _ in }
+        factory.update(view: checkbox, properties: [
+            "behavior": .integer(9),
+            "defaultIsChecked": .flag(true),
+            "accessibilityLabel": .text("Remember me"),
+        ])
+        XCTAssertTrue(checkbox.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(checkbox.accessibilityValue, "On")
+
+        let toggle = factory.create(context: nil) { _ in }
+        factory.update(view: toggle, properties: [
+            "behavior": .integer(23),
+            "buttonToggleItem": .flag(true),
+            "selected": .flag(true),
+            "selectedContainerColor": .integer(Int64(0xFFFF0000)),
+        ])
+        XCTAssertEqual(
+            toggle.backgroundColor,
+            UIColor(red: 1, green: 0, blue: 0, alpha: 1)
+        )
+        factory.release(view: checkbox)
+        factory.release(view: toggle)
+        factory.close()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),
