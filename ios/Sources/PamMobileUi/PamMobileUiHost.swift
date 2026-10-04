@@ -120,6 +120,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var sheetSearchable = false
     private var sheetAllowCustomValue = false
     private var sheetSearchPlaceholder = "Search options"
+    private var calendarMode = 1
+    private var calendarSelectedDates: Set<String> = []
+    private var calendarRangeFrom: String?
+    private var calendarRangeTo: String?
     private weak var sheetSearchField: UITextField?
     private weak var sheetCustomAction: UIButton?
     private weak var sheetEmptyState: UILabel?
@@ -293,6 +297,28 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             && (next["allowCustomValue"]?.pamFlag ?? false)
         sheetSearchPlaceholder = next["searchPlaceholder"]?.pamText
             ?? "Search options"
+        if behavior == .calendar {
+            let nextMode = next["mode"]?.pamInteger ?? 1
+            if previousBehavior != .calendar || nextMode != calendarMode {
+                calendarSelectedDates.removeAll()
+                calendarRangeFrom = nil
+                calendarRangeTo = nil
+            }
+            calendarMode = nextMode
+            if nextMode == 2, let values = next["selectedValues"]?.pamText {
+                calendarSelectedDates = Set(values.split(whereSeparator: \.isNewline).map(String.init))
+            } else if nextMode == 3 {
+                if let from = next["rangeFrom"]?.pamText {
+                    calendarRangeFrom = from
+                }
+                if let to = next["rangeTo"]?.pamText {
+                    calendarRangeTo = to
+                }
+            } else if let value = next["value"]?.pamText
+                ?? next["defaultValue"]?.pamText {
+                calendarSelectedDates = [String(value.prefix(10))]
+            }
+        }
         fillColor = color(next["fillColor"]?.pamInteger, fallback: fillColor)
         trackColor = color(next["trackColor"]?.pamInteger, fallback: trackColor)
         if behavior == .switchControl {
@@ -535,6 +561,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             }
         case .dateTimePicker:
             presentDateTimePicker()
+        case .calendar:
+            if let date = calendarDate(at: point) {
+                _ = selectCalendarDate(date)
+            }
         case .sparkline where properties["interactive"]?.pamFlag == true:
             updateSparklineSelection(at: point.x, emitChange: true)
         case .overlayDismiss:
@@ -1491,6 +1521,30 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         shimmerLayer = gradient
     }
 
+    func configuredDatePicker() -> UIDatePicker {
+        let picker = UIDatePicker()
+        picker.preferredDatePickerStyle = .wheels
+        picker.datePickerMode = switch properties["mode"]?.pamInteger {
+        case 5: .time
+        case 6: .dateAndTime
+        default: .date
+        }
+        let locale = properties["locale"]?.pamText ?? Locale.current.identifier
+        picker.locale = Locale(identifier: (properties["is24Hour"]?.pamFlag ?? false)
+            ? "\(locale)@hours=h23" : locale)
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = Calendar(identifier: .gregorian)
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let lower = properties["minDate"]?.pamText
+            ?? properties["minimumDate"]?.pamText
+        let upper = properties["maxDate"]?.pamText
+            ?? properties["maximumDate"]?.pamText
+        picker.minimumDate = lower.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+        picker.maximumDate = upper.flatMap { dateFormatter.date(from: String($0.prefix(10))) }
+        return picker
+    }
+
     private func presentDateTimePicker() {
         guard let controller = nearestViewController() else {
             emit?(.press, Data())
@@ -1501,13 +1555,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             message: nil,
             preferredStyle: .actionSheet
         )
-        let picker = UIDatePicker()
-        picker.preferredDatePickerStyle = .wheels
-        picker.datePickerMode = switch properties["mode"]?.pamInteger {
-        case 5: .time
-        case 6: .dateAndTime
-        default: .date
-        }
+        let picker = configuredDatePicker()
         alert.view.addSubview(picker)
         picker.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -2009,9 +2057,118 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         context.fill(bounds)
     }
 
+    func configuredCalendar() -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(
+            identifier: properties["locale"]?.pamText ?? Locale.current.identifier
+        )
+        calendar.firstWeekday = min(6, max(0,
+            properties["firstDayOfWeek"]?.pamInteger ?? 0
+        )) + 1
+        return calendar
+    }
+
+    func selectCalendarDate(_ key: String) -> Bool {
+        let formatter = DateFormatter()
+        formatter.calendar = configuredCalendar()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.isLenient = false
+        guard formatter.date(from: key) != nil,
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["disabled"]?.pamFlag ?? false),
+              !(properties["isDisabled"]?.pamFlag ?? false),
+              isUserInteractionEnabled else { return false }
+        let disabled = Set(
+            (properties["disabledDates"]?.pamText ?? "")
+                .split(whereSeparator: \.isNewline).map(String.init)
+        )
+        let minDate = properties["minDate"]?.pamText
+            ?? properties["minimumDate"]?.pamText
+        let maxDate = properties["maxDate"]?.pamText
+            ?? properties["maximumDate"]?.pamText
+        let year = Int(key.prefix(4)) ?? 0
+        if disabled.contains(key)
+            || minDate.map({ key < String($0.prefix(10)) }) == true
+            || maxDate.map({ key > String($0.prefix(10)) }) == true
+            || (properties["minYear"]?.pamInteger).map({ year < $0 }) == true
+            || (properties["maxYear"]?.pamInteger).map({ year > $0 }) == true {
+            return false
+        }
+
+        let payload: String
+        switch calendarMode {
+        case 2:
+            if !calendarSelectedDates.insert(key).inserted {
+                calendarSelectedDates.remove(key)
+            }
+            payload = "M\n" + calendarSelectedDates.sorted().joined(separator: "\n")
+            accessibilityValue = "\(calendarSelectedDates.count) dates selected"
+        case 3:
+            if calendarRangeFrom == nil || calendarRangeTo != nil {
+                calendarRangeFrom = key
+                calendarRangeTo = nil
+            } else {
+                let start = calendarRangeFrom ?? key
+                calendarRangeFrom = min(start, key)
+                calendarRangeTo = max(start, key)
+            }
+            payload = "R\n\(calendarRangeFrom ?? "")\n\(calendarRangeTo ?? "")"
+            accessibilityValue = calendarRangeTo == nil
+                ? "Range starts \(calendarRangeFrom ?? "")"
+                : "\(calendarRangeFrom ?? "") to \(calendarRangeTo ?? "")"
+        default:
+            calendarSelectedDates = [key]
+            payload = key
+            accessibilityValue = key
+        }
+        emit?(.change, Data(payload.utf8))
+        setNeedsDisplay()
+        UIAccessibility.post(notification: .layoutChanged, argument: self)
+        return true
+    }
+
+    private func calendarDate(at point: CGPoint) -> String? {
+        guard bounds.width > 0, bounds.height > 0,
+              bounds.contains(point) else { return nil }
+        let calendar = configuredCalendar()
+        let showWeek = properties["showWeek"]?.pamFlag == true
+        let columns = showWeek ? 8 : 7
+        let column = Int(point.x / (bounds.width / CGFloat(columns)))
+        let row = Int(point.y / (bounds.height / 7)) - 1
+        guard (0..<6).contains(row), (0..<columns).contains(column) else {
+            return nil
+        }
+        let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
+        let dayColumn = rtl ? 6 - column : column - (showWeek ? 1 : 0)
+        guard (0..<7).contains(dayColumn) else { return nil }
+        let now = calendar.date(from: DateComponents(
+            year: properties["year"]?.pamInteger,
+            month: properties["month"]?.pamInteger,
+            day: 1
+        )) ?? Date()
+        let first = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: now)
+        ) ?? now
+        let offset = (calendar.component(.weekday, from: first)
+            - calendar.firstWeekday + 7) % 7
+        guard let firstVisible = calendar.date(byAdding: .day, value: -offset, to: first),
+              let date = calendar.date(
+                byAdding: .day, value: row * 7 + dayColumn, to: firstVisible
+              ) else { return nil }
+        if !(properties["showOutsideDays"]?.pamFlag ?? true)
+            && !calendar.isDate(date, equalTo: first, toGranularity: .month) {
+            return nil
+        }
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
     private func drawCalendar(_ context: CGContext) {
-        var calendar = Calendar.autoupdatingCurrent
-        calendar.firstWeekday = 1
+        let calendar = configuredCalendar()
         let requestedYear = properties["year"]?.pamInteger
         let requestedMonth = properties["month"]?.pamInteger
         let now = calendar.date(from: DateComponents(
@@ -2046,10 +2203,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             .font: font,
             .foregroundColor: stateLayerColor,
         ]
-        let selected = Set(
-            (properties["selectedValues"]?.pamText ?? "")
-                .split(whereSeparator: \.isNewline)
-                .map(String.init)
+        let selected = calendarSelectedDates
+        let disabled = Set(
+            (properties["disabledDates"]?.pamText ?? "")
+                .split(whereSeparator: \.isNewline).map(String.init)
         )
         let formatter = DateFormatter()
         formatter.calendar = calendar
@@ -2063,7 +2220,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 showWeek && effectiveUserInterfaceLayoutDirection != .rightToLeft
                     ? 1 : 0
             )
-            let symbol = calendar.veryShortWeekdaySymbols[dayIndex] as NSString
+            let symbolIndex = (dayIndex + calendar.firstWeekday - 1) % 7
+            let symbol = calendar.veryShortWeekdaySymbols[symbolIndex] as NSString
             let frame = CGRect(
                 x: CGFloat(visualColumn) * cellWidth,
                 y: 0,
@@ -2104,7 +2262,13 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             if outside && !showOutside { continue }
             let text = String(calendar.component(.day, from: date)) as NSString
             let dateKey = formatter.string(from: date)
+            let withinRange = calendarRangeFrom.flatMap { from in
+                calendarRangeTo.map { to in dateKey > from && dateKey < to }
+            } ?? false
             let isSelected = selected.contains(dateKey)
+                || dateKey == calendarRangeFrom
+                || dateKey == calendarRangeTo
+                || withinRange
             if isSelected {
                 context.setFillColor(fillColor.cgColor)
                 context.fillEllipse(in: frame.insetBy(
@@ -2112,7 +2276,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                     dy: max(2, (cellHeight - cellWidth * 0.64) / 2)
                 ))
             }
-            var attributes = outside ? mutedAttributes : normalAttributes
+            let unavailable = disabled.contains(dateKey)
+                || properties["minDate"]?.pamText.map({ dateKey < String($0.prefix(10)) }) == true
+                || properties["maxDate"]?.pamText.map({ dateKey > String($0.prefix(10)) }) == true
+            var attributes = outside || unavailable ? mutedAttributes : normalAttributes
             if isSelected {
                 attributes[.foregroundColor] = selectedForegroundColor
             }

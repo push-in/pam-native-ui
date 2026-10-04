@@ -69,7 +69,8 @@ A module reaches status `3` (`verified`) only when all applicable gates pass:
 
 The iOS gate currently remains `2` (`implemented`) in the checked-in manifest.
 The UIKit suite checks every native behavior and now checks component IDs,
-button/FAB hit targets, and select-item semantics on a simulator. A passing
+button/FAB hit targets, select-item semantics, calendar selection payloads,
+disabled date bounds and date-picker configuration on a simulator. A passing
 simulator run certifies those cases; it does not by itself promote every module
 to verified. Each remaining interaction and visual case needs corresponding
 Android and iOS evidence before its manifest status changes.

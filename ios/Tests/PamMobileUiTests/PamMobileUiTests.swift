@@ -91,6 +91,60 @@ final class PamMobileUiTests: XCTestCase {
         factory.close()
     }
 
+    func testCalendarSelectionHonorsDisabledDatesAndNativePayloadModes() {
+        var payloads: [String] = []
+        let calendar = PamMobileUiHost { _, payload in
+            payloads.append(String(decoding: payload, as: UTF8.self))
+        }
+        calendar.update([
+            "behavior": .integer(7),
+            "mode": .integer(2),
+            "disabledDates": .text("2026-10-04"),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+            "firstDayOfWeek": .integer(1),
+            "locale": .text("pt_BR"),
+        ])
+        XCTAssertEqual(calendar.configuredCalendar().firstWeekday, 2)
+        XCTAssertEqual(calendar.configuredCalendar().locale?.identifier, "pt_BR")
+        XCTAssertFalse(calendar.selectCalendarDate("2026-09-30"))
+        XCTAssertFalse(calendar.selectCalendarDate("2026-10-04"))
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-05"))
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-06"))
+        XCTAssertEqual(payloads, ["M\n2026-10-05", "M\n2026-10-05\n2026-10-06"])
+
+        calendar.update([
+            "behavior": .integer(7),
+            "mode": .integer(3),
+        ])
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-10"))
+        XCTAssertTrue(calendar.selectCalendarDate("2026-10-08"))
+        XCTAssertEqual(Array(payloads.suffix(2)), [
+            "R\n2026-10-10\n",
+            "R\n2026-10-08\n2026-10-10",
+        ])
+        calendar.releaseCallbacks()
+    }
+
+    func testDatePickerAppliesBoundsAndClockMode() {
+        let host = PamMobileUiHost { _, _ in }
+        host.update([
+            "behavior": .integer(17),
+            "mode": .integer(6),
+            "minDate": .text("2026-10-01"),
+            "maxDate": .text("2026-10-31"),
+            "is24Hour": .flag(true),
+        ])
+        let picker = host.configuredDatePicker()
+        XCTAssertEqual(picker.datePickerMode, .dateAndTime)
+        guard let minimum = picker.minimumDate, let maximum = picker.maximumDate else {
+            XCTFail("The picker must retain both requested date bounds")
+            return
+        }
+        XCTAssertLessThan(minimum, maximum)
+        host.releaseCallbacks()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),
