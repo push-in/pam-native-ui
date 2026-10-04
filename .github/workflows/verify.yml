@@ -261,6 +261,21 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             test
 
+      - name: Validate and report UIKit parity evidence
+        run: |
+          python3 -m unittest tools/test-ios-parity-report.py
+          python3 tools/ios-parity-report.py --format markdown \
+            --output ios-parity-evidence.md
+          cat ios-parity-evidence.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload UIKit parity evidence inventory
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-parity-evidence-${{ matrix.native.label }}
+          path: ios-parity-evidence.md
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Build PAM Native UI for the iOS Simulator
         env:
           PAM_NATIVE_IOS_PATH: ${{ github.workspace }}/pam-native/ios

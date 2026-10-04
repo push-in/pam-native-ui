@@ -1,0 +1,23 @@
+{
+    "behaviorTests": {
+        "testButtonAndFabKeepA44PointTouchTargetWhenPooled": ["button", "fab"],
+        "testSelectItemHasSelectionSemanticsAndGenericSheetItemDoesNot": ["select"],
+        "testDefaultCheckedAndSelectedContainerColorReachUIKit": ["checkbox", "button-toggle"],
+        "testCalendarSelectionHonorsDisabledDatesAndNativePayloadModes": ["calendar"],
+        "testCalendarNavigationAndHeaderKeepNativePayloadAndBounds": ["calendar"],
+        "testCalendarHitTestingUsesTaggedGridAndActualRowCount": ["calendar"],
+        "testCalendarAdjacentMonthSelectionUpdatesVisibleTitle": ["calendar"],
+        "testCalendarDaysAreAccessibleButtonsWithNativeActivation": ["calendar"],
+        "testDatePickerAppliesBoundsAndClockMode": ["date-picker", "time-picker"],
+        "testDateTimePickerUsesNativeValueFormatsAndInitialSelection": ["date-picker", "time-picker"],
+        "testDateTimePickerDefaultsToDateTimeAndClampsInitialValue": ["date-picker", "time-picker"],
+        "testFormAndInputGroupLabelsFocusTheirNativeFields": ["form", "text-field"],
+        "testMenuSingleSelectionUpdatesUIKitSemantics": ["menu"],
+        "testPortaledMenuItemsKeepSelectionAndDismissTheirOwner": ["menu"],
+        "testAnchoredBackdropAndEscapeRespectDismissalSettings": ["menu", "overlay"],
+        "testTooltipRespectsConfiguredLongPressDelay": ["tooltip"],
+        "testTabsControlledValueOverridesTriggerStateAndKeepsContentWrapperVisible": ["tabs"],
+        "testTabsKeyboardFocusHonorsManualAndAutomaticActivation": ["tabs"],
+        "testListItemKeepsMaterialLeadingBodyAndTrailingInsets": ["list"]
+    }
+}
