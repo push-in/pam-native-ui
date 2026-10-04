@@ -229,6 +229,49 @@ final class PamMobileUiTests: XCTestCase {
         menu.releaseCallbacks()
     }
 
+    func testFileTreeFolderExpandsAndEmitsPathChange() {
+        var changes: [String] = []
+        let tree = PamMobileUiHost { kind, data in
+            if kind == .change { changes.append(String(decoding: data, as: UTF8.self)) }
+        }
+        tree.update(["behavior": .integer(32), "defaultExpandedPaths": .text("")])
+        let folder = PamMobileUiHost { _, _ in }
+        folder.update(["behavior": .integer(33), "path": .text("docs")])
+        let content = UIView()
+        content.accessibilityIdentifier = "pam:file-tree-content"
+        folder.addSubview(content)
+        tree.addSubview(folder)
+        tree.layoutIfNeeded()
+        XCTAssertTrue(content.isHidden)
+
+        tree.activateFileTreeItem(folder)
+        XCTAssertFalse(content.isHidden)
+        XCTAssertEqual(folder.accessibilityValue, "Expanded")
+        XCTAssertTrue(folder.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(changes, ["docs"])
+
+        tree.activateFileTreeItem(folder)
+        XCTAssertTrue(content.isHidden)
+        XCTAssertEqual(folder.accessibilityValue, "Collapsed")
+        XCTAssertEqual(changes, ["docs", "docs"])
+        folder.releaseCallbacks()
+        tree.releaseCallbacks()
+    }
+
+    func testTooltipRespectsConfiguredLongPressDelay() {
+        let tooltip = PamMobileUiHost { _, _ in }
+        tooltip.update([
+            "behavior": .integer(16),
+            "openDelay": .integer(750),
+            "closeDelay": .integer(125),
+        ])
+        let durations = tooltip.gestureRecognizers?
+            .compactMap { $0 as? UILongPressGestureRecognizer }
+            .map(\.minimumPressDuration) ?? []
+        XCTAssertTrue(durations.contains(0.75))
+        tooltip.releaseCallbacks()
+    }
+
     func testEveryManifestFactoryCreatesAndUpdatesAUIKitView() {
         let factories: [NativeViewFactory] = [
             MobileUiHostFactory(),

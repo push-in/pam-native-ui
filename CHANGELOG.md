@@ -5,8 +5,9 @@
 - Add typed PHP constructors for common Material components while preserving
   the raw property escape hatch.
 - Generate the UIKit component ID registry from the same catalog as Android.
-- Align UIKit calendar selection, menu selection, input slot actions, slider
-  labels and tick styling, and native property aliases with the Android host.
+- Align UIKit calendar and file-tree selection, menu selection, input slot
+  actions, slider labels and tick styling, tooltip timing, and native property
+  aliases with the Android host.
 - Add UIKit interaction tests for the newly aligned behaviors.
 
 ## 1.0.9

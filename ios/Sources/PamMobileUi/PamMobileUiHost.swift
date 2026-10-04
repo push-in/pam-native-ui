@@ -142,11 +142,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var sliderTickSize: CGFloat = 4
     private var sliderStopIndicatorSize: CGFloat = 0
     private var sliderTickLabels: [String] = []
+    private var fileTreeExpandedPaths: Set<String> = []
+    private var fileTreeSelectedPath: String?
+    private var fileTreeInitialized = false
     private var pressAnimator: UIViewPropertyAnimator?
     private var shimmerLayer: CAGradientLayer?
     private var progressTrackLayer: CAShapeLayer?
     private var progressFillLayer: CAShapeLayer?
     private var toastDismissWorkItem: DispatchWorkItem?
+    private var tooltipCloseWorkItem: DispatchWorkItem?
     private var toastScheduleSignature: String?
     private var toastAnnouncementSignature: String?
     private weak var anchoredPortalParent: UIView?
@@ -214,8 +218,31 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             rawValue: next["behavior"]?.pamInteger ?? behavior.rawValue
         ) ?? .container
         component = next["component"]?.pamInteger ?? 0
+        if behavior == .tooltip {
+            let delay = max(500, next["openDelay"]?.pamInteger ?? 500)
+            gestureRecognizers?
+                .compactMap { $0 as? UILongPressGestureRecognizer }
+                .filter { $0.minimumPressDuration > 0 }
+                .forEach { $0.minimumPressDuration = TimeInterval(delay) / 1_000 }
+        }
         if previousBehavior != behavior {
             openDefaultInitialized = false
+            fileTreeInitialized = false
+            fileTreeExpandedPaths.removeAll()
+            fileTreeSelectedPath = nil
+            tooltipCloseWorkItem?.cancel()
+            tooltipCloseWorkItem = nil
+        }
+        if behavior == .fileTree {
+            let controlled = next["expandedPaths"]?.pamText
+            if let paths = controlled ?? (!fileTreeInitialized
+                ? next["defaultExpandedPaths"]?.pamText : nil) {
+                fileTreeExpandedPaths = Set(paths.split(separator: "\n").map(String.init))
+                fileTreeInitialized = true
+            }
+            if let selected = next["selectedPath"]?.pamText {
+                fileTreeSelectedPath = selected
+            }
         }
         isControlled = next["open"] != nil || next["isOpen"] != nil
         if isControlled {
@@ -412,6 +439,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         shimmerLayer = nil
         toastDismissWorkItem?.cancel()
         toastDismissWorkItem = nil
+        tooltipCloseWorkItem?.cancel()
+        tooltipCloseWorkItem = nil
         carouselWorkItem?.cancel()
         carouselWorkItem = nil
         removeProgressLayers()
@@ -590,8 +619,16 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             activateInputSlot()
         case .menuItem:
             activateMenuItem()
-        case .sheetItem,
-             .fileTreeFolder, .fileTreeFile:
+        case .fileTreeFolder, .fileTreeFile:
+            if let tree = ancestor(where: { $0.behavior == .fileTree }) {
+                tree.activateFileTreeItem(self)
+            } else {
+                if behavior == .fileTreeFolder { isExpanded.toggle() }
+                isSelectedState = true
+                applySemantics()
+                emit?(.press, Data())
+            }
+        case .sheetItem:
             emit?(.press, Data())
             if behavior == .sheetItem,
                properties["closeOnSelect"]?.pamFlag
@@ -642,9 +679,20 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
         switch recognizer.state {
         case .began:
+            tooltipCloseWorkItem?.cancel()
+            tooltipCloseWorkItem = nil
             setOpen(true, shouldEmit: true)
         case .ended, .cancelled, .failed:
-            setOpen(false, shouldEmit: true)
+            tooltipCloseWorkItem?.cancel()
+            let delay = max(0, properties["closeDelay"]?.pamInteger ?? 100)
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.requestDismiss()
+            }
+            tooltipCloseWorkItem = workItem
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + TimeInterval(delay) / 1_000,
+                execute: workItem
+            )
         default:
             break
         }
@@ -833,6 +881,31 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         emit?(.press, Data())
     }
 
+    func activateFileTreeItem(_ item: PamMobileUiHost) {
+        guard behavior == .fileTree,
+              let path = item.properties["path"]?.pamText,
+              !path.isEmpty else { return }
+        if item.behavior == .fileTreeFolder {
+            if fileTreeExpandedPaths.contains(path) {
+                fileTreeExpandedPaths.remove(path)
+            } else {
+                fileTreeExpandedPaths.insert(path)
+            }
+            fileTreeSelectedPath = path
+            layoutFileTree()
+            emit?(.change, Data(path.utf8))
+            emitMap([
+                "action": .integer(1),
+                "path": .text(path),
+                "expanded": .flag(fileTreeExpandedPaths.contains(path)),
+            ])
+        } else if item.behavior == .fileTreeFile, fileTreeSelectedPath != path {
+            fileTreeSelectedPath = path
+            layoutFileTree()
+            emit?(.change, Data(path.utf8))
+        }
+    }
+
     @objc private func onPan(_ recognizer: UIPanGestureRecognizer) {
         switch behavior {
         case .bottomSheet:
@@ -907,8 +980,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             } else {
                 accessibilityValue = nil
             }
-        case .sheetItem, .overlayDismiss, .inputSlot,
-             .fileTreeFolder, .fileTreeFile:
+        case .fileTreeFolder, .fileTreeFile:
+            isAccessibilityElement = true
+            traits = [.button]
+            if isSelectedState { traits.insert(.selected) }
+        case .sheetItem, .overlayDismiss, .inputSlot:
             isAccessibilityElement = true
             traits = [.button]
             accessibilityValue = nil
@@ -1423,21 +1499,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     private func layoutFileTree() {
-        let expanded = Set(
-            properties["expandedPaths"]?.pamText?
-                .split(separator: "\n")
-                .map(String.init) ?? []
-        )
-        for folder in descendants(prefix: "pam:file-tree-folder") {
-            guard let identifier = folder.accessibilityIdentifier else { continue }
-            let path = identifier.split(separator: ":", maxSplits: 2).last.map(String.init) ?? ""
-            let open = expanded.isEmpty
-                ? (folder.accessibilityValue == "Expanded")
-                : expanded.contains(path)
-            folder.accessibilityValue = open ? "Expanded" : "Collapsed"
-            folder.subviews.dropFirst().forEach {
-                $0.isHidden = !open
-                $0.accessibilityElementsHidden = !open
+        guard behavior == .fileTree else { return }
+        for item in allDescendants().compactMap({ $0 as? PamMobileUiHost })
+            where item.behavior == .fileTreeFolder || item.behavior == .fileTreeFile {
+            guard let path = item.properties["path"]?.pamText else { continue }
+            item.isSelectedState = path == fileTreeSelectedPath
+            item.applySemantics()
+            if item.behavior == .fileTreeFolder {
+                let expanded = fileTreeExpandedPaths.contains(path)
+                item.accessibilityValue = expanded ? "Expanded" : "Collapsed"
+                if let content = item.descendant(tag: "pam:file-tree-content") {
+                    content.isHidden = !expanded
+                    content.accessibilityElementsHidden = !expanded
+                }
+                if let chevron = item.descendant(tag: "pam:file-tree-chevron") {
+                    chevron.transform = CGAffineTransform(rotationAngle: expanded ? .pi / 2 : 0)
+                }
             }
         }
     }
