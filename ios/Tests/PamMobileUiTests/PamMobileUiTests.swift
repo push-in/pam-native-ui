@@ -363,6 +363,111 @@ final class PamMobileUiTests: XCTestCase {
         host.releaseCallbacks()
     }
 
+    func testRangeSliderTapUpdatesNearestEndpointAndEmitsPair() {
+        var changes: [String] = []
+        var ends: [String] = []
+        let slider = PamMobileUiHost { kind, payload in
+            let value = String(decoding: payload, as: UTF8.self)
+            if kind == .change { changes.append(value) }
+            if kind == .native { ends.append(value) }
+        }
+        slider.frame = CGRect(x: 0, y: 0, width: 320, height: 48)
+        slider.update([
+            "behavior": .integer(5), "range": .flag(true),
+            "min": .decimal(0), "max": .decimal(100), "step": .decimal(10),
+            "lowerValue": .decimal(20), "upperValue": .decimal(80),
+            "thumbWidth": .decimal(20),
+        ])
+        XCTAssertTrue(slider.activateSlider(at: CGPoint(x: 100, y: 24)))
+        XCTAssertEqual(slider.accessibilityValue, "30 to 80")
+        XCTAssertTrue(slider.activateSlider(at: CGPoint(x: 220, y: 24)))
+        XCTAssertEqual(slider.accessibilityValue, "30 to 70")
+        XCTAssertEqual(changes, ["[30,80]", "[30,70]"])
+        XCTAssertEqual(ends, changes)
+
+        slider.update([
+            "behavior": .integer(5), "range": .flag(true),
+            "lowerValue": .decimal(30), "upperValue": .decimal(70),
+            "readOnly": .flag(true),
+        ])
+        XCTAssertFalse(slider.activateSlider(at: CGPoint(x: 160, y: 24)))
+        slider.accessibilityIncrement()
+        XCTAssertEqual(changes.count, 2)
+        XCTAssertEqual(ends.count, 2)
+        slider.releaseCallbacks()
+    }
+
+    func testRangeSliderAccessibilityAdjustsUpperEndpointAndResetsPooledStep() {
+        var changes: [String] = []
+        var ends: [String] = []
+        let slider = PamMobileUiHost { kind, payload in
+            let value = String(decoding: payload, as: UTF8.self)
+            if kind == .change { changes.append(value) }
+            if kind == .native { ends.append(value) }
+        }
+        slider.update([
+            "behavior": .integer(5), "range": .flag(true),
+            "min": .decimal(0), "max": .decimal(100), "step": .decimal(10),
+            "lowerValue": .decimal(30), "upperValue": .decimal(70),
+        ])
+        slider.accessibilityIncrement()
+        slider.accessibilityDecrement()
+        XCTAssertEqual(changes, ["[30,80]", "[30,70]"])
+        XCTAssertEqual(ends, changes)
+        XCTAssertEqual(slider.accessibilityValue, "30 to 70")
+
+        slider.update([
+            "behavior": .integer(5), "range": .flag(false),
+            "value": .decimal(15),
+        ])
+        slider.accessibilityIncrement()
+        XCTAssertEqual(changes.last, "16")
+        XCTAssertEqual(ends.last, "16")
+        slider.releaseCallbacks()
+    }
+
+    func testSliderInputUsesVisibleThumbInsetInBothOrientations() {
+        let slider = PamMobileUiHost { _, _ in }
+        slider.frame = CGRect(x: 0, y: 0, width: 100, height: 48)
+        slider.update([
+            "behavior": .integer(5), "min": .decimal(0), "max": .decimal(100),
+            "thumbWidth": .decimal(20),
+        ])
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 10, y: 24)), 0)
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 90, y: 24)), 100)
+        slider.update([
+            "behavior": .integer(5), "min": .decimal(0), "max": .decimal(100),
+            "thumbWidth": .decimal(20), "reversed": .flag(true),
+        ])
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 10, y: 24)), 100)
+
+        slider.frame = CGRect(x: 0, y: 0, width: 48, height: 200)
+        slider.update([
+            "behavior": .integer(5), "orientation": .integer(2),
+            "min": .decimal(0), "max": .decimal(100),
+            "thumbHeight": .decimal(20), "reversed": .flag(false),
+        ])
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 24, y: 10)), 100)
+        XCTAssertEqual(slider.sliderValue(at: CGPoint(x: 24, y: 190)), 0)
+        slider.releaseCallbacks()
+    }
+
+    func testProgressAnnouncesValueWithoutOfferingSliderAdjustment() {
+        var events = 0
+        let progress = PamMobileUiHost { _, _ in events += 1 }
+        progress.update([
+            "behavior": .integer(4), "value": .decimal(40),
+            "min": .decimal(0), "max": .decimal(100),
+        ])
+        XCTAssertEqual(progress.accessibilityValue, "40")
+        XCTAssertFalse(progress.accessibilityTraits.contains(.adjustable))
+        progress.accessibilityIncrement()
+        progress.accessibilityDecrement()
+        XCTAssertEqual(progress.accessibilityValue, "40")
+        XCTAssertEqual(events, 0)
+        progress.releaseCallbacks()
+    }
+
     func testInputSlotClearActionUpdatesItsNativeField() {
         let group = PamMobileUiHost { _, _ in }
         group.update(["behavior": .integer(27)])
