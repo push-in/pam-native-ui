@@ -1,5 +1,41 @@
 # Consolidated candidate verification
 
+## Current follow-up verification
+
+Run [34843238980](https://github.com/push-in/pam-native-ui/actions/runs/34843238980)
+was confirmed queued for `ca3192b7b07efd9e35dd1c544bb5b86b6b813239` against
+Native `e963ef5dd2cdbca9ea232a030dfc2e2a1a911776`. It includes the committed
+`249442a` list/refresh follow-up and Search Bar decorative semantics. The audit
+branch advanced without force only after the earlier run completed successfully.
+Do not duplicate this queued/running run or transfer earlier approvals to it.
+No package, main-branch merge, release tag or documentation media was published.
+
+The run has now reached **completed / success**, confirmed through the run API
+at that exact revision. This closes its compatibility/platform CI, not the
+separate 114-route device sweep currently running or the complete release gate.
+
+## List and table batch candidate
+
+Revision `665b279fe0b29edaf69c0688b9026ff974a66878` was pushed without force to
+`audit/ui-candidate-20260914`. It consolidates list mutation guards, table loading
+aliases and compact selection targets with their local Android evidence.
+[Run 34842106272](https://github.com/push-in/pam-native-ui/actions/runs/34842106272)
+was dispatched against Native `e963ef5dd2cdbca9ea232a030dfc2e2a1a911776` and
+confirmed queued at creation. The run is now **completed / success**, confirmed
+from the run API at revision `665b279`. This closes that candidate's verification
+run, not the later local revisions or the full release approval inventory.
+
+Local follow-up `249442a` consolidates vector reorder controls, state-specific
+swipe instructions and refresh busy semantics. It is not included in run
+`34842106272`. Android APK `0b19ba4315aa19c2a41299a1938ef0b56f33c27a5ce8f5e975b899f667adee55`
+includes the icons/instructions and passed scoped device interactions; the
+subsequent refresh semantic change has PHP coverage only. Do not conflate these
+coverage scopes. This follow-up is committed locally, not dispatched yet.
+
+This sends a verification candidate, not a public package release. Main, version
+tags and documentation media were not published. Platform contract/build jobs
+do not substitute for device execution of every new PHP-composed UI state.
+
 ## Latest terminal checkpoint
 
 - UI run `34839419510` finished **successfully**, all nine jobs, at

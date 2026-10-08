@@ -580,6 +580,8 @@ internal class MobileUiHost(
     private var sliderTouchInitialValue = 0.0
     private var sliderTouchMoved = false
     private var pendingSliderValue: Double? = null
+    private var sliderLastTouchX = 0f
+    private var sliderLastTouchY = 0f
     private var pendingSliderChange: Runnable? = null
     private var tabValue: String? = null
     private var tabsActivationMode = TABS_ACTIVATION_AUTOMATIC
@@ -5328,6 +5330,8 @@ internal class MobileUiHost(
                         return@OnTouchListener false
                     }
                     sliderTouchActive = true
+                    sliderLastTouchX = event.x
+                    sliderLastTouchY = event.y
                     if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                         // A vertical slider commonly lives inside the route's
                         // vertical ScrollView. Claim the gesture at DOWN so
@@ -5391,6 +5395,18 @@ internal class MobileUiHost(
                 MotionEvent.ACTION_UP -> {
                     parent?.requestDisallowInterceptTouchEvent(false)
                     if (!sliderTouchActive) return@OnTouchListener false
+                    // UP can carry a newer position than the last MOVE. Reuse
+                    // the drag calculation before flushing the final value,
+                    // without turning a stationary rating tap into a drag.
+                    if (event.x != sliderLastTouchX || event.y != sliderLastTouchY) {
+                        val finalMove = MotionEvent.obtain(event)
+                        try {
+                            finalMove.action = MotionEvent.ACTION_MOVE
+                            sliderTouchListener().onTouch(this, finalMove)
+                        } finally {
+                            finalMove.recycle()
+                        }
+                    }
                     sliderTouchActive = false
                     if (
                         nativeProperties.flag("rating", false)

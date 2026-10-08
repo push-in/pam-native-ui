@@ -25,6 +25,18 @@ current candidate and evidence; never delete unrelated user files or devices.
 
 ## Throughput checkpoints
 
+- Do not dispatch full CI for each input property or small follow-up commit.
+  Freeze one coherent implementation batch, run focused local checks where
+  available, then dispatch the platform matrix once for that candidate.
+- CI waiting is not component implementation time: continue independent scoped
+  work while it runs. Poll at batch boundaries, not in a repeated waiting loop.
+- A failed test requires inspection of the failure before another dispatch.
+  Group related corrections; do not restart successful unchanged suites solely
+  because another platform or a hostless test harness failed.
+- Close the input-traits batch before adding more input features. Record missing
+  multiline/hosted-keyboard coverage as explicit pending scope, not as an excuse
+  to reopen every completed input correction. Release approval still requires
+  the applicable interaction checks.
 - Before starting, name the component family, shared defects, acceptance cases
   and concrete deliverable. Do not expand the batch with optional polish midway.
 - Reuse existing passing evidence when its implementation and candidate scope
@@ -40,6 +52,54 @@ current candidate and evidence; never delete unrelated user files or devices.
   rebuild for documentation-only changes or already validated unchanged code.
 
 ## Current release checkpoint — 2026-09-14
+
+Candidate `fca5827a19c0ea5a289ecee3a0b383f802d395b0` completed all nine Verify jobs successfully in
+`34835373543`, with Native input `e963ef5dd2cdbca9ea232a030dfc2e2a1a911776`:
+https://github.com/push-in/pam-native-ui/actions/runs/34835373543
+This follows the terminal failed run below, includes the confirmed PHPStan
+2.1.0 correction, interval bounds/copy, disabled Treeview ancestry and new UIKit
+tree activation/expansion. UIKit current job `103947877428` reports ten tests,
+zero failures, including tree activation/expansion/disabled ancestry. Later
+multiple-selection and controlled-expansion changes are not in this run. No release
+workflow, tag or main-branch update was performed.
+
+UI run `34832258348` completed with failure after eight successful
+jobs: Android minimum/current, Android API 26/36 behavior, iOS minimum/current,
+PHP 8.5 and PHP latest. Job `103938841504` (PHP lowest) failed static analysis
+with PHPStan 2.1.0: the primitive child array was inferred as integer-keyed rather
+than a list, and the selected mark remained nullable in two test assertions.
+Dependency preflight and resolution passed. The follow-up uses list-preserving
+mapping when styling progress tracks, instead of assigning a variable array
+index, and explicitly checks the selected mark's Element type before reading
+its properties. An initial `array_values` normalization was rejected by the
+current analyser as redundant and removed. No suppressions or minimum-version changes
+are used. The 114-component render/style matrix passes after these edits;
+lowest-version confirmation is recorded below. These CI results
+belong to UI `f4ac381` with Native `e963ef5`, not to uncommitted local changes.
+Follow-up `77b6e5c` passes local level-9 analysis of ComponentRenderer.php and
+material-matrix.php with both the installed analyser and PHPStan 2.1.0, plus
+the full render/style matrix. The old analyser was run as an isolated PHAR from
+official commit `2392d360fdf54ea253aa6c68cad1d4ba2e54e927`, after inspecting its
+PHP compatibility and package metadata; vendor and lockfiles were unchanged.
+This closes the three reported static errors, not the whole remote workflow.
+No Android rebuild was performed for this list-preserving refactor and test guard.
+The minimum/current native matrix uses the same candidate revision; two green
+labels are not evidence for two distinct SDK versions. Platform jobs establish
+their automated contract coverage, not visual or interaction approval of all
+114 components. The independent Native run has now completed: API 26/36,
+UIKit and its cross-platform accessibility evidence passed. It still needs
+corrected-revision Rust verification in CI; its old formatting failure cannot
+be repaired by rerunning the old SHA. See Native's candidate validation document
+for exact jobs and the seven automated accessibility contracts per environment.
+
+Corrected UI candidate run `34832258348` was confirmed queued for
+`f4ac3810fef5e97af401d43eada4fdc223161810`, with Native input
+`e963ef5dd2cdbca9ea232a030dfc2e2a1a911776`:
+https://github.com/push-in/pam-native-ui/actions/runs/34832258348
+This follows completed failed run 34831423557 and includes the minimum-version
+alignment and PHP test typing corrections. It is not a duplicate of a live UI
+run. Native run 34831107281 was still in progress at this checkpoint; continue
+observing its remaining instrumented job rather than dispatching a replacement.
 
 Native 1.0.28 preparation: candidate `e963ef5dd2cdbca9ea232a030dfc2e2a1a911776`
 aligns Rust workspace/lock and PHP SDK versions without creating a tag. UI
@@ -243,3 +303,39 @@ The test body took 0.368 seconds; the filtered build/test command took 17 second
 See the sibling Native document `docs/virtual-cell-insertion-2026-09-14.md`.
 Broader virtualization/platform coverage remains open. Do not restart this fixed
 case unless subsequent changes invalidate its evidence.
+
+## Delivery cadence reset — user escalation, 2026-09-14
+
+The user reports nearly 20 hours on one component. Isolated refinements and
+repeated device cycles are not an acceptable delivery cadence.
+
+- Do not restart the isolated Treeview cosmetic follow-up. The non-color marker
+  has since been implemented in `cb96add`; preserve its scoped evidence and track
+  remaining platform checks separately instead of repeating completed work.
+- Organize remaining work into related batches: field geometry/states; selection
+  visuals; navigation/overlays; lists/data; showcase/documentation. Inventory
+  actual outstanding defects before changing code, rather than restarting the
+  entire component catalog.
+- Review and implement the related fixes together, in their owning repositories:
+  PAM for CLI/tooling, PAM Native for reusable native capabilities, UI for visual
+  composition and component policy.
+- Use one integrated build and interaction run per batch. Reuse existing evidence
+  for unchanged scopes; repeat only failed cases or scopes invalidated by a fix.
+  Screenshots supplement interaction tests and are not standalone completion.
+- Timebox an individual investigation to 30 minutes before reassessing its scope.
+  If unresolved, record the precise defect and evidence and move to independent
+  work; do not hide it or publish the affected component as approved.
+- Report batch outcomes as implemented, validated and pending. Prioritize broken
+  interactions, clipping, alignment and missing variants before cosmetic polish.
+  Do not claim a delivery date or full-platform approval without evidence.
+
+This is an execution-policy change, not a new implementation or test result.
+
+### Enforce the checkpoint, not just the written policy
+
+Before implementation, record a finite batch scope and its acceptance cases.
+At the reassessment checkpoint, choose explicitly: deliver the verified subset,
+change the technical approach, or park the documented blocker and advance an
+independent batch. Repeating the same investigation without new evidence is not
+progress. Parked release blockers remain blockers; this does not waive gates.
+Report product changes separately from test infrastructure and documentation.

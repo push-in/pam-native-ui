@@ -1286,7 +1286,8 @@ class MobileUiHostInstrumentedTest {
 
             val y = height / 2f
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_DOWN, width * 0.20f, y))
-            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, width * 0.35f, y))
+            // Release may carry a final coordinate not delivered in MOVE.
+            host.dispatchTouchEvent(motion(MotionEvent.ACTION_MOVE, width * 0.30f, y))
             host.dispatchTouchEvent(motion(MotionEvent.ACTION_UP, width * 0.35f, y))
 
             assertTrue(parentInterceptRequests.first())
