@@ -2795,10 +2795,12 @@ if (
     || ($prominentTitle->properties()[PropKey::Bottom->value] ?? null) !== 16.0
     || ($prominentTitle->properties()[PropKey::FontSize->value] ?? null) !== 32.0
     || ($prominentTitle->properties()[PropKey::LineHeight->value] ?? null) !== 40.0
-    || ($prominentNavigation?->properties()[PropKey::Left->value] ?? null) !== 0.0
-    || ($prominentNavigation?->properties()[PropKey::Top->value] ?? null) !== 4.0
-    || ($prominentAction?->properties()[PropKey::Right->value] ?? null) !== 0.0
-    || ($prominentAction?->properties()[PropKey::Top->value] ?? null) !== 4.0
+    || !$prominentNavigation instanceof \Pam\Native\Element
+    || ($prominentNavigation->properties()[PropKey::Left->value] ?? null) !== 0.0
+    || ($prominentNavigation->properties()[PropKey::Top->value] ?? null) !== 4.0
+    || !$prominentAction instanceof \Pam\Native\Element
+    || ($prominentAction->properties()[PropKey::Right->value] ?? null) !== 0.0
+    || ($prominentAction->properties()[PropKey::Top->value] ?? null) !== 4.0
 ) {
     throw new RuntimeException(
         'Prominent app bars must reserve the upper action row and bottom-anchor a large headline.',
@@ -2834,12 +2836,14 @@ if (
         !== AccessibilityImportance::NoHideDescendants->value
     || !$calendarGrid instanceof \Pam\Native\Element
     || ($calendarGrid->properties()[PropKey::Height->value] ?? null) !== 240.0
-    || ($calendarMonth?->properties()[PropKey::Value->value] ?? null)
+    || !$calendarMonth instanceof \Pam\Native\Element
+    || ($calendarMonth->properties()[PropKey::Value->value] ?? null)
         !== 'pam:calendar-month-select'
-    || ($calendarMonth?->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
-    || ($calendarYear?->properties()[PropKey::Value->value] ?? null)
+    || ($calendarMonth->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
+    || !$calendarYear instanceof \Pam\Native\Element
+    || ($calendarYear->properties()[PropKey::Value->value] ?? null)
         !== 'pam:calendar-year-select'
-    || ($calendarYear?->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
+    || ($calendarYear->properties()[PropKey::MinHeight->value] ?? null) !== 48.0
     || ($previousMonth->children()[0] ?? null)?->kind() !== NodeKind::CustomView
     || ($nextMonth->children()[0] ?? null)?->kind() !== NodeKind::CustomView
 ) {
