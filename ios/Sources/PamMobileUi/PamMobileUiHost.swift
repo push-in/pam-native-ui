@@ -103,6 +103,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     private var isControlled = false
     private var openDefaultInitialized = false
     private var isChecked = false
+    private var isIndeterminate = false
+    private var selectionDefaultInitialized = false
     private var isSelectedState = false
     private var buttonToggleItem = false
     private var isExpanded = false
@@ -228,7 +230,9 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override var canBecomeFirstResponder: Bool {
-        (behavior == .tabTrigger || behavior == .sheetItem)
+        (behavior == .tabTrigger || behavior == .sheetItem
+            || behavior == .checkbox || behavior == .radio
+            || behavior == .switchControl)
             && (properties["enabled"]?.pamFlag ?? true)
             && !(properties["interactionDisabled"]?.pamFlag ?? false)
             && !(properties["readOnly"]?.pamFlag ?? false)
@@ -237,6 +241,15 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     override var keyCommands: [UIKeyCommand]? {
+        if behavior == .checkbox || behavior == .radio || behavior == .switchControl {
+            return [" ", "\r"].map {
+                UIKeyCommand(
+                    input: $0,
+                    modifierFlags: [],
+                    action: #selector(onSelectionKeyCommand(_:))
+                )
+            }
+        }
         if behavior == .sheetItem {
             return [" ", "\r"].map {
                 UIKeyCommand(
@@ -295,6 +308,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
                 .forEach { $0.minimumPressDuration = TimeInterval(delay) / 1_000 }
         }
         if previousBehavior != behavior {
+            selectionDefaultInitialized = false
             if previousBehavior == .slider {
                 sliderGestureActive = false
                 cancelSliderChange()
@@ -342,13 +356,29 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         } else if previousBehavior != behavior {
             isOpen = !(behavior == .popover || behavior == .menu || behavior == .tooltip)
         }
-        let defaultChecked = behavior == .switchControl
-            ? (next["value"]?.pamFlag ?? next["defaultValue"]?.pamFlag ?? isChecked)
-            : (next["defaultIsChecked"]?.pamFlag ?? isChecked)
-        isChecked = next["checked"]?.pamFlag
-            ?? next["isChecked"]?.pamFlag
-            ?? next["modelValue"]?.pamFlag
-            ?? defaultChecked
+        if behavior == .checkbox || behavior == .radio || behavior == .switchControl {
+            let controlledChecked = next["checked"]?.pamFlag
+                ?? next["isChecked"]?.pamFlag
+                ?? next["modelValue"]?.pamFlag
+                ?? (behavior == .switchControl ? next["value"]?.pamFlag : nil)
+            if let controlledChecked {
+                isChecked = controlledChecked
+            } else if !selectionDefaultInitialized {
+                isChecked = behavior == .switchControl
+                    ? (next["defaultValue"]?.pamFlag ?? false)
+                    : (next["defaultIsChecked"]?.pamFlag ?? false)
+            }
+            selectionDefaultInitialized = true
+        } else {
+            isChecked = next["checked"]?.pamFlag
+                ?? next["isChecked"]?.pamFlag
+                ?? next["modelValue"]?.pamFlag
+                ?? next["defaultIsChecked"]?.pamFlag
+                ?? isChecked
+        }
+        isIndeterminate = next["indeterminate"]?.pamFlag
+            ?? next["isIndeterminate"]?.pamFlag
+            ?? false
         isSelectedState = next["selected"]?.pamFlag
             ?? next["isSelected"]?.pamFlag
             ?? isSelectedState
@@ -527,6 +557,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
     }
 
     func releaseCallbacks() {
+        selectionDefaultInitialized = false
+        isIndeterminate = false
         activeDateTimePicker?.dismissSilently()
         activeDateTimePicker = nil
         restoreAnchoredPortalContent()
@@ -705,16 +737,8 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         }
 
         switch behavior {
-        case .checkbox, .switchControl:
-            isChecked.toggle()
-            setNeedsDisplay()
-            emit?(.toggle, Data((isChecked ? "1" : "0").utf8))
-        case .radio:
-            if !isChecked {
-                isChecked = true
-                setNeedsDisplay()
-                emit?(.toggle, Data("1".utf8))
-            }
+        case .checkbox, .radio, .switchControl:
+            guard activateSelection() else { return }
         case .accordion:
             isExpanded.toggle()
             applyAccordion()
@@ -768,7 +792,72 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
 
     override func accessibilityActivate() -> Bool {
         if behavior == .sheetItem { return activateSheetItem() }
+        if behavior == .checkbox || behavior == .radio || behavior == .switchControl {
+            return activateSelection()
+        }
         return super.accessibilityActivate()
+    }
+
+    @objc private func onSelectionKeyCommand(_ command: UIKeyCommand) {
+        guard command.input == " " || command.input == "\r" else { return }
+        if activateSelection() {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    }
+
+    @discardableResult
+    private func activateSelection() -> Bool {
+        guard behavior == .checkbox || behavior == .radio || behavior == .switchControl,
+              isUserInteractionEnabled,
+              properties["enabled"]?.pamFlag ?? true,
+              !(properties["interactionDisabled"]?.pamFlag ?? false),
+              !(properties["readOnly"]?.pamFlag ?? false),
+              !(properties["isReadOnly"]?.pamFlag ?? false) else { return false }
+
+        if behavior == .radio {
+            guard !isChecked else { return false }
+            if let group = selectionGroupAncestor() {
+                guard group.properties["enabled"]?.pamFlag ?? true,
+                      !(group.properties["readOnly"]?.pamFlag ?? false),
+                      !(group.properties["isReadOnly"]?.pamFlag ?? false) else { return false }
+                group.selectionItems().filter { $0 !== self && $0.behavior == .radio }
+                    .forEach { $0.setSelectionChecked(false) }
+            }
+            setSelectionChecked(true)
+        } else {
+            setSelectionChecked(isIndeterminate || !isChecked)
+        }
+        emit?(.toggle, Data((isChecked ? "1" : "0").utf8))
+        return true
+    }
+
+    private func setSelectionChecked(_ checked: Bool) {
+        isChecked = checked
+        isIndeterminate = false
+        applySemantics()
+        setNeedsDisplay()
+    }
+
+    private func selectionGroupAncestor() -> PamMobileUiHost? {
+        ancestor { $0.behavior == .checkboxGroup || $0.behavior == .radioGroup }
+    }
+
+    private func selectionItems() -> [PamMobileUiHost] {
+        var items: [PamMobileUiHost] = []
+        func visit(_ view: UIView) {
+            for child in view.subviews {
+                if let host = child as? PamMobileUiHost {
+                    if host.behavior == .checkbox || host.behavior == .radio {
+                        items.append(host)
+                    } else if host.behavior == .checkboxGroup || host.behavior == .radioGroup {
+                        continue
+                    }
+                }
+                visit(child)
+            }
+        }
+        visit(self)
+        return items
     }
 
     @objc private func onSheetItemKeyCommand(_ command: UIKeyCommand) {
@@ -1152,7 +1241,11 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             isAccessibilityElement = true
             traits = [.button]
             if isChecked { traits.insert(.selected) }
-            accessibilityValue = isChecked ? "On" : "Off"
+            accessibilityValue = isIndeterminate && behavior == .checkbox
+                ? "Mixed" : (isChecked ? "On" : "Off")
+            accessibilityLabel = properties["accessibilityLabel"]?.pamText
+                ?? properties["ariaLabel"]?.pamText
+                ?? findFirstText(in: self)
         case .slider, .bottomSheet:
             isAccessibilityElement = true
             traits = [.adjustable]
@@ -1212,7 +1305,10 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         default:
             isAccessibilityElement = accessibilityLabel != nil
         }
-        if !(properties["enabled"]?.pamFlag ?? true) {
+        if !(properties["enabled"]?.pamFlag ?? true)
+            || properties["interactionDisabled"]?.pamFlag == true
+            || properties["readOnly"]?.pamFlag == true
+            || properties["isReadOnly"]?.pamFlag == true {
             traits.insert(.notEnabled)
         }
         accessibilityTraits = traits
@@ -2744,7 +2840,7 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
             width: size,
             height: size
         )
-        context.setStrokeColor((isChecked ? fillColor : trackColor).cgColor)
+        context.setStrokeColor((isChecked || isIndeterminate ? fillColor : trackColor).cgColor)
         context.setLineWidth(2)
         if behavior == .radio {
             context.strokeEllipse(in: rect.insetBy(dx: 1, dy: 1))
@@ -2755,9 +2851,22 @@ final class PamMobileUiHost: UIView, UIGestureRecognizerDelegate {
         } else {
             let path = UIBezierPath(roundedRect: rect, cornerRadius: 2)
             context.addPath(path.cgPath)
-            if isChecked {
+            if isChecked || isIndeterminate {
                 context.setFillColor(fillColor.cgColor)
                 context.fillPath()
+                context.setStrokeColor(selectedForegroundColor.cgColor)
+                context.setLineWidth(2)
+                context.setLineCap(.round)
+                context.setLineJoin(.round)
+                if isIndeterminate {
+                    context.move(to: CGPoint(x: rect.minX + 6, y: rect.midY))
+                    context.addLine(to: CGPoint(x: rect.maxX - 6, y: rect.midY))
+                } else {
+                    context.move(to: CGPoint(x: rect.minX + 5, y: rect.midY))
+                    context.addLine(to: CGPoint(x: rect.midX - 1, y: rect.maxY - 6))
+                    context.addLine(to: CGPoint(x: rect.maxX - 4, y: rect.minY + 6))
+                }
+                context.strokePath()
             } else {
                 context.strokePath()
             }

@@ -170,6 +170,93 @@ final class PamMobileUiTests: XCTestCase {
         factory.close()
     }
 
+    func testCheckboxVoiceOverClearsMixedStateAndHonorsReadOnly() {
+        var payloads: [String] = []
+        let checkbox = PamMobileUiHost { _, payload in
+            payloads.append(String(decoding: payload, as: UTF8.self))
+        }
+        checkbox.update([
+            "behavior": .integer(9),
+            "indeterminate": .flag(true),
+            "accessibilityLabel": .text("Remember me"),
+        ])
+        XCTAssertEqual(checkbox.accessibilityValue, "Mixed")
+        XCTAssertTrue(checkbox.canBecomeFirstResponder)
+        XCTAssertEqual(checkbox.keyCommands?.count, 2)
+        XCTAssertTrue(checkbox.accessibilityActivate())
+        XCTAssertEqual(checkbox.accessibilityValue, "On")
+        XCTAssertTrue(checkbox.accessibilityTraits.contains(.selected))
+        XCTAssertEqual(payloads, ["1"])
+
+        checkbox.update([
+            "behavior": .integer(9),
+            "defaultIsChecked": .flag(false),
+        ])
+        XCTAssertEqual(checkbox.accessibilityValue, "On")
+
+        checkbox.update([
+            "behavior": .integer(9),
+            "checked": .flag(true),
+            "readOnly": .flag(true),
+        ])
+        XCTAssertTrue(checkbox.accessibilityTraits.contains(.notEnabled))
+        XCTAssertFalse(checkbox.accessibilityActivate())
+        XCTAssertEqual(payloads, ["1"])
+        checkbox.releaseCallbacks()
+        checkbox.update([
+            "behavior": .integer(9),
+            "defaultIsChecked": .flag(false),
+        ])
+        XCTAssertEqual(checkbox.accessibilityValue, "Off")
+    }
+
+    func testRadioGroupVoiceOverSelectionClearsSiblingWithoutDuplicateEvent() {
+        let group = PamMobileUiHost { _, _ in }
+        group.update(["behavior": .integer(21)])
+        var firstPayloads: [String] = []
+        let first = PamMobileUiHost { _, payload in
+            firstPayloads.append(String(decoding: payload, as: UTF8.self))
+        }
+        first.update(["behavior": .integer(10), "checked": .flag(true)])
+        var secondPayloads: [String] = []
+        let second = PamMobileUiHost { _, payload in
+            secondPayloads.append(String(decoding: payload, as: UTF8.self))
+        }
+        second.update(["behavior": .integer(10), "checked": .flag(false)])
+        group.addSubview(first)
+        group.addSubview(second)
+
+        XCTAssertTrue(second.accessibilityActivate())
+        XCTAssertEqual(first.accessibilityValue, "Off")
+        XCTAssertEqual(second.accessibilityValue, "On")
+        XCTAssertEqual(firstPayloads, [])
+        XCTAssertEqual(secondPayloads, ["1"])
+        XCTAssertFalse(second.accessibilityActivate())
+        XCTAssertEqual(secondPayloads, ["1"])
+        first.releaseCallbacks()
+        second.releaseCallbacks()
+        group.releaseCallbacks()
+    }
+
+    func testSwitchVoiceOverUpdatesStateAndRejectsDisabledActivation() {
+        var payloads: [String] = []
+        let toggle = PamMobileUiHost { _, payload in
+            payloads.append(String(decoding: payload, as: UTF8.self))
+        }
+        toggle.update(["behavior": .integer(22), "value": .flag(false)])
+        XCTAssertTrue(toggle.accessibilityActivate())
+        XCTAssertEqual(toggle.accessibilityValue, "On")
+        XCTAssertEqual(payloads, ["1"])
+        toggle.update([
+            "behavior": .integer(22),
+            "checked": .flag(true),
+            "enabled": .flag(false),
+        ])
+        XCTAssertFalse(toggle.accessibilityActivate())
+        XCTAssertEqual(payloads, ["1"])
+        toggle.releaseCallbacks()
+    }
+
     func testCalendarSelectionHonorsDisabledDatesAndNativePayloadModes() {
         var payloads: [String] = []
         let calendar = PamMobileUiHost { _, payload in
