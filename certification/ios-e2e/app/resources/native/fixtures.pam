@@ -1,0 +1,29 @@
+<Screen>
+    <SafeAreaView flexGrow="1">
+        <ScrollView flexGrow="1">
+            <Column padding="16" gap="16">
+                <Text testId="fixture-title" fontSize="24" fontWeight="700">iOS UI certification</Text>
+                <p-autocomplete
+                    testId="fixture-autocomplete"
+                    label="Component"
+                    value="Button"
+                    :items="$autocompleteItems"
+                    searchPlaceholder="Find a component"
+                />
+                <p-combobox
+                    testId="fixture-combobox"
+                    label="Capability"
+                    value="Payments"
+                    :items="$comboboxItems"
+                    searchPlaceholder="Find a capability"
+                />
+                <p-otp-input
+                    testId="fixture-otp"
+                    label="Verification code"
+                    value=""
+                    length="6"
+                />
+            </Column>
+        </ScrollView>
+    </SafeAreaView>
+</Screen>
