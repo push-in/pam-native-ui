@@ -6,7 +6,7 @@ on:
       native_ref:
         description: PAM Native branch, tag or commit to certify against
         required: false
-        default: 76eb55413708c569c1a512aff001be08fb092c14
+        default: 9468f8e3a6f20d77c0384d463494560792f09843
         type: string
   push:
     branches:
@@ -21,8 +21,11 @@ defaults:
     shell: bash --noprofile --norc -euo pipefail {0}
 
 env:
-  PAM_NATIVE_COMMIT: 76eb55413708c569c1a512aff001be08fb092c14
-  PAM_NATIVE_REF: ${{ inputs.native_ref || '76eb55413708c569c1a512aff001be08fb092c14' }}
+  PAM_NATIVE_COMMIT: 9468f8e3a6f20d77c0384d463494560792f09843
+  PAM_NATIVE_REF: ${{ inputs.native_ref || '9468f8e3a6f20d77c0384d463494560792f09843' }}
+  # The PHP graph installs the drawer/WebView plugins (require-dev), which need
+  # the 1.46 core that moved those features out (v1.46.34).
+  PAM_NATIVE_PHP_REF: ${{ inputs.native_ref || '76eb55413708c569c1a512aff001be08fb092c14' }}
 
 jobs:
   composer-compatibility:
@@ -47,7 +50,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: ${{ env.PAM_NATIVE_REF }}
+          ref: ${{ env.PAM_NATIVE_PHP_REF }}
           path: pam-native
 
       - name: Set up PHP
@@ -112,7 +115,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: push-in/pam-native
-          ref: ${{ env.PAM_NATIVE_REF }}
+          ref: ${{ env.PAM_NATIVE_PHP_REF }}
           path: pam-native
 
       - name: Set up PHP
@@ -179,7 +182,7 @@ jobs:
           - label: minimum
             commit: 9468f8e3a6f20d77c0384d463494560792f09843
           - label: current
-            commit: 76eb55413708c569c1a512aff001be08fb092c14
+            commit: 9468f8e3a6f20d77c0384d463494560792f09843
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
@@ -234,7 +237,7 @@ jobs:
           - label: minimum
             commit: 9468f8e3a6f20d77c0384d463494560792f09843
           - label: current
-            commit: 76eb55413708c569c1a512aff001be08fb092c14
+            commit: 9468f8e3a6f20d77c0384d463494560792f09843
     steps:
       - name: Checkout PAM Native UI
         uses: actions/checkout@v7
