@@ -29,8 +29,15 @@ if ($pamNativeSource === null) {
 
 $roots = [
     'Pam\\MobileUi\\' => dirname(__DIR__).'/src/',
-    'Pam\\Native\\' => $pamNativeSource,
 ];
+// Optional plugins that moved out of the core (installed as dev dependencies).
+foreach (['Drawer' => 'pam-native-drawer', 'WebView' => 'pam-native-webview'] as $namespace => $package) {
+    $pluginSource = dirname(__DIR__).'/vendor/pushinbr/'.$package.'/src/';
+    if (is_dir($pluginSource)) {
+        $roots['Pam\\Native\\'.$namespace.'\\'] = $pluginSource;
+    }
+}
+$roots['Pam\\Native\\'] = $pamNativeSource;
 
 spl_autoload_register(
     static function (string $class) use ($roots): void {
@@ -41,6 +48,8 @@ spl_autoload_register(
             $path = $root.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
             if (is_file($path)) {
                 require_once $path;
+
+                return;
             }
         }
     },

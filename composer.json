@@ -22,7 +22,13 @@
         "pushinbr/pam-native": "^1.0.27"
     },
     "require-dev": {
-        "phpstan/phpstan": "^2.1"
+        "phpstan/phpstan": "^2.1",
+        "pushinbr/pam-native-drawer": "^0.1.1",
+        "pushinbr/pam-native-webview": "^0.1.2"
+    },
+    "suggest": {
+        "pushinbr/pam-native-drawer": "Native navigation drawer behind PNavigationDrawer (moved out of the PAM Native core in 1.46).",
+        "pushinbr/pam-native-webview": "Embedded web pages behind NativeCapabilities::web() (moved out of the PAM Native core in 1.46)."
     },
     "autoload": {
         "psr-4": {

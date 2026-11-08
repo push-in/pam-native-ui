@@ -8,7 +8,7 @@ use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ThemeMode;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\Component;
-use Pam\Native\Navigation\DrawerNavigator;
+use Pam\Native\Drawer\DrawerNavigator;
 use Pam\Native\Renderable;
 use Pam\Native\StatusBarAppearance;
 use Pam\Native\Style;

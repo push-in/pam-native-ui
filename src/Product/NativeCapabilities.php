@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pam\MobileUi\Product;
 
+use Pam\MobileUi\Support\OptionalPlugin;
 use Pam\Native\AnimationKeyframe;
 use Pam\Native\MediaType;
 use Pam\Native\NativeMenuItem;
@@ -12,7 +13,7 @@ use Pam\Native\UI\Animated;
 use Pam\Native\UI\BottomSheet;
 use Pam\Native\UI\InteractionRegion;
 use Pam\Native\UI\MediaPlayer;
-use Pam\Native\UI\WebView;
+use Pam\Native\WebView\WebView;
 
 /**
  * Stable PAM Native UI entry points for capability-backed native surfaces.
@@ -41,6 +42,8 @@ final class NativeCapabilities
 
     public static function web(string $source): WebView
     {
+        OptionalPlugin::require(WebView::class, 'pushinbr/pam-native-webview', 'NativeCapabilities::web()');
+
         return WebView::make($source)
             ->javaScriptEnabled()
             ->domStorageEnabled()

@@ -21,7 +21,7 @@ use Pam\MobileUi\Generated\MaterialComponentMap;
 use Pam\MobileUi\Theme\ThemeManager;
 use Pam\Native\App;
 use Pam\Native\Navigation\Router;
-use Pam\Native\Navigation\DrawerType;
+use Pam\Native\Drawer\DrawerType;
 use Pam\Native\UserInterfaceAppearance;
 use Pam\Native\WindowMetrics;
 
