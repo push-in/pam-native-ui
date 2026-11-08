@@ -6,6 +6,7 @@ namespace Pam\MobileUi\Rendering;
 
 use Closure;
 use InvalidArgumentException;
+use Pam\MobileUi\Support\OptionalPlugin;
 use Pam\MobileUi\Enum\CalendarDayState;
 use Pam\MobileUi\Enum\ColorToken;
 use Pam\MobileUi\Enum\ComponentMode;
@@ -54,9 +55,9 @@ use Pam\Native\KeyboardType;
 use Pam\Native\ModalAnimationType;
 use Pam\Native\ModalOrientation;
 use Pam\Native\ModalPresentation;
-use Pam\Native\Navigation\DrawerKeyboardDismissMode;
-use Pam\Native\Navigation\DrawerPosition;
-use Pam\Native\Navigation\DrawerType;
+use Pam\Native\Drawer\DrawerKeyboardDismissMode;
+use Pam\Native\Drawer\DrawerPosition;
+use Pam\Native\Drawer\DrawerType;
 use Pam\Native\NodeKind;
 use Pam\Native\PositionType;
 use Pam\Native\PointerEvents;
@@ -77,7 +78,7 @@ use Pam\Native\TextHyphenationFrequency;
 use Pam\Native\UI\ActivityIndicator;
 use Pam\Native\UI\Animated;
 use Pam\Native\UI\Column;
-use Pam\Native\UI\DrawerLayoutAndroid;
+use Pam\Native\Drawer\DrawerLayoutAndroid;
 use Pam\Native\UI\CustomView;
 use Pam\Native\UI\FlatList;
 use Pam\Native\UI\GestureDetector;
@@ -4132,6 +4133,7 @@ final class ComponentRenderer
         ?Style $styleOverride,
         ?string $elementKey,
     ): Element {
+        OptionalPlugin::require(DrawerLayoutAndroid::class, 'pushinbr/pam-native-drawer', 'PNavigationDrawer');
         $theme = ThemeManager::current();
         $content = $children[0] ?? View::make()->style(new Style(
             widthPercent: 100.0,

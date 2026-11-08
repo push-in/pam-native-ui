@@ -19,6 +19,10 @@
   candidates.
 - Require PAM Native 1.0.27 so currency and masked fields retain rapid input
   without cursor crashes or dropped keyboard events.
+- Use the optional drawer and WebView plugins that left the PAM Native core in
+  1.46 (`Pam\Native\Drawer\*`, `Pam\Native\WebView\WebView`). They are
+  suggested, not required: `PNavigationDrawer` and `NativeCapabilities::web()`
+  name the exact `composer require` when the plugin is missing.
 
 ## 1.0.8
 
