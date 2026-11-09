@@ -1,135 +1,54 @@
-<!-- pam:product-page:start -->
 <div align="center">
 
-# PAM Native UI
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
+  <img src=".github/assets/banner-light.svg" width="880" alt="pam-native-ui: A retained-native Material Design 3 component system for PAM Native.">
+</picture>
 
-**A complete retained-native component system designed for sustained frame rates.**
-
+**A complete retained-native component system designed for sustained frame rates.**<br>
 Compose accessible Android Views and UIKit controls with tokens, themes, responsive layouts, gestures, and UI-thread animation.
 
-[![Latest version](https://img.shields.io/packagist/v/pushinbr/pam-native-ui?style=flat-square&label=stable)](https://packagist.org/packages/pushinbr/pam-native-ui)
-[![CI](https://img.shields.io/github/actions/workflow/status/push-in/pam-native-ui/verify.yml?branch=main&style=flat-square&label=CI)](https://github.com/push-in/pam-native-ui/actions)
-![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?style=flat-square&logo=php&logoColor=white)
-![Android](https://img.shields.io/badge/Android-API%2026%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
-![iOS](https://img.shields.io/badge/iOS-15%2B-000000?style=flat-square&logo=apple&logoColor=white)
+[![Packagist](https://img.shields.io/packagist/v/pushinbr/pam-native-ui?label=packagist&color=f53003)](https://packagist.org/packages/pushinbr/pam-native-ui)
+[![Latest release](https://img.shields.io/github/v/release/push-in/pam-native-ui?label=release&color=e3a008)](https://github.com/push-in/pam-native-ui/releases/latest)
+![PHP 8.5](https://img.shields.io/badge/php-8.5-777bb4)
+[![CI](https://img.shields.io/github/actions/workflow/status/push-in/pam-native-ui/verify.yml?branch=main&label=ci)](https://github.com/push-in/pam-native-ui/actions/workflows/verify.yml)
+[![License](https://img.shields.io/github/license/push-in/pam-native-ui?color=1f6feb)](LICENSE)
 
-**[Documentation](https://push-in.github.io/pam-docs/native/overview/) · [Quick start](#quick-start) · [What you can build](#what-you-can-build) · [PAM ecosystem](https://push-in.github.io/pam-docs/ecosystem/) · [Issues](https://github.com/push-in/pam-native-ui/issues)**
+[Install](#install) · [Quick example](#quick-example) · [Showcase](#android-showcase) · [Themes](#themes) · [Docs](#docs) · [Issues](https://github.com/push-in/pam-native-ui/issues)
 
 </div>
 
----
+<a id="install"></a>
+## <picture><img src=".github/assets/icons/terminal.svg" width="22" height="22" alt=""></picture> Install
 
-## Why PAM Native UI
+Start a new PAM Native project with the UI library already wired in:
 
-Compose accessible Android Views and UIKit controls with tokens, themes, responsive layouts, gestures, and UI-thread animation. The public API is strictly typed for PHP 8.5; expensive or frame-sensitive work stays in Rust or the platform SDK instead of crossing the application boundary every frame.
+```sh
+pam init my-app --template native-ui
+cd my-app
+pam doctor --fix
+pam dev
+```
 
-| | |
-| --- | --- |
-| **Best for** | A focused capability you can add to any PAM Native application |
-| **Native path** | Android Views · UIKit · Rust layout/reconciliation |
-| **Application model** | Composer package + generated native integration |
-| **Design rule** | Independent module; no feed, vertical, or application template bundled |
+`pam init --template native-ui` already requires `pushinbr/pam-native` and `pushinbr/pam-native-ui` (`^1.0`). Already have a PAM Native project? Add only this capability:
 
-## What you can build
-
-- Production mobile design systems
-- Responsive phone, tablet, foldable, and TV interfaces
-- Accessible components with native focus and input behavior
-
-## Quick start
-
-All builds follow the mandatory [build hygiene contract](docs/build-hygiene.md):
-final deliverables remain in `dist`, while regenerable native build outputs are
-removed on exit.
-
-Already have a PAM Native project? Add only this capability:
-
-```bash
+```sh
 pam composer require pushinbr/pam-native-ui
 pam doctor --fix
 ```
 
-New to PAM? Follow the **[five-minute PAM Native setup](https://push-in.github.io/pam-docs/native/overview/)** once, then return here. Your application stays a normal Composer project with a committed lockfile.
-<!-- pam:product-page:end -->
+Composer owns the manifest and the lockfile; the plugin's `pam-native.plugin.json` is discovered and the Android and iOS native view registries are refreshed. New to PAM Native? Follow the [five-minute PAM Native setup](https://push-in.github.io/pam-docs/native/overview/) once.
 
-PAM Native UI is a retained native Material Design 3 component library for
-PAM Native. It exposes 114 mobile `p-*` component parts across 92 manually authored
-modules and renders through Android views and UIKit without a WebView,
-JavaScript runtime, CSS engine, or Vuetify metadata importer.
+All builds follow the mandatory [build hygiene contract](docs/build-hygiene.md): final deliverables remain in `dist`, while regenerable native build outputs are removed on exit.
 
-## Part of the PAM ecosystem
+<a id="quick-example"></a>
+## <picture><img src=".github/assets/icons/code.svg" width="22" height="22" alt=""></picture> Quick example
 
-- [PAM Native core](https://github.com/push-in/pam-native) — required native
-  runtime, renderer, navigation and platform modules.
-- [PAM Native Nitro](https://github.com/push-in/pam-native-nitro) —
-  high-performance offline-first data for native applications.
-- [PAM Native documentation](https://push-in.github.io/pam-docs/native/overview/)
-  — start here if you are new to native PHP applications.
-- [PAM Native UI documentation](docs/authoring.md)
-  — components, themes, accessibility and performance.
+PAM Native UI is a retained native Material Design 3 component library for PAM Native. It exposes 114 mobile `p-*` component parts across 92 manually authored modules and renders through Android views and UIKit without a WebView, JavaScript runtime, CSS engine, or Vuetify metadata importer.
 
-This library does not wrap a web design system and call it native. Its
-components, themes, motion, interaction, accessibility semantics, responsive
-behavior, and platform contracts are designed for the PAM renderer itself.
-The public API stays expressive and familiar; the work underneath stays close
-to the operating system.
+This library does not wrap a web design system and call it native. Its components, themes, motion, interaction, accessibility semantics, responsive behavior, and platform contracts are designed for the PAM renderer itself. The public API stays expressive and familiar; the work underneath stays close to the operating system.
 
-## Android showcase
-
-The bundled catalog exercises all 114 public component parts through the real
-Android renderer. Each public route has a full-device Android candidate capture;
-physical-device interaction approval remains tracked separately and cannot be
-granted by screenshot-only validation.
-
-<p align="center">
-  <img src="docs/assets/android/components/overview.png" width="31%" alt="PAM Studio Android showcase home" />
-  <img src="docs/assets/android/components/screen-all.png" width="31%" alt="Complete PAM Native UI component workbench" />
-  <img src="docs/assets/android/components/screen-overlays.png" width="31%" alt="PAM Native UI overlays showcase" />
-</p>
-
-See the **[Android visual showcase](docs/android-showcase.md)** for every
-component screenshot, capture metadata and real interaction GIFs.
-
-## What we are building
-
-| Promise | Implementation |
-| --- | --- |
-| One component language | Typed PHP and declarative `p-*` tags share the same retained tree |
-| Real native output | Android Views and UIKit, not HTML or a canvas |
-| Material Design 3 | Semantic color, typography, shape, elevation and motion tokens |
-| Native performance | Gesture animation and transient interaction stay on the UI thread |
-| Accessibility by contract | Semantics are part of component parity and release verification |
-| Honest parity | A generated manifest and executable tests gate the published surface |
-| Extensible foundations | Themes, directives and native capabilities compose without forking the renderer |
-
-## Principles
-
-- Public templates use only the `p-*` namespace.
-- Components are implemented manually for Android and iOS.
-- Theme, layout, motion and interaction resolve to compact numeric native
-  properties.
-- Coded variants use sequential integer enums rather than string protocol
-  discriminators.
-- Gesture animation and transient state remain on the native UI thread.
-- PHP receives requested semantic results, not animation frames.
-
-Product-safe factories for Bottom Sheet, WebView, native media, context menus
-and keyframe entrance motion are available through `NativeCapabilities`; see
-[`docs/native-capabilities.md`](docs/native-capabilities.md).
-
-## Installation
-
-```bash
-pam add mobile-ui
-pam doctor
-```
-
-`pam add mobile-ui` performs dependency compatibility preflight, updates the
-normal Composer manifest and lockfile, discovers `pam-native.plugin.json`, and
-refreshes the Android and iOS native view registries. Direct Composer commands
-are an advanced interoperability path; PAM is the supported application workflow.
-
-## Quick start
+A screen in the template language:
 
 ```xml
 <AppScreen>
@@ -153,7 +72,86 @@ and progress, with screen-reader announcements and optional 48 dp actions.
 Dashboard values use `MetricCard`, whose adaptive layout and semantic trend
 labels remain understandable without color.
 
-## Native directives
+<a id="platform-support"></a>
+## <picture><img src=".github/assets/icons/grid.svg" width="22" height="22" alt=""></picture> Platform support
+
+| Platform | Support | Notes |
+| --- | --- | --- |
+| Android | API 26+ | Android Views, `RippleDrawable`; from `pam-native.plugin.json` |
+| iOS | 15.0+ | UIKit; from `pam-native.plugin.json` |
+| PAM Native | 1.0.27 to < 2.0.0 | From `pam-native.plugin.json`; PHP 8.5+ |
+
+<a id="requirements"></a>
+## <picture><img src=".github/assets/icons/shield.svg" width="22" height="22" alt=""></picture> Permissions and requirements
+
+The plugin declares no Android permissions and no iOS usage descriptions. It requires the PAM Native capabilities `renderer.incremental.v1`, `runtime.modules.v1` and `wire.binary.v1` (from `pam-native.plugin.json`).
+
+<a id="why-pam-native-ui"></a>
+## <picture><img src=".github/assets/icons/sparkle.svg" width="22" height="22" alt=""></picture> Why PAM Native UI
+
+Compose accessible Android Views and UIKit controls with tokens, themes, responsive layouts, gestures, and UI-thread animation. The public API is strictly typed for PHP 8.5; expensive or frame-sensitive work stays in Rust or the platform SDK instead of crossing the application boundary every frame.
+
+| | |
+| --- | --- |
+| **Best for** | A focused capability you can add to any PAM Native application |
+| **Native path** | Android Views · UIKit · Rust layout/reconciliation |
+| **Application model** | Composer package + generated native integration |
+| **Design rule** | Independent module; no feed, vertical, or application template bundled |
+
+**What you can build**
+
+- Production mobile design systems
+- Responsive phone, tablet, foldable, and TV interfaces
+- Accessible components with native focus and input behavior
+
+<a id="android-showcase"></a>
+## <picture><img src=".github/assets/icons/mobile.svg" width="22" height="22" alt=""></picture> Android showcase
+
+The bundled catalog exercises all 114 public component parts through the real
+Android renderer. Each public route has a full-device Android candidate capture;
+physical-device interaction approval remains tracked separately and cannot be
+granted by screenshot-only validation.
+
+<p align="center">
+  <img src="docs/assets/android/components/overview.png" width="31%" alt="PAM Studio Android showcase home" />
+  <img src="docs/assets/android/components/screen-all.png" width="31%" alt="Complete PAM Native UI component workbench" />
+  <img src="docs/assets/android/components/screen-overlays.png" width="31%" alt="PAM Native UI overlays showcase" />
+</p>
+
+See the **[Android visual showcase](docs/android-showcase.md)** for every
+component screenshot, capture metadata and real interaction GIFs.
+
+<a id="what-we-are-building"></a>
+## <picture><img src=".github/assets/icons/star.svg" width="22" height="22" alt=""></picture> What we are building
+
+| Promise | Implementation |
+| --- | --- |
+| One component language | Typed PHP and declarative `p-*` tags share the same retained tree |
+| Real native output | Android Views and UIKit, not HTML or a canvas |
+| Material Design 3 | Semantic color, typography, shape, elevation and motion tokens |
+| Native performance | Gesture animation and transient interaction stay on the UI thread |
+| Accessibility by contract | Semantics are part of component parity and release verification |
+| Honest parity | A generated manifest and executable tests gate the published surface |
+| Extensible foundations | Themes, directives and native capabilities compose without forking the renderer |
+
+<a id="principles"></a>
+## <picture><img src=".github/assets/icons/layers.svg" width="22" height="22" alt=""></picture> Principles
+
+- Public templates use only the `p-*` namespace.
+- Components are implemented manually for Android and iOS.
+- Theme, layout, motion and interaction resolve to compact numeric native
+  properties.
+- Coded variants use sequential integer enums rather than string protocol
+  discriminators.
+- Gesture animation and transient state remain on the native UI thread.
+- PHP receives requested semantic results, not animation frames.
+
+Product-safe factories for Bottom Sheet, WebView, native media, context menus
+and keyframe entrance motion are available through `NativeCapabilities`; see
+[`docs/native-capabilities.md`](docs/native-capabilities.md).
+
+<a id="native-directives"></a>
+## <picture><img src=".github/assets/icons/bolt.svg" width="22" height="22" alt=""></picture> Native directives
 
 ```xml
 <p-card
@@ -178,7 +176,8 @@ labels remain understandable without color.
 All observers and recognizers detach on update, unmount, hot reload and runtime
 shutdown. Ripple and motion do not cross the PHP boundary.
 
-## Themes
+<a id="themes"></a>
+## <picture><img src=".github/assets/icons/widgets.svg" width="22" height="22" alt=""></picture> Themes
 
 Language 2 templates use PHP-free Vue-style bindings. Interpolate text with
 `{{ $value }}`, bind properties with `:prop="$value"`, dispatch actions with
@@ -212,14 +211,15 @@ consume semantic MD3 color, typography, shape, elevation and motion tokens.
 `pamLight()` and `pamDark()` ship the contrast-gated PAM identity; `light()` and
 `dark()` remain neutral foundations for fully custom brands.
 
-## Verification
+<a id="verification"></a>
+## <picture><img src=".github/assets/icons/flask.svg" width="22" height="22" alt=""></picture> Verification
 
 ```bash
-composer generate:material
-composer test
-composer test:recipes
-composer analyse
-composer release:check
+pam composer generate:material
+pam composer test
+pam composer test:recipes
+pam composer analyse
+pam composer release:check
 ```
 
 `resources/material-parity.json` is the release gate for the new generation.
@@ -235,15 +235,32 @@ Android contracts run as unit tests, emulator instrumentation and physical ADB
 tests. UIKit contracts build and test through Xcode on a macOS runner before a
 release can be published.
 
-## Documentation
+<a id="docs"></a>
+## <picture><img src=".github/assets/icons/book.svg" width="22" height="22" alt=""></picture> Docs
 
-- [Authoring](docs/authoring.md)
+- [Authoring](docs/authoring.md): components, themes, accessibility and performance
 - [Component catalog](docs/catalog.md)
+- [Android visual showcase](docs/android-showcase.md)
 - [Parity contract](docs/parity.md)
 - [Product foundations](docs/product-foundations.md)
+- [Native capabilities](docs/native-capabilities.md)
 - [Architecture](docs/architecture.md)
 - [Performance evidence](docs/performance.md)
+- [Build hygiene](docs/build-hygiene.md)
+- [PAM Native core](https://github.com/push-in/pam-native): required native runtime, renderer, navigation and platform modules
+- [PAM Native Nitro](https://github.com/push-in/pam-native-nitro): high-performance offline-first data for native applications
+- [PAM Native documentation](https://push-in.github.io/pam-docs/native/overview/): start here if you are new to native PHP applications
+- [Changelog](CHANGELOG.md)
 
-## License
+<a id="pam-ecosystem"></a>
+## <picture><img src=".github/assets/icons/plug.svg" width="22" height="22" alt=""></picture> Part of the PAM ecosystem
 
-Apache-2.0. See [LICENSE](LICENSE) and [LICENSING.md](LICENSING.md).
+PAM runs PHP natively on servers, desktops and phones. This repository is one piece of it.
+
+| [**PAM**](https://github.com/push-in/pam) | [**PAM Desktop**](https://github.com/push-in/pam-desktop) | [**PAM Native**](https://github.com/push-in/pam-native) | [**Ecosystem**](https://github.com/push-in/pam#ecosystem) |
+| --- | --- | --- | --- |
+| the runtime and CLI | native desktop apps in PHP | native Android and iOS apps in PHP | every official package and plugin |
+
+<sub>Docs: [push-in.github.io/pam-docs](https://push-in.github.io/pam-docs/introduction/) · [Issues](https://github.com/push-in/pam-native-ui/issues)</sub>
+
+<p align="center"><sub><a href="LICENSE">Apache-2.0</a>, see also <a href="LICENSING.md">LICENSING.md</a> · Made in Brazil by Pushin</sub></p>
