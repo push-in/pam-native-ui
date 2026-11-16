@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "applicationId": "dev.pam.mobileui.ioscertification",
+    "name": "PAM UI iOS Certification",
+    "entry": "index.php",
+    "runtime": {
+        "php": "8.5",
+        "channel": "stable"
+    },
+    "ios": {
+        "minimumVersion": "15.0"
+    },
+    "modules": [],
+    "views": []
+}
