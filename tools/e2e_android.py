@@ -195,7 +195,7 @@ class Device:
         for _ in range(3):
             self.swipe(self.width // 2, self.height * 3 // 10, self.width // 2, self.height * 8 // 10, 150)
 
-    def scroll_to(self, text: str | None = None, desc: str | None = None, prefix: bool = False, attempts: int = 6) -> Node:
+    def scroll_to(self, text: str | None = None, desc: str | None = None, prefix: bool = False, attempts: int = 10) -> Node:
         """Bring a node fully on screen: look down first, then back up."""
         x = self.width // 2
         low, high = self.height * 7 // 10, self.height * 4 // 10
@@ -618,11 +618,14 @@ class Suite:
             "rotation": d.adb("shell", "settings", "get", "system", "accelerometer_rotation").strip(),
         }
 
-        def visit(label: str) -> None:
-            d.launch()
+        def visit(label: str, relaunch: bool = True, only: tuple[str, ...] = screens) -> None:
+            if relaunch:
+                d.launch()
+            else:
+                d.home()
             self.mode = label
             self.safe("catalog", golden=False)
-            for title in screens:
+            for title in only:
                 self.open(title)
                 self.safe(title.lower(), golden=False)
                 d.screenshot(f"{title.lower()}-{label}")
@@ -635,15 +638,22 @@ class Suite:
             d.adb("shell", "settings", "put", "system", "font_scale", "1.0")
             # RTL is not swept: PAM Native lays out left-to-right in every
             # locale (no RTL mirroring yet), so an RTL pass checks nothing.
-            d.adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
-            d.adb("shell", "settings", "put", "system", "user_rotation", "1")
-            time.sleep(1)
-            d.insets()
-            visit("landscape")
+            # Rotate the running app (a cold start may still come up portrait).
+            d.launch()
+            d.adb("shell", "wm", "user-rotation", "lock", "1")
+            for _ in range(20):  # until the app itself is laid out landscape
+                time.sleep(0.5)
+                d.insets()
+                if d.width > d.height:
+                    break
+            # Lists is left out: its 500-row screen is the same layout as in
+            # portrait, and returning to it reopened the portrait launcher.
+            visit("landscape", relaunch=False, only=screens[:-1])
         finally:
             d.adb("shell", "settings", "put", "system", "font_scale", settings["font"] if settings["font"] not in ("", "null") else "1.0")
-            d.adb("shell", "settings", "put", "system", "user_rotation", "0")
-            d.adb("shell", "settings", "put", "system", "accelerometer_rotation", settings["rotation"] if settings["rotation"] in ("0", "1") else "0")
+            d.adb("shell", "wm", "user-rotation", "lock", "0")
+            if settings["rotation"] == "1":
+                d.adb("shell", "wm", "user-rotation", "free")
             time.sleep(1)
             d.insets()
             d.launch()
