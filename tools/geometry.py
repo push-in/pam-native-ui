@@ -210,7 +210,7 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
 
     for parent in nodes:
         laid_out = [k for k in parent.children if "frame" in k.raw and k.raw.get("alpha", 1) > 0.01]
-        kids = [k for k in laid_out if not k.raw.get("transformed")]
+        kids = [k for k in laid_out if not k.raw.get("transformed") and not k.raw.get("virtual")]
         for i, a in enumerate(kids):
             fa = a.raw["frame"]
             for b in kids[i + 1 :]:
@@ -261,7 +261,7 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
         if len(node.children) != 1 or has_text(node) or max(node.raw["w"], node.raw["h"]) > 64 * density:
             continue
         child = node.children[0]
-        if child.raw.get("transformed") or child.raw["w"] > 40 * density or child.raw["h"] > 40 * density:
+        if child.raw.get("virtual") or child.raw.get("transformed") or child.raw["w"] > 40 * density or child.raw["h"] > 40 * density:
             continue
         px1, py1, px2, py2 = node.rect
         cx1, cy1, cx2, cy2 = child.rect
