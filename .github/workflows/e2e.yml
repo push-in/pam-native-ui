@@ -53,7 +53,7 @@ jobs:
         run: |
           # This checkout stands in for the released package (any 2.x satisfies ^2.0).
           pam composer config repositories.ui '{"type":"path","url":"../..","options":{"symlink":false,"versions":{"pushinbr/pam-native-ui":"2.99.0"}}}'
-          pam composer update --no-interaction --no-progress pushinbr/pam-native-ui pushinbr/pam-native
+          pam composer update --no-interaction --no-progress
           pam mobile build . --abi x86_64
           find dist -name '*.apk' | head -1 > /tmp/apk-path
 
