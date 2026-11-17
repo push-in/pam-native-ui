@@ -1,0 +1,120 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * A full screen: themed background, safe areas on every edge, a large title,
+ * scrolling content that keeps the focused field above the keyboard, and an
+ * optional footer pinned above the home indicator.
+ *
+ * <p-screen title="Settings" subtitle="Account and privacy" back="true" @back="goBack">…</p-screen>
+ */
+#[Tag('p-screen')]
+#[Event('back', 'null')]
+#[Event('refresh', 'null')]
+#[Slot('slot', 0, null)]
+#[Slot('actions', 0, null)]
+#[Slot('footer', 0, null)]
+final class Screen extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $title = '',
+        #[Prop(immutable: false)] public ?string $subtitle = null,
+        #[Prop(immutable: false)] public bool $back = false,
+        #[Prop(immutable: false)] public bool $scroll = true,
+        #[Prop(immutable: false)] public bool $padded = true,
+        #[Prop(immutable: false)] public bool $refreshing = false,
+        #[Prop(immutable: false)] public bool $refreshable = false,
+    ) {
+    }
+
+    #[Action]
+    public function goBack(): void
+    {
+        $this->emit('back');
+    }
+
+    #[Action]
+    public function refresh(): void
+    {
+        $this->emit('refresh');
+    }
+}
+?>
+
+<template language="2">
+    <SafeAreaView class="screen">
+        <Row p-if="$back || $actions !== []" class="bar">
+            <Pressable p-if="$back" class="icon-btn" accessibilityRole="button" accessibilityLabel="Back" @press="goBack">
+                <p-icon name="arrow-left" :size="24" />
+            </Pressable>
+            <View class="spacer" />
+            <Row class="bar-actions"><Slot name="actions" /></Row>
+        </Row>
+        <ScrollView
+            p-if="$scroll"
+            class="scroll"
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            :refreshing="$refreshing"
+            :refreshEnabled="$refreshable"
+            on:refresh="refresh"
+        >
+            <Column :class="$padded ? 'content padded' : 'content'">
+                <Column p-if="$title !== '' || $subtitle !== null" class="head">
+                    <Text p-if="$title !== ''" class="title" accessibilityRole="header">{{ $title }}</Text>
+                    <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>
+                </Column>
+                <Slot />
+            </Column>
+        </ScrollView>
+        <Column p-else :class="$padded ? 'content padded fill' : 'content fill'">
+            <Column p-if="$title !== '' || $subtitle !== null" class="head">
+                <Text p-if="$title !== ''" class="title" accessibilityRole="header">{{ $title }}</Text>
+                <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>
+            </Column>
+            <Slot />
+        </Column>
+        <Column p-if="$footer !== []" class="footer"><Slot name="footer" /></Column>
+    </SafeAreaView>
+</template>
+
+<style scoped>
+    .screen { flex: 1; background-color: var(--p-bg); }
+    .bar { flex-direction: row; align-items: center; min-height: 56px; padding: 0 8px; }
+    .icon-btn { width: 48px; height: 48px; border-radius: 24px; align-items: center; justify-content: center; }
+    .icon-btn:pressed { background-color: var(--p-surface-pressed); }
+    .spacer { flex: 1; }
+    .bar-actions { flex-direction: row; align-items: center; gap: 4px; }
+    .scroll { flex: 1; }
+    .content { gap: 20px; padding-bottom: 32px; }
+    .padded { padding: 8px 20px 32px 20px; }
+    .fill { flex: 1; }
+    .head { gap: 4px; padding-top: 12px; padding-bottom: 4px; }
+    .title { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -0.4px; color: var(--p-text); }
+    .subtitle { font-size: 16px; line-height: 22px; color: var(--p-text-muted); }
+    .footer { gap: 8px; padding: 12px 20px 12px 20px; border-top-width: 1px; border-color: var(--p-border); background-color: var(--p-bg); }
+
+    @media (platform: ios) {
+        .title { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: 0.3px; }
+        .subtitle { font-size: 17px; }
+        .footer { border-top-width: 0.5px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .screen { background-color: var(--p-bg-dark); }
+        .icon-btn:pressed { background-color: var(--p-surface-pressed-dark); }
+        .title { color: var(--p-text-dark); }
+        .subtitle { color: var(--p-text-muted-dark); }
+        .footer { border-color: var(--p-border-dark); background-color: var(--p-bg-dark); }
+    }
+</style>

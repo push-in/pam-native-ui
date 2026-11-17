@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * <p-empty-state icon="search" title="No results" text="Try another search.">
+ *     <p-btn variant="tonal" label="Clear filters" @press="clear" />
+ * </p-empty-state>
+ */
+#[Tag('p-empty-state')]
+#[Slot('slot', 0, null)]
+final class EmptyState extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $title = '',
+        #[Prop(immutable: false)] public ?string $text = null,
+        #[Prop(immutable: false)] public ?string $icon = 'info',
+    ) {
+    }
+}
+?>
+
+<template language="2">
+    <Column class="root">
+        <View p-if="$icon !== null" class="badge">
+            <p-icon :name="$icon" tone="accent" :size="28" />
+        </View>
+        <Text class="title" accessibilityRole="header">{{ $title }}</Text>
+        <Text p-if="$text !== null" class="text">{{ $text }}</Text>
+        <Column class="actions"><Slot /></Column>
+    </Column>
+</template>
+
+<style scoped>
+    .root { align-items: center; padding: 32px 24px; gap: 8px; }
+    .badge { width: 64px; height: 64px; border-radius: 32px; align-items: center; justify-content: center; margin-bottom: 8px; background-color: var(--p-accent-soft); }
+    .title { font-size: 18px; line-height: 24px; font-weight: 600; text-align: center; color: var(--p-text); }
+    .text { font-size: 15px; line-height: 22px; text-align: center; color: var(--p-text-muted); max-width: 320px; }
+    .actions { align-items: center; padding-top: 12px; }
+
+    @media (prefers-color-scheme: dark) {
+        .badge { background-color: var(--p-accent-soft-dark); }
+        .title { color: var(--p-text-dark); }
+        .text { color: var(--p-text-muted-dark); }
+    }
+</style>

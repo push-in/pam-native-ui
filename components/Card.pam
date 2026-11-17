@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Surface for grouped content. Pass `pressable="true"` and listen to `@press`
+ * to make the whole card a button.
+ *
+ * <p-card title="Revenue" subtitle="Last 30 days"><Text>…</Text></p-card>
+ */
+#[Tag('p-card')]
+#[Event('press', 'null')]
+#[Slot('slot', 0, null)]
+#[Slot('actions', 0, null)]
+final class Card extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $variant = 'outlined',
+        #[Prop(immutable: false)] public ?string $title = null,
+        #[Prop(immutable: false)] public ?string $subtitle = null,
+        #[Prop(immutable: false)] public bool $pressable = false,
+        #[Prop(immutable: false)] public bool $padded = true,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[Action]
+    public function press(): void
+    {
+        $this->emit('press');
+    }
+
+    public function rootClass(): string
+    {
+        return 'card c-'.$this->variant.($this->padded ? ' padded' : '');
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? trim(($this->title ?? '').' '.($this->subtitle ?? ''));
+    }
+}
+?>
+
+<template language="2">
+    <Pressable
+        p-if="$pressable"
+        :class="rootClass()"
+        accessibilityRole="button"
+        :accessibilityLabel="a11yLabel()"
+        :testID="$testId"
+        @press="press"
+    >
+        <Column p-if="$title !== null || $subtitle !== null" class="head">
+            <Text p-if="$title !== null" class="title">{{ $title }}</Text>
+            <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>
+        </Column>
+        <Slot />
+        <Row p-if="$actions !== []" class="actions"><Slot name="actions" /></Row>
+    </Pressable>
+    <Column p-else :class="rootClass()" :testID="$testId">
+        <Column p-if="$title !== null || $subtitle !== null" class="head" accessibilityRole="header">
+            <Text p-if="$title !== null" class="title">{{ $title }}</Text>
+            <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>
+        </Column>
+        <Slot />
+        <Row p-if="$actions !== []" class="actions"><Slot name="actions" /></Row>
+    </Column>
+</template>
+
+<style scoped>
+    .card { gap: 12px; border-radius: 16px; overflow: hidden; }
+    .padded { padding: 16px; }
+    .c-outlined { border-width: 1px; border-color: var(--p-border); background-color: var(--p-surface); }
+    .c-filled { background-color: var(--p-surface-muted); }
+    .c-elevated { background-color: var(--p-surface); box-shadow: 0 1px 2px rgba(10, 10, 10, 0.06), 0 4px 16px rgba(10, 10, 10, 0.06); }
+    .c-accent { background-color: var(--p-accent-soft); }
+    .card:pressed { transform: scale(0.99); }
+    .head { gap: 2px; }
+    .title { font-size: 17px; line-height: 24px; font-weight: 600; color: var(--p-text); }
+    .subtitle { font-size: 14px; line-height: 20px; color: var(--p-text-muted); }
+    .actions { flex-direction: row; justify-content: flex-end; gap: 8px; }
+
+    @media (prefers-color-scheme: dark) {
+        .c-outlined { border-color: var(--p-border-dark); background-color: var(--p-surface-dark); }
+        .c-filled { background-color: var(--p-surface-muted-dark); }
+        .c-elevated { background-color: var(--p-surface-dark); box-shadow: none; border-width: 1px; border-color: var(--p-border-dark); }
+        .c-accent { background-color: var(--p-accent-soft-dark); }
+        .title { color: var(--p-text-dark); }
+        .subtitle { color: var(--p-text-muted-dark); }
+    }
+</style>

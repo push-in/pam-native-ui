@@ -1,0 +1,88 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+
+final class Controls extends Component
+{
+    #[State] public string $text = '';
+    #[State] public string $notes = '';
+    #[State] public bool $checked = false;
+    #[State] public bool $toggled = true;
+    #[State] public string $plan = 'pro';
+    #[State] public ?string $country = null;
+    #[State] public array $tags = [];
+    #[State] public ?string $date = null;
+    #[State] public float $volume = 40;
+    #[State] public int $count = 2;
+    #[State] public string $period = 'week';
+    #[State] public bool $chip = true;
+    #[State] public string $tab = 'one';
+
+    /** @return array<string, string> */
+    public function countries(): array
+    {
+        return [
+            'ar' => 'Argentina', 'br' => 'Brazil', 'ca' => 'Canada', 'cl' => 'Chile', 'de' => 'Germany',
+            'es' => 'Spain', 'fr' => 'France', 'in' => 'India', 'it' => 'Italy', 'jp' => 'Japan',
+            'mx' => 'Mexico', 'pt' => 'Portugal', 'uk' => 'United Kingdom', 'us' => 'United States',
+        ];
+    }
+
+    public function state(): string
+    {
+        return json_encode([
+            'text' => $this->text, 'notes' => $this->notes, 'checked' => $this->checked,
+            'toggled' => $this->toggled, 'plan' => $this->plan, 'country' => $this->country,
+            'tags' => $this->tags, 'date' => $this->date, 'volume' => $this->volume,
+            'count' => $this->count, 'period' => $this->period, 'chip' => $this->chip, 'tab' => $this->tab,
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    }
+
+    public function back(): void
+    {
+        $this->popRoute();
+    }
+}
+?>
+
+<template>
+    <p-screen title="Controls" subtitle="The JSON below is PHP state, re-rendered on every change." back="true" @back="back">
+        <p-tabs p-model="$tab" :options="['one' => 'Text', 'two' => 'Choice', 'three' => 'Range']" />
+        <Column p-if="$tab === 'one'" class="panel">
+            <p-text-field p-model="$text" label="Text field" placeholder="Type here" clearable="true" testId="ctl-text" />
+            <p-textarea p-model="$notes" label="Textarea" :rows="3" testId="ctl-notes" />
+            <p-date-input p-model="$date" label="Date" clearable="true" testId="ctl-date" />
+        </Column>
+        <Column p-else-if="$tab === 'two'" class="panel">
+            <p-checkbox p-model="$checked" label="Checkbox" description="Binds a bool." testId="ctl-check" />
+            <p-switch p-model="$toggled" label="Switch" description="Binds a bool." testId="ctl-switch" />
+            <p-radio-group p-model="$plan" label="Radio group" :options="['free' => 'Free', 'pro' => 'Pro', 'team' => 'Team']" />
+            <p-select p-model="$country" label="Select" :options="countries()" testId="ctl-select" />
+            <p-select p-model="$tags" label="Multi-select" multiple="true" :options="['php' => 'PHP', 'rust' => 'Rust', 'kotlin' => 'Kotlin', 'swift' => 'Swift']" testId="ctl-multi" />
+            <Row class="chips">
+                <p-chip p-model="$chip" label="Filter chip" />
+                <p-chip label="Assist" icon="plus" selectable="false" />
+            </Row>
+        </Column>
+        <Column p-else class="panel">
+            <p-slider p-model="$volume" label="Slider" :step="5" showValue="true" unit="%" testId="ctl-slider" />
+            <p-stepper p-model="$count" label="Stepper" :min="0" :max="10" />
+            <p-segmented p-model="$period" :options="['day' => 'Day', 'week' => 'Week', 'month' => 'Month']" />
+        </Column>
+        <p-card variant="filled" title="PHP state">
+            <Text class="mono" accessibilityLabel="php-state" testID="php-state">{{ state() }}</Text>
+        </p-card>
+    </p-screen>
+</template>
+
+<style scoped>
+    .panel { gap: 20px; }
+    .chips { flex-direction: row; gap: 8px; flex-wrap: wrap; }
+    .mono { font-family: monospace; font-size: 12px; line-height: 18px; color: #1B1B18; }
+    @media (prefers-color-scheme: dark) { .mono { color: #EDEDEC; } }
+</style>

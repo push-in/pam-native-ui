@@ -1,0 +1,73 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+
+final class Lists extends Component
+{
+    private const array FIRST = ['Ada', 'Grace', 'Linus', 'Taylor', 'Rasmus', 'Margaret', 'Dennis', 'Barbara', 'Ken', 'Frances'];
+    private const array LAST = ['Lovelace', 'Hopper', 'Torvalds', 'Otwell', 'Lerdorf', 'Hamilton', 'Ritchie', 'Liskov', 'Thompson', 'Allen'];
+
+    #[State] public string $query = '';
+    #[State] public bool $online = false;
+
+    /** @var list<array{id: string, name: string, role: string, online: bool}>|null */
+    private ?array $people = null;
+
+    /** @return list<array{id: string, name: string, role: string, online: bool}> */
+    public function rows(): array
+    {
+        $this->people ??= array_map(
+            static fn (int $i): array => [
+                'id' => 'p'.$i,
+                'name' => self::FIRST[$i % 10].' '.self::LAST[intdiv($i, 10) % 10],
+                'role' => ['Engineer', 'Designer', 'Founder', 'Writer'][$i % 4].' · #'.($i + 1),
+                'online' => $i % 3 === 0,
+            ],
+            range(0, 499),
+        );
+        $query = mb_strtolower(trim($this->query));
+
+        return array_values(array_filter(
+            $this->people,
+            fn (array $row): bool => (!$this->online || $row['online'])
+                && ($query === '' || str_contains(mb_strtolower($row['name']), $query)),
+        ));
+    }
+
+    public function back(): void
+    {
+        $this->popRoute();
+    }
+}
+?>
+
+<template>
+    <p-screen title="People" :subtitle="count(rows()).' people'" back="true" :scroll="false" @back="back">
+        <p-text-field p-model="$query" placeholder="Search people" type="search" clearable="true" testId="list-search" />
+        <Row class="filters">
+            <p-chip p-model="$online" label="Online now" />
+        </Row>
+        <VirtualizedList class="list" estimatedRowHeight="72" keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
+            <p-list-item
+                p-for="$person in rows()"
+                p-key="$person['id']"
+                :key="$person['id']"
+                :title="$person['name']"
+                :subtitle="$person['role']"
+                :avatar="$person['name']"
+                :value="$person['online'] ? 'Online' : null"
+            />
+        </VirtualizedList>
+        <p-empty-state p-if="rows() === []" icon="search" title="Nobody found" text="Try another name." />
+    </p-screen>
+</template>
+
+<style scoped>
+    .filters { flex-direction: row; gap: 8px; }
+    .list { flex: 1; margin: 0 -20px; }
+</style>

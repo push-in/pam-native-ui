@@ -1,0 +1,108 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Number input with − and + buttons (also exposed as `p-number-input`'s
+ * successor). Binds an int; use `step` for increments.
+ *
+ * <p-stepper p-model="$guests" label="Guests" :min="1" :max="12" />
+ */
+#[Tag('p-stepper')]
+#[Event('model', 'int')]
+#[Event('change', 'int')]
+final class Stepper extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public int $modelValue = 0,
+        #[Prop(immutable: false)] public int $min = 0,
+        #[Prop(immutable: false)] public int $max = 999,
+        #[Prop(immutable: false)] public int $step = 1,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public ?string $description = null,
+        #[Prop(immutable: false)] public bool $disabled = false,
+    ) {
+    }
+
+    #[Action]
+    public function decrement(): void
+    {
+        $this->set($this->modelValue - $this->step);
+    }
+
+    #[Action]
+    public function increment(): void
+    {
+        $this->set($this->modelValue + $this->step);
+    }
+
+    #[Action]
+    public function adjust(mixed $action): void
+    {
+        $name = is_string($action) ? $action : (is_object($action) && property_exists($action, 'name') ? (string) $action->name : '');
+        if ($name === 'increment') {
+            $this->increment();
+        } elseif ($name === 'decrement') {
+            $this->decrement();
+        }
+    }
+
+    private function set(int $value): void
+    {
+        $value = max($this->min, min($this->max, $value));
+        if ($this->disabled || $value === $this->modelValue) {
+            return;
+        }
+        $this->modelValue = $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+}
+?>
+
+<template language="2">
+    <Row :class="$disabled ? 'p-choice p-choice-disabled' : 'p-choice'">
+        <Column p-if="$label !== '' || $description !== null" class="p-choice-text">
+            <Text p-if="$label !== ''" class="p-choice-label" importantForAccessibility="no">{{ $label }}</Text>
+            <Text p-if="$description !== null" class="p-choice-description" importantForAccessibility="no">{{ $description }}</Text>
+        </Column>
+        <Row
+            class="control"
+            accessibilityRole="adjustable"
+            :accessibilityLabel="$label"
+            :accessibilityValueMin="$min"
+            :accessibilityValueMax="$max"
+            :accessibilityValueNow="$modelValue"
+            on:accessibilityAction="adjust"
+        >
+            <Pressable class="btn" accessibilityLabel="Decrease" :disabled="$disabled || $modelValue <= $min" @press="decrement">
+                <p-icon name="minus" :tone="$modelValue <= $min ? 'subtle' : 'text'" :size="20" />
+            </Pressable>
+            <Text class="value" importantForAccessibility="no">{{ $modelValue }}</Text>
+            <Pressable class="btn" accessibilityLabel="Increase" :disabled="$disabled || $modelValue >= $max" @press="increment">
+                <p-icon name="plus" :tone="$modelValue >= $max ? 'subtle' : 'text'" :size="20" />
+            </Pressable>
+        </Row>
+    </Row>
+</template>
+
+<style scoped>
+    .control { flex-direction: row; align-items: center; border-radius: 12px; border-width: 1px; border-color: var(--p-border); background-color: var(--p-surface); }
+    .btn { width: 48px; height: 44px; align-items: center; justify-content: center; }
+    .btn:pressed { background-color: var(--p-surface-pressed); }
+    .value { min-width: 40px; text-align: center; font-size: 17px; line-height: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--p-text); }
+
+    @media (prefers-color-scheme: dark) {
+        .control { border-color: var(--p-border-dark); background-color: var(--p-surface-dark); }
+        .btn:pressed { background-color: var(--p-surface-pressed-dark); }
+        .value { color: var(--p-text-dark); }
+    }
+</style>

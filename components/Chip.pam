@@ -1,0 +1,101 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Filter chip (binds a bool with p-model) or assist chip (`@press`).
+ *
+ * <p-chip p-model="$onlyUnread" label="Unread" />
+ */
+#[Tag('p-chip')]
+#[Event('model', 'bool')]
+#[Event('change', 'bool')]
+#[Event('press', 'null')]
+final class Chip extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public bool $modelValue = false,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public ?string $icon = null,
+        #[Prop(immutable: false)] public bool $selectable = true,
+        #[Prop(immutable: false)] public bool $disabled = false,
+    ) {
+    }
+
+    #[Action]
+    public function press(): void
+    {
+        if ($this->disabled) {
+            return;
+        }
+        if ($this->selectable) {
+            $this->modelValue = !$this->modelValue;
+            $this->emit('model', $this->modelValue);
+            $this->emit('change', $this->modelValue);
+        }
+        $this->emit('press');
+    }
+
+    public function on(): bool
+    {
+        return $this->selectable && $this->modelValue;
+    }
+}
+?>
+
+<template language="2">
+    <Pressable
+        :class="on() ? 'chip chip-on' : ($disabled ? 'chip disabled' : 'chip')"
+        :accessibilityRole="$selectable ? 'checkbox' : 'button'"
+        :accessibilityLabel="$label"
+        :accessibilityCheckedState="$selectable ? (on() ? 'checked' : 'unchecked') : 'none'"
+        :disabled="$disabled"
+        hitSlop="6"
+        @press="press"
+    >
+        <p-icon p-if="on()" name="check" tone="accent" :size="18" />
+        <p-icon p-else-if="$icon !== null" :name="$icon" tone="muted" :size="18" />
+        <Text :class="on() ? 'label label-on' : 'label'" numberOfLines="1">{{ $label }}</Text>
+    </Pressable>
+</template>
+
+<style scoped>
+    .chip {
+        flex-direction: row;
+        align-items: center;
+        align-self: flex-start;
+        gap: 6px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 10px;
+        border-width: 1px;
+        border-color: var(--p-border);
+        background-color: var(--p-surface);
+    }
+    .chip:pressed { background-color: var(--p-surface-pressed); }
+    .chip-on { border-color: var(--p-accent-soft-pressed); background-color: var(--p-accent-soft); padding-left: 10px; }
+    .chip-on:pressed { background-color: var(--p-accent-soft-pressed); }
+    .disabled { opacity: 0.45; }
+    .label { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p-text); }
+    .label-on { color: var(--p-accent-text); }
+
+    @media (platform: ios) {
+        .chip { border-radius: 18px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .chip { border-color: var(--p-border-dark); background-color: var(--p-surface-dark); }
+        .chip:pressed { background-color: var(--p-surface-pressed-dark); }
+        .chip-on { border-color: var(--p-accent-soft-pressed-dark); background-color: var(--p-accent-soft-dark); }
+        .label { color: var(--p-text-dark); }
+        .label-on { color: var(--p-accent-text-dark); }
+    }
+</style>

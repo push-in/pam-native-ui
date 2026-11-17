@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/** <p-icon-btn icon="search" label="Search" @press="openSearch" /> (48 dp target, label is read aloud) */
+#[Tag('p-icon-btn')]
+#[Event('press', 'null')]
+final class IconButton extends Component
+{
+    public function __construct(
+        #[Prop(required: true, immutable: false)] public string $icon,
+        #[Prop(required: true, immutable: false)] public string $label,
+        #[Prop(immutable: false)] public string $variant = 'plain',
+        #[Prop(immutable: false)] public bool $disabled = false,
+    ) {
+    }
+
+    #[Action]
+    public function press(): void
+    {
+        if (!$this->disabled) {
+            $this->emit('press');
+        }
+    }
+}
+?>
+
+<template language="2">
+    <Pressable
+        :class="'btn v-'.$variant.($disabled ? ' disabled' : '')"
+        accessibilityRole="button"
+        :accessibilityLabel="$label"
+        :disabled="$disabled"
+        @press="press"
+    >
+        <p-icon :name="$icon" :tone="$variant === 'filled' ? 'on-accent' : ($variant === 'tonal' ? 'accent' : 'text')" :size="22" />
+    </Pressable>
+</template>
+
+<style scoped>
+    .btn { width: 48px; height: 48px; border-radius: 24px; align-items: center; justify-content: center; }
+    .v-plain { background-color: transparent; }
+    .v-plain:pressed { background-color: var(--p-surface-pressed); }
+    .v-tonal { background-color: var(--p-accent-soft); }
+    .v-tonal:pressed { background-color: var(--p-accent-soft-pressed); }
+    .v-filled { background-color: var(--p-accent); }
+    .v-filled:pressed { background-color: var(--p-accent-pressed); }
+    .disabled { opacity: 0.4; }
+
+    @media (prefers-color-scheme: dark) {
+        .v-plain:pressed { background-color: var(--p-surface-pressed-dark); }
+        .v-tonal { background-color: var(--p-accent-soft-dark); }
+        .v-tonal:pressed { background-color: var(--p-accent-soft-pressed-dark); }
+        .v-filled { background-color: var(--p-accent-dark); }
+    }
+</style>

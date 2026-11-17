@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Grouped list section (settings style) with an optional header and footer.
+ *
+ * <p-section title="Account" footer="Signed in on this device.">
+ *     <p-list-item title="Email" value="dev@pam.dev" />
+ * </p-section>
+ */
+#[Tag('p-section')]
+#[Slot('slot', 0, null)]
+final class Section extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public ?string $title = null,
+        #[Prop(immutable: false)] public ?string $footer = null,
+        #[Prop(immutable: false)] public bool $inset = true,
+    ) {
+    }
+}
+?>
+
+<template language="2">
+    <Column class="section">
+        <Text p-if="$title !== null" class="title" accessibilityRole="header">{{ $title }}</Text>
+        <Column :class="$inset ? 'group group-inset' : 'group'" accessibilityRole="list">
+            <Slot />
+        </Column>
+        <Text p-if="$footer !== null" class="footer">{{ $footer }}</Text>
+    </Column>
+</template>
+
+<style scoped>
+    .section { gap: 8px; }
+    .title { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--p-text-muted); padding: 0 16px; }
+    .group { overflow: hidden; background-color: var(--p-surface); }
+    .group-inset { border-radius: 16px; border-width: 1px; border-color: var(--p-border); }
+    .footer { font-size: 13px; line-height: 18px; color: var(--p-text-muted); padding: 0 16px; }
+
+    @media (platform: ios) {
+        .title { font-weight: 400; letter-spacing: 0px; }
+        .group-inset { border-width: 0; border-radius: 12px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .title, .footer { color: var(--p-text-muted-dark); }
+        .group { background-color: var(--p-surface-dark); }
+        .group-inset { border-color: var(--p-border-dark); }
+    }
+</style>

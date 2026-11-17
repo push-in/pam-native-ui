@@ -1,0 +1,121 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * One row of a list or settings section: optional leading icon or avatar,
+ * title, subtitle and a trailing value, slot or chevron.
+ *
+ * <p-list-item title="Account" subtitle="dev@pam.dev" icon="info" chevron="true" @press="openAccount" />
+ */
+#[Tag('p-list-item')]
+#[Event('press', 'null')]
+#[Slot('leading', 0, null)]
+#[Slot('trailing', 0, null)]
+final class ListItem extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $title = '',
+        #[Prop(immutable: false)] public ?string $subtitle = null,
+        #[Prop(immutable: false)] public ?string $value = null,
+        #[Prop(immutable: false)] public ?string $icon = null,
+        #[Prop(immutable: false)] public ?string $avatar = null,
+        #[Prop(immutable: false)] public bool $chevron = false,
+        #[Prop(immutable: false)] public bool $pressable = false,
+        #[Prop(immutable: false)] public bool $divider = true,
+        #[Prop(immutable: false)] public bool $destructive = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[Action]
+    public function press(): void
+    {
+        if (!$this->disabled) {
+            $this->emit('press');
+        }
+    }
+
+    public function interactive(): bool
+    {
+        return $this->pressable || $this->chevron;
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? trim($this->title.($this->subtitle !== null ? ', '.$this->subtitle : '').($this->value !== null ? ', '.$this->value : ''));
+    }
+
+    public function titleClass(): string
+    {
+        return $this->destructive ? 'title title-danger' : 'title';
+    }
+}
+?>
+
+<template language="2">
+    <Pressable
+        :class="$disabled ? 'item disabled' : 'item'"
+        :accessibilityRole="interactive() ? 'button' : 'text'"
+        :accessibilityLabel="a11yLabel()"
+        :disabled="$disabled || !interactive()"
+        :testID="$testId"
+        @press="press"
+    >
+        <Row class="row">
+            <View p-if="$icon !== null" class="leading-icon">
+                <p-icon :name="$icon" :tone="$destructive ? 'danger' : 'accent'" :size="20" />
+            </View>
+            <p-avatar p-else-if="$avatar !== null" :name="$avatar" size="sm" />
+            <Slot name="leading" />
+            <Column class="text">
+                <Text :class="titleClass()" numberOfLines="1">{{ $title }}</Text>
+                <Text p-if="$subtitle !== null" class="subtitle" numberOfLines="2">{{ $subtitle }}</Text>
+            </Column>
+            <Text p-if="$value !== null" class="value" numberOfLines="1">{{ $value }}</Text>
+            <Slot name="trailing" />
+            <p-icon p-if="$chevron" name="chevron-right" tone="subtle" :size="20" />
+        </Row>
+        <View p-if="$divider" :class="$icon !== null || $avatar !== null ? 'divider divider-inset' : 'divider'" />
+    </Pressable>
+</template>
+
+<style scoped>
+    .item { min-height: 56px; justify-content: center; }
+    .item:pressed { background-color: var(--p-surface-pressed); }
+    .disabled { opacity: 0.45; }
+    .row { flex-direction: row; align-items: center; gap: 14px; min-height: 56px; padding: 8px 16px; }
+    .leading-icon { width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background-color: var(--p-accent-soft); }
+    .text { flex: 1; gap: 2px; }
+    .title { font-size: 16px; line-height: 22px; color: var(--p-text); }
+    .title-danger { color: var(--p-danger); }
+    .subtitle { font-size: 13px; line-height: 18px; color: var(--p-text-muted); }
+    .value { font-size: 15px; line-height: 20px; color: var(--p-text-muted); max-width: 160px; }
+    .divider { position: absolute; left: 16px; right: 0; bottom: 0; height: 1px; background-color: var(--p-border); }
+    .divider-inset { left: 66px; }
+
+    @media (platform: ios) {
+        .title { font-size: 17px; }
+        .divider { height: 0.5px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .item:pressed { background-color: var(--p-surface-pressed-dark); }
+        .leading-icon { background-color: var(--p-accent-soft-dark); }
+        .title { color: var(--p-text-dark); }
+        .title-danger { color: var(--p-danger-dark); }
+        .subtitle, .value { color: var(--p-text-muted-dark); }
+        .divider { background-color: var(--p-border-dark); }
+    }
+</style>

@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * 1.x name of {@see Screen}, kept so `pam init` 1.x projects keep rendering.
+ *
+ * @deprecated 2.0 Use `<p-screen>`.
+ */
+#[Tag('AppScreen')]
+#[Slot('slot', 0, null)]
+final class AppScreen extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $title = '',
+        #[Prop(immutable: false)] public ?string $subtitle = null,
+    ) {
+    }
+}
+?>
+
+<template language="2">
+    <p-screen :title="$title" :subtitle="$subtitle"><Slot /></p-screen>
+</template>

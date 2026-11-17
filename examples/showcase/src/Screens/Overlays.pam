@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+
+final class Overlays extends Component
+{
+    #[State] public bool $sheet = false;
+    #[State] public bool $dialog = false;
+    #[State] public bool $snackbar = false;
+    #[State] public string $sort = 'recent';
+    #[State] public bool $unread = false;
+    #[State] public string $log = 'Nothing yet';
+
+    public function openSheet(): void { $this->sheet = true; }
+    public function openDialog(): void { $this->dialog = true; }
+    public function showSnackbar(): void { $this->snackbar = true; }
+
+    public function apply(): void
+    {
+        $this->sheet = false;
+        $this->log = 'Filters applied: '.$this->sort.($this->unread ? ', unread only' : '');
+        $this->snackbar = true;
+    }
+
+    public function deleted(): void { $this->log = 'Project deleted'; }
+    public function cancelled(): void { $this->log = 'Delete cancelled'; }
+    public function undo(): void { $this->log = 'Undone'; }
+    public function back(): void { $this->popRoute(); }
+}
+?>
+
+<template>
+    <p-screen title="Overlays" back="true" @back="back">
+        <p-card title="Bottom sheet" subtitle="Drag, swipe or tap outside to close.">
+            <p-btn variant="tonal" label="Open filters" testId="open-sheet" @press="openSheet" />
+        </p-card>
+        <p-card title="Dialog" subtitle="A confirmation with a destructive action.">
+            <p-btn variant="tonal" label="Delete project" testId="open-dialog" @press="openDialog" />
+        </p-card>
+        <p-card title="Snackbar" subtitle="Hides itself after 4 seconds.">
+            <p-btn variant="tonal" label="Show snackbar" testId="open-snackbar" @press="showSnackbar" />
+        </p-card>
+        <Text class="log" accessibilityLabel="overlay-log">{{ $log }}</Text>
+
+        <p-sheet p-model="$sheet" title="Filters">
+            <p-radio-group p-model="$sort" label="Sort by" :options="['recent' => 'Most recent', 'popular' => 'Most popular', 'name' => 'Name']" />
+            <p-switch p-model="$unread" label="Unread only" />
+            <template #footer>
+                <p-btn label="Apply" block="true" testId="apply-sheet" @press="apply" />
+            </template>
+        </p-sheet>
+        <p-dialog p-model="$dialog" title="Delete project?" text="This removes the project and its history. It cannot be undone." confirmLabel="Delete" destructive="true" @confirm="deleted" @cancel="cancelled" />
+        <p-snackbar p-model="$snackbar" text="Changes saved" actionLabel="Undo" @action="undo" />
+    </p-screen>
+</template>
+
+<style scoped>
+    .log { font-family: "Instrument Sans"; font-size: 14px; color: #706F6C; text-align: center; }
+    @media (prefers-color-scheme: dark) { .log { color: #A1A09A; } }
+</style>

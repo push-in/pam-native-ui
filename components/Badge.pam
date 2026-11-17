@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/** <p-badge label="New" tone="accent" /> · <p-badge :count="3" /> · <p-badge dot="true" /> */
+#[Tag('p-badge')]
+final class Badge extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public ?string $label = null,
+        #[Prop(immutable: false)] public ?int $count = null,
+        #[Prop(immutable: false)] public int $max = 99,
+        #[Prop(immutable: false)] public string $tone = 'accent',
+        #[Prop(immutable: false)] public bool $dot = false,
+    ) {
+    }
+
+    public function text(): string
+    {
+        if ($this->count !== null) {
+            return $this->count > $this->max ? $this->max.'+' : (string) $this->count;
+        }
+
+        return $this->label ?? '';
+    }
+
+    public function rootClass(): string
+    {
+        return ($this->dot ? 'dot' : 'badge').' b-'.$this->tone;
+    }
+}
+?>
+
+<template language="2">
+    <View p-if="$dot" :class="rootClass()" accessibilityRole="image" accessibilityLabel="New" />
+    <View p-else :class="rootClass()">
+        <Text :class="'text t-'.$tone" numberOfLines="1">{{ text() }}</Text>
+    </View>
+</template>
+
+<style scoped>
+    .badge { align-self: flex-start; min-width: 20px; height: 22px; padding: 0 8px; border-radius: 11px; align-items: center; justify-content: center; }
+    .dot { width: 8px; height: 8px; border-radius: 4px; }
+    .text { font-size: 12px; line-height: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .b-accent { background-color: var(--p-accent); }
+    .b-neutral { background-color: var(--p-surface-muted); }
+    .b-success { background-color: var(--p-success-soft); }
+    .b-warning { background-color: var(--p-warning-soft); }
+    .b-danger { background-color: var(--p-danger-soft); }
+    .b-info { background-color: var(--p-info-soft); }
+    .t-accent { color: var(--p-on-accent); }
+    .t-neutral { color: var(--p-text); }
+    .t-success { color: var(--p-success); }
+    .t-warning { color: var(--p-warning); }
+    .t-danger { color: var(--p-danger); }
+    .t-info { color: var(--p-info); }
+
+    @media (prefers-color-scheme: dark) {
+        .b-accent { background-color: var(--p-accent-dark); }
+        .b-neutral { background-color: var(--p-surface-muted-dark); }
+        .b-success { background-color: var(--p-success-soft-dark); }
+        .b-warning { background-color: var(--p-warning-soft-dark); }
+        .b-danger { background-color: var(--p-danger-soft-dark); }
+        .b-info { background-color: var(--p-info-soft-dark); }
+        .t-neutral { color: var(--p-text-dark); }
+        .t-success { color: var(--p-success-dark); }
+        .t-warning { color: var(--p-warning-dark); }
+        .t-danger { color: var(--p-danger-dark); }
+        .t-info { color: var(--p-info-dark); }
+    }
+</style>

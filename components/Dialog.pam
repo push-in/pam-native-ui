@@ -1,0 +1,112 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Centered confirmation dialog bound to a bool. With `confirmLabel` it renders
+ * the actions itself and emits `confirm` / `cancel`.
+ *
+ * <p-dialog p-model="$confirmDelete" title="Delete project?" text="This cannot be undone." confirmLabel="Delete" destructive="true" @confirm="delete" />
+ */
+#[Tag('p-dialog')]
+#[Event('model', 'bool')]
+#[Event('confirm', 'null')]
+#[Event('cancel', 'null')]
+#[Slot('slot', 0, null)]
+#[Slot('actions', 0, null)]
+final class Dialog extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public bool $modelValue = false,
+        #[Prop(immutable: false)] public string $title = '',
+        #[Prop(immutable: false)] public ?string $text = null,
+        #[Prop(immutable: false)] public ?string $confirmLabel = null,
+        #[Prop(immutable: false)] public string $cancelLabel = 'Cancel',
+        #[Prop(immutable: false)] public bool $destructive = false,
+        #[Prop(immutable: false)] public bool $dismissible = true,
+    ) {
+    }
+
+    #[Action]
+    public function confirm(): void
+    {
+        $this->close();
+        $this->emit('confirm');
+    }
+
+    #[Action]
+    public function cancel(): void
+    {
+        $this->close();
+        $this->emit('cancel');
+    }
+
+    #[Action]
+    public function requestClose(): void
+    {
+        if ($this->dismissible) {
+            $this->cancel();
+        }
+    }
+
+    private function close(): void
+    {
+        if ($this->modelValue) {
+            $this->modelValue = false;
+            $this->emit('model', false);
+        }
+    }
+}
+?>
+
+<template language="2">
+    <View class="host">
+        <Modal
+            p-if="$modelValue"
+            transparent="true"
+            presentation="dialog"
+            animationType="fade"
+            backdropColor="rgba(10, 10, 10, 0.42)"
+            on:requestClose="requestClose"
+        >
+            <Column class="card" accessibilityRole="alert">
+                <Text class="title" accessibilityRole="header">{{ $title }}</Text>
+                <Text p-if="$text !== null" class="text">{{ $text }}</Text>
+                <Slot />
+                <Row p-if="$confirmLabel !== null" class="actions">
+                    <p-btn variant="text" :label="$cancelLabel" @press="cancel" />
+                    <p-btn :variant="$destructive ? 'danger' : 'filled'" :label="$confirmLabel" size="sm" @press="confirm" />
+                </Row>
+                <Row p-else class="actions"><Slot name="actions" /></Row>
+            </Column>
+        </Modal>
+    </View>
+</template>
+
+<style scoped>
+    .host { position: absolute; width: 0; height: 0; }
+    .card { width: 320px; max-width: 90%; gap: 12px; padding: 24px 24px 16px 24px; border-radius: 28px; background-color: var(--p-surface); }
+    .title { font-size: 22px; line-height: 28px; font-weight: 600; color: var(--p-text); }
+    .text { font-size: 15px; line-height: 22px; color: var(--p-text-muted); }
+    .actions { flex-direction: row; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 8px; }
+
+    @media (platform: ios) {
+        .card { width: 300px; border-radius: 20px; }
+        .title { font-size: 18px; line-height: 24px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .card { background-color: var(--p-surface-dark); }
+        .title { color: var(--p-text-dark); }
+        .text { color: var(--p-text-muted-dark); }
+    }
+</style>
