@@ -209,6 +209,8 @@ final class Slider extends Component
 </template>
 
 <style scoped>
+    @import "../src/theme/fields.css";
+
     .root { gap: 4px; width: 100%; }
     .head { flex-direction: row; align-items: center; justify-content: space-between; }
     .label { flex: 1; }

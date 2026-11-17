@@ -86,6 +86,9 @@ final class Checkbox extends Component
 </template>
 
 <style scoped>
+    @import "../src/theme/fields.css";
+    @import "../src/theme/choice.css";
+
     .root { gap: 2px; }
     .box {
         width: 24px;

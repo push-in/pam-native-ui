@@ -1,0 +1,19 @@
+/* Selection rows: control, label and description. */
+
+.p-choice {
+    flex-direction: row;
+    align-items: center;
+    min-height: 48px;
+    gap: 12px;
+    padding: 4px 0;
+}
+.p-choice-text { flex: 1; gap: 2px; }
+.p-choice-label { font-size: 16px; line-height: 22px; color: var(--p-text); }
+.p-choice-description { font-size: 13px; line-height: 18px; color: var(--p-text-muted); }
+.p-choice:pressed { opacity: 0.7; }
+.p-choice-disabled { opacity: 0.45; }
+
+@media (prefers-color-scheme: dark) {
+    .p-choice-label { color: var(--p-text-dark); }
+    .p-choice-description { color: var(--p-text-muted-dark); }
+}

@@ -95,6 +95,8 @@ final class Stepper extends Component
 </template>
 
 <style scoped>
+    @import "../src/theme/choice.css";
+
     .control { flex-direction: row; align-items: center; border-radius: 12px; border-width: 1px; border-color: var(--p-border); background-color: var(--p-surface); }
     .btn { width: 48px; height: 44px; align-items: center; justify-content: center; }
     .btn:pressed { background-color: var(--p-surface-pressed); }

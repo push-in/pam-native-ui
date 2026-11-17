@@ -85,6 +85,9 @@ final class RadioGroup extends Component
 </template>
 
 <style scoped>
+    @import "../src/theme/fields.css";
+    @import "../src/theme/choice.css";
+
     .root { gap: 2px; }
     .ring {
         width: 22px;

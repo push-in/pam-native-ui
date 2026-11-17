@@ -283,6 +283,9 @@ final class Select extends Component
 </template>
 
 <style scoped>
+    @import "../src/theme/fields.css";
+    @import "../src/theme/choice.css";
+
     .label-row { flex-direction: row; gap: 2px; }
     .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
     .trigger { justify-content: space-between; }

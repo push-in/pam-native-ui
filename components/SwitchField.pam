@@ -79,6 +79,8 @@ final class SwitchField extends Component
 </template>
 
 <style scoped>
+    @import "../src/theme/choice.css";
+
     .track {
         width: 52px;
         height: 32px;

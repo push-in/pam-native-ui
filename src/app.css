@@ -2,10 +2,10 @@
  * PAM Native UI theme.
  *
  * PAM prepends this sheet to every component of the package when it compiles
- * them (the package's own `src/app.css`), so the tokens and the shared classes
- * below are available in each component's scoped <style>. Custom properties
- * resolve at compile time, so the dark theme is written as explicit
- * `prefers-color-scheme: dark` rules next to the light ones.
+ * them (the package's own `src/app.css`), so keep it to tokens and fonts:
+ * shared classes live in src/theme/*.css and are @imported only by the
+ * components that use them. Custom properties resolve at compile time, so the
+ * dark theme is written as explicit `prefers-color-scheme: dark` rules.
  *
  * Brand: Instrument Sans, ink #0A0A0A / #161615 / #3E3E3A, paper #EDEDEC /
  * #A1A09A, accent #F53003 (the PAM/Laravel red).
@@ -98,108 +98,11 @@
     font-weight: 700;
 }
 
-/* Type scale (Material 3 sizes, iOS sizes under platform: ios) */
 Text {
     font-family: "Instrument Sans";
     color: var(--p-text);
 }
 
-.p-display { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -0.4px; }
-.p-title-lg { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.3px; }
-.p-title { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.2px; }
-.p-headline { font-size: 17px; line-height: 24px; font-weight: 600; }
-.p-body { font-size: 16px; line-height: 24px; font-weight: 400; }
-.p-body-sm { font-size: 14px; line-height: 20px; font-weight: 400; }
-.p-label { font-size: 14px; line-height: 20px; font-weight: 500; }
-.p-caption { font-size: 12px; line-height: 16px; font-weight: 400; }
-
-@media (platform: ios) {
-    .p-display { font-size: 34px; line-height: 41px; font-weight: 700; }
-    .p-headline { font-size: 17px; line-height: 22px; }
-    .p-body { font-size: 17px; line-height: 22px; }
-    .p-body-sm { font-size: 15px; line-height: 20px; }
-    .p-label { font-size: 15px; line-height: 20px; }
-    .p-caption { font-size: 12px; line-height: 16px; }
-}
-
-/* Colour roles */
-.p-bg { background-color: var(--p-bg); }
-.p-surface { background-color: var(--p-surface); }
-.p-surface-muted { background-color: var(--p-surface-muted); }
-.p-text { color: var(--p-text); }
-.p-text-muted { color: var(--p-text-muted); }
-.p-text-subtle { color: var(--p-text-subtle); }
-.p-text-accent { color: var(--p-accent-text); }
-.p-text-danger { color: var(--p-danger); }
-.p-text-success { color: var(--p-success); }
-
 @media (prefers-color-scheme: dark) {
     Text { color: var(--p-text-dark); }
-    .p-bg { background-color: var(--p-bg-dark); }
-    .p-surface { background-color: var(--p-surface-dark); }
-    .p-surface-muted { background-color: var(--p-surface-muted-dark); }
-    .p-text { color: var(--p-text-dark); }
-    .p-text-muted { color: var(--p-text-muted-dark); }
-    .p-text-subtle { color: var(--p-text-subtle-dark); }
-    .p-text-accent { color: var(--p-accent-text-dark); }
-    .p-text-danger { color: var(--p-danger-dark); }
-    .p-text-success { color: var(--p-success-dark); }
-}
-
-/* Shared field anatomy: label, box, helper and error */
-.p-field { gap: 6px; width: 100%; }
-.p-field-label { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p-text); }
-.p-field-helper { font-size: 12px; line-height: 16px; color: var(--p-text-muted); }
-.p-field-error { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--p-danger); }
-.p-field-box {
-    flex-direction: row;
-    align-items: center;
-    min-height: 52px;
-    padding: 0 14px;
-    gap: 8px;
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--p-border);
-    border-radius: var(--p-radius);
-    background-color: var(--p-surface);
-}
-.p-field-box-focused { border-color: var(--p-accent); border-width: 2px; padding: 0 13px; }
-.p-field-box-invalid { border-color: var(--p-danger); }
-.p-field-box-disabled { background-color: var(--p-surface-muted); opacity: 0.6; }
-.p-field-value { font-size: 16px; line-height: 22px; color: var(--p-text); flex: 1; }
-.p-field-placeholder { font-size: 16px; line-height: 22px; color: var(--p-text-subtle); flex: 1; }
-
-@media (platform: ios) {
-    .p-field-box { border-radius: 10px; }
-    .p-field-value, .p-field-placeholder { font-size: 17px; }
-}
-
-@media (prefers-color-scheme: dark) {
-    .p-field-label { color: var(--p-text-dark); }
-    .p-field-helper { color: var(--p-text-muted-dark); }
-    .p-field-error { color: var(--p-danger-dark); }
-    .p-field-box { border-color: var(--p-border-dark); background-color: var(--p-surface-dark); }
-    .p-field-box-focused { border-color: var(--p-accent-dark); }
-    .p-field-box-invalid { border-color: var(--p-danger-dark); }
-    .p-field-box-disabled { background-color: var(--p-surface-muted-dark); }
-    .p-field-value { color: var(--p-text-dark); }
-    .p-field-placeholder { color: var(--p-text-subtle-dark); }
-}
-
-/* Selection controls share one row anatomy: control, label and description */
-.p-choice {
-    flex-direction: row;
-    align-items: center;
-    min-height: 48px;
-    gap: 12px;
-    padding: 4px 0;
-}
-.p-choice-text { flex: 1; gap: 2px; }
-.p-choice-label { font-size: 16px; line-height: 22px; color: var(--p-text); }
-.p-choice-description { font-size: 13px; line-height: 18px; color: var(--p-text-muted); }
-.p-choice-disabled { opacity: 0.45; }
-
-@media (prefers-color-scheme: dark) {
-    .p-choice-label { color: var(--p-text-dark); }
-    .p-choice-description { color: var(--p-text-muted-dark); }
 }
