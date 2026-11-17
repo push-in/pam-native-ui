@@ -172,6 +172,8 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
     scrolling = {"SCROLL", "LIST", "VIRTUAL_LIST", "SECTION_LIST"}
 
     def in_scroller(node: Node) -> bool:
+        if node.raw.get("scrolls"):
+            return True
         parent = node.parent
         while parent is not None:
             if parent.raw["kind"] in scrolling:
@@ -207,7 +209,8 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
                     findings["overlap"].append(f"{a.owner()} / {b.owner()}")
 
     for parent in nodes:
-        kids = [k for k in parent.children if "frame" in k.raw and k.raw.get("alpha", 1) > 0.01 and not k.raw.get("transformed")]
+        laid_out = [k for k in parent.children if "frame" in k.raw and k.raw.get("alpha", 1) > 0.01]
+        kids = [k for k in laid_out if not k.raw.get("transformed")]
         for i, a in enumerate(kids):
             fa = a.raw["frame"]
             for b in kids[i + 1 :]:
@@ -226,7 +229,7 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
         # position 2 absolute.
         if parent.raw.get("justify") not in (None, 1, 3):
             continue
-        stacked = [k for k in kids if k.raw.get("position") != 2]
+        stacked = [k for k in laid_out if k.raw.get("position") != 2]
         ordered = sorted(stacked, key=lambda k: (k.raw["frame"][1], k.raw["frame"][0]))
         for a, b in zip(ordered, ordered[1:]):
             fa, fb = a.raw["frame"], b.raw["frame"]

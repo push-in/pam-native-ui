@@ -105,7 +105,7 @@ def events() -> list[dict]:
         {"tap": "Increase"}, last("stepper.change:2"),
         {"tap": "Increase"}, {"tap": "Increase"}, state('"count":3'),
         {"tap": "Events field"}, last("field.focus"),
-        {"type": "pam\n"}, state('"field.submit:pam"', '"name":"pam"'),
+        {"type": "42\n"}, state('"field.submit:42"', '"name":"42"'),
         {"tap": "Pressable card"}, state('"field.blur"'),
         {"tap": "Reset events"}, state('"events":[]', '"alert":true'),
     ]

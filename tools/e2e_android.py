@@ -306,8 +306,10 @@ class Suite:
         lowest = max((bounds(n)[3] for n in d.nodes() if n.get("clickable") == "true" and n.get("content-desc")), default=0)
         self.check("select sheet: last option above the navigation bar", 0 < lowest <= limit, f"{lowest} vs {limit}")
         d.screenshot("select-sheet-end")
-        for _ in range(4):
-            d.swipe(x, d.height * 55 // 100, x, d.height * 85 // 100, 120)
+        for _ in range(8):
+            if d.find(desc="Brazil") is not None:
+                break
+            d.swipe(x, d.height * 50 // 100, x, d.height * 90 // 100, 150)
         d.tap(desc="Brazil", scroll=False)
         self.check("select (virtualized list in a sheet)", d.state()["country"] == "br")
         d.top()
@@ -401,21 +403,22 @@ class Suite:
         self.check("stepper clamps at max", d.state()["count"] == 3, d.state()["count"])
         fired("field.focus", lambda: d.tap(desc="Events field"))
         self.check("focus shows the keyboard", d.keyboard_shown())
-        d.type("pam")
+        d.type("42")
         d.key("66")  # enter: return key "done" submits
         evts = d.events()
-        self.check("event field.submit", "field.submit:pam" in evts, evts[-3:])
+        # Digits: no IME capitalizes or corrects them, the value is exact.
+        self.check("event field.submit", "field.submit:42" in evts, evts[-3:])
         self.check("submit hides the keyboard", not d.keyboard_shown())
         if "field.blur" not in evts:
             d.tap(text="Pressable card")
             evts = d.events()
         self.check("event field.blur", "field.blur" in evts, evts[-3:])
-        self.check("field p-model", d.state()["name"].lower() == "pam", d.state()["name"])
+        self.check("field p-model", d.state()["name"] == "42", d.state()["name"])
         # Typed text reaches PHP before a press that follows it immediately.
         d.tap(desc="Events field")
-        d.type("xy")
+        d.type("7")
         d.tap(text="Pressable card", scroll=False)
-        self.check("pending input flushed before a press", d.state()["name"].lower() == "pamxy", d.state()["name"])
+        self.check("pending input flushed before a press", d.state()["name"] == "427", d.state()["name"])
         d.back() if d.keyboard_shown() else None
         d.tap(desc="Reset events")
         self.check("reset", d.events() == [] and d.state()["alert"] is True)
