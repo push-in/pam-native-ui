@@ -31,3 +31,10 @@ adb shell dumpsys gfxinfo dev.pam.nativeui.showcase.debug reset
 adb shell dumpsys gfxinfo dev.pam.nativeui.showcase.debug
 adb shell dumpsys meminfo dev.pam.nativeui.showcase.debug
 ```
+
+Known limit: `p-select` renders its options in a `ScrollView` inside the
+sheet. A `VirtualizedList` inside a `BottomSheet` fails on Android today
+([push-in/pam-native#262](https://github.com/push-in/pam-native/issues/262));
+the sheet will switch to a virtualized list for very long option lists once
+that is fixed. Lists on a screen (`p-screen scroll="false"` +
+`VirtualizedList`, as in the showcase) are virtualized already.
