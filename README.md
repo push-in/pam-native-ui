@@ -207,6 +207,7 @@ python3 tools/e2e_android.py --serial emulator-5554   # 14 input round-trips to 
 - [Forms and validation](docs/forms.md)
 - [Theme, light and dark](docs/theming.md)
 - [Upgrading from 1.x](UPGRADE.md)
+- [Performance](docs/performance.md)
 - [1.0.8 audit: why 2.0](docs/audit-1.0.md)
 - [Changelog](CHANGELOG.md)
 - [PAM Native core](https://github.com/push-in/pam-native): runtime, renderer, navigation and platform modules
