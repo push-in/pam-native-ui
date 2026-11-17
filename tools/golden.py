@@ -46,6 +46,11 @@ def compare(actual: Path, golden: Path, rects: list[Rect], diff: Path | None = N
     if a.size != g.size:
         return False, f"size {a.size} vs golden {g.size}"
     a, g = mask(a, rects), mask(g, rects)
+    # The golden carries the regions masked when it was recorded (magenta):
+    # an animation there moves between runs, so it is masked in both.
+    magenta = Image.new("RGB", g.size, (255, 0, 255))
+    diff_to_magenta = ImageChops.difference(g, magenta).convert("L").point(lambda v: 255 if v == 0 else 0)
+    a.paste(magenta, mask=diff_to_magenta)
     delta = ImageChops.difference(a, g).convert("RGB")
     channels = delta.split()
     over = [band.point(lambda value: 255 if value > CHANNEL_TOLERANCE else 0) for band in channels]

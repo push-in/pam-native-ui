@@ -45,6 +45,7 @@ PLATFORM_NOISE = [
     r"BLASTBufferQueue",
     r"FrameEvents: updateAcquireFence",
     r"userfaultfd: MOVE ioctl",  # ART on emulator kernels
+    r"Cleared Reference was only reachable from finalizer",  # ART GC notice
     r"Unexpected CPU variant|Known variants:",  # ART on x86_64 emulators
     r"InteractionJankMonitor: Initializing without READ_DEVICE_CONFIG",
     r"HWUI\s*: (Unknown dataspace|Failed to initialize 101010-2|Failed to choose config)",
