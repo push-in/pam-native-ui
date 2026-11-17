@@ -41,7 +41,9 @@ class Device:
     def launch(self) -> None:
         self.adb("shell", "am", "force-stop", self.package)
         self.adb("shell", "monkey", "-p", self.package, "-c", "android.intent.category.LAUNCHER", "1")
-        self.wait_for(text="Native UI", timeout=30)
+        time.sleep(3)
+        # The app restores its last route; go back to the catalog.
+        self.home()
 
     def nodes(self) -> list[dict[str, str]]:
         for _ in range(5):
@@ -85,6 +87,13 @@ class Device:
     def type(self, value: str) -> None:
         self.adb("shell", "input", "text", value.replace(" ", "%s"))
         time.sleep(0.8)
+
+    def home(self) -> None:
+        for _ in range(5):
+            if self.find(text="Every PAM Native UI component, on device.") is not None:
+                return
+            self.back()
+        self.wait_for(text="Every PAM Native UI component, on device.", timeout=30)
 
     def back(self) -> None:
         self.adb("shell", "input", "keyevent", "4")

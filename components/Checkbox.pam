@@ -11,7 +11,10 @@ use Pam\Native\Attributes\Tag;
 use Pam\Native\Component;
 
 /**
- * <p-checkbox p-model="$terms" label="I accept the terms" :error="$form->error('terms')" />
+ * Checkbox with a label and an optional description; the whole row is the
+ * touch target. Shows an error under the row.
+ *
+ * <p-checkbox p-model="$form->terms" label="I accept the terms" :error="error('terms')" />
  */
 #[Tag('p-checkbox')]
 #[Event('model', 'bool')]

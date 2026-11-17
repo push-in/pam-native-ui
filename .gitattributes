@@ -1,1 +1,4 @@
 /docs/assets/ export-ignore
+/tests export-ignore
+/tools export-ignore
+/.github export-ignore

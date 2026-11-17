@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.0.0 - 2026-11-17
+
+A rebuild. 1.x could not get a value from an input to PHP: `p-model` on any
+`p-*` input stopped the app at boot, `@change` listeners were dropped and
+`on:change` landed on a wrapper that never fires (see
+[docs/audit-1.0.md](docs/audit-1.0.md)). 2.0 is a set of PAM single-file
+components drawn by the PAM Native renderer, with two-way binding on every
+input. Upgrade notes: [UPGRADE.md](UPGRADE.md).
+
+- **Two-way binding.** `p-model` on every input (`p-text-field`,
+  `p-textarea`, `p-checkbox`, `p-switch`, `p-radio-group`, `p-select`,
+  `p-date-input`, `p-slider`, `p-stepper`, `p-segmented`, `p-chip`, `p-tabs`)
+  and overlay (`p-sheet`, `p-dialog`, `p-snackbar`), including
+  `p-model="$form->field"` on a `NativeForm`. Requires PAM Native 1.51.
+- **Forms.** `InteractsWithForm` (`error()`, `validateField()`,
+  `submitForm()`, `submitting()`, `formFailed()`), `p-form` with an announced
+  error summary, and the `Accepted`, `Between`, `Pattern` and `OneOf` rules.
+- **Predictable events.** Each component declares its events
+  (`#[Event('change', 'string')]`); `@change` and `on:change` are the same
+  event; an unknown event or prop fails with the component and prop name.
+- **Typed components.** Every prop is a typed PHP 8.5 constructor parameter.
+- **Theme.** PAM brand (Instrument Sans, `#0A0A0A`/`#161615`/`#3E3E3A`,
+  `#EDEDEC`/`#A1A09A`, accent `#F53003`) in light and dark, Material 3 shapes
+  on Android and iOS shapes on iOS, 48 dp targets, UI-thread motion that
+  honours reduce motion.
+- **One renderer.** The 9,400-line Android host and 4,000-line iOS host are
+  gone: no Kotlin, Swift or native view in the package, so both platforms
+  share one implementation and PAM Native's renderer.
+- **Showcase** (`examples/showcase`): every component, a validated sign-up
+  form, a 500-row virtualized list, sheets, dialogs and snackbars.
+- **Tests:** `tests/run.php` (85 assertions through the PAM renderer) and
+  `tools/e2e_android.py` (14 input round-trips on a device).
+- **Removed:** the 1.x Material facades (`Pam\MobileUi\Material\*`), the
+  generated renderer, themes API and 60+ specialised tags. `PamUI::mode()` and
+  `ThemeMode` remain as deprecated shims, and `<AppScreen>` renders
+  `<p-screen>`.
+
 ## 1.0.9
 
 - Add typed PHP constructors for common Material components while preserving

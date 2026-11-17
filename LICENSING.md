@@ -8,8 +8,9 @@ including proprietary applications, commercial services, and competing UI
 frameworks, subject to the license terms. There are no royalties, revenue
 limits, or field-of-use restrictions.
 
-Third-party reference material remains governed by its own license. See
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and
-[`licenses/upstream-reference-MIT.txt`](licenses/upstream-reference-MIT.txt).
+The Instrument Sans font files in `resources/fonts` are Copyright 2022 The
+Instrument Sans Project Authors and licensed under the SIL Open Font License
+1.1 ([`resources/fonts/OFL.txt`](resources/fonts/OFL.txt)). You may bundle
+them in your applications.
 
 This document is not legal advice.

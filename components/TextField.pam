@@ -15,7 +15,7 @@ use Pam\NativeUi\Support\Fields;
 /**
  * Single-line text input with a label, helper text and an error message.
  *
- * <p-text-field p-model="$email" label="Email" type="email" :error="$errors['email'] ?? null" />
+ * <p-text-field p-model="$email" label="Email" type="email" :error="error('email')" />
  */
 #[Tag('p-text-field')]
 #[Event('model', 'string')]

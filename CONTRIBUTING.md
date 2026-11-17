@@ -1,103 +1,37 @@
 # Contributing to PAM Native UI
 
-PAM Native UI welcomes components, themes, accessibility fixes, native
-behaviors, documentation and performance evidence. Public Composer packages use
-the `pushinbr/pam-*` namespace.
+PAM Native UI welcomes components, accessibility fixes, theme work,
+documentation and performance evidence. Public Composer packages use the
+`pushinbr/pam-*` namespace.
 
-All interface changes must satisfy the release-gating contract in
-[`docs/visual-quality-contract.md`](docs/visual-quality-contract.md). Automated
-interaction success never substitutes for visual approval on a physical device.
+## How the package is built
 
-Showcase and product screens must place components directly on the page canvas
-with spacing, headings or dividers. A card is reserved for content whose domain
-meaning is a card. Never use a card as a preview frame, never nest one card in
-another, and never put a card inside a dialog, sheet, overlay or menu that already
-owns its surface. `php tools/validate-showcase.php` enforces this rule.
+- `components/*.pam`: one PAM single-file component per file (Language 2,
+  typed constructor props, `#[Tag]`, `#[Event]`, scoped CSS). PAM Native
+  registers them from `pam-native.plugin.json` (`php.components`).
+- `src/app.css`: tokens and fonts only; it is prepended to every component.
+  Shared classes live in `src/theme/*.css` and are `@import`ed by the
+  components that use them, so each compiled component stays small.
+- `src/`: PHP helpers (options, calendar, field rules, forms).
+- No Android or iOS code: components are drawn with PAM Native primitives.
 
-## Local setup
+## Rules for components
 
-Keep `pam-native` and `pam-native-ui` as sibling directories. PHP 8.5, Java 21
-and an Android SDK are required.
+- Inputs bind with `p-model`: take `modelValue`, emit `model` and `change`.
+- Every prop is a typed constructor parameter with `#[Prop(immutable: false)]`.
+- Touch targets are at least 48 dp; set roles, labels, checked/selected state
+  and live regions.
+- Write light and dark rules (`prefers-color-scheme: dark`) and iOS rules
+  (`platform: ios`) next to each other.
+- Nothing runs while hidden: no timers or listeners outside the visible state.
 
-Install the isolated PHPStan toolchain:
-
-```bash
-composer install --working-dir=tools/phpstan
-```
-
-Run the complete PHP and generated-source gate:
-
-```bash
-PAM_NATIVE_ROOT=../pam-native composer verify
-composer validate --strict --no-check-publish
-```
-
-Run Android compilation, unit tests and lint:
+## Checks
 
 ```bash
-../pam-native/android/gradlew \
-  -p android \
-  -PpamNativeRoot="$(cd ../pam-native && pwd)" \
-  testDebugUnitTest \
-  lintDebug \
-  compileDebugAndroidTestKotlin
+composer install
+php tests/run.php
+php tools/component-docs.php   # regenerate docs/components.md
+python3 tools/e2e_android.py --serial <device>   # with examples/showcase running
 ```
 
-With a device or emulator connected, run the behavioral suite:
-
-```bash
-../pam-native/android/gradlew \
-  -p android \
-  -PpamNativeRoot="$(cd ../pam-native && pwd)" \
-  connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=dev.pam.mobileui.MobileUiHostInstrumentedTest
-```
-
-Physical showcase audits target the signed release application
-`dev.pam.mobileui.catalog`. Do not run release evidence against the
-`dev.pam.mobileui.catalog.debug` development install: debug builds can accept a
-hot-reload bundle through an existing ADB reverse and therefore are not stable
-or artifact-identical evidence. The physical gate verifies the APK package and
-the hash of the APK actually installed on the device before it records a pass.
-
-## Generated API and parity
-
-Do not hand-edit `src/Generated/*`, `docs/catalog.md` or
-`resources/parity.json`. Edit the source inventory, recipes or generator, then
-run:
-
-```bash
-composer generate
-composer verify
-```
-
-`resources/pam-ui-components.json` and `resources/parity.json` are internal
-renderer-regression inventories. They must never be registered or autoloaded as
-public PascalCase components. The public surface is authored in
-`resources/pam-material-components.php` and gated by
-`resources/material-parity.json`.
-
-Every public tag must:
-
-- have a typed facade and deterministic integer component ID;
-- compile in light and dark themes;
-- support every captured variant, compound variant and applicable state;
-- emit only semantic events across the PAM boundary;
-- preserve native accessibility semantics.
-
-Transient gesture, focus, animation, scroll and input progress belongs on the
-Android UI thread. Avoid callbacks to PHP on every frame or pointer sample.
-
-## Performance evidence
-
-Run `composer benchmark` for PHP composition. Physical Android results belong
-in `docs/performance.md` with device, API level, build type, sample count and
-percentiles. Do not convert bridge-event reduction into a framework speedup
-claim, and do not mark comparative performance verified without a matched
-end-to-end baseline.
-
-## Licensing
-
-Contributions are distributed under the repository's Apache License 2.0.
-Preserve third-party notices and include the license of any incorporated
-material.
+Commit messages follow `type: summary` (`fix:`, `feat:`, `docs:`).
