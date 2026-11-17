@@ -62,7 +62,7 @@ final class Sheet extends Component
                     <Column class="body"><Slot /></Column>
                 </ScrollView>
                 <Column p-else class="body"><Slot /></Column>
-                <Column p-if="$footer !== []" class="footer"><Slot name="footer" /></Column>
+                <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
             </Column>
         </BottomSheet>
         <BottomSheet
@@ -79,7 +79,7 @@ final class Sheet extends Component
                 <ScrollView class="body-scroll full" keyboardShouldPersistTaps="handled">
                     <Column class="body"><Slot /></Column>
                 </ScrollView>
-                <Column p-if="$footer !== []" class="footer"><Slot name="footer" /></Column>
+                <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
             </Column>
         </BottomSheet>
     </View>

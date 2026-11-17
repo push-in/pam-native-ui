@@ -66,7 +66,7 @@ final class Card extends Component
             <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>
         </Column>
         <Slot />
-        <Row p-if="$actions !== []" class="actions"><Slot name="actions" /></Row>
+        <Row p-if="($actions ?? []) !== []" class="actions"><Slot name="actions" /></Row>
     </Pressable>
     <Column p-else :class="rootClass()" :testID="$testId">
         <Column p-if="$title !== null || $subtitle !== null" class="head" accessibilityRole="header">
@@ -74,7 +74,7 @@ final class Card extends Component
             <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>
         </Column>
         <Slot />
-        <Row p-if="$actions !== []" class="actions"><Slot name="actions" /></Row>
+        <Row p-if="($actions ?? []) !== []" class="actions"><Slot name="actions" /></Row>
     </Column>
 </template>
 

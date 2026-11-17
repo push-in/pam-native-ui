@@ -9,6 +9,7 @@ use Pam\Native\Attributes\Event;
 use Pam\Native\Attributes\Prop;
 use Pam\Native\Attributes\Slot;
 use Pam\Native\Attributes\Tag;
+use Pam\Native\Appearance;
 use Pam\Native\Component;
 
 /**
@@ -37,6 +38,11 @@ final class Screen extends Component
     ) {
     }
 
+    public function statusBarStyle(): string
+    {
+        return Appearance::isDark() ? 'light-content' : 'dark-content';
+    }
+
     #[Action]
     public function goBack(): void
     {
@@ -53,7 +59,8 @@ final class Screen extends Component
 
 <template language="2">
     <SafeAreaView class="screen">
-        <Row p-if="$back || $actions !== []" class="bar">
+        <StatusBar :barStyle="statusBarStyle()" />
+        <Row p-if="$back || ($actions ?? []) !== []" class="bar">
             <Pressable p-if="$back" class="icon-btn" accessibilityRole="button" accessibilityLabel="Back" @press="goBack">
                 <p-icon name="arrow-left" :size="24" />
             </Pressable>
@@ -84,7 +91,7 @@ final class Screen extends Component
             </Column>
             <Slot />
         </Column>
-        <Column p-if="$footer !== []" class="footer"><Slot name="footer" /></Column>
+        <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
     </SafeAreaView>
 </template>
 
