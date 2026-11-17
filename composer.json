@@ -51,8 +51,7 @@
             "/.git",
             "/.github",
             "/docs/assets",
-            "/examples/**/vendor",
-            "/examples/**/.pam-native",
+            "/examples",
             "/tests",
             "/vendor"
         ]

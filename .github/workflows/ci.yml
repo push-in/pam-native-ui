@@ -63,3 +63,4 @@ jobs:
           grep -q 'components/TextField.pam' /tmp/dist/listing.txt
           grep -q 'resources/fonts/InstrumentSans-Regular.ttf' /tmp/dist/listing.txt
           ! grep -q 'docs/assets/' /tmp/dist/listing.txt
+          ! grep -q 'examples/' /tmp/dist/listing.txt
