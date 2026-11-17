@@ -47,7 +47,7 @@ def controls() -> list[dict]:
         *open_screen("Controls"),
         {"tapField": "Text field"}, {"type": "hello pam\n"}, state('"text":"hello pam"'),
         {"tapField": "Textarea"}, {"type": "multi line"}, state('"notes":"multi line"'),
-        {"tapXY": [0.5, 0.12]},
+        {"dismissKeyboard": True},
         {"tap": "Date, not set"}, {"tap": day}, state(f'"date":"{today.isoformat()}"'),
         {"tap": "Choice"},
         {"tap": "Checkbox"}, state('"checked":true'),
@@ -60,7 +60,7 @@ def controls() -> list[dict]:
         {"tap": "Filter chip"}, state('"chip":false'),
         {"swipe": "down"},
         {"tap": "Range"},
-        {"tap": "Increase"}, state('"count":3'),
+        {"tapIn": "Stepper", "at": [0.95, 0.5]}, state('"count":3'),
         {"tap": "Month"}, state('"period":"month"'),
         {"shot": "controls"},
     ]
@@ -75,7 +75,7 @@ def forms() -> list[dict]:
         {"shot": "forms-errors"},
         {"tapField": "Name, required"}, {"type": "Ada Lovelace"},
         {"tapField": "Email, required"}, {"type": "ada@pam.dev"},
-        {"tapField": "Password, required"}, {"type": "analytical\n"},
+        {"tapField": "Password, required"}, {"type": "analytical\n"}, {"dismissKeyboard": True},
         {"tap": "Role, required, none selected"}, {"tap": "Developer"},
         {"tap": "I accept the terms"},
         {"tap": "Create account"},
@@ -102,10 +102,10 @@ def events() -> list[dict]:
         {"tap": "Dismiss"}, last("alert.close"), state('"alert":false'), {"expectNot": "Closable alert"},
         {"tap": "Second"}, last("tabs.change:b"), state('"tab":"b"'),
         {"tap": "Right"}, last("segmented.change:y"), state('"segment":"y"'),
-        {"tap": "Increase"}, last("stepper.change:2"),
-        {"tap": "Increase"}, {"tap": "Increase"}, state('"count":3'),
+        {"tapIn": "Quantity", "at": [0.95, 0.5]}, last("stepper.change:2"),
+        {"tapIn": "Quantity", "at": [0.95, 0.5]}, {"tapIn": "Quantity", "at": [0.95, 0.5]}, state('"count":3'),
         {"tapField": "Events field"}, last("field.focus"),
-        {"type": "42\n"}, state('"field.submit:42"', '"name":"42"'),
+        {"type": "42\n"}, state('"field.submit:42"', '"name":"42"'), {"dismissKeyboard": True},
         {"tap": "Pressable card"}, state('"field.blur"'),
         {"tap": "Reset events"}, state('"events":[]', '"alert":true'),
     ]
@@ -136,7 +136,7 @@ def lists() -> list[dict]:
         *open_screen("Lists"),
         {"expect": "500 people"}, {"shot": "lists"},
         {"fling": "up"}, {"fling": "up"}, {"fling": "up"}, {"wait": 1}, {"shot": "lists-scrolled"},
-        {"tapField": "Search people"}, {"type": "zzzz\n"}, {"waitFor": "Nobody found"}, {"shot": "lists-empty"},
+        {"tapField": "Search people"}, {"type": "zzzz\n"}, {"dismissKeyboard": True}, {"waitFor": "Nobody found"}, {"shot": "lists-empty"},
     ]
 
 
