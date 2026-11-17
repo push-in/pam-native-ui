@@ -45,7 +45,10 @@ jobs:
 
       - name: Install PAM
         run: |
-          curl -fsSL https://github.com/push-in/pam/releases/latest/download/install.sh | sh
+          # github.com release downloads answer 403 now and then on hosted runners.
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 15 -o /tmp/pam-install.sh \
+            https://github.com/push-in/pam/releases/latest/download/install.sh
+          for attempt in 1 2 3; do sh /tmp/pam-install.sh && break; [ "$attempt" = 3 ] && exit 1; sleep 30; done
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build the showcase with this checkout
