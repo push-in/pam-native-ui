@@ -19,6 +19,8 @@ core binds `p-model` to component tags.
 
 ## Input values never reach PHP
 
+<img src="assets/v1-pmodel.png" width="270" alt="1.0.8: p-model on p-text-field stops the app at boot">
+
 | Case | Template | Result |
 | --- | --- | --- |
 | Documented binding (README "Themes" section) | `<p-text-field p-model="$query" />` | Boot error: `The model attribute is only valid on Input.` |
