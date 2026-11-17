@@ -120,14 +120,14 @@ def overlays() -> list[dict]:
         *sheet, {"expect": "Sort by"}, {"probe": "Apply", "name": "sheet-apply-frame"}, {"shot": "sheet"},
         {"tap": "Most popular"}, {"tap": "Unread only"}, {"tap": "Apply"}, {"expectNot": "Apply"},
         state('"sort":"popular"', '"unread":true', '"sheet.apply:popular:unread"'),
-        {"waitFor": "Changes saved", "timeout": 4}, {"shot": "snackbar"},
-        {"tap": "Undo"}, last("snackbar.action"), {"expectNot": "Changes saved"},
+        # Act on the 4 s snackbar first; its screenshot is taken below.
+        {"waitFor": "Changes saved", "timeout": 4}, {"tap": "Undo"}, last("snackbar.action"), {"expectNot": "Changes saved"},
         *sheet, {"tapXY": [0.5, 0.12]}, {"expectNot": "Apply"}, last("sheet.close"), state('"sheet":false'),
         *sheet, {"drag": [0.5, 0.55, 0.5, 0.98], "velocity": 1500}, {"expectNot": "Apply"}, last("sheet.close"),
         {"tap": "Delete project"}, {"waitFor": "Delete project?"}, {"shot": "dialog"},
         {"tap": "Delete"}, {"expectNot": "Delete project?"}, last("dialog.confirm"),
         {"tap": "Delete project"}, {"tap": "Cancel"}, last("dialog.cancel"), state('"dialog":false'),
-        {"tap": "Show snackbar"}, {"waitFor": "Changes saved"}, {"expectNot": "Changes saved", "timeout": 8},
+        {"tap": "Show snackbar"}, {"waitFor": "Changes saved"}, {"shot": "snackbar"}, {"expectNot": "Changes saved", "timeout": 8},
         state('"snackbar":false'),
     ]
 
