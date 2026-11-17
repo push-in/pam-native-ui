@@ -21,7 +21,7 @@ Write `p-model="$email"` and the field and your PHP state stay in sync, on Andro
 <a id="install"></a>
 ## <picture><img src=".github/assets/icons/terminal.svg" width="22" height="22" alt=""></picture> Install
 
-Start a new PAM Native project with the UI library already wired in (PAM 2.2.19 or newer; `pam self-update` first if `pam --version` is older):
+Start a new PAM Native project with the UI library already wired in (PAM 2.2.20 or newer; `pam self-update` first if `pam --version` is older):
 
 ```sh
 pam init my-app --template native-ui          # starters: --starter auth|tabs|ecommerce|chat|showcase
