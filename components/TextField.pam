@@ -1,0 +1,282 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\State;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\NativeUi\Support\Fields;
+
+/**
+ * Single-line text input with a label, helper text and an error message.
+ *
+ * <p-text-field p-model="$email" label="Email" type="email" :error="$errors['email'] ?? null" />
+ */
+#[Tag('p-text-field')]
+#[Event('model', 'string')]
+#[Event('change', 'string')]
+#[Event('submit', 'string')]
+#[Event('focus', 'null')]
+#[Event('blur', 'null')]
+final class TextField extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $modelValue = '',
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public string $placeholder = '',
+        #[Prop(immutable: false)] public string $type = 'text',
+        #[Prop(immutable: false)] public ?string $helper = null,
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public bool $required = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public bool $readonly = false,
+        #[Prop(immutable: false)] public bool $clearable = false,
+        #[Prop(immutable: false)] public bool $autofocus = false,
+        #[Prop(immutable: false)] public ?int $maxlength = null,
+        #[Prop(immutable: false)] public bool $counter = false,
+        #[Prop(immutable: false)] public ?string $prefix = null,
+        #[Prop(immutable: false)] public ?string $suffix = null,
+        #[Prop(immutable: false)] public ?string $autocomplete = null,
+        #[Prop(immutable: false)] public string $returnKey = 'done',
+        #[Prop(immutable: false)] public string $sync = 'immediate',
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[State]
+    public bool $focused = false;
+
+    #[State]
+    public bool $revealed = false;
+
+    #[Action]
+    public function input(string $value): void
+    {
+        $this->modelValue = $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+
+    #[Action]
+    public function submitted(): void
+    {
+        $this->emit('submit', $this->modelValue);
+    }
+
+    #[Action]
+    public function focusIn(): void
+    {
+        $this->focused = true;
+        $this->emit('focus');
+    }
+
+    #[Action]
+    public function focusOut(): void
+    {
+        $this->focused = false;
+        $this->emit('blur');
+    }
+
+    #[Action]
+    public function clear(): void
+    {
+        $this->input('');
+    }
+
+    #[Action]
+    public function toggleReveal(): void
+    {
+        $this->revealed = !$this->revealed;
+    }
+
+    public function isPassword(): bool
+    {
+        return $this->type === 'password';
+    }
+
+    public function secure(): bool
+    {
+        return $this->type === 'password' && !$this->revealed;
+    }
+
+    public function keyboard(): string
+    {
+        return Fields::keyboard($this->type);
+    }
+
+    public function capitalize(): string
+    {
+        return Fields::capitalize($this->type);
+    }
+
+    public function autoComplete(): string
+    {
+        return $this->autocomplete ?? Fields::autoComplete($this->type);
+    }
+
+    public function correct(): bool
+    {
+        return Fields::autoCorrect($this->type);
+    }
+
+    public function boxClass(): string
+    {
+        return Fields::boxClass($this->focused, $this->error, $this->disabled);
+    }
+
+    public function editable(): bool
+    {
+        return !$this->disabled && !$this->readonly;
+    }
+
+    public function showClear(): bool
+    {
+        return $this->clearable && $this->modelValue !== '' && $this->editable();
+    }
+
+    public function counterText(): string
+    {
+        return Fields::counter($this->modelValue, $this->maxlength);
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? Fields::accessibilityLabel($this->label, $this->placeholder, $this->required);
+    }
+
+    public function a11yHint(): string
+    {
+        return Fields::accessibilityHint($this->error, $this->helper);
+    }
+}
+?>
+
+<template language="2">
+    <Column class="p-field" :testID="$testId">
+        <Row p-if="$label !== ''" class="label-row">
+            <Text class="p-field-label">{{ $label }}</Text>
+            <Text p-if="$required" class="required" importantForAccessibility="no">*</Text>
+        </Row>
+        <Row :class="['p-field-box', boxClass()]">
+            <Text p-if="$prefix !== null" class="affix" importantForAccessibility="no">{{ $prefix }}</Text>
+            <Input
+                class="input"
+                :value="$modelValue"
+                :placeholder="$placeholder"
+                :secureTextEntry="secure()"
+                :keyboardType="keyboard()"
+                :autoCapitalize="capitalize()"
+                :autoComplete="autoComplete()"
+                :autoCorrect="correct()"
+                :editable="editable()"
+                :maxLength="$maxlength"
+                :autoFocus="$autofocus"
+                :returnKeyType="$returnKey"
+                :sync="$sync"
+                :accessibilityLabel="a11yLabel()"
+                :accessibilityHint="a11yHint()"
+                on:change="input"
+                on:submit="submitted"
+                on:focus="focusIn"
+                on:blur="focusOut"
+            />
+            <Text p-if="$suffix !== null" class="affix" importantForAccessibility="no">{{ $suffix }}</Text>
+            <Pressable
+                p-if="showClear()"
+                class="trailing"
+                accessibilityRole="button"
+                accessibilityLabel="Clear"
+                @press="clear"
+            >
+                <View class="clear-glyph">
+                    <View class="clear-bar clear-bar-a" />
+                    <View class="clear-bar clear-bar-b" />
+                </View>
+            </Pressable>
+            <Pressable
+                p-if="isPassword()"
+                class="trailing"
+                accessibilityRole="button"
+                :accessibilityLabel="$revealed ? 'Hide password' : 'Show password'"
+                @press="toggleReveal"
+            >
+                <Text class="reveal">{{ $revealed ? 'Hide' : 'Show' }}</Text>
+            </Pressable>
+        </Row>
+        <Row p-if="$error !== null || $helper !== null || $counter" class="support-row">
+            <Text p-if="$error !== null" class="p-field-error support" accessibilityLiveRegion="polite">{{ $error }}</Text>
+            <Text p-else-if="$helper !== null" class="p-field-helper support">{{ $helper }}</Text>
+            <View p-else class="support" />
+            <Text p-if="$counter" class="p-field-helper">{{ counterText() }}</Text>
+        </Row>
+    </Column>
+</template>
+
+<style scoped>
+    .label-row { flex-direction: row; gap: 2px; }
+    .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
+    .input {
+        flex: 1;
+        min-height: 50px;
+        padding: 0;
+        font-family: "Instrument Sans";
+        font-size: 16px;
+        color: var(--p-text);
+        caret-color: var(--p-accent);
+        background-color: transparent;
+        border-width: 0;
+    }
+    .input::placeholder { color: var(--p-text-subtle); }
+    .input::selection { color: var(--p-accent); }
+    .affix { font-size: 16px; color: var(--p-text-muted); }
+    .trailing {
+        min-width: 44px;
+        min-height: 44px;
+        margin-right: -8px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 22px;
+    }
+    .trailing:pressed { background-color: var(--p-surface-pressed); }
+    .reveal { font-size: 14px; font-weight: 600; color: var(--p-accent-text); }
+    .clear-glyph {
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        background-color: var(--p-text-subtle);
+        align-items: center;
+        justify-content: center;
+    }
+    .clear-bar {
+        position: absolute;
+        width: 10px;
+        height: 1.5px;
+        border-radius: 1px;
+        background-color: var(--p-surface);
+    }
+    .clear-bar-a { transform: rotate(45deg); }
+    .clear-bar-b { transform: rotate(-45deg); }
+    .support-row { flex-direction: row; gap: 12px; align-items: flex-start; }
+    .support { flex: 1; }
+
+    @media (platform: ios) {
+        .input { font-size: 17px; min-height: 48px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .required { color: var(--p-accent-dark); }
+        .input { color: var(--p-text-dark); caret-color: var(--p-accent-dark); }
+        .input::placeholder { color: var(--p-text-subtle-dark); }
+        .affix { color: var(--p-text-muted-dark); }
+        .trailing:pressed { background-color: var(--p-surface-pressed-dark); }
+        .reveal { color: var(--p-accent-text-dark); }
+        .clear-glyph { background-color: var(--p-text-subtle-dark); }
+        .clear-bar { background-color: var(--p-surface-dark); }
+    }
+</style>
