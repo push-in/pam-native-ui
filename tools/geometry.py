@@ -282,9 +282,17 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
         dy = (cy1 - py1) - (py2 - cy2)
         if abs(dx) > TOLERANCE_PX or abs(dy) > TOLERANCE_PX:
             findings["centering"].append(f"{node.owner()}: icon off by {dx / 2:+.1f},{dy / 2:+.1f}px")
-    # On iOS a view off the device pixel grid draws soft edges and borders.
+    def transformed(node: Node) -> bool:
+        while node is not None:
+            if node.raw.get("transformed"):
+                return True
+            node = node.parent
+        return False
+
+    # On iOS a view off the device pixel grid draws soft edges and borders
+    # (inside a rotated or scaled ancestor the grid does not apply).
     for node in nodes:
-        if node.raw.get("subpixel") and not node.raw.get("transformed") and node.shown:
+        if node.raw.get("subpixel") and not transformed(node) and node.shown:
             findings["pixel snapping"].append(f"{node.owner()}: {'/'.join(node.raw['subpixel'])} between device pixels")
     for key, values in findings.items():
         findings[key] = sorted(set(values))
