@@ -48,6 +48,7 @@ class Device:
         self.shots = shots
         self.width, self.height = 1080, 2400
         self.top_inset, self.bottom_inset = 0, 0
+        self.snapshots = True
 
     def adb(self, *args: str) -> str:
         return subprocess.run(["adb", "-s", self.serial, *args], check=True, capture_output=True, text=True).stdout
@@ -70,6 +71,14 @@ class Device:
         self.home()
 
     def nodes(self) -> list[Node]:
+        """On-screen nodes: the app's layout snapshot when the debug build
+        publishes one (a few hundred ms), else a UI Automator dump (seconds,
+        it waits for the UI to idle, which a spinner never does)."""
+        if self.snapshots:
+            try:
+                return self.snapshot_nodes()
+            except (RuntimeError, subprocess.CalledProcessError, ValueError):
+                self.snapshots = False
         for _ in range(6):
             raw = self.adb("exec-out", "uiautomator", "dump", "/dev/tty")
             start, end = raw.find("<?xml"), raw.rfind("</hierarchy>")
@@ -78,6 +87,22 @@ class Device:
                 return [dict(node.attrib) for node in root.iter("node") if node.get("package") == self.package]
             time.sleep(0.3)
         raise RuntimeError("uiautomator dump failed")
+
+    def snapshot_nodes(self) -> list[Node]:
+        snapshot = geometry.capture(self.serial, self.package, attempts=30)
+        found = []
+        for raw in snapshot["nodes"]:
+            visible = raw.get("visible") or []
+            if len(visible) != 4 or visible[2] <= visible[0] or visible[3] <= visible[1] or raw.get("alpha", 1) <= 0.01:
+                continue
+            found.append({
+                "text": raw.get("text", ""),
+                "content-desc": raw.get("label", ""),
+                "bounds": "[{},{}][{},{}]".format(*visible),
+                "clickable": "true" if raw.get("clickable") else "false",
+                "package": self.package,
+            })
+        return found
 
     def find(self, text: str | None = None, desc: str | None = None, prefix: bool = False) -> Node | None:
         wanted = text if text is not None else desc

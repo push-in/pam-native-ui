@@ -194,11 +194,16 @@ Set the window colours in `pam-native.json` so the first frame matches (`"appear
 ## <picture><img src=".github/assets/icons/flask.svg" width="22" height="22" alt=""></picture> Verification
 
 ```sh
-composer install && php tests/run.php            # 85 assertions: helpers, rules, every input through the PAM renderer
-python3 tools/e2e_android.py --serial emulator-5554   # 14 input round-trips to PHP on a device
+composer install && php tests/run.php        # every input through the PAM renderer, in PHP
+python3 tools/e2e_android.py --serial emulator-5554 --golden tests/golden/android
+python3 tools/e2e_ios.py --layout > e2e-ios.json  # the same scenarios for the iOS UI driver
 ```
 
-`tests/run.php` renders each component with the PAM Native template renderer, fires the same native event closures the device fires and checks the PHP state. `tools/e2e_android.py` drives the showcase on a device or emulator and reads the PHP state back from the screen.
+- `tests/run.php` renders each component with the PAM Native template renderer, fires the native event closures and checks the PHP state.
+- `tools/e2e_android.py` drives the showcase on a device: every input and every declared event must reach PHP (the screens print their PHP state as JSON), sheets and dialogs close by back, scrim and swipe, the keyboard opens and closes, light and dark.
+- At each state it checks the real layout (`tools/geometry.py`): 48dp touch targets, nothing under a system bar, no truncated or overlapping text, siblings snapped to the same pixels, even spacing, shared baselines and centred icons. It then compares a golden screenshot (`tools/golden.py`, tolerance documented in the file).
+- `tools/zero_errors.py` fails on any warning or error the app logged, and checks that a multi-file hot reload logs none.
+- CI runs the Android suite on every pull request (`.github/workflows/e2e.yml`).
 
 <a id="docs"></a>
 ## <picture><img src=".github/assets/icons/book.svg" width="22" height="22" alt=""></picture> Docs

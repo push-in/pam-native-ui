@@ -86,7 +86,7 @@ class Node:
         return found
 
 
-def capture(serial: str, package: str) -> dict:
+def capture(serial: str, package: str, attempts: int = 60) -> dict:
     request = secrets.token_hex(16)
     adb = ["adb", "-s", serial]
     subprocess.run(
@@ -94,12 +94,12 @@ def capture(serial: str, package: str) -> dict:
         check=True, capture_output=True,
     )
     path = f"cache/pam-layout-{request}.json"
-    for _ in range(60):
+    for _ in range(attempts):
         result = subprocess.run([*adb, "exec-out", "run-as", package, "cat", path], capture_output=True)
         if result.returncode == 0 and result.stdout.startswith(b"{"):
             subprocess.run([*adb, "shell", "run-as", package, "rm", "-f", path], capture_output=True)
             return json.loads(result.stdout)
-        time.sleep(0.1)
+        time.sleep(0.05)
     raise RuntimeError("the app did not publish its layout (debug build of pam-native 1.52+ running?)")
 
 
