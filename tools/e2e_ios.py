@@ -37,7 +37,8 @@ def home() -> list[dict]:
 
 
 def open_screen(title: str, screen: str | None = None) -> list[dict]:
-    return [*home(), {"tap": title}, {"waitFor": screen or SCREENS.get(title, title)}]
+    # Catalog rows by their testId: "Forms" also begins "Forms that talk to PHP."
+    return [*home(), {"tapId": f"nav-{title.lower()}"}, {"waitFor": screen or SCREENS.get(title, title), "timeout": 20}]
 
 
 def controls() -> list[dict]:

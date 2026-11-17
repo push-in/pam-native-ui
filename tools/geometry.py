@@ -73,8 +73,12 @@ class Node:
         return self.name
 
     def root(self) -> "Node":
+        """The surface the node draws on: the nearest modal (a sheet, dialog
+        or snackbar host) above it, else the screen root."""
         node = self
         while node.parent is not None:
+            if node.raw["kind"] == "MODAL":
+                return node
             node = node.parent
         return node
 
