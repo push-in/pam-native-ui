@@ -1,0 +1,89 @@
+name: Device E2E
+
+# Every component and event on an Android emulator: the showcase is built
+# with this checkout of pam-native-ui, then tools/e2e_android.py drives it,
+# checks the geometry of every state (tools/geometry.py), compares goldens
+# (tests/golden/android, tools/golden.py) and fails on any app warning or
+# error in logcat (tools/zero_errors.py).
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      record_goldens:
+        description: Record goldens instead of comparing (uploaded as an artifact)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  android:
+    name: Android API 36 components, events, geometry and goldens
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@v4
+
+      - name: Install Android build dependencies
+        run: sdkmanager "platforms;android-36" "ndk;27.1.12297006" "cmake;3.22.1"
+
+      - name: Install PAM
+        run: |
+          curl -fsSL https://github.com/push-in/pam/releases/latest/download/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build the showcase with this checkout
+        working-directory: examples/showcase
+        run: |
+          # This checkout stands in for the released package (any 2.x satisfies ^2.0).
+          pam composer config repositories.ui '{"type":"path","url":"../..","options":{"symlink":false,"versions":{"pushinbr/pam-native-ui":"2.99.0"}}}'
+          pam composer update --no-interaction --no-progress pushinbr/pam-native-ui pushinbr/pam-native
+          pam mobile build . --abi x86_64
+          find dist -name '*.apk' | head -1 > /tmp/apk-path
+
+      - name: Enable KVM
+        run: |
+          sudo usermod -aG kvm "$USER"
+          sudo chmod 666 /dev/kvm
+
+      - name: Drive every component on the emulator
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 36
+          arch: x86_64
+          target: default
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r "examples/showcase/$(cat /tmp/apk-path)"
+            adb logcat -c
+            mkdir -p /tmp/shots
+            python3 -m pip install --quiet --user --break-system-packages pillow
+            python3 tools/e2e_android.py --serial emulator-5554 --shots /tmp/shots --golden tests/golden/android ${{ inputs.record_goldens && '--update-golden' || '' }}
+            python3 tools/zero_errors.py logcat --serial emulator-5554
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android-e2e
+          path: |
+            /tmp/shots
+            /tmp/pam-golden-*
+            tests/golden/android

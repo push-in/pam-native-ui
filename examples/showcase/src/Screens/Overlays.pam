@@ -14,22 +14,37 @@ final class Overlays extends Component
     #[State] public bool $snackbar = false;
     #[State] public string $sort = 'recent';
     #[State] public bool $unread = false;
-    #[State] public string $log = 'Nothing yet';
+    /** @var list<string> */
+    #[State] public array $events = [];
 
+    public function log(string $event): void { $this->events = [...array_slice($this->events, -3), $event]; }
     public function openSheet(): void { $this->sheet = true; }
     public function openDialog(): void { $this->dialog = true; }
     public function showSnackbar(): void { $this->snackbar = true; }
+    public function sheetClosed(): void { $this->log('sheet.close'); }
 
     public function apply(): void
     {
         $this->sheet = false;
-        $this->log = 'Filters applied: '.$this->sort.($this->unread ? ', unread only' : '');
+        $this->log('sheet.apply:'.$this->sort.($this->unread ? ':unread' : ''));
         $this->snackbar = true;
     }
 
-    public function deleted(): void { $this->log = 'Project deleted'; }
-    public function cancelled(): void { $this->log = 'Delete cancelled'; }
-    public function undo(): void { $this->log = 'Undone'; }
+    public function deleted(): void { $this->log('dialog.confirm'); }
+    public function cancelled(): void { $this->log('dialog.cancel'); }
+    public function undo(): void { $this->log('snackbar.action'); }
+
+    public function state(): string
+    {
+        return json_encode([
+            'events' => $this->events,
+            'sheet' => $this->sheet,
+            'dialog' => $this->dialog,
+            'snackbar' => $this->snackbar,
+            'sort' => $this->sort,
+            'unread' => $this->unread,
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    }
     public function back(): void { $this->popRoute(); }
 }
 ?>
@@ -45,9 +60,8 @@ final class Overlays extends Component
         <p-card title="Snackbar" subtitle="Hides itself after 4 seconds.">
             <p-btn variant="tonal" label="Show snackbar" testId="open-snackbar" @press="showSnackbar" />
         </p-card>
-        <Text class="log" accessibilityLabel="overlay-log">{{ $log }}</Text>
 
-        <p-sheet p-model="$sheet" title="Filters">
+        <p-sheet p-model="$sheet" title="Filters" @close="sheetClosed">
             <p-radio-group p-model="$sort" label="Sort by" :options="['recent' => 'Most recent', 'popular' => 'Most popular', 'name' => 'Name']" />
             <p-switch p-model="$unread" label="Unread only" />
             <template #footer>
@@ -56,10 +70,13 @@ final class Overlays extends Component
         </p-sheet>
         <p-dialog p-model="$dialog" title="Delete project?" text="This removes the project and its history. It cannot be undone." confirmLabel="Delete" destructive="true" @confirm="deleted" @cancel="cancelled" />
         <p-snackbar p-model="$snackbar" text="Changes saved" actionLabel="Undo" @action="undo" />
+        <template #footer>
+            <Text class="log" testID="php-state">{{ state() }}</Text>
+        </template>
     </p-screen>
 </template>
 
 <style scoped>
-    .log { font-family: "Instrument Sans"; font-size: 14px; color: #706F6C; text-align: center; }
-    @media (prefers-color-scheme: dark) { .log { color: #A1A09A; } }
+    .log { font-family: monospace; font-size: 12px; line-height: 18px; color: #1B1B18; }
+    @media (prefers-color-scheme: dark) { .log { color: #EDEDEC; } }
 </style>

@@ -238,6 +238,7 @@ final class DateInput extends Component
                     <View class="spacer" />
                     <p-btn variant="text" label="Today" @press="today" />
                 </Row>
+                <View class="sheet-end" />
             </Column>
         </BottomSheet>
     </Column>
@@ -250,7 +251,9 @@ final class DateInput extends Component
     .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
     .trigger { justify-content: space-between; }
     .trigger:pressed { background-color: var(--p-surface-muted); }
-    .sheet { padding: 8px 16px 12px 16px; gap: 4px; background-color: var(--p-surface); }
+    /* Content, not padding: the engine pads a sheet by max(inset, padding). */
+    .sheet-end { height: 8px; }
+    .sheet { padding: 8px 16px 0 16px; gap: 4px; background-color: var(--p-surface); }
     .head { flex-direction: row; align-items: center; justify-content: space-between; min-height: 52px; padding-left: 8px; }
     .month { font-size: 18px; line-height: 24px; font-weight: 600; color: var(--p-text); }
     .nav { flex-direction: row; gap: 4px; }

@@ -63,6 +63,7 @@ final class Sheet extends Component
                 </ScrollView>
                 <Column p-else class="body"><Slot /></Column>
                 <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
+                <View class="sheet-end" />
             </Column>
         </BottomSheet>
         <BottomSheet
@@ -80,6 +81,7 @@ final class Sheet extends Component
                     <Column class="body"><Slot /></Column>
                 </ScrollView>
                 <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
+                <View class="sheet-end" />
             </Column>
         </BottomSheet>
     </View>
@@ -87,8 +89,12 @@ final class Sheet extends Component
 
 <style scoped>
     .host { position: absolute; width: 0; height: 0; }
-    .sheet { padding: 4px 0 12px 0; background-color: var(--p-surface); }
+    /* The engine pads a sheet by max(bottom inset, its padding): the end
+       spacer is content, so 12px always sit above the gesture bar or home
+       indicator. */
+    .sheet { padding-top: 4px; background-color: var(--p-surface); }
     .sheet-full { flex: 1; }
+    .sheet-end { height: 12px; }
     .title { font-size: 18px; line-height: 24px; font-weight: 600; color: var(--p-text); padding: 8px 20px 12px 20px; }
     .body-scroll { max-height: 560px; }
     .full { flex: 1; max-height: none; }

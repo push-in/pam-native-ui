@@ -1,0 +1,105 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+
+/**
+ * Every component event, logged as it reaches PHP. The JSON at the bottom is
+ * what the end-to-end suites (tools/e2e) read back on Android and iOS.
+ */
+final class Events extends Component
+{
+    /** @var list<string> */
+    #[State] public array $events = [];
+    #[State] public bool $alert = true;
+    #[State] public bool $chip = false;
+    #[State] public string $tab = 'a';
+    #[State] public string $segment = 'x';
+    #[State] public int $count = 1;
+    #[State] public string $name = '';
+    #[State] public bool $busy = false;
+
+    public function log(string $event): void
+    {
+        $this->events = [...array_slice($this->events, -3), $event];
+    }
+
+    public function pressed(): void { $this->log('btn.press'); }
+    public function disabledPressed(): void { $this->log('btn.disabled.press'); }
+    public function loadingPressed(): void { $this->log('btn.loading.press'); }
+    public function iconPressed(): void { $this->log('iconbtn.press'); }
+    public function chipPressed(): void { $this->log('chip.press'); }
+    public function chipChanged(bool $on): void { $this->log('chip.change:'.($on ? 'on' : 'off')); }
+    public function cardPressed(): void { $this->log('card.press'); }
+    public function itemPressed(): void { $this->log('item.press'); }
+    public function disabledItemPressed(): void { $this->log('item.disabled.press'); }
+    public function alertClosed(): void { $this->alert = false; $this->log('alert.close'); }
+    public function tabChanged(string $tab): void { $this->log('tabs.change:'.$tab); }
+    public function segmentChanged(string $segment): void { $this->log('segmented.change:'.$segment); }
+    public function stepped(int $count): void { $this->log('stepper.change:'.$count); }
+    public function focused(): void { $this->log('field.focus'); }
+    public function blurred(): void { $this->log('field.blur'); }
+    public function submitted(string $value): void { $this->log('field.submit:'.$value); }
+    public function reset(): void { $this->events = []; $this->alert = true; }
+    public function back(): void { $this->popRoute(); }
+
+    public function state(): string
+    {
+        return json_encode([
+            'events' => $this->events,
+            'alert' => $this->alert,
+            'chip' => $this->chip,
+            'tab' => $this->tab,
+            'segment' => $this->segment,
+            'count' => $this->count,
+            'name' => $this->name,
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    }
+}
+?>
+
+<template>
+    <p-screen title="Events" subtitle="Every event, as PHP receives it." back="true" @back="back">
+        <p-section title="Buttons">
+            <Column class="pad">
+                <Row class="row">
+                    <p-btn label="Press me" @press="pressed" />
+                    <p-btn label="Disabled" disabled="true" @press="disabledPressed" />
+                    <p-btn label="Loading" loading="true" accessibilityLabel="Loading button" @press="loadingPressed" />
+                </Row>
+                <Row class="row">
+                    <p-icon-btn icon="plus" label="Add item" variant="tonal" @press="iconPressed" />
+                    <p-chip label="Assist" icon="plus" selectable="false" @press="chipPressed" />
+                    <p-chip p-model="$chip" label="Filter" @change="chipChanged" />
+                </Row>
+            </Column>
+        </p-section>
+        <p-card title="Pressable card" subtitle="Tap anywhere on the card." pressable="true" @press="cardPressed">
+            <p-badge label="Card" tone="neutral" />
+        </p-card>
+        <p-section title="List">
+            <p-list-item title="Open item" subtitle="Chevron row" icon="info" chevron="true" @press="itemPressed" />
+            <p-list-item title="Disabled item" chevron="true" disabled="true" :divider="false" @press="disabledItemPressed" />
+        </p-section>
+        <p-alert p-if="$alert" tone="warning" title="Closable alert" text="Close it with the button." closable="true" @close="alertClosed" />
+        <p-tabs p-model="$tab" :options="['a' => 'First', 'b' => 'Second']" @change="tabChanged" />
+        <p-segmented p-model="$segment" :options="['x' => 'Left', 'y' => 'Right']" @change="segmentChanged" />
+        <p-stepper p-model="$count" label="Quantity" :min="0" :max="3" @change="stepped" />
+        <p-text-field p-model="$name" label="Events field" returnKey="done" @focus="focused" @blur="blurred" @submit="submitted" />
+        <p-btn variant="text" label="Reset events" @press="reset" />
+        <template #footer>
+            <Text class="mono" testID="php-state">{{ state() }}</Text>
+        </template>
+    </p-screen>
+</template>
+
+<style scoped>
+    .pad { padding: 12px 16px; gap: 12px; }
+    .row { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .mono { font-family: monospace; font-size: 12px; line-height: 18px; color: #1B1B18; }
+    @media (prefers-color-scheme: dark) { .mono { color: #EDEDEC; } }
+</style>
