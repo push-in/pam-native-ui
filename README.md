@@ -36,7 +36,7 @@ pam composer require pushinbr/pam-native-ui
 mkdir -p assets/fonts && cp vendor/pushinbr/pam-native-ui/resources/fonts/*.ttf assets/fonts/
 ```
 
-That is all the setup there is. The components are PAM single-file components shipped inside the package; PAM Native 1.51 discovers them from the plugin descriptor at boot and packs them into release builds. There is no Android or iOS code in this package: every component is drawn by the PAM Native renderer with its native views, so both platforms get the same behaviour and the renderer's smoothness.
+That is all the setup there is. The components are PAM single-file components shipped inside the package; PAM Native 1.52 discovers them from the plugin descriptor at boot and packs them into release builds. There is no Android or iOS code in this package: every component is drawn by the PAM Native renderer with its native views, so both platforms get the same behaviour and the renderer's smoothness.
 
 <a id="quick-example"></a>
 ## <picture><img src=".github/assets/icons/code.svg" width="22" height="22" alt=""></picture> Quick example
