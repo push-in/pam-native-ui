@@ -230,13 +230,22 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
         if parent.raw.get("justify") not in (None, 1, 3):
             continue
         stacked = [k for k in laid_out if k.raw.get("position") != 2]
-        ordered = sorted(stacked, key=lambda k: (k.raw["frame"][1], k.raw["frame"][0]))
+        # A row's children overlap vertically (centred items start at
+        # different y): order them along x; a column's along y.
+        def overlaps(a: Node, b: Node) -> bool:
+            fa, fb = a.raw["frame"], b.raw["frame"]
+            return min(fa[1] + fa[3], fb[1] + fb[3]) > max(fa[1], fb[1])
+
+        row = len(stacked) > 1 and all(overlaps(a, b) for i, a in enumerate(stacked) for b in stacked[i + 1 :])
+        ordered = sorted(stacked, key=lambda k: (k.raw["frame"][0], k.raw["frame"][1]) if row else (k.raw["frame"][1], k.raw["frame"][0]))
         for a, b in zip(ordered, ordered[1:]):
             fa, fb = a.raw["frame"], b.raw["frame"]
             vertical = fb[1] >= fa[1] + fa[3] - 0.01
             horizontal = fb[0] >= fa[0] + fa[2] - 0.01 and abs(fb[1] - fa[1]) < fa[3]
             gap = fb[1] - (fa[1] + fa[3]) if vertical else fb[0] - (fa[0] + fa[2]) if horizontal else None
-            if gap is None or gap < 0.01:
+            # Spacing tokens are small; a larger gap comes from distributing
+            # free space (flex-grow, auto margins), not from a spacing value.
+            if gap is None or gap < 0.01 or gap > 48:
                 continue
             if abs(gap - round(gap)) > 0.01:
                 findings["spacing"].append(f"{a.owner()} -> {b.owner()}: {gap:.2f}dp gap")

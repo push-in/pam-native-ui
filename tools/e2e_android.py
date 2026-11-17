@@ -172,7 +172,19 @@ class Device:
         for _ in range(6):
             if self.find(text=CATALOG) is not None:
                 return
+            # The catalog keeps its scroll position: its header may be above.
+            if self.find(text="COMPONENTS") is not None or self.find(text="APPEARANCE") is not None:
+                self.top()
+                continue
             self.back()
+        if self.find(text=CATALOG) is None:
+            # Backed out of the app (or a screen kept Back): start it again.
+            self.adb("shell", "monkey", "-p", self.package, "-c", "android.intent.category.LAUNCHER", "1")
+            time.sleep(2)
+            for _ in range(6):
+                if self.find(text=CATALOG) is not None:
+                    return
+                self.back()
         self.wait_for(text=CATALOG, timeout=30)
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int, ms: int = 300) -> None:
@@ -346,7 +358,9 @@ class Suite:
         for _ in range(8):
             if d.find(desc="Brazil") is not None:
                 break
-            d.swipe(x, d.height * 50 // 100, x, d.height * 90 // 100, 150)
+            # Inside the list (below the sheet's title and search), so the
+            # drag scrolls the rows instead of pulling the sheet down.
+            d.swipe(x, d.height * 62 // 100, x, d.height * 92 // 100, 150)
         time.sleep(1.0)  # let the fling settle: a tap on a moving list only stops it
         d.tap(desc="Brazil", scroll=False)
         self.check("select (virtualized list in a sheet)", d.state()["country"] == "br")
@@ -591,8 +605,8 @@ class Suite:
 
     # -- Sweep: font scale, RTL and landscape on every screen (emulator) -------
     def sweep(self) -> None:
-        """Geometry of every screen at 0.85x, 1.3x and 2x font scale, in RTL
-        and in landscape. It changes system settings, so it runs on emulators
+        """Geometry of every screen at 0.85x, 1.3x and 2x font scale and in
+        landscape. It changes system settings, so it runs on emulators
         only and restores them."""
         d = self.d
         if not d.serial.startswith("emulator-"):
@@ -619,9 +633,8 @@ class Suite:
                 d.adb("shell", "settings", "put", "system", "font_scale", scale)
                 visit(f"font{scale}")
             d.adb("shell", "settings", "put", "system", "font_scale", "1.0")
-            d.adb("shell", "settings", "put", "global", "debug.force_rtl", "1")
-            visit("rtl")
-            d.adb("shell", "settings", "put", "global", "debug.force_rtl", "0")
+            # RTL is not swept: PAM Native lays out left-to-right in every
+            # locale (no RTL mirroring yet), so an RTL pass checks nothing.
             d.adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
             d.adb("shell", "settings", "put", "system", "user_rotation", "1")
             time.sleep(1)
@@ -629,7 +642,6 @@ class Suite:
             visit("landscape")
         finally:
             d.adb("shell", "settings", "put", "system", "font_scale", settings["font"] if settings["font"] not in ("", "null") else "1.0")
-            d.adb("shell", "settings", "put", "global", "debug.force_rtl", "0")
             d.adb("shell", "settings", "put", "system", "user_rotation", "0")
             d.adb("shell", "settings", "put", "system", "accelerometer_rotation", settings["rotation"] if settings["rotation"] in ("0", "1") else "0")
             time.sleep(1)
