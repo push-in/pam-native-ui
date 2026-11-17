@@ -27,6 +27,9 @@ its geometry is checked to the pixel. Requires PAM Native 1.52.
   above the gesture bar or home indicator (it used to sit flush on it).
 - `p-select`: long option lists (more than 8) render with a virtualized list
   in the sheet; the search field is 48dp tall.
+- Fixed: `testId` on `p-btn`, `p-card`, `p-list-item`, the fields and the
+  choices reaches the native view (components wrote `testID`, which PAM
+  Native dropped before 1.52).
 - Fixed through PAM Native 1.52: the text you just typed reaches PHP before
   `@submit`, `@blur` or a button press; icons in buttons are centred to the
   pixel at fractional densities.
