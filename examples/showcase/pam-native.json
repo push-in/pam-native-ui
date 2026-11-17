@@ -1,0 +1,19 @@
+{
+    "$schema": "vendor/pushinbr/pam-native/resources/pam-native.schema.json",
+    "version": 1,
+    "applicationId": "dev.pam.nativeui.showcase",
+    "name": "Native UI",
+    "entry": "index.php",
+    "runtime": {"php": "8.5", "channel": "stable"},
+    "versionCode": 1,
+    "versionName": "2.0.0",
+    "appearance": {
+        "defaultMode": "system",
+        "light": {"background": "#FDFDFC"},
+        "dark": {"background": "#0A0A0A"}
+    },
+    "android": {"minSdk": 26, "targetSdk": 36, "permissions": [], "deepLinks": []},
+    "ios": {"minimumVersion": "15.0"},
+    "modules": [],
+    "views": []
+}

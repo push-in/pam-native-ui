@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Form layout: consistent spacing between fields and an error summary that is
+ * announced to screen readers after a failed submit.
+ *
+ * <p-form :error="formFailed() ? 'Fix the highlighted fields.' : null">…fields…</p-form>
+ */
+#[Tag('p-form')]
+#[Slot('slot', 0, null)]
+final class Form extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public ?string $success = null,
+    ) {
+    }
+}
+?>
+
+<template language="2">
+    <Column class="form">
+        <p-alert p-if="$error !== null" tone="danger" :text="$error" />
+        <p-alert p-else-if="$success !== null" tone="success" :text="$success" />
+        <Slot />
+    </Column>
+</template>
+
+<style scoped>
+    .form { gap: 20px; width: 100%; }
+</style>

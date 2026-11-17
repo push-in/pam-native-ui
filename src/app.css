@@ -1,0 +1,108 @@
+/*
+ * PAM Native UI theme.
+ *
+ * PAM prepends this sheet to every component of the package when it compiles
+ * them (the package's own `src/app.css`), so keep it to tokens and fonts:
+ * shared classes live in src/theme/*.css and are @imported only by the
+ * components that use them. Custom properties resolve at compile time, so the
+ * dark theme is written as explicit `prefers-color-scheme: dark` rules.
+ *
+ * Brand: Instrument Sans, ink #0A0A0A / #161615 / #3E3E3A, paper #EDEDEC /
+ * #A1A09A, accent #F53003 (the PAM/Laravel red).
+ */
+
+:root {
+    /* Light */
+    --p-bg: #FDFDFC;
+    --p-surface: #FFFFFF;
+    --p-surface-muted: #F5F5F3;
+    --p-surface-pressed: #EDEDEC;
+    --p-border: #E3E3E0;
+    --p-border-strong: #A1A09A;
+    --p-text: #1B1B18;
+    --p-text-muted: #706F6C;
+    --p-text-subtle: #A1A09A;
+    --p-accent: #F53003;
+    --p-accent-pressed: #D42A02;
+    --p-on-accent: #FFFFFF;
+    --p-accent-soft: #FFF2F2;
+    --p-accent-soft-pressed: #FFE1DC;
+    --p-accent-text: #C42702;
+    --p-danger: #D92D20;
+    --p-danger-soft: #FEF3F2;
+    --p-success: #12805C;
+    --p-success-soft: #ECFDF3;
+    --p-warning: #B54708;
+    --p-warning-soft: #FFFAEB;
+    --p-info: #175CD3;
+    --p-info-soft: #EFF8FF;
+    --p-scrim: rgba(10, 10, 10, 0.42);
+
+    /* Dark */
+    --p-bg-dark: #0A0A0A;
+    --p-surface-dark: #161615;
+    --p-surface-muted-dark: #1F1F1D;
+    --p-surface-pressed-dark: #2A2A27;
+    --p-border-dark: #3E3E3A;
+    --p-border-strong-dark: #706F6C;
+    --p-text-dark: #EDEDEC;
+    --p-text-muted-dark: #A1A09A;
+    --p-text-subtle-dark: #706F6C;
+    --p-accent-dark: #FF4433;
+    --p-accent-pressed-dark: #FF6A5C;
+    --p-on-accent-dark: #FFFFFF;
+    --p-accent-soft-dark: #2A0A05;
+    --p-accent-soft-pressed-dark: #3D120A;
+    --p-accent-text-dark: #FF7A6B;
+    --p-danger-dark: #F97066;
+    --p-danger-soft-dark: #2B0F0D;
+    --p-success-dark: #47CD89;
+    --p-success-soft-dark: #0A2418;
+    --p-warning-dark: #FDB022;
+    --p-warning-soft-dark: #2B1D05;
+    --p-info-dark: #84CAFF;
+    --p-info-soft-dark: #0B1D33;
+    --p-scrim-dark: rgba(0, 0, 0, 0.62);
+
+    /* Shape, spacing and motion */
+    --p-radius-sm: 8px;
+    --p-radius: 12px;
+    --p-radius-lg: 16px;
+    --p-radius-xl: 24px;
+    --p-touch: 48px;
+    --p-motion-fast: 120ms;
+    --p-motion: 200ms;
+}
+
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("asset://assets/fonts/InstrumentSans-Regular.ttf");
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("asset://assets/fonts/InstrumentSans-Medium.ttf");
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("asset://assets/fonts/InstrumentSans-SemiBold.ttf");
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("asset://assets/fonts/InstrumentSans-SemiBold.ttf");
+    font-weight: 700;
+}
+
+Text {
+    font-family: "Instrument Sans";
+    color: var(--p-text);
+}
+
+@media (prefers-color-scheme: dark) {
+    Text { color: var(--p-text-dark); }
+}

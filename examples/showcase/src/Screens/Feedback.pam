@@ -1,0 +1,91 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+
+final class Feedback extends Component
+{
+    #[State] public bool $alert = true;
+    #[State] public float $progress = 0.35;
+
+    public function dismiss(): void
+    {
+        $this->alert = false;
+    }
+
+    public function advance(): void
+    {
+        $this->progress = $this->progress >= 1.0 ? 0.0 : min(1.0, $this->progress + 0.15);
+    }
+
+    public function back(): void
+    {
+        $this->popRoute();
+    }
+}
+?>
+
+<template>
+    <p-screen title="Feedback" back="true" @back="back">
+        <p-alert p-if="$alert" tone="info" title="Heads up" text="Alerts are announced to screen readers." closable="true" @close="dismiss" />
+        <p-alert tone="success" title="Saved" text="Your changes are live." />
+        <p-alert tone="warning" text="Your trial ends in 3 days." />
+        <p-alert tone="danger" title="Payment failed" text="Check your card and try again." />
+        <p-card title="Progress">
+            <p-progress :value="$progress" label="Uploading" showValue="true" />
+            <p-progress label="Indeterminate" />
+            <p-btn variant="tonal" size="sm" label="Advance" @press="advance" />
+        </p-card>
+        <p-card title="Badges and avatars">
+            <Row class="row">
+                <p-badge label="New" />
+                <p-badge :count="128" tone="danger" />
+                <p-badge label="Beta" tone="info" />
+                <p-badge label="Paid" tone="success" />
+                <p-badge label="Neutral" tone="neutral" />
+            </Row>
+            <Row class="row">
+                <p-avatar name="Ada Lovelace" size="sm" />
+                <p-avatar name="Grace Hopper" />
+                <p-avatar name="Taylor Otwell" size="lg" />
+                <p-avatar name="Rasmus Lerdorf" size="xl" />
+            </Row>
+        </p-card>
+        <p-card title="Skeleton">
+            <Row class="row">
+                <p-skeleton :width="48" :height="48" :radius="24" />
+                <Column class="grow"><p-skeleton :lines="2" /></Column>
+            </Row>
+        </p-card>
+        <p-card title="Buttons">
+            <p-btn label="Filled" icon="check" />
+            <Row class="row">
+                <p-btn variant="tonal" label="Tonal" />
+                <p-btn variant="outlined" label="Outlined" />
+                <p-btn variant="text" label="Text" />
+            </Row>
+            <Row class="row">
+                <p-btn variant="danger" label="Delete" />
+                <p-btn label="Loading" loading="true" />
+                <p-btn label="Disabled" disabled="true" />
+            </Row>
+            <Row class="row">
+                <p-icon-btn icon="search" label="Search" />
+                <p-icon-btn icon="plus" label="Add" variant="tonal" />
+                <p-icon-btn icon="check" label="Done" variant="filled" />
+            </Row>
+        </p-card>
+        <p-empty-state icon="search" title="Empty state" text="Use it when a list or search has nothing to show.">
+            <p-btn variant="tonal" label="Clear filters" />
+        </p-empty-state>
+    </p-screen>
+</template>
+
+<style scoped>
+    .row { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .grow { flex: 1; }
+</style>

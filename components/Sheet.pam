@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Native bottom sheet bound to a bool. Content sits above the navigation bar
+ * and home indicator; tall content scrolls.
+ *
+ * <p-sheet p-model="$filtersOpen" title="Filters">…<template #footer><p-btn block="true" label="Apply" @press="apply" /></template></p-sheet>
+ */
+#[Tag('p-sheet')]
+#[Event('model', 'bool')]
+#[Event('close', 'null')]
+#[Slot('slot', 0, null)]
+#[Slot('footer', 0, null)]
+final class Sheet extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public bool $modelValue = false,
+        #[Prop(immutable: false)] public ?string $title = null,
+        #[Prop(immutable: false)] public bool $scroll = true,
+        #[Prop(immutable: false)] public bool $fullHeight = false,
+        #[Prop(immutable: false)] public bool $dismissible = true,
+    ) {
+    }
+
+    #[Action]
+    public function dismissed(): void
+    {
+        if (!$this->modelValue) {
+            return;
+        }
+        $this->modelValue = false;
+        $this->emit('model', false);
+        $this->emit('close');
+    }
+}
+?>
+
+<template language="2">
+    <View class="host">
+        <BottomSheet
+            p-if="$modelValue && !$fullHeight"
+            snapPoints="content"
+            keyboardBehavior="contain"
+            :dismissible="$dismissible"
+            :backdropDismiss="$dismissible"
+            on:sheetDismiss="dismissed"
+        >
+            <Column class="sheet">
+                <Text p-if="$title !== null" class="title" accessibilityRole="header">{{ $title }}</Text>
+                <ScrollView p-if="$scroll" class="body-scroll" keyboardShouldPersistTaps="handled">
+                    <Column class="body"><Slot /></Column>
+                </ScrollView>
+                <Column p-else class="body"><Slot /></Column>
+                <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
+            </Column>
+        </BottomSheet>
+        <BottomSheet
+            p-if="$modelValue && $fullHeight"
+            :snapPoints="[1.0]"
+            index="0"
+            keyboardBehavior="contain"
+            :dismissible="$dismissible"
+            :backdropDismiss="$dismissible"
+            on:sheetDismiss="dismissed"
+        >
+            <Column class="sheet sheet-full">
+                <Text p-if="$title !== null" class="title" accessibilityRole="header">{{ $title }}</Text>
+                <ScrollView class="body-scroll full" keyboardShouldPersistTaps="handled">
+                    <Column class="body"><Slot /></Column>
+                </ScrollView>
+                <Column p-if="($footer ?? []) !== []" class="footer"><Slot name="footer" /></Column>
+            </Column>
+        </BottomSheet>
+    </View>
+</template>
+
+<style scoped>
+    .host { position: absolute; width: 0; height: 0; }
+    .sheet { padding: 4px 0 12px 0; background-color: var(--p-surface); }
+    .sheet-full { flex: 1; }
+    .title { font-size: 18px; line-height: 24px; font-weight: 600; color: var(--p-text); padding: 8px 20px 12px 20px; }
+    .body-scroll { max-height: 560px; }
+    .full { flex: 1; max-height: none; }
+    .body { padding: 0 20px; gap: 16px; }
+    .footer { padding: 16px 20px 0 20px; gap: 8px; }
+
+    @media (prefers-color-scheme: dark) {
+        .sheet { background-color: var(--p-surface-dark); }
+        .title { color: var(--p-text-dark); }
+    }
+</style>

@@ -1,0 +1,88 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\NativeUi\Support\Options;
+
+/**
+ * Segmented control (iOS) / segmented button (Material 3) for 2–5 options.
+ *
+ * <p-segmented p-model="$period" :options="['day' => 'Day', 'week' => 'Week', 'month' => 'Month']" />
+ */
+#[Tag('p-segmented')]
+#[Event('model', 'mixed')]
+#[Event('change', 'mixed')]
+final class Segmented extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string|int|float|null $modelValue = null,
+        #[Prop(immutable: false)] public array $options = [],
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+    ) {
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function rows(): array
+    {
+        return Options::normalize($this->options);
+    }
+
+    #[Action]
+    public function choose(string|int|float|bool $value): void
+    {
+        if ($this->disabled || Options::same($value, $this->modelValue)) {
+            return;
+        }
+        $this->modelValue = is_bool($value) ? (int) $value : $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+
+    public function selected(mixed $value): bool
+    {
+        return Options::same($value, $this->modelValue);
+    }
+}
+?>
+
+<template language="2">
+    <Row :class="$disabled ? 'track disabled' : 'track'" accessibilityRole="tablist" :accessibilityLabel="$accessibilityLabel ?? ''">
+        <Pressable
+            p-for="$option in rows()"
+            :key="$option['key']"
+            :class="selected($option['value']) ? 'segment segment-on' : 'segment'"
+            accessibilityRole="tab"
+            :accessibilityLabel="$option['label']"
+            :accessibilitySelected="selected($option['value'])"
+            :disabled="$disabled || $option['disabled']"
+            @press="choose($option['value'])"
+        >
+            <Text :class="selected($option['value']) ? 'label label-on' : 'label'" numberOfLines="1">{{ $option['label'] }}</Text>
+        </Pressable>
+    </Row>
+</template>
+
+<style scoped>
+    .track { flex-direction: row; padding: 3px; gap: 3px; border-radius: 12px; background-color: var(--p-surface-muted); }
+    .disabled { opacity: 0.45; }
+    .segment { flex: 1; min-height: 40px; align-items: center; justify-content: center; padding: 0 12px; border-radius: 9px; }
+    .segment:pressed { opacity: 0.7; }
+    .segment-on { background-color: var(--p-surface); box-shadow: 0 1px 3px rgba(10, 10, 10, 0.1); }
+    .label { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p-text-muted); }
+    .label-on { font-weight: 600; color: var(--p-text); }
+
+    @media (prefers-color-scheme: dark) {
+        .track { background-color: var(--p-surface-muted-dark); }
+        .segment-on { background-color: var(--p-surface-pressed-dark); box-shadow: none; }
+        .label { color: var(--p-text-muted-dark); }
+        .label-on { color: var(--p-text-dark); }
+    }
+</style>

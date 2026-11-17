@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Linear progress (0–1) or, without a value, an indeterminate bar that
+ * shimmers on the UI thread and stops while off screen. `circular="true"`
+ * uses the platform activity indicator.
+ *
+ * <p-progress :value="$upload" label="Uploading" /> · <p-progress circular="true" />
+ */
+#[Tag('p-progress')]
+final class Progress extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public ?float $value = null,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public bool $circular = false,
+        #[Prop(immutable: false)] public bool $showValue = false,
+    ) {
+    }
+
+    public function percent(): float
+    {
+        return $this->value === null ? 0.0 : max(0.0, min(100.0, $this->value * 100));
+    }
+
+    public function percentText(): string
+    {
+        return (string) (int) round($this->percent()).'%';
+    }
+}
+?>
+
+<template language="2">
+    <ActivityIndicator p-if="$circular" color="#F53003" indicatorSize="large" :accessibilityLabel="$label !== '' ? $label : 'Loading'" />
+    <Column p-else class="root">
+        <Row p-if="$label !== '' || ($showValue && $value !== null)" class="head">
+            <Text class="label">{{ $label }}</Text>
+            <Text p-if="$showValue && $value !== null" class="value">{{ percentText() }}</Text>
+        </Row>
+        <View
+            class="track"
+            accessibilityRole="progressbar"
+            :accessibilityLabel="$label !== '' ? $label : 'Progress'"
+            :accessibilityBusy="$value === null"
+            :accessibilityValueMin="0"
+            :accessibilityValueMax="100"
+            :accessibilityValueNow="percent()"
+        >
+            <View p-if="$value !== null" class="bar" :widthPercent="percent()" />
+            <Shimmer p-else class="shimmer" baseColor="#F53003" gradientColor="#FFFFFF8C" duration="1100" />
+        </View>
+    </Column>
+</template>
+
+<style scoped>
+    .root { gap: 6px; width: 100%; }
+    .head { flex-direction: row; justify-content: space-between; }
+    .label { font-size: 14px; line-height: 20px; color: var(--p-text-muted); }
+    .value { font-size: 14px; line-height: 20px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--p-text); }
+    .track { height: 6px; border-radius: 3px; overflow: hidden; background-color: var(--p-accent-soft); }
+    .bar { height: 6px; border-radius: 3px; background-color: var(--p-accent); }
+    .shimmer { height: 6px; width: 100%; }
+
+    @media (prefers-color-scheme: dark) {
+        .label { color: var(--p-text-muted-dark); }
+        .value { color: var(--p-text-dark); }
+        .track { background-color: var(--p-accent-soft-dark); }
+        .bar { background-color: var(--p-accent-dark); }
+    }
+</style>

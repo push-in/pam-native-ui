@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use Pam\Native\Appearance;
+use Pam\Native\AppearanceMode;
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+use Pam\NativeUi\NativeUi;
+
+final class Catalog extends Component
+{
+    #[State]
+    public string $appearance = 'system';
+
+    public function mount(): void
+    {
+        $this->appearance = match (Appearance::mode()) {
+            AppearanceMode::Light => 'light',
+            AppearanceMode::Dark => 'dark',
+            default => 'system',
+        };
+    }
+
+    public function changeAppearance(string $mode): void
+    {
+        NativeUi::appearance(match ($mode) {
+            'light' => AppearanceMode::Light,
+            'dark' => AppearanceMode::Dark,
+            default => AppearanceMode::System,
+        });
+    }
+
+    public function open(string $route): void
+    {
+        $this->pushRoute($route);
+    }
+}
+?>
+
+<template>
+    <p-screen title="Native UI" subtitle="Every PAM Native UI component, on device.">
+        <p-card variant="accent">
+            <Column class="hero">
+                <p-badge label="2.0" />
+                <Text class="hero-title">Forms that talk to PHP.</Text>
+                <Text class="hero-text">Two-way binding, validation, sheets and a PAM theme in light and dark.</Text>
+            </Column>
+        </p-card>
+        <Column class="group">
+            <Text class="caption">Appearance</Text>
+            <p-segmented
+                p-model="$appearance"
+                accessibilityLabel="Appearance"
+                :options="['system' => 'System', 'light' => 'Light', 'dark' => 'Dark']"
+                @change="changeAppearance"
+            />
+        </Column>
+        <p-section title="Components">
+            <p-list-item title="Forms" subtitle="Validation, errors and submit" icon="check" chevron="true" testId="nav-forms" @press="open('forms')" />
+            <p-list-item title="Controls" subtitle="Every input, bound to PHP" icon="plus" chevron="true" testId="nav-controls" @press="open('controls')" />
+            <p-list-item title="Lists" subtitle="500 virtualized rows" icon="search" chevron="true" testId="nav-lists" @press="open('lists')" />
+            <p-list-item title="Feedback" subtitle="Alerts, progress, skeletons" icon="info" chevron="true" testId="nav-feedback" @press="open('feedback')" />
+            <p-list-item title="Overlays" subtitle="Sheets, dialogs, snackbars" icon="chevron-up" chevron="true" :divider="false" testId="nav-overlays" @press="open('overlays')" />
+        </p-section>
+    </p-screen>
+</template>
+
+<style scoped>
+    .hero { gap: 8px; }
+    .hero-title { font-family: "Instrument Sans"; font-size: 22px; line-height: 28px; font-weight: 600; color: #1B1B18; }
+    .hero-text { font-family: "Instrument Sans"; font-size: 15px; line-height: 22px; color: #706F6C; }
+    .group { gap: 8px; }
+    .caption { font-family: "Instrument Sans"; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #706F6C; padding: 0 4px; }
+
+    @media (prefers-color-scheme: dark) {
+        .hero-title { color: #EDEDEC; }
+        .hero-text, .caption { color: #A1A09A; }
+    }
+</style>

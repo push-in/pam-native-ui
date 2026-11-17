@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Appearance;
+use Pam\Native\Component;
+
+/**
+ * Loading placeholder. One shared native shimmer clock drives every
+ * skeleton; it pauses while off screen.
+ *
+ * <p-skeleton :lines="3" /> · <p-skeleton :width="48" :height="48" :radius="24" />
+ */
+#[Tag('p-skeleton')]
+final class Skeleton extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public int $lines = 1,
+        #[Prop(immutable: false)] public ?float $width = null,
+        #[Prop(immutable: false)] public float $height = 14,
+        #[Prop(immutable: false)] public float $radius = 7,
+    ) {
+    }
+
+    /** @return list<array{key: string, width: float}> */
+    public function rows(): array
+    {
+        $rows = [];
+        for ($i = 0; $i < max(1, $this->lines); $i++) {
+            $rows[] = ['key' => 'l'.$i, 'width' => $this->lines > 1 && $i === $this->lines - 1 ? 60.0 : 100.0];
+        }
+
+        return $rows;
+    }
+
+    public function base(): string
+    {
+        return Appearance::isDark() ? '#1F1F1D' : '#EDEDEC';
+    }
+
+    public function highlight(): string
+    {
+        return Appearance::isDark() ? '#FFFFFF14' : '#FFFFFF99';
+    }
+}
+?>
+
+<template language="2">
+    <Shimmer
+        p-if="$width !== null"
+        :baseColor="base()"
+        :gradientColor="highlight()"
+        :width="$width"
+        :height="$height"
+        :borderRadius="$radius"
+        accessibilityLabel="Loading"
+    />
+    <Column p-else class="lines" accessibilityLabel="Loading" accessibilityRole="progressbar" accessibilityBusy="true">
+        <Shimmer
+            p-for="$row in rows()"
+            :key="$row['key']"
+            :baseColor="base()"
+            :gradientColor="highlight()"
+            :widthPercent="$row['width']"
+            :height="$height"
+            :borderRadius="$radius"
+        />
+    </Column>
+</template>
+
+<style scoped>
+    .lines { gap: 10px; width: 100%; }
+</style>

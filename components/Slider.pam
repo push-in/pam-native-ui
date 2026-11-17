@@ -1,0 +1,253 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Animation\Drag;
+use Pam\Native\Animation\DragTextFormat;
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\State;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\Native\GestureEvent;
+use Pam\Native\LayoutEvent;
+use Pam\Native\PressEvent;
+
+/**
+ * Continuous or stepped slider. The thumb, the filled track and the value
+ * label move on the UI thread while dragging; PHP receives one `model` event
+ * when the finger lifts (or on a tap, or a screen reader increment).
+ *
+ * <p-slider p-model="$volume" label="Volume" :min="0" :max="100" :step="5" showValue="true" />
+ */
+#[Tag('p-slider')]
+#[Event('model', 'float')]
+#[Event('change', 'float')]
+final class Slider extends Component
+{
+    private const float THUMB = 28.0;
+
+    public function __construct(
+        #[Prop(immutable: false)] public float $modelValue = 0,
+        #[Prop(immutable: false)] public float $min = 0,
+        #[Prop(immutable: false)] public float $max = 100,
+        #[Prop(immutable: false)] public float $step = 1,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public bool $showValue = false,
+        #[Prop(immutable: false)] public string $unit = '',
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    /** Width of the travel area in dp, measured on layout. */
+    #[State]
+    public float $width = 0;
+
+    #[Action]
+    public function measured(LayoutEvent $event): void
+    {
+        $width = max(0.0, $event->width - self::THUMB);
+        if (abs($width - $this->width) >= 0.5) {
+            $this->width = $width;
+        }
+    }
+
+    #[Action]
+    public function released(GestureEvent $event): void
+    {
+        $this->commitAt($event->x);
+    }
+
+    #[Action]
+    public function tapped(PressEvent $event): void
+    {
+        $this->commitAt($event->x);
+    }
+
+    #[Action]
+    public function adjust(mixed $action): void
+    {
+        $name = is_string($action) ? $action : (is_object($action) && property_exists($action, 'name') ? (string) $action->name : '');
+        $delta = $this->stepSize();
+        if ($name === 'increment') {
+            $this->commit($this->modelValue + $delta);
+        } elseif ($name === 'decrement') {
+            $this->commit($this->modelValue - $delta);
+        }
+    }
+
+    private function commitAt(float $x): void
+    {
+        if ($this->disabled || $this->width <= 0) {
+            return;
+        }
+        $fraction = max(0.0, min(1.0, ($x - self::THUMB / 2) / $this->width));
+        $this->commit($this->min + $fraction * ($this->max - $this->min));
+    }
+
+    private function commit(float $value): void
+    {
+        $value = $this->snap($value);
+        if (abs($value - $this->modelValue) < 1e-9) {
+            return;
+        }
+        $this->modelValue = $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+
+    private function snap(float $value): float
+    {
+        $value = max($this->min, min($this->max, $value));
+        if ($this->step > 0) {
+            $value = $this->min + round(($value - $this->min) / $this->step) * $this->step;
+            $value = max($this->min, min($this->max, $value));
+        }
+
+        return round($value, $this->decimals());
+    }
+
+    private function stepSize(): float
+    {
+        return $this->step > 0 ? $this->step : ($this->max - $this->min) / 100;
+    }
+
+    public function decimals(): int
+    {
+        $step = (string) $this->step;
+
+        return str_contains($step, '.') ? min(3, strlen(rtrim(substr($step, strpos($step, '.') + 1), '0'))) : 0;
+    }
+
+    public function fraction(): float
+    {
+        $range = $this->max - $this->min;
+
+        return $range <= 0 ? 0.0 : max(0.0, min(1.0, ($this->modelValue - $this->min) / $range));
+    }
+
+    public function position(): float
+    {
+        return $this->fraction() * $this->width;
+    }
+
+    public function fillWidth(): float
+    {
+        return $this->position() + self::THUMB / 2;
+    }
+
+    public function drag(): Drag
+    {
+        return Drag::horizontal()
+            ->target('thumb')
+            ->atTouch(self::THUMB / 2)
+            ->bounds(0, max(0.0, $this->width))
+            ->snapOnRelease(false)
+            ->drive('fill', 'translateX', [0, max(1.0, $this->width)], [-$this->width, 0])
+            ->driveText('value', [0, max(1.0, $this->width)], [$this->min, $this->max], DragTextFormat::Number, $this->decimals());
+    }
+
+    public function fillOffset(): float
+    {
+        return $this->position() - $this->width;
+    }
+
+    public function valueText(): string
+    {
+        return number_format($this->modelValue, $this->decimals(), '.', '');
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? ($this->label !== '' ? $this->label : 'Slider');
+    }
+}
+?>
+
+<template language="2">
+    <Column class="root" :testID="$testId">
+        <Row p-if="$label !== '' || $showValue" class="head">
+            <Text p-if="$label !== ''" class="p-field-label label">{{ $label }}</Text>
+            <Row p-if="$showValue" class="value-row">
+                <Text nativeRef="value" class="value">{{ valueText() }}</Text>
+                <Text p-if="$unit !== ''" class="value">{{ $unit }}</Text>
+            </Row>
+        </Row>
+        <GestureDetector
+            gestureType="pan"
+            gestureDirection="horizontal"
+            gestureMinDistance="2"
+            :gestureEnabled="!$disabled"
+            :drag="drag()"
+            on:gestureEnd="released"
+        >
+            <Pressable
+                :class="$disabled ? 'track-area disabled' : 'track-area'"
+                accessibilityRole="adjustable"
+                :accessibilityLabel="a11yLabel()"
+                :accessibilityValueMin="$min"
+                :accessibilityValueMax="$max"
+                :accessibilityValueNow="$modelValue"
+                :accessibilityValueText="valueText().($unit !== '' ? ' '.$unit : '')"
+                :disabled="$disabled"
+                on:layout="measured"
+                on:press="tapped"
+                on:accessibilityAction="adjust"
+            >
+                <View class="track">
+                    <View nativeRef="fill" class="fill" :translationX="fillOffset()" />
+                </View>
+                <View nativeRef="thumb" class="thumb" :translationX="position()" />
+            </Pressable>
+        </GestureDetector>
+    </Column>
+</template>
+
+<style scoped>
+    @import "../src/theme/fields.css";
+
+    .root { gap: 4px; width: 100%; }
+    .head { flex-direction: row; align-items: center; justify-content: space-between; }
+    .label { flex: 1; }
+    .value-row { flex-direction: row; gap: 4px; }
+    .value { font-size: 14px; line-height: 20px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--p-accent-text); }
+    .track-area { height: 48px; justify-content: center; }
+    .disabled { opacity: 0.45; }
+    .track {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background-color: var(--p-surface-pressed);
+    }
+    .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; border-radius: 3px; background-color: var(--p-accent); }
+    .thumb {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 14px;
+        background-color: #FFFFFF;
+        border-width: 0.5px;
+        border-color: rgba(10, 10, 10, 0.16);
+        elevation: 2;
+    }
+
+    @media (platform: android) {
+        .thumb { width: 28px; height: 28px; background-color: var(--p-accent); border-width: 4px; border-color: #FFFFFF; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .value { color: var(--p-accent-text-dark); }
+        .track { background-color: var(--p-surface-pressed-dark); }
+        .fill { background-color: var(--p-accent-dark); }
+        .thumb { border-color: rgba(0, 0, 0, 0.4); }
+    }
+</style>

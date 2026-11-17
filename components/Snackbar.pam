@@ -1,0 +1,117 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\Native\System\TimerHandle;
+use Pam\Native\System\Timers;
+
+/**
+ * Brief message at the bottom of the screen, above the navigation bar and
+ * home indicator. Bound to a bool; hides itself after `duration` ms (0 keeps
+ * it until dismissed). The timer only runs while the snackbar is shown.
+ *
+ * <p-snackbar p-model="$saved" text="Changes saved" actionLabel="Undo" @action="undo" />
+ */
+#[Tag('p-snackbar')]
+#[Event('model', 'bool')]
+#[Event('action', 'null')]
+final class Snackbar extends Component
+{
+    private ?TimerHandle $timer = null;
+
+    private bool $timed = false;
+
+    public function __construct(
+        #[Prop(immutable: false)] public bool $modelValue = false,
+        #[Prop(immutable: false)] public string $text = '',
+        #[Prop(immutable: false)] public ?string $actionLabel = null,
+        #[Prop(immutable: false)] public int $duration = 4000,
+    ) {
+    }
+
+    public function rendering(): void
+    {
+        if ($this->modelValue && !$this->timed && $this->duration > 0) {
+            $this->timed = true;
+            $this->timer = Timers::timeout($this->duration, function (): void {
+                $this->timer = null;
+                $this->hide();
+            });
+        } elseif (!$this->modelValue && $this->timed) {
+            $this->cancelTimer();
+        }
+    }
+
+    #[Action]
+    public function action(): void
+    {
+        $this->hide();
+        $this->emit('action');
+    }
+
+    #[Action]
+    public function hide(): void
+    {
+        $this->cancelTimer();
+        if ($this->modelValue) {
+            $this->modelValue = false;
+            $this->emit('model', false);
+        }
+    }
+
+    public function cleanup(): void
+    {
+        $this->cancelTimer();
+    }
+
+    private function cancelTimer(): void
+    {
+        $this->timer?->cancel();
+        $this->timer = null;
+        $this->timed = false;
+    }
+}
+?>
+
+<template language="2">
+    <View p-if="$modelValue" class="host" pointerEvents="box-none">
+        <Row class="bar" accessibilityRole="alert" accessibilityLiveRegion="polite">
+            <Text class="text">{{ $text }}</Text>
+            <Pressable p-if="$actionLabel !== null" class="action" accessibilityRole="button" :accessibilityLabel="$actionLabel" @press="action">
+                <Text class="action-text">{{ $actionLabel }}</Text>
+            </Pressable>
+        </Row>
+    </View>
+</template>
+
+<style scoped>
+    .host { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 16px; padding-bottom: env(safe-area-inset-bottom, 0px); margin-bottom: 16px; }
+    .bar {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        min-height: 52px;
+        padding: 6px 8px 6px 16px;
+        border-radius: 14px;
+        background-color: #161615;
+        box-shadow: 0 6px 24px rgba(10, 10, 10, 0.24);
+    }
+    .text { flex: 1; font-size: 15px; line-height: 20px; color: #EDEDEC; }
+    .action { min-height: 44px; padding: 0 12px; justify-content: center; border-radius: 10px; }
+    .action:pressed { background-color: rgba(255, 255, 255, 0.08); }
+    .action-text { font-size: 15px; font-weight: 600; color: #FF7A6B; }
+
+    @media (prefers-color-scheme: dark) {
+        .bar { background-color: #EDEDEC; }
+        .text { color: #1B1B18; }
+        .action:pressed { background-color: rgba(10, 10, 10, 0.06); }
+        .action-text { color: #C42702; }
+    }
+</style>

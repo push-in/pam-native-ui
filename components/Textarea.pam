@@ -1,0 +1,182 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\State;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\NativeUi\Support\Fields;
+
+/**
+ * Multi-line text input that grows with its content up to `rows` lines.
+ *
+ * <p-textarea p-model="$bio" label="Bio" :maxlength="160" counter="true" />
+ */
+#[Tag('p-textarea')]
+#[Event('model', 'string')]
+#[Event('change', 'string')]
+#[Event('focus', 'null')]
+#[Event('blur', 'null')]
+final class Textarea extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $modelValue = '',
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public string $placeholder = '',
+        #[Prop(immutable: false)] public int $rows = 4,
+        #[Prop(immutable: false)] public ?string $helper = null,
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public bool $required = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public bool $readonly = false,
+        #[Prop(immutable: false)] public bool $autofocus = false,
+        #[Prop(immutable: false)] public ?int $maxlength = null,
+        #[Prop(immutable: false)] public bool $counter = false,
+        #[Prop(immutable: false)] public ?string $autocomplete = null,
+        #[Prop(immutable: false)] public string $sync = 'debounced',
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[State]
+    public bool $focused = false;
+
+    #[Action]
+    public function input(string $value): void
+    {
+        $this->modelValue = $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+
+
+    #[Action]
+    public function focusIn(): void
+    {
+        $this->focused = true;
+        $this->emit('focus');
+    }
+
+    #[Action]
+    public function focusOut(): void
+    {
+        $this->focused = false;
+        $this->emit('blur');
+    }
+
+
+
+
+
+
+
+    public function autoComplete(): string
+    {
+        return $this->autocomplete ?? 'off';
+    }
+
+
+    public function boxClass(): string
+    {
+        return Fields::boxClass($this->focused, $this->error, $this->disabled);
+    }
+
+    public function minHeight(): int
+    {
+        return max(2, $this->rows) * 22 + 24;
+    }
+
+    public function editable(): bool
+    {
+        return !$this->disabled && !$this->readonly;
+    }
+
+
+    public function counterText(): string
+    {
+        return Fields::counter($this->modelValue, $this->maxlength);
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? Fields::accessibilityLabel($this->label, $this->placeholder, $this->required);
+    }
+
+    public function a11yHint(): string
+    {
+        return Fields::accessibilityHint($this->error, $this->helper);
+    }
+}
+?>
+
+<template language="2">
+    <Column class="p-field" :testID="$testId">
+        <Row p-if="$label !== ''" class="label-row">
+            <Text class="p-field-label">{{ $label }}</Text>
+            <Text p-if="$required" class="required" importantForAccessibility="no">*</Text>
+        </Row>
+        <Row :class="['p-field-box', 'area-box', boxClass()]" :minHeight="minHeight()">
+            <Input
+                class="input"
+                multiline="true"
+                textAlignVertical="top"
+                :value="$modelValue"
+                :placeholder="$placeholder"
+                :autoComplete="autoComplete()"
+                :editable="editable()"
+                :maxLength="$maxlength"
+                :autoFocus="$autofocus"
+                :sync="$sync"
+                :accessibilityLabel="a11yLabel()"
+                :accessibilityHint="a11yHint()"
+                on:change="input"
+                on:focus="focusIn"
+                on:blur="focusOut"
+            />
+        </Row>
+        <Row p-if="$error !== null || $helper !== null || $counter" class="support-row">
+            <Text p-if="$error !== null" class="p-field-error support" accessibilityLiveRegion="polite">{{ $error }}</Text>
+            <Text p-else-if="$helper !== null" class="p-field-helper support">{{ $helper }}</Text>
+            <View p-else class="support" />
+            <Text p-if="$counter" class="p-field-helper">{{ counterText() }}</Text>
+        </Row>
+    </Column>
+</template>
+
+<style scoped>
+    @import "../src/theme/fields.css";
+
+    .label-row { flex-direction: row; gap: 2px; }
+    .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
+    .area-box { align-items: stretch; padding-top: 12px; padding-bottom: 12px; }
+    .input {
+        flex: 1;
+        padding: 0;
+        font-family: "Instrument Sans";
+        font-size: 16px;
+        line-height: 22px;
+        color: var(--p-text);
+        caret-color: var(--p-accent);
+        background-color: transparent;
+        border-width: 0;
+    }
+    .input::placeholder { color: var(--p-text-subtle); }
+    .support-row { flex-direction: row; gap: 12px; align-items: flex-start; }
+    .support { flex: 1; }
+
+    @media (platform: ios) {
+        .input { font-size: 17px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .required { color: var(--p-accent-dark); }
+        .input { color: var(--p-text-dark); caret-color: var(--p-accent-dark); }
+        .input::placeholder { color: var(--p-text-subtle-dark); }
+    }
+</style>

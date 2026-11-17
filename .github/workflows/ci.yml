@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  php:
+    name: PHP 8.5 / PAM Native ${{ matrix.graph }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        graph:
+          - lowest
+          - latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install
+        run: |
+          arguments=(--no-interaction --no-progress --prefer-dist)
+          if [[ '${{ matrix.graph }}' == lowest ]]; then
+            arguments+=(--prefer-lowest --prefer-stable)
+          fi
+          composer update "${arguments[@]}"
+
+      - name: Lint
+        run: |
+          find src compat tests tools -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+          composer validate --strict
+
+      - name: Tests
+        run: php tests/run.php
+
+      - name: Component reference is current
+        run: |
+          php tools/component-docs.php
+          git diff --exit-code docs/components.md
+
+      - name: Package contents
+        run: |
+          composer archive --format=zip --dir=/tmp/dist --file=pam-native-ui
+          unzip -l /tmp/dist/pam-native-ui.zip | tee /tmp/dist/listing.txt
+          grep -q 'components/TextField.pam' /tmp/dist/listing.txt
+          grep -q 'resources/fonts/InstrumentSans-Regular.ttf' /tmp/dist/listing.txt
+          ! grep -q 'docs/assets/' /tmp/dist/listing.txt
+          ! grep -q 'examples/' /tmp/dist/listing.txt

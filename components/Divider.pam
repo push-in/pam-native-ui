@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/** <p-divider /> or <p-divider label="or" /> */
+#[Tag('p-divider')]
+final class Divider extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public ?string $label = null,
+        #[Prop(immutable: false)] public bool $vertical = false,
+    ) {
+    }
+}
+?>
+
+<template language="2">
+    <View p-if="$vertical" class="vertical" importantForAccessibility="no" />
+    <Row p-else-if="$label !== null" class="labeled">
+        <View class="line flex" importantForAccessibility="no" />
+        <Text class="label">{{ $label }}</Text>
+        <View class="line flex" importantForAccessibility="no" />
+    </Row>
+    <View p-else class="line" importantForAccessibility="no" />
+</template>
+
+<style scoped>
+    .line { height: 1px; background-color: var(--p-border); }
+    .flex { flex: 1; }
+    .vertical { width: 1px; align-self: stretch; background-color: var(--p-border); }
+    .labeled { flex-direction: row; align-items: center; gap: 12px; }
+    .label { font-size: 13px; color: var(--p-text-muted); }
+
+    @media (prefers-color-scheme: dark) {
+        .line, .vertical { background-color: var(--p-border-dark); }
+        .label { color: var(--p-text-muted-dark); }
+    }
+</style>

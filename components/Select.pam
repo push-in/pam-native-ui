@@ -1,0 +1,338 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\State;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\NativeUi\Support\Fields;
+use Pam\NativeUi\Support\Options;
+
+/**
+ * A field that opens a native bottom sheet with the options. Long lists get a
+ * search box and a virtualized list; `multiple` binds an array of values.
+ *
+ * <p-select p-model="$country" label="Country" :options="$countries" searchable="true" />
+ */
+#[Tag('p-select')]
+#[Event('model', 'mixed')]
+#[Event('change', 'mixed')]
+final class Select extends Component
+{
+    /** Above this many options the sheet scrolls a virtualized list. */
+    private const int LONG = 8;
+
+    public function __construct(
+        #[Prop(immutable: false)] public mixed $modelValue = null,
+        #[Prop(immutable: false)] public array $options = [],
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public string $placeholder = 'Select',
+        #[Prop(immutable: false)] public ?string $helper = null,
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public bool $multiple = false,
+        #[Prop(immutable: false)] public bool $searchable = false,
+        #[Prop(immutable: false)] public bool $required = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $sheetTitle = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[State]
+    public bool $open = false;
+
+    #[State]
+    public string $query = '';
+
+    #[Action]
+    public function show(): void
+    {
+        if (!$this->disabled) {
+            $this->query = '';
+            $this->open = true;
+        }
+    }
+
+    #[Action]
+    public function hide(): void
+    {
+        $this->open = false;
+    }
+
+    #[Action]
+    public function search(string $query): void
+    {
+        $this->query = $query;
+    }
+
+    #[Action]
+    public function choose(string|int|float|bool $value): void
+    {
+        if ($this->multiple) {
+            $current = is_array($this->modelValue) ? $this->modelValue : [];
+            $next = [];
+            $found = false;
+            foreach ($current as $item) {
+                if (Options::same($item, $value)) {
+                    $found = true;
+                    continue;
+                }
+                $next[] = $item;
+            }
+            if (!$found) {
+                $next[] = $value;
+            }
+            $this->modelValue = $next;
+            $this->emit('model', $next);
+            $this->emit('change', $next);
+
+            return;
+        }
+        $this->open = false;
+        if (Options::same($value, $this->modelValue)) {
+            return;
+        }
+        $this->modelValue = $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function rows(): array
+    {
+        $rows = Options::normalize($this->options);
+        $query = mb_strtolower(trim($this->query));
+        if ($query === '') {
+            return $rows;
+        }
+
+        return array_values(array_filter(
+            $rows,
+            static fn (array $row): bool => str_contains(mb_strtolower($row['label']), $query),
+        ));
+    }
+
+    public function long(): bool
+    {
+        return count($this->options) > self::LONG;
+    }
+
+    public function showSearch(): bool
+    {
+        return $this->searchable || count($this->options) > 12;
+    }
+
+    public function selected(mixed $value): bool
+    {
+        if ($this->multiple) {
+            foreach (is_array($this->modelValue) ? $this->modelValue : [] as $item) {
+                if (Options::same($item, $value)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return Options::same($value, $this->modelValue);
+    }
+
+    public function display(): string
+    {
+        if ($this->multiple) {
+            $labels = [];
+            foreach (is_array($this->modelValue) ? $this->modelValue : [] as $item) {
+                $labels[] = Options::label($this->options, $item) ?? (is_scalar($item) ? (string) $item : '');
+            }
+
+            return implode(', ', $labels);
+        }
+        if ($this->modelValue === null || $this->modelValue === '') {
+            return '';
+        }
+
+        return Options::label($this->options, $this->modelValue) ?? '';
+    }
+
+    public function boxClass(): string
+    {
+        return Fields::boxClass($this->open, $this->error, $this->disabled);
+    }
+
+    public function a11yLabel(): string
+    {
+        $value = $this->display();
+
+        return trim(Fields::accessibilityLabel($this->label, $this->placeholder, $this->required).', '.($value === '' ? 'none selected' : $value), ', ');
+    }
+
+    public function title(): string
+    {
+        return $this->sheetTitle ?? ($this->label !== '' ? $this->label : $this->placeholder);
+    }
+}
+?>
+
+<template language="2">
+    <Column class="p-field" :testID="$testId">
+        <Row p-if="$label !== ''" class="label-row">
+            <Text class="p-field-label">{{ $label }}</Text>
+            <Text p-if="$required" class="required" importantForAccessibility="no">*</Text>
+        </Row>
+        <Pressable
+            :class="['p-field-box', 'trigger', boxClass()]"
+            accessibilityRole="combobox"
+            :accessibilityLabel="a11yLabel()"
+            :accessibilityHint="$error ?? ($helper ?? '')"
+            :accessibilityExpanded="$open"
+            :disabled="$disabled"
+            @press="show"
+        >
+            <Text p-if="display() !== ''" class="p-field-value" numberOfLines="1">{{ display() }}</Text>
+            <Text p-else class="p-field-placeholder" numberOfLines="1">{{ $placeholder }}</Text>
+            <p-icon name="chevron-down" tone="muted" :size="20" />
+        </Pressable>
+        <Text p-if="$error !== null" class="p-field-error" accessibilityLiveRegion="polite">{{ $error }}</Text>
+        <Text p-else-if="$helper !== null" class="p-field-helper">{{ $helper }}</Text>
+
+        <BottomSheet
+            p-if="$open && !long()"
+            snapPoints="content"
+            keyboardBehavior="contain"
+            on:sheetDismiss="hide"
+        >
+            <Column class="sheet">
+                <Row class="sheet-head">
+                    <Text class="sheet-title" accessibilityRole="header">{{ title() }}</Text>
+                    <Pressable p-if="$multiple" class="done" accessibilityRole="button" accessibilityLabel="Done" @press="hide">
+                        <Text class="done-text">Done</Text>
+                    </Pressable>
+                </Row>
+                <Pressable
+                    p-for="$option in rows()"
+                    :key="$option['key']"
+                    :class="$option['disabled'] ? 'option option-disabled' : 'option'"
+                    :accessibilityRole="$multiple ? 'checkbox' : 'radio'"
+                    :accessibilityLabel="$option['label']"
+                    :accessibilityCheckedState="selected($option['value']) ? 'checked' : 'unchecked'"
+                    :disabled="$option['disabled']"
+                    @press="choose($option['value'])"
+                >
+                    <Column class="option-text">
+                        <Text :class="selected($option['value']) ? 'option-label option-label-on' : 'option-label'">{{ $option['label'] }}</Text>
+                        <Text p-if="$option['description'] !== null" class="p-choice-description">{{ $option['description'] }}</Text>
+                    </Column>
+                    <p-icon p-if="selected($option['value'])" name="check" tone="accent" :size="22" />
+                </Pressable>
+            </Column>
+        </BottomSheet>
+
+        <BottomSheet
+            p-if="$open && long()"
+            :snapPoints="[0.62, 1.0]"
+            index="0"
+            keyboardBehavior="contain"
+            on:sheetDismiss="hide"
+        >
+            <Column class="sheet sheet-long">
+                <Row class="sheet-head">
+                    <Text class="sheet-title" accessibilityRole="header">{{ title() }}</Text>
+                    <Pressable p-if="$multiple" class="done" accessibilityRole="button" accessibilityLabel="Done" @press="hide">
+                        <Text class="done-text">Done</Text>
+                    </Pressable>
+                </Row>
+                <Row p-if="showSearch()" class="search">
+                    <p-icon name="search" tone="muted" :size="20" />
+                    <Input
+                        class="search-input"
+                        :value="$query"
+                        placeholder="Search"
+                        autoCapitalize="none"
+                        autoCorrect="false"
+                        returnKeyType="search"
+                        accessibilityLabel="Search options"
+                        on:change="search"
+                    />
+                </Row>
+                <ScrollView class="list" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+                    <Pressable
+                        p-for="$option in rows()"
+                        :key="$option['key']"
+                        :class="$option['disabled'] ? 'option option-disabled' : 'option'"
+                        :accessibilityRole="$multiple ? 'checkbox' : 'radio'"
+                        :accessibilityLabel="$option['label']"
+                        :accessibilityCheckedState="selected($option['value']) ? 'checked' : 'unchecked'"
+                        :disabled="$option['disabled']"
+                        @press="choose($option['value'])"
+                    >
+                        <Column class="option-text">
+                            <Text :class="selected($option['value']) ? 'option-label option-label-on' : 'option-label'">{{ $option['label'] }}</Text>
+                            <Text p-if="$option['description'] !== null" class="p-choice-description">{{ $option['description'] }}</Text>
+                        </Column>
+                        <p-icon p-if="selected($option['value'])" name="check" tone="accent" :size="22" />
+                    </Pressable>
+                </ScrollView>
+            </Column>
+        </BottomSheet>
+    </Column>
+</template>
+
+<style scoped>
+    @import "../src/theme/fields.css";
+    @import "../src/theme/choice.css";
+
+    .label-row { flex-direction: row; gap: 2px; }
+    .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
+    .trigger { justify-content: space-between; }
+    .trigger:pressed { background-color: var(--p-surface-muted); }
+    .sheet { padding: 4px 0 8px 0; background-color: var(--p-surface); }
+    .sheet-long { flex: 1; }
+    .sheet-head { flex-direction: row; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 20px; }
+    .sheet-title { font-size: 17px; line-height: 24px; font-weight: 600; color: var(--p-text); }
+    .done { min-height: 44px; min-width: 56px; align-items: flex-end; justify-content: center; }
+    .done-text { font-size: 16px; font-weight: 600; color: var(--p-accent-text); }
+    .search {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 16px 8px 16px;
+        padding: 0 12px;
+        min-height: 44px;
+        border-radius: 12px;
+        background-color: var(--p-surface-muted);
+    }
+    .search-input { flex: 1; min-height: 44px; padding: 0; font-family: "Instrument Sans"; font-size: 16px; color: var(--p-text); background-color: transparent; border-width: 0; }
+    .search-input::placeholder { color: var(--p-text-subtle); }
+    .list { flex: 1; }
+    .option {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+        padding: 8px 20px;
+    }
+    .option:pressed { background-color: var(--p-surface-pressed); }
+    .option-disabled { opacity: 0.45; }
+    .option-text { flex: 1; gap: 2px; }
+    .option-label { font-size: 16px; line-height: 22px; color: var(--p-text); }
+    .option-label-on { font-weight: 600; color: var(--p-accent-text); }
+
+    @media (prefers-color-scheme: dark) {
+        .required { color: var(--p-accent-dark); }
+        .trigger:pressed { background-color: var(--p-surface-muted-dark); }
+        .sheet { background-color: var(--p-surface-dark); }
+        .sheet-title { color: var(--p-text-dark); }
+        .done-text { color: var(--p-accent-text-dark); }
+        .search { background-color: var(--p-surface-muted-dark); }
+        .search-input { color: var(--p-text-dark); }
+        .search-input::placeholder { color: var(--p-text-subtle-dark); }
+        .option:pressed { background-color: var(--p-surface-pressed-dark); }
+        .option-label { color: var(--p-text-dark); }
+        .option-label-on { color: var(--p-accent-text-dark); }
+    }
+</style>

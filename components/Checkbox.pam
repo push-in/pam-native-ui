@@ -1,0 +1,119 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Checkbox with a label and an optional description; the whole row is the
+ * touch target. Shows an error under the row.
+ *
+ * <p-checkbox p-model="$form->terms" label="I accept the terms" :error="error('terms')" />
+ */
+#[Tag('p-checkbox')]
+#[Event('model', 'bool')]
+#[Event('change', 'bool')]
+final class Checkbox extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public bool $modelValue = false,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public ?string $description = null,
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public bool $indeterminate = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[Action]
+    public function toggle(): void
+    {
+        if ($this->disabled) {
+            return;
+        }
+        $this->modelValue = !$this->modelValue;
+        $this->emit('model', $this->modelValue);
+        $this->emit('change', $this->modelValue);
+    }
+
+    public function boxClass(): string
+    {
+        $on = $this->modelValue || $this->indeterminate;
+
+        return 'box'.($on ? ' box-on' : '').($this->error !== null && !$on ? ' box-invalid' : '');
+    }
+
+    public function checkedState(): string
+    {
+        return $this->indeterminate ? 'mixed' : ($this->modelValue ? 'checked' : 'unchecked');
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? $this->label;
+    }
+}
+?>
+
+<template language="2">
+    <Column class="root">
+        <Pressable
+            :class="$disabled ? 'p-choice p-choice-disabled' : 'p-choice'"
+            accessibilityRole="checkbox"
+            :accessibilityLabel="a11yLabel()"
+            :accessibilityHint="$error ?? ($description ?? '')"
+            :accessibilityCheckedState="checkedState()"
+            :disabled="$disabled"
+            :testID="$testId"
+            @press="toggle"
+        >
+            <View :class="boxClass()">
+                <p-icon p-if="$indeterminate" name="minus" tone="on-accent" :size="20" />
+                <p-icon p-else-if="$modelValue" name="check" tone="on-accent" :size="20" />
+            </View>
+            <Column p-if="$label !== '' || $description !== null" class="p-choice-text">
+                <Text p-if="$label !== ''" class="p-choice-label">{{ $label }}</Text>
+                <Text p-if="$description !== null" class="p-choice-description">{{ $description }}</Text>
+            </Column>
+        </Pressable>
+        <Text p-if="$error !== null" class="p-field-error error" accessibilityLiveRegion="polite">{{ $error }}</Text>
+    </Column>
+</template>
+
+<style scoped>
+    @import "../src/theme/fields.css";
+    @import "../src/theme/choice.css";
+
+    .root { gap: 2px; }
+    .box {
+        width: 24px;
+        height: 24px;
+        margin: 0 0 0 2px;
+        border-width: 2px;
+        border-color: var(--p-border-strong);
+        border-radius: 6px;
+        align-items: center;
+        justify-content: center;
+    }
+    .box-on { border-color: var(--p-accent); background-color: var(--p-accent); }
+    .box-invalid { border-color: var(--p-danger); }
+    .error { padding-left: 38px; }
+
+    @media (platform: ios) {
+        .box { border-radius: 12px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .box { border-color: var(--p-border-strong-dark); }
+        .box-on { border-color: var(--p-accent-dark); background-color: var(--p-accent-dark); }
+        .box-invalid { border-color: var(--p-danger-dark); }
+    }
+</style>

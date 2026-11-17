@@ -1,266 +1,40 @@
-# Performance evidence
+# Performance
 
-PAM Native UI keeps interaction progress inside Android and sends PHP only the
-semantic result. Benchmarks are split by layer so a fast PHP microbenchmark
-cannot be mistaken for smooth rendered frames.
+Measured on 2026-11-17 with the showcase debug build on an Android 16
+emulator (`pam-ci-36`, x86_64, 1080x2400, host GPU) and PAM Native 1.51.0.
 
-Release evidence also distinguishes source correctness from package
-reproducibility. The release workflow constructs the PHP and iOS source
-archives twice from the same immutable Git tree, performs two clean Android AAR
-builds, and compares every pair byte for byte before checksums, provenance or
-publication. Cross-job archives expire after seven days; durable downloads live
-on the GitHub release.
+| Scenario | Result |
+| --- | --- |
+| 500-row `VirtualizedList` of `p-list-item` (avatar, title, subtitle), 9 flings | 268 frames, 2.2% janky, p50/p90/p95 16 ms, p99 24 ms (`dumpsys gfxinfo`) |
+| Memory after the flings | 147 MB PSS total, 29 MB native heap, 22 MB Java heap (`dumpsys meminfo`, debug build with the PHP runtime) |
+| CPU while idle on a screen | 0.0% (`top`) |
+| Compiled component cache (31 components) | 4.2 MB, from 31 MB before PAM Native 1.51 stopped copying the stylesheet IR into every `@media` block |
 
-Each comparison also emits a bounded schema-1 JSON report with sequential
-integer artifact/result codes, byte count and SHA-256. The publish job streams
-the downloaded packages again and rejects missing, substituted, symlinked,
-oversized or malformed evidence before creating the release.
+What keeps it lean:
 
-Artifact codes are `1` for the iOS source ZIP, `2` for the Android AAR and `3`
-for the PHP source archive. Result code `1` means passed and `2` means a byte
-mismatch; the producer and verifier use the corresponding integer enums.
+- `p-slider` moves its thumb, fill and value label on the UI thread with PAM
+  Native's `Drag`; PHP gets one `model` event on release.
+- `p-text-field` syncs with the `debounced` mode by default: live validation
+  without one bridge call per keystroke, and typing never fights a stale echo.
+- `p-snackbar` starts its timer only while shown and cancels it on hide or
+  unmount; nothing else in the package schedules work.
+- Switch thumbs, pressed states and the tab indicator are CSS transitions run
+  natively; `prefers-reduced-motion` disables them.
+- The package theme (`src/app.css`) holds only tokens and fonts; shared
+  classes are imported only by the components that use them.
 
-The same artifact codes feed package-size budgets: 1 MiB for iOS source, 8 MiB
-for the Android AAR and 4 MiB for PHP source. These are release safety ceilings,
-not app download/install-size claims. Schema-1 reports bind actual bytes, limit,
-result code and SHA-256, are provenance-attested, and are recomputed from the
-downloaded artifacts immediately before publication.
+Reproduce: run `examples/showcase` with `pam dev`, open Lists, then
 
-The portable source-archive check is available locally:
-
-```bash
-tools/test-reproducible-archive.sh
+```sh
+adb shell dumpsys gfxinfo dev.pam.nativeui.showcase.debug reset
+# fling the list
+adb shell dumpsys gfxinfo dev.pam.nativeui.showcase.debug
+adb shell dumpsys meminfo dev.pam.nativeui.showcase.debug
 ```
 
-The same boundary applies to UIKit. `p-ripple`, state layers, overlay motion,
-intersection, resize and mutation observation execute in native code. Only
-requested semantic events cross the bounded binary channel; listeners are
-absent when a directive is not authored.
-
-## Android UI-thread microbenchmark
-
-Reference run:
-
-- date: 2026-07-24;
-- device: Samsung SM-S918B (Galaxy S23 Ultra);
-- Android API: 36;
-- build: debug, instrumented;
-- samples: 10,000 host updates, 10,000 slider moves, 2,000 calendar
-  draws, 10,000 DateTimePicker updates, 10,000 Accordion toggles, 10,000
-  Checkbox toggles, 10,000 RadioGroup selections and 2,000 host lifecycles;
-- warm-up: 1,000 host updates, 1,000 DateTimePicker updates, 1,000
-  Accordion toggles, 1,000 Checkbox toggles, 1,000 RadioGroup selections
-  and 200 calendar draws.
-
-| Operation | p50 | p95 | p99 | max |
-| --- | ---: | ---: | ---: | ---: |
-| Decode/apply native host update | 18 µs | 44 µs | 53 µs | 1,937 µs |
-| Slider move and local redraw | 18 µs | 21 µs | 25 µs | 58 µs |
-| Calendar grid draw | 1,269 µs | 1,356 µs | 1,403 µs | 1,468 µs |
-| DateTimePicker property update | 24 µs | 28 µs | 45 µs | 2,206 µs |
-| Accordion semantic toggle | 11 µs | 17 µs | 22 µs | 1,796 µs |
-| Checkbox semantic toggle | 3 µs | 4 µs | 4 µs | 44 µs |
-| RadioGroup exclusive selection | 9 µs | 13 µs | 17 µs | 103 µs |
-| Create, update and release host | 128 µs | 154 µs | 192 µs | 1,946 µs |
-
-The complete rerun on the same device passed on 2026-07-24. Its machine-readable
-result is checked in at
-[`benchmarks/android-sm-s918b-api36-2026-07-24.json`](../benchmarks/android-sm-s918b-api36-2026-07-24.json).
-All 24 measured operation families stayed below their enforced p99 budget;
-notable results include tabs at 42 µs, menu selection at 6 µs, sheet snapping
-at 504 µs, rich markdown updates at 127 µs, and table layout at 2 µs.
-
-A second run on Android 12/API 31 using a Samsung Galaxy S10 passed all 39
-functional instrumentation tests and all performance gates. This older-device
-evidence is stored separately in
-[`benchmarks/android-sm-g973f-api31-2026-07-24.json`](../benchmarks/android-sm-g973f-api31-2026-07-24.json);
-it is not mixed into the Galaxy S23 reference baseline.
-
-Both checked-in results now implement the versioned
-[`device-evidence.schema.json`](../benchmarks/device-evidence.schema.json)
-contract and are executable release inputs rather than free-form examples.
-Platform `1` is Android; build types `1` and `2` are debug and release;
-measurement coverage `1` is historical p99-only and `2` is complete
-p50/p95/p99/max; result `1` is passed and `2` is failed. Each report binds its
-capture date and exact 40-character source revision without inventing missing
-historical quantiles. Every measurement carries its own `sampleCount`;
-`samplesPerOperation` is retained as the largest count in the run and must
-equal the maximum of those exact per-metric values. This preserves the real
-2,000 calendar/lifecycle samples instead of presenting them as 10,000.
-
-CI and tagged releases run the dependency-free verifier against the current
-21-operation inventory. The three image-navigation, message-branch and prompt
-measurements remain accepted only as one complete historical extension because
-those hosts were consolidated after the July capture; partial mixtures fail.
-The verifier rejects unknown/missing fields, string codes,
-failed functional tests, duplicate device/API/date evidence, incomplete
-quantiles, non-monotonic samples, symlinks, oversized reports, and p99 at or
-above 4 ms (8 ms for lifecycle). Reproduce the evidence gate without building
-the app:
-
-```bash
-python3 benchmarks/verify-device-evidence.py benchmarks/android-*.json
-python3 -m unittest discover -s benchmarks -p 'test_*device_evidence.py'
-```
-
-This gate proves the integrity and stated budget of recorded runs. It cannot
-prove that an old JSON was captured on the named hardware; future device jobs
-must attach signed runner/device provenance before that stronger claim is made.
-
-The 10,000 slider moves emitted zero per-move bridge callbacks and one final
-semantic `CHANGE` event. This is a 10,000:1 reduction versus an implementation
-that sends every sampled movement across the language boundary; it is not a
-claim that PAM is 10,000 times faster than another framework.
-
-The 2,000 calendar frames drew the complete six-week range state, today
-indicator and disabled dates directly into an Android canvas with zero bridge
-events. The 10,000 DateTimePicker updates parsed limits, time-zone offsets and
-changing ISO values on the native UI thread with zero bridge events. The
-10,000 Accordion state changes each emitted exactly one final semantic toggle;
-content visibility and animation do not emit frame callbacks. Checkbox and
-RadioGroup each emitted exactly 10,000 semantic events while drawing state and,
-for radio, unchecking the sibling locally without an extra bridge callback.
-The instrumented benchmark fails when update, DateTimePicker update, Accordion
-toggle, Checkbox toggle, RadioGroup selection, gesture or calendar draw p99
-exceeds 4 ms, or lifecycle p99 exceeds 8 ms. Run it on a connected device:
-
-```bash
-../pam-native/android/gradlew \
-  -p android \
-  connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=dev.pam.mobileui.MobileUiHostPerformanceInstrumentedTest
-```
-
-The raw JSON result is logged under `PamMobileUiBench`. Do not copy that line by
-hand. From a clean committed checkout with exactly one authorized physical
-device, capture the full instrumented suite and turn its log plus JUnit results
-into a new canonical report with:
-
-```bash
-tools/capture-android-device-evidence.sh \
-  benchmarks/android-device-apiNN-YYYY-MM-DD.json
-```
-
-The command refuses dirty worktrees, existing output files, multiple devices,
-missing/duplicate benchmark payloads, partial quantiles, and any failed,
-errored or skipped instrumentation case. It binds the current Git revision and
-date, then immediately reruns the independent verifier. Gradle's user and
-project caches are redirected into `.pam-device-capture`; the command removes
-that directory and the regenerable `android/build` output on every exit so a
-physical capture does not leave another unbounded build cache behind.
-
-The current benchmark source additionally gates 10,000 native sheet snap
-changes and 10,000 sheet-item activations at p99 below 4 ms, with exactly one
-semantic event per operation. Those two rows will be added to the reference
-table only after a new physical-device run; static compilation is not reported
-as measured runtime evidence.
-
-The same pending physical run now includes 10,000 collision-aware anchored
-layouts and 10,000 Menu selections. Positioning must emit zero bridge events;
-each Menu activation must emit exactly one semantic event. Both use the same
-p99 below 4 ms gate and remain excluded from the reference table until measured
-on hardware.
-
-Compound inputs add two more pending hardware gates: 10,000 focus/invalid state
-updates with zero bridge events, and 10,000 native slot activations with exactly
-one semantic press each. Clear and password visibility mutate the mounted
-`EditText` directly; normal typing follows the selected native/debounced/blur/
-submit synchronization policy. These rows also remain excluded from the
-reference table until a physical run records them.
-
-The pending physical suite also lays out a 20-row by 4-column semantic table
-10,000 times. Its cached accessibility coordinates must keep steady-layout p99
-below 4 ms and emit zero bridge events. Scalar `FlatList`, `VirtualizedList`
-and `SectionList` use PAM core's RecyclerView host, recycled pool and bounded
-GapWorker prefetch; an end-to-end scroll and memory profile remains part of the
-full-renderer benchmark rather than this plugin-host microbenchmark.
-
-The same suite performs 10,000 paired steady updates of a multi-line Skeleton
-and persistent Toast. The single pulse animator and identity-stable timer must
-keep p99 below 4 ms with zero bridge events; the result remains excluded from
-the reference table until measured on hardware.
-
-FileTree adds a pending 10,000-toggle gate below 4 ms p99. Each folder
-activation performs its selection and expansion updates locally and emits
-exactly two semantic results (selected path plus bounded expansion map);
-animation frames never cross the bridge.
-
-The unified vertical/horizontal ScrollView adds a pending native fling and
-10,000 property-update gate. Drag, momentum, paging and snap remain inside the
-core Android host; registered scroll progress is coalesced to one scalar per
-display frame, while an unobserved scroll emits zero bridge events. Static
-compilation is not reported as physical runtime evidence.
-
-The image pipeline adds pending cold/warm/cache-hit gates for 1,000 mixed
-avatar, card and background requests. The physical-device run must record
-deduplicated network count, disk-hit ratio, decoded allocation, cancellation
-correctness, main-thread mount time and frame p95/p99. A 4096 px source used in
-a 40 dp avatar must decode to the nearest bounded target bucket rather than its
-full dimensions. Progress may cross at most once per display frame when
-observed; images without lifecycle handlers emit zero bridge events.
-
-Inputs add a pending 10,000-keystroke and 1,000-field focus/selection gate.
-Native and blur/submit sync modes must preserve every character and cursor
-position with zero per-keystroke PHP callbacks; observed selection may emit at
-most once per display frame. The run records IME latency, dropped characters,
-main-thread p95/p99 and bridge event counts on physical hardware.
-
-Grid adds a pending 10,000-layout gate using responsive columns, mixed spans,
-independent row/column gaps and two wrapped rows. Breakpoint selection,
-measurement, RTL mirroring and placement must remain below 4 ms p99 with zero
-bridge events; this row stays excluded until recorded on physical hardware.
-
-## PHP composition and binary encoding
-
-The reference local run composed a realistic styled form subtree and encoded
-the complete PAM binary tree 2,000 times per sample. The table reports the
-median of five measured samples after the benchmark's 100-tree warm-up:
-
-| Metric | Result |
-| --- | ---: |
-| Median total | 996.910 ms |
-| Median throughput | 2,006.2 trees/s |
-| Encoded frame | 2,148 bytes |
-| Peak PHP memory | 8 MiB |
-| PHP | 8.4.23 |
-
-Reference host: Intel Core Ultra 9 185H, 22 logical CPUs, 30 GiB RAM, Linux
-7.0.11 x86-64. The five measured totals were 1,096.115 ms, 974.398 ms,
-981.180 ms, 1,042.991 ms and 996.910 ms.
-
-Reproduce it with `composer benchmark`.
-
-## Android release showcase startup
-
-The API 36 x86_64 emulator release candidate dated 2026-09-06 cold-launched
-all 84 dedicated component routes. Every launch rendered its route identifier
-and `Variations` heading at the authoritative top position, with no runtime
-error, crash or ANR marker:
-
-| Metric | Result | Budget |
-| --- | ---: | ---: |
-| Cold launch p50 | 328 ms | — |
-| Cold launch p95 | 366 ms | 1,500 ms |
-| Cold launch p99 | 500 ms | — |
-| Slowest route | 562 ms | 2,500 ms |
-
-The machine-readable result is
-[`benchmarks/emulator-android-api36-showcase-release-2026-09-06.json`](../benchmarks/emulator-android-api36-showcase-release-2026-09-06.json).
-It binds the exact installed APK SHA-256 and remains explicitly marked as
-emulator-only candidate evidence. Reproduce the complete route sweep with:
-
-```bash
-python3 tools/audit-showcase-android-release-startup.py \
-  --serial emulator-5556 \
-  --output benchmarks/emulator-android-api36-showcase-release-YYYY-MM-DD.json
-```
-
-## Claim boundary
-
-These measurements validate bounded host work and the absence of per-frame PHP
-traffic on one high-end physical device. The separate release sweep validates
-cold startup and correct first layout through the full PAM renderer on an API
-36 emulator. Neither establishes an end-to-end speedup over React Native Nitro
-Modules. Physical-device full-renderer frame p50/p95/p99, jank, memory and
-matched-device competitor baselines remain required before the performance
-gate can move from `planned` to `verified`.
+Known limit: `p-select` renders its options in a `ScrollView` inside the
+sheet. A `VirtualizedList` inside a `BottomSheet` fails on Android today
+([push-in/pam-native#262](https://github.com/push-in/pam-native/issues/262));
+the sheet will switch to a virtualized list for very long option lists once
+that is fixed. Lists on a screen (`p-screen scroll="false"` +
+`VirtualizedList`, as in the showcase) are virtualized already.

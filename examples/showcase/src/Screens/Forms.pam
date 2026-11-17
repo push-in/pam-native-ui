@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Screens;
+
+use App\Forms\SignUpForm;
+use Pam\Native\Attributes\State;
+use Pam\Native\Component;
+use Pam\NativeUi\Forms\InteractsWithForm;
+
+final class Forms extends Component
+{
+    use InteractsWithForm;
+
+    public SignUpForm $form;
+
+    #[State]
+    public bool $saved = false;
+
+    public function __construct()
+    {
+        $this->form = new SignUpForm();
+    }
+
+    /** @return array<string, string> */
+    public function roles(): array
+    {
+        return ['developer' => 'Developer', 'designer' => 'Designer', 'founder' => 'Founder'];
+    }
+
+    public function save(): void
+    {
+        if (!$this->submitForm()) {
+            return;
+        }
+        $this->form->succeed();
+        $this->touchForm();
+        $this->saved = true;
+    }
+
+    public function back(): void
+    {
+        $this->popRoute();
+    }
+}
+?>
+
+<template>
+    <p-screen title="Create account" subtitle="Every field is bound to a typed PHP form." back="true" @back="back">
+        <p-form :error="formFailed() ? 'Fix the highlighted fields and try again.' : null" :success="$saved ? 'Account created for '.$form->email : null">
+            <p-text-field p-model="$form->name" label="Name" type="name" required="true" :error="error('name')" @blur="validateField('name')" testId="field-name" />
+            <p-text-field p-model="$form->email" label="Email" type="email" placeholder="you@example.com" required="true" clearable="true" :error="error('email')" @blur="validateField('email')" testId="field-email" />
+            <p-text-field p-model="$form->password" label="Password" type="password" required="true" helper="At least 8 characters." :error="error('password')" @blur="validateField('password')" testId="field-password" />
+            <p-select p-model="$form->role" label="Role" :options="roles()" required="true" :error="error('role')" testId="field-role" />
+            <p-stepper p-model="$form->team" label="Team size" :min="1" :max="500" />
+            <p-date-input p-model="$form->start" label="Start date" clearable="true" testId="field-start" />
+            <p-textarea p-model="$form->about" label="About you" :maxlength="160" counter="true" placeholder="What are you building?" testId="field-about" />
+            <p-checkbox p-model="$form->terms" label="I accept the terms" :error="error('terms')" testId="field-terms" />
+            <p-switch p-model="$form->newsletter" label="Product news" description="One email a month." />
+        </p-form>
+        <template #footer>
+            <p-btn label="Create account" block="true" size="lg" :loading="submitting()" testId="submit" @press="save" />
+        </template>
+    </p-screen>
+</template>

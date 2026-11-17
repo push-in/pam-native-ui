@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/** <p-avatar name="Taylor Otwell" /> · <p-avatar :src="$user->photo" name="Taylor" size="lg" /> */
+#[Tag('p-avatar')]
+final class Avatar extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $name = '',
+        #[Prop(immutable: false)] public ?string $src = null,
+        #[Prop(immutable: false)] public string $size = 'md',
+    ) {
+    }
+
+    public function initials(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name)) ?: [];
+        $first = mb_substr($parts[0] ?? '', 0, 1);
+        $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+
+        return mb_strtoupper($first.$last);
+    }
+
+    public function pixels(): float
+    {
+        return match ($this->size) {
+            'xs' => 24,
+            'sm' => 36,
+            'lg' => 56,
+            'xl' => 80,
+            default => 44,
+        };
+    }
+
+    public function tone(): string
+    {
+        return 'a a'.(abs(crc32($this->name)) % 4);
+    }
+
+    public function fontSize(): float
+    {
+        return round($this->pixels() * 0.38);
+    }
+}
+?>
+
+<template language="2">
+    <View
+        :class="tone()"
+        :width="pixels()"
+        :height="pixels()"
+        :borderRadius="pixels() / 2"
+        accessibilityRole="image"
+        :accessibilityLabel="$name"
+    >
+        <Image p-if="$src !== null" :source="$src" decorative="true" class="image" :width="pixels()" :height="pixels()" :borderRadius="pixels() / 2" resizeMode="cover" />
+        <Text p-else class="initials" :fontSize="fontSize()" importantForAccessibility="no">{{ initials() }}</Text>
+    </View>
+</template>
+
+<style scoped>
+    .a { align-items: center; justify-content: center; overflow: hidden; }
+    .a0 { background-color: #FFE1DC; }
+    .a1 { background-color: #E8E6FF; }
+    .a2 { background-color: #DCF5E8; }
+    .a3 { background-color: #FFF1CC; }
+    .initials { font-weight: 600; color: #1B1B18; }
+    .image { position: absolute; left: 0; top: 0; }
+
+    @media (prefers-color-scheme: dark) {
+        .a0 { background-color: #3D120A; }
+        .a1 { background-color: #25224A; }
+        .a2 { background-color: #0F2E20; }
+        .a3 { background-color: #3A2D07; }
+        .initials { color: #EDEDEC; }
+    }
+</style>

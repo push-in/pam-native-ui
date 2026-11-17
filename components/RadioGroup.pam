@@ -1,0 +1,112 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\NativeUi\Support\Options;
+
+/**
+ * <p-radio-group p-model="$plan" label="Plan" :options="['free' => 'Free', 'pro' => 'Pro']" />
+ */
+#[Tag('p-radio-group')]
+#[Event('model', 'mixed')]
+#[Event('change', 'mixed')]
+final class RadioGroup extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string|int|float|null $modelValue = null,
+        #[Prop(immutable: false)] public array $options = [],
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function rows(): array
+    {
+        return Options::normalize($this->options);
+    }
+
+    #[Action]
+    public function choose(string|int|float|bool $value): void
+    {
+        if ($this->disabled || Options::same($value, $this->modelValue)) {
+            return;
+        }
+        $this->modelValue = is_bool($value) ? (int) $value : $value;
+        $this->emit('model', $value);
+        $this->emit('change', $value);
+    }
+
+    public function selected(mixed $value): bool
+    {
+        return Options::same($value, $this->modelValue);
+    }
+
+    public function ringClass(mixed $value): string
+    {
+        return $this->selected($value) ? 'ring ring-on' : ($this->error !== null ? 'ring ring-invalid' : 'ring');
+    }
+}
+?>
+
+<template language="2">
+    <Column class="root" accessibilityRole="radiogroup" :accessibilityLabel="$label" :testID="$testId">
+        <Text p-if="$label !== ''" class="p-field-label">{{ $label }}</Text>
+        <Pressable
+            p-for="$option in rows()"
+            :key="$option['key']"
+            :class="$disabled || $option['disabled'] ? 'p-choice p-choice-disabled' : 'p-choice'"
+            accessibilityRole="radio"
+            :accessibilityLabel="$option['label']"
+            :accessibilityHint="$option['description'] ?? ''"
+            :accessibilityCheckedState="selected($option['value']) ? 'checked' : 'unchecked'"
+            :disabled="$disabled || $option['disabled']"
+            @press="choose($option['value'])"
+        >
+            <View :class="ringClass($option['value'])">
+                <View p-if="selected($option['value'])" class="dot" />
+            </View>
+            <Column class="p-choice-text">
+                <Text class="p-choice-label">{{ $option['label'] }}</Text>
+                <Text p-if="$option['description'] !== null" class="p-choice-description">{{ $option['description'] }}</Text>
+            </Column>
+        </Pressable>
+        <Text p-if="$error !== null" class="p-field-error" accessibilityLiveRegion="polite">{{ $error }}</Text>
+    </Column>
+</template>
+
+<style scoped>
+    @import "../src/theme/fields.css";
+    @import "../src/theme/choice.css";
+
+    .root { gap: 2px; }
+    .ring {
+        width: 22px;
+        height: 22px;
+        margin-left: 2px;
+        border-width: 2px;
+        border-color: var(--p-border-strong);
+        border-radius: 11px;
+        align-items: center;
+        justify-content: center;
+    }
+    .ring-on { border-color: var(--p-accent); }
+    .ring-invalid { border-color: var(--p-danger); }
+    .dot { width: 10px; height: 10px; border-radius: 5px; background-color: var(--p-accent); }
+
+    @media (prefers-color-scheme: dark) {
+        .ring { border-color: var(--p-border-strong-dark); }
+        .ring-on { border-color: var(--p-accent-dark); }
+        .ring-invalid { border-color: var(--p-danger-dark); }
+        .dot { background-color: var(--p-accent-dark); }
+    }
+</style>

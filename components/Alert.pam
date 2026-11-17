@@ -1,0 +1,95 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Inline message. Screen readers announce it when it appears.
+ *
+ * <p-alert tone="danger" title="Payment failed" text="Check your card and try again." closable="true" @close="dismiss" />
+ */
+#[Tag('p-alert')]
+#[Event('close', 'null')]
+#[Slot('slot', 0, null)]
+final class Alert extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $tone = 'info',
+        #[Prop(immutable: false)] public ?string $title = null,
+        #[Prop(immutable: false)] public ?string $text = null,
+        #[Prop(immutable: false)] public bool $closable = false,
+    ) {
+    }
+
+    #[Action]
+    public function close(): void
+    {
+        $this->emit('close');
+    }
+
+    public function icon(): string
+    {
+        return match ($this->tone) {
+            'success' => 'check',
+            'warning', 'danger' => 'alert',
+            default => 'info',
+        };
+    }
+}
+?>
+
+<template language="2">
+    <Row :class="'alert a-'.$tone" accessibilityRole="alert" accessibilityLiveRegion="polite">
+        <p-icon :name="icon()" :tone="$tone" :size="22" />
+        <Column class="body">
+            <Text p-if="$title !== null" :class="'title t-'.$tone">{{ $title }}</Text>
+            <Text p-if="$text !== null" class="text">{{ $text }}</Text>
+            <Slot />
+        </Column>
+        <Pressable p-if="$closable" class="close" accessibilityRole="button" accessibilityLabel="Dismiss" @press="close">
+            <p-icon name="close" tone="muted" :size="18" />
+        </Pressable>
+    </Row>
+</template>
+
+<style scoped>
+    .alert { flex-direction: row; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 14px; border-width: 1px; }
+    .body { flex: 1; gap: 2px; }
+    .title { font-size: 15px; line-height: 22px; font-weight: 600; }
+    .text { font-size: 14px; line-height: 20px; color: var(--p-text); }
+    .close { width: 44px; height: 44px; margin: -12px -12px -12px 0; align-items: center; justify-content: center; border-radius: 22px; }
+    .close:pressed { background-color: var(--p-surface-pressed); }
+    .a-info { background-color: var(--p-info-soft); border-color: rgba(23, 92, 211, 0.18); }
+    .a-success { background-color: var(--p-success-soft); border-color: rgba(18, 128, 92, 0.18); }
+    .a-warning { background-color: var(--p-warning-soft); border-color: rgba(181, 71, 8, 0.18); }
+    .a-danger { background-color: var(--p-danger-soft); border-color: rgba(217, 45, 32, 0.18); }
+    .a-accent { background-color: var(--p-accent-soft); border-color: rgba(245, 48, 3, 0.18); }
+    .t-info { color: var(--p-info); }
+    .t-success { color: var(--p-success); }
+    .t-warning { color: var(--p-warning); }
+    .t-danger { color: var(--p-danger); }
+    .t-accent { color: var(--p-accent-text); }
+
+    @media (prefers-color-scheme: dark) {
+        .text { color: var(--p-text-dark); }
+        .close:pressed { background-color: var(--p-surface-pressed-dark); }
+        .a-info { background-color: var(--p-info-soft-dark); border-color: rgba(132, 202, 255, 0.2); }
+        .a-success { background-color: var(--p-success-soft-dark); border-color: rgba(71, 205, 137, 0.2); }
+        .a-warning { background-color: var(--p-warning-soft-dark); border-color: rgba(253, 176, 34, 0.2); }
+        .a-danger { background-color: var(--p-danger-soft-dark); border-color: rgba(249, 112, 102, 0.2); }
+        .a-accent { background-color: var(--p-accent-soft-dark); border-color: rgba(255, 68, 51, 0.24); }
+        .t-info { color: var(--p-info-dark); }
+        .t-success { color: var(--p-success-dark); }
+        .t-warning { color: var(--p-warning-dark); }
+        .t-danger { color: var(--p-danger-dark); }
+        .t-accent { color: var(--p-accent-text-dark); }
+    }
+</style>

@@ -1,0 +1,41 @@
+/* Field anatomy: label, box, value, helper and error. */
+
+.p-field { gap: 6px; width: 100%; }
+.p-field-label { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p-text); }
+.p-field-helper { font-size: 12px; line-height: 16px; color: var(--p-text-muted); }
+.p-field-error { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--p-danger); }
+.p-field-box {
+    flex-direction: row;
+    align-items: center;
+    min-height: 52px;
+    padding: 0 14px;
+    gap: 8px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--p-border);
+    border-radius: var(--p-radius);
+    background-color: var(--p-surface);
+}
+.p-field-box-focused { border-color: var(--p-accent); border-width: 2px; padding: 0 13px; }
+.p-field-box-invalid { border-color: var(--p-danger); }
+.p-field-box-disabled { background-color: var(--p-surface-muted); opacity: 0.6; }
+.p-field-value { font-size: 16px; line-height: 22px; color: var(--p-text); flex: 1; }
+.p-field-placeholder { font-size: 16px; line-height: 22px; color: var(--p-text-subtle); flex: 1; }
+
+@media (platform: ios) {
+    .p-field-box { border-radius: 10px; }
+    .p-field-value, .p-field-placeholder { font-size: 17px; }
+}
+
+@media (prefers-color-scheme: dark) {
+    .p-field-label { color: var(--p-text-dark); }
+    .p-field-helper { color: var(--p-text-muted-dark); }
+    .p-field-error { color: var(--p-danger-dark); }
+    .p-field-box { border-color: var(--p-border-dark); background-color: var(--p-surface-dark); }
+    .p-field-box-focused { border-color: var(--p-accent-dark); }
+    .p-field-box-invalid { border-color: var(--p-danger-dark); }
+    .p-field-box-disabled { background-color: var(--p-surface-muted-dark); }
+    .p-field-value { color: var(--p-text-dark); }
+    .p-field-placeholder { color: var(--p-text-subtle-dark); }
+}
+
