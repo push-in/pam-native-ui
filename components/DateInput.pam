@@ -1,0 +1,285 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\State;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+use Pam\NativeUi\Support\Calendar;
+use Pam\NativeUi\Support\Fields;
+
+/**
+ * Date field with a month calendar in a bottom sheet. Binds an ISO date
+ * string (`Y-m-d`) or null.
+ *
+ * <p-date-input p-model="$birthday" label="Birthday" max="2010-12-31" />
+ */
+#[Tag('p-date-input')]
+#[Event('model', 'mixed')]
+#[Event('change', 'mixed')]
+final class DateInput extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public ?string $modelValue = null,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public string $placeholder = 'Select a date',
+        #[Prop(immutable: false)] public ?string $min = null,
+        #[Prop(immutable: false)] public ?string $max = null,
+        #[Prop(immutable: false)] public string $format = 'D, M j, Y',
+        #[Prop(immutable: false)] public int $firstDay = 0,
+        #[Prop(immutable: false)] public ?string $helper = null,
+        #[Prop(immutable: false)] public ?string $error = null,
+        #[Prop(immutable: false)] public bool $required = false,
+        #[Prop(immutable: false)] public bool $clearable = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[State]
+    public bool $open = false;
+
+    /** First day of the month shown in the sheet (Y-m-01). */
+    #[State]
+    public string $month = '';
+
+    #[Action]
+    public function show(): void
+    {
+        if ($this->disabled) {
+            return;
+        }
+        $this->month = Calendar::monthOf($this->modelValue ?? Calendar::clamp(Calendar::today(), $this->min, $this->max));
+        $this->open = true;
+    }
+
+    #[Action]
+    public function hide(): void
+    {
+        $this->open = false;
+    }
+
+    #[Action]
+    public function previous(): void
+    {
+        $this->month = Calendar::shift($this->month, -1);
+    }
+
+    #[Action]
+    public function next(): void
+    {
+        $this->month = Calendar::shift($this->month, 1);
+    }
+
+    #[Action]
+    public function pick(string $date): void
+    {
+        $this->open = false;
+        if ($date === $this->modelValue || !Calendar::allowed($date, $this->min, $this->max)) {
+            return;
+        }
+        $this->modelValue = $date;
+        $this->emit('model', $date);
+        $this->emit('change', $date);
+    }
+
+    #[Action]
+    public function clear(): void
+    {
+        $this->open = false;
+        if ($this->modelValue === null) {
+            return;
+        }
+        $this->modelValue = null;
+        $this->emit('model', null);
+        $this->emit('change', null);
+    }
+
+    #[Action]
+    public function today(): void
+    {
+        $this->pick(Calendar::today());
+    }
+
+    /** @return list<list<array{key: string, date: string, day: string, inMonth: bool, allowed: bool}>> */
+    public function weeks(): array
+    {
+        return Calendar::weeks($this->month, $this->firstDay, $this->min, $this->max);
+    }
+
+    /** @return list<string> */
+    public function weekdays(): array
+    {
+        return Calendar::weekdays($this->firstDay);
+    }
+
+    public function monthTitle(): string
+    {
+        return Calendar::title($this->month);
+    }
+
+    public function canPrevious(): bool
+    {
+        return $this->min === null || Calendar::shift($this->month, -1) >= Calendar::monthOf($this->min);
+    }
+
+    public function canNext(): bool
+    {
+        return $this->max === null || Calendar::shift($this->month, 1) <= Calendar::monthOf($this->max);
+    }
+
+    public function dayClass(array $day): string
+    {
+        $classes = ['day'];
+        if (!$day['inMonth']) {
+            $classes[] = 'day-outside';
+        }
+        if ($day['date'] === $this->modelValue) {
+            $classes[] = 'day-selected';
+        } elseif ($day['date'] === Calendar::today()) {
+            $classes[] = 'day-today';
+        }
+        if (!$day['allowed']) {
+            $classes[] = 'day-disabled';
+        }
+
+        return implode(' ', $classes);
+    }
+
+    public function dayTextClass(array $day): string
+    {
+        return $day['date'] === $this->modelValue ? 'day-text day-text-selected' : ($day['date'] === Calendar::today() ? 'day-text day-text-today' : 'day-text');
+    }
+
+    public function dayLabel(array $day): string
+    {
+        return Calendar::format($day['date'], 'l, F j, Y');
+    }
+
+    public function display(): string
+    {
+        return $this->modelValue === null ? '' : Calendar::format($this->modelValue, $this->format);
+    }
+
+    public function boxClass(): string
+    {
+        return Fields::boxClass($this->open, $this->error, $this->disabled);
+    }
+
+    public function a11yLabel(): string
+    {
+        $value = $this->display();
+
+        return trim(Fields::accessibilityLabel($this->label, $this->placeholder, $this->required).', '.($value === '' ? 'not set' : $value), ', ');
+    }
+}
+?>
+
+<template language="2">
+    <Column class="p-field" :testID="$testId">
+        <Row p-if="$label !== ''" class="label-row">
+            <Text class="p-field-label">{{ $label }}</Text>
+            <Text p-if="$required" class="required" importantForAccessibility="no">*</Text>
+        </Row>
+        <Pressable
+            :class="['p-field-box', 'trigger', boxClass()]"
+            accessibilityRole="button"
+            :accessibilityLabel="a11yLabel()"
+            :accessibilityHint="$error ?? ($helper ?? 'Opens a calendar')"
+            :disabled="$disabled"
+            @press="show"
+        >
+            <Text p-if="display() !== ''" class="p-field-value" numberOfLines="1">{{ display() }}</Text>
+            <Text p-else class="p-field-placeholder" numberOfLines="1">{{ $placeholder }}</Text>
+            <p-icon name="calendar" tone="muted" :size="20" />
+        </Pressable>
+        <Text p-if="$error !== null" class="p-field-error" accessibilityLiveRegion="polite">{{ $error }}</Text>
+        <Text p-else-if="$helper !== null" class="p-field-helper">{{ $helper }}</Text>
+
+        <BottomSheet p-if="$open" snapPoints="content" on:sheetDismiss="hide">
+            <Column class="sheet">
+                <Row class="head">
+                    <Text class="month" accessibilityRole="header" accessibilityLiveRegion="polite">{{ monthTitle() }}</Text>
+                    <Row class="nav">
+                        <Pressable class="nav-btn" accessibilityRole="button" accessibilityLabel="Previous month" :disabled="!canPrevious()" @press="previous">
+                            <p-icon name="chevron-left" :tone="canPrevious() ? 'text' : 'subtle'" :size="22" />
+                        </Pressable>
+                        <Pressable class="nav-btn" accessibilityRole="button" accessibilityLabel="Next month" :disabled="!canNext()" @press="next">
+                            <p-icon name="chevron-right" :tone="canNext() ? 'text' : 'subtle'" :size="22" />
+                        </Pressable>
+                    </Row>
+                </Row>
+                <Row class="week">
+                    <Text p-for="$weekday in weekdays()" :key="$weekday" class="weekday" importantForAccessibility="no">{{ $weekday }}</Text>
+                </Row>
+                <Row p-for="$week in weeks()" :key="$week[0]['key']" class="week">
+                    <Pressable
+                        p-for="$day in $week"
+                        :key="$day['key']"
+                        class="cell"
+                        accessibilityRole="button"
+                        :accessibilityLabel="dayLabel($day)"
+                        :accessibilitySelected="$day['date'] === $modelValue"
+                        :disabled="!$day['allowed']"
+                        @press="pick($day['date'])"
+                    >
+                        <View :class="dayClass($day)">
+                            <Text :class="dayTextClass($day)">{{ $day['day'] }}</Text>
+                        </View>
+                    </Pressable>
+                </Row>
+                <Row class="actions">
+                    <p-btn p-if="$clearable && $modelValue !== null" variant="text" label="Clear" @press="clear" />
+                    <View class="spacer" />
+                    <p-btn variant="text" label="Today" @press="today" />
+                </Row>
+            </Column>
+        </BottomSheet>
+    </Column>
+</template>
+
+<style scoped>
+    .label-row { flex-direction: row; gap: 2px; }
+    .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
+    .trigger { justify-content: space-between; }
+    .trigger:pressed { background-color: var(--p-surface-muted); }
+    .sheet { padding: 8px 16px 12px 16px; gap: 4px; background-color: var(--p-surface); }
+    .head { flex-direction: row; align-items: center; justify-content: space-between; min-height: 52px; padding-left: 8px; }
+    .month { font-size: 18px; line-height: 24px; font-weight: 600; color: var(--p-text); }
+    .nav { flex-direction: row; gap: 4px; }
+    .nav-btn { width: 48px; height: 48px; border-radius: 24px; align-items: center; justify-content: center; }
+    .nav-btn:pressed { background-color: var(--p-surface-pressed); }
+    .week { flex-direction: row; justify-content: space-between; }
+    .weekday { flex: 1; text-align: center; font-size: 12px; line-height: 32px; font-weight: 600; color: var(--p-text-muted); }
+    .cell { flex: 1; height: 48px; align-items: center; justify-content: center; }
+    .day { width: 42px; height: 42px; align-items: center; justify-content: center; border-radius: 21px; }
+    .cell:pressed .day { background-color: var(--p-surface-pressed); }
+    .day-outside { opacity: 0.35; }
+    .day-today { border-width: 1px; border-color: var(--p-accent); }
+    .day-selected { background-color: var(--p-accent); }
+    .day-disabled { opacity: 0.25; }
+    .day-text { font-size: 16px; line-height: 22px; color: var(--p-text); }
+    .day-text-today { font-weight: 600; color: var(--p-accent-text); }
+    .day-text-selected { font-weight: 600; color: var(--p-on-accent); }
+    .actions { flex-direction: row; align-items: center; padding-top: 8px; }
+    .spacer { flex: 1; }
+
+    @media (prefers-color-scheme: dark) {
+        .required { color: var(--p-accent-dark); }
+        .trigger:pressed { background-color: var(--p-surface-muted-dark); }
+        .sheet { background-color: var(--p-surface-dark); }
+        .month { color: var(--p-text-dark); }
+        .nav-btn:pressed { background-color: var(--p-surface-pressed-dark); }
+        .weekday { color: var(--p-text-muted-dark); }
+        .cell:pressed .day { background-color: var(--p-surface-pressed-dark); }
+        .day-today { border-color: var(--p-accent-dark); }
+        .day-selected { background-color: var(--p-accent-dark); }
+        .day-text { color: var(--p-text-dark); }
+        .day-text-today { color: var(--p-accent-text-dark); }
+    }
+</style>

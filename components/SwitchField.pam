@@ -1,0 +1,133 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Switch row: a Material 3 switch on Android and an iOS-style switch on iOS,
+ * animated on the UI thread. The whole row is the touch target.
+ *
+ * <p-switch p-model="$notifications" label="Notifications" description="Push and email" />
+ */
+#[Tag('p-switch')]
+#[Event('model', 'bool')]
+#[Event('change', 'bool')]
+final class SwitchField extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public bool $modelValue = false,
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public ?string $description = null,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[Action]
+    public function toggled(mixed $value = null): void
+    {
+        $next = $value === null ? !$this->modelValue : ($value === true || $value === 1 || $value === '1');
+        if ($this->disabled || $next === $this->modelValue) {
+            return;
+        }
+        $this->modelValue = $next;
+        $this->emit('model', $next);
+        $this->emit('change', $next);
+    }
+
+    #[Action]
+    public function pressed(): void
+    {
+        $this->toggled(!$this->modelValue);
+    }
+
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? $this->label;
+    }
+}
+?>
+
+<template language="2">
+    <Pressable
+        :class="$disabled ? 'p-choice p-choice-disabled' : 'p-choice'"
+        accessibilityRole="switch"
+        :accessibilityLabel="a11yLabel()"
+        :accessibilityHint="$description ?? ''"
+        :accessibilityCheckedState="$modelValue ? 'checked' : 'unchecked'"
+        :disabled="$disabled"
+        :testID="$testId"
+        @press="pressed"
+    >
+        <Column p-if="$label !== '' || $description !== null" class="p-choice-text">
+            <Text p-if="$label !== ''" class="p-choice-label">{{ $label }}</Text>
+            <Text p-if="$description !== null" class="p-choice-description">{{ $description }}</Text>
+        </Column>
+        <View :class="$modelValue ? 'track track-on' : 'track'">
+            <View :class="$modelValue ? 'thumb thumb-on' : 'thumb'" />
+        </View>
+    </Pressable>
+</template>
+
+<style scoped>
+    .track {
+        width: 52px;
+        height: 32px;
+        margin-left: 8px;
+        padding: 0 4px;
+        border-radius: 16px;
+        border-width: 2px;
+        border-color: var(--p-border-strong);
+        background-color: var(--p-surface-muted);
+        justify-content: center;
+    }
+    .track-on { border-color: var(--p-accent); background-color: var(--p-accent); }
+    .thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        background-color: var(--p-border-strong);
+        transform: translateX(0px);
+        transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .thumb-on { width: 24px; height: 24px; border-radius: 12px; background-color: #FFFFFF; transform: translateX(16px); }
+
+    @media (platform: ios) {
+        .track { width: 51px; height: 31px; padding: 0 2px; border-width: 0; border-radius: 16px; background-color: #E9E9EA; }
+        .track-on { background-color: var(--p-accent); }
+        .thumb, .thumb-on {
+            width: 27px;
+            height: 27px;
+            border-radius: 14px;
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+        }
+        .thumb-on { transform: translateX(20px); }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .track { border-color: var(--p-border-strong-dark); background-color: var(--p-surface-muted-dark); }
+        .track-on { border-color: var(--p-accent-dark); background-color: var(--p-accent-dark); }
+        .thumb { background-color: var(--p-border-strong-dark); }
+        .thumb-on { background-color: #FFFFFF; }
+    }
+
+    @media (prefers-color-scheme: dark) and (platform: ios) {
+        .track { background-color: #39393D; }
+        .track-on { background-color: var(--p-accent-dark); }
+        .thumb { background-color: #FFFFFF; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .thumb { transition: none; }
+    }
+</style>

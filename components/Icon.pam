@@ -1,0 +1,161 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * The package's built-in glyphs, drawn with native views: crisp at any size,
+ * themed for light and dark, no font or image asset to ship.
+ *
+ * check, close, plus, minus, chevron-right, chevron-left, chevron-down,
+ * chevron-up, arrow-left, search, calendar, info, alert, dot.
+ */
+#[Tag('p-icon')]
+final class Icon extends Component
+{
+    public const array NAMES = [
+        'check', 'close', 'plus', 'minus', 'chevron-right', 'chevron-left',
+        'chevron-down', 'chevron-up', 'arrow-left', 'search', 'calendar',
+        'info', 'alert', 'dot',
+    ];
+
+    public function __construct(
+        #[Prop(immutable: false)] public string $name = 'dot',
+        #[Prop(immutable: false)] public string $tone = 'text',
+        #[Prop(immutable: false)] public float $size = 24,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+    ) {
+    }
+
+    public function scale(): float
+    {
+        return $this->size / 24;
+    }
+
+    public function toneClass(): string
+    {
+        return 'icon tone-'.$this->tone;
+    }
+
+    public function decorative(): string
+    {
+        return $this->accessibilityLabel === null ? 'no-hide-descendants' : 'yes';
+    }
+}
+?>
+
+<template language="2">
+    <View
+        :class="toneClass()"
+        :width="$size"
+        :height="$size"
+        :accessible="$accessibilityLabel !== null"
+        :accessibilityLabel="$accessibilityLabel ?? ''"
+        accessibilityRole="image"
+        :importantForAccessibility="decorative()"
+    >
+        <View class="canvas" :scaleX="scale()" :scaleY="scale()">
+            <Match value="$name">
+                <Case value="check"><View class="stroke check" /></Case>
+                <Case value="close"><View class="fill bar bar-45" /><View class="fill bar bar-135" /></Case>
+                <Case value="plus"><View class="fill bar" /><View class="fill bar bar-90" /></Case>
+                <Case value="minus"><View class="fill bar" /></Case>
+                <Case value="chevron-right"><View class="stroke chevron chevron-right" /></Case>
+                <Case value="chevron-left"><View class="stroke chevron chevron-left" /></Case>
+                <Case value="chevron-down"><View class="stroke chevron chevron-down" /></Case>
+                <Case value="chevron-up"><View class="stroke chevron chevron-up" /></Case>
+                <Case value="arrow-left"><View class="stroke chevron arrow-head" /><View class="fill arrow-shaft" /></Case>
+                <Case value="search"><View class="stroke lens" /><View class="fill handle" /></Case>
+                <Case value="calendar"><View class="stroke calendar" /><View class="fill calendar-pin calendar-pin-a" /><View class="fill calendar-pin calendar-pin-b" /></Case>
+                <Case value="info"><View class="stroke ring" /><View class="fill info-dot" /><View class="fill info-bar" /></Case>
+                <Case value="alert"><View class="stroke ring" /><View class="fill alert-bar" /><View class="fill alert-dot" /></Case>
+                <Default><View class="fill dot" /></Default>
+            </Match>
+        </View>
+    </View>
+</template>
+
+<style scoped>
+    .icon { align-items: center; justify-content: center; overflow: visible; }
+    .canvas { width: 24px; height: 24px; align-items: center; justify-content: center; }
+
+    .bar { position: absolute; width: 16px; height: 2px; border-radius: 1px; }
+    .bar-45 { transform: rotate(45deg); }
+    .bar-90 { transform: rotate(90deg); }
+    .bar-135 { transform: rotate(-45deg); }
+
+    .check {
+        position: absolute;
+        width: 7px;
+        height: 13px;
+        border-right-width: 2.25px;
+        border-bottom-width: 2.25px;
+        transform: translateY(-1.5px) rotate(45deg);
+    }
+
+    .chevron { position: absolute; width: 9px; height: 9px; }
+    .chevron-right { border-top-width: 2px; border-right-width: 2px; transform: translateX(-2px) rotate(45deg); }
+    .chevron-left { border-bottom-width: 2px; border-left-width: 2px; transform: translateX(2px) rotate(45deg); }
+    .chevron-down { border-right-width: 2px; border-bottom-width: 2px; transform: translateY(-2px) rotate(45deg); }
+    .chevron-up { border-top-width: 2px; border-left-width: 2px; transform: translateY(2px) rotate(45deg); }
+    .arrow-head { border-bottom-width: 2px; border-left-width: 2px; transform: translateX(-3px) rotate(45deg); }
+    .arrow-shaft { position: absolute; width: 14px; height: 2px; border-radius: 1px; transform: translateX(1px); }
+
+    .lens { position: absolute; width: 13px; height: 13px; border-width: 2px; border-radius: 7px; transform: translate(-2px, -2px); }
+    .handle { position: absolute; width: 7px; height: 2px; border-radius: 1px; transform: translate(5px, 5px) rotate(45deg); }
+
+    .calendar { position: absolute; width: 17px; height: 16px; border-width: 2px; border-top-width: 5px; border-radius: 3px; transform: translateY(1px); }
+    .calendar-pin { position: absolute; width: 2px; height: 5px; border-radius: 1px; top: 2px; }
+    .calendar-pin-a { left: 8px; }
+    .calendar-pin-b { left: 14px; }
+
+    .ring { position: absolute; width: 19px; height: 19px; border-width: 2px; border-radius: 10px; }
+    .info-dot { position: absolute; width: 2.5px; height: 2.5px; border-radius: 2px; transform: translateY(-4px); }
+    .info-bar { position: absolute; width: 2px; height: 7px; border-radius: 1px; transform: translateY(2px); }
+    .alert-bar { position: absolute; width: 2px; height: 7px; border-radius: 1px; transform: translateY(-2px); }
+    .alert-dot { position: absolute; width: 2.5px; height: 2.5px; border-radius: 2px; transform: translateY(4px); }
+    .dot { width: 8px; height: 8px; border-radius: 4px; }
+
+    .tone-text .fill { background-color: var(--p-text); }
+    .tone-text .stroke { border-color: var(--p-text); }
+    .tone-muted .fill { background-color: var(--p-text-muted); }
+    .tone-muted .stroke { border-color: var(--p-text-muted); }
+    .tone-subtle .fill { background-color: var(--p-text-subtle); }
+    .tone-subtle .stroke { border-color: var(--p-text-subtle); }
+    .tone-accent .fill { background-color: var(--p-accent); }
+    .tone-accent .stroke { border-color: var(--p-accent); }
+    .tone-on-accent .fill { background-color: var(--p-on-accent); }
+    .tone-on-accent .stroke { border-color: var(--p-on-accent); }
+    .tone-danger .fill { background-color: var(--p-danger); }
+    .tone-danger .stroke { border-color: var(--p-danger); }
+    .tone-success .fill { background-color: var(--p-success); }
+    .tone-success .stroke { border-color: var(--p-success); }
+    .tone-warning .fill { background-color: var(--p-warning); }
+    .tone-warning .stroke { border-color: var(--p-warning); }
+    .tone-info .fill { background-color: var(--p-info); }
+    .tone-info .stroke { border-color: var(--p-info); }
+
+    @media (prefers-color-scheme: dark) {
+        .tone-text .fill { background-color: var(--p-text-dark); }
+        .tone-text .stroke { border-color: var(--p-text-dark); }
+        .tone-muted .fill { background-color: var(--p-text-muted-dark); }
+        .tone-muted .stroke { border-color: var(--p-text-muted-dark); }
+        .tone-subtle .fill { background-color: var(--p-text-subtle-dark); }
+        .tone-subtle .stroke { border-color: var(--p-text-subtle-dark); }
+        .tone-accent .fill { background-color: var(--p-accent-dark); }
+        .tone-accent .stroke { border-color: var(--p-accent-dark); }
+        .tone-danger .fill { background-color: var(--p-danger-dark); }
+        .tone-danger .stroke { border-color: var(--p-danger-dark); }
+        .tone-success .fill { background-color: var(--p-success-dark); }
+        .tone-success .stroke { border-color: var(--p-success-dark); }
+        .tone-warning .fill { background-color: var(--p-warning-dark); }
+        .tone-warning .stroke { border-color: var(--p-warning-dark); }
+        .tone-info .fill { background-color: var(--p-info-dark); }
+        .tone-info .stroke { border-color: var(--p-info-dark); }
+    }
+</style>

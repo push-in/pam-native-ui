@@ -43,7 +43,7 @@ final class TextField extends Component
         #[Prop(immutable: false)] public ?string $suffix = null,
         #[Prop(immutable: false)] public ?string $autocomplete = null,
         #[Prop(immutable: false)] public string $returnKey = 'done',
-        #[Prop(immutable: false)] public string $sync = 'immediate',
+        #[Prop(immutable: false)] public string $sync = 'debounced',
         #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
         #[Prop(immutable: false)] public ?string $testId = null,
     ) {

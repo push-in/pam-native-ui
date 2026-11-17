@@ -1,0 +1,175 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pam\NativeUi\Components;
+
+use Pam\Native\Attributes\Action;
+use Pam\Native\Attributes\Event;
+use Pam\Native\Attributes\Prop;
+use Pam\Native\Attributes\Slot;
+use Pam\Native\Attributes\Tag;
+use Pam\Native\Component;
+
+/**
+ * Button with five variants and three sizes. A loading or disabled button
+ * ignores presses, so a double tap never submits twice.
+ *
+ * <p-btn label="Save" @press="save" :loading="$saving" />
+ * <p-btn variant="tonal" icon="plus" @press="add">Add item</p-btn>
+ */
+#[Tag('p-btn')]
+#[Event('press', 'null')]
+#[Slot('slot', 0, null)]
+final class Button extends Component
+{
+    public function __construct(
+        #[Prop(immutable: false)] public string $label = '',
+        #[Prop(immutable: false)] public string $variant = 'filled',
+        #[Prop(immutable: false)] public string $size = 'md',
+        #[Prop(immutable: false)] public ?string $icon = null,
+        #[Prop(immutable: false)] public bool $block = false,
+        #[Prop(immutable: false)] public bool $loading = false,
+        #[Prop(immutable: false)] public bool $disabled = false,
+        #[Prop(immutable: false)] public ?string $accessibilityLabel = null,
+        #[Prop(immutable: false)] public ?string $testId = null,
+    ) {
+    }
+
+    #[Action]
+    public function press(): void
+    {
+        if ($this->loading || $this->disabled) {
+            return;
+        }
+        $this->emit('press');
+    }
+
+    public function rootClass(): string
+    {
+        $classes = ['btn', 'v-'.$this->variant, 's-'.$this->size];
+        if ($this->block) {
+            $classes[] = 'btn-block';
+        }
+        if ($this->disabled) {
+            $classes[] = 'btn-disabled';
+        }
+
+        return implode(' ', $classes);
+    }
+
+    public function textClass(): string
+    {
+        return 'label l-'.$this->variant.' ls-'.$this->size;
+    }
+
+    public function iconColor(): string
+    {
+        return match ($this->variant) {
+            'filled', 'danger' => 'on-accent',
+            'tonal', 'outlined', 'text' => 'accent',
+            default => 'text',
+        };
+    }
+
+    public function spinnerColor(): string
+    {
+        return match ($this->variant) {
+            'filled', 'danger' => '#FFFFFF',
+            default => '#F53003',
+        };
+    }
+
+    public function a11yLabel(): string
+    {
+        return $this->accessibilityLabel ?? $this->label;
+    }
+}
+?>
+
+<template language="2">
+    <Pressable
+        :class="rootClass()"
+        accessibilityRole="button"
+        :accessibilityLabel="a11yLabel()"
+        :accessibilityBusy="$loading"
+        :disabled="$disabled || $loading"
+        :testID="$testId"
+        @press="press"
+    >
+        <Row class="content">
+            <ActivityIndicator p-if="$loading" :color="spinnerColor()" indicatorSize="small" class="spinner" />
+            <p-icon p-else-if="$icon !== null" :name="$icon" :tone="iconColor()" :size="20" />
+            <Text p-if="$label !== ''" :class="textClass()" numberOfLines="1">{{ $label }}</Text>
+            <Slot />
+        </Row>
+    </Pressable>
+</template>
+
+<style scoped>
+    .btn {
+        min-height: 48px;
+        padding: 0 24px;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        transform: scale(1);
+        transition: transform 120ms ease-out, opacity 120ms ease-out;
+    }
+    .btn:pressed { transform: scale(0.98); }
+    .btn-block { align-self: stretch; }
+    .s-md { min-height: 48px; }
+    .s-sm { min-height: 40px; padding: 0 16px; }
+    .s-lg { min-height: 56px; padding: 0 28px; }
+    .btn-disabled { opacity: 0.4; }
+    .content { flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
+    .spinner { width: 20px; height: 20px; }
+
+    .v-filled { background-color: var(--p-accent); }
+    .v-filled:pressed { background-color: var(--p-accent-pressed); }
+    .v-danger { background-color: var(--p-danger); }
+    .v-tonal { background-color: var(--p-accent-soft); }
+    .v-tonal:pressed { background-color: var(--p-accent-soft-pressed); }
+    .v-outlined { border-width: 1px; border-color: var(--p-border-strong); background-color: transparent; }
+    .v-outlined:pressed { background-color: var(--p-surface-pressed); }
+    .v-text { padding: 0 12px; background-color: transparent; }
+    .label { text-align: center; }
+    .v-text:pressed { background-color: var(--p-accent-soft); }
+    .v-neutral { background-color: var(--p-surface-muted); }
+    .v-neutral:pressed { background-color: var(--p-surface-pressed); }
+
+    .l-filled, .l-danger { color: var(--p-on-accent); }
+    .l-tonal, .l-outlined, .l-text { color: var(--p-accent-text); }
+    .l-neutral { color: var(--p-text); }
+    .ls-md { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: 0.1px; }
+    .ls-sm { font-size: 14px; line-height: 20px; font-weight: 600; }
+    .ls-lg { font-size: 17px; line-height: 24px; font-weight: 600; }
+
+    @media (platform: ios) {
+        .btn { border-radius: 12px; min-height: 50px; }
+        .s-sm { border-radius: 10px; min-height: 40px; }
+        .s-lg { border-radius: 14px; min-height: 56px; }
+        .ls-md { font-size: 17px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .v-filled { background-color: var(--p-accent-dark); }
+        .v-filled:pressed { background-color: var(--p-accent-pressed-dark); }
+        .v-danger { background-color: var(--p-danger-dark); }
+        .v-tonal { background-color: var(--p-accent-soft-dark); }
+        .v-tonal:pressed { background-color: var(--p-accent-soft-pressed-dark); }
+        .v-outlined { border-color: var(--p-border-dark); }
+        .v-outlined:pressed { background-color: var(--p-surface-pressed-dark); }
+        .v-text:pressed { background-color: var(--p-accent-soft-dark); }
+        .v-neutral { background-color: var(--p-surface-muted-dark); }
+        .v-neutral:pressed { background-color: var(--p-surface-pressed-dark); }
+        .l-tonal, .l-outlined, .l-text { color: var(--p-accent-text-dark); }
+        .l-neutral { color: var(--p-text-dark); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .btn { transition: none; }
+        .btn:pressed { transform: none; }
+    }
+</style>
