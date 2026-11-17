@@ -74,10 +74,11 @@ class Node:
 
     def root(self) -> "Node":
         """The surface the node draws on: the nearest modal (a sheet, dialog
-        or snackbar host) above it, else the screen root."""
+        or snackbar host) or absolutely positioned overlay (a toast floats
+        over content by design) above it, else the screen root."""
         node = self
         while node.parent is not None:
-            if node.raw["kind"] == "MODAL":
+            if node.raw["kind"] == "MODAL" or node.raw.get("position") == 2:
                 return node
             node = node.parent
         return node
