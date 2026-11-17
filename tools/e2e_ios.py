@@ -3,7 +3,7 @@
 
 Prints the JSON step list for the PAM Native iOS UI driver (pam-native
 `PamNativeUITests`, docs/ios-ui-driver.md). `expectText` steps read the PHP
-state JSON (testID "php-state") back from the screen, so a step passes only
+state JSON (testId "php-state") back from the screen, so a step passes only
 when the event reached PHP and PHP re-rendered.
 
     python3 tools/e2e_ios.py [--suite all] > e2e-ios.json
@@ -45,8 +45,8 @@ def controls() -> list[dict]:
     day = today.strftime("%A, %B ") + str(today.day) + today.strftime(", %Y")
     return [
         *open_screen("Controls"),
-        {"tap": "Text field"}, {"type": "hello pam\n"}, state('"text":"hello pam"'),
-        {"tap": "Textarea"}, {"type": "multi line"}, state('"notes":"multi line"'),
+        {"tapField": "Text field"}, {"type": "hello pam\n"}, state('"text":"hello pam"'),
+        {"tapField": "Textarea"}, {"type": "multi line"}, state('"notes":"multi line"'),
         {"tapXY": [0.5, 0.12]},
         {"tap": "Date, not set"}, {"tap": day}, state(f'"date":"{today.isoformat()}"'),
         {"tap": "Choice"},
@@ -73,9 +73,9 @@ def forms() -> list[dict]:
         {"waitFor": "Fix the highlighted fields and try again."},
         {"expect": "Enter your email."},
         {"shot": "forms-errors"},
-        {"tap": "Name, required"}, {"type": "Ada Lovelace"},
-        {"tap": "Email, required"}, {"type": "ada@pam.dev"},
-        {"tap": "Password, required"}, {"type": "analytical\n"},
+        {"tapField": "Name, required"}, {"type": "Ada Lovelace"},
+        {"tapField": "Email, required"}, {"type": "ada@pam.dev"},
+        {"tapField": "Password, required"}, {"type": "analytical\n"},
         {"tap": "Role, required, none selected"}, {"tap": "Developer"},
         {"tap": "I accept the terms"},
         {"tap": "Create account"},
@@ -104,7 +104,7 @@ def events() -> list[dict]:
         {"tap": "Right"}, last("segmented.change:y"), state('"segment":"y"'),
         {"tap": "Increase"}, last("stepper.change:2"),
         {"tap": "Increase"}, {"tap": "Increase"}, state('"count":3'),
-        {"tap": "Events field"}, last("field.focus"),
+        {"tapField": "Events field"}, last("field.focus"),
         {"type": "42\n"}, state('"field.submit:42"', '"name":"42"'),
         {"tap": "Pressable card"}, state('"field.blur"'),
         {"tap": "Reset events"}, state('"events":[]', '"alert":true'),
@@ -136,7 +136,7 @@ def lists() -> list[dict]:
         *open_screen("Lists"),
         {"expect": "500 people"}, {"shot": "lists"},
         {"fling": "up"}, {"fling": "up"}, {"fling": "up"}, {"wait": 1}, {"shot": "lists-scrolled"},
-        {"tap": "Search people"}, {"type": "zzzz\n"}, {"waitFor": "Nobody found"}, {"shot": "lists-empty"},
+        {"tapField": "Search people"}, {"type": "zzzz\n"}, {"waitFor": "Nobody found"}, {"shot": "lists-empty"},
     ]
 
 

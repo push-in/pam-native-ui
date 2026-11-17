@@ -71,7 +71,7 @@ final class Overlays extends Component
         <p-dialog p-model="$dialog" title="Delete project?" text="This removes the project and its history. It cannot be undone." confirmLabel="Delete" destructive="true" @confirm="deleted" @cancel="cancelled" />
         <p-snackbar p-model="$snackbar" text="Changes saved" actionLabel="Undo" @action="undo" />
         <template #footer>
-            <Text class="log" testID="php-state">{{ state() }}</Text>
+            <Text class="log" testId="php-state">{{ state() }}</Text>
         </template>
     </p-screen>
 </template>

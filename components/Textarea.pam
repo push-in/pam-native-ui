@@ -116,7 +116,7 @@ final class Textarea extends Component
 ?>
 
 <template language="2">
-    <Column class="p-field" :testID="$testId">
+    <Column class="p-field" :testId="$testId">
         <Row p-if="$label !== ''" class="label-row">
             <Text class="p-field-label">{{ $label }}</Text>
             <Text p-if="$required" class="required" importantForAccessibility="no">*</Text>

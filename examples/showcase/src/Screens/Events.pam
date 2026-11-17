@@ -92,7 +92,7 @@ final class Events extends Component
         <p-text-field p-model="$name" label="Events field" returnKey="done" @focus="focused" @blur="blurred" @submit="submitted" />
         <p-btn variant="text" label="Reset events" @press="reset" />
         <template #footer>
-            <Text class="mono" testID="php-state">{{ state() }}</Text>
+            <Text class="mono" testId="php-state">{{ state() }}</Text>
         </template>
     </p-screen>
 </template>

@@ -59,7 +59,7 @@ final class RadioGroup extends Component
 ?>
 
 <template language="2">
-    <Column class="root" accessibilityRole="radiogroup" :accessibilityLabel="$label" :testID="$testId">
+    <Column class="root" accessibilityRole="radiogroup" :accessibilityLabel="$label" :testId="$testId">
         <Text p-if="$label !== ''" class="p-field-label">{{ $label }}</Text>
         <Pressable
             p-for="$option in rows()"

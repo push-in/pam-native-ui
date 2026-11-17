@@ -3,7 +3,7 @@
 
 Drives the showcase app (examples/showcase) with adb and UI Automator and reads
 PHP state back from the screen. Controls, Events and Overlays each print their
-component state as JSON (a Text with testID "php-state"), re-rendered by PHP
+component state as JSON (a Text with testId "php-state"), re-rendered by PHP
 after every change, so a check passes only when the event reached PHP.
 
     python3 tools/e2e_android.py --serial emulator-5554 \

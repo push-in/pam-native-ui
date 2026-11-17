@@ -70,7 +70,7 @@ final class ListItem extends Component
         :accessibilityRole="interactive() ? 'button' : 'text'"
         :accessibilityLabel="a11yLabel()"
         :disabled="$disabled || !interactive()"
-        :testID="$testId"
+        :testId="$testId"
         @press="press"
     >
         <Row class="row">

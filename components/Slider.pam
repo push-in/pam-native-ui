@@ -170,7 +170,7 @@ final class Slider extends Component
 ?>
 
 <template language="2">
-    <Column class="root" :testID="$testId">
+    <Column class="root" :testId="$testId">
         <Row p-if="$label !== '' || $showValue" class="head">
             <Text p-if="$label !== ''" class="p-field-label label">{{ $label }}</Text>
             <Row p-if="$showValue" class="value-row">

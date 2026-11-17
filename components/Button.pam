@@ -94,7 +94,7 @@ final class Button extends Component
         :accessibilityLabel="a11yLabel()"
         :accessibilityBusy="$loading"
         :disabled="$disabled || $loading"
-        :testID="$testId"
+        :testId="$testId"
         @press="press"
     >
         <Row class="content">
