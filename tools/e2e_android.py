@@ -54,6 +54,16 @@ class Device:
         return subprocess.run(["adb", "-s", self.serial, *args], check=True, capture_output=True, text=True).stdout
 
     def insets(self) -> None:
+        # The app's own view of the display (rotation included), when the
+        # debug build publishes its layout; else the physical size and bars.
+        try:
+            snapshot = geometry.capture(self.serial, self.package, attempts=20)
+            self.width, self.height = snapshot["screen"]
+            left, top, right, bottom = snapshot["insets"]
+            self.top_inset, self.bottom_inset = top, bottom
+            return
+        except (RuntimeError, subprocess.CalledProcessError, ValueError, KeyError):
+            pass
         size = re.search(r"(\d+)x(\d+)", self.adb("shell", "wm", "size").splitlines()[-1])
         if size:
             self.width, self.height = int(size.group(1)), int(size.group(2))
@@ -237,7 +247,7 @@ class Suite:
         self.results.append((name, bool(condition), detail))
         print(("PASS " if condition else "FAIL ") + name + (f" ({detail})" if detail else ""), flush=True)
 
-    def safe(self, screen: str) -> None:
+    def safe(self, screen: str, golden: bool = True) -> None:
         """Geometry of the current screen (layout snapshot) plus its golden."""
         try:
             snapshot = geometry.capture(self.d.serial, self.d.package)
@@ -245,9 +255,11 @@ class Suite:
             bad = self.d.unsafe()
             self.check(f"{screen}: nothing under the system bars", not bad, ", ".join(bad[:4]) or str(error))
             return
+        label = screen if self.mode in ("light", "dark") else f"{screen} ({self.mode})"
         for name, values in geometry.check(snapshot).items():
-            self.check(f"{screen}: {name}", not values, "; ".join(values[:3]))
-        self.golden(screen)
+            self.check(f"{label}: {name}", not values, "; ".join(values[:3]))
+        if golden:
+            self.golden(screen)
 
     def golden(self, screen: str) -> None:
         if self.golden_dir is None:
@@ -335,6 +347,7 @@ class Suite:
             if d.find(desc="Brazil") is not None:
                 break
             d.swipe(x, d.height * 50 // 100, x, d.height * 90 // 100, 150)
+        time.sleep(1.0)  # let the fling settle: a tap on a moving list only stops it
         d.tap(desc="Brazil", scroll=False)
         self.check("select (virtualized list in a sheet)", d.state()["country"] == "br")
         d.top()
@@ -576,6 +589,53 @@ class Suite:
         self.check("light appearance restores", not self.background_dark())
         d.tap(desc="System", prefix=True)
 
+    # -- Sweep: font scale, RTL and landscape on every screen (emulator) -------
+    def sweep(self) -> None:
+        """Geometry of every screen at 0.85x, 1.3x and 2x font scale, in RTL
+        and in landscape. It changes system settings, so it runs on emulators
+        only and restores them."""
+        d = self.d
+        if not d.serial.startswith("emulator-"):
+            self.check("sweep: skipped on a physical device", True)
+            return
+        screens = ("Forms", "Controls", "Events", "Feedback", "Overlays", "Lists")
+        settings = {
+            "font": d.adb("shell", "settings", "get", "system", "font_scale").strip(),
+            "rotation": d.adb("shell", "settings", "get", "system", "accelerometer_rotation").strip(),
+        }
+
+        def visit(label: str) -> None:
+            d.launch()
+            self.mode = label
+            self.safe("catalog", golden=False)
+            for title in screens:
+                self.open(title)
+                self.safe(title.lower(), golden=False)
+                d.screenshot(f"{title.lower()}-{label}")
+            self.mode = "light"
+
+        try:
+            for scale in ("0.85", "1.3", "2.0"):
+                d.adb("shell", "settings", "put", "system", "font_scale", scale)
+                visit(f"font{scale}")
+            d.adb("shell", "settings", "put", "system", "font_scale", "1.0")
+            d.adb("shell", "settings", "put", "global", "debug.force_rtl", "1")
+            visit("rtl")
+            d.adb("shell", "settings", "put", "global", "debug.force_rtl", "0")
+            d.adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
+            d.adb("shell", "settings", "put", "system", "user_rotation", "1")
+            time.sleep(1)
+            d.insets()
+            visit("landscape")
+        finally:
+            d.adb("shell", "settings", "put", "system", "font_scale", settings["font"] if settings["font"] not in ("", "null") else "1.0")
+            d.adb("shell", "settings", "put", "global", "debug.force_rtl", "0")
+            d.adb("shell", "settings", "put", "system", "user_rotation", "0")
+            d.adb("shell", "settings", "put", "system", "accelerometer_rotation", settings["rotation"] if settings["rotation"] in ("0", "1") else "0")
+            time.sleep(1)
+            d.insets()
+            d.launch()
+
     def background_dark(self) -> bool:
         from io import BytesIO
 
@@ -599,7 +659,7 @@ def main() -> int:
     args = parser.parse_args()
     device = Device(args.serial, args.package, args.shots)
     suite = Suite(device, args.golden, args.update_golden)
-    names = ["controls", "forms", "events", "overlays", "lists", "feedback", "theme"]
+    names = ["controls", "forms", "events", "overlays", "lists", "feedback", "theme", "sweep"]
     chosen = names if args.suite == "all" else args.suite.split(",")
     device.launch()
     for name in chosen:

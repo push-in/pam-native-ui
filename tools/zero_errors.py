@@ -63,7 +63,15 @@ def app_lines(serial: str, package: str) -> list[str]:
         raise RuntimeError(f"{package} is not running")
     out = adb(serial, "logcat", "-d", "-v", "brief", f"--pid={pid[0]}", "*:W")
     noise = re.compile("|".join(PLATFORM_NOISE))
-    return [line for line in out.splitlines() if re.match(r"^[WEF]/", line) and not noise.search(line)]
+    lines = []
+    for line in out.splitlines():
+        if not re.match(r"^[WEF]/", line):
+            continue
+        # "W/Tag( 1234): message" -> "W/Tag: message" before matching noise.
+        plain = re.sub(r"^([WEF])/\s*(.*?)\s*\(\s*\d+\):", r"\1/\2:", line)
+        if not noise.search(plain):
+            lines.append(line)
+    return lines
 
 
 def gate(serial: str, package: str) -> int:
