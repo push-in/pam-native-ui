@@ -3,7 +3,7 @@
 ## 2.1.0 - 2026-11-17
 
 Measured, not eyeballed: every component and event is driven on a device and
-its geometry is checked to the pixel. Requires PAM Native 1.53.2.
+its geometry is checked to the pixel. Requires PAM Native 1.53.3.
 
 - **Device E2E for every component and event.** The showcase has an Events
   screen that logs every event as PHP receives it. `tools/e2e_android.py`
@@ -30,7 +30,7 @@ its geometry is checked to the pixel. Requires PAM Native 1.53.2.
 - Fixed: `testId` on `p-btn`, `p-card`, `p-list-item`, the fields and the
   choices reaches the native view (components wrote `testID`, which PAM
   Native dropped before 1.52).
-- Fixed through PAM Native 1.53.2: the confirm dialog keeps its 320 dp card
+- Fixed through PAM Native 1.53.3: the confirm dialog keeps its 320 dp card
   on Android (it shrank to 272 dp and cut "Cancel" and "Delete" to "C..."),
   and switching light/dark at runtime no longer leaves a blank screen on iOS
   after the keyboard has been shown.
