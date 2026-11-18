@@ -31,6 +31,11 @@ import geometry  # noqa: E402
 import golden as goldens  # noqa: E402
 
 CATALOG = "Every PAM Native UI component, on device."
+CATALOG_MARKERS = (
+    "COMPONENTS", "APPEARANCE", "Validation, errors and submit", "Every input, bound to PHP",
+    "Every event, as PHP receives it", "500 virtualized rows", "Alerts, progress, skeletons",
+    "Sheets, dialogs, snackbars",
+)
 # Catalog entry -> the title of the screen it opens.
 SCREENS = {"Forms": "Create account", "Lists": "People"}
 Node = dict[str, str]
@@ -173,7 +178,8 @@ class Device:
             if self.find(text=CATALOG) is not None:
                 return
             # The catalog keeps its scroll position: its header may be above.
-            if self.find(text="COMPONENTS") is not None or self.find(text="APPEARANCE") is not None:
+            # In landscape only a few rows fit: any row subtitle means the catalog.
+            if any(self.find(text=marker) is not None for marker in CATALOG_MARKERS):
                 self.top()
                 continue
             self.back()
