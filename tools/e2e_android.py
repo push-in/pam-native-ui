@@ -292,14 +292,18 @@ class Suite:
 
         name = f"{screen}-{self.mode}".replace(" ", "-").replace("(", "").replace(")", "")
         work = Path(tempfile.mkdtemp(prefix="pam-golden-"))
-        first, second = work / "a.png", work / "b.png"
-        for path in (first, second):
+        # Four captures over ~1.6 s: an indeterminate bar visits most of its
+        # track, so the masked region covers where it can be in the golden.
+        captures = [work / f"{letter}.png" for letter in "abcd"]
+        for path in captures:
             time.sleep(0.4)
             with open(path, "wb") as handle:
                 subprocess.run(["adb", "-s", self.d.serial, "exec-out", "screencap", "-p"], check=True, stdout=handle)
+        second = captures[-1]
         d = self.d
         masks = [(0, 0, d.width, d.top_inset), (0, d.height - d.bottom_inset, d.width, d.height)]
-        masks += goldens.animated_regions(first, second)
+        moving = [box for before, after in zip(captures, captures[1:]) for box in goldens.animated_regions(before, after)]
+        masks += goldens.merge_nearby(moving)
         target = self.golden_dir / f"{name}.png"
         if self.update or not target.exists():
             target.parent.mkdir(parents=True, exist_ok=True)
