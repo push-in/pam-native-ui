@@ -199,12 +199,18 @@ class Device:
         """Bring a node fully on screen: look down first, then back up."""
         x = self.width // 2
         low, high = self.height * 7 // 10, self.height * 4 // 10
+        last = None
         for step in range(attempts * 2 + 1):
             node = self.find(text=text, desc=desc, prefix=prefix)
             if node is not None:
                 y1, y2 = bounds(node)[1], bounds(node)[3]
                 if y1 > self.top_inset and y2 < self.height - self.bottom_inset - 24:
                     return node
+                # The end of the scroll (a short landscape window): the row
+                # cannot clear the 24 px margin but is fully on screen.
+                if (y1, y2) == last and y1 > self.top_inset and y2 <= self.height - self.bottom_inset:
+                    return node
+                last = (y1, y2)
             if step < attempts:
                 self.swipe(x, low, x, high)
             else:
