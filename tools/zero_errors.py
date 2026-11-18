@@ -51,6 +51,7 @@ PLATFORM_NOISE = [
     r"HWUI\s*: (Unknown dataspace|Failed to initialize 101010-2|Failed to choose config)",
     r"FrameTracker: Missed SF frame",  # system jank tracker; jank is measured with gfxinfo
     r"RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection",  # IME after the field blurs
+    r"HWUI\s*: Image decoding logging dropped",  # HWUI rate-limiting its own decode trace on a busy CI emulator
 ]
 
 
