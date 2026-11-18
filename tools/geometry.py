@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import secrets
 import subprocess
 import sys
@@ -300,6 +301,25 @@ def check(snapshot: dict, allow_truncation: tuple[str, ...] = ()) -> dict[str, l
     return findings
 
 
+def painted(path: str) -> list[str]:
+    """The screenshot saved beside a snapshot shows what the layout reports.
+    A blank frame over a full layout means something opaque covers the app
+    (the iOS light/dark switch once painted UIKit's keyboard window)."""
+    image_path = os.path.splitext(path)[0] + ".png"
+    if not os.path.isfile(image_path):
+        return []
+    try:
+        from PIL import Image
+    except ImportError:
+        return []
+    image = Image.open(image_path).convert("L")
+    width, height = image.size
+    body = image.crop((0, height // 8, width, height * 9 // 10))
+    histogram = body.histogram()
+    share = max(histogram) / max(1, sum(histogram))
+    return [f"{os.path.basename(image_path)}: {share:.1%} of the screen is one colour"] if share > 0.995 else []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--serial", default=None)
@@ -312,6 +332,7 @@ def main() -> int:
         for path in args.files:
             with open(path) as handle:
                 findings = check(json.load(handle))
+            findings["painted"] = painted(path)
             print(f"== {path}")
             for name, values in findings.items():
                 print(("PASS " if not values else "FAIL ") + name + "".join(f"\n    {value}" for value in values[:20]))
