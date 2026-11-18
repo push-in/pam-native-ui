@@ -13,7 +13,7 @@ use Pam\Native\AppearanceMode;
  */
 final class NativeUi
 {
-    public const string VERSION = '2.1.0';
+    public const string VERSION = '2.2.0';
 
     private function __construct()
     {

@@ -188,6 +188,8 @@ use Pam\NativeUi\NativeUi;
 NativeUi::appearance(AppearanceMode::Dark); // System, Light or Dark; persisted natively
 ```
 
+Bring your own brand with a tokens file (`"theme": {"tokens": "src/theme.css"}` in `pam-native.json`): `:root { --p-accent: #166534; --p-accent-dark: #4ade80; }` recolours every component, resolved at build time. See [Your brand](docs/theming.md#your-brand).
+
 Set the window colours in `pam-native.json` so the first frame matches (`"appearance": {"light": {"background": "#FDFDFC"}, "dark": {"background": "#0A0A0A"}}`). See [docs/theming.md](docs/theming.md).
 
 <a id="verification"></a>
