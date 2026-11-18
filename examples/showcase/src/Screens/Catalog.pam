@@ -44,7 +44,7 @@ final class Catalog extends Component
     <p-screen title="Native UI" subtitle="Every PAM Native UI component, on device.">
         <p-card variant="accent">
             <Column class="hero">
-                <p-badge label="2.0" />
+                <p-badge label="2.1" />
                 <Text class="hero-title">Forms that talk to PHP.</Text>
                 <Text class="hero-text">Two-way binding, validation, sheets and a PAM theme in light and dark.</Text>
             </Column>
@@ -61,6 +61,7 @@ final class Catalog extends Component
         <p-section title="Components">
             <p-list-item title="Forms" subtitle="Validation, errors and submit" icon="check" chevron="true" testId="nav-forms" @press="open('forms')" />
             <p-list-item title="Controls" subtitle="Every input, bound to PHP" icon="plus" chevron="true" testId="nav-controls" @press="open('controls')" />
+            <p-list-item title="Events" subtitle="Every event, as PHP receives it" icon="check" chevron="true" testId="nav-events" @press="open('events')" />
             <p-list-item title="Lists" subtitle="500 virtualized rows" icon="search" chevron="true" testId="nav-lists" @press="open('lists')" />
             <p-list-item title="Feedback" subtitle="Alerts, progress, skeletons" icon="info" chevron="true" testId="nav-feedback" @press="open('feedback')" />
             <p-list-item title="Overlays" subtitle="Sheets, dialogs, snackbars" icon="chevron-up" chevron="true" :divider="false" testId="nav-overlays" @press="open('overlays')" />

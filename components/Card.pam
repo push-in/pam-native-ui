@@ -58,7 +58,7 @@ final class Card extends Component
         :class="rootClass()"
         accessibilityRole="button"
         :accessibilityLabel="a11yLabel()"
-        :testID="$testId"
+        :testId="$testId"
         @press="press"
     >
         <Column p-if="$title !== null || $subtitle !== null" class="head">
@@ -68,7 +68,7 @@ final class Card extends Component
         <Slot />
         <Row p-if="($actions ?? []) !== []" class="actions"><Slot name="actions" /></Row>
     </Pressable>
-    <Column p-else :class="rootClass()" :testID="$testId">
+    <Column p-else :class="rootClass()" :testId="$testId">
         <Column p-if="$title !== null || $subtitle !== null" class="head" accessibilityRole="header">
             <Text p-if="$title !== null" class="title">{{ $title }}</Text>
             <Text p-if="$subtitle !== null" class="subtitle">{{ $subtitle }}</Text>

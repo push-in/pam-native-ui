@@ -72,7 +72,7 @@ final class Checkbox extends Component
             :accessibilityHint="$error ?? ($description ?? '')"
             :accessibilityCheckedState="checkedState()"
             :disabled="$disabled"
-            :testID="$testId"
+            :testId="$testId"
             @press="toggle"
         >
             <View :class="boxClass()">

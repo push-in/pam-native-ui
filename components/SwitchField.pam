@@ -65,7 +65,7 @@ final class SwitchField extends Component
         :accessibilityHint="$description ?? ''"
         :accessibilityCheckedState="$modelValue ? 'checked' : 'unchecked'"
         :disabled="$disabled"
-        :testID="$testId"
+        :testId="$testId"
         @press="pressed"
     >
         <Column p-if="$label !== '' || $description !== null" class="p-choice-text">

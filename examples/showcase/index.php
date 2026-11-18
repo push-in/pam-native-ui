@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Screens\Catalog;
 use App\Screens\Controls;
+use App\Screens\Events;
 use App\Screens\Feedback;
 use App\Screens\Forms;
 use App\Screens\Lists;
@@ -22,6 +23,7 @@ App::run(Route::stack(
         Route::screen('catalog', Catalog::class);
         Route::screen('forms', Forms::class);
         Route::screen('controls', Controls::class);
+        Route::screen('events', Events::class);
         Route::screen('lists', Lists::class);
         Route::screen('feedback', Feedback::class);
         Route::screen('overlays', Overlays::class);

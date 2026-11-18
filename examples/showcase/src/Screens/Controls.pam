@@ -75,7 +75,7 @@ final class Controls extends Component
             <p-segmented p-model="$period" :options="['day' => 'Day', 'week' => 'Week', 'month' => 'Month']" />
         </Column>
         <p-card variant="filled" title="PHP state">
-            <Text class="mono" accessibilityLabel="php-state" testID="php-state">{{ state() }}</Text>
+            <Text class="mono" testId="php-state">{{ state() }}</Text>
         </p-card>
     </p-screen>
 </template>

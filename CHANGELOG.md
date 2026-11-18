@@ -1,5 +1,43 @@
 # Changelog
 
+## 2.1.0 - 2026-11-17
+
+Measured, not eyeballed: every component and event is driven on a device and
+its geometry is checked to the pixel. Requires PAM Native 1.53.3.
+
+- **Device E2E for every component and event.** The showcase has an Events
+  screen that logs every event as PHP receives it. `tools/e2e_android.py`
+  drives every input, button, chip, card, list item, alert, tab, segmented
+  control, stepper, field focus/submit/blur, sheet (apply, back, scrim,
+  swipe), dialog (confirm, cancel, back) and snackbar (action, timeout), in
+  light and dark, and fails unless PHP state matches. `tools/e2e_ios.py`
+  emits the same scenarios for the PAM Native iOS UI driver.
+- **Geometry checks at every state** (`tools/geometry.py`, from PAM Native's
+  layout snapshot): touch targets of at least 48dp (44pt on iOS), nothing
+  under the status, navigation or gesture bar, no truncated or overlapping
+  text, siblings that share an edge share its pixels, even spacing, shared
+  baselines and pixel-centred icons.
+- **Golden screenshots** (`tools/golden.py`, documented tolerance) and a
+  **zero-errors gate** (`tools/zero_errors.py`: no warning or error from the
+  app in logcat, also after a multi-file hot reload). CI runs all of it on an
+  Android emulator (`.github/workflows/e2e.yml`).
+- `p-segmented`: each segment is a 48dp touch target; the visible pill is
+  40dp with 4dp gaps.
+- `p-sheet`, `p-select` and `p-date-input`: the last row keeps its spacing
+  above the gesture bar or home indicator (it used to sit flush on it).
+- `p-select`: long option lists (more than 8) render with a virtualized list
+  in the sheet; the search field is 48dp tall.
+- Fixed: `testId` on `p-btn`, `p-card`, `p-list-item`, the fields and the
+  choices reaches the native view (components wrote `testID`, which PAM
+  Native dropped before 1.52).
+- Fixed through PAM Native 1.53.3: the confirm dialog keeps its 320 dp card
+  on Android (it shrank to 272 dp and cut "Cancel" and "Delete" to "C..."),
+  and switching light/dark at runtime no longer leaves a blank screen on iOS
+  after the keyboard has been shown.
+- Fixed through PAM Native 1.52: the text you just typed reaches PHP before
+  `@submit`, `@blur` or a button press; icons in buttons are centred to the
+  pixel at fractional densities.
+
 ## 2.0.0 - 2026-11-17
 
 A rebuild. 1.x could not get a value from an input to PHP: `p-model` on any

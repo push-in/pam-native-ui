@@ -179,7 +179,7 @@ final class Select extends Component
 ?>
 
 <template language="2">
-    <Column class="p-field" :testID="$testId">
+    <Column class="p-field" :testId="$testId">
         <Row p-if="$label !== ''" class="label-row">
             <Text class="p-field-label">{{ $label }}</Text>
             <Text p-if="$required" class="required" importantForAccessibility="no">*</Text>
@@ -229,6 +229,7 @@ final class Select extends Component
                     </Column>
                     <p-icon p-if="selected($option['value'])" name="check" tone="accent" :size="22" />
                 </Pressable>
+                <View class="sheet-end" />
             </Column>
         </BottomSheet>
 
@@ -259,9 +260,10 @@ final class Select extends Component
                         on:change="search"
                     />
                 </Row>
-                <ScrollView class="list" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+                <VirtualizedList class="list" estimatedRowHeight="56" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
                     <Pressable
                         p-for="$option in rows()"
+                        p-key="$option['key']"
                         :key="$option['key']"
                         :class="$option['disabled'] ? 'option option-disabled' : 'option'"
                         :accessibilityRole="$multiple ? 'checkbox' : 'radio'"
@@ -276,7 +278,7 @@ final class Select extends Component
                         </Column>
                         <p-icon p-if="selected($option['value'])" name="check" tone="accent" :size="22" />
                     </Pressable>
-                </ScrollView>
+                </VirtualizedList>
             </Column>
         </BottomSheet>
     </Column>
@@ -290,7 +292,9 @@ final class Select extends Component
     .required { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--p-accent); }
     .trigger { justify-content: space-between; }
     .trigger:pressed { background-color: var(--p-surface-muted); }
-    .sheet { padding: 4px 0 8px 0; background-color: var(--p-surface); }
+    /* Content, not padding: the engine pads a sheet by max(inset, padding). */
+    .sheet-end { height: 8px; }
+    .sheet { padding: 4px 0 0 0; background-color: var(--p-surface); }
     .sheet-long { flex: 1; }
     .sheet-head { flex-direction: row; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 20px; }
     .sheet-title { font-size: 17px; line-height: 24px; font-weight: 600; color: var(--p-text); }
@@ -302,11 +306,11 @@ final class Select extends Component
         gap: 8px;
         margin: 4px 16px 8px 16px;
         padding: 0 12px;
-        min-height: 44px;
+        min-height: 48px;
         border-radius: 12px;
         background-color: var(--p-surface-muted);
     }
-    .search-input { flex: 1; min-height: 44px; padding: 0; font-family: "Instrument Sans"; font-size: 16px; color: var(--p-text); background-color: transparent; border-width: 0; }
+    .search-input { flex: 1; min-height: 48px; padding: 0; font-family: "Instrument Sans"; font-size: 16px; color: var(--p-text); background-color: transparent; border-width: 0; }
     .search-input::placeholder { color: var(--p-text-subtle); }
     .list { flex: 1; }
     .option {
