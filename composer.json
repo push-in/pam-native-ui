@@ -21,7 +21,7 @@
     },
     "require": {
         "php": "^8.5",
-        "pushinbr/pam-native": "^1.52"
+        "pushinbr/pam-native": "^1.53.2"
     },
     "autoload": {
         "psr-4": {
