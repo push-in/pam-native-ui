@@ -40,12 +40,43 @@ def mask(image: Image.Image, rects: list[Rect]) -> Image.Image:
     return masked
 
 
-def compare(actual: Path, golden: Path, rects: list[Rect], diff: Path | None = None) -> tuple[bool, str]:
+def magenta_band(image: Image.Image, from_bottom: bool = False) -> int:
+    """Rows of the recorded system-bar mask at the top (or bottom) edge."""
+    rows = range(image.height - 1, -1, -1) if from_bottom else range(image.height)
+    count = 0
+    for y in rows:
+        row = image.crop((0, y, image.width, y + 1)).getcolors(1)
+        if not row or row[0][1] != (255, 0, 255):
+            break
+        count += 1
+    return count
+
+
+def compare(
+    actual: Path,
+    golden: Path,
+    rects: list[Rect],
+    diff: Path | None = None,
+    insets: tuple[int, int] | None = None,
+) -> tuple[bool, str]:
     a = Image.open(actual).convert("RGB")
     g = Image.open(golden).convert("RGB")
-    if a.size != g.size:
+    if a.width != g.width:
         return False, f"size {a.size} vs golden {g.size}"
-    a, g = mask(a, rects), mask(g, rects)
+    a = mask(a, rects)
+    if insets is not None:
+        # The app is laid out below the status bar and above the navigation
+        # bar. Emulator boots do not always agree on the status bar height
+        # (display cutout), so the content is compared from its own top edge:
+        # the golden's recorded bands against this run's insets.
+        g_top, g_bottom = magenta_band(g), magenta_band(g, from_bottom=True)
+        a_top, a_bottom = insets
+        height = min(a.height - a_top - a_bottom, g.height - g_top - g_bottom)
+        a = a.crop((0, a_top, a.width, a_top + height))
+        g = g.crop((0, g_top, g.width, g_top + height))
+    elif a.size != g.size:
+        return False, f"size {a.size} vs golden {g.size}"
+    g = mask(g, rects) if insets is None else g
     # The golden carries the regions masked when it was recorded (magenta):
     # an animation there moves between runs, so it is masked in both.
     magenta = Image.new("RGB", g.size, (255, 0, 255))
@@ -87,7 +118,7 @@ def animated_regions(first: Path, second: Path, pad: int = 8) -> list[Rect]:
 
 def largest_blob(differing: Image.Image) -> int:
     """Longest side of the largest 8-connected differing region (downsampled by 2)."""
-    small = differing.resize((max(1, differing.width // 2), max(1, differing.height // 2)), Image.Resampling.BOX)
+    small = differing.resize((max(1, differing.width // 2), max(1, differing.height // 2)), getattr(Image, "Resampling", Image).BOX)
     width, height = small.size
     pixels = small.load()
     seen = bytearray(width * height)

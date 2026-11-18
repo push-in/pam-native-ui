@@ -307,7 +307,7 @@ class Suite:
             goldens.mask(Image.open(second), masks).save(target)
             self.check(f"{screen}: golden recorded", True, target.name)
             return
-        ok, detail = goldens.compare(second, target, masks, work / f"{name}-diff.png")
+        ok, detail = goldens.compare(second, target, masks, work / f"{name}-diff.png", insets=(d.top_inset, d.bottom_inset))
         self.check(f"{screen}: matches golden", ok, detail if ok else f"{detail}; diff {work / (name + '-diff.png')}")
 
     def run(self, name: str, scenario) -> None:
@@ -692,6 +692,16 @@ def main() -> int:
     parser.add_argument("--update-golden", action="store_true", help="record goldens instead of comparing")
     args = parser.parse_args()
     device = Device(args.serial, args.package, args.shots)
+    if args.serial.startswith("emulator-"):
+        # Goldens need one status bar height. A device profile's cutout
+        # overlay is not applied on every emulator boot (128 px status bar on
+        # one run, 63 px on the next): the golden emulator runs without one.
+        overlays = device.adb("shell", "cmd", "overlay", "list")
+        for line in overlays.splitlines():
+            line = line.strip()
+            if line.startswith("[x]") and ("display.cutout.emulation" in line or "internal.emulation." in line):
+                device.adb("shell", "cmd", "overlay", "disable", line[3:].strip())
+                time.sleep(2)
     suite = Suite(device, args.golden, args.update_golden)
     names = ["controls", "forms", "events", "overlays", "lists", "feedback", "theme", "sweep"]
     chosen = names if args.suite == "all" else args.suite.split(",")
