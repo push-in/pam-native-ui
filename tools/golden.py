@@ -71,12 +71,17 @@ def compare(
         # the golden's recorded bands against this run's insets.
         g_top, g_bottom = magenta_band(g), magenta_band(g, from_bottom=True)
         a_top, a_bottom = insets
+        # This run's masks (an animation such as an indeterminate bar) cover
+        # the same content in the golden, shifted by the inset difference.
+        shift = g_top - a_top
+        g = mask(g, [(x1, y1 + shift, x2, y2 + shift) for x1, y1, x2, y2 in rects])
         height = min(a.height - a_top - a_bottom, g.height - g_top - g_bottom)
         a = a.crop((0, a_top, a.width, a_top + height))
         g = g.crop((0, g_top, g.width, g_top + height))
     elif a.size != g.size:
         return False, f"size {a.size} vs golden {g.size}"
-    g = mask(g, rects) if insets is None else g
+    if insets is None:
+        g = mask(g, rects)
     # The golden carries the regions masked when it was recorded (magenta):
     # an animation there moves between runs, so it is masked in both.
     magenta = Image.new("RGB", g.size, (255, 0, 255))
@@ -113,7 +118,24 @@ def animated_regions(first: Path, second: Path, pad: int = 8) -> list[Rect]:
             box = changed.crop((x, y, x + step, y + step))
             if box.getbbox():
                 regions.append((x - pad, y - pad, x + step + pad, y + step + pad))
-    return regions
+    return merge_nearby(regions)
+
+
+def merge_nearby(regions: list[Rect], gap: int = 96) -> list[Rect]:
+    """One box per animation: an indeterminate bar moves along its track,
+    and the cells where two captures happened to agree were left unmasked
+    although the bar sits anywhere on that track in the golden."""
+    merged: list[Rect] = []
+    for box in sorted(regions):
+        for index, other in enumerate(merged):
+            rows_meet = box[1] <= other[3] and other[1] <= box[3]
+            close = box[0] <= other[2] + gap and other[0] <= box[2] + gap
+            if rows_meet and close:
+                merged[index] = (min(box[0], other[0]), min(box[1], other[1]), max(box[2], other[2]), max(box[3], other[3]))
+                break
+        else:
+            merged.append(box)
+    return merged
 
 
 def largest_blob(differing: Image.Image) -> int:
