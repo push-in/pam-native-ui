@@ -44,10 +44,16 @@ jobs:
         run: sdkmanager "platforms;android-36" "ndk;27.1.12297006" "cmake;3.22.1"
 
       - name: Install PAM
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # github.com release downloads answer 403 now and then on hosted runners.
           curl -fsSL --retry 6 --retry-all-errors --retry-delay 15 -o /tmp/pam-install.sh \
             https://github.com/push-in/pam/releases/latest/download/install.sh
+          # The installer asks the anonymous GitHub API for the latest tag, which
+          # hosted runners hit the rate limit of: resolve it with the job token.
+          PAM_VERSION=$(gh release view -R push-in/pam --json tagName -q .tagName)
+          export PAM_VERSION
           for attempt in 1 2 3; do sh /tmp/pam-install.sh && break; [ "$attempt" = 3 ] && exit 1; sleep 30; done
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
