@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.2.0 - 2026-11-18
+
+Your brand, compiled in.
+
+- Added: app theme tokens. Point `pam-native.json` at a CSS file of
+  `:root { --p-*: value; }` declarations (`"theme": {"tokens": "src/theme.css"}`)
+  and every component takes your palette, radii, touch size and motion, in
+  light (`--p-accent`) and dark (`--p-accent-dark`). The tokens resolve when
+  PAM compiles the components (PAM Native 1.53.9): no runtime cost, nothing
+  changes for apps without the file, and the file may only declare tokens, so
+  it cannot restyle a component's structure. Every token is listed in
+  [docs/theming.md](docs/theming.md#your-brand).
+- `pam init --template product` (PAM 2.2.23) builds its native app on 2.2 and
+  generates the theme tokens from the product's design-token contract.
+- Requires PAM Native 1.53.9.
+
 ## 2.1.0 - 2026-11-17
 
 Measured, not eyeballed: every component and event is driven on a device and

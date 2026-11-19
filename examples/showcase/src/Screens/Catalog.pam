@@ -44,7 +44,7 @@ final class Catalog extends Component
     <p-screen title="Native UI" subtitle="Every PAM Native UI component, on device.">
         <p-card variant="accent">
             <Column class="hero">
-                <p-badge label="2.1" />
+                <p-badge label="2.2" />
                 <Text class="hero-title">Forms that talk to PHP.</Text>
                 <Text class="hero-text">Two-way binding, validation, sheets and a PAM theme in light and dark.</Text>
             </Column>

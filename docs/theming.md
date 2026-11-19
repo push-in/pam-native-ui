@@ -42,6 +42,57 @@ place (no remount, no flash). Give the window the same colours in
 
 `p-screen` sets the status bar icons for the current appearance.
 
+## Your brand
+
+Give the app its own palette without touching the components: write a CSS
+file that declares only `:root` custom properties and point `pam-native.json`
+at it.
+
+```json
+"theme": {"tokens": "src/theme.css"}
+```
+
+```css
+/* src/theme.css */
+:root {
+    --p-accent: #166534;          /* light */
+    --p-accent-dark: #4ade80;     /* dark */
+    --p-on-accent: #ffffff;
+    --p-on-accent-dark: #052e16;
+    --p-radius: 16px;
+}
+```
+
+PAM resolves the tokens when it compiles the components (PAM Native 1.53.9
+or later), so a themed app renders exactly as fast as the default one, and an
+app without the file is not affected. Edits recompile the components and hot
+reload like any other change. The file holds 64 KiB at most and may only
+declare `:root { --token: value; }`: any selector fails the build, so a theme
+can change colours and sizes but never a component's structure. Set the same
+backgrounds in `pam-native.json` `appearance` so the first frame matches.
+
+Every token, each colour with a `-dark` twin:
+
+| Group | Tokens |
+| --- | --- |
+| bg | `--p-bg` |
+| surface | `--p-surface`, `--p-surface-muted`, `--p-surface-pressed` |
+| border | `--p-border`, `--p-border-strong` |
+| text | `--p-text`, `--p-text-muted`, `--p-text-subtle` |
+| accent | `--p-accent`, `--p-accent-pressed`, `--p-accent-soft`, `--p-accent-soft-pressed`, `--p-accent-text` |
+| on | `--p-on-accent` |
+| danger | `--p-danger`, `--p-danger-soft` |
+| success | `--p-success`, `--p-success-soft` |
+| warning | `--p-warning`, `--p-warning-soft` |
+| info | `--p-info`, `--p-info-soft` |
+| scrim | `--p-scrim` |
+| radius | `--p-radius-sm`, `--p-radius`, `--p-radius-lg`, `--p-radius-xl` |
+| touch | `--p-touch` |
+| motion | `--p-motion-fast`, `--p-motion` |
+
+`pam init --template product` generates this file from its design-token
+contract (`composer theme` regenerates it).
+
 ## Platform feel
 
 | | Android | iOS |
