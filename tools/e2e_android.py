@@ -78,11 +78,36 @@ class Device:
         self.top_inset = int(status.group(1)) if status else 0
         self.bottom_inset = self.height - int(nav.group(1)) if nav else 0
 
+    def display_state(self) -> tuple[bool, int | None]:
+        """(display cutout present, status bar bottom) as the window manager reports them."""
+        windows = self.adb("shell", "dumpsys", "window")
+        cutout = any(
+            int(x2) > int(x1) and int(y2) > int(y1)
+            for x1, y1, x2, y2 in re.findall(r"type=displayCutout frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\]", windows)
+        )
+        status = re.search(r"type=statusBars frame=\[\d+,\d+\]\[\d+,(\d+)\]", windows)
+        return cutout, int(status.group(1)) if status else None
+
+    def wait_display_settled(self, timeout: float = 60) -> None:
+        """Wait until the display has no cutout and the same status bar for 3 reads in a row."""
+        deadline = time.time() + timeout
+        last, stable = None, 0
+        while time.time() < deadline:
+            state = self.display_state()
+            stable = stable + 1 if state == last and not state[0] and state[1] else 0
+            if stable >= 2:
+                print(f"INFO display settled: no cutout, status bar bottom {state[1]} px", flush=True)
+                return
+            last = state
+            time.sleep(1)
+        print(f"WARN display not settled after {timeout:.0f} s (cutout, status bar bottom): {last}", flush=True)
+
     def launch(self) -> None:
         self.adb("shell", "am", "force-stop", self.package)
         self.adb("shell", "monkey", "-p", self.package, "-c", "android.intent.category.LAUNCHER", "1")
         time.sleep(3)
         self.insets()
+        print(f"INFO launched: {self.width}x{self.height}, insets top {self.top_inset} bottom {self.bottom_inset}", flush=True)
         self.home()
 
     def nodes(self) -> list[Node]:
@@ -119,9 +144,9 @@ class Device:
             })
         return found
 
-    def find(self, text: str | None = None, desc: str | None = None, prefix: bool = False) -> Node | None:
+    def find(self, text: str | None = None, desc: str | None = None, prefix: bool = False, nodes: list[Node] | None = None) -> Node | None:
         wanted = text if text is not None else desc
-        for node in self.nodes():
+        for node in self.nodes() if nodes is None else nodes:
             value = node.get("text", "") if text is not None else node.get("content-desc", "")
             if (value.startswith(wanted) if prefix else value == wanted) and node.get("bounds"):
                 x1, y1, x2, y2 = bounds(node)
@@ -137,6 +162,21 @@ class Device:
                 return node
             time.sleep(0.25)
         raise AssertionError(f"not on screen: text={text!r} desc={desc!r}")
+
+    def settled(self, timeout: float = 4) -> list[Node]:
+        """On-screen nodes once nothing moves: two reads in a row with the same
+        geometry. A list still flinging (or a sheet still sliding) reads
+        differently each time, and a node seen mid-fling may be gone by the
+        time it is tapped."""
+        deadline = time.time() + timeout
+        previous = None
+        while True:
+            nodes = self.nodes()
+            layout = [(n.get("text"), n.get("content-desc"), n.get("bounds")) for n in nodes]
+            if layout == previous or time.time() > deadline:
+                return nodes
+            previous = layout
+            time.sleep(0.15)
 
     def gone(self, text: str | None = None, desc: str | None = None, timeout: float = 6) -> bool:
         deadline = time.time() + timeout
@@ -185,8 +225,10 @@ class Device:
             self.back()
         if self.find(text=CATALOG) is None:
             # Backed out of the app (or a screen kept Back): start it again.
+            # A new window: its insets are measured again.
             self.adb("shell", "monkey", "-p", self.package, "-c", "android.intent.category.LAUNCHER", "1")
             time.sleep(2)
+            self.insets()
             for _ in range(6):
                 if self.find(text=CATALOG) is not None:
                     return
@@ -301,6 +343,9 @@ class Suite:
                 subprocess.run(["adb", "-s", self.d.serial, "exec-out", "screencap", "-p"], check=True, stdout=handle)
         second = captures[-1]
         d = self.d
+        # The insets of this screen now (the layout snapshot), not the ones
+        # measured at the last launch: the crop below must match the capture.
+        d.insets()
         masks = [(0, 0, d.width, d.top_inset), (0, d.height - d.bottom_inset, d.width, d.height)]
         moving = [box for before, after in zip(captures, captures[1:]) for box in goldens.animated_regions(before, after)]
         masks += goldens.merge_nearby(moving)
@@ -368,16 +413,19 @@ class Suite:
         for _ in range(4):
             d.swipe(x, d.height * 85 // 100, x, d.height * 55 // 100, 120)
         limit = d.height - d.bottom_inset
-        lowest = max((bounds(n)[3] for n in d.nodes() if n.get("clickable") == "true" and n.get("content-desc")), default=0)
+        lowest = max((bounds(n)[3] for n in d.settled() if n.get("clickable") == "true" and n.get("content-desc")), default=0)
         self.check("select sheet: last option above the navigation bar", 0 < lowest <= limit, f"{lowest} vs {limit}")
         d.screenshot("select-sheet-end")
-        for _ in range(8):
-            if d.find(desc="Brazil") is not None:
+        # Back up to Brazil (the second row) with slow drags inside the list.
+        # A drag that reaches the top of the list moves the sheet with its
+        # whole distance and velocity, and a fast one closes it (the old
+        # flings did, now and then). A 16 % drag over 1.2 s stays far below
+        # the dismiss threshold, scrolls exactly that far (no fling), and the
+        # rows are read only once they stop moving.
+        for _ in range(12):
+            if d.find(desc="Brazil", nodes=d.settled()) is not None:
                 break
-            # Inside the list (below the sheet's title and search), so the
-            # drag scrolls the rows instead of pulling the sheet down.
-            d.swipe(x, d.height * 62 // 100, x, d.height * 92 // 100, 150)
-        time.sleep(1.0)  # let the fling settle: a tap on a moving list only stops it
+            d.swipe(x, d.height * 62 // 100, x, d.height * 78 // 100, 1200)
         d.tap(desc="Brazil", scroll=False)
         self.check("select (virtualized list in a sheet)", d.state()["country"] == "br")
         d.top()
@@ -705,7 +753,11 @@ def main() -> int:
             line = line.strip()
             if line.startswith("[x]") and ("display.cutout.emulation" in line or "internal.emulation." in line):
                 device.adb("shell", "cmd", "overlay", "disable", line[3:].strip())
-                time.sleep(2)
+        # The overlay change lands asynchronously (seconds on a CI emulator):
+        # the cutout goes, the status bar shrinks from 128 to 63 px and
+        # running apps are killed. Launched before that, the app measured the
+        # cutout insets (128 px) and every golden was cropped 65 px off.
+        device.wait_display_settled()
     suite = Suite(device, args.golden, args.update_golden)
     names = ["controls", "forms", "events", "overlays", "lists", "feedback", "theme", "sweep"]
     chosen = names if args.suite == "all" else args.suite.split(",")
