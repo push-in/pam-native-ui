@@ -57,14 +57,61 @@ jobs:
           for attempt in 1 2 3; do sh /tmp/pam-install.sh && break; [ "$attempt" = 3 ] && exit 1; sleep 30; done
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Build the showcase with this checkout
+      - name: Resolve the showcase with this checkout
+        id: resolve
         working-directory: examples/showcase
         run: |
           # This checkout stands in for the released package (any 2.x satisfies ^2.0).
           pam composer config repositories.ui '{"type":"path","url":"../..","options":{"symlink":false,"versions":{"pushinbr/pam-native-ui":"2.99.0"}}}'
           pam composer update --no-interaction --no-progress
+          native=$(pam composer show pushinbr/pam-native --format=json | python3 -c 'import json, sys; print(json.load(sys.stdin)["versions"][0])')
+          echo "pam-native=$native" >> "$GITHUB_OUTPUT"
+          # The Gradle home pam mobile build uses: cached below, keyed on
+          # the pam-native version (its Android project pins every plugin).
+          echo "PAM_NATIVE_GRADLE_HOME=$HOME/.pam-native-gradle" >> "$GITHUB_ENV"
+
+      # Gradle dependencies come from the cache, not from Maven Central on
+      # every run: on 2026-11-19 Central answered 404 ("Could not find
+      # org.jetbrains.kotlin:kotlin-stdlib:2.3.0", asm 9.9, ...) to two
+      # hosted runners in a row (run 44459661709, attempts 2 and 3).
+      - name: Restore the Gradle dependency cache
+        id: gradle-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.pam-native-gradle/caches/modules-2
+            ~/.pam-native-gradle/wrapper/dists
+          key: pam-gradle-${{ runner.os }}-${{ steps.resolve.outputs.pam-native }}
+          restore-keys: pam-gradle-${{ runner.os }}-
+
+      - name: Build the showcase
+        working-directory: examples/showcase
+        run: |
+          # Google's mirror of Maven Central, after the project's own
+          # repositories: a module Central does not serve (404) is looked
+          # up there instead of failing the build.
+          mkdir -p "$PAM_NATIVE_GRADLE_HOME/init.d"
+          cat > "$PAM_NATIVE_GRADLE_HOME/init.d/central-mirror.gradle" <<'GRADLE'
+          def centralMirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+          settingsEvaluated { settings ->
+              settings.pluginManagement.repositories.maven { name = 'MavenCentralMirror'; url = centralMirror }
+              settings.dependencyResolutionManagement.repositories.maven { name = 'MavenCentralMirror'; url = centralMirror }
+          }
+          GRADLE
           pam mobile build . --abi x86_64
           find dist -name '*.apk' | head -1 > /tmp/apk-path
+
+      # Saved right after a successful build (not at the end of the job, which
+      # a golden difference may fail), and only a complete resolution: a
+      # failed build never stores a cache.
+      - name: Save the Gradle dependency cache
+        if: steps.gradle-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.pam-native-gradle/caches/modules-2
+            ~/.pam-native-gradle/wrapper/dists
+          key: pam-gradle-${{ runner.os }}-${{ steps.resolve.outputs.pam-native }}
 
       - name: Enable KVM
         run: |
